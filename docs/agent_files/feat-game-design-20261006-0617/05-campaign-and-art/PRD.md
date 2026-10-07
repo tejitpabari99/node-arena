@@ -6,7 +6,7 @@ date: 2026-10-07
 # PRD: Campaign + Art (SP05)
 
 Repo/branch: node-arena · feat/game-design · Depends on: SP01 (level/archetype schema), SP02 (sim), SP03 (manifest contract), SP04 (bots, validate:levels, balance)
-Owns: `packages/content/data/levels/01..20-*.json`, campaign archetype variants (`data/archetypes/{small,large}.json`), `tools/balance-targets.json` values, `apps/web/assets/manifest.json` *content* (SP03 owns loader), `apps/web/assets/{models,audio}/`, `docs/CREDITS.md`. No code beyond an optional layout-generator script.
+Owns: `packages/content/data/levels/01..20-*.json`, values of campaign archetype variants (`data/archetypes/{small,large}.json`; files hosted by SP01), `tools/balance-targets.json` values, `apps/web/assets/manifest.json` *content* (SP03 owns loader), `apps/web/assets/{models,audio}/`, `docs/CREDITS.md`. No code beyond an optional layout-generator script.
 
 ## TL;DR
 - 4 bands x 5 levels, all selectable. Gradual teaching uses only v1 mechanics: line slots, capacity, neutrals, head-on clash, multi-enemy, cuts.
@@ -42,10 +42,10 @@ The sim and tools are only a game once there are 20 fair, readable, progressivel
 | `standard` | cap 50, rate 1.0, thresholds [10,30] | up to 3 | mid office block | L1 |
 | `small` | cap 20, rate 0.6, thresholds [10] | up to 2 | low shop | L6 |
 | `large` | cap 80, rate 1.5, thresholds [10,30] | up to 3 | skyscraper | L7 |
-Footprint radius scales with size (a skyscraper reads as "big and valuable"). Needs SP01 to host `small`/`large` (ask below). Exact numbers are starting guesses, tuned in greybox. Rationale for variants over standard-only: cheap, differentiates levels, size doubles as a readable stat cue.
+Footprint radius scales with size (a skyscraper reads as "big and valuable"). SP01 hosts the files and confirms `extends` may change any component param incl. `drawsLines.extraSlotAbove` (arrays replaced whole; no adding/removing components) [ACCEPTED]. Exact numbers are starting guesses, tuned in greybox. Rationale for variants over standard-only: cheap, differentiates levels, size doubles as a readable stat cue.
 
 ### Campaign table
-Map = `bounds` 120x80 for all levels (fixed camera, auto-fit); shape describes layout. Tiers: band1 easy, band2 normal, band3 hard, band4 expert (SP04 tier ids, exact names [OPEN]). Time limit 300 s unless noted.
+Map = `bounds` 120x80 for all levels (fixed camera, auto-fit); shape describes layout. Tiers (SP04 owns the names): band1 `easy`, band2 `normal`, band3 `hard`, band4 `expert`; bot profile id = `<personality>-<tier>`; "mixed" = a distinct personality per bot, each `<personality>-<tier>`. Time limit 300 s unless noted.
 | # | Name | Teaching focus | Towers | Bots (profile) | Map shape |
 |---|---|---|---|---|---|
 | **Band 1 Rookie (day)** | | | | | |
@@ -94,7 +94,7 @@ Towers/bot counts are targets; the golden numbers live in the files.
 | 2 | >= 98% | 65-85% | <= 5 | 0 |
 | 3 | >= 90% | 40-65% | <= 8 | 0 |
 | 4 | >= 80% | 20-45% | <= 10 | 0 |
-Owner sign-off: clears each band's levels in <= 3 attempts median (B1 first try; B4 may need ~5), no level feels "unwinnable" or "autopilot". Tension with SP04 "reference must win all 4 seeds" at band 4: see [OPEN].
+Owner sign-off: clears each band's levels in <= 3 attempts median (B1 first try; B4 may need ~5), no level feels "unwinnable" or "autopilot". `validate:levels` (K=4 seeds) applies SP04's per-band rule: bands 1-3 win all K, band 4 win >= K-1 or a committed solution replay; the 200-seed thresholds above are the balance runner's targets [RESOLVED].
 
 ### Art
 | Role | Pack (source) | Licence verified | Use |
@@ -107,7 +107,7 @@ Owner sign-off: clears each band's levels in <= 3 attempts median (B1 first try;
 | Music (1 track) | candidates: Kenney Music Jingles; OpenGameArt filtered to CC0 | **N** | one looping track |
 | Fallback chars | Quaternius Universal Animation Library: https://quaternius.com/packs/universalanimationlibrary.html | Y, CC0 | only if Kenney characters fail the look/budget |
 Mixamo excluded (Adobe licence, no redistribution).
-- **Team colour**: Kenney models use one shared colormap, so no per-team named material is expected. Plan: SP03 fallback (tinted base plate + roof marker) first; `teamMaterial` only if a one-off Blender/gltf-transform step splits a material [OPEN]. Characters: shirt tint via `tint`/`teamMask`.
+- **Team colour**: Kenney models use one shared colormap, so no per-team named material is expected. Plan: SP03 fallback (tinted base plate + roof marker) first; `teamMaterial` only if a one-off Blender/gltf-transform step splits a material [OPEN]. Characters: shirt recolour via `teamMaterial` ("Shirt") or `tint`.
 - **Palettes** (`palettes` in manifest; every key in both). Default: player.1 #2E86FF, player.2 #FF4D4D, player.3 #FFC933, player.4 #35C46B, neutral #A0A7B0. Colourblind (Okabe-Ito): #0072B2, #D55E00, #F0E442, #009E73, neutral #999999. `teamMarkers`: circle/triangle/square/diamond.
 - **Themes** (`level.visual`): `city.day` (B1), `city.dusk` (B2), `city.overcast` (B3), `city.night` (B4); same models/palette material, differing ground tint, light, fog, props. Cheap variety without new art.
 - **Budgets** (SP03 `check:manifest`): troop <= 300 tris, tower <= 5k, texture <= 1024^2; initial load <= ~10 MB; music lazy-loaded; models through gltf-transform (meshopt, dedupe, texture resize) at import.
@@ -131,14 +131,15 @@ Mixamo excluded (Adobe licence, no redistribution).
 3. Pick music track; sign off per band playtest.
 4. Final campaign sign-off (all 20 completable, difficulty ramp).
 
-Cross-PRD asks: **SP01** host `small`/`large` archetypes; confirm `extends` can change `drawsLines.extraSlotAbove`. **SP04** add `human-proxy` tooling profile; confirm tier names; accept `balance-targets.json` schema. **SP03** base-plate team-colour fallback must be good enough as primary.
+Cross-PRD asks: **SP01** [ACCEPTED] hosts `small`/`large`; `extends` may change `drawsLines.extraSlotAbove`. **SP04** [ACCEPTED] `human-proxy` tooling profile, tier names `easy|normal|hard|expert`, `balance-targets.json` schema. **SP03** base-plate team-colour fallback must be good enough as primary (open with SP03).
 
 ## Risks / Open Questions
 - [OPEN] Kenney buildings: tris within 5k and any splittable team material? Check on import; fallback base plate.
 - [OPEN] Mini Characters tris vs 300 budget; fallback decimate, capsule primitive troop, or Quaternius.
-- [OPEN] Band 4 vs "reference wins all 4 seeds": relax to majority-of-K for band 4, or committed replay solutions (SP04 fallback).
+- [RESOLVED: SP04 per-band rule: band 4 needs >= K-1 of K seeds or a committed solution replay] band 4 vs reference-wins-all-seeds.
 - [OPEN] Music + clash/capture SFX source and licence not yet verified.
-- [OPEN] Tier ids (`easy|normal|hard|expert`) vs SP04 numbering; all numbers (tower variants, tier skill, thresholds) are guesses until greybox playtest.
+- [OPEN] All numbers (tower variants, tier skill, thresholds) are guesses until greybox playtest.
+- [RESOLVED: tier ids `easy|normal|hard|expert` owned by SP04] tier naming.
 - [OPEN] Are 120x80 and 18 u spacing sufficient for 14-tower level at laptop resolutions; test on L18 first.
 - [OPEN] Do 3-bot levels end with bots killing each other too fast (FFA balance)?
 - [RESOLVED: no overrides in campaign] SP01 overrides question.

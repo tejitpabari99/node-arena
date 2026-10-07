@@ -6,7 +6,7 @@ date: 2026-10-07
 # PRD: Rules + Data-Driven Content Model (SP01)
 
 Repo/branch: node-arena · feat/game-design · Depends on: nothing
-Owns: `docs/GAME_RULES.md`, `packages/content/**` (schemas, component registry, loader/compiler, hashing, validator, data files except campaign levels 01-20 and `data/bots/*.json`; also **hosts** SP04's `src/bot-params.ts` + `schemas/bot.schema.json`, and the manifest schema `src/manifest.schema.ts` + generated `schemas/manifest.schema.json` (schema only; the `manifest.json` file is SP03's)), `packages/content/data/{balance,troops,archetypes}`, `docs/CONTENT_GUIDE.md` (change process)
+Owns: `docs/GAME_RULES.md`, `packages/content/**` (schemas, component registry, loader/compiler, hashing, validator, data files except campaign levels 01-20 and `data/bots/*.json`; also **hosts** SP04's `src/bot-params.ts` + `schemas/bot.schema.json`, and the manifest schema `src/manifest.schema.ts` + generated `schemas/manifest.schema.json` (schema only; the `manifest.json` file is SP03's)), `packages/content/data/{balance,troops,archetypes}` (archetypes: `standard`, `small`, `large`; SP05 supplies/tunes the `small`/`large` values), `docs/CONTENT_GUIDE.md` (change process)
 
 ## TL;DR
 - GAME_RULES.md owns **mechanics** (rule IDs `R-AREA-NN`); JSON files own **numbers + composition**. The engine is a generic interpreter: changing a rate, troop power, or tower position is a data edit only.
@@ -59,7 +59,7 @@ src/                    typebox schemas, component registry, bot-params.ts (SP04
 data/
   balance.json          globals
   troops/regular.json
-  archetypes/standard.json
+  archetypes/{standard,small,large}.json   (small/large extend standard; values tuned by SP05)
   levels/01-first-steps.json … 20-*.json
   bots/<profile>.json   (profiles authored by SP04)
 ```
@@ -79,6 +79,7 @@ Per-instance values (owner, starting garrison) are in the level, not the archety
   "footprintRadius":3, "components":{ "garrison":{"cap":50}, "generates":{"troop":"regular","ratePerSec":1.0},
   "drawsLines":{"extraSlotAbove":[10,30]}, "capturable":{} } }
 ```
+**Variants (SP05 ask accepted)**: content hosts `small` and `large` as `extends: "standard"` archetypes. `extends` may change **any param of an existing component** (e.g. `garrison.cap`, `generates.ratePerSec`, `drawsLines.extraSlotAbove`) plus top-level `visual` and `footprintRadius`; array params (`extraSlotAbove`) are replaced whole, not merged. **Limit (v1)**: an extending archetype may not add or remove components (variants = param changes only; widening is additive later); results must satisfy the same registry ranges and semantic checks (ascending thresholds, `garrison ≤ cap`). Example: `small` = `{extends:"standard", visual:"tower.small", footprintRadius:2, components:{garrison:{cap:20}, generates:{ratePerSec:0.6}, drawsLines:{extraSlotAbove:[10]}}}`.
 Troop type: `{id, visual, value, speed}`; v1 registry range `value == 1` (widening it + combat-in-value-units is the v2 tank change: data + one combat behaviour).
 **Extension rule**: new behaviour = one new schema entry + one sim implementation + rule IDs + tests, shipped together; a component absent from registry or with a param outside its declared v1 range is an error. Archer = new component `shoots` + data; no change to existing schemas.
 
@@ -94,7 +95,7 @@ Troop type: `{id, visual, value, speed}`; v1 registry range `value == 1` (wideni
   "overrides":{} }
 ```
 - Coordinates: 2D ground plane, origin at map centre, units = world units (renderer maps y→z), ≤3 decimals. Edge-case: `bounds` is advisory for camera and in-bounds check.
-- `players` unbounded (>4 for v6); `team` optional (default = own id); v1 semantic rule: teams all distinct, exactly one `human`, 1–3 `bot`s. v4 relaxes the semantic rule only; schema unchanged. `botProfile` refs `data/bots/*.json` (envelope `{id, kind: "utility"|"idle", params}`; inner `params` schema = `bot-params.ts`, authored by SP04, hosted here). Level-referenceable profiles exclude `reference` (tooling-only).
+- `players` unbounded (>4 for v6); `team` optional (default = own id); v1 semantic rule: teams all distinct, exactly one `human`, 1–3 `bot`s. v4 relaxes the semantic rule only; schema unchanged. `botProfile` refs `data/bots/*.json` (envelope `{id, kind: "utility"|"idle", params}`; inner `params` schema = `bot-params.ts`, authored by SP04, hosted here). Level-referenceable profiles exclude the tooling-only profiles `reference` and `human-proxy` (both SP04); a tooling profile may still be another tooling profile's `extends` base.
 - `obstacles[]` (`{kind,…}`) and `mapObjects[]` (`{kind,…}`) are reserved: schema accepts the array, v1 semantic pass rejects non-empty/unknown kinds. Power-ups slot in as `mapObjects` kinds with their own pos/footprint, so overlap checks already cover them.
 - `timeLimitSec` omitted → `balance.defaults.timeLimitSec`. `visual` = manifest theme key; omitted → `balance.defaults.theme`; presentation-only (not hashed).
 - **Overrides**: `overrides.{globals|troops.<id>|archetypes.<id>.components.<name>}.<param>` — param patches only; cannot add/remove components or entities (use a new archetype with `extends` instead). Resolved at compile; hashed as resolved. The balance runner lists every level using overrides.
@@ -111,7 +112,7 @@ Troop type: `{id, visual, value, speed}`; v1 registry range `value == 1` (wideni
 
 ### Validation
 - **Schema pass** (Ajv strict, `additionalProperties:false` everywhere): shapes, ranges, id regex `^[a-z0-9][a-z0-9-]*$`, unknown component/kind rejected.
-- **Semantic pass**: unique ids; all refs resolve (archetype, troop, botProfile, owner, team, visual keys when manifest given); component params in registry v1 range; `extraSlotAbove` strictly ascending; `0 ≤ garrison ≤ cap` (warn if highest threshold ≥ cap); towers in bounds; footprints non-overlapping (+margin) incl. future mapObjects; every player owns ≥1 tower; ≥2 owners; rates/speeds > 0 and `speed ≤ 100`, `|coord| ≤ 500`; bot rules (via `bot.schema.json` + semantic pass): profile `extends` depth ≤1 and a profile with `extends` may override **only** `skill`, `reference` profile not referenceable by levels, every `botProfile` ref resolves, weights/biases within bounds (weight ≤ 10,000 milli so int32 sums hold); `order` unique and contiguous 1–20 across campaign; obstacles/mapObjects empty; `extends` depth ≤1, no cycles; overrides reference existing params. Reachability is trivially true in v1 (straight lines, no obstacles); hook reserved for line-of-sight once obstacles exist. Playability (reference bot wins, idle loses) is SP04.
+- **Semantic pass**: unique ids; all refs resolve (archetype, troop, botProfile, owner, team, visual keys when manifest given); component params in registry v1 range; `extraSlotAbove` strictly ascending; `0 ≤ garrison ≤ cap` (warn if highest threshold ≥ cap); towers in bounds; footprints non-overlapping (+margin) incl. future mapObjects; every player owns ≥1 tower; ≥2 owners; rates/speeds > 0 and `speed ≤ 100`, `|coord| ≤ 500`; bot rules (via `bot.schema.json` + semantic pass): profile `extends` depth ≤1 and a profile with `extends` may override **only** `skill`, tooling profiles (`reference`, `human-proxy`) not referenceable by levels, every `botProfile` ref resolves, weights/biases within bounds (weight ≤ 10,000 milli so int32 sums hold); `order` unique and contiguous 1–20 across campaign; obstacles/mapObjects empty; `extends` depth ≤1, no cycles; overrides reference existing params. Reachability is trivially true in v1 (straight lines, no obstacles); hook reserved for line-of-sight once obstacles exist. Playability (reference bot wins, idle loses) is SP04.
 - API: `validateContent(fileMap, opts?: {manifest}) → {errors[], warnings[]}` (manifest given → visual-key checks); `loadContent` throws on errors.
 
 ### CompiledLevel (what SP02/SP04/SP03 consume)
@@ -154,9 +155,9 @@ Code must never do anything the rules don't state; param meaning lives in rules,
 ## Risks / Open Questions
 - [OPEN] TypeBox vs zod: spike on first schema file; switch cost is low before SP02 starts. Default TypeBox.
 - [OPEN] Fixed-point scale 1000 sufficient for speed/progress along long lines at 20 Hz (rounding bias)? SP02 spike; may need a finer internal scale while keeping authored 3 decimals.
-- [OPEN] Do campaign levels actually use `overrides`, or ban them once the 20 levels exist? Revisit after SP05 greybox.
+- [RESOLVED: SP05 campaign uses no level `overrides` (new archetype via `extends` instead); mechanism stays for dev-panel tuning/future custom games, SP05 acceptance asserts none in campaign] campaign overrides.
 - [OPEN] Map unit scale (bounds ~120×80, tower radius ~3) — tune in greybox; cheap data edit.
-- [OPEN] Bot params as floats: affect only commands, not sim state, but balance-runner reproducibility wants same fixed-point rule. SP04 to decide.
+- [RESOLVED: SP04 chose fixed-point, same loader (`fx3`)] bot params floats vs fixed-point.
 - [OPEN] R-CAP wording vs brief ("at cap, no generation counts"): SP02 semantics (at cap with a drawn line the tower keeps sending; accumulator not banked only when no line) refine but do not contradict the brief; confirm with user at greybox.
 - [OPEN] Per-tower send-rate param may be wanted in v2 (archer-like variants); v1 omits since send = generation.
 - [RESOLVED: schema accepts team field now; v4 only relaxes a semantic rule] team-readiness.
@@ -169,7 +170,7 @@ Code must never do anything the rules don't state; param meaning lives in rules,
 1. GAME_RULES.md exists with outline above, ≥ all brief section-5 rules as `R-…` IDs, tick phase order, changelog, `RULES_VERSION`; no literal tunable numbers in rule text.
 2. `packages/content` ships TypeBox schemas (incl. manifest + bot), generated JSON Schemas, component registry (4 components), browser-safe `loadContent`, `validateContent(fileMap,{manifest})`, `compileLevel` (dense sorted indices, team per player, resolved `bots`), `simHash`/`botHash`, `hashes.lock.json`, `balance.json`, `regular` troop, `standard` archetype, and one sample level.
 3. Editing `generates.ratePerSec`, troop `speed`, or a tower `pos` requires no code change and changes `simHash`; editing a `visual` key or `name` does not.
-4. Fixtures prove rejection of: unknown component, unknown field, 4-decimal number, dangling ref, overlapping towers, non-empty `obstacles`/`mapObjects`, troop `value: 2`, override of a missing param, `|coord| > 500`, `speed > 100`, tier profile `extends` overriding non-`skill` fields, level referencing `reference` profile, missing manifest visual key.
+4. Fixtures prove rejection of: unknown component, unknown field, 4-decimal number, dangling ref, overlapping towers, non-empty `obstacles`/`mapObjects`, troop `value: 2`, override of a missing param, `|coord| > 500`, `speed > 100`, tier profile `extends` overriding non-`skill` fields, level referencing a tooling profile (`reference`/`human-proxy`), missing manifest visual key.
 5. A fixture archetype `archer` (`garrison`,`capturable`,`shoots`) and troop `tank` are rejected only because the registry lacks `shoots` / range excludes `value 2` — adding those registry entries makes them pass with no schema redesign.
 6. Same files load identically via Node `fs` and Vite glob (same `simHash`).
 7. CONTENT_GUIDE.md documents the change-process table.

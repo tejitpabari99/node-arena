@@ -165,7 +165,7 @@ registerComponent({ name:'generates', state:{acc:0}, systems:{generation: fn}, h
 ## Risks / Open Questions
 - [OPEN] Cap semantics with lines (tower at cap keeps sending; acc not banked) — confirm in R-CAP wording with the user at greybox.
 - [OPEN] Capture with count exactly 0 flips to hitter with 0 garrison; playtest whether feels punishing.
-- [OPEN] `draw` outcome (mutual elimination) wording for UI (SP03).
+- [RESOLVED: SP03 results copy "Mutual defeat — not completed"] `draw` outcome UI wording.
 - [OPEN] Friendly/mixed front pass-through during head-on clash is simplified; revisit for v4 teams.
 - [OPEN] Fixed-point spike result may change internal factor (low risk).
 - [OPEN] Event volume with 2× speed and `events:false` bypass for balance runner — measure.

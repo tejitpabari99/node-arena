@@ -6,7 +6,7 @@ date: 2026-10-07
 # PRD: Bots + Tools (SP04)
 
 Repo/branch: node-arena · feat/game-design · Depends on: SP01 (content/validator/profile envelope), SP02 (sim API)
-Owns: `packages/bots/**` (bot engine, consideration registry, driver, headless harness, tests, `bench:bots`), bot `params` schema (file `packages/content/src/bot-params.ts`, contributed into SP01's package), `packages/content/data/bots/*.json` (profiles), `tools/**` (CLIs, CI workflow). Does not own: sim, level data (SP05), web driver wiring and manifest file (SP03).
+Owns: `packages/bots/**` (bot engine, consideration registry, driver, headless harness, tests, `bench:bots`), bot `params` schema (file `packages/content/src/bot-params.ts`, contributed into SP01's package), `packages/content/data/bots/*.json` (profiles), `tools/**` (CLIs, CI workflow; except `tools/balance-targets.json` values and optional `tools/layout/` helper, both authored by SP05; SP04 owns the balance-targets schema). Does not own: sim, level data (SP05), web driver wiring and manifest file (SP03).
 
 ## TL;DR
 - Bots live in `packages/bots`, outside sim. A bot sees exactly what the player sees (`view`, `readTroops`, `canDraw`) and emits the same `DrawLine`/`CutLine` commands. No events, no snapshot, no hidden state, no cheats.
@@ -23,7 +23,7 @@ Levels are only as good as their opponents. Bots must be fair (same rules as pla
 |---|---|
 | Bot interface, driver cadence, determinism + replay strategy | Learning/MCTS bots, dynamic difficulty, easy/hard toggle |
 | Utility-AI over generic component-derived considerations | Bot code for archer/tank (extension point only) |
-| Bot-params schema + 4 personalities + reference + idle | Authoring the 20 levels or tuning numbers (SP05) |
+| Bot-params schema + 4 personalities + tier profiles + reference + human-proxy + idle | Authoring the 20 levels or tuning numbers (SP05) |
 | Tools CLIs, output formats, CI wiring | Web bot wiring, UI (SP03); sim golden tooling (SP02 owns `sim:golden`) |
 | Test strategy + perf budget | Server hosting of bots (v3; designed worker/server-safe) |
 
@@ -94,16 +94,16 @@ Score = `bias[kind] * (sum w_i * c_i) / (sum w_i)` + noise; noise = rng uniform 
 - Authored decimals <=3 places -> milli by SP01's loader (tag `fx3`); unknown consideration/component/field = validation error; consideration registry parity asserted at startup (like sim).
 - `extends` depth 1 (SP01 pattern). **Semantic rule: a profile with `extends` may override only `skill`** -> difficulty variants cannot change personality. Tier profiles are therefore 3-line files.
 - Floats vs fixed-point: **fixed-point**. Bot params do not touch sim state, but balance reproducibility and v3 server parity want identical decisions on all runtimes.
-- Personalities v1: `rusher` (attack bias, short interval), `turtle` (reinforce/cut, high `threatToSource`), `economist` (heavy `targetValue`/generates), `opportunist` (`targetWeakness`, `ownerDominance`). Plus tooling profiles `reference` (strong, noise 0, interval 0.5 s, 2-3 actions; tooling-only: levels may not reference it) and `idle` (`kind:"idle"`, legal in levels, e.g. tutorial opponents).
-- Starting difficulty bands -> skill tiers (tuned by SP05 via runner): band 1 `3.5s / noise 0.35 / 1 action`; band 2 `2.2s / 0.2 / 1`; band 3 `1.4s / 0.1 / 2`; band 4 `0.8s / 0.03 / 2`. Level picks `<personality>-<tier>` ids.
+- Personalities v1: `rusher` (attack bias, short interval), `turtle` (reinforce/cut, high `threatToSource`), `economist` (heavy `targetValue`/generates), `opportunist` (`targetWeakness`, `ownerDominance`). Plus tooling profiles `reference` (strong, noise 0, interval 0.5 s, 2-3 actions; tooling-only: levels may not reference it), **`human-proxy`** (SP05 ask accepted: `extends: "reference"` overriding only `skill` to a slower, noisier block, starting guess `1.8s / noise 0.2 / 1 action`; tooling-only like `reference`; purpose: approximate an average human so `balance --proxy human-proxy` can check SP05's per-band human-proxy win-rate targets, since `reference` is too strong to represent a player) and `idle` (`kind:"idle"`, legal in levels, e.g. tutorial opponents).
+- Starting difficulty bands -> skill tiers (tuned by SP05 via runner). **Tier names (owned here; SP05 uses them): `easy` = band 1 `3.5s / noise 0.35 / 1 action`; `normal` = band 2 `2.2s / 0.2 / 1`; `hard` = band 3 `1.4s / 0.1 / 2`; `expert` = band 4 `0.8s / 0.03 / 2`.** Profile id = `<personality>-<tier>` (e.g. `rusher-easy`, `turtle-expert`): 4 personalities x 4 tiers = 16 three-line `extends` files, generated once and committed; levels reference only these (plus `idle`).
 
 ### tools/ (TS, `tsx`, workspace scripts)
 | Script | Does |
 |---|---|
 | `validate:content` | SP01 `validateContent` for all data + hashes.lock (`simHash` and `botHash`; regenerate with SP01 `pnpm content:lock`) / versions check |
 | `check:manifest` | **owned here** (CLI/CI); calls `validateContent(fileMap,{manifest})` so every visual key exists in SP03's `apps/web/assets/manifest.json` (schema from SP01), then SP03's `validateManifest()` for file existence, tri/texture budgets, CREDITS listing; SP03 owns manifest file + runtime fallback |
-| `validate:levels [--levels id\|all] [--seeds 4]` | validate:content, then per level: reference proxy plays the human seat vs the level's bots, K seeds, must **win all K**; idle proxy must **not win any**; every run terminates, no `CommandRejected`, no invariant throw; one seed run twice -> same final hash. Reports per level |
-| `balance --levels all --proxy reference,<profiles> --seeds 200 --jobs 2 --format md\|json` | win-rate matrix: levels x proxy profile; also median seconds-to-win, timeout %, draw %, median towers at end; flags levels outside `tools/balance-targets.json` band ranges (values authored by SP05); lists levels using SP01 overrides. `--mode arena` rotates profiles across all seats (profile-vs-profile). Runs `events:false` |
+| `validate:levels [--levels id\|all] [--seeds 4]` | validate:content, then per level: reference proxy plays the human seat vs the level's bots, K seeds, must meet the **per-band rule** (from `level.band`): bands 1-3 **win all K**; band 4 **win >= K-1** (K=4: 3 of 4), or pass via a committed solution replay `tools/solutions/<levelId>.replay.json` that `replay:verify` confirms is a win (any `simHash` change invalidates it; regenerate). Statistical band targets are the balance runner's job, not this gate; idle proxy must **not win any**; every run terminates, no `CommandRejected`, no invariant throw; one seed run twice -> same final hash. Reports per level |
+| `balance --levels all --proxy reference,<profiles> --seeds 200 --jobs 2 --format md\|json` | win-rate matrix: levels x proxy profile; also median seconds-to-win, timeout %, draw %, median towers at end; flags levels outside `tools/balance-targets.json` band ranges (values authored by SP05; schema owned here: `bands.<1-4>:{referenceWinMin, humanProxyWin:[min,max], timeoutMaxPct, idleWinMax}`; `human-proxy` is selectable via `--proxy`); lists levels using SP01 overrides. `--mode arena` rotates profiles across all seats (profile-vs-profile). Runs `events:false` |
 | `replay:verify <file\|dir>` | SP02 `playReplay`: header check, checkpoints, final hash; prints first diverging tick. Covers `golden/` replays |
 | `check:rules` | regex-extract `R-[A-Z]+-\d+` headings from GAME_RULES.md (tombstones exempt) and `covers R-...` tags in test titles across packages; fails on untested IDs and on tags naming unknown IDs |
 | `bots:golden [--update]` | recompute bots on 3 fixed (level, seed) pairs and diff against committed command logs |
@@ -125,7 +125,7 @@ Score = `bias[kind] * (sum w_i * c_i) / (sum w_i)` + noise; noise = rng uniform 
 | 7 | Difficulty | `skill` only; `extends` limited to `skill` | per-tier full profiles | Enforces brief; personalities cannot drift per tier |
 | 8 | Cadence | Per-bot interval ticks + seeded phase | all bots same tick; every tick | Cheap; reads as human reaction time |
 | 9 | Params schema file | SP04 contributes into content package | schema in bots (content would depend on bots) | Validator in content must know it; avoids cycle |
-| 10 | Reference bot | Strong utility profile as human proxy | per-level scripted solutions | Zero authoring; scales to 20 levels (fallback in Risks) |
+| 10 | Reference bot | Strong utility profile as human proxy (+ slower `human-proxy` for band targets) | per-level scripted solutions only | Zero authoring; scales to 20 levels (fallback: committed solution replay, band 4) |
 | 11 | Manifest check | Tools owns CLI | SP03 | Same CI home as other validators; SP03 owns data |
 | 12 | CI | GitHub Actions + local `pnpm ci` | local-only hooks | Repo is on GitHub; local-only hosting is separate |
 
@@ -133,8 +133,8 @@ Score = `bias[kind] * (sum w_i * c_i) / (sum w_i)` + noise; noise = rng uniform 
 - Enable Actions on the repo once; no secrets needed.
 
 ## Risks / Open Questions
-- [OPEN] Can one generic `reference` utility bot win all 20 levels (esp. band 4 built for clever human play)? Fallback: committed `data/solutions/<level>.replay.json` accepted by `validate:levels` as alternative proof. Decide after SP05 greybox.
-- [OPEN] `validate:levels` pass rule: all 4 seeds vs win-rate threshold; start strict, loosen if noise>0 reference flakes.
+- [OPEN] Can one generic `reference` utility bot win bands 1-3 on all K seeds and band 4 on >= K-1 (else solution replay)? Decide after SP05 greybox. How solution replays get recorded (scripted command list via `runMatch` vs owner play; web has no replay export in SP03) is undecided.
+- [RESOLVED: per-band rule in `validate:levels` (bands 1-3 all K, band 4 >= K-1 or committed solution replay); reconciles SP05 band 4 reference >= 80%] pass rule / SP05 band-4 conflict.
 - [OPEN] Consideration set sufficiency: head-on clash exploitation and line-cut timing may need `clashPotential`. Add by data+registry after greybox playtest.
 - [OPEN] Per-decision cost at v6 (>4 owners, >50 towers): `maxTargetsPerSource` pruning; re-bench.
 - [OPEN] Balance bands (`balance-targets.json`) and tier values are guesses until SP05 playtests.
@@ -148,6 +148,7 @@ All SP01/SP02/SP03 asks below were ACCEPTED by the owning PRDs: SP01 hosts `bot-
 - SP01: (a) host `bot-params.ts` + schema `bot.schema.json`, (b) `compileLevel` resolves `botProfile` (extends, fx3->int) into `CompiledLevel.bots[{player, profile}]`, (c) `botHash` per profile in `hashes.lock.json`, excluded from `simHash`, (d) validator: `extends`-only-`skill`, `reference` not referenceable by levels, bounds on weights, `validateContent(fileMap,{manifest})`.
 - SP02: (a) export `idiv`, `mulDiv`, `isqrt`, `Sfc32`, `mixSeed`, `RejectReason`, `SimView` types; (b) shared ESLint determinism config consumable by `packages/bots`; (c) `step(...,{events:false})` still maintains `sim.rejected` (cumulative count) so harness can assert zero rejects.
 - SP03: call `driver.commands(sim)` each tick before `step`; never feed bots events.
+- SP05 (ACCEPTED): `human-proxy` tooling profile; tier names `easy|normal|hard|expert`; `tools/balance-targets.json` schema (above); SP05-authored `tools/layout/` helper.
 
 ## Tests
 | Layer | What |
@@ -164,9 +165,9 @@ All SP01/SP02/SP03 asks below were ACCEPTED by the owning PRDs: SP01 hosts `bot-
 ## Acceptance Criteria
 1. `createBotDriver` + `Bot` types exported; SP03 can run a level with bots using only that and SP02 API.
 2. Adding a profile `foo.json` (new weights) changes behaviour with zero code edits; changing a tier changes only `skill`.
-3. All v1 profiles validate; `extends` override of non-`skill` fields is rejected by fixture.
+3. All v1 profiles (incl. 16 tier profiles, `reference`, `human-proxy`, `idle`) validate; `extends` override of non-`skill` fields is rejected by fixture.
 4. Bot matches record to replays that `replay:verify` passes with no bot present; bot re-run reproduces command logs byte-identically.
-5. `validate:levels` flags a fixture level the reference cannot win and one the idle proxy wins.
+5. `validate:levels` flags a fixture level the reference cannot win (per-band rule; band-4 fixture passes with 3/4 wins or a valid solution replay) and one the idle proxy wins.
 6. `balance` emits md + json matrix, reproducible across `--jobs`.
 7. `check:rules` and `check:manifest` fail on fixtures (untested ID, missing visual key) and pass on repo.
 8. GitHub Actions workflow and `pnpm ci` run the full gate chain; perf bench within budget.
