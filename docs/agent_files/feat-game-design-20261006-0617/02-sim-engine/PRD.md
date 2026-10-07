@@ -28,7 +28,7 @@ SP01 fixes *what* the rules and data are; something must execute them identicall
 
 ## Requirements
 1. Pure TS, ES2022 lib only (no DOM, no Node types); depends on `packages/content` types only.
-2. Consumes only `CompiledLevel` (all int32). Needs from compile (SP01): dense indices with towers/players sorted by id; per-component int params; troop kinds `{value, speedMilli}`; `timeLimitSec`; `team` per player. Visual keys pass through untouched to `view` (never read by rules).
+2. Consumes only `CompiledLevel` (all int32). Needs from compile (SP01): dense indices with towers/players sorted by id; per-component int params; troop kinds `{value, speedMilli}`; `timeLimitSec`; `team`, `kind`, `colorKey` per player. Visual keys (and `colorKey`) pass through untouched to `view` (never read by rules); `CompiledLevel.bots` is ignored by sim.
 3. Fixed tick = R-TCK constant (20 Hz). Progress unit = 1/(1000·tickRate) world unit (see Fixed-point). No wall clock; pause/1×/2× = how often the driver calls `step`.
 4. One canonical ordering rule: players, towers, channels ascending by dense index (= sorted id). No `for…in`, no unsorted `Object.keys`, no default `sort()`.
 5. Startup asserts sim component registry keys == content registry keys; unknown component = load error.
@@ -42,7 +42,8 @@ create(level: CompiledLevel, seed: number): Sim
 interface Sim {
   readonly tick: number; readonly view: SimView;           // view mutated in place; valid until next step
   step(cmds: readonly Command[], opts?: {events?: boolean}): readonly SimEvent[]; // no-op after GameOver
-  canDraw(player: number, from: string, to: string): RejectReason | null;     // same validator step() uses
+  readonly rejected: number;                                // cumulative CommandRejected count; maintained even with events:false
+  canDraw(player: string, from: string, to: string): RejectReason | null;     // string ids like Command; same validator step() uses
   readTroops(out: TroopBuf): number;                        // fills caller typed arrays, no alloc
   hash(): string;                                           // 16 hex, dual 32-bit lanes
   snapshot(): SimSnapshot;                                  // JSON-serialisable (tests, golden diffs, v3 keyframes)
@@ -57,6 +58,8 @@ type SimEvent = // all carry tick; ids are dense indices into view.ids
   | PlayerEliminated{player} | GameOver{outcome:'won'|'lost'|'draw'|'timeout',winnerTeam|null}
   | CommandRejected{cmd,reason};
 ```
+- **Public exports** (SP03/SP04 may import only these): `create`, types `Sim, SimView, SimEvent, Command, RejectReason, TroopBuf, SimSnapshot`, replay helpers, `TICK_RATE`, and math/PRNG utilities `idiv, mulDiv, isqrt, Sfc32, mixSeed(...parts: number[]): number`. `events:false` skips event construction but still counts rejects in `sim.rejected` (harness asserts zero).
+- **Clash event semantics**: `channel` = the A→B channel with A's dense index < B's; `progA` = progress of that channel's front measured from A (its source); `progB` = progress of the reverse channel's front measured from B (its own source). Both are channel-relative to their own source; the clash point on line A→B is at `progA/length`. `value` = value removed from each side.
 - Commands use string ids (stable in replays/wire); events/views use dense indices + `view.ids.{towers,players}` (hot path). Commands in a step are canonicalised: stable-sorted by player index, original order within player.
 - `Surrender` omitted in v1 ([DEFERRED] to v3 leave/forfeit). Swipe/right-click hit-testing lives in SP03 (geometry from `view.lines`); it just emits `CutLine`.
 - `RejectReason`: `not-owner | self | no-slot | duplicate | gameover | unknown-id | no-component`. `canDraw` lets UI preview and bots never produce rejects.
@@ -64,11 +67,11 @@ type SimEvent = // all carry tick; ids are dense indices into view.ids
 ### SimView (read-only, zero-copy typed arrays)
 | Field | Content |
 |---|---|
-| `tick`, `over` | current tick; `null` or `{outcome, winnerTeam}` |
+| `tick`, `over`, `timeLimitTicks` | current tick; `null` or `{outcome, winnerTeam}`; `timeLimitSec·tickRate` (HUD countdown, SP03) |
 | `ids` | `towers[]`, `players[]` strings |
-| `players[i]` | `{team, alive, transit, stats{generated, overflowLost, kills, captures}}` |
+| `players[i]` | `{team, kind ('human'\|'bot'), colorKey, alive, transit, stats{generated, overflowLost, kills, captures}}` |
 | `tower.*` | Int32Array columns: `owner` (−1 neutral), `team`, `slots` (derived max lines), `lines` (used), plus every component column (`garrison.count`, `garrison.cap`, `generates.acc`, `drawsLines.cursor`) via `tower.col[name]` |
-| `towerStatic[i]` | `{x,y (milli), archetype, visual, footprintRadius}` |
+| `towerStatic[i]` | `{x,y (milli), archetype, visual, footprintRadius, components: string[]}` (component names, sorted; drives SP03 overlays) |
 | `lines[]` | drawn lines `{channel, from, to, owner, length, drawSeq}` (sorted) |
 | `kinds[k]` | `{value, speedPerTick, visual}` — renderer extrapolates `progress + alpha·speedPerTick`, clamped to `length`; no troop identity needed |
 | `readTroops` | per troop: `channel, seq (stable id, for animation phase), owner, kind, progress` at current tick |
@@ -126,7 +129,7 @@ registerComponent({ name:'generates', state:{acc:0}, systems:{generation: fn}, h
 - **Win/lose**: after phases 1–6: eliminate players with no towers and no troops in transit; game over when ≤1 team alive or the human is eliminated (`lost`); both sides eliminated same tick → `draw` (counts as not completed); `tick ≥ timeLimitSec·tickRate` → `timeout` (loss for all). Post-GameOver `step` is a no-op.
 
 ### Determinism, hash, replay
-- **Lint** (ESLint on `packages/sim`): ban `Math.random|sqrt|sin|cos|tan|atan2|pow|exp|log|hypot|round`, `Date`, `performance`, `setTimeout`, `console`, `Intl`, float literals (`Literal[raw=/\./]`), `for…in`, `sort` without comparator, `JSON.stringify` in hash path; tsconfig `lib:["ES2022"], types:[]`. Only `src/math.ts` may use `Math.floor/trunc/imul`.
+- **Lint** (ESLint on `packages/sim`; the config is exported as a shared preset `packages/sim/eslint.determinism.cjs` that `packages/bots` extends): ban `Math.random|sqrt|sin|cos|tan|atan2|pow|exp|log|hypot|round`, `Date`, `performance`, `setTimeout`, `console`, `Intl`, float literals (`Literal[raw=/\./]`), `for…in`, `sort` without comparator, `JSON.stringify` in hash path; tsconfig `lib:["ES2022"], types:[]`. Only `src/math.ts` may use `Math.floor/trunc/imul`.
 - **Hash**: stream int32 words through two murmur3-style lanes (different seeds) → 16 hex. Covers tick, prng, player alive/transit, tower columns, channel flags/seq, troop ring contents in channel order. Excludes events, stats, view caches. Content identity is SP01 `simHash`, not this.
 - **Replay** `{header{rulesVersion,schemaVersion,contentVersion,levelId,simHash,seed}, commands:[{tick,cmd}], checkpoints:[{tick,hash}] every 20 ticks, finalHash, outcome}`. Recorder wraps `step`; `playReplay(content, rec)` re-creates, refuses header mismatch, verifies checkpoints, returns first diverging tick. Rejected commands are recorded as submitted.
 - Driver contract for SP03: `commands.tick = sim.tick` at submission; pause = don't call `step`; 2× = two `step`s per interval; result identical regardless of scheduling.
@@ -170,6 +173,7 @@ registerComponent({ name:'generates', state:{acc:0}, systems:{generation: fn}, h
 - [DEFERRED] Surrender/leave, `restore(snapshot)`, mid-tick rollback, worker hosting (v3).
 
 ## Requested SP01 changes
+[ACCEPTED: all four folded into SP01 (phase order, R-CMB/R-CAP/R-LIN text, validator bounds, compile output). Kept here for traceability.]
 1. Move slot enforcement to after arrivals/capture (phase 6); movement and capture become implicit/inline in R-TCK phase text.
 2. R-CMB: define clash on fronts, overshoot-ordered simultaneous arrivals, hit-leaving-0 capture with leftover value.
 3. R-CAP: cap gates garrison additions only; no banked accumulator at cap.

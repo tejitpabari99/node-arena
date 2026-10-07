@@ -6,7 +6,7 @@ date: 2026-10-07
 # PRD: Web Client (SP03)
 
 Repo/branch: node-arena · feat/game-design · Depends on: SP01 (content, visual keys, manifest schema/types), SP02 (sim API/view/events)
-Owns: `apps/web/**` (shell, driver, renderer, input, UI, audio, saves, dev panel, Playwright tests), `apps/web/assets/manifest.json` **schema usage + loader** (schema/types live in SP01 content), `tools` manifest-check hook. Does not own: sim, content schemas, bot logic (SP04), art selection/levels/CREDITS (SP05).
+Owns: `apps/web/**` (shell, driver, renderer, input, UI, audio, saves, dev panel, Playwright tests), `apps/web/assets/manifest.json` (the file) + its loader and a node-safe `validateManifest()` used by SP04's `check:manifest` (schema/types live in SP01 `content`: `src/manifest.schema.ts`, generated `schemas/manifest.schema.json`). Does not own: sim, content schemas, bot logic (SP04), art selection/levels/CREDITS (SP05).
 
 ## TL;DR
 - Thin imperative renderer reads `sim.view` + `readTroops` each frame; **everything visual resolves through `manifest.json`** (key → model/material/scale/tint/anim/sfx/fx). No tower/troop type is named in renderer code.
@@ -29,11 +29,11 @@ SP01/SP02 define rules and a headless sim. Something must make it look like a po
 
 ## Requirements
 1. **Driver** (`GameDriver`): `acc += min(dt, 250 ms)·speed`; `while acc ≥ 50 ms && steps < 5: sim.step(cmds)`; leftover beyond 5 steps dropped (no spiral). `alpha = acc/50`. Pause = no `step`; 2× = speed multiplier. `commands.tick = sim.tick` at submission. `visibilitychange` hidden → auto-pause (shows pause screen); never catch up.
-2. **Bot hook**: `interface BotController { decide(view: SimView, sim: Sim, player: number): Command[] }`, invoked once per sim tick per bot player before `step`; commands pass `canDraw`-equivalent path (same `step`). SP04 supplies implementations; web only wires `level.players[kind=bot].botProfile → controller`.
+2. **Bot hook** (SP04 contract): `const driver = createBotDriver(compiledLevel, matchSeed)` at level start; each fixed tick `sim.step([...playerCmds, ...driver.commands(sim)])` (driver is a no-op between its decision ticks). Web never reads bot profiles or feeds bots events; `matchSeed` = the sim seed. Pause/2× need no bot handling.
 3. **Screens** (state machine): `boot → menu → picker → loading → playing ⇄ paused → results`; `error` from any loading failure. Settings reachable from menu and pause.
 4. **Renderer** consumes only `view`, `readTroops`, events, manifest. Details in Architecture.
 5. **Input**: pointer events only; draw, swipe-cut, right-click cut, hover feedback (below).
-6. **UI (Preact)**: main menu; level picker (all 20 selectable, completed marker, `order`/`name` from content); HUD (countdown timer from `timeLimitSec`, speed 1×/2×, pause, perf HUD toggle); pause (resume, restart, settings, quit); results (won/lost/timeout/draw, retry, next, menu); settings (music/sfx volume + mute, colourblind, quality, reduced motion). No ad/payment/energy UI anywhere.
+6. **UI (Preact)**: main menu; level picker (all 20 selectable, completed marker, `order`/`name` from content); HUD (countdown timer from `view.timeLimitTicks`, speed 1×/2×, pause, perf HUD toggle); pause (resume, restart, settings, quit); results (won/lost/timeout/draw, retry, next, menu); settings (music/sfx volume + mute, colourblind, quality, reduced motion). No ad/payment/energy UI anywhere.
 7. **Saves**: versioned, migrated, corrupt-safe.
 8. **Audio**, **dev panel**, **accessibility**, **tests** as below.
 
@@ -42,19 +42,19 @@ SP01/SP02 define rules and a headless sim. Something must make it look like a po
 ### Layout
 ```
 apps/web/src/{main.tsx, app/state.ts, driver/, render/{scene,towers,troops,lines,labels,fx,camera}.ts,
-  manifest/{load,resolve,validate}.ts, input/, ui/, audio/, save/, dev/}
+  manifest/{load,resolve,validate}.ts   (validate.ts exports node-safe `validateManifest(manifest, {assetsDir, credits})`), input/, ui/, audio/, save/, dev/}
 apps/web/assets/{manifest.json, models/, audio/}
 ```
 Rule: `render/` and `input/` know sim-view columns and component *names* only via registries, never archetype/troop ids.
 
 ### Manifest contract (SP05 must follow)
-Schema/types exported by SP01 `content`; `additionalProperties:false`. Sections:
+Schema/types exported by SP01 `content` (`manifest.schema.ts` → generated `schemas/manifest.schema.json`; SP03 owns only `apps/web/assets/manifest.json` and must validate against it); `additionalProperties:false`. Sections:
 | Section | Content |
 |---|---|
 | `palettes` | `{default:{player.1..N, neutral}, colorblind:{…same keys…}}` hex; `teamMarkers` glyph per `colorKey` (secondary encoding) |
 | `models` | `{id:{src:"models/x.glb"} | {primitive:"box|capsule|cylinder", size:[..]}}` |
 | `visuals` | key → `{kind:'tower'|'troop', model, scale, yOffset, teamMaterial?, tint?, anim?, label?, fx?, sfx?}` |
-| `themes` | level `visual` key → `{ground, sky, light{dir,color,intensity}, fog?, props?[]}` |
+| `themes` | level `visual` key (= `CompiledLevel.visual`, a theme key) → `{ground, sky, light{dir,color,intensity}, fog?, props?[]}` |
 | `events` | sim event name → `{sfx?, fx?}` (e.g. `Captured`, `Clash`, `GameOver`) |
 | `camera` | `{pitchDeg, fov, margin}` |
 ```json
@@ -65,15 +65,15 @@ Schema/types exported by SP01 `content`; `additionalProperties:false`. Sections:
 - Every key referenced by content (`archetype.visual`, `troop.visual`, `colorKey`, `level.visual`) must resolve; every palette defines every used `colorKey`.
 - `teamMaterial` = GLB material name recoloured per team (loader merges primitives; those get `teamMask=1`, shader mixes team colour). A model with no such material gets a tinted base plate instead.
 - Greybox = `{primitive}` models; swapping to GLB is a manifest edit only. `anim.type` values: `bob` (v1), `none`; `vat` reserved.
-- Tools hook (SP04): `validate:manifest` = schema + key resolution + file existence + budgets (troop ≤ 300 tris, tower ≤ 5k, texture ≤ 1024²) + each `src` listed in CREDITS.md.
+- Tools (SP04 owns the `check:manifest` runner): it runs schema + key resolution via `validateContent(fileMap,{manifest})`, then SP03's `validateManifest()` for file existence + budgets (troop ≤ 300 tris, tower ≤ 5k, texture ≤ 1024²) + each `src` listed in CREDITS.md.
 
 ### Generic rendering
-- **Towers** (≤ ~50, individual groups, not instanced): for each `view.towerStatic[i]` → `visuals[visual]` → clone model, materials cloned per owner colour; owner change (column `owner`) swaps team colour + marker + plays `Captured` fx. Neutral uses `palette.neutral`.
-- **Component overlays**: registry `overlay[componentName]` built from the archetype's component keys (needs SP02 `towerStatic.components: string[]`, ask #1). v1: `garrison` → count label (reads `col['garrison.count']`), `drawsLines` → slot pips (`slots`, `lines`), `capturable` → none. A future `shoots` registers a radius ring in one file; unknown components without overlay are ignored (never error). Overlay params come from `visual.label`.
+- **Towers** (≤ ~50, individual groups, not instanced): for each `view.towerStatic[i]` → `visuals[visual]` → clone model, materials cloned per owner colour; team colour via `view.players[owner].colorKey` → palette (human seat = `kind:'human'`); owner change (column `owner`) swaps team colour + marker + plays `Captured` fx. Neutral uses `palette.neutral`.
+- **Component overlays**: registry `overlay[componentName]` built from the archetype's component keys (uses SP02 `towerStatic.components: string[]`). v1: `garrison` → count label (reads `col['garrison.count']`), `drawsLines` → slot pips (`slots`, `lines`), `capturable` → none. A future `shoots` registers a radius ring in one file; unknown components without overlay are ignored (never error). Overlay params come from `visual.label`.
 - **Labels**: one absolutely-positioned DOM layer; element per tower, `transform` set only when screen position changes (camera fixed → once per resize), text only when value changes. High-contrast chip (dark outline, team-tinted), min 14 px, billboards above model so tall buildings do not hide counts; clamp to viewport. Switch to instanced digit sprites if label cost > ~8% frame (best-practices threshold).
 - **Troops**: `readTroops(buf)` into preallocated typed arrays; per troop: `t = min((progress + alpha·speedPerTick)/length, 1)`, position = lerp(from, to), yaw precomputed per channel, `phase = seq`. Write to the `(kind visual, owner)` mesh's `InstancedBufferAttribute` (x,z,yaw,phase); `mesh.count` = live; `frustumCulled=false`, fixed bounding sphere; capacity grows ×2. Vertex shader (patched `onBeforeCompile`): translate/rotate, `y += amp·|sin(2π·hz·time + phase)|`, roll sway. Troops do not cast shadows; towers + ground receive from one directional light.
 - **Lines**: one flat ribbon per drawn line (`view.lines`, ≤ ~100) with scrolling chevron texture pointing source→target, team colour, drawn under troops. A→B and B→A are **laterally offset** (±line width/2) so both stay visible. Rebuild on `LineDrawn/LineCut`, not per frame.
-- **Clash**: on `Clash{channel,progA,progB}` spawn spark/puff at `progA/length` along line (event carries progs, no sim query). Head-on troops visibly meet because both fronts extrapolate toward the same midpoint. `fx` defined in manifest `events`; fx pool preallocated.
+- **Clash**: on `Clash{channel,progA,progB}` spawn spark/puff at `progA/length` along line (event carries progs, no sim query; per SP02 both progs are channel-relative to their own source and `channel` is the lower-index→higher-index line). Head-on troops visibly meet because both fronts extrapolate toward the same midpoint. `fx` defined in manifest `events`; fx pool preallocated.
 - **Camera**: fixed perspective, pitch/fov from manifest, auto-fit to level tower bounds + margin on resize; no pan/zoom.
 - **Quality** (`low|med|high`): pixel ratio cap 1 / 1.5 / min(dpr,2); shadow map off/1024/2048; antialias off/on/on.
 - **Disposal**: per-level resources tracked in a `Disposables` scope; level change/restart disposes geometries, materials, textures, instanced meshes, DOM labels. Shared asset cache (by `src`, refcounted) survives. Test: `renderer.info.memory` returns to baseline after 20 level switches.
@@ -95,7 +95,7 @@ Key `nodearena:save`: `{v:1, completed:{[levelId]:{firstAt}}, settings:{musicVol
 Thin WebAudio wrapper (no lib). SFX ids and event mapping from manifest `events`; voice cap (e.g. 8) + per-event cooldown so 2× clash spam stays pleasant. One looping music track; separate mute + volume; context resumed on first user gesture. CC0 only (SP05 supplies).
 
 ### Dev panel
-Behind `?dev=1`. Inputs generated from content JSON Schema (balance globals, troop speed, archetype component params, level overrides). Edit → mutate in-memory content copy → `compileLevel` → restart level (sim never mutated mid-match); "tuned" badge; completion disabled. **Export** downloads edited JSON files. Perf HUD (also in settings): fps, frame p95, JS ms/frame, sim step ms, draw calls, triangles, troops live.
+Behind `?dev=1`. Inputs generated from content JSON Schema (SP01 package export, plus browser-safe `loadContent`/`compileLevel`; balance globals, troop speed, archetype component params, level overrides). Edit → mutate in-memory content copy → `compileLevel` → restart level (sim never mutated mid-match); "tuned" badge; completion disabled. **Export** downloads edited JSON files. Perf HUD (also in settings): fps, frame p95, JS ms/frame, sim step ms, draw calls, triangles, troops live.
 
 ### Accessibility
 Colourblind palette is data (`palettes.colorblind`, e.g. Okabe-Ito) **plus** non-colour marker glyph per team on tower base and label chip. Reduced motion: no bob/sway, no screenshake, shorter fx. Full keyboard on menus; `Esc` = pause; text ≥ 14 px; label contrast ≥ 4.5:1 via chip.
@@ -111,7 +111,7 @@ Colourblind palette is data (`palettes.colorblind`, e.g. Okabe-Ito) **plus** non
 | Playwright | retry/finish with no interstitial; DOM assertion for no ad/energy | 5 |
 | Screenshots | greybox + final-art scenes (menu, picker, in-level), colourblind variant | 6 |
 | Screenshot | head-on level at replay tick of first `Clash`: sparks at midpoint | 7 |
-| Playwright | step to `timeLimitSec·20` → results "timeout"/lost | 8 |
+| Playwright | step to `view.timeLimitTicks` → results "timeout"/lost | 8 |
 | Unit (vitest) | driver (clamp, 2×, pause, hidden), save migrations, manifest resolve/validate, cut geometry | – |
 | Perf | stress level, 2,000 troops: CPU JS/frame < 4 ms, draw calls < 100 (`renderer.info`); real-GPU fps check manual | – |
 | Leak | memory baseline after 20 level switches | – |
@@ -140,21 +140,21 @@ Colourblind palette is data (`palettes.colorblind`, e.g. Okabe-Ito) **plus** non
 - [OPEN] Team recolour of GLB via merged `teamMask` — verify with chosen CC0 pack (SP05); fallback: per-team texture/atlas.
 - [OPEN] Label readability when buildings overlap in screen space on dense levels; may need height offset or declutter.
 - [OPEN] Fixed camera vs large levels; if min label size unreachable, add zoom (DEFERRED otherwise).
-- [OPEN] `BotController` signature and who runs bots (main thread v1) — SP04 to confirm.
+- [RESOLVED: SP04 `createBotDriver(level, matchSeed): BotDriver`, `driver.commands(sim)` before each `step`, main thread v1] bot hook.
 - [OPEN] Playwright software-GL screenshot stability; fall back to structural asserts.
 - [OPEN] Extrapolated front may briefly overshoot a clash point (< 1 tick); clamp to `length − progB` if visible.
 - [RESOLVED: results copy] `draw` shown as "Mutual defeat — not completed" (answers SP02 UI wording).
 - [DEFERRED] Pan/zoom, VAT/skeletal, instanced digit labels, sim in Web Worker, roads decor.
 
 ## Asks to other sub-projects
-1. SP02: add `components: string[]` (or per-component presence) to `towerStatic`; expose `timeLimitTicks` in view/level; confirm `Clash` progs are channel-relative to source.
-2. SP01: browser-safe `loadContent(objects)` + `compileLevel` (no fs); `level.visual` = theme key; export manifest schema/types; JSON Schema usable for dev-panel form generation.
-3. SP04: `validate:manifest` runner calls web resolver; `BotController` signature.
+1. SP02 [ACCEPTED]: `towerStatic.components: string[]`, `view.timeLimitTicks`, `view.players[i].{kind,colorKey}`, Clash progs channel-relative (stated in SP02).
+2. SP01 [ACCEPTED]: browser-safe `loadContent(fileMap)` + `compileLevel`; `level.visual` = theme key; manifest schema/types + JSON Schema exported from content.
+3. SP04 [ACCEPTED]: owns the `check:manifest` runner (calls SP03 `validateManifest()`); bot hook = `createBotDriver`/`driver.commands(sim)`.
 4. SP05: follow manifest contract; keep tower/troop within tri budgets; pivots base-centre, 1 unit ≈ 1 m.
 
 ## Acceptance Criteria
 1. Renderer contains no archetype/troop ids; adding a fixture archetype + visual key in data renders with no code change; changing a key's model/scale/tint in manifest reskins it.
-2. `validate:manifest` fails on any unresolved key, missing palette colour, missing file, over-budget model.
+2. `check:manifest` fails on any unresolved key, missing palette colour, missing file, over-budget model.
 3. Driver tests: clamp, 2×, pause, hidden-tab, split-step determinism (hash equal to unthrottled run).
 4. Brief ACs 1–8 pass in Playwright/screenshot suite above.
 5. Level switch ×20 leaves GPU memory counts at baseline; asset failure shows error screen and Retry recovers.

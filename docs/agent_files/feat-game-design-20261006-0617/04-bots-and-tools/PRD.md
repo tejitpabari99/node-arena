@@ -46,6 +46,7 @@ createBotDriver(level: CompiledLevel, matchSeed: number): BotDriver   // one Bot
 interface BotDriver { commands(sim: Sim): Command[] }                  // call once per tick BEFORE sim.step
 ```
 - SP03 contract: each fixed tick, `sim.step([...playerCmds, ...driver.commands(sim)])`. Driver is a no-op between decision ticks, so calling every tick is free. Pause/2x need no bot logic (sim tick is the only clock; interval is in ticks).
+- `createBotDriver` reads `level.bots` (SP01 compile: `[{player: dense index, profile: resolved}]`); `Bot.player` is the id string via `view.ids.players`. `tickRate` comes from SP02's `TICK_RATE` export.
 - Decision ticks: `tick % intervalTicks == phase`, `phase = bot rng seed-derived` (bots do not all act on the same tick). `intervalTicks = floor(decisionIntervalSec_milli * tickRate / 1000)`, min 1.
 - `kind:"idle"` -> bot returning `[]`. Runs on web main thread in v1; pure and worker/server-safe (v3 server can host the same driver).
 - **Replay strategy (decided)**: bot commands are recorded as ordinary commands by SP02's recorder. Playback never instantiates bots, so replays survive bot code changes. Bot determinism is verified separately (see Tests); `BOT_VERSION` + `botHash` mark when committed bot goldens must regenerate.
@@ -99,8 +100,8 @@ Score = `bias[kind] * (sum w_i * c_i) / (sum w_i)` + noise; noise = rng uniform 
 ### tools/ (TS, `tsx`, workspace scripts)
 | Script | Does |
 |---|---|
-| `validate:content` | SP01 `validateContent` for all data + hashes.lock/versions check |
-| `check:manifest` | **owned here** (CLI/CI); calls `validateContent(fileMap,{manifest})` so every visual key exists in SP03's `apps/web/assets/manifest.json`; SP03 owns manifest file + runtime fallback |
+| `validate:content` | SP01 `validateContent` for all data + hashes.lock (`simHash` and `botHash`; regenerate with SP01 `pnpm content:lock`) / versions check |
+| `check:manifest` | **owned here** (CLI/CI); calls `validateContent(fileMap,{manifest})` so every visual key exists in SP03's `apps/web/assets/manifest.json` (schema from SP01), then SP03's `validateManifest()` for file existence, tri/texture budgets, CREDITS listing; SP03 owns manifest file + runtime fallback |
 | `validate:levels [--levels id\|all] [--seeds 4]` | validate:content, then per level: reference proxy plays the human seat vs the level's bots, K seeds, must **win all K**; idle proxy must **not win any**; every run terminates, no `CommandRejected`, no invariant throw; one seed run twice -> same final hash. Reports per level |
 | `balance --levels all --proxy reference,<profiles> --seeds 200 --jobs 2 --format md\|json` | win-rate matrix: levels x proxy profile; also median seconds-to-win, timeout %, draw %, median towers at end; flags levels outside `tools/balance-targets.json` band ranges (values authored by SP05); lists levels using SP01 overrides. `--mode arena` rotates profiles across all seats (profile-vs-profile). Runs `events:false` |
 | `replay:verify <file\|dir>` | SP02 `playReplay`: header check, checkpoints, final hash; prints first diverging tick. Covers `golden/` replays |
@@ -137,14 +138,15 @@ Score = `bias[kind] * (sum w_i * c_i) / (sum w_i)` + noise; noise = rng uniform 
 - [OPEN] Consideration set sufficiency: head-on clash exploitation and line-cut timing may need `clashPotential`. Add by data+registry after greybox playtest.
 - [OPEN] Per-decision cost at v6 (>4 owners, >50 towers): `maxTargetsPerSource` pruning; re-bench.
 - [OPEN] Balance bands (`balance-targets.json`) and tier values are guesses until SP05 playtests.
-- [OPEN] Level `overrides` interaction: bot params are not in `simHash`; need `botHash` in lockfile (ask SP01).
+- [RESOLVED: SP01 accepted; `botHash` per profile in `hashes.lock.json`, outside `simHash`] bot hash.
 - [RESOLVED: fixed-point, same loader] SP01 floats vs fixed-point item.
 - [RESOLVED: lives in tools] manifest visual-key check.
 - [DEFERRED] MCTS/lookahead hard-mode bot, dynamic difficulty, server-hosted bots (v3), v2 archer/tank considerations.
 
-### Asks
+### Asks (status)
+All SP01/SP02/SP03 asks below were ACCEPTED by the owning PRDs: SP01 hosts `bot-params.ts`/`bot.schema.json`, resolves profiles into `CompiledLevel.bots`, adds `botHash`, enforces `extends`-only-`skill`, `reference` non-referenceable, weight bounds, `validateContent(fileMap,{manifest})`; SP02 exports `idiv, mulDiv, isqrt, Sfc32, mixSeed, RejectReason, SimView, TICK_RATE`, shares `eslint.determinism.cjs`, and exposes `sim.rejected` for `events:false` runs; SP03 uses `createBotDriver` exactly as named here.
 - SP01: (a) host `bot-params.ts` + schema `bot.schema.json`, (b) `compileLevel` resolves `botProfile` (extends, fx3->int) into `CompiledLevel.bots[{player, profile}]`, (c) `botHash` per profile in `hashes.lock.json`, excluded from `simHash`, (d) validator: `extends`-only-`skill`, `reference` not referenceable by levels, bounds on weights, `validateContent(fileMap,{manifest})`.
-- SP02: (a) export `idiv`, `mulDiv`, `isqrt`, `Sfc32`, `mixSeed`, `RejectReason`, `SimView` types; (b) shared ESLint determinism config consumable by `packages/bots`; (c) `step(...,{events:false})` still returns `CommandRejected`-equivalent signal or counter so harness can assert zero rejects.
+- SP02: (a) export `idiv`, `mulDiv`, `isqrt`, `Sfc32`, `mixSeed`, `RejectReason`, `SimView` types; (b) shared ESLint determinism config consumable by `packages/bots`; (c) `step(...,{events:false})` still maintains `sim.rejected` (cumulative count) so harness can assert zero rejects.
 - SP03: call `driver.commands(sim)` each tick before `step`; never feed bots events.
 
 ## Tests
