@@ -8,8 +8,8 @@ Source of truth: /root/projects/node-arena/.worktrees/feat/game-design/docs/agen
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Package scaffold + determinism lint preset | SP01 | in-progress |
-| 2 | Fixed-point spike + math/PRNG utilities | 1 | todo |
+| 1 | Package scaffold + determinism lint preset | SP01 | done |
+| 2 | Fixed-point spike + math/PRNG utilities | 1 | in-progress |
 | 3 | State model, component registry, `create` | 2, SP01 | todo |
 | 4 | Commands, `canDraw`, generation, departures | 3 | todo |
 | 5 | Lazy movement, clash, arrivals, capture | 4 | todo |
