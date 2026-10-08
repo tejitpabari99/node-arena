@@ -3,7 +3,7 @@ import { createView, refreshView, readTroops, snapshot, type Sim, type SimView, 
 import type { CompiledLevel, CompiledPlayer, CompiledTower, CompiledComponents } from '@node-arena/content';
 import { step, validateDraw, type Command, type RejectReason, type SimEvent, type GameOver } from './commands.js';
 import { TICK_RATE, isqrt, Sfc32 } from './math.js';
-import { ComponentRegistry, createComponentRegistry, PHASES, sortedNames, compareNames, type Phase, type SimComponent, type ComponentSystem } from './registry.js';
+import { ComponentRegistry, createComponentRegistry, sortedNames, compareNames, type Phase, type SimComponent, type ComponentSystem } from './registry.js';
 
 export interface Troop { p0: number; t0: number; owner: number; kind: number; seq: number; value: number }
 const troopColumns = ['p0', 't0', 'owner', 'kind', 'seq', 'value'] as const;
@@ -109,9 +109,12 @@ export interface SimState {
   channels: (Channel | undefined)[];
   componentTowers: Map<string, Int32Array>;
   components: readonly SimComponent[];
+  readonly phases: readonly Phase[];
   systems: Record<Phase, ScheduledSystem[]>;
   prng: Sfc32;
   ensureChannel(from: number, to: number): Channel;
+  /** Remove value from one front and its owner's transit; caller accounts the cause. */
+  killFront(channel: Channel, value: number): number;
 }
 export interface CreateOptions { readonly registry?: ComponentRegistry; readonly debug?: boolean }
 
@@ -120,6 +123,7 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
   const registry = options.registry ?? createComponentRegistry();
   registry.assertParity(level.componentNames);
   const components = registry.definitions();
+  const phases = registry.orderedPhases();
   const names = new Set(components.map(component => component.name));
   const n = level.towers.length;
   const p = level.players.length;
@@ -134,7 +138,8 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
   }
   const tower: TowerState = { owner: column(), team: column(), slots: column(), lines: column(), col: Object.create(null) as Record<string, Int32Array> };
   const componentTowers = new Map<string, Int32Array>();
-  const systems: Record<Phase, ScheduledSystem[]> = { commands: [], generation: [], departures: [], clash: [], arrivals: [], slots: [], win: [] };
+  const systems: Record<Phase, ScheduledSystem[]> = Object.create(null) as Record<Phase, ScheduledSystem[]>;
+  for (const phase of phases) systems[phase] = [];
   for (const component of components) {
     const indices: number[] = [];
     for (let i = 0; i < n; i++) if (Object.hasOwn(level.towers[i]!.components, component.name)) indices.push(i);
@@ -145,12 +150,12 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
       tower.col[`${component.name}.${name}`] = col;
     }
     for (const i of indices) component.initialize?.(level.towers[i]!, tower.col, i);
-    for (const phase of PHASES) {
+    for (const phase of phases) {
       const system = component.systems?.[phase];
-      if (system) systems[phase].push({ ...system, component: component.name });
+      if (system) systems[phase]!.push({ ...system, component: component.name });
     }
   }
-  for (const phase of PHASES) systems[phase].sort((a, b) => a.order - b.order || compareNames(a.component, b.component));
+  for (const phase of phases) systems[phase]!.sort((a, b) => a.order - b.order || compareNames(a.component, b.component));
   for (let i = 0; i < n; i++) {
     const source = level.towers[i]!;
     for (const name of sortedNames(source.components)) if (!names.has(name)) throw new Error(`Unknown component: ${name}`);
@@ -188,11 +193,17 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
     towerParams: level.towers.map(tower => Object.fromEntries(sortedNames(tower.components).map(name => [name, Object.fromEntries(Object.entries(tower.components[name]!).sort(([a], [b]) => compareNames(a, b)).map(([param, value]) => {
       return [param, Array.isArray(value) ? [...value] : value];
     }))]))),
-    kinds: level.kinds.map(kind => ({ id: kind.id, value: kind.value, speedPerTick: kind.speedMilli, visual: kind.visual })), lengths, channels, componentTowers, components, systems, prng: new Sfc32(seed),
+    kinds: level.kinds.map(kind => ({ id: kind.id, value: kind.value, speedPerTick: kind.speedMilli, visual: kind.visual })), lengths, channels, componentTowers, components, phases, systems, prng: new Sfc32(seed),
     ensureChannel(from, to) {
       if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to < 0 || from >= n || to >= n || from === to) throw new RangeError('Invalid channel pair');
       const key = from * n + to;
       return channels[key] ??= { key, from, to, length: lengths[key]!, drawn: 0, drawSeq: 0, owner: -1, troops: new TroopRing(state.debug) };
+    },
+    killFront(channel, value) {
+      const owner = channel.troops.front()?.owner;
+      const removed = channel.troops.consumeFront(value);
+      if (owner !== undefined && owner !== -1) players.transit[owner] = players.transit[owner]! - removed;
+      return removed;
     },
   };
   for (const component of components) component.setup?.(state, componentTowers.get(component.name)!);

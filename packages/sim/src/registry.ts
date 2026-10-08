@@ -4,9 +4,9 @@ import type { DrawValidation } from './commands.js';
 import { generate, depart, refreshSlots, enforceSlots, validateLine } from './economy.js';
 import { capturableHit, garrisonArrive } from './combat.js';
 
-/** Fixed rule phases; order within a phase is explicit, then component name. */
+/** Default v1 rule phases; trusted registries may insert extension phases locally. */
 export const PHASES = ['commands', 'generation', 'departures', 'clash', 'arrivals', 'slots', 'win'] as const;
-export type Phase = typeof PHASES[number];
+export type Phase = string;
 export interface ComponentSystem {
   readonly order: number;
   readonly run: (state: SimState, towers: Int32Array) => void;
@@ -31,9 +31,25 @@ export function sortedNames(object: object): string[] {
 }
 export class ComponentRegistry {
   private readonly entries = new Map<string, SimComponent>();
+  private readonly phases: Phase[] = [...PHASES];
+
+  registerPhase(name: Phase, placement: { readonly after: Phase }): void {
+    if (this.phases.includes(name)) throw new Error(`Duplicate phase: ${name}`);
+    const index = this.phases.indexOf(placement.after);
+    if (index === -1) throw new Error(`Unknown phase: ${placement.after}`);
+    if (!name) throw new Error('Invalid phase name');
+    this.phases.splice(index + 1, 0, name);
+  }
+
+  orderedPhases(): readonly Phase[] {
+    return Object.freeze([...this.phases]);
+  }
 
   registerComponent(component: SimComponent): void {
     if (this.entries.has(component.name)) throw new Error(`Duplicate component: ${component.name}`);
+    for (const phase of sortedNames(component.systems ?? {})) {
+      if (!this.phases.includes(phase)) throw new Error(`Unknown phase: ${phase}`);
+    }
     for (const name of sortedNames(component.state)) {
       const value = component.state[name]!;
       if (!Number.isInteger(value) || value < -2147483648 || value > 2147483647) throw new RangeError('Component state must be int32');

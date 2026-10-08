@@ -1,6 +1,5 @@
 import type { SimState, Channel } from './state.js';
 import { arrive, clash } from './combat.js';
-import { PHASES } from './registry.js';
 import { outcome, assertInvariants } from './tick.js';
 export type Command =
   | { type: 'DrawLine'; player: string; from: string; to: string }
@@ -81,10 +80,10 @@ export function step(state: SimState, commands: readonly Command[], options: { e
       if (state.events) state.events.push({ type: 'CommandRejected', tick: state.tick, cmd, reason });
     }
   }
-  for (const phase of PHASES) {
+  for (const phase of state.phases) {
     if (phase === 'clash') clash(state);
     if (phase === 'arrivals') arrive(state);
-    for (const system of state.systems[phase]) system.run(state, state.componentTowers.get(system.component)!);
+    for (const system of state.systems[phase]!) system.run(state, state.componentTowers.get(system.component)!);
     if (phase === 'win') outcome(state);
   }
   if (state.debug) assertInvariants(state);
