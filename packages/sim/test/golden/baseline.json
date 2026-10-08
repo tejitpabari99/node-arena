@@ -1,0 +1,1914 @@
+{
+  "format": 1,
+  "metadata": {
+    "rulesVersion": "1.0.0",
+    "schemaVersion": "1.0.0",
+    "contentVersion": "1.0.0"
+  },
+  "scenarios": [
+    {
+      "name": "generation-cap",
+      "purpose": "Fractional generation fills the cap and stops without banking a burst.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 10,
+          "theme": ""
+        },
+        "id": "generation-cap",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 10,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": 0,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 2
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 15000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "b",
+            "x": 1000,
+            "y": 0,
+            "owner": 1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 100,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "84ec962591009d28319419b56306e1cc6c0f30cd42f3d53c4a30d7185a5cdea1",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 20,
+      "commands": [],
+      "fullGame": false
+    },
+    {
+      "name": "persistent-cut-replaced",
+      "purpose": "Persistent permission sends each tick; player cuts and friendly reverse replacement preserve in-flight troops.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 10,
+          "theme": ""
+        },
+        "id": "persistent-cut-replaced",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 10,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": 0,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "b",
+            "x": 20,
+            "y": 0,
+            "owner": 0,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "c",
+            "x": 1000,
+            "y": 0,
+            "owner": 1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 100,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "376e0d16cf9c4c54d6e17219b7e05c311068bc907bbaeba116720a394b8c81fd",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 12,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "b"
+          }
+        },
+        {
+          "tick": 1,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "b",
+            "to": "a"
+          }
+        },
+        {
+          "tick": 3,
+          "cmd": {
+            "type": "CutLine",
+            "player": "p0",
+            "from": "b",
+            "to": "a"
+          }
+        },
+        {
+          "tick": 4,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "c"
+          }
+        },
+        {
+          "tick": 7,
+          "cmd": {
+            "type": "CutLine",
+            "player": "p0",
+            "from": "a",
+            "to": "c"
+          }
+        }
+      ],
+      "fullGame": false
+    },
+    {
+      "name": "slot-reduction",
+      "purpose": "An incoming hit crosses the strict extra-slot threshold and cuts the newest outgoing line.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 10,
+          "theme": ""
+        },
+        "id": "slot-reduction",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 10,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": 0,
+            "garrison": 11,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "b",
+            "x": 5,
+            "y": 0,
+            "owner": 1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "c",
+            "x": 1000,
+            "y": 0,
+            "owner": -1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "d",
+            "x": 1500,
+            "y": 0,
+            "owner": -1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 100,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "3985165b268824c84adb16db0a0795e032304fa2fd2559513e9134e20ed997c8",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 3,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "c"
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "d"
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p1",
+            "from": "b",
+            "to": "a"
+          }
+        }
+      ],
+      "fullGame": false
+    },
+    {
+      "name": "head-on-clash",
+      "purpose": "Hostile generated FIFO fronts cancel at the equality boundary.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 10,
+          "theme": ""
+        },
+        "id": "head-on-clash",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 10,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": 0,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "b",
+            "x": 20,
+            "y": 0,
+            "owner": 1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 100,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "fe2daf5164a344a83efe5e0d1e720cb991e8bdbc46b2d6588cd57fac7c081329",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 8,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p1",
+            "from": "b",
+            "to": "a"
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "b"
+          }
+        }
+      ],
+      "fullGame": false
+    },
+    {
+      "name": "overshoot-capture",
+      "purpose": "Larger overshoot beats channel order; later same-tick arrivals recapture the changed owner.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 10,
+          "theme": ""
+        },
+        "id": "overshoot-capture",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 10,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": 1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "b",
+            "x": 5,
+            "y": 0,
+            "owner": 0,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 1,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "c",
+            "x": 10,
+            "y": 0,
+            "owner": -1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 210,
+            "value": 1,
+            "visual": ""
+          },
+          {
+            "id": "kind-1",
+            "speedMilli": 200,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "715c8dacb86e549aa1c3e863ee8bccba804e503bc4605823a5d5774af0286716",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 2,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p1",
+            "from": "a",
+            "to": "c"
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "b",
+            "to": "c"
+          }
+        }
+      ],
+      "fullGame": false
+    },
+    {
+      "name": "cap-overflow",
+      "purpose": "Friendly arrivals overflow a capped tower while a capped sender keeps generating on its line.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 10,
+          "theme": ""
+        },
+        "id": "cap-overflow",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 10,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": 0,
+            "garrison": 2,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 2
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "b",
+            "x": 5,
+            "y": 0,
+            "owner": 0,
+            "garrison": 2,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 2
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "c",
+            "x": 1000,
+            "y": 0,
+            "owner": 1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 100,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "7281d1026d151782f8082a0fb81c66056da1eeb5b863484c74f98d8aa2370776",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 5,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "b"
+          }
+        }
+      ],
+      "fullGame": false
+    },
+    {
+      "name": "command-rejections",
+      "purpose": "Rejected duplicate, self and unknown submissions remain in the replay in submitted order.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 10,
+          "theme": ""
+        },
+        "id": "command-rejections",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 10,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": 0,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "b",
+            "x": 1000,
+            "y": 0,
+            "owner": 1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 100,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "592b81d4cb0431841f7925cbbb599e8499408d21e1c39e1d29cabd35eab01e5d",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 21,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "b"
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "b"
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "a"
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "missing",
+            "from": "a",
+            "to": "b"
+          }
+        }
+      ],
+      "fullGame": false
+    },
+    {
+      "name": "mutual-defeat",
+      "purpose": "Players with no towers or transit are eliminated together and the result is draw.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 10,
+          "theme": ""
+        },
+        "id": "mutual-defeat",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 10,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": -1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 100,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "ad5434f03a2fd8857008dbccf53cbc397cac7df5530ba4a0d27e9ce5001a993c",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 1,
+      "commands": [],
+      "fullGame": false
+    },
+    {
+      "name": "full-transit-win",
+      "purpose": "Complete game: capture cuts enemy permission; last enemy troops keep that player alive until arrival, then human wins.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 10,
+          "theme": ""
+        },
+        "id": "full-transit-win",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 10,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": 0,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "b",
+            "x": 5,
+            "y": 0,
+            "owner": 1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "c",
+            "x": 500,
+            "y": 0,
+            "owner": 0,
+            "garrison": 5,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 100,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "a71cd77375cd48ba89dbf1630e81fad91322b085c026424ffed1007d174e1ea8",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 200,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "b"
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p1",
+            "from": "b",
+            "to": "c"
+          }
+        }
+      ],
+      "fullGame": true
+    },
+    {
+      "name": "full-human-loss",
+      "purpose": "Complete game: sustained enemy arrivals remove the last human tower and yield lost.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 10,
+          "theme": ""
+        },
+        "id": "full-human-loss",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 10,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": 0,
+            "garrison": 3,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 0
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "b",
+            "x": 5,
+            "y": 0,
+            "owner": 1,
+            "garrison": 0,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 100,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "854bc11af770dab01550f731fe6da43aa864c10463db06405982663fbbd761b4",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 200,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p1",
+            "from": "b",
+            "to": "a"
+          }
+        }
+      ],
+      "fullGame": true
+    },
+    {
+      "name": "full-stalemate-timeout",
+      "purpose": "Complete game: opposing persistent lines clash until the authoritative tick limit produces timeout.",
+      "level": {
+        "bounds": {
+          "w": 2000,
+          "h": 1000
+        },
+        "globals": {
+          "timeLimitSec": 3,
+          "theme": ""
+        },
+        "id": "full-stalemate-timeout",
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "timeLimitSec": 3,
+        "visual": "",
+        "bots": [],
+        "players": [
+          {
+            "id": "p0",
+            "team": "team0",
+            "kind": "human",
+            "colorKey": "p0"
+          },
+          {
+            "id": "p1",
+            "team": "team1",
+            "kind": "bot",
+            "colorKey": "p1"
+          }
+        ],
+        "towers": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "owner": 0,
+            "garrison": 4,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          },
+          {
+            "id": "b",
+            "x": 20,
+            "y": 0,
+            "owner": 1,
+            "garrison": 4,
+            "archetype": "golden",
+            "visual": "",
+            "footprintRadius": 0,
+            "components": {
+              "garrison": {
+                "cap": 50
+              },
+              "generates": {
+                "troop": 0,
+                "ratePerSec": 20000
+              },
+              "drawsLines": {
+                "extraSlotAbove": []
+              },
+              "capturable": {}
+            }
+          }
+        ],
+        "kinds": [
+          {
+            "id": "kind-0",
+            "speedMilli": 100,
+            "value": 1,
+            "visual": ""
+          }
+        ],
+        "simHash": "3cfdfaf1ea2f2dd71c77d55d2a8baa1e6e402e75becfc012ab9c307b96b701de",
+        "botHash": {}
+      },
+      "seed": 4294967295,
+      "ticks": 60,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p0",
+            "from": "a",
+            "to": "b"
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "p1",
+            "from": "b",
+            "to": "a"
+          }
+        }
+      ],
+      "fullGame": true
+    }
+  ],
+  "results": [
+    {
+      "name": "generation-cap",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "generation-cap",
+          "simHash": "84ec962591009d28319419b56306e1cc6c0f30cd42f3d53c4a30d7185a5cdea1",
+          "seed": 4294967295
+        },
+        "commands": [],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "f6fe425f30abbd46"
+          }
+        ],
+        "finalTick": 20,
+        "finalHash": "f6fe425f30abbd46",
+        "outcome": null
+      },
+      "eventLogHash": "34b26174a02e571a"
+    },
+    {
+      "name": "persistent-cut-replaced",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "persistent-cut-replaced",
+          "simHash": "376e0d16cf9c4c54d6e17219b7e05c311068bc907bbaeba116720a394b8c81fd",
+          "seed": 4294967295
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "b"
+            }
+          },
+          {
+            "tick": 1,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "b",
+              "to": "a"
+            }
+          },
+          {
+            "tick": 3,
+            "cmd": {
+              "type": "CutLine",
+              "player": "p0",
+              "from": "b",
+              "to": "a"
+            }
+          },
+          {
+            "tick": 4,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "c"
+            }
+          },
+          {
+            "tick": 7,
+            "cmd": {
+              "type": "CutLine",
+              "player": "p0",
+              "from": "a",
+              "to": "c"
+            }
+          }
+        ],
+        "checkpoints": [],
+        "finalTick": 12,
+        "finalHash": "e493ab097d9a049f",
+        "outcome": null
+      },
+      "eventLogHash": "a7bf4cf1c6a8373b"
+    },
+    {
+      "name": "slot-reduction",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "slot-reduction",
+          "simHash": "3985165b268824c84adb16db0a0795e032304fa2fd2559513e9134e20ed997c8",
+          "seed": 4294967295
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "c"
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "d"
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p1",
+              "from": "b",
+              "to": "a"
+            }
+          }
+        ],
+        "checkpoints": [],
+        "finalTick": 3,
+        "finalHash": "35c30ae3f8cb0cd8",
+        "outcome": null
+      },
+      "eventLogHash": "69394c1e62971de0"
+    },
+    {
+      "name": "head-on-clash",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "head-on-clash",
+          "simHash": "fe2daf5164a344a83efe5e0d1e720cb991e8bdbc46b2d6588cd57fac7c081329",
+          "seed": 4294967295
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p1",
+              "from": "b",
+              "to": "a"
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "b"
+            }
+          }
+        ],
+        "checkpoints": [],
+        "finalTick": 8,
+        "finalHash": "a11b73c292733b62",
+        "outcome": null
+      },
+      "eventLogHash": "8c2ebd527fd5ed27"
+    },
+    {
+      "name": "overshoot-capture",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "overshoot-capture",
+          "simHash": "715c8dacb86e549aa1c3e863ee8bccba804e503bc4605823a5d5774af0286716",
+          "seed": 4294967295
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p1",
+              "from": "a",
+              "to": "c"
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "b",
+              "to": "c"
+            }
+          }
+        ],
+        "checkpoints": [],
+        "finalTick": 2,
+        "finalHash": "5692cb326499f5ee",
+        "outcome": null
+      },
+      "eventLogHash": "91a1b0b246ab51bc"
+    },
+    {
+      "name": "cap-overflow",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "cap-overflow",
+          "simHash": "7281d1026d151782f8082a0fb81c66056da1eeb5b863484c74f98d8aa2370776",
+          "seed": 4294967295
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "b"
+            }
+          }
+        ],
+        "checkpoints": [],
+        "finalTick": 5,
+        "finalHash": "f86dcb38a3c32277",
+        "outcome": null
+      },
+      "eventLogHash": "3a0662462919eeff"
+    },
+    {
+      "name": "command-rejections",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "command-rejections",
+          "simHash": "592b81d4cb0431841f7925cbbb599e8499408d21e1c39e1d29cabd35eab01e5d",
+          "seed": 4294967295
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "b"
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "b"
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "a"
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "missing",
+              "from": "a",
+              "to": "b"
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "87a865565aac2582"
+          }
+        ],
+        "finalTick": 21,
+        "finalHash": "9c9ef7a3b2465c2d",
+        "outcome": null
+      },
+      "eventLogHash": "742ef11a2b6e9755"
+    },
+    {
+      "name": "mutual-defeat",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "mutual-defeat",
+          "simHash": "ad5434f03a2fd8857008dbccf53cbc397cac7df5530ba4a0d27e9ce5001a993c",
+          "seed": 4294967295
+        },
+        "commands": [],
+        "checkpoints": [],
+        "finalTick": 1,
+        "finalHash": "bdf5cef008f1c2fa",
+        "outcome": {
+          "outcome": "draw",
+          "winnerTeam": null
+        }
+      },
+      "eventLogHash": "3e54193b18e76daa"
+    },
+    {
+      "name": "full-transit-win",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "full-transit-win",
+          "simHash": "a71cd77375cd48ba89dbf1630e81fad91322b085c026424ffed1007d174e1ea8",
+          "seed": 4294967295
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "b"
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p1",
+              "from": "b",
+              "to": "c"
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "5eeec8c6812e857c"
+          },
+          {
+            "tick": 40,
+            "hash": "84007da847f16c82"
+          },
+          {
+            "tick": 60,
+            "hash": "272078586951fb8c"
+          },
+          {
+            "tick": 80,
+            "hash": "7ab19fa0e17b83bb"
+          },
+          {
+            "tick": 100,
+            "hash": "8beead0645694bd1"
+          }
+        ],
+        "finalTick": 101,
+        "finalHash": "7db0c2ffdd7b2b84",
+        "outcome": {
+          "outcome": "won",
+          "winnerTeam": "team0"
+        }
+      },
+      "eventLogHash": "aebadd53805cbd2e"
+    },
+    {
+      "name": "full-human-loss",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "full-human-loss",
+          "simHash": "854bc11af770dab01550f731fe6da43aa864c10463db06405982663fbbd761b4",
+          "seed": 4294967295
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p1",
+              "from": "b",
+              "to": "a"
+            }
+          }
+        ],
+        "checkpoints": [],
+        "finalTick": 4,
+        "finalHash": "f266d736e2256301",
+        "outcome": {
+          "outcome": "lost",
+          "winnerTeam": "team1"
+        }
+      },
+      "eventLogHash": "e2327a4daf78b29a"
+    },
+    {
+      "name": "full-stalemate-timeout",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.0.0",
+          "levelId": "full-stalemate-timeout",
+          "simHash": "3cfdfaf1ea2f2dd71c77d55d2a8baa1e6e402e75becfc012ab9c307b96b701de",
+          "seed": 4294967295
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p0",
+              "from": "a",
+              "to": "b"
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "p1",
+              "from": "b",
+              "to": "a"
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "04c5c487e428c348"
+          },
+          {
+            "tick": 40,
+            "hash": "7f05d342b309745f"
+          },
+          {
+            "tick": 60,
+            "hash": "8fc121ee7cb47007"
+          }
+        ],
+        "finalTick": 60,
+        "finalHash": "8fc121ee7cb47007",
+        "outcome": {
+          "outcome": "timeout",
+          "winnerTeam": null
+        }
+      },
+      "eventLogHash": "eba58a09c2399860"
+    }
+  ]
+}
