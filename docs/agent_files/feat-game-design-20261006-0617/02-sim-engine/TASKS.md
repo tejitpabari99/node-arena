@@ -10,8 +10,8 @@ Source of truth: /root/projects/node-arena/.worktrees/feat/game-design/docs/agen
 |---|---|---|---|
 | 1 | Package scaffold + determinism lint preset | SP01 | done |
 | 2 | Fixed-point spike + math/PRNG utilities | 1 | done |
-| 3 | State model, component registry, `create` | 2, SP01 | in-progress |
-| 4 | Commands, `canDraw`, generation, departures | 3 | todo |
+| 3 | State model, component registry, `create` | 2, SP01 | done |
+| 4 | Commands, `canDraw`, generation, departures | 3 | in-progress |
 | 5 | Lazy movement, clash, arrivals, capture | 4 | todo |
 | 6 | Slot enforcement, win/lose/time, events, `step` | 5 | todo |
 | 7 | SimView, `readTroops`, `snapshot`, `hash` | 6 | todo |
