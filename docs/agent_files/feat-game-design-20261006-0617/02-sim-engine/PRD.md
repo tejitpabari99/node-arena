@@ -79,7 +79,7 @@ World floats: renderer converts milli → units. Troop position along a line = `
 
 ### Fixed-point (answers SP01 open item)
 - Authored 3 decimals → milli (SP01). **Internal progress unit = 1/20 000 world unit (milli × tickRate).** Per-tick step = `speedMilli` exactly (speed 3.001 u/s → 3001 progress/tick), so there is *no* per-tick rounding or accumulator for movement. Line length = integer `isqrt` of `(dx²+dy²)` in progress units, computed once at `create` (floor, ≤ 1/20 000 u error, identical for all troops).
-- Bounds (SP01 validator additions): `|coord| ≤ 500 u`, `speed ≤ 100 u/s`, so `dx² + dy² ≤ 8·10^14 < 2^53`; all temporaries exact doubles; stored columns int32.
+- Bounds (SP01 validator additions): `|coord| ≤ 500 u`, `speed ≤ 100 u/s`, so `dx² + dy² ≤ 8·10^14 < 2^53`; all temporaries exact doubles; stored columns int32. Resolved `timeLimitSec × 20` must fit positive int32; maximum duration is 107374182 seconds. Cumulative player statistics use exact safe-integer storage ≥ 0 (for example, `Float64Array` carrying integer values), rather than int32 aggregate counters; they remain excluded from the hash, and debug checks enforce safe-integer range.
 - **Answer: scale 1000 for authoring is enough; no finer authored scale.** Spike (1 task, before engine core): property test over random lines/speeds comparing integer arrival tick against BigInt-exact; must match within 0 ticks for floor-length rule, and confirm overflow bounds. Fail → widen internal factor, not authored precision.
 - Generation: `acc += ratePerSecMilli`; one unit per `1000·tickRate` of acc (SP01). Helpers `idiv` (trunc), `mulDiv` (range-checked) are the only division paths.
 
@@ -163,6 +163,7 @@ registerComponent({ name:'generates', state:{acc:0}, systems:{generation: fn}, h
 | 14 | Scheduling | Outside sim; step = one tick | Sim-owned clock | Pause/2×/server/test all trivial |
 
 ## Risks / Open Questions
+- [RESOLVED:2026-10-08reviewfix] Duration must resolve to positive int32 ticks (maximum 107374182 seconds at 20 Hz); cumulative player statistics use nonnegative exact safe-integer storage rather than int32, remain excluded from hash, and receive debug safe-integer range checks.
 - [RESOLVED (user, 2026-10-08): at cap with an outgoing line the tower keeps sending at its generation rate; with no line it stops (no banking). GAME_RULES.md R-CAP is worded this way.] Cap semantics with lines (tower at cap keeps sending; acc not banked) — confirm in R-CAP wording with the user at greybox.
 - [RESOLVED (user, 2026-10-08): flips to the hitter with 0 garrison] Capture with count exactly 0 flips to hitter with 0 garrison; playtest whether feels punishing.
 - [RESOLVED: SP03 results copy "Mutual defeat — not completed"] `draw` outcome UI wording.
