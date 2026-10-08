@@ -8,10 +8,10 @@ Source of truth: docs/agent_files/feat-game-design-20261006-0617/01-rules-and-co
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Package scaffold + TypeBox spike | — | todo |
-| 2 | GAME_RULES.md | — | todo |
-| 3 | Fixed-point numerics + browser-safe loader | T1 | todo |
-| 4 | Core schemas + generated JSON Schemas | T1, T3 | todo |
+| 1 | Package scaffold + TypeBox spike | — | done |
+| 2 | GAME_RULES.md | — | done |
+| 3 | Fixed-point numerics + browser-safe loader | T1 | done |
+| 4 | Core schemas + generated JSON Schemas | T1, T3 | in-progress |
 | 5 | Component registry + `extends` resolution | T2, T4 | todo |
 | 6 | Hosted bot + manifest schemas | T4 | todo |
 | 7 | `validateContent` (schema + semantic) | T5, T6 | todo |
