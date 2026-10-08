@@ -54,7 +54,7 @@ test('covers R-ENT-04 R-CMB-01: friendly mixed fronts block later hostile fronts
   assert.deepEqual([...s.players.transit], [2, 3]);
   const allied = level(); allied.players[1].team = 'p0';
   const t = create(allied, 0); troop(t, 0, 1, 0, 60); troop(t, 1, 0, 1, 40);
-  assert.deepEqual(t.step([]), []);
+  assert.deepEqual(t.step([]), [{ type: 'GameOver', tick: 1, outcome: 'won', winnerTeam: 'p0' }]);
 });
 test('covers R-CMB-02 R-CMB-03: overshoot order re-evaluates later arrivals through capture and recapture', () => {
   const s = create(level({ counts: [0, 1, 0, 0] }), 0);
@@ -99,7 +99,7 @@ test('covers R-CAP-01 R-ENT-04: same-team arrivals reinforce with excess counted
   const input = level({ counts: [0, 49, 0, 0] }); input.players[1].team = 'p0';
   const s = create(input, 0);
   troop(s, 0, 1, 0, 100, 2);
-  assert.deepEqual(s.step([]), [{ type: 'TroopArrived', tick: 1, tower: 1, owner: 0, effect: 'overflow' }]);
+  assert.deepEqual(s.step([]), [{ type: 'TroopArrived', tick: 1, tower: 1, owner: 0, effect: 'overflow' }, { type: 'GameOver', tick: 1, outcome: 'won', winnerTeam: 'p0' }]);
   assert.equal(s.tower.col['garrison.count'][1], 50);
   assert.equal(s.tower.owner[1], 1);
   assert.equal(s.players.stats.overflowLost[0], 1);

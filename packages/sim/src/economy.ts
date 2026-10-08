@@ -1,11 +1,27 @@
 import type { SimState } from './state.js';
-import type { DrawValidation } from './commands.js';
+import { cutChannel, type DrawValidation } from './commands.js';
 import { idiv, TICK_RATE } from './math.js';
 export function refreshSlots(state: SimState, towers: Int32Array): void {
   for (const i of towers) {
     let slots = 1;
     for (const threshold of state.towerParams[i]!.drawsLines!.extraSlotAbove!) if (threshold < state.tower.col['garrison.count']![i]!) slots++;
     state.tower.slots[i] = slots;
+  }
+}
+/** Slots are derived from final post-arrival garrison; cut permission only. */
+export function enforceSlots(state: SimState, towers: Int32Array): void {
+  refreshSlots(state, towers);
+  const n = state.ids.towers.length;
+  for (const from of towers) {
+    while (state.tower.lines[from]! > state.tower.slots[from]!) {
+      let newest = undefined;
+      for (let to = 0; to < n; to++) {
+        const channel = state.channels[from * n + to];
+        if (channel?.drawn && (!newest || channel.drawSeq > newest.drawSeq)) newest = channel;
+      }
+      if (!newest) throw new Error('Line count invariant breached');
+      cutChannel(state, newest, 'slots');
+    }
   }
 }
 export function validateLine(state: SimState, player: number, from: number, to: number): DrawValidation {
@@ -25,11 +41,13 @@ export function generate(state: SimState, towers: Int32Array): void {
     const troops = idiv(total, denominator);
     acc[i] = total % denominator;
     const value = troops * state.kinds[state.tower.col['generates.troop']![i]!]!.value;
+    state.accounting.generated += value;
     state.players.stats.generated[owner] = state.players.stats.generated[owner]! + value;
     if (state.tower.lines[i]! > 0) state.pendingDepartures[i] = troops;
     else {
       const added = Math.min(value, cap[i]! - count[i]!);
       count[i] = count[i]! + added;
+      state.accounting.overflow += value - added;
       state.players.stats.overflowLost[owner] = state.players.stats.overflowLost[owner]! + value - added;
     }
   }

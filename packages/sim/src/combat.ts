@@ -31,6 +31,7 @@ export function clash(state: SimState): void {
       const progA = progress(state, frontA), progB = progress(state, frontB);
       if (progA + progB < a.length) break;
       const value = Math.min(frontA.value, frontB.value);
+      state.accounting.clashes += value;
       a.troops.consumeFront(value); b.troops.consumeFront(value);
       removeTransit(state, frontA.owner, value); removeTransit(state, frontB.owner, value);
       creditKill(state, frontA.owner, value); creditKill(state, frontB.owner, value);
@@ -65,16 +66,24 @@ export function garrisonArrive(state: SimState, tower: number, troop: Troop): vo
   const owner = state.tower.owner[tower]!;
   if (friendly(state, owner, troop.owner)) {
     const added = Math.min(troop.value, cap[tower]! - count[tower]!);
+    state.accounting.overflow += troop.value - added;
     count[tower] = count[tower]! + added;
     state.players.stats.overflowLost[troop.owner] = state.players.stats.overflowLost[troop.owner]! + troop.value - added;
     if (state.events) state.events.push({ type: 'TroopArrived', tick: state.tick, tower, owner: troop.owner, effect: added === troop.value ? 'reinforce' : 'overflow' });
     return;
   }
   const damage = Math.min(troop.value, count[tower]!);
+  state.accounting.hits += damage;
   count[tower] = count[tower]! - damage;
   creditKill(state, troop.owner, damage); creditKill(state, owner, damage);
   if (state.events) state.events.push({ type: 'TroopArrived', tick: state.tick, tower, owner: troop.owner, effect: 'hit' });
-  arrivalHooks(state, 'onHit', tower, { ...troop, value: troop.value - damage });
+  const remainder = troop.value - damage;
+  arrivalHooks(state, 'onHit', tower, { ...troop, value: remainder });
+  // A noncapturable target discards leftover value; capture already accounts its additions.
+  if (state.tower.owner[tower] === owner && remainder > 0) {
+    state.accounting.overflow += remainder;
+    if (troop.owner !== -1) state.players.stats.overflowLost[troop.owner] = state.players.stats.overflowLost[troop.owner]! + remainder;
+  }
 }
 /** Registered capturable behavior runs inline after the garrison has taken the hit. */
 export function capturableHit(state: SimState, tower: number, troop: Troop): void {
@@ -84,6 +93,7 @@ export function capturableHit(state: SimState, tower: number, troop: Troop): voi
   state.tower.owner[tower] = troop.owner;
   state.tower.team[tower] = troop.owner === -1 ? -1 : state.players.team[troop.owner]!;
   const added = Math.min(troop.value, state.tower.col['garrison.cap']![tower]!);
+  state.accounting.overflow += troop.value - added;
   count[tower] = added;
   if (troop.owner !== -1) {
     state.players.stats.overflowLost[troop.owner] = state.players.stats.overflowLost[troop.owner]! + troop.value - added;

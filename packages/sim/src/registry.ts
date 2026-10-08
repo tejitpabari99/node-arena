@@ -1,7 +1,7 @@
 import type { CompiledTower } from '@node-arena/content';
 import type { SimState, Troop } from './state.js';
 import type { DrawValidation } from './commands.js';
-import { generate, depart, refreshSlots, validateLine } from './economy.js';
+import { generate, depart, refreshSlots, enforceSlots, validateLine } from './economy.js';
 import { capturableHit, garrisonArrive } from './combat.js';
 
 /** Fixed rule phases; order within a phase is explicit, then component name. */
@@ -65,7 +65,7 @@ export function createComponentRegistry(): ComponentRegistry {
     col['generates.ratePerSec']![i] = tower.components.generates!.ratePerSec!;
     col['generates.troop']![i] = tower.components.generates!.troop!;
   } });
-  registry.registerComponent({ name: 'drawsLines', state: { cursor: -1 }, setup: refreshSlots, systems: { generation: { order: 1, run: refreshSlots }, departures: { order: 0, run: depart } }, hooks: { validateDraw: validateLine, onCapture(state, tower) { state.tower.col['drawsLines.cursor']![tower] = -1; } } });
+  registry.registerComponent({ name: 'drawsLines', state: { cursor: -1 }, setup: refreshSlots, systems: { generation: { order: 1, run: refreshSlots }, departures: { order: 0, run: depart }, slots: { order: 0, run: enforceSlots } }, hooks: { validateDraw: validateLine, onCapture(state, tower) { state.tower.col['drawsLines.cursor']![tower] = -1; } } });
   registry.registerComponent({ name: 'capturable', state: {}, hooks: { onHit: capturableHit } });
   return registry;
 }

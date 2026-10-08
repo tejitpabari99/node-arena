@@ -1,9 +1,13 @@
 import type { SimState, Channel } from './state.js';
 import { arrive, clash } from './combat.js';
+import { PHASES } from './registry.js';
+import { outcome, assertInvariants } from './tick.js';
 export type Command =
   | { type: 'DrawLine'; player: string; from: string; to: string }
   | { type: 'CutLine'; player: string; from: string; to: string };
 export type RejectReason = 'not-owner' | 'self' | 'no-slot' | 'duplicate' | 'gameover' | 'unknown-id' | 'no-component';
+export type Outcome = 'won' | 'lost' | 'draw' | 'timeout';
+export interface GameOver { outcome: Outcome; winnerTeam: string | null }
 export type SimEvent =
   | { type: 'LineDrawn'; tick: number; channel: number; from: number; to: number; owner: number }
   | { type: 'LineCut'; tick: number; channel: number; reason: 'player' | 'slots' | 'captured' | 'replaced' }
@@ -11,6 +15,8 @@ export type SimEvent =
   | { type: 'Clash'; tick: number; channel: number; progA: number; progB: number; value: number }
   | { type: 'TroopArrived'; tick: number; tower: number; owner: number; effect: 'reinforce' | 'overflow' | 'hit' }
   | { type: 'Captured'; tick: number; tower: number; from: number; to: number }
+  | { type: 'PlayerEliminated'; tick: number; player: number }
+  | ({ type: 'GameOver'; tick: number } & GameOver)
   | { type: 'CommandRejected'; tick: number; cmd: unknown; reason: RejectReason };
 export interface DrawValidation { reason: RejectReason | null; reverse?: Channel }
 const emptyEvents: readonly SimEvent[] = Object.freeze([]);
@@ -75,13 +81,13 @@ export function step(state: SimState, commands: readonly Command[], options: { e
       if (state.events) state.events.push({ type: 'CommandRejected', tick: state.tick, cmd, reason });
     }
   }
-  for (const phase of ['commands', 'generation', 'departures'] as const) {
+  for (const phase of PHASES) {
+    if (phase === 'clash') clash(state);
+    if (phase === 'arrivals') arrive(state);
     for (const system of state.systems[phase]) system.run(state, state.componentTowers.get(system.component)!);
+    if (phase === 'win') outcome(state);
   }
-  clash(state);
-  for (const system of state.systems.clash) system.run(state, state.componentTowers.get(system.component)!);
-  arrive(state);
-  for (const system of state.systems.arrivals) system.run(state, state.componentTowers.get(system.component)!);
+  if (state.debug) assertInvariants(state);
   const events = state.events ?? emptyEvents;
   state.events = null;
   return events;

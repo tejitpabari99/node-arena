@@ -1,5 +1,5 @@
 import type { CompiledLevel, CompiledPlayer, CompiledTower, CompiledComponents } from '@node-arena/content';
-import { step, validateDraw, type Command, type RejectReason, type SimEvent } from './commands.js';
+import { step, validateDraw, type Command, type RejectReason, type SimEvent, type GameOver } from './commands.js';
 import { TICK_RATE, isqrt, Sfc32 } from './math.js';
 import { ComponentRegistry, createComponentRegistry, PHASES, sortedNames, compareNames, type Phase, type SimComponent, type ComponentSystem } from './registry.js';
 
@@ -11,7 +11,13 @@ export class TroopRing {
   private head = 0;
   size = 0;
 
+  constructor(private readonly debug = false) {}
+
   push(troop: Troop): void {
+    if (this.debug) for (const name of troopColumns) {
+      const value = troop[name];
+      if (!Number.isInteger(value) || value < -2147483648 || value > 2147483647) throw new Error('int32 troop invariant breached');
+    }
     if (this.size === this.col.p0.length) {
       for (const name of troopColumns) {
         const old = this.col[name];
@@ -24,6 +30,14 @@ export class TroopRing {
     const index = (this.head + this.size) % this.col.p0.length;
     for (const name of troopColumns) this.col[name][index] = troop[name];
     this.size++;
+  }
+
+  /** Ordered traversal for debug checks and later read/hash consumers; never advances the ring. */
+  forEach(visit: (troop: Troop) => void): void {
+    for (let offset = 0; offset < this.size; offset++) {
+      const i = (this.head + offset) % this.col.p0.length;
+      visit({ p0: this.col.p0[i]!, t0: this.col.t0[i]!, owner: this.col.owner[i]!, kind: this.col.kind[i]!, seq: this.col.seq[i]!, value: this.col.value[i]! });
+    }
   }
 
   front(): Troop | undefined {
@@ -57,7 +71,12 @@ export interface TowerState { owner: Int32Array; team: Int32Array; slots: Int32A
 export interface ScheduledSystem extends ComponentSystem { readonly component: string }
 export interface SimState {
   tick: number;
-  over: { outcome: string; winnerTeam: number | null } | null;
+  over: GameOver | null;
+  debug: boolean;
+  teamIds: string[];
+  eliminated: Int32Array;
+  /** Value-unit accounting only; excluded from future rule-state hashes. */
+  accounting: { initial: number; generated: number; overflow: number; hits: number; clashes: number };
   rejected: number;
   drawSeq: number;
   troopSeq: number;
@@ -83,9 +102,9 @@ export interface SimState {
   prng: Sfc32;
   ensureChannel(from: number, to: number): Channel;
 }
-export interface CreateOptions { readonly registry?: ComponentRegistry }
+export interface CreateOptions { readonly registry?: ComponentRegistry; readonly debug?: boolean }
 
-/** Staged constructor through arrivals/capture; outcome/view/hash follow in later tasks. */
+/** Full tick mechanics; public view/hash/replay follow in later tasks. */
 export function create(level: CompiledLevel, seed: number, options: CreateOptions = {}): SimState {
   const registry = options.registry ?? createComponentRegistry();
   registry.assertParity(level.componentNames);
@@ -138,6 +157,8 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
   }
   const channels: (Channel | undefined)[] = Array.from({ length: n * n }, () => undefined);
   const state: SimState = { tick: 0, over: null, rejected: 0, drawSeq: 0, troopSeq: 0, pendingDepartures: column(), events: null,
+    debug: options.debug ?? false, teamIds: [...teams.keys()], eliminated: playerColumn(),
+    accounting: { initial: level.towers.reduce((sum, tower) => sum + tower.garrison, 0), generated: 0, overflow: 0, hits: 0, clashes: 0 },
     step(commands, options) { return step(state, commands, options); },
     canDraw(player, from, to) { return validateDraw(state, player, from, to).reason; },
     resetOnCapture(tower) {
@@ -151,7 +172,7 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
     ensureChannel(from, to) {
       if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to < 0 || from >= n || to >= n || from === to) throw new RangeError('Invalid channel pair');
       const key = from * n + to;
-      return channels[key] ??= { key, from, to, length: lengths[key]!, drawn: 0, drawSeq: 0, owner: -1, troops: new TroopRing() };
+      return channels[key] ??= { key, from, to, length: lengths[key]!, drawn: 0, drawSeq: 0, owner: -1, troops: new TroopRing(state.debug) };
     },
   };
   for (const component of components) component.setup?.(state, componentTowers.get(component.name)!);
