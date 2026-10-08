@@ -10,7 +10,7 @@ Persistent-route tower-war browser game; v1 = rules spec + deterministic engine 
 ## Sub-projects
 | # | Folder | Title | Phase | Depends on | Owns (packages/files) | Status |
 |---|---|---|---|---|---|---|
-| 01 | [01-rules-and-content-model](01-rules-and-content-model/PRD.md) | Rules + data-driven content model | P0 foundation | none | `docs/GAME_RULES.md`, `docs/CONTENT_GUIDE.md`, `packages/content/**` (schemas, registry, loader/compiler, hashing, validator; data `balance`, `troops`, `archetypes/{standard,small,large}`; hosts bot + manifest schemas) | draft |
+| 01 | [01-rules-and-content-model](01-rules-and-content-model/PRD.md) | Rules + data-driven content model | P0 foundation | none | `docs/GAME_RULES.md`, `docs/CONTENT_GUIDE.md`, `packages/content/**` (schemas, registry, loader/compiler, hashing, validator; data `balance`, `troops`, `archetypes/{standard,small,large}`; hosts bot + manifest schemas) | review pending |
 | 02 | [02-sim-engine](02-sim-engine/PRD.md) | Deterministic sim engine | P1 engine | 01 | `packages/sim/**`, golden replays, `eslint.determinism.cjs`, `bench:sim` | draft |
 | 03 | [03-web-client](03-web-client/PRD.md) | Web client | P2 greybox playable | 01, 02 | `apps/web/**`, `apps/web/assets/manifest.json` (file) + loader, `validateManifest()` | draft |
 | 04 | [04-bots-and-tools](04-bots-and-tools/PRD.md) | Bots + tools | P2 (parallel with 03) | 01, 02 | `packages/bots/**`, `packages/content/src/bot-params.ts` + `data/bots/*.json`, `tools/**` (CLIs, CI workflow) | draft |
@@ -80,9 +80,10 @@ New (this design pass):
 Folded this pass: SP05 asks accepted (SP01 hosts `small`/`large`, `extends` may change any component param incl. `extraSlotAbove`, no adding/removing components; campaign uses no `overrides`; SP04 `human-proxy` + tier names; band-4 rule).
 
 ## Links
+- [SP01 implementation run](01-rules-and-content-model/code-2026-10-08-0528.md) — 12 tasks implemented; dev-review pending.
 - [brainstorm.md](brainstorm.md)
 - Research (relative to repo root): `research/engine-research.md`, `research/similar-games.md`, `research/mechanics-research.md`, `research/gamedev-best-practices.md`
 - PRDs: [01](01-rules-and-content-model/PRD.md), [02](02-sim-engine/PRD.md), [03](03-web-client/PRD.md), [04](04-bots-and-tools/PRD.md), [05](05-campaign-and-art/PRD.md)
 
 ## Next step
-Open questions resolved/deferred (2026-10-08). Next: run dev-tasks to generate TASKS.md per sub-project.
+SP01 implementation is complete. Next: review 01-rules-and-content-model, then implement 02-sim-engine.

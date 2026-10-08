@@ -1,6 +1,6 @@
 ---
-status: draft
-summary: 12 tasks — GAME_RULES.md, packages/content schemas/registry/loader/validator/compiler/hashing, v1 data files, fixtures, CONTENT_GUIDE.md
+status: done
+summary: 12 tasks implemented — rules, content schemas/registry/loader/validator/compiler/hashing, v1 data, acceptance fixtures, and CONTENT_GUIDE.md; dev-review pending
 date: 2026-10-08
 ---
 # Tasks: Rules + Data-Driven Content Model (SP01)
@@ -16,10 +16,10 @@ Source of truth: docs/agent_files/feat-game-design-20261006-0617/01-rules-and-co
 | 6 | Hosted bot + manifest schemas | T4 | done |
 | 7 | `validateContent` (schema + semantic) | T5, T6 | done |
 | 8 | `compileLevel` + `CompiledLevel` | T5, T7 | done |
-| 9 | Hashing, versioning, lockfile, CI checks | T8 | in-progress |
-| 10 | v1 data files + sample level | T7 | todo |
-| 11 | Rejection fixtures + acceptance tests | T9, T10 | todo |
-| 12 | CONTENT_GUIDE.md | T9 | todo |
+| 9 | Hashing, versioning, lockfile, CI checks | T8 | done |
+| 10 | v1 data files + sample level | T7 | done |
+| 11 | Rejection fixtures + acceptance tests | T9, T10 | done |
+| 12 | CONTENT_GUIDE.md | T9 | done |
 
 ## Task 1 — Package scaffold + TypeBox spike
 What it is / what it means: Stand up `packages/content` and settle schema tech (Decision 1; resolved: TypeBox, switch only if spike fails).
