@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
     "./eslint.determinism.cjs": "./eslint.determinism.cjs"
   },
   "scripts": {
@@ -12,5 +15,10 @@
     "build": "tsc -p tsconfig.json",
     "lint": "eslint src"
   },
-  "dependencies": { "@node-arena/content": "workspace:*" }
+  "dependencies": {
+    "@node-arena/content": "workspace:*"
+  },
+  "devDependencies": {
+    "fast-check": "4.10.2"
+  }
 }
