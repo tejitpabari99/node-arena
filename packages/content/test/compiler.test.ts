@@ -32,7 +32,7 @@ test('golden sample compiles to dense sorted integer inputs with resolved bots a
   assert.match(simHash, /^[a-f0-9]{64}$/);
   assert.match(botHash.easy ?? '', /^[a-f0-9]{64}$/);
   assert.deepEqual(inputs, {
-    id: 'sample', timeLimitSec: 120, visual: 'city', bounds: { w: 120000, h: 80000 },
+    componentNames: ['capturable', 'drawsLines', 'garrison', 'generates'], id: 'sample', timeLimitSec: 120, visual: 'city', bounds: { w: 120000, h: 80000 },
     globals: { timeLimitSec: 120, theme: 'city' },
     players: [{ id: 'p-1', kind: 'bot', colorKey: 'blue', team: 'p-1' }, { id: 'p1', kind: 'human', colorKey: 'red', team: 'p1' }],
     towers: [
@@ -80,4 +80,8 @@ test('source path and array order cannot change compiled indices or resolved pro
 test('unknown level ids produce a located content error instead of another level', () => {
   const loaded = content.loadContent(fixture());
   assert.throws(() => compile(loaded, 'missing'), (error: unknown) => error instanceof content.ContentLoadError && error.errors.some(issue => issue.pointer === '/id' && issue.message.includes('Unknown level')));
+});
+
+test('compiled metadata carries the actual content component registry names', () => {
+  assert.deepEqual(compile(content.loadContent(fixture())).componentNames, Object.keys(content.COMPONENT_REGISTRY.components).sort());
 });

@@ -2,6 +2,7 @@ import type { Archetype, Balance, Level } from './core.schema.js';
 import type { BotProfile } from './bot.schema.js';
 import type { BotParams } from './bot-params.js';
 import type { LoadedContent } from './parse-content.js';
+import { COMPONENT_REGISTRY } from './component-registry.js';
 import { ContentLoadError } from './fixed-point.js';
 import { resolveLevelOverrides } from './resolve-overrides.js';
 import { hashBotProfile, hashCompiledLevel } from './hash.js';
@@ -46,6 +47,8 @@ export interface CompiledBot { player: number; profile: ResolvedBotProfile }
  * durations and dense indices are unscaled integers. Visual keys pass through.
  */
 export interface CompiledLevel {
+  /** Authoritative registry names, for type-only consumers to assert parity. */
+  componentNames: readonly string[];
   id: string;
   timeLimitSec: number;
   visual: string;
@@ -98,6 +101,6 @@ export function compileLevel(content: LoadedContent, levelId: string): CompiledL
     delete params.extends;
     return [{ player: index, profile: { id: profile.id, kind: profile.kind, params } }];
   });
-  const compiled = { id: level.id, timeLimitSec: level.timeLimitSec ?? globals.timeLimitSec, visual: level.visual ?? globals.theme, bounds: structuredClone(level.bounds), globals, towers, players, kinds, bots };
+  const compiled = { componentNames: Object.keys(COMPONENT_REGISTRY.components).sort((a, b) => a < b ? -1 : a > b ? 1 : 0), id: level.id, timeLimitSec: level.timeLimitSec ?? globals.timeLimitSec, visual: level.visual ?? globals.theme, bounds: structuredClone(level.bounds), globals, towers, players, kinds, bots };
   return { ...compiled, simHash: hashCompiledLevel(compiled), botHash: Object.fromEntries(bots.map(bot => [bot.profile.id, hashBotProfile(bot.profile)])) };
 }
