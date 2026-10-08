@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { CoreSchemas } from '../src/index.js';
+import { HostedSchemas } from '../src/index.js';
 
-for (const [name, schema] of Object.entries(CoreSchemas)) {
+for (const [name, schema] of Object.entries(HostedSchemas)) {
   const filename = `${name}.schema.json`;
   const destination = new URL(`../schemas/${filename}`, import.meta.url);
   const generated = `${JSON.stringify(schema, null, 2)}\n`;

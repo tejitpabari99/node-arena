@@ -1,4 +1,6 @@
 import Type from 'typebox';
+import { BotSchema, type BotProfile } from './bot.schema.js';
+import { ManifestSchema } from './manifest.schema.js';
 import { SCHEMA_VERSION, TroopSchema } from './troop.schema.js';
 
 const idPattern = '^[a-z0-9][a-z0-9-]*$';
@@ -69,6 +71,8 @@ export type Content = Type.Static<typeof ContentSchema>;
 export type Balance = Type.Static<typeof BalanceSchema>;
 export type Archetype = Type.Static<typeof ArchetypeSchema>;
 export type Level = Type.Static<typeof LevelSchema>;
-export type CoreEntity = Content | Balance | Archetype | Level | Type.Static<typeof TroopSchema>;
+export type CoreEntity = Content | Balance | Archetype | Level | Type.Static<typeof TroopSchema> | BotProfile;
 /** Ordered schema catalog shared by the loader and generated editor artifacts. */
-export const CoreSchemas = { content: ContentSchema, balance: BalanceSchema, troop: TroopSchema, archetype: ArchetypeSchema, level: LevelSchema };
+export const CoreSchemas = { content: ContentSchema, balance: BalanceSchema, troop: TroopSchema, archetype: ArchetypeSchema, level: LevelSchema, bot: BotSchema };
+/** Editor schemas additionally include the web-owned visual manifest contract. */
+export const HostedSchemas = { ...CoreSchemas, manifest: ManifestSchema };

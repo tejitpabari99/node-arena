@@ -1,0 +1,165 @@
+{
+  "type": "object",
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "id",
+    "kind",
+    "params"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "kind": {
+      "anyOf": [
+        {
+          "type": "string",
+          "const": "utility"
+        },
+        {
+          "type": "string",
+          "const": "idle"
+        }
+      ]
+    },
+    "params": {
+      "type": "object",
+      "properties": {
+        "extends": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "skill": {
+          "type": "object",
+          "required": [
+            "decisionIntervalSec",
+            "noise",
+            "actionsPerDecision"
+          ],
+          "properties": {
+            "decisionIntervalSec": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "x-unit": "fx3"
+            },
+            "noise": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "x-unit": "fx3"
+            },
+            "actionsPerDecision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          },
+          "additionalProperties": false
+        },
+        "bias": {
+          "type": "object",
+          "required": [
+            "attack"
+          ],
+          "properties": {
+            "attack": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10,
+              "x-unit": "fx3"
+            }
+          },
+          "additionalProperties": false
+        },
+        "weights": {
+          "type": "object",
+          "required": [
+            "attack"
+          ],
+          "properties": {
+            "attack": {
+              "type": "object",
+              "required": [
+                "targetValue"
+              ],
+              "properties": {
+                "targetValue": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10,
+                  "x-unit": "fx3"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "extends": {}
+        },
+        "required": [
+          "extends"
+        ]
+      },
+      "then": {
+        "properties": {
+          "skill": {},
+          "bias": false,
+          "weights": false
+        },
+        "required": [
+          "skill"
+        ]
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://node-arena.local/schemas/bot.schema.json",
+  "title": "bot",
+  "additionalProperties": false,
+  "if": {
+    "properties": {
+      "kind": {
+        "const": "utility"
+      }
+    },
+    "required": [
+      "kind"
+    ]
+  },
+  "then": {
+    "properties": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "skill": {}
+        },
+        "required": [
+          "skill"
+        ]
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "params": {
+        "type": "object",
+        "maxProperties": 0
+      }
+    }
+  }
+}
