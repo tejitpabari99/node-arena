@@ -1,5 +1,5 @@
 ---
-status: draft
+status: in-progress
 summary: 13 tasks to build the deterministic sim engine (packages/sim) - scaffold and lint, fixed-point spike, registry/state, tick phases, view/hash, replay, tests, perf
 date: 2026-10-08
 ---
@@ -8,7 +8,7 @@ Source of truth: /root/projects/node-arena/.worktrees/feat/game-design/docs/agen
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Package scaffold + determinism lint preset | SP01 | todo |
+| 1 | Package scaffold + determinism lint preset | SP01 | in-progress |
 | 2 | Fixed-point spike + math/PRNG utilities | 1 | todo |
 | 3 | State model, component registry, `create` | 2, SP01 | todo |
 | 4 | Commands, `canDraw`, generation, departures | 3 | todo |
