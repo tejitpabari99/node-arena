@@ -1,0 +1,8 @@
+{
+  "$schema": "troop.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "tank",
+  "value": 2,
+  "speed": 10.125,
+  "visual": "soldier"
+}

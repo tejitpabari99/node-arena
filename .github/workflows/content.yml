@@ -30,6 +30,8 @@ jobs:
             base=656d0ca
           fi
           pnpm check:content --base "$base" --allow-bootstrap
+      - name: Install Chromium for content browser parity
+        run: pnpm --filter @node-arena/content exec playwright install --with-deps chromium
       - run: pnpm test
       - run: pnpm build
       - run: pnpm lint

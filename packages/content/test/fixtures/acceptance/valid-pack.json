@@ -1,0 +1,127 @@
+{
+  "content.json": {
+    "$schema": "content.schema.json",
+    "schemaVersion": "1.0.0",
+    "contentVersion": "1.0.0",
+    "rulesVersion": "1.0.0"
+  },
+  "data/balance.json": {
+    "$schema": "balance.schema.json",
+    "schemaVersion": "1.0.0",
+    "defaults": {
+      "timeLimitSec": 300,
+      "theme": "city"
+    }
+  },
+  "data/troops/regular.json": {
+    "$schema": "troop.schema.json",
+    "schemaVersion": "1.0.0",
+    "id": "regular",
+    "value": 1,
+    "speed": 10.125,
+    "visual": "soldier"
+  },
+  "data/archetypes/standard.json": {
+    "$schema": "archetype.schema.json",
+    "schemaVersion": "1.0.0",
+    "id": "standard",
+    "visual": "tower",
+    "footprintRadius": 3,
+    "components": {
+      "garrison": {
+        "cap": 50
+      },
+      "generates": {
+        "troop": "regular",
+        "ratePerSec": 1.125
+      },
+      "drawsLines": {
+        "extraSlotAbove": [
+          10,
+          30
+        ]
+      },
+      "capturable": {}
+    }
+  },
+  "data/bots/base.json": {
+    "$schema": "bot.schema.json",
+    "schemaVersion": "1.0.0",
+    "id": "base",
+    "kind": "utility",
+    "params": {
+      "skill": {
+        "decisionIntervalSec": 1.25,
+        "noise": 0.1,
+        "actionsPerDecision": 2
+      },
+      "bias": {
+        "attack": 1.125
+      }
+    }
+  },
+  "data/bots/easy.json": {
+    "$schema": "bot.schema.json",
+    "schemaVersion": "1.0.0",
+    "id": "easy",
+    "kind": "utility",
+    "params": {
+      "extends": "base",
+      "skill": {
+        "decisionIntervalSec": 1.25,
+        "noise": 0.3,
+        "actionsPerDecision": 2
+      }
+    }
+  },
+  "data/levels/sample.json": {
+    "$schema": "level.schema.json",
+    "schemaVersion": "1.0.0",
+    "id": "sample",
+    "name": "Sample",
+    "order": 1,
+    "band": 1,
+    "bounds": {
+      "w": 120,
+      "h": 80
+    },
+    "players": [
+      {
+        "id": "p1",
+        "kind": "human",
+        "colorKey": "red"
+      },
+      {
+        "id": "b1",
+        "kind": "bot",
+        "colorKey": "blue",
+        "botProfile": "easy"
+      }
+    ],
+    "towers": [
+      {
+        "id": "t1",
+        "archetype": "standard",
+        "pos": {
+          "x": -40.125,
+          "y": 0.001
+        },
+        "owner": "p1",
+        "garrison": 10
+      },
+      {
+        "id": "t2",
+        "archetype": "standard",
+        "pos": {
+          "x": 40,
+          "y": -2.125
+        },
+        "owner": "b1",
+        "garrison": 15
+      }
+    ],
+    "obstacles": [],
+    "mapObjects": [],
+    "overrides": {}
+  }
+}
