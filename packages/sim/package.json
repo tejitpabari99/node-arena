@@ -14,7 +14,8 @@
     "test": "node --test test/*.test.cjs",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.golden.json",
     "lint": "eslint src",
-    "sim:golden": "node scripts/golden.cjs"
+    "sim:golden": "node scripts/golden.cjs",
+    "bench:sim": "node scripts/bench.cjs"
   },
   "dependencies": {
     "@node-arena/content": "workspace:*"

@@ -47,6 +47,17 @@ export class TroopRing {
     return this.col[name][(this.head + offset) % this.col.p0.length]!;
   }
 
+  /** Stream canonical troop words without repeating column lookup/index arithmetic. */
+  writeWords(out: { word(value: number): void }): void {
+    const { p0, t0, owner, kind, seq, value } = this.col;
+    const capacity = p0.length;
+    for (let offset = 0; offset < this.size; offset++) {
+      const i = (this.head + offset) % capacity;
+      out.word(p0[i]!); out.word(t0[i]!); out.word(owner[i]!);
+      out.word(kind[i]!); out.word(seq[i]!); out.word(value[i]!);
+    }
+  }
+
   front(): Troop | undefined {
     if (this.size === 0) return undefined;
     const i = this.head;

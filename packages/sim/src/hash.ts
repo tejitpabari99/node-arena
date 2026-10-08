@@ -22,10 +22,7 @@ export function hashState(state: SimState): string {
     if (!channel) continue;
     hash.word(channel.key); hash.word(channel.from); hash.word(channel.to); hash.word(channel.length);
     hash.word(channel.drawn); hash.word(channel.drawSeq); hash.word(channel.owner); hash.word(channel.troops.size);
-    for (let i = 0; i < channel.troops.size; i++) {
-      hash.word(channel.troops.read('p0', i)); hash.word(channel.troops.read('t0', i)); hash.word(channel.troops.read('owner', i));
-      hash.word(channel.troops.read('kind', i)); hash.word(channel.troops.read('seq', i)); hash.word(channel.troops.read('value', i));
-    }
+    channel.troops.writeWords(hash);
   }
   return hash.finish();
 }
