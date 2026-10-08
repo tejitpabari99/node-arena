@@ -10,7 +10,7 @@ Persistent-route tower-war browser game; v1 = rules spec + deterministic engine 
 ## Sub-projects
 | # | Folder | Title | Phase | Depends on | Owns (packages/files) | Status |
 |---|---|---|---|---|---|---|
-| 01 | [01-rules-and-content-model](01-rules-and-content-model/PRD.md) | Rules + data-driven content model | P0 foundation | none | `docs/GAME_RULES.md`, `docs/CONTENT_GUIDE.md`, `packages/content/**` (schemas, registry, loader/compiler, hashing, validator; data `balance`, `troops`, `archetypes/{standard,small,large}`; hosts bot + manifest schemas) | NEEDS_CHANGES |
+| 01 | [01-rules-and-content-model](01-rules-and-content-model/PRD.md) | Rules + data-driven content model | P0 foundation | none | `docs/GAME_RULES.md`, `docs/CONTENT_GUIDE.md`, `packages/content/**` (schemas, registry, loader/compiler, hashing, validator; data `balance`, `troops`, `archetypes/{standard,small,large}`; hosts bot + manifest schemas) | done (review PASS) |
 | 02 | [02-sim-engine](02-sim-engine/PRD.md) | Deterministic sim engine | P1 engine | 01 | `packages/sim/**`, golden replays, `eslint.determinism.cjs`, `bench:sim` | draft |
 | 03 | [03-web-client](03-web-client/PRD.md) | Web client | P2 greybox playable | 01, 02 | `apps/web/**`, `apps/web/assets/manifest.json` (file) + loader, `validateManifest()` | draft |
 | 04 | [04-bots-and-tools](04-bots-and-tools/PRD.md) | Bots + tools | P2 (parallel with 03) | 01, 02 | `packages/bots/**`, `packages/content/src/bot-params.ts` + `data/bots/*.json`, `tools/**` (CLIs, CI workflow) | draft |
@@ -80,11 +80,13 @@ New (this design pass):
 Folded this pass: SP05 asks accepted (SP01 hosts `small`/`large`, `extends` may change any component param incl. `extraSlotAbove`, no adding/removing components; campaign uses no `overrides`; SP04 `human-proxy` + tier names; band-4 rule).
 
 ## Links
-- [SP01 implementation run](01-rules-and-content-model/code-2026-10-08-0528.md) — 12 tasks implemented; Task 3 reopened for review fix.
-- [SP01 review](01-rules-and-content-model/review-2026-10-08-0533.md) — NEEDS_CHANGES: 1 must-fix (fixed-point underflow).
+- [SP01 implementation run](01-rules-and-content-model/code-2026-10-08-0528.md) — original 12-task run, retained as history.
+- [SP01 review-fix run](01-rules-and-content-model/code-2026-10-08-0539.md) — Task 3 fix complete; 222 tests passed; all 12 tasks done.
+- [SP01 original review](01-rules-and-content-model/review-2026-10-08-0533.md) — historical NEEDS_CHANGES: fixed-point underflow.
+- [SP01 latest review](01-rules-and-content-model/review-2026-10-08-0539.md) — PASS across all three personas; original finding resolved.
 - [brainstorm.md](brainstorm.md)
 - Research (relative to repo root): `research/engine-research.md`, `research/similar-games.md`, `research/mechanics-research.md`, `research/gamedev-best-practices.md`
 - PRDs: [01](01-rules-and-content-model/PRD.md), [02](02-sim-engine/PRD.md), [03](03-web-client/PRD.md), [04](04-bots-and-tools/PRD.md), [05](05-campaign-and-art/PRD.md)
 
 ## Next step
-Fix SP01 fixed-point underflow through dev-code, then re-run dev-review. After SP01 passes review, implement 02-sim-engine.
+SP01 is complete with review PASS. Implement 02-sim-engine next, retaining the existing feat/game-design branch as directed by the user.

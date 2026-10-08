@@ -1,6 +1,6 @@
 ---
 status: done
-summary: 12 tasks implemented — rules, content schemas/registry/loader/validator/compiler/hashing, v1 data, acceptance fixtures, and CONTENT_GUIDE.md; dev-review pending
+summary: 12 tasks implemented and review PASS — rules, content model, validation, compilation, hashing, v1 data, acceptance fixtures, and guide
 date: 2026-10-08
 ---
 # Tasks: Rules + Data-Driven Content Model (SP01)
@@ -10,7 +10,7 @@ Source of truth: docs/agent_files/feat-game-design-20261006-0617/01-rules-and-co
 |---|---|---|---|
 | 1 | Package scaffold + TypeBox spike | — | done |
 | 2 | GAME_RULES.md | — | done |
-| 3 | Fixed-point numerics + browser-safe loader | T1 | in-progress |
+| 3 | Fixed-point numerics + browser-safe loader | T1 | done |
 | 4 | Core schemas + generated JSON Schemas | T1, T3 | done |
 | 5 | Component registry + `extends` resolution | T2, T4 | done |
 | 6 | Hosted bot + manifest schemas | T4 | done |
