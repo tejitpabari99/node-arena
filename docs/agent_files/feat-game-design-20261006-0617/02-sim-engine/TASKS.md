@@ -19,8 +19,8 @@ Source of truth: /root/projects/node-arena/.worktrees/feat/game-design/docs/agen
 | 9 | Rule tests (`covers R-XXX-NN`) | 6 | done |
 | 10 | Property tests | 8 | done |
 | 11 | Golden replays + `sim:golden` + cross-runtime | 8, 9 | done |
-| 12 | Extensibility fixture test | 6 | in-progress |
-| 13 | `bench:sim` + perf/event-volume measurement | 7 | todo |
+| 12 | Extensibility fixture test | 6 | done |
+| 13 | `bench:sim` + perf/event-volume measurement | 7 | in-progress |
 
 ## Task 1 — Package scaffold + determinism lint preset
 What it is / what it means: Creates `packages/sim` as pure TS (ES2022 lib, no DOM, no Node types), depending only on `packages/content` types (Req 1; Determinism).
