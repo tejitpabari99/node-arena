@@ -91,6 +91,7 @@ const cases: [string, string, string, (files: ReturnType<typeof pack>) => void][
   ['outside bounds', levelFile, '/towers/0/pos/x', f => { f[levelFile].towers[0]!.pos.x = -61; }],
   ['footprint outside bounds', levelFile, '/towers/0/pos/x', f => { f[levelFile].towers[0]!.pos.x = -59; }],
   ['overlap', levelFile, '/towers/1/pos', f => { f[levelFile].towers[1]!.pos.x = -35; }],
+  ['coincident zero-radius towers', levelFile, '/towers/1/pos', f => { f[archetypeFile].footprintRadius = 0; f[levelFile].towers[1]!.pos = { x: -40, y: 0 }; }],
   ['player owns no tower', levelFile, '/players/1/id', f => { f[levelFile].towers[1]!.owner = 'p1'; }],
   ['one owner', levelFile, '/towers', f => { f[levelFile].towers[1]!.owner = 'p1'; }],
   ['no human', levelFile, '/players', f => { f[levelFile].players[0]!.kind = 'bot'; }],

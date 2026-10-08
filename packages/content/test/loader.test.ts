@@ -135,3 +135,19 @@ test('the unchanged loader runs without Node globals in a browser-like runtime',
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), { [file]: { ...troop, speed: 1125 } });
 });
+
+// An absolute tolerance on value * 1000 rejects valid large values, whose product carries growing float error.
+test('fx3 accepts exactly the doubles nearest a three-decimal value', () => {
+  const schema = Type.Number({ 'x-unit': 'fx3' });
+  for (const [value, expected] of [[16392.331, 16392331], [2147483.647, 2147483647], [-2147483.647, -2147483647], [0.1, 100], [0.001, 1], [1.005, 1005]] as const) {
+    assert.equal(content.convertFixedPoint(value, schema, file), expected);
+  }
+  for (const value of [1e-13, 0.0001, 16392.3311]) {
+    assert.throws(() => content.convertFixedPoint({ x: value }, Type.Object({ x: schema }), file), (error: unknown) => {
+      assert.ok(error instanceof content.ContentLoadError);
+      assert.equal(error.errors[0]?.file, file);
+      assert.equal(error.errors[0]?.pointer, '/x');
+      return true;
+    });
+  }
+});

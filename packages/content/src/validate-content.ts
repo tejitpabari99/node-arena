@@ -111,7 +111,8 @@ export function validateLoadedContent(files: LoadedContent, opts: ValidateConten
       if (2 * (Math.abs(y) + radius) > level.bounds.h) add(file, `${pointer}/pos/y`, 'Footprint exceeds map bounds');
       for (const other of geometry) {
         const dx = x - other.x; const dy = y - other.y; const sum = radius + other.radius;
-        if (dx * dx + dy * dy < sum * sum) add(file, `${pointer}/pos`, `Footprint overlaps ${other.pointer}`);
+        // Coincident towers overlap even at radius 0, which would otherwise yield zero-length lines.
+        if ((dx === 0 && dy === 0) || dx * dx + dy * dy < sum * sum) add(file, `${pointer}/pos`, `Footprint overlaps ${other.pointer}`);
       }
       geometry.push({ pointer, x, y, radius });
     };

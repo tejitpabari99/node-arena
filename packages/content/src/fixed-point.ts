@@ -38,9 +38,9 @@ export function convertFixedPoint<T>(value: T, schema: NumericSchema, file: stri
       if (issues) { issues.push(error); return value; }
       throw new ContentLoadError([error]);
     }
-    const scaled = value * FIXED_POINT_SCALE;
-    const rounded = Math.round(scaled);
-    if (Math.abs(scaled - rounded) > 1e-9) {
+    const rounded = Math.round(value * FIXED_POINT_SCALE);
+    // Exact: division is correctly rounded, so this holds iff value is the double nearest a three-decimal number.
+    if (rounded / FIXED_POINT_SCALE !== value) {
       const error = { file, pointer, message: 'fx3 allows at most three decimal places' };
       if (issues) { issues.push(error); return value; }
       throw new ContentLoadError([error]);
