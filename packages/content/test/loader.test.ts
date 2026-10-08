@@ -6,6 +6,40 @@ import * as content from '../src/index.js';
 
 const file = 'data/troops/regular.json';
 const troop = { $schema: '../../schemas/troop.schema.json', schemaVersion: '1.0.0', id: 'regular', visual: 'troop.regular', value: 1, speed: 1.125 };
+
+// Omitting the converted lower bound would accept positive authored values as zero milli-units.
+test('positive fx3 underflow throws a located error', () => {
+  const schema = Type.Object({
+    speed: Type.Number({ exclusiveMinimum: 0, 'x-unit': 'fx3' }),
+    interval: Type.Number({ exclusiveMinimum: 0, 'x-unit': 'fx3' }),
+  });
+  const input = { speed: 1e-13, interval: 1e-13 };
+  assert.throws(() => content.convertFixedPoint(input, schema, file), (error: unknown) => {
+    assert.ok(error instanceof content.ContentLoadError);
+    assert.equal(error.errors[0]?.file, file);
+    assert.equal(error.errors[0]?.pointer, '/speed');
+    return true;
+  });
+});
+
+test('positive fx3 underflow aggregates without stopping traversal', () => {
+  const schema = Type.Object({
+    speed: Type.Number({ exclusiveMinimum: 0, 'x-unit': 'fx3' }),
+    interval: Type.Number({ exclusiveMinimum: 0, 'x-unit': 'fx3' }),
+  });
+  const issues: content.ContentIssue[] = [];
+  content.convertFixedPoint({ speed: 1e-13, interval: 1e-13 }, schema, file, '', issues);
+  assert.deepEqual(issues.map(({ file, pointer }) => ({ file, pointer })), [
+    { file, pointer: '/speed' }, { file, pointer: '/interval' },
+  ]);
+});
+
+// Applying the strict bound to all fx3 fields would reject valid zero noise/coordinates.
+test('zero remains valid for fx3 fields that do not declare a positive minimum', () => {
+  for (const schema of [Type.Number({ 'x-unit': 'fx3' }), Type.Number({ minimum: 0, 'x-unit': 'fx3' })]) {
+    assert.equal(content.convertFixedPoint(0, schema, file), 0);
+  }
+});
 // Namespace access lets missing APIs produce a test assertion, rather than an import error, in RED.
 function api() {
   assert.equal(typeof content.loadContent, 'function');

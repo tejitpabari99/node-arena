@@ -24,6 +24,51 @@ function located(files: content.ContentFileMap, file: string, pointer: string, m
   assert.ok(errors.some((issue) => issue.file === file && issue.pointer === pointer), JSON.stringify(errors));
 }
 
+// Missing the schema-tagged converted bound lets these positive values compile to zero.
+const underflowCases: [string, string, string, (files: ReturnType<typeof pack>) => void][] = [
+  ['troop speed', 'data/troops/regular.json', '/speed', f => { f['data/troops/regular.json'].speed = 1e-13; }],
+  ['troop speed override', levelFile, '/overrides/troops/regular/speed', f => { f[levelFile].overrides = { troops: { regular: { speed: 1e-13 } } }; }],
+  ['generation rate', archetypeFile, '/components/generates/ratePerSec', f => { f[archetypeFile].components.generates.ratePerSec = 1e-13; }],
+  ['generation rate override', levelFile, '/overrides/archetypes/standard/components/generates/ratePerSec', f => { f[levelFile].overrides = { archetypes: { standard: { components: { generates: { ratePerSec: 1e-13 } } } } }; }],
+  ['bot decision interval', 'data/bots/easy.json', '/params/skill/decisionIntervalSec', f => { f['data/bots/easy.json'].params.skill.decisionIntervalSec = 1e-13; }],
+  ['tier decision interval', 'tier.json', '/params/skill/decisionIntervalSec', f => {
+    Object.assign(f, { 'tier.json': { ...envelope('bot'), id: 'tier', kind: 'utility', params: { extends: 'easy', skill: { decisionIntervalSec: 1e-13, noise: 0, actionsPerDecision: 1 } } } });
+  }],
+];
+for (const [name, file, pointer, mutate] of underflowCases) {
+  test(`validator and loader reject positive underflow in ${name} at its authored location`, () => {
+    const files = pack();
+    mutate(files);
+    located(files, file, pointer);
+    assert.throws(() => content.loadContent(files), (error: unknown) =>
+      error instanceof content.ContentLoadError && error.errors.some(issue => issue.file === file && issue.pointer === pointer));
+  });
+}
+
+// Tightening the bound to >1 milli-unit would reject the smallest supported positive value.
+test('smallest positive speeds, generation rates and base/tier intervals compile to one milli-unit', () => {
+  const f = pack();
+  f['data/troops/regular.json'].speed = 0.001;
+  f[archetypeFile].components.generates.ratePerSec = 0.001;
+  f['data/bots/easy.json'].params.skill.decisionIntervalSec = 0.001;
+  f['data/bots/easy.json'].params.skill.noise = 0;
+  assert.deepEqual(validate(f), { errors: [], warnings: [] });
+  const base = content.compileLevel(content.loadContent(f), 'sample');
+  assert.equal(base.kinds[0]?.speedMilli, 1);
+  assert.equal(base.towers[0]?.components.generates?.ratePerSec, 1);
+  assert.equal(base.bots[0]?.profile.params.skill?.decisionIntervalSec, 1);
+  assert.equal(base.bots[0]?.profile.params.skill?.noise, 0);
+  assert.equal(base.towers[0]?.y, 0);
+  const tier = { ...envelope('bot'), id: 'tier', kind: 'utility', params: { extends: 'easy', skill: { decisionIntervalSec: 0.001, noise: 0, actionsPerDecision: 1 } } };
+  f[levelFile].players[1]!.botProfile = 'tier';
+  f[levelFile].overrides = { troops: { regular: { speed: 0.001 } }, archetypes: { standard: { components: { generates: { ratePerSec: 0.001 } } } } };
+  const patched = content.compileLevel(content.loadContent({ ...f, 'tier.json': tier }), 'sample');
+  assert.equal(patched.kinds[0]?.speedMilli, 1);
+  assert.equal(patched.towers[0]?.components.generates?.ratePerSec, 1);
+  assert.equal(patched.bots[0]?.profile.params.skill?.decisionIntervalSec, 1);
+  assert.equal(patched.bots[0]?.profile.params.skill?.noise, 0);
+});
+
 // Removing reference, range, geometry or player checks must allow one of these invalid packs.
 test('a valid sample pack validates without forcing twenty campaign levels and remains immutable', () => {
   const files = pack();

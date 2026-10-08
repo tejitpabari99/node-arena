@@ -19,6 +19,7 @@ export interface NumericSchema {
   type?: string;
   $id?: string;
   'x-unit'?: string;
+  exclusiveMinimum?: number;
   properties?: Record<string, NumericSchema>;
   patternProperties?: Record<string, NumericSchema>;
   items?: NumericSchema;
@@ -47,6 +48,11 @@ export function convertFixedPoint<T>(value: T, schema: NumericSchema, file: stri
     // The PRD specifies a symmetric range: |n| <= 2^31 - 1.
     if (!Number.isFinite(rounded) || Math.abs(rounded) > 2147483647) {
       const error = { file, pointer, message: 'scaled fx3 value exceeds int32 range' };
+      if (issues) { issues.push(error); return value; }
+      throw new ContentLoadError([error]);
+    }
+    if (schema.exclusiveMinimum === 0 && rounded <= 0) {
+      const error = { file, pointer, message: 'positive fx3 value must be at least one milli-unit' };
       if (issues) { issues.push(error); return value; }
       throw new ContentLoadError([error]);
     }
