@@ -14,3 +14,5 @@ export { type Command, type RejectReason, type SimEvent, type GameOver, type Out
 export function create(level: CompiledLevel, seed: number, options?: CreateOptions): Sim {
   return createState(level, seed, options);
 }
+
+export { createReplayRecorder, playReplay, type ReplayMetadata, type ReplayJson, type ReplayRecord, type ReplaySource, type ReplayRecorder, type ReplayResult } from './replay.js';
