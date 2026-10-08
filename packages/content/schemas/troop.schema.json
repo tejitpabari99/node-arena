@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "id",
+    "visual",
+    "value",
+    "speed"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "visual": {
+      "type": "string",
+      "minLength": 1,
+      "x-presentation": true
+    },
+    "value": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "speed": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 100,
+      "x-unit": "fx3"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://node-arena.local/schemas/troop.schema.json",
+  "title": "Troop",
+  "additionalProperties": false
+}
