@@ -50,3 +50,9 @@ test('bots can import the preset with their own src/math.ts exception', async ()
   assert.ok((await lint('Math.random();', 'src/strategy.ts', botsDir)).length > 0);
   assert.deepEqual(await lint('Math.imul(1, 2);', 'src/math.ts', botsDir), []);
 });
+test('division and division assignment are confined to src/math.ts', async () => {
+  for (const source of ['const n = 10 / 2;', 'let n = 10; n /= 2;']) {
+    assert.ok((await lint(source)).length > 0);
+    assert.deepEqual(await lint(source, 'src/math.ts'), []);
+  }
+});

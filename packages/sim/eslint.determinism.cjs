@@ -39,6 +39,12 @@ const plugin = { rules: {
             if (property.type === 'Property') check(property, objectName(node.init), property.key.name ?? property.key.value);
           }
         },
+        BinaryExpression(node) {
+          if (node.operator === '/' && !options.integerMath) context.report({ node, messageId: 'forbidden', data: { operation: 'Division outside math.ts' } });
+        },
+        AssignmentExpression(node) {
+          if (node.operator === '/=' && !options.integerMath) context.report({ node, messageId: 'forbidden', data: { operation: 'Division outside math.ts' } });
+        },
         Literal(node) {
           if (typeof node.value === 'number' && (node.raw.includes('.') || !Number.isInteger(node.value))) {
             context.report({ node, messageId: 'forbidden', data: { operation: 'Float literal' } });
