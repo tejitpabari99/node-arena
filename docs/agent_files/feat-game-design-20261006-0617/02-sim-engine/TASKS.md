@@ -17,8 +17,8 @@ Source of truth: /root/projects/node-arena/.worktrees/feat/game-design/docs/agen
 | 7 | SimView, `readTroops`, `snapshot`, `hash` | 6 | done |
 | 8 | Replay record/playback | 7 | done |
 | 9 | Rule tests (`covers R-XXX-NN`) | 6 | done |
-| 10 | Property tests | 8 | in-progress |
-| 11 | Golden replays + `sim:golden` + cross-runtime | 8, 9 | todo |
+| 10 | Property tests | 8 | done |
+| 11 | Golden replays + `sim:golden` + cross-runtime | 8, 9 | in-progress |
 | 12 | Extensibility fixture test | 6 | todo |
 | 13 | `bench:sim` + perf/event-volume measurement | 7 | todo |
 
