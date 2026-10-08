@@ -1,0 +1,427 @@
+{
+  "type": "object",
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "id",
+    "name",
+    "order",
+    "band",
+    "bounds",
+    "players",
+    "towers",
+    "obstacles",
+    "mapObjects",
+    "overrides"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "x-presentation": true
+    },
+    "order": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "band": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "visual": {
+      "type": "string",
+      "minLength": 1,
+      "x-presentation": true
+    },
+    "timeLimitSec": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "bounds": {
+      "type": "object",
+      "required": [
+        "w",
+        "h"
+      ],
+      "properties": {
+        "w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 500,
+          "x-unit": "fx3"
+        },
+        "h": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 500,
+          "x-unit": "fx3"
+        }
+      },
+      "additionalProperties": false
+    },
+    "players": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "colorKey"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "human"
+              },
+              {
+                "type": "string",
+                "const": "bot"
+              }
+            ]
+          },
+          "colorKey": {
+            "type": "string",
+            "minLength": 1,
+            "x-presentation": true
+          },
+          "team": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "botProfile": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "towers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "archetype",
+          "pos",
+          "owner",
+          "garrison"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "archetype": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "pos": {
+            "type": "object",
+            "required": [
+              "x",
+              "y"
+            ],
+            "properties": {
+              "x": {
+                "type": "number",
+                "minimum": -500,
+                "maximum": 500,
+                "x-unit": "fx3"
+              },
+              "y": {
+                "type": "number",
+                "minimum": -500,
+                "maximum": 500,
+                "x-unit": "fx3"
+              }
+            },
+            "additionalProperties": false
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "garrison": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "obstacles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "pos": {
+            "type": "object",
+            "required": [
+              "x",
+              "y"
+            ],
+            "properties": {
+              "x": {
+                "type": "number",
+                "minimum": -500,
+                "maximum": 500,
+                "x-unit": "fx3"
+              },
+              "y": {
+                "type": "number",
+                "minimum": -500,
+                "maximum": 500,
+                "x-unit": "fx3"
+              }
+            },
+            "additionalProperties": false
+          },
+          "footprintRadius": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 500,
+            "x-unit": "fx3"
+          },
+          "delta": {
+            "type": "integer",
+            "minimum": -2147483647,
+            "maximum": 2147483647
+          },
+          "hp": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "mapObjects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "pos": {
+            "type": "object",
+            "required": [
+              "x",
+              "y"
+            ],
+            "properties": {
+              "x": {
+                "type": "number",
+                "minimum": -500,
+                "maximum": 500,
+                "x-unit": "fx3"
+              },
+              "y": {
+                "type": "number",
+                "minimum": -500,
+                "maximum": 500,
+                "x-unit": "fx3"
+              }
+            },
+            "additionalProperties": false
+          },
+          "footprintRadius": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 500,
+            "x-unit": "fx3"
+          },
+          "delta": {
+            "type": "integer",
+            "minimum": -2147483647,
+            "maximum": 2147483647
+          },
+          "hp": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "properties": {
+        "globals": {
+          "type": "object",
+          "properties": {
+            "timeLimitSec": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          },
+          "additionalProperties": false
+        },
+        "troops": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*$": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2147483647
+                },
+                "speed": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 100,
+                  "x-unit": "fx3"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "archetypes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*$": {
+              "type": "object",
+              "required": [
+                "components"
+              ],
+              "properties": {
+                "components": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-z][a-zA-Z0-9]*$": {
+                      "type": "object",
+                      "properties": {
+                        "cap": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        },
+                        "troop": {
+                          "type": "string",
+                          "pattern": "^[a-z0-9][a-z0-9-]*$"
+                        },
+                        "ratePerSec": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "x-unit": "fx3"
+                        },
+                        "radius": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 500,
+                          "x-unit": "fx3"
+                        },
+                        "extraSlotAbove": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 2147483647
+                          }
+                        }
+                      },
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^(?!(?:cap|troop|ratePerSec|radius|extraSlotAbove)$)[a-z][a-zA-Z0-9]*$": {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": -2147483647,
+                                  "maximum": 2147483647
+                                },
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "boolean"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": -2147483647,
+                                    "maximum": 2147483647
+                                  },
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://node-arena.local/schemas/level.schema.json",
+  "title": "level",
+  "additionalProperties": false
+}

@@ -20,6 +20,7 @@ export interface NumericSchema {
   $id?: string;
   'x-unit'?: string;
   properties?: Record<string, NumericSchema>;
+  patternProperties?: Record<string, NumericSchema>;
   items?: NumericSchema;
   additionalProperties?: boolean | NumericSchema;
 }
@@ -51,6 +52,7 @@ export function convertFixedPoint<T>(value: T, schema: NumericSchema, file: stri
   if (value !== null && typeof value === 'object') {
     return Object.fromEntries(Object.entries(value).map(([key, item]) => {
       const childSchema = schema.properties?.[key]
+        ?? Object.entries(schema.patternProperties ?? {}).find(([pattern]) => new RegExp(pattern).test(key))?.[1]
         ?? (typeof schema.additionalProperties === 'object' ? schema.additionalProperties : {});
       return [key, convertFixedPoint(item, childSchema, file, `${pointer}/${escapePointerSegment(key)}`)];
     })) as T;

@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "defaults"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "defaults": {
+      "type": "object",
+      "required": [
+        "timeLimitSec",
+        "theme"
+      ],
+      "properties": {
+        "timeLimitSec": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "theme": {
+          "type": "string",
+          "minLength": 1,
+          "x-presentation": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://node-arena.local/schemas/balance.schema.json",
+  "title": "balance",
+  "additionalProperties": false
+}

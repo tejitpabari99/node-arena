@@ -27,7 +27,7 @@ test('loads strings and objects, scales only tagged fields, and leaves inputs un
 // Using decimal string length or exact float equality would wrongly reject these values.
 for (const [authored, expected] of [[0.001, 1], [0.29, 290], [1.001, 1001], [100, 100000]] as const) {
   test(`loads the three-decimal boundary ${authored}`, () => {
-    assert.equal(api().loadContent({ [file]: { ...troop, speed: authored } })[file]?.speed, expected);
+    assert.deepEqual(api().loadContent({ [file]: { ...troop, speed: authored } })[file], { ...troop, speed: expected });
   });
 }
 
