@@ -62,7 +62,7 @@ test('integer square root floors at exact square boundaries through MAX_SAFE_INT
   for (const n of values) assert.equal(math.isqrt(n), Number(root(BigInt(n))), `sqrt ${n}`);
   for (const n of [-1, NaN, Infinity, 0.5, Number.MAX_SAFE_INTEGER + 1]) assert.throws(() => math.isqrt(n), RangeError);
 });
-test('covers R-TCK-01 / R-TCK-02: fixed-point spike matches BigInt floor-length arrival at 20 Hz', () => {
+test('covers R-TCK-02: fixed-point spike matches BigInt floor-length arrival at 20 Hz', () => {
   assert.equal(typeof math.isqrt, 'function');
   assert.equal(typeof math.TICK_RATE, 'number');
   const coords = [-500000, -499999, -1, 0, 1, 499999, 500000];

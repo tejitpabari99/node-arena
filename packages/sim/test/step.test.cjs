@@ -16,7 +16,7 @@ function enqueue(s, from, to, owner, p0, value = 1) {
   s.players.transit[owner] += value;
   return ch;
 }
-test('covers R-LIN-02 R-TCK-05: arrivals lower slots and cut greatest drawSeq repeatedly, retaining troops', () => {
+test('covers R-TCK-05: arrivals lower slots and cut greatest drawSeq repeatedly, retaining troops', () => {
   const s = create(level({ speed: 0 }), 0);
   s.step([draw('a', 'd'), draw('a', 'b'), draw('a', 'c')]);
   const kept = enqueue(s, 0, 2, 0, 0);
@@ -67,7 +67,7 @@ test('covers R-WIN-02: human elimination loses even with multiple bot teams, uni
     assert.deepEqual(events.at(-1), { type: 'GameOver', tick: 1, outcome: 'lost', winnerTeam: winner });
   }
 });
-test('covers R-WIN-01 R-WIN-02: teams determine winner, neutral towers do not keep a player alive', () => {
+test('covers R-WIN-01: teams determine winner, neutral towers do not keep a player alive', () => {
   const s = create(level({ owners: [0, 1, -1, -1], teams: ['allied', 'allied'] }), 0);
   assert.deepEqual(s.step([]).at(-1), { type: 'GameOver', tick: 1, outcome: 'won', winnerTeam: 'allied' });
 });

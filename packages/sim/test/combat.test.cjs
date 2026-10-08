@@ -45,7 +45,7 @@ test('covers R-CMB-01: clash repeats qualifying fronts and reports canonical own
   assert.deepEqual([...s.players.transit], [0, 0]);
   assert.deepEqual([...s.players.stats.kills], [3, 3]);
 });
-test('covers R-ENT-04 R-CMB-01: friendly mixed fronts block later hostile fronts and crossing pairs never clash', () => {
+test('covers R-ENT-04: friendly mixed fronts block later hostile fronts and crossing pairs never clash', () => {
   const s = create(level(), 0);
   troop(s, 0, 1, 0, 60); troop(s, 0, 1, 1, 60);
   troop(s, 1, 0, 0, 40); troop(s, 1, 0, 1, 40);
@@ -56,7 +56,7 @@ test('covers R-ENT-04 R-CMB-01: friendly mixed fronts block later hostile fronts
   const t = create(allied, 0); troop(t, 0, 1, 0, 60); troop(t, 1, 0, 1, 40);
   assert.deepEqual(t.step([]), [{ type: 'GameOver', tick: 1, outcome: 'won', winnerTeam: 'p0' }]);
 });
-test('covers R-CMB-02 R-CMB-03: overshoot order re-evaluates later arrivals through capture and recapture', () => {
+test('covers R-CMB-02: overshoot order re-evaluates later arrivals through capture and recapture', () => {
   const s = create(level({ counts: [0, 1, 0, 0] }), 0);
   troop(s, 0, 1, 0, 109); troop(s, 0, 1, 0, 106);
   troop(s, 3, 1, 1, 202);
@@ -81,7 +81,7 @@ test('covers R-CMB-02: exact arrival ties use channel key then FIFO, independent
   assert.equal(s.tower.owner[1], 1);
   assert.equal(s.tower.col['garrison.count'][1], 2);
 });
-test('covers R-CAP-01 R-CMB-03: tank leftover capture bounds garrison and accounts overflow and neutral hostility', () => {
+test('covers R-CMB-03: tank leftover capture bounds garrison and accounts overflow and neutral hostility', () => {
   for (const [count, cap, want, lost, kills] of [[1, 50, 1, 0, 1], [0, 1, 1, 1, 0], [2, 50, 0, 0, 2]]) {
     const s = create(level({ owners: [0, -1, 0, 1], counts: [0, count, 0, 0], cap }), 0);
     troop(s, 0, 1, 0, 100, 2);
@@ -95,7 +95,7 @@ test('covers R-CAP-01 R-CMB-03: tank leftover capture bounds garrison and accoun
     assert.equal(s.players.transit[0], 0);
   }
 });
-test('covers R-CAP-01 R-ENT-04: same-team arrivals reinforce with excess counted to troop owner', () => {
+test('covers R-CAP-01: same-team arrivals reinforce with excess counted to troop owner', () => {
   const input = level({ counts: [0, 49, 0, 0] }); input.players[1].team = 'p0';
   const s = create(input, 0);
   troop(s, 0, 1, 0, 100, 2);
@@ -105,7 +105,7 @@ test('covers R-CAP-01 R-ENT-04: same-team arrivals reinforce with excess counted
   assert.equal(s.players.stats.overflowLost[0], 1);
   assert.deepEqual([...s.players.stats.kills], [0, 0]);
 });
-test('covers R-CPT-01 R-CPT-02: capture cuts old outgoing permission, resets registered state and preserves transit', () => {
+test('covers R-CPT-02: capture cuts old outgoing permission, resets registered state and preserves transit', () => {
   const s = create(level({ counts: [0, 1, 0, 0], rate: 1500 }), 0);
   s.step([draw('b', 'd', 'p1')]);
   const outgoing = troop(s, 1, 3, 1, 0);
@@ -122,7 +122,7 @@ test('covers R-CPT-01 R-CPT-02: capture cuts old outgoing permission, resets reg
   assert.deepEqual(events.filter(e => e.type === 'LineCut'), [{ type: 'LineCut', tick: 2, channel: 7, reason: 'captured' }]);
   assert.deepEqual([...s.players.transit], [0, 1]);
 });
-test('covers R-TCK-05 R-ENT-02 R-LIN-05: analytic motion leaves in-flight bases unchanged and new departures at zero', () => {
+test('covers R-TCK-04: analytic motion leaves in-flight bases unchanged and new departures at zero', () => {
   const s = create(level({ speed: 20, counts: [0, 3, 0, 0] }), 0);
   const ch = troop(s, 0, 1, 0, 0);
   const base = ch.troops.front();

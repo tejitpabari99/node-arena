@@ -39,7 +39,7 @@ test('covers R-TCK-03: stable player ordering preserves commands within each pla
   assert.deepEqual(events.map(e => e.type), ['LineDrawn', 'LineCut', 'LineDrawn', 'LineDrawn']);
   assert.deepEqual(events.filter(e => e.type === 'LineDrawn').map(e => e.owner), [0, 0, 1]);
 });
-test('covers R-LIN-03 R-LIN-05: replacement and cuts preserve in-flight troops; rejection preserves reverse permission', () => {
+test('covers R-LIN-03: replacement and cuts preserve in-flight troops; rejection preserves reverse permission', () => {
   const s = create(level({ count: 10 }), 0);
   s.step([draw('b', 'a'), draw('a', 'c')]);
   const reverse = s.channels[4];
@@ -55,7 +55,7 @@ test('covers R-LIN-03 R-LIN-05: replacement and cuts preserve in-flight troops; 
   assert.equal(s.channels[1].troops.size, 1);
   assert.equal(s.rejected, 1);
 });
-test('covers R-GEN-01 R-GEN-02: fractional generation, neutral and missing components, slots refresh', () => {
+test('covers R-GEN-02: fractional generation, neutral and missing components, slots refresh', () => {
   const s = create(level({ rate: 1500, count: 10 }), 0);
   assert.equal(typeof s.step, 'function');
   for (let i = 0; i < 13; i++) s.step([]);
@@ -71,7 +71,7 @@ test('covers R-GEN-01 R-GEN-02: fractional generation, neutral and missing compo
   assert.equal(neutral.tower.col['generates.acc'][0], 0);
   assert.equal(neutral.players.stats.generated[0], 1); // b alone
 });
-test('covers R-SND-01 R-SND-02: sending freezes count and shares generation by sorted targets through cuts', () => {
+test('covers R-SND-02: sending freezes count and shares generation by sorted targets through cuts', () => {
   const s = create(level({ rate: 60000 }), 0);
   const events = s.step([draw('a', 'c'), draw('a', 'b')]);
   assert.deepEqual(events.filter(e => e.type === 'TroopSpawned' && e.channel < 4).map(e => e.channel), [1, 2, 1]);
@@ -84,7 +84,7 @@ test('covers R-SND-01 R-SND-02: sending freezes count and shares generation by s
   assert.equal(s.channels[1].troops.size, 4);
   assert.equal(s.channels[2].troops.size, 5);
 });
-test('covers R-CAP-01 R-CAP-02: no-bank cap preserves fractional remainder, discards overflow and keeps sending', () => {
+test('covers R-CAP-02: no-bank cap preserves fractional remainder, discards overflow and keeps sending', () => {
   const s = create(level({ rate: 65000, count: 49 }), 0);
   s.step([]);
   assert.equal(s.tower.col['garrison.count'][0], 50);
