@@ -65,6 +65,18 @@ test('header versions, identity, seed format and malformed records are refused',
   }
   assert.throws(() => api.createReplayRecorder(level(), NaN, metadata), /replay/i);
 });
+test('rulesVersion requires equal major.minor only; patch may differ, minor and major refused', () => {
+  const rec = recorded(), [major, minor, patch] = metadata.rulesVersion.split('.').map(Number);
+  const withRules = v => { const t = structuredClone(rec); t.header.rulesVersion = v; return t; };
+  assert.equal(api.playReplay(source(), withRules(`${major}.${minor}.${patch + 1}`)).ok, true);
+  for (const v of [`${major}.${minor + 1}.${patch}`, `${major + 1}.${minor}.${patch}`]) assert.throws(() => api.playReplay(source(), withRules(v)), /replay/i, v);
+  assert.equal(api.playReplay({ metadata: { ...metadata, rulesVersion: `${major}.${minor}.${patch + 1}` }, level: level() }, rec).ok, true);
+});
+test('playback ending early (engine outcome differs from recording) reports divergence instead of throwing', () => {
+  const rec = recorded(), early = level(); early.towers[1].owner = 0;
+  const result = api.playReplay({ metadata, level: early }, rec);
+  assert.equal(result.ok, false); assert.equal(result.divergingTick, 1); assert.equal(result.sim.view.over.outcome, 'won');
+});
 test('checkpoint reports first observable divergent tick and final hash, outcome and changed seed fail', () => {
   const rec = recorded();
   for (const [mutate, tick] of [[r => r.checkpoints[0].hash = '0'.repeat(16), 20], [r => r.checkpoints[1].hash = '0'.repeat(16), 40], [r => r.finalHash = '0'.repeat(16), 45], [r => r.outcome = { outcome: 'draw', winnerTeam: null }, 45], [r => r.header.seed = 78, 20], [r => { r.commands[1].cmd.to = 'a'; r.commands[2].cmd.to = 'a'; }, 20]]) {
@@ -101,7 +113,7 @@ test('empty initial recording and gameover before first checkpoint are determini
   assert.equal(recorder.record().outcome.outcome, 'won');
   assert.equal(api.playReplay({ metadata, level: compiled }, recorder.record()).ok, true);
   const rec = recorder.record(); rec.finalTick = 2;
-  assert.throws(() => api.playReplay({ metadata, level: compiled }, rec), /replay/i);
+  const result = api.playReplay({ metadata, level: compiled }, rec); assert.equal(result.ok, false); assert.equal(result.divergingTick, 1);
 });
 test('lossy and cyclic submissions are refused atomically before stepping', () => {
   const recorder = api.createReplayRecorder(level(), 77, metadata);

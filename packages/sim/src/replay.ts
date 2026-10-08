@@ -104,14 +104,15 @@ export function createReplayRecorder(level: CompiledLevel, seed: number, metadat
 export function playReplay(content: ReplaySource, rec: ReplayRecord): ReplayResult {
   validate(rec);
   if (!metadataValid(content.metadata)) invalid();
-  for (const key of ['rulesVersion', 'schemaVersion', 'contentVersion'] as const) if (rec.header[key] !== content.metadata[key]) invalid();
+  if (rec.header.rulesVersion.split('.', 2).join('.') !== content.metadata.rulesVersion.split('.', 2).join('.')) invalid();
+  for (const key of ['schemaVersion', 'contentVersion'] as const) if (rec.header[key] !== content.metadata[key]) invalid();
   const level = content.level ?? content.resolveLevel(rec.header.levelId);
   if (level.id !== rec.header.levelId || level.simHash !== rec.header.simHash) invalid();
   const sim = create(level, rec.header.seed);
   if (rec.finalTick > sim.view.timeLimitTicks) invalid();
   let commandIndex = 0, checkpointIndex = 0;
   while (sim.tick < rec.finalTick) {
-    if (sim.view.over) invalid();
+    if (sim.view.over) return { ok: false, sim, divergingTick: sim.tick };
     const cmds: Command[] = [];
     while (commandIndex < rec.commands.length && rec.commands[commandIndex]!.tick === sim.tick) cmds.push(clone(rec.commands[commandIndex++]!.cmd) as unknown as Command);
     sim.step(cmds, { events: false });
