@@ -85,7 +85,7 @@ export interface SimState {
 }
 export interface CreateOptions { readonly registry?: ComponentRegistry }
 
-/** Staged constructor with command/economy phases; combat/view/hash follow in later tasks. */
+/** Staged constructor through arrivals/capture; outcome/view/hash follow in later tasks. */
 export function create(level: CompiledLevel, seed: number, options: CreateOptions = {}): SimState {
   const registry = options.registry ?? createComponentRegistry();
   registry.assertParity(level.componentNames);

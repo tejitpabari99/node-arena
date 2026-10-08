@@ -1,4 +1,5 @@
 import type { SimState, Channel } from './state.js';
+import { arrive, clash } from './combat.js';
 export type Command =
   | { type: 'DrawLine'; player: string; from: string; to: string }
   | { type: 'CutLine'; player: string; from: string; to: string };
@@ -7,6 +8,9 @@ export type SimEvent =
   | { type: 'LineDrawn'; tick: number; channel: number; from: number; to: number; owner: number }
   | { type: 'LineCut'; tick: number; channel: number; reason: 'player' | 'slots' | 'captured' | 'replaced' }
   | { type: 'TroopSpawned'; tick: number; channel: number; seq: number; owner: number }
+  | { type: 'Clash'; tick: number; channel: number; progA: number; progB: number; value: number }
+  | { type: 'TroopArrived'; tick: number; tower: number; owner: number; effect: 'reinforce' | 'overflow' | 'hit' }
+  | { type: 'Captured'; tick: number; tower: number; from: number; to: number }
   | { type: 'CommandRejected'; tick: number; cmd: unknown; reason: RejectReason };
 export interface DrawValidation { reason: RejectReason | null; reverse?: Channel }
 const emptyEvents: readonly SimEvent[] = Object.freeze([]);
@@ -74,6 +78,10 @@ export function step(state: SimState, commands: readonly Command[], options: { e
   for (const phase of ['commands', 'generation', 'departures'] as const) {
     for (const system of state.systems[phase]) system.run(state, state.componentTowers.get(system.component)!);
   }
+  clash(state);
+  for (const system of state.systems.clash) system.run(state, state.componentTowers.get(system.component)!);
+  arrive(state);
+  for (const system of state.systems.arrivals) system.run(state, state.componentTowers.get(system.component)!);
   const events = state.events ?? emptyEvents;
   state.events = null;
   return events;
