@@ -12,3 +12,4 @@ export { validateContent, type ValidationResult, type ValidateContentOptions } f
 export { parseContent } from './parse-content.js';
 export { resolveProfiles } from './resolve-profiles.js';
 export { resolveLevelOverrides, type ResolvedLevelData } from './resolve-overrides.js';
+export { compileLevel, type CompiledLevel, type CompiledTower, type CompiledPlayer, type CompiledTroopKind, type CompiledComponentParams, type CompiledComponents, type CompiledBot, type ResolvedBotProfile } from './compile.js';
