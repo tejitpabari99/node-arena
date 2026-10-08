@@ -102,3 +102,47 @@ export class Sfc32 {
     return [this.a, this.b, this.c, this.d];
   }
 }
+
+/** Streaming Murmur3-style dual lanes; integer multiply stays inside math.ts. */
+export class WordHash {
+  private a = 0x9e3779b9;
+  private b = 0x243f6a88;
+  private count = 0;
+
+  word(value: number): void {
+    let lane = Math.imul(value | 0, 0xcc9e2d51);
+    lane = (lane << 15) | (lane >>> 17);
+    lane = Math.imul(lane, 0x1b873593);
+    this.a = this.mix(this.a, lane);
+    this.b = this.mix(this.b, lane);
+    this.count++;
+  }
+
+  words(values: ArrayLike<number>): void {
+    this.word(values.length);
+    for (let i = 0; i < values.length; i++) this.word(values[i]!);
+  }
+
+  text(value: string): void {
+    this.word(value.length);
+    for (let i = 0; i < value.length; i++) this.word(value.charCodeAt(i));
+  }
+
+  finish(): string {
+    return this.avalanche(this.a ^ this.count).toString(16).padStart(8, '0') + this.avalanche(this.b ^ this.count).toString(16).padStart(8, '0');
+  }
+
+  private mix(hash: number, lane: number): number {
+    hash ^= lane;
+    hash = (hash << 13) | (hash >>> 19);
+    return (Math.imul(hash, 5) + 0xe6546b64) | 0;
+  }
+
+  private avalanche(hash: number): number {
+    hash ^= hash >>> 16;
+    hash = Math.imul(hash, 0x85ebca6b);
+    hash ^= hash >>> 13;
+    hash = Math.imul(hash, 0xc2b2ae35);
+    return (hash ^ (hash >>> 16)) >>> 0;
+  }
+}

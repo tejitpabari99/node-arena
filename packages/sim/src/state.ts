@@ -1,3 +1,5 @@
+import { hashState } from './hash.js';
+import { createView, refreshView, readTroops, snapshot, type Sim, type SimView, type TroopBuf, type SimSnapshot } from './read.js';
 import type { CompiledLevel, CompiledPlayer, CompiledTower, CompiledComponents } from '@node-arena/content';
 import { step, validateDraw, type Command, type RejectReason, type SimEvent, type GameOver } from './commands.js';
 import { TICK_RATE, isqrt, Sfc32 } from './math.js';
@@ -40,6 +42,11 @@ export class TroopRing {
     }
   }
 
+  /** Nonallocating logical FIFO column access, independent of wrap/capacity. */
+  read(name: typeof troopColumns[number], offset: number): number {
+    return this.col[name][(this.head + offset) % this.col.p0.length]!;
+  }
+
   front(): Troop | undefined {
     if (this.size === 0) return undefined;
     const i = this.head;
@@ -70,6 +77,10 @@ export interface PlayerState {
 export interface TowerState { owner: Int32Array; team: Int32Array; slots: Int32Array; lines: Int32Array; col: Record<string, Int32Array> }
 export interface ScheduledSystem extends ComponentSystem { readonly component: string }
 export interface SimState {
+  readonly view: SimView;
+  readTroops(out: TroopBuf): number;
+  snapshot(): SimSnapshot;
+  hash(): string;
   tick: number;
   over: GameOver | null;
   debug: boolean;
@@ -104,8 +115,8 @@ export interface SimState {
 }
 export interface CreateOptions { readonly registry?: ComponentRegistry; readonly debug?: boolean }
 
-/** Full tick mechanics; public view/hash/replay follow in later tasks. */
-export function create(level: CompiledLevel, seed: number, options: CreateOptions = {}): SimState {
+/** Internal state access remains available for mechanics fixtures. */
+export function create(level: CompiledLevel, seed: number, options: CreateOptions = {}): SimState & Sim {
   const registry = options.registry ?? createComponentRegistry();
   registry.assertParity(level.componentNames);
   const components = registry.definitions();
@@ -156,10 +167,19 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
     lengths[to * n + from] = length;
   }
   const channels: (Channel | undefined)[] = Array.from({ length: n * n }, () => undefined);
-  const state: SimState = { tick: 0, over: null, rejected: 0, drawSeq: 0, troopSeq: 0, pendingDepartures: column(), events: null,
+  let view: SimView;
+  const state: SimState = { get view() { return view; },
+    readTroops(out) { return readTroops(state, out); },
+    snapshot() { return snapshot(state); },
+    hash() { return hashState(state); }, tick: 0, over: null, rejected: 0, drawSeq: 0, troopSeq: 0, pendingDepartures: column(), events: null,
     debug: options.debug ?? false, teamIds: [...teams.keys()], eliminated: playerColumn(),
     accounting: { initial: level.towers.reduce((sum, tower) => sum + tower.garrison, 0), generated: 0, overflow: 0, hits: 0, clashes: 0 },
-    step(commands, options) { return step(state, commands, options); },
+    step(commands, options) {
+      if (state.over) return step(state, commands, options);
+      const events = step(state, commands, options);
+      refreshView(state);
+      return events;
+    },
     canDraw(player, from, to) { return validateDraw(state, player, from, to).reason; },
     resetOnCapture(tower) {
       for (const component of components) if (Object.hasOwn(state.towerParams[tower]!, component.name)) component.hooks?.onCapture?.(state, tower);
@@ -176,5 +196,6 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
     },
   };
   for (const component of components) component.setup?.(state, componentTowers.get(component.name)!);
+  view = createView(state);
   return state;
 }
