@@ -22,4 +22,4 @@ pnpm content:schemas  # regenerate committed JSON Schema after schema changes
 pnpm check:schemas   # fail if generated schemas are stale
 ```
 
-The content package exports `TroopSchema`, its inferred `Troop` type, `SCHEMA_VERSION`, `createAjv`, and `validateTroop`. Node file access belongs in external adapters or package scripts; all content source files reject imports of fs, path, and crypto.
+The content package exports `TroopSchema`, its inferred `Troop` type, `SCHEMA_VERSION`, `createAjv`, `validateTroop`, `FIXED_POINT_SCALE`, `convertFixedPoint`, and `loadContent`. `loadContent(fileMap)` accepts JSON strings or objects keyed by source path and returns new objects under the same paths; its current schema dispatch supports troops. Only fields tagged `x-unit: fx3` become milli-unit integers; troop counts remain integers in authored units. `ContentLoadError.errors` contains source files, JSON pointers, and messages. Other entity schemas and semantic checks are added in the following content tasks. Node file access belongs in external adapters or package scripts; all content source files reject imports of fs, path, and crypto.
