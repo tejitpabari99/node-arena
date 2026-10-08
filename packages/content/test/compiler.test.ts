@@ -85,3 +85,30 @@ test('unknown level ids produce a located content error instead of another level
 test('compiled metadata carries the actual content component registry names', () => {
   assert.deepEqual(compile(content.loadContent(fixture())).componentNames, Object.keys(content.COMPONENT_REGISTRY.components).sort());
 });
+
+for (const location of ['default', 'explicit', 'override'] as const) {
+  const pointer = location === 'default' ? '/defaults/timeLimitSec' : location === 'explicit' ? '/timeLimitSec' : '/overrides/globals/timeLimitSec';
+  function durationFiles(seconds: number) {
+    const files = fixture();
+    const level = files['level.json'] as content.Level;
+    level.overrides = {};
+    if (location === 'default') (files['balance.json'] as content.Balance).defaults.timeLimitSec = seconds;
+    else if (location === 'explicit') level.timeLimitSec = seconds;
+    else level.overrides = { globals: { timeLimitSec: seconds } };
+    return files;
+  }
+  test(`${location} duration accepts the int32 tick boundary and rejects the next second with location`, () => {
+    assert.equal(compile(content.loadContent(durationFiles(107374182))).timeLimitSec, 107374182);
+    const files = durationFiles(107374183);
+    const result = content.validateContent(files);
+    assert.ok(result.errors.some(issue => issue.pointer === pointer));
+    assert.throws(() => content.loadContent(files), (error: unknown) => error instanceof content.ContentLoadError && error.errors.some(issue => issue.file === (location === 'default' ? 'balance.json' : 'level.json') && issue.pointer === pointer));
+  });
+  test(`compiler rejects ${location} duration mutation beyond validated tick bounds`, () => {
+    const loaded = content.loadContent(durationFiles(107374182));
+    if (location === 'default') (loaded['balance.json'] as content.Balance).defaults.timeLimitSec = 107374183;
+    else if (location === 'explicit') (loaded['level.json'] as content.Level).timeLimitSec = 107374183;
+    else (loaded['level.json'] as content.Level).overrides.globals!.timeLimitSec = 107374183;
+    assert.throws(() => compile(loaded), (error: unknown) => error instanceof content.ContentLoadError && error.errors.some(issue => issue.file === (location === 'default' ? 'balance.json' : 'level.json') && issue.pointer === pointer));
+  });
+}

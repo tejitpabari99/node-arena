@@ -83,7 +83,7 @@ export interface Channel { key: number; from: number; to: number; length: number
 export interface PlayerState {
   team: Int32Array; alive: Int32Array; transit: Int32Array;
   kind: CompiledPlayer['kind'][]; colorKey: string[];
-  stats: { generated: Int32Array; overflowLost: Int32Array; kills: Int32Array; captures: Int32Array };
+  stats: { generated: Float64Array; overflowLost: Float64Array; kills: Float64Array; captures: Float64Array };
 }
 export interface TowerState { owner: Int32Array; team: Int32Array; slots: Int32Array; lines: Int32Array; col: Record<string, Int32Array> }
 export interface ScheduledSystem extends ComponentSystem { readonly component: string }
@@ -131,6 +131,8 @@ export interface CreateOptions { readonly registry?: ComponentRegistry; readonly
 
 /** Internal state access remains available for mechanics fixtures. */
 export function create(level: CompiledLevel, seed: number, options: CreateOptions = {}): SimState & Sim {
+  const timeLimitTicks = level.timeLimitSec * TICK_RATE;
+  if (!Number.isInteger(level.timeLimitSec) || level.timeLimitSec <= 0 || !Number.isInteger(timeLimitTicks) || timeLimitTicks > 2147483647) throw new RangeError('Invalid timeLimitSec: timeLimitTicks must fit positive int32');
   const registry = options.registry ?? createComponentRegistry();
   registry.assertParity(level.componentNames);
   const components = registry.definitions();
@@ -140,7 +142,8 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
   const p = level.players.length;
   const column = () => new Int32Array(n);
   const playerColumn = () => new Int32Array(p);
-  const players: PlayerState = { team: playerColumn(), alive: playerColumn(), transit: playerColumn(), kind: level.players.map(player => player.kind), colorKey: level.players.map(player => player.colorKey), stats: { generated: playerColumn(), overflowLost: playerColumn(), kills: playerColumn(), captures: playerColumn() } };
+  const statsColumn = () => new Float64Array(p);
+  const players: PlayerState = { team: playerColumn(), alive: playerColumn(), transit: playerColumn(), kind: level.players.map(player => player.kind), colorKey: level.players.map(player => player.colorKey), stats: { generated: statsColumn(), overflowLost: statsColumn(), kills: statsColumn(), captures: statsColumn() } };
   const teams = new Map<string, number>();
   for (let i = 0; i < p; i++) {
     const team = level.players[i]!.team;
@@ -199,7 +202,7 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
     canDraw(player, from, to) { return validateDraw(state, player, from, to).reason; },
     resetOnCapture(tower) {
       for (const component of components) if (Object.hasOwn(state.towerParams[tower]!, component.name)) component.hooks?.onCapture?.(state, tower);
-    }, timeLimitTicks: level.timeLimitSec * TICK_RATE, visual: level.visual, ids: { players: level.players.map(player => player.id), towers: level.towers.map(tower => tower.id) }, players, tower,
+    }, timeLimitTicks, visual: level.visual, ids: { players: level.players.map(player => player.id), towers: level.towers.map(tower => tower.id) }, players, tower,
     towerStatic: level.towers.map((tower: CompiledTower) => ({ x: tower.x, y: tower.y, archetype: tower.archetype, visual: tower.visual, footprintRadius: tower.footprintRadius, components: sortedNames(tower.components) })),
     towerParams: level.towers.map(tower => Object.fromEntries(sortedNames(tower.components).map(name => [name, Object.fromEntries(Object.entries(tower.components[name]!).sort(([a], [b]) => compareNames(a, b)).map(([param, value]) => {
       return [param, Array.isArray(value) ? [...value] : value];

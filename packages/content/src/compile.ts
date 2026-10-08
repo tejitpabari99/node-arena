@@ -75,6 +75,13 @@ export function compileLevel(content: LoadedContent, levelId: string): CompiledL
   if (!entry) throw new ContentLoadError([{ file: levelId, pointer: '/id', message: 'Unknown level id' }]);
   const [file, level] = entry;
   const { archetypes, troops, globals } = resolveLevelOverrides(content, level, file);
+  const timeLimitSec = level.timeLimitSec ?? globals.timeLimitSec;
+  if (!Number.isInteger(timeLimitSec) || timeLimitSec < 1 || timeLimitSec > 107374182) {
+    const balanceFile = Object.entries(content).find(([, entity]) => 'defaults' in entity)?.[0] ?? file;
+    const explicit = level.timeLimitSec !== undefined;
+    const overridden = level.overrides.globals?.timeLimitSec !== undefined;
+    throw new ContentLoadError([{ file: explicit || overridden ? file : balanceFile, pointer: explicit ? '/timeLimitSec' : overridden ? '/overrides/globals/timeLimitSec' : '/defaults/timeLimitSec', message: 'Duration must resolve to positive int32 ticks (maximum 107374182 seconds)' }]);
+  }
   const players: CompiledPlayer[] = [...level.players].sort(byId).map(player => ({ id: player.id, kind: player.kind, colorKey: player.colorKey, team: player.team ?? player.id }));
   const playerIndices = new Map(players.map((player, index) => [player.id, index]));
   const sourceTowers = [...level.towers].sort(byId);
@@ -101,6 +108,6 @@ export function compileLevel(content: LoadedContent, levelId: string): CompiledL
     delete params.extends;
     return [{ player: index, profile: { id: profile.id, kind: profile.kind, params } }];
   });
-  const compiled = { componentNames: Object.keys(COMPONENT_REGISTRY.components).sort((a, b) => a < b ? -1 : a > b ? 1 : 0), id: level.id, timeLimitSec: level.timeLimitSec ?? globals.timeLimitSec, visual: level.visual ?? globals.theme, bounds: structuredClone(level.bounds), globals, towers, players, kinds, bots };
+  const compiled = { componentNames: Object.keys(COMPONENT_REGISTRY.components).sort((a, b) => a < b ? -1 : a > b ? 1 : 0), id: level.id, timeLimitSec, visual: level.visual ?? globals.theme, bounds: structuredClone(level.bounds), globals, towers, players, kinds, bots };
   return { ...compiled, simHash: hashCompiledLevel(compiled), botHash: Object.fromEntries(bots.map(bot => [bot.profile.id, hashBotProfile(bot.profile)])) };
 }

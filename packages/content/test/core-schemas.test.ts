@@ -89,3 +89,13 @@ test('extension params keep untagged numbers integral and scale reserved and fut
   assert.deepEqual(loaded['archer.json'], { ...archer, footprintRadius: 3000, components: { shoots: { ratePerSec: 625, radius: 12125, targeting: 'nearestHostile' } } });
   assert.deepEqual((loaded['level.json'] as content.Level).mapObjects, [{ kind: 'gate', pos: { x: 1125, y: -2625 }, footprintRadius: 250, delta: 1 }]);
 });
+
+test('generated editor duration schemas enforce positive int32 ticks for defaults, levels and overrides', async () => {
+  const balance = await validator('balance'), level = await validator('level');
+  for (const seconds of [107374182, 107374183]) {
+    const valid = seconds === 107374182;
+    assert.equal(balance({ ...samples.balance, defaults: { ...samples.balance.defaults, timeLimitSec: seconds } }), valid);
+    assert.equal(level({ ...samples.level, timeLimitSec: seconds }), valid);
+    assert.equal(level({ ...samples.level, overrides: { globals: { timeLimitSec: seconds } } }), valid);
+  }
+});

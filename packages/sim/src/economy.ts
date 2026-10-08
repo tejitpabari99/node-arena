@@ -1,3 +1,4 @@
+import { addStat } from './stats.js';
 import type { SimState } from './state.js';
 import { cutChannel, type DrawValidation } from './commands.js';
 import { idiv, TICK_RATE } from './math.js';
@@ -42,13 +43,13 @@ export function generate(state: SimState, towers: Int32Array): void {
     acc[i] = total % denominator;
     const value = troops * state.kinds[state.tower.col['generates.troop']![i]!]!.value;
     state.accounting.generated += value;
-    state.players.stats.generated[owner] = state.players.stats.generated[owner]! + value;
+    addStat(state.players.stats, 'generated', owner, value);
     if (state.tower.lines[i]! > 0) state.pendingDepartures[i] = troops;
     else {
       const added = Math.min(value, cap[i]! - count[i]!);
       count[i] = count[i]! + added;
       state.accounting.overflow += value - added;
-      state.players.stats.overflowLost[owner] = state.players.stats.overflowLost[owner]! + value - added;
+      addStat(state.players.stats, 'overflowLost', owner, value - added);
     }
   }
 }

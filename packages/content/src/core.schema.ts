@@ -29,7 +29,7 @@ export const ComponentParamsSchema = Type.Object({
   },
 });
 const components = () => Type.Record(Type.String({ pattern: '^[a-z][a-zA-Z0-9]*$' }), ComponentParamsSchema, { additionalProperties: false });
-const defaults = { timeLimitSec: Type.Integer({ minimum: 1, maximum: 2147483647 }), theme: visual() };
+const defaults = { timeLimitSec: Type.Integer({ minimum: 1, maximum: 107374182 }), theme: visual() };
 
 export const ContentSchema = Type.Object({ ...envelope, contentVersion: semver(), rulesVersion: semver() }, options('content'));
 export const BalanceSchema = Type.Object({ ...envelope, defaults: Type.Object(defaults, { additionalProperties: false }) }, options('balance'));

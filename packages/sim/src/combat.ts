@@ -1,3 +1,4 @@
+import { addStat } from './stats.js';
 import type { Channel, SimState, Troop } from './state.js';
 import { cutChannel } from './commands.js';
 
@@ -14,7 +15,7 @@ export function arrivalHooks(state: SimState, hook: 'onArrive' | 'onHit', tower:
   }
 }
 function creditKill(state: SimState, owner: number, value: number): void {
-  if (owner !== -1) state.players.stats.kills[owner] = state.players.stats.kills[owner]! + value;
+  if (owner !== -1) addStat(state.players.stats, 'kills', owner, value);
 }
 function removeTransit(state: SimState, owner: number, value: number): void {
   if (owner !== -1) state.players.transit[owner] = state.players.transit[owner]! - value;
@@ -68,7 +69,7 @@ export function garrisonArrive(state: SimState, tower: number, troop: Troop): vo
     const added = Math.min(troop.value, cap[tower]! - count[tower]!);
     state.accounting.overflow += troop.value - added;
     count[tower] = count[tower]! + added;
-    state.players.stats.overflowLost[troop.owner] = state.players.stats.overflowLost[troop.owner]! + troop.value - added;
+    addStat(state.players.stats, 'overflowLost', troop.owner, troop.value - added);
     if (state.events) state.events.push({ type: 'TroopArrived', tick: state.tick, tower, owner: troop.owner, effect: added === troop.value ? 'reinforce' : 'overflow' });
     return;
   }
@@ -82,7 +83,7 @@ export function garrisonArrive(state: SimState, tower: number, troop: Troop): vo
   // A noncapturable target discards leftover value; capture already accounts its additions.
   if (state.tower.owner[tower] === owner && remainder > 0) {
     state.accounting.overflow += remainder;
-    if (troop.owner !== -1) state.players.stats.overflowLost[troop.owner] = state.players.stats.overflowLost[troop.owner]! + remainder;
+    if (troop.owner !== -1) addStat(state.players.stats, 'overflowLost', troop.owner, remainder);
   }
 }
 /** Registered capturable behavior runs inline after the garrison has taken the hit. */
@@ -96,8 +97,8 @@ export function capturableHit(state: SimState, tower: number, troop: Troop): voi
   state.accounting.overflow += troop.value - added;
   count[tower] = added;
   if (troop.owner !== -1) {
-    state.players.stats.overflowLost[troop.owner] = state.players.stats.overflowLost[troop.owner]! + troop.value - added;
-    state.players.stats.captures[troop.owner] = state.players.stats.captures[troop.owner]! + 1;
+    addStat(state.players.stats, 'overflowLost', troop.owner, troop.value - added);
+    addStat(state.players.stats, 'captures', troop.owner, 1);
   }
   const n = state.ids.towers.length;
   for (let to = 0; to < n; to++) {

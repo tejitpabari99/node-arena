@@ -39,7 +39,6 @@ export function assertInvariants(state: SimState): void {
   for (const value of [state.tick, state.rejected, state.drawSeq, state.troopSeq, state.timeLimitTicks]) int32(value);
   for (const values of [state.tower.owner, state.tower.team, state.tower.slots, state.tower.lines, state.pendingDepartures, state.players.team, state.players.alive, state.players.transit, state.eliminated]) column(values);
   for (const name of sortedNames(state.tower.col)) column(state.tower.col[name]!);
-  for (const name of sortedNames(state.players.stats)) column(state.players.stats[name as keyof typeof state.players.stats]);
   const transit = Array.from({ length: state.ids.players.length }, () => 0);
   const lines = new Int32Array(state.ids.towers.length);
   let inflight = 0, garrison = 0;
@@ -56,7 +55,10 @@ export function assertInvariants(state: SimState): void {
   }
   for (let player = 0; player < transit.length; player++) {
     if (transit[player] !== state.players.transit[player]) throw new Error('Transit recount invariant breached');
-    for (const name of sortedNames(state.players.stats)) if (state.players.stats[name as keyof typeof state.players.stats][player]! < 0) throw new Error('int32 stats invariant breached');
+    for (const name of sortedNames(state.players.stats)) {
+      const value = state.players.stats[name as keyof typeof state.players.stats][player]!;
+      if (!Number.isSafeInteger(value) || value < 0) throw new Error('Stats safe-integer invariant breached');
+    }
   }
   const count = state.tower.col['garrison.count'], cap = state.tower.col['garrison.cap'];
   for (let tower = 0; tower < lines.length; tower++) {

@@ -48,7 +48,7 @@
     "timeLimitSec": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 2147483647
+      "maximum": 107374182
     },
     "bounds": {
       "type": "object",
@@ -294,7 +294,7 @@
             "timeLimitSec": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 2147483647
+              "maximum": 107374182
             }
           },
           "additionalProperties": false
