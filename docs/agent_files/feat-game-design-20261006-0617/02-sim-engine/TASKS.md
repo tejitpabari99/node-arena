@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 summary: 13 tasks to build the deterministic sim engine (packages/sim) - scaffold and lint, fixed-point spike, registry/state, tick phases, view/hash, replay, tests, perf
 date: 2026-10-08
 ---

@@ -8,6 +8,7 @@ Ad-free browser strategy game (persistent-route tower war) with solo campaign an
 - `docs/agent_files/` — design docs (brainstorm, PRDs, tasks)
 
 - `packages/content/` — browser-safe content schemas and validation (TypeBox + Ajv); generated editor schemas, v1 data, sample level and content hash lock.
+- `packages/sim/` — deterministic integer-rule engine, component registry, zero-copy views, state hashes, replay helpers, golden parity tests, and performance benchmark.
 
 ## Development
 
@@ -22,6 +23,8 @@ pnpm content:schemas  # regenerate committed JSON Schema after schema changes
 pnpm check:schemas   # fail if generated schemas are stale
 pnpm content:lock    # regenerate per-level/per-profile identities
 pnpm check:content --base HEAD  # compare to committed manifest and lock
+pnpm sim:golden      # verify committed simulation replays
+pnpm bench:sim       # enforce strict simulation performance budgets
 ```
 
 The content package exports TypeBox schemas and inferred types for content versions, balance defaults, troops, archetypes, and levels, plus `SCHEMA_VERSION`, `CoreSchemas`, `createAjv`, `validateTroop`, `FIXED_POINT_SCALE`, `convertFixedPoint`, and `loadContent`. `loadContent(fileMap)` accepts JSON strings or objects keyed by source path and returns cloned core entities under the same paths. Only fields tagged `x-unit: fx3` become milli-unit integers; counts and durations remain in authored units. `ContentLoadError.errors` contains source files, JSON pointers, and messages. Component maps accept flat param bags for registry extensibility; the registry and shared semantic validator reject unknown components, unresolved references, invalid inheritance, reserved non-empty arrays, and unsupported parameter patches. Untagged numeric extension params must be integers. Node file access belongs in external adapters or package scripts; all content source files reject imports of fs, path, and crypto.
@@ -35,3 +38,5 @@ Hosted contracts include `BotSchema`/`BotProfile`, `ManifestSchema`/`Manifest`, 
 The v1 dataset starts at content/rules/schema version `1.0.0`: `data/balance.json` supplies the default time limit and theme, `data/troops/regular.json` supplies the troop, and `data/archetypes/{standard,small,large}.json` supplies the base and variants. Variant values are placeholders for SP05 tuning. `data/levels/sample.json` demonstrates one human, one bot and a neutral tower with empty overrides; its filename keeps it outside the reserved campaign `01`–`20` order checks. `data/examples/sample-bot.json` is a minimal idle supporting profile so the sample validates and compiles; SP04 owns production profiles under `data/bots/`, and SP05 owns campaign levels. SP03 owns the asset manifest.
 
 Run `pnpm content:lock` and `pnpm check:content --base 656d0ca` to regenerate and check the complete dataset and non-empty lock. The first dataset can start against a revision before content metadata exists; removing an existing dataset cannot use this exception.
+
+The sim package exposes `create`, `TICK_RATE`, simulation/command/event/view/snapshot types, math/PRNG utilities, component registry helpers, and `createReplayRecorder`/`playReplay`. A simulation provides `step`, `canDraw`, `view`, `readTroops`, `snapshot`, and `hash`. Rule computations use integers; Float64 statistics carry exact safe integers and remain excluded from rule-state hashes.
