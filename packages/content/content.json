@@ -1,0 +1,6 @@
+{
+  "$schema": "schemas/content.schema.json",
+  "schemaVersion": "1.0.0",
+  "contentVersion": "1.0.0",
+  "rulesVersion": "1.0.0"
+}

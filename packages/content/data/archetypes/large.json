@@ -1,0 +1,12 @@
+{
+  "$schema": "../../schemas/archetype.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "large",
+  "extends": "standard",
+  "visual": "tower.large",
+  "footprintRadius": 4,
+  "components": {
+    "garrison": { "cap": 100 },
+    "generates": { "ratePerSec": 1.5 }
+  }
+}

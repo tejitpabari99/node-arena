@@ -1,0 +1,8 @@
+{
+  "$schema": "../schemas/balance.schema.json",
+  "schemaVersion": "1.0.0",
+  "defaults": {
+    "timeLimitSec": 300,
+    "theme": "theme.downtown"
+  }
+}

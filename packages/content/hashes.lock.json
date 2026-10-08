@@ -1,4 +1,8 @@
 {
-  "levels": {},
-  "bots": {}
+  "levels": {
+    "sample": "7815eec4dd6087dd6001e2e2e0491c4af7a14b7e05d894e3c6741a8efbdcbf79"
+  },
+  "bots": {
+    "sample-bot": "5d97b466044f0cb4e28ba3c24fffb6ab0a05c182d6aea2ccc5d0714d9cc42d5c"
+  }
 }

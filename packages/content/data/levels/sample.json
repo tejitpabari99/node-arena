@@ -1,0 +1,21 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "sample",
+  "name": "Sample",
+  "order": 1,
+  "band": 1,
+  "bounds": { "w": 120, "h": 80 },
+  "players": [
+    { "id": "p1", "kind": "human", "colorKey": "player.1" },
+    { "id": "b1", "kind": "bot", "botProfile": "sample-bot", "colorKey": "player.2" }
+  ],
+  "towers": [
+    { "id": "t1", "archetype": "standard", "pos": { "x": -40, "y": 0 }, "owner": "p1", "garrison": 10 },
+    { "id": "t2", "archetype": "standard", "pos": { "x": 40, "y": 0 }, "owner": "b1", "garrison": 10 },
+    { "id": "t3", "archetype": "small", "pos": { "x": 0, "y": 0 }, "owner": null, "garrison": 15 }
+  ],
+  "obstacles": [],
+  "mapObjects": [],
+  "overrides": {}
+}

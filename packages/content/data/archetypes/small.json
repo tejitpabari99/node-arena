@@ -1,0 +1,13 @@
+{
+  "$schema": "../../schemas/archetype.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "small",
+  "extends": "standard",
+  "visual": "tower.small",
+  "footprintRadius": 2,
+  "components": {
+    "garrison": { "cap": 20 },
+    "generates": { "ratePerSec": 0.6 },
+    "drawsLines": { "extraSlotAbove": [10] }
+  }
+}
