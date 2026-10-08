@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as content from '../src/index.js';
 
+// These fixtures isolate schema/registry loading; public loadContent checks full semantics.
+const loadPartial = (files: content.ContentFileMap, opts: content.LoadContentOptions = {}) => content.loadContent(files, { ...opts, partial: true });
+
 const standard = { $schema: 'archetype.schema.json', schemaVersion: '1.0.0', id: 'standard', visual: 'tower.standard', footprintRadius: 3, components: { garrison: { cap: 50 }, generates: { troop: 'regular', ratePerSec: 1.125 }, drawsLines: { extraSlotAbove: [10, 30] }, capturable: {} } };
 const regular = { $schema: 'troop.schema.json', schemaVersion: '1.0.0', id: 'regular', visual: 'troop.regular', value: 1, speed: 10 };
 
@@ -10,7 +13,7 @@ function registry() {
   return content.COMPONENT_REGISTRY;
 }
 function issue(files: content.ContentFileMap, file: string, pointer: string) {
-  assert.throws(() => content.loadContent(files), (error: unknown) => {
+  assert.throws(() => loadPartial(files), (error: unknown) => {
     assert.ok(error instanceof content.ContentLoadError);
     assert.ok(error.errors.some((entry) => entry.file === file && entry.pointer === pointer), JSON.stringify(error.errors));
     return true;
@@ -23,7 +26,7 @@ test('covers R-ENT-01: resolves small/large parameter variants in loaded units w
   const large = { ...standard, id: 'large', extends: 'standard', visual: 'tower.large', footprintRadius: 4, components: { generates: { ratePerSec: 2 } } };
   const files = { 'small.json': small, 'standard.json': standard, 'large.json': large };
   const before = structuredClone(files);
-  const loaded = content.loadContent(files);
+  const loaded = loadPartial(files);
   assert.deepEqual((loaded['small.json'] as content.Archetype).components, { garrison: { cap: 20 }, generates: { troop: 'regular', ratePerSec: 600 }, drawsLines: { extraSlotAbove: [10] }, capturable: {} });
   assert.deepEqual((loaded['large.json'] as content.Archetype).components, { garrison: { cap: 50 }, generates: { troop: 'regular', ratePerSec: 2000 }, drawsLines: { extraSlotAbove: [10, 30] }, capturable: {} });
   assert.equal((loaded['small.json'] as content.Archetype).footprintRadius, 2000);
@@ -50,7 +53,7 @@ for (const [name, components, pointer] of [
 }
 
 test('covers R-ENT-02: v1 rejects tank combat value but permits unit value', () => {
-  assert.ok(content.loadContent({ 'regular.json': regular }));
+  assert.ok(loadPartial({ 'regular.json': regular }));
   issue({ 'tank.json': { ...regular, id: 'tank', value: 2 } }, 'tank.json', '/value');
 });
 
@@ -71,7 +74,7 @@ test('rejects adding or removing inherited components, while omitted components 
   const child = { ...standard, id: 'small', extends: 'standard', components: { capturable: {} } };
   issue({ 'standard.json': base, 'small.json': child }, 'small.json', '/components/capturable');
   issue({ 'standard.json': standard, 'small.json': { ...child, components: { capturable: null } } }, 'small.json', '/components/capturable');
-  assert.deepEqual((content.loadContent({ 'standard.json': standard, 'small.json': { ...child, components: {} } })['small.json'] as content.Archetype).components, { ...standard.components, generates: { troop: 'regular', ratePerSec: 1125 } });
+  assert.deepEqual((loadPartial({ 'standard.json': standard, 'small.json': { ...child, components: {} } })['small.json'] as content.Archetype).components, { ...standard.components, generates: { troop: 'regular', ratePerSec: 1125 } });
 });
 
 test('invalid inherited params identify the base file and invalid patched params identify the variant', () => {
@@ -89,10 +92,10 @@ test('an injected registry supports archer and tank without widening production 
   };
   const archer = { ...standard, id: 'archer', components: { garrison: { cap: 30 }, capturable: {}, shoots: { ratePerSec: 0.625, radius: 12.125, targeting: 'nearestHostile' } } };
   issue({ 'archer.json': archer }, 'archer.json', '/components/shoots');
-  const loaded = content.loadContent({ 'archer.json': archer, 'tank.json': { ...regular, id: 'tank', value: 2 } }, { registry: extended });
+  const loaded = loadPartial({ 'archer.json': archer, 'tank.json': { ...regular, id: 'tank', value: 2 } }, { registry: extended });
   assert.deepEqual((loaded['archer.json'] as content.Archetype).components.shoots, { ratePerSec: 625, radius: 12125, targeting: 'nearestHostile' });
   assert.equal((loaded['tank.json'] as content.Troop).value, 2);
   assert.equal(v1.troopValue.maximum, 1);
   assert.equal('shoots' in v1.components, false);
-  assert.throws(() => content.loadContent({ 'archer.json': { ...archer, components: { shoots: { ...archer.components.shoots, targeting: 'friendly' } } } }, { registry: extended }), /\/components\/shoots\/targeting/);
+  assert.throws(() => loadPartial({ 'archer.json': { ...archer, components: { shoots: { ...archer.components.shoots, targeting: 'friendly' } } } }, { registry: extended }), /\/components\/shoots\/targeting/);
 });

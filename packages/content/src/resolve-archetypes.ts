@@ -6,14 +6,14 @@ import { COMPONENT_REGISTRY, validateComponents, type ComponentRegistry } from '
  * A variant patches existing component params, never the component set. Arrays
  * replace whole, and the cloned results share no mutable data with the inputs.
  */
-export function resolveArchetypes(files: Record<string, Archetype>, registry: ComponentRegistry = COMPONENT_REGISTRY): Record<string, Archetype> {
+export function resolveArchetypes(files: Record<string, Archetype>, registry: ComponentRegistry = COMPONENT_REGISTRY, issues?: ContentIssue[]): Record<string, Archetype> {
   const byId = new Map<string, Archetype>();
   const errors: ContentIssue[] = [];
   for (const [file, archetype] of Object.entries(files)) {
     if (byId.has(archetype.id)) errors.push({ file, pointer: '/id', message: 'Duplicate archetype id' });
     else byId.set(archetype.id, archetype);
   }
-  const resolved: Record<string, Archetype> = {};
+  const resolved: Record<string, Archetype> = Object.create(null);
   for (const [file, archetype] of Object.entries(files)) {
     errors.push(...validateComponents(archetype.components, file, registry, archetype.extends !== undefined));
     let base: Archetype | undefined;
@@ -34,6 +34,7 @@ export function resolveArchetypes(files: Record<string, Archetype>, registry: Co
     resolved[file] = { ...structuredClone(archetype), components };
     // Keep authored extends metadata as provenance; components are fully resolved.
   }
-  if (errors.length) throw new ContentLoadError(errors);
+  if (issues) issues.push(...errors);
+  else if (errors.length) throw new ContentLoadError(errors);
   return resolved;
 }

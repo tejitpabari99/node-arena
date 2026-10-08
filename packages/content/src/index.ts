@@ -8,3 +8,7 @@ export { resolveArchetypes } from './resolve-archetypes.js';
 export { BotSchema, BotJsonSchema, type BotProfile } from './bot.schema.js';
 export { BotParamsSchema, BotSkillSchema, type BotParams, type BotSkill } from './bot-params.js';
 export { ManifestSchema, ManifestJsonSchema, type Manifest } from './manifest.schema.js';
+export { validateContent, type ValidationResult, type ValidateContentOptions } from './validate-content.js';
+export { parseContent } from './parse-content.js';
+export { resolveProfiles } from './resolve-profiles.js';
+export { resolveLevelOverrides, type ResolvedLevelData } from './resolve-overrides.js';

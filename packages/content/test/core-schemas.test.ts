@@ -3,6 +3,9 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import * as content from '../src/index.js';
 
+// These fixtures isolate schema/registry loading; public loadContent checks full semantics.
+const loadPartial = (files: content.ContentFileMap, opts: content.LoadContentOptions = {}) => content.loadContent(files, { ...opts, partial: true });
+
 const envelope = (kind: string) => ({ $schema: `../../schemas/${kind}.schema.json`, schemaVersion: '1.0.0' });
 const samples = {
   content: { ...envelope('content'), contentVersion: '1.0.0', rulesVersion: '1.0.0' },
@@ -59,11 +62,11 @@ test('balance keeps tickRate out of data and requires both v1 defaults', async (
 
 test('loader dispatches core files and converts nested and override field units without scaling counts', () => {
   const level = { ...samples.level, overrides: { troops: { regular: { value: 2, speed: 2.125 } }, archetypes: { standard: { components: { generates: { ratePerSec: 0.625 }, garrison: { cap: 20 }, drawsLines: { extraSlotAbove: [10] } } } } } };
-  const loaded = content.loadContent({ 'content.json': samples.content, 'balance.json': samples.balance, 'standard.json': samples.archetype, 'level.json': level });
+  const loaded = loadPartial({ 'content.json': samples.content, 'balance.json': samples.balance, 'standard.json': samples.archetype, 'level.json': level });
   assert.deepEqual(loaded['standard.json'], { ...samples.archetype, footprintRadius: 3000, components: { ...samples.archetype.components, generates: { troop: 'regular', ratePerSec: 1125 } } });
   assert.deepEqual(loaded['level.json'], { ...level, bounds: { w: 120000, h: 80000 }, towers: [{ ...level.towers[0], pos: { x: -40125, y: 1 } }], overrides: { troops: { regular: { value: 2, speed: 2125 } }, archetypes: { standard: { components: { generates: { ratePerSec: 625 }, garrison: { cap: 20 }, drawsLines: { extraSlotAbove: [10] } } } } } });
   assert.deepEqual(loaded['balance.json'], samples.balance);
-  assert.throws(() => content.loadContent({ 'level.json': { ...level, overrides: { archetypes: { standard: { components: { generates: { ratePerSec: 0.0001 } } } } } } }), /\/overrides\/archetypes\/standard\/components\/generates\/ratePerSec/);
+  assert.throws(() => loadPartial({ 'level.json': { ...level, overrides: { archetypes: { standard: { components: { generates: { ratePerSec: 0.0001 } } } } } } }), /\/overrides\/archetypes\/standard\/components\/generates\/ratePerSec/);
 });
 
 // Untagged arbitrary fractional params could escape loading as floats into simulation.
@@ -82,7 +85,7 @@ test('extension params keep untagged numbers integral and scale reserved and fut
       },
     } },
   };
-  const loaded = content.loadContent({ 'archer.json': archer, 'level.json': level }, { registry });
+  const loaded = loadPartial({ 'archer.json': archer, 'level.json': level }, { registry });
   assert.deepEqual(loaded['archer.json'], { ...archer, footprintRadius: 3000, components: { shoots: { ratePerSec: 625, radius: 12125, targeting: 'nearestHostile' } } });
   assert.deepEqual((loaded['level.json'] as content.Level).mapObjects, [{ kind: 'gate', pos: { x: 1125, y: -2625 }, footprintRadius: 250, delta: 1 }]);
 });

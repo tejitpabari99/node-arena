@@ -1,72 +1,32 @@
-import type { ErrorObject } from 'ajv';
-import { ContentLoadError, convertFixedPoint, escapePointerSegment, type ContentIssue, type NumericSchema } from './fixed-point.js';
-import { CoreSchemas, type Archetype, type CoreEntity } from './core.schema.js';
+import { ContentLoadError } from './fixed-point.js';
+import { parseContent, type ContentFileMap, type LoadedContent } from './parse-content.js';
 import { COMPONENT_REGISTRY, validateTroopValue, type ComponentRegistry } from './component-registry.js';
 import { resolveArchetypes } from './resolve-archetypes.js';
-import { createAjv } from './validate.js';
-
-export type ContentFileMap = Record<string, string | object>;
-/** Path-keyed clones in milli-units; archetype component params are resolved. */
-export type LoadedContent = Record<string, CoreEntity>;
-const ajv = createAjv();
-const schemas = Object.entries(CoreSchemas).map(([name, schema]) => ({
-  filename: `${name}.schema.json`, schema: schema as NumericSchema, validate: ajv.compile(schema),
-}));
-
-function issueForSchemaError(file: string, error: ErrorObject): ContentIssue {
-  const property = error.keyword === 'additionalProperties' ? error.params.additionalProperty
-    : error.keyword === 'required' ? error.params.missingProperty : undefined;
-  return {
-    file,
-    pointer: error.instancePath + (typeof property === 'string' ? `/${escapePointerSegment(property)}` : ''),
-    message: error.message ?? 'Invalid content',
-  };
+import { validateLoadedContent } from './validate-content.js';
+import type { Archetype } from './core.schema.js';
+export type { ContentFileMap, LoadedContent } from './parse-content.js';
+export interface LoadContentOptions {
+  registry?: ComponentRegistry;
+  /** Explicit schema/registry-only mode for isolated tooling; public default checks every reference. */
+  partial?: boolean;
 }
 
-export interface LoadContentOptions { registry?: ComponentRegistry }
-
-/** Pure fileMap adapter shared by Node I/O callers and the browser's edited JSON. */
+/** Path-keyed clones in milli-units; all supplied content is validated by default. */
 export function loadContent(fileMap: ContentFileMap, opts: LoadContentOptions = {}): LoadedContent {
-  const registry = opts.registry ?? COMPONENT_REGISTRY;
-  const archetypes: Record<string, Archetype> = {};
-  const entries: [string, CoreEntity][] = [];
-  const errors: ContentIssue[] = [];
-  for (const [file, source] of Object.entries(fileMap)) {
-    let authored: unknown;
-    try {
-      authored = typeof source === 'string' ? JSON.parse(source) : source;
-    } catch {
-      errors.push({ file, pointer: '', message: 'Invalid JSON' });
-      continue;
-    }
-    if (!authored || typeof authored !== 'object' || Array.isArray(authored)) {
-      errors.push({ file, pointer: '', message: 'Content file must contain an object' });
-      continue;
-    }
-    const schemaReference = (authored as Record<string, unknown>).$schema;
-    // File adapters can retain relative editor references or use the schema's canonical ID.
-    const entry = schemas.find(({ filename, schema }) => typeof schemaReference === 'string'
-      && (schemaReference === schema.$id || schemaReference === filename || schemaReference.endsWith(`/${filename}`)));
-    if (!entry) {
-      errors.push({ file, pointer: '/$schema', message: 'Unknown or missing content schema' });
-      continue;
-    }
-    try {
-      // Check numeric precision before schema ranges so NaN/overflow get fx3 diagnostics.
-      const converted = convertFixedPoint(authored, entry.schema, file);
-      // Validate authored units: scaled speed intentionally exceeds the authored bound.
-      if (!entry.validate(authored)) {
-        errors.push(...(entry.validate.errors ?? []).map((error) => issueForSchemaError(file, error)));
-        continue;
-      }
-      if (entry.filename === 'troop.schema.json') errors.push(...validateTroopValue((converted as { value: number }).value, file, registry));
-      if (entry.filename === 'archetype.schema.json') archetypes[file] = converted as Archetype;
-      entries.push([file, converted as CoreEntity]);
-    } catch (error) {
-      if (!(error instanceof ContentLoadError)) throw error;
-      errors.push(...error.errors);
-    }
+  const parsed = parseContent(fileMap);
+  if (!opts.partial) {
+    const result = validateLoadedContent(parsed.files, opts);
+    const errors = [...parsed.errors, ...result.errors];
+    if (errors.length) throw new ContentLoadError(errors);
+    return result.files;
   }
+  const errors = [...parsed.errors]; const registry = opts.registry ?? COMPONENT_REGISTRY;
+  const archetypes: Record<string, Archetype> = {};
+  for (const [file, entity] of Object.entries(parsed.files)) {
+    if ('components' in entity) archetypes[file] = entity;
+    if ('speed' in entity) errors.push(...validateTroopValue(entity.value, file, registry));
+  }
+  const resolved = resolveArchetypes(archetypes, registry, errors);
   if (errors.length) throw new ContentLoadError(errors);
-  return { ...Object.fromEntries(entries), ...resolveArchetypes(archetypes, registry) };
+  return { ...parsed.files, ...resolved };
 }
