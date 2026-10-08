@@ -1,10 +1,12 @@
 import type { ErrorObject } from 'ajv';
 import { ContentLoadError, convertFixedPoint, escapePointerSegment, type ContentIssue, type NumericSchema } from './fixed-point.js';
-import { CoreSchemas, type CoreEntity } from './core.schema.js';
+import { CoreSchemas, type Archetype, type CoreEntity } from './core.schema.js';
+import { COMPONENT_REGISTRY, validateTroopValue, type ComponentRegistry } from './component-registry.js';
+import { resolveArchetypes } from './resolve-archetypes.js';
 import { createAjv } from './validate.js';
 
 export type ContentFileMap = Record<string, string | object>;
-/** Path-keyed, cloned core entities with tagged numeric fields in milli-units. */
+/** Path-keyed clones in milli-units; archetype component params are resolved. */
 export type LoadedContent = Record<string, CoreEntity>;
 const ajv = createAjv();
 const schemas = Object.entries(CoreSchemas).map(([name, schema]) => ({
@@ -21,8 +23,12 @@ function issueForSchemaError(file: string, error: ErrorObject): ContentIssue {
   };
 }
 
+export interface LoadContentOptions { registry?: ComponentRegistry }
+
 /** Pure fileMap adapter shared by Node I/O callers and the browser's edited JSON. */
-export function loadContent(fileMap: ContentFileMap): LoadedContent {
+export function loadContent(fileMap: ContentFileMap, opts: LoadContentOptions = {}): LoadedContent {
+  const registry = opts.registry ?? COMPONENT_REGISTRY;
+  const archetypes: Record<string, Archetype> = {};
   const entries: [string, CoreEntity][] = [];
   const errors: ContentIssue[] = [];
   for (const [file, source] of Object.entries(fileMap)) {
@@ -53,6 +59,8 @@ export function loadContent(fileMap: ContentFileMap): LoadedContent {
         errors.push(...(entry.validate.errors ?? []).map((error) => issueForSchemaError(file, error)));
         continue;
       }
+      if (entry.filename === 'troop.schema.json') errors.push(...validateTroopValue((converted as { value: number }).value, file, registry));
+      if (entry.filename === 'archetype.schema.json') archetypes[file] = converted as Archetype;
       entries.push([file, converted as CoreEntity]);
     } catch (error) {
       if (!(error instanceof ContentLoadError)) throw error;
@@ -60,5 +68,5 @@ export function loadContent(fileMap: ContentFileMap): LoadedContent {
     }
   }
   if (errors.length) throw new ContentLoadError(errors);
-  return Object.fromEntries(entries);
+  return { ...Object.fromEntries(entries), ...resolveArchetypes(archetypes, registry) };
 }

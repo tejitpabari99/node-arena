@@ -72,7 +72,17 @@ test('extension params keep untagged numbers integral and scale reserved and fut
   assert.equal(validate({ ...samples.archetype, components: { shoots: { damage: 0.5 } } }), false);
   const archer = { ...samples.archetype, components: { shoots: { ratePerSec: 0.625, radius: 12.125, targeting: 'nearestHostile' } } };
   const level = { ...samples.level, mapObjects: [{ kind: 'gate', pos: { x: 1.125, y: -2.625 }, footprintRadius: 0.25, delta: 1 }] };
-  const loaded = content.loadContent({ 'archer.json': archer, 'level.json': level });
+  const registry: content.ComponentRegistry = {
+    ...content.COMPONENT_REGISTRY,
+    components: { ...content.COMPONENT_REGISTRY.components, shoots: {
+      ruleIds: ['R-SHOOT-01'], params: {
+        ratePerSec: { type: 'number', unit: 'fx3', minimum: 1, maximum: 2147483647 },
+        radius: { type: 'number', unit: 'fx3', minimum: 0, maximum: 500000 },
+        targeting: { type: 'string', values: ['nearestHostile', 'randomHostile'] },
+      },
+    } },
+  };
+  const loaded = content.loadContent({ 'archer.json': archer, 'level.json': level }, { registry });
   assert.deepEqual(loaded['archer.json'], { ...archer, footprintRadius: 3000, components: { shoots: { ratePerSec: 625, radius: 12125, targeting: 'nearestHostile' } } });
   assert.deepEqual((loaded['level.json'] as content.Level).mapObjects, [{ kind: 'gate', pos: { x: 1125, y: -2625 }, footprintRadius: 250, delta: 1 }]);
 });
