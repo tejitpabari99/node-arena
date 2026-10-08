@@ -28,7 +28,10 @@ test('golden sample compiles to dense sorted integer inputs with resolved bots a
   const loaded = content.loadContent(fixture());
   const before = structuredClone(loaded);
   const level = compile(loaded);
-  assert.deepEqual(level, {
+  const { simHash, botHash, ...inputs } = level;
+  assert.match(simHash, /^[a-f0-9]{64}$/);
+  assert.match(botHash.easy ?? '', /^[a-f0-9]{64}$/);
+  assert.deepEqual(inputs, {
     id: 'sample', timeLimitSec: 120, visual: 'city', bounds: { w: 120000, h: 80000 },
     globals: { timeLimitSec: 120, theme: 'city' },
     players: [{ id: 'p-1', kind: 'bot', colorKey: 'blue', team: 'p-1' }, { id: 'p1', kind: 'human', colorKey: 'red', team: 'p1' }],
@@ -39,7 +42,6 @@ test('golden sample compiles to dense sorted integer inputs with resolved bots a
     ],
     kinds: [{ id: 'a-regular', value: 1, speedMilli: 8000, visual: 'scout' }, { id: 'regular', value: 1, speedMilli: 12375, visual: 'soldier' }],
     bots: [{ player: 0, profile: { id: 'easy', kind: 'utility', params: { skill: { decisionIntervalSec: 2125, noise: 300, actionsPerDecision: 1 }, bias: { attack: 1125 }, weights: { attack: { targetValue: 9250 } } } } }],
-    simHash: null, botHash: null,
   });
   assert.deepEqual(loaded, before);
   level.towers[0]!.components.drawsLines!.extraSlotAbove!.push(99);

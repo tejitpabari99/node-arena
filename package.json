@@ -11,7 +11,9 @@
     "build": "pnpm -r build",
     "lint": "eslint .",
     "content:schemas": "pnpm --filter @node-arena/content schemas:generate",
-    "check:schemas": "pnpm --filter @node-arena/content schemas:check"
+    "check:schemas": "pnpm --filter @node-arena/content schemas:check",
+    "content:lock": "pnpm --filter @node-arena/content lock:generate",
+    "check:content": "pnpm --filter @node-arena/content lock:check"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

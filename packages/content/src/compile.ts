@@ -4,6 +4,7 @@ import type { BotParams } from './bot-params.js';
 import type { LoadedContent } from './parse-content.js';
 import { ContentLoadError } from './fixed-point.js';
 import { resolveLevelOverrides } from './resolve-overrides.js';
+import { hashBotProfile, hashCompiledLevel } from './hash.js';
 import { resolveProfiles } from './resolve-profiles.js';
 
 /** Flat loaded-unit params; generates.troop is a dense index into kinds. */
@@ -55,10 +56,10 @@ export interface CompiledLevel {
   /** Referenced troop kinds only, sorted by id; generates.troop indexes this array. */
   kinds: CompiledTroopKind[];
   bots: CompiledBot[];
-  /** Explicitly unavailable until Task 9 supplies canonical hashing. */
-  simHash: string | null;
-  /** Per-profile identities, explicitly unavailable until Task 9. */
-  botHash: Record<string, string> | null;
+  /** Identity of resolved simulation inputs, excluding presentation and bots. */
+  simHash: string;
+  /** Separate identities of referenced resolved bot profiles. */
+  botHash: Record<string, string>;
 }
 
 const byId = (a: { id: string }, b: { id: string }) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
@@ -97,5 +98,6 @@ export function compileLevel(content: LoadedContent, levelId: string): CompiledL
     delete params.extends;
     return [{ player: index, profile: { id: profile.id, kind: profile.kind, params } }];
   });
-  return { id: level.id, timeLimitSec: level.timeLimitSec ?? globals.timeLimitSec, visual: level.visual ?? globals.theme, bounds: structuredClone(level.bounds), globals, towers, players, kinds, bots, simHash: null, botHash: null };
+  const compiled = { id: level.id, timeLimitSec: level.timeLimitSec ?? globals.timeLimitSec, visual: level.visual ?? globals.theme, bounds: structuredClone(level.bounds), globals, towers, players, kinds, bots };
+  return { ...compiled, simHash: hashCompiledLevel(compiled), botHash: Object.fromEntries(bots.map(bot => [bot.profile.id, hashBotProfile(bot.profile)])) };
 }

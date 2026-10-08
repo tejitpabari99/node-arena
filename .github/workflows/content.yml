@@ -5,15 +5,31 @@ on:
 jobs:
   content:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['22', '24']
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check:schemas
+      - name: Check content hashes and baseline versions
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        run: |
+          base="$PR_BASE"
+          if [ -z "$base" ]; then base="$PUSH_BASE"; fi
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base=656d0ca
+          fi
+          pnpm check:content --base "$base" --allow-bootstrap
       - run: pnpm test
       - run: pnpm build
       - run: pnpm lint

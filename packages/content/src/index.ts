@@ -13,3 +13,6 @@ export { parseContent } from './parse-content.js';
 export { resolveProfiles } from './resolve-profiles.js';
 export { resolveLevelOverrides, type ResolvedLevelData } from './resolve-overrides.js';
 export { compileLevel, type CompiledLevel, type CompiledTower, type CompiledPlayer, type CompiledTroopKind, type CompiledComponentParams, type CompiledComponents, type CompiledBot, type ResolvedBotProfile } from './compile.js';
+
+export { canonicalJson, sha256, hashBotProfile, hashCompiledLevel } from './hash.js';
+export { RULES_VERSION, generateHashes, checkContentVersion, checkRulesVersion, type ReplayHeader, type HashesLock, type ContentBaseline } from './versioning.js';
