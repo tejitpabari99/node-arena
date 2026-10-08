@@ -136,13 +136,13 @@ Colourblind palette is data (`palettes.colorblind`, e.g. Okabe-Ito) **plus** non
 - Real-GPU laptop playtest for 60 fps and readability sign-off (owner only).
 
 ## Risks / Open Questions
-- [OPEN] Spike (before renderer lock): 2,000 bobbing instanced troops at 60 fps on integrated GPU; fall back to static-bob/no-bob or VAT.
-- [OPEN] Team recolour of GLB via merged `teamMask` — verify with chosen CC0 pack (SP05); fallback: per-team texture/atlas.
-- [OPEN] Label readability when buildings overlap in screen space on dense levels; may need height offset or declutter.
-- [OPEN] Fixed camera vs large levels; if min label size unreachable, add zoom (DEFERRED otherwise).
+- [RESOLVED: run spike as first renderer task; fallbacks as listed] Spike (before renderer lock): 2,000 bobbing instanced troops at 60 fps on integrated GPU; fall back to static-bob/no-bob or VAT.
+- [RESOLVED: default tinted base plate + roof marker (per SP05); teamMask only if a pack material split works] Team recolour of GLB via merged `teamMask` — verify with chosen CC0 pack (SP05); fallback: per-team texture/atlas.
+- [DEFERRED: check at greybox; height offset/declutter if needed] Label readability when buildings overlap in screen space on dense levels; may need height offset or declutter.
+- [DEFERRED: fixed camera in v1; add zoom only if L18 labels unreadable at greybox] Fixed camera vs large levels; if min label size unreachable, add zoom (DEFERRED otherwise).
 - [RESOLVED: SP04 `createBotDriver(level, matchSeed): BotDriver`, `driver.commands(sim)` before each `step`, main thread v1] bot hook.
-- [OPEN] Playwright software-GL screenshot stability; fall back to structural asserts.
-- [OPEN] Extrapolated front may briefly overshoot a clash point (< 1 tick); clamp to `length − progB` if visible.
+- [RESOLVED: try screenshots; fall back to structural asserts if flaky] Playwright software-GL screenshot stability; fall back to structural asserts.
+- [DEFERRED: clamp only if visible at greybox] Extrapolated front may briefly overshoot a clash point (< 1 tick); clamp to `length − progB` if visible.
 - [RESOLVED: results copy] `draw` shown as "Mutual defeat — not completed" (answers SP02 UI wording).
 - [DEFERRED] Pan/zoom, VAT/skeletal, instanced digit labels, sim in Web Worker, roads decor.
 

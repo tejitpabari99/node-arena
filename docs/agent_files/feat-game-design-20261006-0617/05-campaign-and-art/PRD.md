@@ -107,7 +107,7 @@ Owner sign-off: clears each band's levels in <= 3 attempts median (B1 first try;
 | Music (1 track) | candidates: Kenney Music Jingles; OpenGameArt filtered to CC0 | **N** | one looping track |
 | Fallback chars | Quaternius Universal Animation Library: https://quaternius.com/packs/universalanimationlibrary.html | Y, CC0 | only if Kenney characters fail the look/budget |
 Mixamo excluded (Adobe licence, no redistribution).
-- **Team colour**: Kenney models use one shared colormap, so no per-team named material is expected. Plan: SP03 fallback (tinted base plate + roof marker) first; `teamMaterial` only if a one-off Blender/gltf-transform step splits a material [OPEN]. Characters: shirt recolour via `teamMaterial` ("Shirt") or `tint`.
+- **Team colour**: Kenney models use one shared colormap, so no per-team named material is expected. Plan: SP03 fallback (tinted base plate + roof marker) first; `teamMaterial` only if a one-off Blender/gltf-transform step splits a material [RESOLVED: base plate + roof marker first; teamMaterial only if a split works]. Characters: shirt recolour via `teamMaterial` ("Shirt") or `tint`.
 - **Palettes** (`palettes` in manifest; every key in both). Default: player.1 #2E86FF, player.2 #FF4D4D, player.3 #FFC933, player.4 #35C46B, neutral #A0A7B0. Colourblind (Okabe-Ito): #0072B2, #D55E00, #F0E442, #009E73, neutral #999999. `teamMarkers`: circle/triangle/square/diamond.
 - **Themes** (`level.visual`): `city.day` (B1), `city.dusk` (B2), `city.overcast` (B3), `city.night` (B4); same models/palette material, differing ground tint, light, fog, props. Cheap variety without new art.
 - **Budgets** (SP03 `check:manifest`): troop <= 300 tris, tower <= 5k, texture <= 1024^2; initial load <= ~10 MB; music lazy-loaded; models through gltf-transform (meshopt, dedupe, texture resize) at import.
@@ -117,7 +117,7 @@ Mixamo excluded (Adobe licence, no redistribution).
 | # | Decision | Choice | Alternatives considered | Why |
 |---|---|---|---|---|
 | 1 | Tower variety | `standard` + `small` + `large` via `extends` | Standard only; per-level overrides | Differentiates levels, no new components; overrides hide balance in levels |
-| 2 | Overrides in campaign | None | Allow ad-hoc | Resolves SP01 [OPEN]: new archetype instead; runner list stays empty |
+| 2 | Overrides in campaign | None | Allow ad-hoc | Resolves SP01 open question: new archetype instead; runner list stays empty |
 | 3 | Authoring | Hand JSON + optional emit-JSON symmetry helper | Pure hand; layout DSL in-game | Data stays source of truth; symmetry helper saves time on 3-4 seat maps |
 | 4 | Map size | 120x80 all levels | Variable big maps | Fixed camera, label legibility |
 | 5 | Art packs | Kenney family (Commercial, Roads, Mini Characters) | Mixed Kenney/KayKit/Quaternius | One style family, all CC0 verified |
@@ -134,14 +134,14 @@ Mixamo excluded (Adobe licence, no redistribution).
 Cross-PRD asks: **SP01** [ACCEPTED] hosts `small`/`large`; `extends` may change `drawsLines.extraSlotAbove`. **SP04** [ACCEPTED] `human-proxy` tooling profile, tier names `easy|normal|hard|expert`, `balance-targets.json` schema. **SP03** base-plate team-colour fallback must be good enough as primary (open with SP03).
 
 ## Risks / Open Questions
-- [OPEN] Kenney buildings: tris within 5k and any splittable team material? Check on import; fallback base plate.
-- [OPEN] Mini Characters tris vs 300 budget; fallback decimate, capsule primitive troop, or Quaternius.
+- [RESOLVED: check on import; fallback base plate] Kenney buildings: tris within 5k and any splittable team material? Check on import; fallback base plate.
+- [RESOLVED: check on import; fallback order decimate → capsule → Quaternius] Mini Characters tris vs 300 budget; fallback decimate, capsule primitive troop, or Quaternius.
 - [RESOLVED: SP04 per-band rule: band 4 needs >= K-1 of K seeds or a committed solution replay] band 4 vs reference-wins-all-seeds.
-- [OPEN] Music + clash/capture SFX source and licence not yet verified.
-- [OPEN] All numbers (tower variants, tier skill, thresholds) are guesses until greybox playtest.
+- [RESOLVED: agents pick CC0 audio (Kenney audio packs for SFX; a CC0 music track), verify licence at download, record in docs/CREDITS.md; user may swap at slice sign-off] Music + clash/capture SFX source and licence not yet verified.
+- [DEFERRED: greybox playtest] All numbers (tower variants, tier skill, thresholds) are guesses until greybox playtest.
 - [RESOLVED: tier ids `easy|normal|hard|expert` owned by SP04] tier naming.
-- [OPEN] Are 120x80 and 18 u spacing sufficient for 14-tower level at laptop resolutions; test on L18 first.
-- [OPEN] Do 3-bot levels end with bots killing each other too fast (FFA balance)?
+- [DEFERRED: test on L18 at greybox] Are 120x80 and 18 u spacing sufficient for 14-tower level at laptop resolutions; test on L18 first.
+- [DEFERRED: check at greybox; tune bot aggression if needed] Do 3-bot levels end with bots killing each other too fast (FFA balance)?
 - [RESOLVED: no overrides in campaign] SP01 overrides question.
 - [DEFERRED] Per-band music, v2 tower art, in-game level preview thumbnails.
 

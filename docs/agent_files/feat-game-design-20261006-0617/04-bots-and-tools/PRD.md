@@ -133,11 +133,11 @@ Score = `bias[kind] * (sum w_i * c_i) / (sum w_i)` + noise; noise = rng uniform 
 - Enable Actions on the repo once; no secrets needed.
 
 ## Risks / Open Questions
-- [OPEN] Can one generic `reference` utility bot win bands 1-3 on all K seeds and band 4 on >= K-1 (else solution replay)? Decide after SP05 greybox. How solution replays get recorded (scripted command list via `runMatch` vs owner play; web has no replay export in SP03) is undecided.
+- [RESOLVED (user, 2026-10-08): bands 1-3 must win all K seeds; band 4 >= K-1 seeds, else an agent-authored scripted winning command list replayed via runMatch in CI. No owner-recorded replays; no web replay export needed.] Can one generic `reference` utility bot win bands 1-3 on all K seeds and band 4 on >= K-1 (else solution replay)? Decide after SP05 greybox. How solution replays get recorded (scripted command list via `runMatch` vs owner play; web has no replay export in SP03) is undecided.
 - [RESOLVED: per-band rule in `validate:levels` (bands 1-3 all K, band 4 >= K-1 or committed solution replay); reconciles SP05 band 4 reference >= 80%] pass rule / SP05 band-4 conflict.
-- [OPEN] Consideration set sufficiency: head-on clash exploitation and line-cut timing may need `clashPotential`. Add by data+registry after greybox playtest.
-- [OPEN] Per-decision cost at v6 (>4 owners, >50 towers): `maxTargetsPerSource` pruning; re-bench.
-- [OPEN] Balance bands (`balance-targets.json`) and tier values are guesses until SP05 playtests.
+- [DEFERRED: add clashPotential via data+registry after greybox if needed] Consideration set sufficiency: head-on clash exploitation and line-cut timing may need `clashPotential`. Add by data+registry after greybox playtest.
+- [DEFERRED: v6; maxTargetsPerSource pruning, re-bench then] Per-decision cost at v6 (>4 owners, >50 towers): `maxTargetsPerSource` pruning; re-bench.
+- [DEFERRED: tune at SP05 playtest] Balance bands (`balance-targets.json`) and tier values are guesses until SP05 playtests.
 - [RESOLVED: SP01 accepted; `botHash` per profile in `hashes.lock.json`, outside `simHash`] bot hash.
 - [RESOLVED: fixed-point, same loader] SP01 floats vs fixed-point item.
 - [RESOLVED: lives in tools] manifest visual-key check.

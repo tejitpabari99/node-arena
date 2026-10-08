@@ -153,13 +153,13 @@ Code must never do anything the rules don't state; param meaning lives in rules,
 | 16 | Bot hosting | `bot-params.ts` + `bot.schema.json` in content (SP04 authors); `botHash` outside `simHash` (SP04 ask accepted) | Schema in bots (cycle); bots inside simHash | Validator must know it; tuning bots must not invalidate replays |
 
 ## Risks / Open Questions
-- [OPEN] TypeBox vs zod: spike on first schema file; switch cost is low before SP02 starts. Default TypeBox.
-- [OPEN] Fixed-point scale 1000 sufficient for speed/progress along long lines at 20 Hz (rounding bias)? SP02 spike; may need a finer internal scale while keeping authored 3 decimals.
+- [RESOLVED: TypeBox; spike on first schema file, switch only if spike fails] TypeBox vs zod: spike on first schema file; switch cost is low before SP02 starts. Default TypeBox.
+- [RESOLVED: keep authored 3 decimals / scale 1000; SP02 spike may widen internal factor only] Fixed-point scale 1000 sufficient for speed/progress along long lines at 20 Hz (rounding bias)? SP02 spike; may need a finer internal scale while keeping authored 3 decimals.
 - [RESOLVED: SP05 campaign uses no level `overrides` (new archetype via `extends` instead); mechanism stays for dev-panel tuning/future custom games, SP05 acceptance asserts none in campaign] campaign overrides.
-- [OPEN] Map unit scale (bounds ~120×80, tower radius ~3) — tune in greybox; cheap data edit.
+- [DEFERRED: start 120×80, radius ~3; tune at greybox] Map unit scale (bounds ~120×80, tower radius ~3) — tune in greybox; cheap data edit.
 - [RESOLVED: SP04 chose fixed-point, same loader (`fx3`)] bot params floats vs fixed-point.
-- [OPEN] R-CAP wording vs brief ("at cap, no generation counts"): SP02 semantics (at cap with a drawn line the tower keeps sending; accumulator not banked only when no line) refine but do not contradict the brief; confirm with user at greybox.
-- [OPEN] Per-tower send-rate param may be wanted in v2 (archer-like variants); v1 omits since send = generation.
+- [RESOLVED (user, 2026-10-08): at cap with an outgoing line the tower keeps sending at its generation rate; with no line it stops (no banking). GAME_RULES.md R-CAP is worded this way.] R-CAP wording vs brief ("at cap, no generation counts"): SP02 semantics (at cap with a drawn line the tower keeps sending; accumulator not banked only when no line) refine but do not contradict the brief; confirm with user at greybox.
+- [DEFERRED: v2] Per-tower send-rate param may be wanted in v2 (archer-like variants); v1 omits since send = generation.
 - [RESOLVED: schema accepts team field now; v4 only relaxes a semantic rule] team-readiness.
 - [RESOLVED: SP02 ask; phase order, R-CMB/R-CAP text and validator bounds folded in above] sim/rules alignment.
 - [RESOLVED: SP04 `botHash` ask; lockfile has `bots` map, excluded from `simHash`] bot reproducibility.

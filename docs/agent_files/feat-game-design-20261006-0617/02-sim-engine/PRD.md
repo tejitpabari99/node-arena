@@ -163,12 +163,12 @@ registerComponent({ name:'generates', state:{acc:0}, systems:{generation: fn}, h
 | 14 | Scheduling | Outside sim; step = one tick | Sim-owned clock | Pause/2×/server/test all trivial |
 
 ## Risks / Open Questions
-- [OPEN] Cap semantics with lines (tower at cap keeps sending; acc not banked) — confirm in R-CAP wording with the user at greybox.
-- [OPEN] Capture with count exactly 0 flips to hitter with 0 garrison; playtest whether feels punishing.
+- [RESOLVED (user, 2026-10-08): at cap with an outgoing line the tower keeps sending at its generation rate; with no line it stops (no banking). GAME_RULES.md R-CAP is worded this way.] Cap semantics with lines (tower at cap keeps sending; acc not banked) — confirm in R-CAP wording with the user at greybox.
+- [RESOLVED (user, 2026-10-08): flips to the hitter with 0 garrison] Capture with count exactly 0 flips to hitter with 0 garrison; playtest whether feels punishing.
 - [RESOLVED: SP03 results copy "Mutual defeat — not completed"] `draw` outcome UI wording.
-- [OPEN] Friendly/mixed front pass-through during head-on clash is simplified; revisit for v4 teams.
-- [OPEN] Fixed-point spike result may change internal factor (low risk).
-- [OPEN] Event volume with 2× speed and `events:false` bypass for balance runner — measure.
+- [DEFERRED: v4] Friendly/mixed front pass-through during head-on clash is simplified; revisit for v4 teams.
+- [RESOLVED: follows SP01 spike; internal factor only] Fixed-point spike result may change internal factor (low risk).
+- [RESOLVED: measure in SP02 bench; balance runner uses events:false] Event volume with 2× speed and `events:false` bypass for balance runner — measure.
 - [RESOLVED: lazy progress + overshoot ordering] arrival fairness and perf.
 - [DEFERRED] Surrender/leave, `restore(snapshot)`, mid-tick rollback, worker hosting (v3).
 

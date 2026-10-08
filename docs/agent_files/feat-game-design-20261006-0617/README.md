@@ -49,33 +49,33 @@ New (this design pass):
 - **`obstacles[]` / `mapObjects[]` reserved**: schema accepts, v1 validator rejects non-empty. **v2 archer/tank = new component/system + data**, no schema redesign.
 - Lazy analytic troop movement in sim; renderer extrapolates; manifest-driven generic renderer (no archetype ids in code).
 
-## Risks / Open Questions (consolidated; resolve in-PRD with `[RESOLVED: ...]` / `[DEFERRED]`)
+## Risks / Open Questions (consolidated; all items resolved/deferred 2026-10-08, see in-PRD markers)
 ### Owner-only: needs user decision or playtest
-- SP01/SP02: confirm R-CAP semantics (at cap with a drawn line the tower keeps sending; no banked accumulator) vs brief wording, at greybox.
-- SP02: capture at exactly 0 count flips to hitter with 0 garrison; playtest if punishing.
-- SP01: map unit scale (120x80, tower radius ~3) tune in greybox.
-- SP04: balance bands and tier values are guesses until SP05 playtests.
-- SP04: can generic `reference` bot meet per-band rule (bands 1-3 all K, band 4 >= K-1 else solution replay)? Decide after greybox; incl. how solution replays are recorded.
-- SP03: real-GPU laptop check of 2,000 bobbing troops at 60 fps; label readability on dense levels; fixed camera vs large levels (add zoom?).
-- SP05: all numbers (tower variants, tier skill, thresholds) are guesses until playtest; FFA 3-bot balance; 120x80 + 18 u spacing on L18.
-- SP05: pick music track and clash/capture SFX; licence verification at download.
+- SP01/SP02: confirm R-CAP semantics (at cap with a drawn line the tower keeps sending; no banked accumulator) vs brief wording, at greybox. RESOLVED (user): at cap with a line keeps sending at generation rate; no line stops.
+- SP02: capture at exactly 0 count flips to hitter with 0 garrison; playtest if punishing. RESOLVED (user): flips to hitter with 0 garrison.
+- SP01: map unit scale (120x80, tower radius ~3) tune in greybox. DEFERRED: start 120x80, radius ~3; tune at greybox.
+- SP04: balance bands and tier values are guesses until SP05 playtests. DEFERRED: tune at SP05 playtest.
+- SP04: can generic `reference` bot meet per-band rule (bands 1-3 all K, band 4 >= K-1 else solution replay)? Decide after greybox; incl. how solution replays are recorded. RESOLVED (user): bands 1-3 all K, band 4 >= K-1 else agent-scripted command list replayed via runMatch in CI; no owner replays.
+- SP03: real-GPU laptop check of 2,000 bobbing troops at 60 fps; label readability on dense levels; fixed camera vs large levels (add zoom?). RESOLVED: run spike first (fallbacks listed); DEFERRED: label readability + camera, check at greybox, zoom only if L18 unreadable.
+- SP05: all numbers (tower variants, tier skill, thresholds) are guesses until playtest; FFA 3-bot balance; 120x80 + 18 u spacing on L18. DEFERRED: all to greybox playtest.
+- SP05: pick music track and clash/capture SFX; licence verification at download. RESOLVED: agents pick CC0 audio, verify licence, record in docs/CREDITS.md; user may swap at slice sign-off.
 - SP05 manual: greybox, slice (L1, L10, L18) and per-band/final sign-offs.
 
 ### Technical (agents can resolve via spike/measurement)
-- SP01: TypeBox vs zod (spike on first schema file; default TypeBox).
-- SP01: fixed-point scale 1000 sufficient? (SP02 says yes; spike confirms; may widen internal factor only).
-- SP01: per-tower send-rate param possibly wanted in v2 (v1 omits).
-- SP02: friendly/mixed front pass-through during head-on clash simplified; revisit for v4.
-- SP02: fixed-point spike result may change internal factor (low risk).
-- SP02: event volume at 2x and `events:false` bypass for balance runner; measure.
-- SP03: instanced troop spike (fallback static-bob/no-bob or VAT).
-- SP03: GLB team recolour via `teamMask` with chosen pack (fallback atlas/base plate).
-- SP03: Playwright software-GL screenshot stability (fallback structural asserts).
-- SP03: extrapolated front may overshoot clash point < 1 tick; clamp if visible.
-- SP04: consideration set sufficiency (`clashPotential` maybe).
-- SP04: per-decision cost at v6 scale; re-bench.
-- SP05: Kenney building tris <= 5k and splittable team material (fallback base plate).
-- SP05: Mini Characters tris vs 300 budget (fallback decimate, capsule, Quaternius).
+- SP01: TypeBox vs zod (spike on first schema file; default TypeBox). RESOLVED: TypeBox, switch only if spike fails.
+- SP01: fixed-point scale 1000 sufficient? (SP02 says yes; spike confirms; may widen internal factor only). RESOLVED: keep scale 1000; SP02 spike may widen internal factor only.
+- SP01: per-tower send-rate param possibly wanted in v2 (v1 omits). DEFERRED: v2.
+- SP02: friendly/mixed front pass-through during head-on clash simplified; revisit for v4. DEFERRED: v4.
+- SP02: fixed-point spike result may change internal factor (low risk). RESOLVED: follows SP01 spike.
+- SP02: event volume at 2x and `events:false` bypass for balance runner; measure. RESOLVED: measure in SP02 bench; balance runner uses events:false.
+- SP03: instanced troop spike (fallback static-bob/no-bob or VAT). RESOLVED: run as first renderer task.
+- SP03: GLB team recolour via `teamMask` with chosen pack (fallback atlas/base plate). RESOLVED: base plate + roof marker default; teamMask only if split works.
+- SP03: Playwright software-GL screenshot stability (fallback structural asserts). RESOLVED: try screenshots, fall back if flaky.
+- SP03: extrapolated front may overshoot clash point < 1 tick; clamp if visible. DEFERRED: clamp only if visible at greybox.
+- SP04: consideration set sufficiency (`clashPotential` maybe). DEFERRED: add via data+registry after greybox if needed.
+- SP04: per-decision cost at v6 scale; re-bench. DEFERRED: v6; maxTargetsPerSource pruning.
+- SP05: Kenney building tris <= 5k and splittable team material (fallback base plate). RESOLVED: check on import.
+- SP05: Mini Characters tris vs 300 budget (fallback decimate, capsule, Quaternius). RESOLVED: check on import; fallback order decimate, capsule, Quaternius.
 
 Folded this pass: SP05 asks accepted (SP01 hosts `small`/`large`, `extends` may change any component param incl. `extraSlotAbove`, no adding/removing components; campaign uses no `overrides`; SP04 `human-proxy` + tier names; band-4 rule).
 
@@ -85,4 +85,4 @@ Folded this pass: SP05 asks accepted (SP01 hosts `small`/`large`, `extends` may 
 - PRDs: [01](01-rules-and-content-model/PRD.md), [02](02-sim-engine/PRD.md), [03](03-web-client/PRD.md), [04](04-bots-and-tools/PRD.md), [05](05-campaign-and-art/PRD.md)
 
 ## Next step
-User reviews the PRDs and resolves each `[OPEN]` in-PRD (`[RESOLVED: ...]` / `[DEFERRED]`), then run dev-tasks to generate TASKS.md per sub-project.
+Open questions resolved/deferred (2026-10-08). Next: run dev-tasks to generate TASKS.md per sub-project.
