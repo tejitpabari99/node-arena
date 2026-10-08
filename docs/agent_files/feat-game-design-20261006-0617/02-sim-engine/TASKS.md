@@ -13,8 +13,8 @@ Source of truth: /root/projects/node-arena/.worktrees/feat/game-design/docs/agen
 | 3 | State model, component registry, `create` | 2, SP01 | done |
 | 4 | Commands, `canDraw`, generation, departures | 3 | done |
 | 5 | Lazy movement, clash, arrivals, capture | 4 | done |
-| 6 | Slot enforcement, win/lose/time, events, `step` | 5 | in-progress |
-| 7 | SimView, `readTroops`, `snapshot`, `hash` | 6 | todo |
+| 6 | Slot enforcement, win/lose/time, events, `step` | 5 | done |
+| 7 | SimView, `readTroops`, `snapshot`, `hash` | 6 | in-progress |
 | 8 | Replay record/playback | 7 | todo |
 | 9 | Rule tests (`covers R-XXX-NN`) | 6 | todo |
 | 10 | Property tests | 8 | todo |
