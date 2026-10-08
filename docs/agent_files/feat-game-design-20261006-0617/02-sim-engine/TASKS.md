@@ -15,8 +15,8 @@ Source of truth: /root/projects/node-arena/.worktrees/feat/game-design/docs/agen
 | 5 | Lazy movement, clash, arrivals, capture | 4 | done |
 | 6 | Slot enforcement, win/lose/time, events, `step` | 5 | done |
 | 7 | SimView, `readTroops`, `snapshot`, `hash` | 6 | done |
-| 8 | Replay record/playback | 7 | in-progress |
-| 9 | Rule tests (`covers R-XXX-NN`) | 6 | todo |
+| 8 | Replay record/playback | 7 | done |
+| 9 | Rule tests (`covers R-XXX-NN`) | 6 | in-progress |
 | 10 | Property tests | 8 | todo |
 | 11 | Golden replays + `sim:golden` + cross-runtime | 8, 9 | todo |
 | 12 | Extensibility fixture test | 6 | todo |
