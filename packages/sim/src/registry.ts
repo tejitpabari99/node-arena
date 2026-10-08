@@ -1,5 +1,7 @@
 import type { CompiledTower } from '@node-arena/content';
 import type { SimState, Troop } from './state.js';
+import type { DrawValidation } from './commands.js';
+import { generate, depart, refreshSlots, validateLine } from './economy.js';
 
 /** Fixed rule phases; order within a phase is explicit, then component name. */
 export const PHASES = ['commands', 'generation', 'departures', 'clash', 'arrivals', 'slots', 'win'] as const;
@@ -9,12 +11,15 @@ export interface ComponentSystem {
   readonly run: (state: SimState, towers: Int32Array) => void;
 }
 export interface ComponentHooks {
+  readonly validateDraw?: (state: SimState, player: number, from: number, to: number) => DrawValidation;
+  readonly onCapture?: (state: SimState, tower: number) => void;
   readonly onArrive?: (state: SimState, tower: number, troop: Troop) => void;
   readonly onHit?: (state: SimState, tower: number, troop: Troop) => void;
 }
 export interface SimComponent {
   readonly name: string;
   readonly state: Readonly<Record<string, number>>;
+  readonly setup?: (state: SimState, towers: Int32Array) => void;
   readonly initialize?: (tower: CompiledTower, columns: Record<string, Int32Array>, index: number) => void;
   readonly systems?: Partial<Readonly<Record<Phase, ComponentSystem>>>;
   readonly hooks?: ComponentHooks;
@@ -48,18 +53,18 @@ export class ComponentRegistry {
   }
 }
 
-/** V1 declarations only; mechanics systems and hooks are supplied by later tasks. */
+/** V1 components own their columns and registered mechanics. */
 export function createComponentRegistry(): ComponentRegistry {
   const registry = new ComponentRegistry();
   registry.registerComponent({ name: 'garrison', state: { count: 0, cap: 0 }, initialize(tower, col, i) {
     col['garrison.count']![i] = tower.garrison;
     col['garrison.cap']![i] = tower.components.garrison!.cap!;
   } });
-  registry.registerComponent({ name: 'generates', state: { acc: 0, ratePerSec: 0, troop: 0 }, initialize(tower, col, i) {
+  registry.registerComponent({ name: 'generates', state: { acc: 0, ratePerSec: 0, troop: 0 }, systems: { generation: { order: 0, run: generate } }, hooks: { onCapture(state, tower) { state.tower.col['generates.acc']![tower] = 0; } }, initialize(tower, col, i) {
     col['generates.ratePerSec']![i] = tower.components.generates!.ratePerSec!;
     col['generates.troop']![i] = tower.components.generates!.troop!;
   } });
-  registry.registerComponent({ name: 'drawsLines', state: { cursor: 0 } });
+  registry.registerComponent({ name: 'drawsLines', state: { cursor: -1 }, setup: refreshSlots, systems: { generation: { order: 1, run: refreshSlots }, departures: { order: 0, run: depart } }, hooks: { validateDraw: validateLine, onCapture(state, tower) { state.tower.col['drawsLines.cursor']![tower] = -1; } } });
   registry.registerComponent({ name: 'capturable', state: {} });
   return registry;
 }

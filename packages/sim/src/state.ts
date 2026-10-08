@@ -1,4 +1,5 @@
 import type { CompiledLevel, CompiledPlayer, CompiledTower, CompiledComponents } from '@node-arena/content';
+import { step, validateDraw, type Command, type RejectReason, type SimEvent } from './commands.js';
 import { TICK_RATE, isqrt, Sfc32 } from './math.js';
 import { ComponentRegistry, createComponentRegistry, PHASES, sortedNames, compareNames, type Phase, type SimComponent, type ComponentSystem } from './registry.js';
 
@@ -56,6 +57,15 @@ export interface TowerState { owner: Int32Array; team: Int32Array; slots: Int32A
 export interface ScheduledSystem extends ComponentSystem { readonly component: string }
 export interface SimState {
   tick: number;
+  over: { outcome: string; winnerTeam: number | null } | null;
+  rejected: number;
+  drawSeq: number;
+  troopSeq: number;
+  pendingDepartures: Int32Array;
+  events: SimEvent[] | null;
+  step(commands: readonly Command[], options?: { events?: boolean }): readonly SimEvent[];
+  canDraw(player: string, from: string, to: string): RejectReason | null;
+  resetOnCapture(tower: number): void;
   timeLimitTicks: number;
   visual: string;
   ids: { players: string[]; towers: string[] };
@@ -75,7 +85,7 @@ export interface SimState {
 }
 export interface CreateOptions { readonly registry?: ComponentRegistry }
 
-/** Staged state constructor. Tick/view/hash APIs are added by their own tasks. */
+/** Staged constructor with command/economy phases; combat/view/hash follow in later tasks. */
 export function create(level: CompiledLevel, seed: number, options: CreateOptions = {}): SimState {
   const registry = options.registry ?? createComponentRegistry();
   registry.assertParity(level.componentNames);
@@ -117,10 +127,6 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
     tower.owner[i] = source.owner;
     tower.team[i] = source.owner === -1 ? -1 : players.team[source.owner]!;
     if (source.owner !== -1) players.alive[source.owner] = 1;
-    if (source.components.drawsLines) {
-      tower.slots[i] = 1;
-      for (const threshold of source.components.drawsLines.extraSlotAbove!) if (threshold < source.garrison) tower.slots[i] = tower.slots[i]! + 1;
-    }
   }
   const lengths = new Int32Array(n * n);
   for (let from = 0; from < n; from++) for (let to = from + 1; to < n; to++) {
@@ -131,7 +137,12 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
     lengths[to * n + from] = length;
   }
   const channels: (Channel | undefined)[] = Array.from({ length: n * n }, () => undefined);
-  return { tick: 0, timeLimitTicks: level.timeLimitSec * TICK_RATE, visual: level.visual, ids: { players: level.players.map(player => player.id), towers: level.towers.map(tower => tower.id) }, players, tower,
+  const state: SimState = { tick: 0, over: null, rejected: 0, drawSeq: 0, troopSeq: 0, pendingDepartures: column(), events: null,
+    step(commands, options) { return step(state, commands, options); },
+    canDraw(player, from, to) { return validateDraw(state, player, from, to).reason; },
+    resetOnCapture(tower) {
+      for (const component of components) if (Object.hasOwn(state.towerParams[tower]!, component.name)) component.hooks?.onCapture?.(state, tower);
+    }, timeLimitTicks: level.timeLimitSec * TICK_RATE, visual: level.visual, ids: { players: level.players.map(player => player.id), towers: level.towers.map(tower => tower.id) }, players, tower,
     towerStatic: level.towers.map((tower: CompiledTower) => ({ x: tower.x, y: tower.y, archetype: tower.archetype, visual: tower.visual, footprintRadius: tower.footprintRadius, components: sortedNames(tower.components) })),
     towerParams: level.towers.map(tower => Object.fromEntries(sortedNames(tower.components).map(name => [name, Object.fromEntries(Object.entries(tower.components[name]!).sort(([a], [b]) => compareNames(a, b)).map(([param, value]) => {
       return [param, Array.isArray(value) ? [...value] : value];
@@ -143,4 +154,6 @@ export function create(level: CompiledLevel, seed: number, options: CreateOption
       return channels[key] ??= { key, from, to, length: lengths[key]!, drawn: 0, drawSeq: 0, owner: -1, troops: new TroopRing() };
     },
   };
+  for (const component of components) component.setup?.(state, componentTowers.get(component.name)!);
+  return state;
 }
