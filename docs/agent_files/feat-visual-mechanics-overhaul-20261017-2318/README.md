@@ -6,14 +6,14 @@ date: 2026-10-17
 
 # feat/visual-mechanics-overhaul - branch index
 
-Node Arena v1.1: re-skin to match the Tower War reference images as closely as possible (same camera feel, proportions, palette, tower shapes, number/dot style, lane look, troop look, props, HUD; ref/towerwar_*.jpg primarily) (diorama, painted stacked towers, ribbon lanes, chibi troops, visible head-on clash) and fix bot line churn. Game rules unchanged.
+Node Arena v1.1: re-skin to match the Tower War reference images as closely as possible (same camera feel, proportions, palette, tower shapes, number/dot style, lane look, troop look, props, HUD; ref/towerwar_*.jpg primarily) (diorama, stacked stone towers with team roof caps and trim, ribbon lanes, chibi troops, visible head-on clash) and fix bot line churn. Game rules unchanged.
 
 ## Sub-projects
 | # | Name | Phase | Depends on | Scope | Docs |
 |---|---|---|---|---|---|
 | 01 | Visual QA harness | 1 | none | Deterministic Playwright capture, compose, probe metrics M01-M13, 24-item scored CHECKLIST, iteration-0 baseline | [PRD](01-visual-qa-harness/PRD.md) / [TASKS](01-visual-qa-harness/TASKS.md) (8 tasks) |
 | 02 | Bot line commitment | 1 | none | Min line lifetime, cut margin, redraw block, tie hysteresis as bot params; churn tool; goldens regenerated; balance bands held | [PRD](02-bot-line-commitment/PRD.md) / [TASKS](02-bot-line-commitment/TASKS.md) (7 tasks) |
-| 03 | Diorama + towers | 2 | 01 | ~65 deg camera, grass/sand/rock ground, ref-matched props, code-built painted stacked towers, roof count + slot dots, labels removed, `grass` theme for all levels | [PRD](03-diorama-and-towers/PRD.md) / [TASKS](03-diorama-and-towers/TASKS.md) (7 tasks) |
+| 03 | Diorama + towers | 2 | 01 | ~65 deg camera, grass/sand/rock ground, ref-matched props, code-built stacked stone towers with team roof caps + trim, roof count + slot dots, labels removed, `grass` theme for all levels | [PRD](03-diorama-and-towers/PRD.md) / [TASKS](03-diorama-and-towers/TASKS.md) (7 tasks) |
 | 04 | Lanes, troops, clash | 3 | 03 (uses 01) | Pair ribbon lanes with chevrons and build-out, shared head-on lane with smoothed split, brawl FX, tinted chibi troops, LOD | [PRD](04-lanes-troops-clash/PRD.md) / [TASKS](04-lanes-troops-clash/TASKS.md) (10 tasks) |
 | 05 | HUD, rollout, perf | 4 | 04 (03); 02 for churn numbers in final review | Level pill + strength bar, round buttons, tip, menu restyle, L1 slice gate, 20-level sweep, L18 60 fps, baseline refresh, `final-review.md` | [PRD](05-hud-rollout-perf/PRD.md) / [TASKS](05-hud-rollout-perf/TASKS.md) (13 tasks) |
 
@@ -30,8 +30,8 @@ Task Status values: todo → in-progress → done | blocked | Blocked-visual (se
 
 ## Locked decisions (from brainstorm.md)
 - Target look: match the reference images (`ref/towerwar_*.jpg` primarily) as closely as possible, same camera feel, proportions, palette, tower shapes, number/dot style, lane look, troop look, props, HUD; steep ~65 deg landscape camera; full-bleed grass diorama, sand/rock border with trees, rocks, crates, tires; no void or board edge.
-- Towers: whole tower in team colour (grey neutral), floors by count band (max 5), white outlined count on roof + 1-3 slot dots, "Max" at cap; colourblind glyph on roof only in that mode.
-- Lanes: flat translucent team ribbon ~1/3 tower width, white chevrons, darker edges, builds outward from source.
+- Towers: white/light-grey stone floors with a team-coloured roof cap and team-coloured trim bands (neutral = all grey), matching the Tower War refs (whole-tower team paint is City Takeover, not the target); floors by count band (max 5), white outlined count on roof + 1-3 slot dots, "Max" at cap; colourblind glyph on roof only in that mode.
+- Lanes: flat translucent team ribbon ~1/3 tower width (Tower War look: soft ribbon, subtle dotted texture), white chevrons on top (City Takeover style; user kept chevrons), darker edges, builds outward from source.
 - Head-on A->B + B->A = ONE lane split by colour at the live meeting point with a brawl (puffs + marker); other crossings just overlap. Renderer-only, sim untouched.
 - Troops: chunky chibi in team colour, single file; LOD fallback (> 600 troops or frame-time degrade).
 - Art: towers/lanes/ground in code; props/troops from any freely downloadable pack or code-built geometry, chosen purely for visual match to refs (licensing not a constraint; source noted in docs/CREDITS.md). One theme (`grass`) for all 20 levels, theme is data.
@@ -44,8 +44,9 @@ Task Status values: todo → in-progress → done | blocked | Blocked-visual (se
 ## How to execute (for the executing environment)
 1. Read `AGENTS.md`, `brainstorm.md`, and this README.
 2. Run `pnpm install && pnpm build:prerequisites`.
-3. Run dev-code per sub-project in dependency order: 01 and 02 in parallel, then 03, then 04, then 05.
-4. Every visual task follows the "Iteration protocol" section in its own PRD. Those sections are self-contained and authoritative; do not rely on any skill or environment feature for iteration behaviour.
+3. Execute with this explicit loop (no skill required; skills in `.agents/skills` may help but are optional): for each sub-project in dependency order (01 ∥ 02 → 03 → 04 → 05), for each task in its `TASKS.md` table order: set Status `in-progress`; implement via a sub-agent; run the task's Iteration block to its exit; run the tests named in Done-when; commit `<NN-name>: Task N — <short name>` (iteration commits `… — iter k: <change>`; hyphen vs em dash in per-SP files is cosmetic); set Status `done` / `blocked` / `Blocked-visual`. Never wait for human approval. At the end SP05 Task 13 writes `final-review.md`.
+4. **Scoring rigor (all visual iteration, SP03-SP05):** before scoring any item >= 8, log >= 3 concrete observable differences vs the ref; run objective pixel checks per SP01 metrics (`visual:score-sheet`, provided by SP01); a blind second scorer sub-agent sees only the composite + checklist and the item score = min of the two scores.
+   Every visual task follows the "Iteration protocol" section in its own PRD. Those sections are self-contained and authoritative; do not rely on any skill or environment feature for iteration behaviour.
 5. No human approval until `final-review.md` (written by SP05) in this folder.
 6. `Blocked-visual` tasks (12-iteration cap or stuck rule) do not stop the run: log them, record in TASKS.md and final-review, continue.
 
@@ -68,6 +69,7 @@ Cross-SP conventions: refs are never edited; thresholds are never lowered; scree
 
 ## Index
 - `brainstorm.md` - v1.1 brief (approved)
+- `critique-2026-10-17.md` - plan critique (B1-B5, N1-N9, S1-S4) and where it was applied
 - `ref/` - reference images
   - Best: `towerwar_01.jpg`, `towerwar_03.jpg`, `towerwar_06.jpg`, `towerwar_yt1.jpg`, `citytakeover_01.jpg`, `citytakeover_04.jpg`
   - `v1_playtest_*.png` = current state
