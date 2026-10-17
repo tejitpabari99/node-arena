@@ -1,0 +1,86 @@
+{
+  "timestamp": "2026-10-09T17:43:16.163324+00:00",
+  "allowedCpus": "0-3",
+  "sampleBusyPct": {
+    "0": 7.0,
+    "1": 2.0,
+    "2": 6.030150753768845,
+    "3": 2.525252525252525
+  },
+  "selectedCore": 1,
+  "hostLoadBefore": [
+    2.00341796875,
+    2.97900390625,
+    3.07568359375
+  ],
+  "processesBefore": [
+    "    PID    PPID PSR %CPU COMMAND",
+    "3670547 3670546   1  100 ps",
+    "2307696 2306877   2  2.4 claude",
+    "3670546 3670361   3  1.9 python3",
+    "3670361 2205636   1  1.6 bash",
+    "1726988 1575154   0  1.4 claude",
+    "2205561 1849794   0  1.3 codex",
+    "   1038       1   2  1.1 rsyslogd",
+    "2205636 2205561   1  0.9 codex",
+    "    305       2   3  0.1 jbd2/sda1-8",
+    "   1094       1   2  0.1 preload",
+    "   1001       1   1  0.0 qemu-ga",
+    "3665148 2307696   3  0.0 bash",
+    "3573916       2   2  0.0 kworker/u8:2-iou_exit",
+    "1575153       1   3  0.0 tmux: server"
+  ],
+  "wallSeconds": 4.379727685824037,
+  "benchmarkCpuSeconds": 4.378012000000001,
+  "selectedCoreBusySeconds": 4.4,
+  "estimatedOtherSelectedCoreBusySeconds": 0.021987999999999452,
+  "processesAfter": [
+    "    PID    PPID PSR %CPU COMMAND",
+    "2307696 2306877   2  2.4 claude",
+    "1726988 1575154   2  1.4 claude",
+    "2205561 1849794   0  1.3 codex",
+    "   1038       1   2  1.1 rsyslogd",
+    "2205636 2205561   1  0.9 codex",
+    "3670546 3670361   3  0.6 python3",
+    "3670361 2205636   1  0.5 bash",
+    "    305       2   0  0.1 jbd2/sda1-8",
+    "   1094       1   3  0.1 preload",
+    "   1001       1   3  0.0 qemu-ga",
+    "3665148 2307696   0  0.0 bash",
+    "3573916       2   2  0.0 kworker/u8:2-iou_exit",
+    "1575153       1   3  0.0 tmux: server",
+    "3542430       2   3  0.0 kworker/u8:3-iou_exit"
+  ],
+  "hostLoadAfter": [
+    1.9228515625,
+    2.94580078125,
+    3.064453125
+  ],
+  "exitCode": 0,
+  "stderr": "",
+  "command": "taskset -c 1 node packages/bots/scripts/bench.mjs",
+  "benchmark": {
+    "environment": {
+      "node": "v22.23.3",
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "AMD EPYC-Rome Processor"
+    },
+    "mode": "strict",
+    "budgetMs": 1,
+    "result": {
+      "botVersion": "1.0.0",
+      "profile": "rusher-expert",
+      "seed": 704,
+      "towers": 50,
+      "troops": 2000,
+      "lines": 50,
+      "ownTowers": 25,
+      "warmup": 1000,
+      "samples": 5000,
+      "commandCount": 10000,
+      "mean": 0.597238589000003,
+      "p99": 0.8818430000001172
+    }
+  }
+}

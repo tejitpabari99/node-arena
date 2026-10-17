@@ -1,0 +1,122 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "09-chain-link",
+  "name": "Chain Link",
+  "order": 9,
+  "band": 2,
+  "visual": "city.dusk",
+  "timeLimitSec": 300,
+  "bounds": {
+    "w": 120,
+    "h": 80
+  },
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "player.1"
+    },
+    {
+      "id": "b1",
+      "kind": "bot",
+      "botProfile": "turtle-normal",
+      "colorKey": "player.2"
+    }
+  ],
+  "towers": [
+    {
+      "id": "home-1",
+      "archetype": "standard",
+      "pos": {
+        "x": -50,
+        "y": -26
+      },
+      "owner": "p1",
+      "garrison": 20
+    },
+    {
+      "id": "home-2",
+      "archetype": "standard",
+      "pos": {
+        "x": 50,
+        "y": -26
+      },
+      "owner": "b1",
+      "garrison": 12
+    },
+    {
+      "id": "link-a-1",
+      "archetype": "standard",
+      "pos": {
+        "x": -28,
+        "y": -30
+      },
+      "owner": "p1",
+      "garrison": 4
+    },
+    {
+      "id": "link-a-2",
+      "archetype": "standard",
+      "pos": {
+        "x": 28,
+        "y": -30
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "link-b-1",
+      "archetype": "standard",
+      "pos": {
+        "x": -34,
+        "y": -11
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "link-b-2",
+      "archetype": "standard",
+      "pos": {
+        "x": 34,
+        "y": -11
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "link-c-1",
+      "archetype": "small",
+      "pos": {
+        "x": -14,
+        "y": 14
+      },
+      "owner": null,
+      "garrison": 9
+    },
+    {
+      "id": "link-c-2",
+      "archetype": "small",
+      "pos": {
+        "x": 14,
+        "y": 14
+      },
+      "owner": null,
+      "garrison": 9
+    },
+    {
+      "id": "hub",
+      "archetype": "standard",
+      "pos": {
+        "x": 0,
+        "y": -5
+      },
+      "owner": null,
+      "garrison": 14
+    }
+  ],
+  "obstacles": [],
+  "mapObjects": [],
+  "overrides": {}
+}

@@ -1,0 +1,9 @@
+
+ RUN  v5.0.3 /root/projects/node-arena/.worktrees/feat/game-design/apps/web
+
+
+ Test Files  3 passed (3)
+      Tests  13 passed (13)
+   Start at  16:13:34
+   Duration  487ms (transform 51%, import 36%, tests 11%, worker 2%)
+

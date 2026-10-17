@@ -1,0 +1,16 @@
+
+> @node-arena/web@0.0.0 test /root/projects/node-arena/.worktrees/feat/game-design/apps/web
+> vitest run -- test/model-regressions.test.ts test/cache-regressions.test.ts
+
+
+ RUN  v5.0.3 /root/projects/node-arena/.worktrees/feat/game-design/apps/web
+
+
+ Test Files  17 passed (17)
+      Tests  133 passed (133)
+   Start at  15:58:57
+   Duration  2.89s (import 63%, transform 20%, tests 15%, worker 1%)
+
+    Isolate  17 workers spawned · ~129ms startup each (spawn + environment, per file)
+             at least ~601ms faster with isolate: false — reuses workers across files instead of one per file
+

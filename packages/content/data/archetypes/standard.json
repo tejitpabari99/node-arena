@@ -1,0 +1,13 @@
+{
+  "$schema": "../../schemas/archetype.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "standard",
+  "visual": "tower.standard",
+  "footprintRadius": 3,
+  "components": {
+    "garrison": { "cap": 50 },
+    "generates": { "troop": "regular", "ratePerSec": 1 },
+    "drawsLines": { "extraSlotAbove": [10, 30] },
+    "capturable": {}
+  }
+}

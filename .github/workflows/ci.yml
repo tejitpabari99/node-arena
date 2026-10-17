@@ -1,0 +1,59 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  content:
+    name: Content and simulation (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['22', '24']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Select content version baseline
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        run: |
+          base="$PR_BASE"
+          if [ -z "$base" ]; then base="$PUSH_BASE"; fi
+          if [ -z "$base" ] || [[ "$base" =~ ^0+$ ]]; then
+            if git rev-parse --verify 'HEAD^' >/dev/null 2>&1; then
+              base=HEAD^
+            else
+              base=HEAD
+            fi
+          fi
+          git rev-parse --verify "${base}^{commit}" >/dev/null
+          echo "CONTENT_BASE=$base" >> "$GITHUB_ENV"
+      - name: Install Chromium for browser parity
+        run: |
+          pnpm --filter @node-arena/web exec playwright install --with-deps chromium
+          pnpm --filter @node-arena/content exec playwright install --with-deps chromium
+          pnpm --filter @node-arena/sim exec playwright install --with-deps chromium
+      - run: pnpm run ci
+  playwright:
+    name: Web preview and development browser suites
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:prerequisites
+      - run: pnpm --filter @node-arena/web exec playwright install --with-deps chromium
+      - run: pnpm test:web:all

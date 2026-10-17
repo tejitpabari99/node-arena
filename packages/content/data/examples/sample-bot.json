@@ -1,0 +1,7 @@
+{
+  "$schema": "../../schemas/bot.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "sample-bot",
+  "kind": "idle",
+  "params": {}
+}

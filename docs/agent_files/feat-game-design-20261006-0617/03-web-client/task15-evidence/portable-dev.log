@@ -1,0 +1,16 @@
+[WebServer] (node:2298522) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:2298613) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:2298752) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/app-flow.spec.ts:4:1 › future 20-level content runs through real results, retry, next and completed picker (3.4s)
+LINES_FX_RESULT {"blue":4062,"red":3654,"scrolling":7899,"unchanged":true,"clash":{"type":"Clash","tick":6,"channel":1,"progA":100000,"progB":100000,"value":1},"clashPosition":[5,0.15,0],"sparkPixels":400,"captured":{"type":"Captured","tick":11,"tower":1,"from":1,"to":0},"capturePosition":[10,0.12,0],"captureEffect":"pulse","baseline":{"geometries":0,"textures":0},"after":{"geometries":0,"textures":0}}
+  ✓  2 [chromium] › e2e/lines-fx.spec.ts:4:1 › real sim opposite ribbons, clash event coordinates, capture effects, scrolling shader and GPU cleanup (2.0s)
+TROOPS_RESULT {"count":2000,"cutCount":2000,"linesAfterCut":0,"calls":14,"triangles":72000,"colored":698,"projected":[-0.4012865467829268,0.23697801839245106,0.998044029480067],"fronts":[[20,0,-1.5707963705062866,1],[20,0,1.5707963705062866,2],[20,20,-1.5707963705062866,3],[20,20,1.5707963705062866,4]],"headVisible":[52,12],"baseline":{"geometries":0,"textures":2},"after":{"geometries":0,"textures":2},"renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","jsMs":{"samples":120,"median":0.5999999046325684,"p95":1.5999999046325684,"max":3.200000047683716},"updateMs":{"samples":120,"median":0.2999999523162842,"p95":0.40000009536743164,"max":1}}
+  ✓  3 [chromium] › e2e/troops.spec.ts:4:1 › real public sim: 2,000 troops, head-on placement, cut-channel persistence, GPU cleanup and shader correctness (23.8s)
+
+  3 passed (36.3s)

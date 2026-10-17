@@ -1,0 +1,18 @@
+{
+  "$schema": "archetype.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "archer",
+  "visual": "tower",
+  "footprintRadius": 3,
+  "components": {
+    "garrison": {
+      "cap": 30
+    },
+    "capturable": {},
+    "shoots": {
+      "ratePerSec": 0.625,
+      "radius": 12.125,
+      "targeting": "nearestHostile"
+    }
+  }
+}

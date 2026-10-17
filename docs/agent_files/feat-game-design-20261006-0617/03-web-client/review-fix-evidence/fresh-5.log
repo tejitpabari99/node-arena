@@ -1,0 +1,9 @@
+
+> node-arena@ check:content /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/content lock:check --base 343593c
+
+
+> @node-arena/content@0.0.0 lock:check /root/projects/node-arena/.worktrees/feat/game-design/packages/content
+> tsx scripts/content-lock.ts --check --base 343593c
+
+Content hashes current (1 levels, 1 bots); rules versions agree; BOT_VERSION gate deferred to SP04

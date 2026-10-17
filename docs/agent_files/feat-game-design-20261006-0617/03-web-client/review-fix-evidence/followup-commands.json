@@ -1,0 +1,39 @@
+[
+  {
+    "command": "pnpm --filter @node-arena/web exec vitest run test/model-regressions.test.ts test/cache-regressions.test.ts",
+    "exitCode": 0,
+    "elapsedSeconds": 1.6,
+    "log": "targeted-regressions.log",
+    "stderr": "targeted-regressions-stderr.log"
+  },
+  {
+    "command": "WEB_TEST_SERVER=dev pnpm --filter @node-arena/web exec playwright test e2e/acceptance.spec.ts --grep full runtime stress --workers=1 --reporter=json",
+    "exitCode": 0,
+    "elapsedSeconds": 31.39,
+    "log": "isolated-dev-stress.log",
+    "stderr": "isolated-dev-stress-stderr.log",
+    "stats": {
+      "startTime": "2026-10-09T16:05:06.340Z",
+      "duration": 30120.814000000002,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  {
+    "command": "WEB_TEST_SERVER=dev pnpm --filter @node-arena/web exec playwright test --workers=1 --reporter=json",
+    "exitCode": 1,
+    "elapsedSeconds": 156.53,
+    "log": "final-dev.log",
+    "stderr": "final-dev-stderr.log",
+    "stats": {
+      "startTime": "2026-10-09T16:05:37.619Z",
+      "duration": 156529.05,
+      "expected": 30,
+      "skipped": 0,
+      "unexpected": 1,
+      "flaky": 0
+    }
+  }
+]

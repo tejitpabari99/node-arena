@@ -1,0 +1,93 @@
+{
+  "$schema": "../../../packages/content/schemas/manifest.schema.json",
+  "schemaVersion": "1.0.0",
+  "palettes": {
+    "default": {"neutral": "#A0A7B0", "player.1": "#2E86FF", "player.2": "#FF4D4D", "player.3": "#FFC933", "player.4": "#35C46B"},
+    "colorblind": {"neutral": "#999999", "player.1": "#0072B2", "player.2": "#D55E00", "player.3": "#F0E442", "player.4": "#009E73"}
+  },
+  "teamMarkers": {"neutral": "○", "player.1": "▲", "player.2": "■", "player.3": "●", "player.4": "◆"},
+  "models": {
+    "block": {"primitive": "box", "size": [4, 6, 4]},
+    "unit": {"primitive": "capsule", "size": [0.35, 0.7, 0.35]},
+    "building.small": {"src": "models/tower-small.glb"},
+    "building.standard": {"src": "models/tower-standard.glb"},
+    "building.large": {"src": "models/tower-large.glb"},
+    "character.regular": {"src": "models/troop-regular.glb"},
+    "prop.road": {"src": "models/prop-road.glb"},
+    "prop.light": {"src": "models/prop-light.glb"},
+    "prop.cone": {"src": "models/prop-cone.glb"}
+  },
+  "visuals": {
+    "tower.standard": {"kind": "tower", "model": "building.standard", "scale": 4, "label": {"height": 7.6}},
+    "tower.small": {"kind": "tower", "model": "building.small", "scale": 3.6, "label": {"height": 5.4}},
+    "tower.large": {"kind": "tower", "model": "building.large", "scale": 3.9, "label": {"height": 12}},
+    "troop.regular": {"kind": "troop", "model": "character.regular", "scale": 2.8, "teamMaterial": "Shirt", "anim": {"type": "bob", "hz": 2.2, "amp": 0.12, "sway": 6}}
+  },
+  "themes": {
+    "city.day": { "ground": "#DFE7DB", "sky": "#D9EAF4", "light": {"dir": [1, 2, 1], "color": "#FFFFFF", "intensity": 2}, "fog": {"color": "#D9EAF4", "near": 110, "far": 340},
+      "props": [
+        {"model": "prop.road", "pos": [10, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [30, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [50, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [70, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [90, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [110, 0, -8], "scale": 20},
+        {"model": "prop.light", "pos": [20, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.light", "pos": [60, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.light", "pos": [100, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.cone", "pos": [40, 0, -1], "scale": 12},
+        {"model": "prop.cone", "pos": [80, 0, -1], "scale": 12}
+      ] },
+    "city.dusk": { "ground": "#EBD9C2", "sky": "#F2B98A", "light": {"dir": [-2, 1, 1], "color": "#FFC48A", "intensity": 1.6}, "fog": {"color": "#F2B98A", "near": 100, "far": 310},
+      "props": [
+        {"model": "prop.road", "pos": [10, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [30, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [50, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [70, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [90, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [110, 0, -8], "scale": 20},
+        {"model": "prop.light", "pos": [20, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.light", "pos": [60, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.light", "pos": [100, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.cone", "pos": [40, 0, -1], "scale": 12},
+        {"model": "prop.cone", "pos": [80, 0, -1], "scale": 12}
+      ] },
+    "city.overcast": { "ground": "#C3CAC8", "sky": "#BFC6CC", "light": {"dir": [0.3, 2, 0.3], "color": "#E6EBEF", "intensity": 1.3}, "fog": {"color": "#BFC6CC", "near": 95, "far": 290},
+      "props": [
+        {"model": "prop.road", "pos": [10, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [30, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [50, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [70, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [90, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [110, 0, -8], "scale": 20},
+        {"model": "prop.light", "pos": [20, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.light", "pos": [60, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.light", "pos": [100, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.cone", "pos": [40, 0, -1], "scale": 12},
+        {"model": "prop.cone", "pos": [80, 0, -1], "scale": 12}
+      ] },
+    "city.night": { "ground": "#6B7C99", "sky": "#1D2740", "light": {"dir": [-1, 2, -1], "color": "#9DB4E8", "intensity": 1.1}, "fog": {"color": "#1D2740", "near": 100, "far": 320},
+      "props": [
+        {"model": "prop.road", "pos": [10, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [30, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [50, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [70, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [90, 0, -8], "scale": 20},
+        {"model": "prop.road", "pos": [110, 0, -8], "scale": 20},
+        {"model": "prop.light", "pos": [20, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.light", "pos": [60, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.light", "pos": [100, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
+        {"model": "prop.cone", "pos": [40, 0, -1], "scale": 12},
+        {"model": "prop.cone", "pos": [80, 0, -1], "scale": 12}
+      ] }
+  },
+  "events": {
+    "Captured": {"fx": "pulse", "sfx": "audio/capture.ogg"},
+    "Clash": {"fx": "puff", "sfx": "audio/clash.ogg"},
+    "LineCut": {"sfx": "audio/cut.ogg"},
+    "LineDrawn": {"sfx": "audio/ui-click.ogg"},
+    "GameOver": {"sfx": "audio/gameover.ogg"},
+    "Music": {"sfx": "audio/music-insistent.ogg"}
+  },
+  "camera": {"pitchDeg": 55, "fov": 45, "margin": 12}
+}

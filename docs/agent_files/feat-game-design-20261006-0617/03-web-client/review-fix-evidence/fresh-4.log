@@ -1,0 +1,15 @@
+
+> node-arena@ check:schemas /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/content schemas:check
+
+
+> @node-arena/content@0.0.0 schemas:check /root/projects/node-arena/.worktrees/feat/game-design/packages/content
+> tsx scripts/generate-schemas.ts --check
+
+content.schema.json is current
+balance.schema.json is current
+troop.schema.json is current
+archetype.schema.json is current
+level.schema.json is current
+bot.schema.json is current
+manifest.schema.json is current

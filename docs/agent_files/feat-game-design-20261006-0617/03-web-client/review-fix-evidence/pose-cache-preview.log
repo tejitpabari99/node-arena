@@ -1,0 +1,1604 @@
+{
+  "config": {
+    "argv": [
+      "/root/.nvm/versions/node/v22.23.3/bin/node",
+      "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/node_modules/@playwright/test/cli.js",
+      "test",
+      "--workers=1",
+      "--reporter=json"
+    ],
+    "configFile": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/playwright.config.ts",
+    "rootDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "chromium",
+        "testDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+        "snapshotDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4173",
+          "trace": "retain-on-failure",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium",
+          "launchOptions": {
+            "args": [
+              "--use-gl=angle",
+              "--use-angle=swiftshader",
+              "--enable-unsafe-swiftshader"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": {
+      "command": "pnpm preview --port 4173 --strictPort",
+      "url": "http://127.0.0.1:4173",
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "acceptance.spec.ts",
+      "file": "acceptance.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "test API is absent normally, deterministic driver draws for 30 seconds and replays",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1291,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:14:41.939Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-d88a4d647360fd02406f",
+          "file": "acceptance.spec.ts",
+          "line": 21,
+          "column": 1
+        },
+        {
+          "title": "right cut stops channel spawning but in-flight troops arrive",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 969,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:14:43.379Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-fdd9a47df571f524dfad",
+          "file": "acceptance.spec.ts",
+          "line": 34,
+          "column": 41
+        },
+        {
+          "title": "swipe cut stops channel spawning but in-flight troops arrive",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1436,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:14:44.368Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-cfb3fb9650d95d04b577",
+          "file": "acceptance.spec.ts",
+          "line": 34,
+          "column": 41
+        },
+        {
+          "title": "20 authored levels, completion survives reload, retry/next and timeout have no interstitial",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10790,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:14:45.821Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-b45adfdc8c34af76b9f2",
+          "file": "acceptance.spec.ts",
+          "line": 54,
+          "column": 1
+        },
+        {
+          "title": "capture, glyphs and clash use real event positions and current labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5855,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:14:56.622Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-42b398450b6c426e159e",
+          "file": "acceptance.spec.ts",
+          "line": 72,
+          "column": 1
+        },
+        {
+          "title": "full runtime stress and twenty level-switch GPU/DOM baseline",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 25618,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:02.493Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "full-runtime-stress.json",
+                      "contentType": "application/json",
+                      "body": "eyJ2YWx1ZXMiOlswLjgwMDAwMDE5MDczNDg2MzMsMywzLjI5OTk5OTk1MjMxNjI4NCwxLDQuOTAwMDAwMDk1MzY3NDMyLDIuMzk5OTk5ODU2OTQ4ODUyNSwyLjI5OTk5OTk1MjMxNjI4NCwxLjU5OTk5OTkwNDYzMjU2ODQsMi4wOTk5OTk5MDQ2MzI1Njg0LDIuNzAwMDAwMDQ3NjgzNzE2LDMuNjAwMDAwMTQzMDUxMTQ3NSwyLjI5OTk5OTk1MjMxNjI4NCwxLjU5OTk5OTkwNDYzMjU2ODQsMS43MDAwMDAwNDc2ODM3MTU4LDIsMS43OTk5OTk5NTIzMTYyODQyLDEuNSwxLjA5OTk5OTkwNDYzMjU2ODQsMS45MDAwMDAwOTUzNjc0MzE2LDEuNzk5OTk5OTUyMzE2Mjg0MiwxLDIuNDAwMDAwMDk1MzY3NDMxNiwyLjUsMS4xOTk5OTk4MDkyNjUxMzY3LDEuMDk5OTk5OTA0NjMyNTY4NCwwLjg5OTk5OTg1Njk0ODg1MjUsMSwxLjY5OTk5OTgwOTI2NTEzNjcsMS4xMDAwMDAxNDMwNTExNDc1LDEuODk5OTk5ODU2OTQ4ODUyNSwxLjg5OTk5OTg1Njk0ODg1MjUsMS4yOTk5OTk5NTIzMTYyODQyLDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjUsMy41LDAuOTAwMDAwMDk1MzY3NDMxNiwxLjIwMDAwMDA0NzY4MzcxNTgsMS4zMDAwMDAxOTA3MzQ4NjMzLDEsMi45MDAwMDAwOTUzNjc0MzE2LDEsMS4yOTk5OTk5NTIzMTYyODQyLDEsMywxLDEsMS4yMDAwMDAwNDc2ODM3MTU4LDEuMTAwMDAwMTQzMDUxMTQ3NSwxLjMwMDAwMDE5MDczNDg2MzMsMS4yOTk5OTk5NTIzMTYyODQyLDQsMSwxLjcwMDAwMDA0NzY4MzcxNTgsMiwxLDQuNSwxLjIwMDAwMDA0NzY4MzcxNTgsMSwxLjA5OTk5OTkwNDYzMjU2ODQsMi41LDEsMS43OTk5OTk5NTIzMTYyODQyLDEuMjAwMDAwMDQ3NjgzNzE1OCwxLDEsMS41OTk5OTk5MDQ2MzI1Njg0LDAuOTAwMDAwMDk1MzY3NDMxNiwxLjU5OTk5OTkwNDYzMjU2ODQsMiwxLDEsMS4xMDAwMDAxNDMwNTExNDc1LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjIwMDAwMDA0NzY4MzcxNTgsMSwxLjA5OTk5OTkwNDYzMjU2ODQsMSwxLjUsMS40MDAwMDAwOTUzNjc0MzE2LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjEwMDAwMDE0MzA1MTE0NzUsMSwxLjc5OTk5OTk1MjMxNjI4NDIsMS4yMDAwMDAwNDc2ODM3MTU4LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjEwMDAwMDE0MzA1MTE0NzUsMS4xMDAwMDAxNDMwNTExNDc1LDEsMC45MDAwMDAwOTUzNjc0MzE2LDEuMDk5OTk5OTA0NjMyNTY4NCwxLjI5OTk5OTk1MjMxNjI4NDIsMS4xMDAwMDAxNDMwNTExNDc1LDEuMTAwMDAwMTQzMDUxMTQ3NSwxLjE5OTk5OTgwOTI2NTEzNjcsMS41LDEuMzk5OTk5ODU2OTQ4ODUyNSwxLjIwMDAwMDA0NzY4MzcxNTgsMS4xMDAwMDAxNDMwNTExNDc1LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjI5OTk5OTk1MjMxNjI4NDIsMS41LDEuMDk5OTk5OTA0NjMyNTY4NCwxLjI5OTk5OTk1MjMxNjI4NDIsMS4wOTk5OTk5MDQ2MzI1Njg0LDEuMzk5OTk5ODU2OTQ4ODUyNSwxLjEwMDAwMDE0MzA1MTE0NzUsMy4yMDAwMDAwNDc2ODM3MTYsMi41OTk5OTk5MDQ2MzI1Njg0LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjIwMDAwMDA0NzY4MzcxNTgsMS4yMDAwMDAwNDc2ODM3MTU4LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjUsMi4xMDAwMDAxNDMwNTExNDc1LDEuMTk5OTk5ODA5MjY1MTM2Nyw1LjU5OTk5OTkwNDYzMjU2OCw0Ljc5OTk5OTk1MjMxNjI4NCwzLjU5OTk5OTkwNDYzMjU2ODQsMS4wOTk5OTk5MDQ2MzI1Njg0LDEuMjk5OTk5OTUyMzE2Mjg0Ml0sImNhbGxzIjpbMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTVdLCJwOTUiOjMuNTk5OTk5OTA0NjMyNTY4NCwidHJvb3BzIjozMjAwLCJtZW1vcnkiOnsiY3VycmVudCI6eyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjR9LCJyZXRpcmVkIjpbXSwibGFiZWxzIjozLCJjYW52YXNlcyI6MX19"
+                    },
+                    {
+                      "name": "full-runtime-lifetime.json",
+                      "contentType": "application/json",
+                      "body": "eyJiYXNlbGluZSI6eyJnZW9tZXRyaWVzIjoxMywidGV4dHVyZXMiOjR9LCJtZW1vcnkiOnsiY3VycmVudCI6bnVsbCwicmV0aXJlZCI6W3siZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9XSwibGFiZWxzIjowLCJjYW52YXNlcyI6MH0sImlkbGVMaWZldGltZSI6eyJsaXN0ZW5lcnMiOjAsInJhZiI6MH0sImFjdGl2ZUxpZmV0aW1lIjp7Imxpc3RlbmVycyI6MTMsInJhZiI6MH19"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-f5e1c199347792ea272a",
+          "file": "acceptance.spec.ts",
+          "line": 92,
+          "column": 1
+        },
+        {
+          "title": "manifest GLB swap, failed-only asset Retry and invalid boot recovery",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1474,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:28.131Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-f4b3f7c88d4baac865e6",
+          "file": "acceptance.spec.ts",
+          "line": 119,
+          "column": 1
+        },
+        {
+          "title": "stable greybox menu, picker, game and colourblind software GL screenshots",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1494,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:29.617Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-e37965ab12eb5ef1d1f4",
+          "file": "acceptance.spec.ts",
+          "line": 151,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "app-flow.spec.ts",
+      "file": "app-flow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "future 20-level content runs through real results, retry, next and completed picker",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Imports controller fixtures through Vite; production runtime is covered by boot.spec",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/app-flow.spec.ts",
+                    "line": 7,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 59,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:31.136Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Imports controller fixtures through Vite; production runtime is covered by boot.spec",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/app-flow.spec.ts",
+                        "line": 7,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "8f8f7f41653bf1d58280-671e3a2e8aa9540987dc",
+          "file": "app-flow.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "assets.spec.ts",
+      "file": "assets.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "asset error recovery, real GLTF/audio decode, and twenty GPU resource releases",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Asset modules are not wired into the production shell until Task 12",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/assets.spec.ts",
+                    "line": 5,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 58,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:31.218Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Asset modules are not wired into the production shell until Task 12",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/assets.spec.ts",
+                        "line": 5,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "381c53c131d04f5e8243-4e65d4d8d21f1cec268a",
+          "file": "assets.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "audio.spec.ts",
+      "file": "audio.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "real WebAudio decodes a test WAV, plays mapped voices, mutes independently and disposes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Real WebAudio module fixture requires Vite dev transport",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/audio.spec.ts",
+                    "line": 4,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 56,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:31.297Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Real WebAudio module fixture requires Vite dev transport",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/audio.spec.ts",
+                        "line": 4,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "87be2dcdb54c25970a35-71e28d9f4a0665b68754",
+          "file": "audio.spec.ts",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "boot.spec.ts",
+      "file": "boot.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "menu loads authored content; real runtime renders and pauses without simulation restart",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3659,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:31.375Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3be9e5b40a014dc58fa3-2dc342723058827361a3",
+          "file": "boot.spec.ts",
+          "line": 2,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "cache-regressions.spec.ts",
+      "file": "cache-regressions.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "application restarts and twenty shared-source switches retain decoded CPU assets without retired GPU owners",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Actual controller/runtime source imports require Vite development server",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/cache-regressions.spec.ts",
+                    "line": 5,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 110,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:35.061Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Actual controller/runtime source imports require Vite development server",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/cache-regressions.spec.ts",
+                        "line": 5,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "4635fbca9337a3dc1dca-88e0d49009f4d178077a",
+          "file": "cache-regressions.spec.ts",
+          "line": 4,
+          "column": 1
+        },
+        {
+          "title": "production shell retains GLB and WAV across offline restart and shared-source level switches",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7476,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:35.182Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "production-offline-cache.json",
+                      "contentType": "application/json",
+                      "body": "eyJiYXNlbGluZSI6eyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjR9LCJtZW1vcnkiOnsiY3VycmVudCI6bnVsbCwicmV0aXJlZCI6W3siZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9XSwibGFiZWxzIjowLCJjYW52YXNlcyI6MH0sInJlcXVlc3RzIjp7Im1vZGVscyI6MSwiYXVkaW8iOjF9LCJkZWNvZGVzIjoxfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4635fbca9337a3dc1dca-2f57789d3a35d4afe78c",
+          "file": "cache-regressions.spec.ts",
+          "line": 66,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "dev.spec.ts",
+      "file": "dev.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "query gates live tuning; apply restarts and downloads actual authored JSON",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5825,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:42.687Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e6974130559fd0f511c6-c375bc73cacfb38bb865",
+          "file": "dev.spec.ts",
+          "line": 2,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "input-palette.spec.ts",
+      "file": "input-palette.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "saved default palette colors both valid preview and route",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3328,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:48.548Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "343c9b741905cac19979-ba69902f9d7b39b31be6",
+          "file": "input-palette.spec.ts",
+          "line": 40,
+          "column": 41
+        },
+        {
+          "title": "saved colourblind palette colors both valid preview and route",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1128,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:51.900Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "343c9b741905cac19979-ba53349931d432375399",
+          "file": "input-palette.spec.ts",
+          "line": 40,
+          "column": 41
+        },
+        {
+          "title": "pause settings update subsequent gestures and active preview without restarting the match",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1188,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:53.040Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "343c9b741905cac19979-3cdbd924618f5fd50e88",
+          "file": "input-palette.spec.ts",
+          "line": 57,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "input.spec.ts",
+      "file": "input.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "draw snaps, queues next tick, explains duplicate/no-slot and Escape consumes active gesture",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Module harness exercises real driver until production test hook supports fixture injection",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/input.spec.ts",
+                    "line": 36,
+                    "column": 39
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 448,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:54.265Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Module harness exercises real driver until production test hook supports fixture injection",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/input.spec.ts",
+                        "line": 36,
+                        "column": 39
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "62978389d577d9e03e88-022b302770c872d4cac4",
+          "file": "input.spec.ts",
+          "line": 38,
+          "column": 1
+        },
+        {
+          "title": "right-click and contextmenu-only trackpad cut nearest own offset line; queued cut preserves arrivals",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Module harness exercises real driver until production test hook supports fixture injection",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/input.spec.ts",
+                    "line": 36,
+                    "column": 39
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 48,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:54.733Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Module harness exercises real driver until production test hook supports fixture injection",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/input.spec.ts",
+                        "line": 36,
+                        "column": 39
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "62978389d577d9e03e88-14c66338d47208a5c2db",
+          "file": "input.spec.ts",
+          "line": 49,
+          "column": 1
+        },
+        {
+          "title": "empty-ground swipe cuts once per stroke, includes final segment and respects CSS tolerance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Module harness exercises real driver until production test hook supports fixture injection",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/input.spec.ts",
+                    "line": 36,
+                    "column": 39
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 51,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:54.793Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Module harness exercises real driver until production test hook supports fixture injection",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/input.spec.ts",
+                        "line": 36,
+                        "column": 39
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "62978389d577d9e03e88-99bbe9a7b947fd908dc6",
+          "file": "input.spec.ts",
+          "line": 61,
+          "column": 1
+        },
+        {
+          "title": "paused/results ignore all gestures; pointer cancellation, canvas rebinding and disposal remove input",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Module harness exercises real driver until production test hook supports fixture injection",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/input.spec.ts",
+                    "line": 36,
+                    "column": 39
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 65,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:54.869Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Module harness exercises real driver until production test hook supports fixture injection",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/input.spec.ts",
+                        "line": 36,
+                        "column": 39
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "62978389d577d9e03e88-2b2f4b03fe8d2dccc5c1",
+          "file": "input.spec.ts",
+          "line": 70,
+          "column": 1
+        },
+        {
+          "title": "12px right-click threshold, primary pointer cancellation and canvas replacement preserve one binding",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Module harness exercises real driver until production test hook supports fixture injection",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/input.spec.ts",
+                    "line": 36,
+                    "column": 39
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 63,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:54.951Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Module harness exercises real driver until production test hook supports fixture injection",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/input.spec.ts",
+                        "line": 36,
+                        "column": 39
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "62978389d577d9e03e88-643da60d326ae07c89f5",
+          "file": "input.spec.ts",
+          "line": 82,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "lines-fx.spec.ts",
+      "file": "lines-fx.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "real sim opposite ribbons, clash event coordinates, capture effects, scrolling shader and GPU cleanup",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Module harness until Task12 wiring",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/lines-fx.spec.ts",
+                    "line": 5,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 51,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:55.045Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Module harness until Task12 wiring",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/lines-fx.spec.ts",
+                        "line": 5,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "9281b0715130bd62a0c6-8869a0752fb5bd495025",
+          "file": "lines-fx.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "model-regressions.spec.ts",
+      "file": "model-regressions.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "actual GLB troops preserve mirrored exteriors and authored secondary texture sampling",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Isolated renderer source imports require Vite development server",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/model-regressions.spec.ts",
+                    "line": 5,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 50,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:55.117Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Isolated renderer source imports require Vite development server",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/model-regressions.spec.ts",
+                        "line": 5,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "ac25427b7f57fd3aa9a1-d1c220ac9a43bec1b4e3",
+          "file": "model-regressions.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "scene.spec.ts",
+      "file": "scene.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "compiled level themes, real GL props, fixed fit through resize, live quality context changes and disposal",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Scene modules are not wired into the production shell until Task 12",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/scene.spec.ts",
+                    "line": 6,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 60,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:55.199Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Scene modules are not wired into the production shell until Task 12",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/scene.spec.ts",
+                        "line": 6,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "3aa4c5b91f4bbc99f382-caec3e88c1c84ad2aace",
+          "file": "scene.spec.ts",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "spike.spec.ts",
+      "file": "spike.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "troop spike measures bob in software GL",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12494,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "SPIKE_RESULT {\"mode\":\"bob\",\"environment\":{\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36\",\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"width\":640,\"height\":360,\"dpr\":1,\"troopCount\":2000,\"buckets\":4,\"trianglesPerTroop\":60},\"warmupFrames\":30,\"updateMs\":{\"samples\":120,\"min\":0,\"median\":0,\"p95\":0.10000014305114746,\"max\":0.20000004768371582},\"renderSubmissionMs\":{\"samples\":120,\"min\":0.09999990463256836,\"median\":0.20000004768371582,\"p95\":1.5,\"max\":3.4000000953674316},\"jsMs\":{\"samples\":120,\"min\":0.10000014305114746,\"median\":0.2999999523162842,\"p95\":1.5,\"max\":3.4000000953674316},\"frameMs\":{\"samples\":119,\"min\":16.599999999998545,\"median\":83.30000000000109,\"p95\":183.29999999999927,\"max\":2233.3},\"fps\":10.378329350613106,\"drawCalls\":4,\"triangles\":120000}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:15:55.287Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f503dcb13d1b9f4cc52f-3ed9506f14beb50c4996",
+          "file": "spike.spec.ts",
+          "line": 4,
+          "column": 3
+        },
+        {
+          "title": "troop spike measures static-bob in software GL",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14585,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "SPIKE_RESULT {\"mode\":\"static-bob\",\"environment\":{\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36\",\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"width\":640,\"height\":360,\"dpr\":1,\"troopCount\":2000,\"buckets\":4,\"trianglesPerTroop\":60},\"warmupFrames\":30,\"updateMs\":{\"samples\":120,\"min\":0,\"median\":0,\"p95\":0.10000014305114746,\"max\":1.0999999046325684},\"renderSubmissionMs\":{\"samples\":120,\"min\":0.09999990463256836,\"median\":0.2999999523162842,\"p95\":0.5,\"max\":3.200000047683716},\"jsMs\":{\"samples\":120,\"min\":0.09999990463256836,\"median\":0.2999999523162842,\"p95\":0.5,\"max\":3.299999952316284},\"frameMs\":{\"samples\":119,\"min\":16.59999999999991,\"median\":83.30000000000018,\"p95\":166.69999999999982,\"max\":233.29999999999927},\"fps\":12.526843235504655,\"drawCalls\":4,\"triangles\":120000}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:16:07.794Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f503dcb13d1b9f4cc52f-6adb6fb42ed15b7ba786",
+          "file": "spike.spec.ts",
+          "line": 4,
+          "column": 3
+        },
+        {
+          "title": "troop spike measures none in software GL",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14627,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "SPIKE_RESULT {\"mode\":\"none\",\"environment\":{\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36\",\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"width\":640,\"height\":360,\"dpr\":1,\"troopCount\":2000,\"buckets\":4,\"trianglesPerTroop\":60},\"warmupFrames\":30,\"updateMs\":{\"samples\":120,\"min\":0,\"median\":0,\"p95\":0.10000014305114746,\"max\":0.19999980926513672},\"renderSubmissionMs\":{\"samples\":120,\"min\":0.09999990463256836,\"median\":0.2999999523162842,\"p95\":1.4000000953674316,\"max\":2.700000047683716},\"jsMs\":{\"samples\":120,\"min\":0.19999980926513672,\"median\":0.2999999523162842,\"p95\":1.5,\"max\":2.799999952316284},\"frameMs\":{\"samples\":119,\"min\":16.599999999998545,\"median\":83.39999999999964,\"p95\":183.40000000000055,\"max\":2099.9},\"fps\":10.000420185722088,\"drawCalls\":4,\"triangles\":120000}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:16:22.404Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f503dcb13d1b9f4cc52f-52ca4c095543a58a9b2e",
+          "file": "spike.spec.ts",
+          "line": 4,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "towers.spec.ts",
+      "file": "towers.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "manifest-only fixture towers, real capture recolour, component labels, glyphs, projection and cache-safe disposal",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Renderer composition is wired into the shell in Task 12",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/towers.spec.ts",
+                    "line": 6,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 2061,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:16:37.063Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Renderer composition is wired into the shell in Task 12",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/towers.spec.ts",
+                        "line": 6,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "f68a6381e1f656596953-7f1eda3c096c1046b653",
+          "file": "towers.spec.ts",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "troops.spec.ts",
+      "file": "troops.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "real public sim: 2,000 troops, head-on placement, cut-channel persistence, GPU cleanup and shader correctness",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Production shell integration is Task 12; exercise renderer modules via Vite",
+                  "location": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/troops.spec.ts",
+                    "line": 5,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 50,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:16:39.195Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Production shell integration is Task 12; exercise renderer modules via Vite",
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/troops.spec.ts",
+                        "line": 5,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "d9685633d3b802980a57-e8d1284a076d60785d8b",
+          "file": "troops.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-09T16:14:40.287Z",
+    "duration": 119097.603,
+    "expected": 17,
+    "skipped": 14,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

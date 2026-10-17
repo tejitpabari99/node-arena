@@ -1,0 +1,63 @@
+{
+  "$schema": "../../schemas/bot.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "turtle",
+  "kind": "utility",
+  "params": {
+    "skill": {
+      "decisionIntervalSec": 2.4,
+      "noise": 0.1,
+      "actionsPerDecision": 1
+    },
+    "bias": {
+      "attack": 0.6,
+      "reinforce": 1.2,
+      "cut": 1
+    },
+    "holdThreshold": 0.4,
+    "maxTargetsPerSource": 4,
+    "cooldownSec": 6,
+    "componentValue": {
+      "generates": 1,
+      "garrison": 0.8
+    },
+    "weights": {
+      "attack": {
+        "targetValue": 1,
+        "timeToTake": 2,
+        "distance": 2,
+        "threatToSource": 5,
+        "threatToTarget": 0,
+        "targetWeakness": 0,
+        "ownerDominance": 0,
+        "sliceCost": 3,
+        "lineUseless": 0,
+        "stickiness": 2
+      },
+      "reinforce": {
+        "targetValue": 2,
+        "timeToTake": 0,
+        "distance": 2,
+        "threatToSource": 0,
+        "threatToTarget": 5,
+        "targetWeakness": 0,
+        "ownerDominance": 0,
+        "sliceCost": 1,
+        "lineUseless": 0,
+        "stickiness": 2
+      },
+      "cut": {
+        "targetValue": 0,
+        "timeToTake": 0,
+        "distance": 0,
+        "threatToSource": 5,
+        "threatToTarget": 0,
+        "targetWeakness": 0,
+        "ownerDominance": 0,
+        "sliceCost": 0,
+        "lineUseless": 4,
+        "stickiness": 2
+      }
+    }
+  }
+}

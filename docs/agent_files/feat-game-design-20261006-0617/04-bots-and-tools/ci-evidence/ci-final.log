@@ -1,0 +1,3561 @@
+
+> node-arena@ ci /root/projects/node-arena/.worktrees/feat/game-design
+> bash scripts/ci.sh
+
+Content version baseline: 1716a53
+
+> node-arena@ lint /root/projects/node-arena/.worktrees/feat/game-design
+> eslint .
+
+
+> node-arena@ build:prerequisites /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/content --filter @node-arena/sim --filter @node-arena/bots --workspace-concurrency=1 -r build
+
+Scope: 3 of 6 workspace projects
+
+> @node-arena/content@0.0.0 build /root/projects/node-arena/.worktrees/feat/game-design/packages/content
+> tsc -p tsconfig.json && tsc -p tsconfig.check.json
+
+
+> @node-arena/sim@0.0.0 build /root/projects/node-arena/.worktrees/feat/game-design/packages/sim
+> tsc -p tsconfig.json && tsc -p tsconfig.golden.json
+
+
+> @node-arena/bots@0.0.0 build /root/projects/node-arena/.worktrees/feat/game-design/packages/bots
+> tsc -p tsconfig.json && tsc -p tsconfig.check.json
+
+
+> node-arena@ typecheck /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm exec tsc -p packages/content/tsconfig.json --noEmit && pnpm exec tsc -p packages/content/tsconfig.check.json && pnpm exec tsc -p packages/sim/tsconfig.json --noEmit && pnpm exec tsc -p packages/sim/tsconfig.golden.json && pnpm exec tsc -p packages/bots/tsconfig.json --noEmit && pnpm exec tsc -p packages/bots/tsconfig.check.json && pnpm exec tsc -p tools/tsconfig.json && pnpm exec tsc -p apps/web/tsconfig.json
+
+
+> node-arena@ test /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --workspace-concurrency=1 -r test
+
+Scope: 5 of 6 workspace projects
+
+> @node-arena/content@0.0.0 test /root/projects/node-arena/.worktrees/feat/game-design/packages/content
+> tsx --test test/*.test.ts
+
+TAP version 13
+# Subtest: AC4: rejection fixture baseline satisfies schema, registry, semantics and manifest
+ok 1 - AC4: rejection fixture baseline satisfies schema, registry, semantics and manifest
+  ---
+  duration_ms: 23.225484
+  type: 'test'
+  ...
+# Subtest: AC4 (covers R-ENT-01): rejects fixture unknown-component
+ok 2 - AC4 (covers R-ENT-01): rejects fixture unknown-component
+  ---
+  duration_ms: 3.334153
+  type: 'test'
+  ...
+# Subtest: AC4 (covers R-ENT-02): rejects fixture unknown-field
+ok 3 - AC4 (covers R-ENT-02): rejects fixture unknown-field
+  ---
+  duration_ms: 2.857083
+  type: 'test'
+  ...
+# Subtest: AC4 (covers R-TCK-02): rejects fixture four-decimal-number
+ok 4 - AC4 (covers R-TCK-02): rejects fixture four-decimal-number
+  ---
+  duration_ms: 2.246898
+  type: 'test'
+  ...
+# Subtest: AC4 (covers R-ENT-01): rejects fixture dangling-reference
+ok 5 - AC4 (covers R-ENT-01): rejects fixture dangling-reference
+  ---
+  duration_ms: 1.196614
+  type: 'test'
+  ...
+# Subtest: AC4: rejects fixture overlapping-towers
+ok 6 - AC4: rejects fixture overlapping-towers
+  ---
+  duration_ms: 0.946827
+  type: 'test'
+  ...
+# Subtest: AC4: rejects fixture nonempty-obstacles
+ok 7 - AC4: rejects fixture nonempty-obstacles
+  ---
+  duration_ms: 1.061447
+  type: 'test'
+  ...
+# Subtest: AC4: rejects fixture nonempty-map-objects
+ok 8 - AC4: rejects fixture nonempty-map-objects
+  ---
+  duration_ms: 1.09544
+  type: 'test'
+  ...
+# Subtest: AC4 (covers R-ENT-02): rejects fixture troop-value-two
+ok 9 - AC4 (covers R-ENT-02): rejects fixture troop-value-two
+  ---
+  duration_ms: 1.344285
+  type: 'test'
+  ...
+# Subtest: AC4: rejects fixture missing-override-param
+ok 10 - AC4: rejects fixture missing-override-param
+  ---
+  duration_ms: 2.505402
+  type: 'test'
+  ...
+# Subtest: AC4 (covers R-TCK-02): rejects fixture coordinate-over-500
+ok 11 - AC4 (covers R-TCK-02): rejects fixture coordinate-over-500
+  ---
+  duration_ms: 0.866062
+  type: 'test'
+  ...
+# Subtest: AC4 (covers R-TCK-02): rejects fixture speed-over-100
+ok 12 - AC4 (covers R-TCK-02): rejects fixture speed-over-100
+  ---
+  duration_ms: 0.804055
+  type: 'test'
+  ...
+# Subtest: AC4: rejects fixture tier-overrides-non-skill
+ok 13 - AC4: rejects fixture tier-overrides-non-skill
+  ---
+  duration_ms: 0.823992
+  type: 'test'
+  ...
+# Subtest: AC4: rejects fixture tooling-profile-reference
+ok 14 - AC4: rejects fixture tooling-profile-reference
+  ---
+  duration_ms: 0.84903
+  type: 'test'
+  ...
+# Subtest: AC4: rejects fixture tooling-profile-human-proxy
+ok 15 - AC4: rejects fixture tooling-profile-human-proxy
+  ---
+  duration_ms: 0.959151
+  type: 'test'
+  ...
+# Subtest: AC4: rejects fixture missing-manifest-key
+ok 16 - AC4: rejects fixture missing-manifest-key
+  ---
+  duration_ms: 0.53413
+  type: 'test'
+  ...
+# Subtest: AC5 (covers R-ENT-01, covers R-ENT-02): archer/tank fail only their support contract and pass a registry extension
+ok 17 - AC5 (covers R-ENT-01, covers R-ENT-02): archer/tank fail only their support contract and pass a registry extension
+  ---
+  duration_ms: 2.41015
+  type: 'test'
+  ...
+# Subtest: AC3: generation rate changes simHash
+ok 18 - AC3: generation rate changes simHash
+  ---
+  duration_ms: 6.944824
+  type: 'test'
+  ...
+# Subtest: AC3: troop speed changes simHash
+ok 19 - AC3: troop speed changes simHash
+  ---
+  duration_ms: 3.214725
+  type: 'test'
+  ...
+# Subtest: AC3: tower position changes simHash
+ok 20 - AC3: tower position changes simHash
+  ---
+  duration_ms: 2.693471
+  type: 'test'
+  ...
+# Subtest: AC3: level name preserves simHash
+ok 21 - AC3: level name preserves simHash
+  ---
+  duration_ms: 3.020834
+  type: 'test'
+  ...
+# Subtest: AC3: archetype visual preserves simHash
+ok 22 - AC3: archetype visual preserves simHash
+  ---
+  duration_ms: 2.283979
+  type: 'test'
+  ...
+# Subtest: AC3: troop visual preserves simHash
+ok 23 - AC3: troop visual preserves simHash
+  ---
+  duration_ms: 2.07497
+  type: 'test'
+  ...
+# Subtest: AC3: level visual preserves simHash
+ok 24 - AC3: level visual preserves simHash
+  ---
+  duration_ms: 2.063328
+  type: 'test'
+  ...
+# Subtest: shipped sample validates and compiles to usable integer simulation inputs
+ok 25 - shipped sample validates and compiles to usable integer simulation inputs
+  ---
+  duration_ms: 47.466437
+  type: 'test'
+  ...
+# Subtest: shipped small and large variants preserve base behavior with distinct capacities and generation
+ok 26 - shipped small and large variants preserve base behavior with distinct capacities and generation
+  ---
+  duration_ms: 21.807078
+  type: 'test'
+  ...
+# Subtest: valid sample balance edits change simulation identity while reskins preserve it
+ok 27 - valid sample balance edits change simulation identity while reskins preserve it
+  ---
+  duration_ms: 39.608349
+  type: 'test'
+  ...
+# Subtest: named production bot corpus contains 23 distinct complete profiles and preserves the sample
+ok 28 - named production bot corpus contains 23 distinct complete profiles and preserves the sample
+  ---
+  duration_ms: 42.823607
+  type: 'test'
+  ...
+# Subtest: all sixteen three-line tiers compile inherited personality with exact skill bands; idle remains legal
+ok 29 - all sixteen three-line tiers compile inherited personality with exact skill bands; idle remains legal
+  ---
+  duration_ms: 79.410027
+  type: 'test'
+  ...
+# Subtest: levels reject tooling profile reference
+ok 30 - levels reject tooling profile reference
+  ---
+  duration_ms: 1.031259
+  type: 'test'
+  ...
+# Subtest: levels reject tooling profile reference through an alias
+ok 31 - levels reject tooling profile reference through an alias
+  ---
+  duration_ms: 0.598692
+  type: 'test'
+  ...
+# Subtest: levels reject tooling profile human-proxy
+ok 32 - levels reject tooling profile human-proxy
+  ---
+  duration_ms: 0.590406
+  type: 'test'
+  ...
+# Subtest: levels reject tooling profile human-proxy through an alias
+ok 33 - levels reject tooling profile human-proxy through an alias
+  ---
+  duration_ms: 0.546142
+  type: 'test'
+  ...
+# Subtest: full utility profiles load all action fields in milli-units while counts stay integral
+ok 34 - full utility profiles load all action fields in milli-units while counts stay integral
+  ---
+  duration_ms: 5.474708
+  type: 'test'
+  ...
+# Subtest: maximum consideration weights keep each loaded scoring numerator below int32
+ok 35 - maximum consideration weights keep each loaded scoring numerator below int32
+  ---
+  duration_ms: 0.773446
+  type: 'test'
+  ...
+# Subtest: utility params reject unknown keys with source locations
+ok 36 - utility params reject unknown keys with source locations
+  ---
+  duration_ms: 1.957336
+  type: 'test'
+  ...
+# Subtest: new fractional params reject excessive precision and invalid bounds at their fields
+ok 37 - new fractional params reject excessive precision and invalid bounds at their fields
+  ---
+  duration_ms: 1.589293
+  type: 'test'
+  ...
+# Subtest: every new personality field is forbidden in skill-only tiers by schemas and semantics
+ok 38 - every new personality field is forbidden in skill-only tiers by schemas and semantics
+  ---
+  duration_ms: 4.895383
+  type: 'test'
+  ...
+# Subtest: editor schema and runtime schema agree on full profiles and tier restrictions
+ok 39 - editor schema and runtime schema agree on full profiles and tier restrictions
+  ---
+  duration_ms: 76.544029
+  type: 'test'
+  ...
+# Subtest: changed bot hashes require a strictly increasing semver even after locks regenerate
+ok 40 - changed bot hashes require a strictly increasing semver even after locks regenerate
+  ---
+  duration_ms: 1.591958
+  type: 'test'
+  ...
+# Subtest: Node adapter reads literal current and committed versions without executing source
+ok 41 - Node adapter reads literal current and committed versions without executing source
+  ---
+  duration_ms: 42.395168
+  type: 'test'
+  ...
+# Subtest: AC6 (covers R-TCK-02, covers R-TCK-03): Node fs and a Vite raw glob compile identically in Chromium
+ok 42 - AC6 (covers R-TCK-02, covers R-TCK-03): Node fs and a Vite raw glob compile identically in Chromium
+  ---
+  duration_ms: 790.13034
+  type: 'test'
+  ...
+# Subtest: loader.ts rejects the Node import fs
+ok 43 - loader.ts rejects the Node import fs
+  ---
+  duration_ms: 1273.451139
+  type: 'test'
+  ...
+# Subtest: loader.ts rejects the Node import fs/promises
+ok 44 - loader.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 10.073645
+  type: 'test'
+  ...
+# Subtest: loader.ts rejects the Node import node:fs
+ok 45 - loader.ts rejects the Node import node:fs
+  ---
+  duration_ms: 4.36009
+  type: 'test'
+  ...
+# Subtest: loader.ts rejects the Node import node:fs/promises
+ok 46 - loader.ts rejects the Node import node:fs/promises
+  ---
+  duration_ms: 3.822435
+  type: 'test'
+  ...
+# Subtest: loader.ts rejects the Node import path
+ok 47 - loader.ts rejects the Node import path
+  ---
+  duration_ms: 4.281521
+  type: 'test'
+  ...
+# Subtest: loader.ts rejects the Node import node:path
+ok 48 - loader.ts rejects the Node import node:path
+  ---
+  duration_ms: 1.999044
+  type: 'test'
+  ...
+# Subtest: loader.ts rejects the Node import crypto
+ok 49 - loader.ts rejects the Node import crypto
+  ---
+  duration_ms: 1.514801
+  type: 'test'
+  ...
+# Subtest: loader.ts rejects the Node import node:crypto
+ok 50 - loader.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 2.342461
+  type: 'test'
+  ...
+# Subtest: validate.ts rejects the Node import fs
+ok 51 - validate.ts rejects the Node import fs
+  ---
+  duration_ms: 3.725018
+  type: 'test'
+  ...
+# Subtest: validate.ts rejects the Node import fs/promises
+ok 52 - validate.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 2.102673
+  type: 'test'
+  ...
+# Subtest: validate.ts rejects the Node import node:fs
+ok 53 - validate.ts rejects the Node import node:fs
+  ---
+  duration_ms: 1.393079
+  type: 'test'
+  ...
+# Subtest: validate.ts rejects the Node import node:fs/promises
+ok 54 - validate.ts rejects the Node import node:fs/promises
+  ---
+  duration_ms: 2.42583
+  type: 'test'
+  ...
+# Subtest: validate.ts rejects the Node import path
+ok 55 - validate.ts rejects the Node import path
+  ---
+  duration_ms: 1.506826
+  type: 'test'
+  ...
+# Subtest: validate.ts rejects the Node import node:path
+ok 56 - validate.ts rejects the Node import node:path
+  ---
+  duration_ms: 7.943259
+  type: 'test'
+  ...
+# Subtest: validate.ts rejects the Node import crypto
+ok 57 - validate.ts rejects the Node import crypto
+  ---
+  duration_ms: 4.628463
+  type: 'test'
+  ...
+# Subtest: validate.ts rejects the Node import node:crypto
+ok 58 - validate.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 6.690629
+  type: 'test'
+  ...
+# Subtest: compiler.ts rejects the Node import fs
+ok 59 - compiler.ts rejects the Node import fs
+  ---
+  duration_ms: 2.762712
+  type: 'test'
+  ...
+# Subtest: compiler.ts rejects the Node import fs/promises
+ok 60 - compiler.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 15.879635
+  type: 'test'
+  ...
+# Subtest: compiler.ts rejects the Node import node:fs
+ok 61 - compiler.ts rejects the Node import node:fs
+  ---
+  duration_ms: 1.670537
+  type: 'test'
+  ...
+# Subtest: compiler.ts rejects the Node import node:fs/promises
+ok 62 - compiler.ts rejects the Node import node:fs/promises
+  ---
+  duration_ms: 1.197976
+  type: 'test'
+  ...
+# Subtest: compiler.ts rejects the Node import path
+ok 63 - compiler.ts rejects the Node import path
+  ---
+  duration_ms: 1.436422
+  type: 'test'
+  ...
+# Subtest: compiler.ts rejects the Node import node:path
+ok 64 - compiler.ts rejects the Node import node:path
+  ---
+  duration_ms: 1.512366
+  type: 'test'
+  ...
+# Subtest: compiler.ts rejects the Node import crypto
+ok 65 - compiler.ts rejects the Node import crypto
+  ---
+  duration_ms: 1.563022
+  type: 'test'
+  ...
+# Subtest: compiler.ts rejects the Node import node:crypto
+ok 66 - compiler.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 1.22607
+  type: 'test'
+  ...
+# Subtest: hash.ts rejects the Node import fs
+ok 67 - hash.ts rejects the Node import fs
+  ---
+  duration_ms: 1.533836
+  type: 'test'
+  ...
+# Subtest: hash.ts rejects the Node import fs/promises
+ok 68 - hash.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 1.390994
+  type: 'test'
+  ...
+# Subtest: hash.ts rejects the Node import node:fs
+ok 69 - hash.ts rejects the Node import node:fs
+  ---
+  duration_ms: 2.356106
+  type: 'test'
+  ...
+# Subtest: hash.ts rejects the Node import node:fs/promises
+ok 70 - hash.ts rejects the Node import node:fs/promises
+  ---
+  duration_ms: 5.033355
+  type: 'test'
+  ...
+# Subtest: hash.ts rejects the Node import path
+ok 71 - hash.ts rejects the Node import path
+  ---
+  duration_ms: 1.056427
+  type: 'test'
+  ...
+# Subtest: hash.ts rejects the Node import node:path
+ok 72 - hash.ts rejects the Node import node:path
+  ---
+  duration_ms: 1.013545
+  type: 'test'
+  ...
+# Subtest: hash.ts rejects the Node import crypto
+ok 73 - hash.ts rejects the Node import crypto
+  ---
+  duration_ms: 4.13448
+  type: 'test'
+  ...
+# Subtest: hash.ts rejects the Node import node:crypto
+ok 74 - hash.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 1.076495
+  type: 'test'
+  ...
+# Subtest: loadContent.ts rejects the Node import fs
+ok 75 - loadContent.ts rejects the Node import fs
+  ---
+  duration_ms: 3.022459
+  type: 'test'
+  ...
+# Subtest: loadContent.ts rejects the Node import fs/promises
+ok 76 - loadContent.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 0.886491
+  type: 'test'
+  ...
+# Subtest: loadContent.ts rejects the Node import node:fs
+ok 77 - loadContent.ts rejects the Node import node:fs
+  ---
+  duration_ms: 0.94803
+  type: 'test'
+  ...
+# Subtest: loadContent.ts rejects the Node import node:fs/promises
+ok 78 - loadContent.ts rejects the Node import node:fs/promises
+  ---
+  duration_ms: 0.883085
+  type: 'test'
+  ...
+# Subtest: loadContent.ts rejects the Node import path
+ok 79 - loadContent.ts rejects the Node import path
+  ---
+  duration_ms: 1.701377
+  type: 'test'
+  ...
+# Subtest: loadContent.ts rejects the Node import node:path
+ok 80 - loadContent.ts rejects the Node import node:path
+  ---
+  duration_ms: 1.023062
+  type: 'test'
+  ...
+# Subtest: loadContent.ts rejects the Node import crypto
+ok 81 - loadContent.ts rejects the Node import crypto
+  ---
+  duration_ms: 0.865863
+  type: 'test'
+  ...
+# Subtest: loadContent.ts rejects the Node import node:crypto
+ok 82 - loadContent.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 1.338034
+  type: 'test'
+  ...
+# Subtest: validateContent.ts rejects the Node import fs
+ok 83 - validateContent.ts rejects the Node import fs
+  ---
+  duration_ms: 1.195021
+  type: 'test'
+  ...
+# Subtest: validateContent.ts rejects the Node import fs/promises
+ok 84 - validateContent.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 0.885609
+  type: 'test'
+  ...
+# Subtest: validateContent.ts rejects the Node import node:fs
+ok 85 - validateContent.ts rejects the Node import node:fs
+  ---
+  duration_ms: 0.907532
+  type: 'test'
+  ...
+# Subtest: validateContent.ts rejects the Node import node:fs/promises
+ok 86 - validateContent.ts rejects the Node import node:fs/promises
+  ---
+  duration_ms: 1.165695
+  type: 'test'
+  ...
+# Subtest: validateContent.ts rejects the Node import path
+ok 87 - validateContent.ts rejects the Node import path
+  ---
+  duration_ms: 3.120615
+  type: 'test'
+  ...
+# Subtest: validateContent.ts rejects the Node import node:path
+ok 88 - validateContent.ts rejects the Node import node:path
+  ---
+  duration_ms: 1.132621
+  type: 'test'
+  ...
+# Subtest: validateContent.ts rejects the Node import crypto
+ok 89 - validateContent.ts rejects the Node import crypto
+  ---
+  duration_ms: 0.969901
+  type: 'test'
+  ...
+# Subtest: validateContent.ts rejects the Node import node:crypto
+ok 90 - validateContent.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 0.953089
+  type: 'test'
+  ...
+# Subtest: compileLevel.ts rejects the Node import fs
+ok 91 - compileLevel.ts rejects the Node import fs
+  ---
+  duration_ms: 1.154603
+  type: 'test'
+  ...
+# Subtest: compileLevel.ts rejects the Node import fs/promises
+ok 92 - compileLevel.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 0.939822
+  type: 'test'
+  ...
+# Subtest: compileLevel.ts rejects the Node import node:fs
+ok 93 - compileLevel.ts rejects the Node import node:fs
+  ---
+  duration_ms: 0.845915
+  type: 'test'
+  ...
+# Subtest: compileLevel.ts rejects the Node import node:fs/promises
+ok 94 - compileLevel.ts rejects the Node import node:fs/promises
+  ---
+  duration_ms: 0.880259
+  type: 'test'
+  ...
+# Subtest: compileLevel.ts rejects the Node import path
+ok 95 - compileLevel.ts rejects the Node import path
+  ---
+  duration_ms: 0.758158
+  type: 'test'
+  ...
+# Subtest: compileLevel.ts rejects the Node import node:path
+ok 96 - compileLevel.ts rejects the Node import node:path
+  ---
+  duration_ms: 0.920638
+  type: 'test'
+  ...
+# Subtest: compileLevel.ts rejects the Node import crypto
+ok 97 - compileLevel.ts rejects the Node import crypto
+  ---
+  duration_ms: 0.773346
+  type: 'test'
+  ...
+# Subtest: compileLevel.ts rejects the Node import node:crypto
+ok 98 - compileLevel.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 1.227983
+  type: 'test'
+  ...
+# Subtest: hash/sha256.ts rejects the Node import fs
+ok 99 - hash/sha256.ts rejects the Node import fs
+  ---
+  duration_ms: 41.985376
+  type: 'test'
+  ...
+# Subtest: hash/sha256.ts rejects the Node import fs/promises
+ok 100 - hash/sha256.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 3.179037
+  type: 'test'
+  ...
+# Subtest: hash/sha256.ts rejects the Node import node:fs
+ok 101 - hash/sha256.ts rejects the Node import node:fs
+  ---
+  duration_ms: 0.701509
+  type: 'test'
+  ...
+# Subtest: hash/sha256.ts rejects the Node import node:fs/promises
+ok 102 - hash/sha256.ts rejects the Node import node:fs/promises
+  ---
+  duration_ms: 0.697883
+  type: 'test'
+  ...
+# Subtest: hash/sha256.ts rejects the Node import path
+ok 103 - hash/sha256.ts rejects the Node import path
+  ---
+  duration_ms: 0.694557
+  type: 'test'
+  ...
+# Subtest: hash/sha256.ts rejects the Node import node:path
+ok 104 - hash/sha256.ts rejects the Node import node:path
+  ---
+  duration_ms: 3.396803
+  type: 'test'
+  ...
+# Subtest: hash/sha256.ts rejects the Node import crypto
+ok 105 - hash/sha256.ts rejects the Node import crypto
+  ---
+  duration_ms: 2.846822
+  type: 'test'
+  ...
+# Subtest: hash/sha256.ts rejects the Node import node:crypto
+ok 106 - hash/sha256.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 1.012412
+  type: 'test'
+  ...
+# Subtest: a browser-safe validator may import Ajv
+ok 107 - a browser-safe validator may import Ajv
+  ---
+  duration_ms: 3.606683
+  type: 'test'
+  ...
+# Subtest: the browser boundary also rejects export { readFile } from 'node:fs';
+ok 108 - the browser boundary also rejects export { readFile } from 'node:fs';
+  ---
+  duration_ms: 1.62438
+  type: 'test'
+  ...
+# Subtest: the browser boundary also rejects const fs = await import('node:fs');
+ok 109 - the browser boundary also rejects const fs = await import('node:fs');
+  ---
+  duration_ms: 3.758994
+  type: 'test'
+  ...
+# Subtest: the browser boundary also rejects const crypto = require('node:crypto');
+ok 110 - the browser boundary also rejects const crypto = require('node:crypto');
+  ---
+  duration_ms: 1.424719
+  type: 'test'
+  ...
+# Subtest: golden sample compiles to dense sorted integer inputs with resolved bots and presentation keys
+ok 111 - golden sample compiles to dense sorted integer inputs with resolved bots and presentation keys
+  ---
+  duration_ms: 21.865188
+  type: 'test'
+  ...
+# Subtest: level values win over defaults and compiling another level cannot retain overrides
+ok 112 - level values win over defaults and compiling another level cannot retain overrides
+  ---
+  duration_ms: 7.611407
+  type: 'test'
+  ...
+# Subtest: source path and array order cannot change compiled indices or resolved profile content
+ok 113 - source path and array order cannot change compiled indices or resolved profile content
+  ---
+  duration_ms: 3.946823
+  type: 'test'
+  ...
+# Subtest: unknown level ids produce a located content error instead of another level
+ok 114 - unknown level ids produce a located content error instead of another level
+  ---
+  duration_ms: 1.319388
+  type: 'test'
+  ...
+# Subtest: compiled metadata carries the actual content component registry names
+ok 115 - compiled metadata carries the actual content component registry names
+  ---
+  duration_ms: 1.445659
+  type: 'test'
+  ...
+# Subtest: default duration accepts the int32 tick boundary and rejects the next second with location
+ok 116 - default duration accepts the int32 tick boundary and rejects the next second with location
+  ---
+  duration_ms: 3.001558
+  type: 'test'
+  ...
+# Subtest: compiler rejects default duration mutation beyond validated tick bounds
+ok 117 - compiler rejects default duration mutation beyond validated tick bounds
+  ---
+  duration_ms: 0.85462
+  type: 'test'
+  ...
+# Subtest: explicit duration accepts the int32 tick boundary and rejects the next second with location
+ok 118 - explicit duration accepts the int32 tick boundary and rejects the next second with location
+  ---
+  duration_ms: 5.374698
+  type: 'test'
+  ...
+# Subtest: compiler rejects explicit duration mutation beyond validated tick bounds
+ok 119 - compiler rejects explicit duration mutation beyond validated tick bounds
+  ---
+  duration_ms: 7.150968
+  type: 'test'
+  ...
+# Subtest: override duration accepts the int32 tick boundary and rejects the next second with location
+ok 120 - override duration accepts the int32 tick boundary and rejects the next second with location
+  ---
+  duration_ms: 6.848599
+  type: 'test'
+  ...
+# Subtest: compiler rejects override duration mutation beyond validated tick bounds
+ok 121 - compiler rejects override duration mutation beyond validated tick bounds
+  ---
+  duration_ms: 1.895308
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: resolves small/large parameter variants in loaded units without mutating inputs
+ok 122 - covers R-ENT-01: resolves small/large parameter variants in loaded units without mutating inputs
+  ---
+  duration_ms: 5.316896
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: rejects unknown component at its source pointer
+ok 123 - covers R-ENT-01: rejects unknown component at its source pointer
+  ---
+  duration_ms: 0.748669
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: rejects unknown param at its source pointer
+ok 124 - covers R-ENT-01: rejects unknown param at its source pointer
+  ---
+  duration_ms: 0.411306
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: rejects missing required param at its source pointer
+ok 125 - covers R-ENT-01: rejects missing required param at its source pointer
+  ---
+  duration_ms: 0.376439
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: rejects zero generation at its source pointer
+ok 126 - covers R-ENT-01: rejects zero generation at its source pointer
+  ---
+  duration_ms: 0.330241
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: rejects noninteger cap at its source pointer
+ok 127 - covers R-ENT-01: rejects noninteger cap at its source pointer
+  ---
+  duration_ms: 0.170174
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: rejects negative threshold at its source pointer
+ok 128 - covers R-ENT-01: rejects negative threshold at its source pointer
+  ---
+  duration_ms: 0.285655
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: rejects unordered thresholds at its source pointer
+ok 129 - covers R-ENT-01: rejects unordered thresholds at its source pointer
+  ---
+  duration_ms: 0.279293
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: rejects duplicate thresholds at its source pointer
+ok 130 - covers R-ENT-01: rejects duplicate thresholds at its source pointer
+  ---
+  duration_ms: 0.449589
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: rejects capturable params at its source pointer
+ok 131 - covers R-ENT-01: rejects capturable params at its source pointer
+  ---
+  duration_ms: 0.706488
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-02: v1 rejects tank combat value but permits unit value
+ok 132 - covers R-ENT-02: v1 rejects tank combat value but permits unit value
+  ---
+  duration_ms: 0.695156
+  type: 'test'
+  ...
+# Subtest: rejects extends missing base
+ok 133 - rejects extends missing base
+  ---
+  duration_ms: 0.385335
+  type: 'test'
+  ...
+# Subtest: rejects extends self cycle
+ok 134 - rejects extends self cycle
+  ---
+  duration_ms: 0.337714
+  type: 'test'
+  ...
+# Subtest: rejects extends cycle
+ok 135 - rejects extends cycle
+  ---
+  duration_ms: 0.372783
+  type: 'test'
+  ...
+# Subtest: rejects extends depth greater than one
+ok 136 - rejects extends depth greater than one
+  ---
+  duration_ms: 0.233776
+  type: 'test'
+  ...
+# Subtest: rejects adding or removing inherited components, while omitted components remain inherited
+ok 137 - rejects adding or removing inherited components, while omitted components remain inherited
+  ---
+  duration_ms: 0.56067
+  type: 'test'
+  ...
+# Subtest: invalid inherited params identify the base file and invalid patched params identify the variant
+ok 138 - invalid inherited params identify the base file and invalid patched params identify the variant
+  ---
+  duration_ms: 0.374845
+  type: 'test'
+  ...
+# Subtest: an injected registry supports archer and tank without widening production schemas
+ok 139 - an injected registry supports archer and tank without widening production schemas
+  ---
+  duration_ms: 0.70779
+  type: 'test'
+  ...
+# Subtest: CLI writes lock, detects stale output and rejects regenerated unversioned changes against git baseline
+ok 140 - CLI writes lock, detects stale output and rejects regenerated unversioned changes against git baseline
+  ---
+  duration_ms: 6134.433341
+  type: 'test'
+  ...
+# Subtest: precontent baseline bootstraps a first dataset; absent dataset needs explicit bootstrap and cannot erase baseline
+ok 141 - precontent baseline bootstraps a first dataset; absent dataset needs explicit bootstrap and cannot erase baseline
+  ---
+  duration_ms: 3353.054843
+  type: 'test'
+  ...
+# Subtest: CLI refuses regenerated bot hashes without a committed BOT_VERSION bump
+ok 142 - CLI refuses regenerated bot hashes without a committed BOT_VERSION bump
+  ---
+  duration_ms: 2752.890497
+  type: 'test'
+  ...
+# Subtest: validator and loader reject positive underflow in troop speed at its authored location
+ok 143 - validator and loader reject positive underflow in troop speed at its authored location
+  ---
+  duration_ms: 15.015445
+  type: 'test'
+  ...
+# Subtest: validator and loader reject positive underflow in troop speed override at its authored location
+ok 144 - validator and loader reject positive underflow in troop speed override at its authored location
+  ---
+  duration_ms: 1.696939
+  type: 'test'
+  ...
+# Subtest: validator and loader reject positive underflow in generation rate at its authored location
+ok 145 - validator and loader reject positive underflow in generation rate at its authored location
+  ---
+  duration_ms: 2.434586
+  type: 'test'
+  ...
+# Subtest: validator and loader reject positive underflow in generation rate override at its authored location
+ok 146 - validator and loader reject positive underflow in generation rate override at its authored location
+  ---
+  duration_ms: 1.623368
+  type: 'test'
+  ...
+# Subtest: validator and loader reject positive underflow in bot decision interval at its authored location
+ok 147 - validator and loader reject positive underflow in bot decision interval at its authored location
+  ---
+  duration_ms: 1.241128
+  type: 'test'
+  ...
+# Subtest: validator and loader reject positive underflow in tier decision interval at its authored location
+ok 148 - validator and loader reject positive underflow in tier decision interval at its authored location
+  ---
+  duration_ms: 1.571308
+  type: 'test'
+  ...
+# Subtest: smallest positive speeds, generation rates and base/tier intervals compile to one milli-unit
+ok 149 - smallest positive speeds, generation rates and base/tier intervals compile to one milli-unit
+  ---
+  duration_ms: 4.864924
+  type: 'test'
+  ...
+# Subtest: a valid sample pack validates without forcing twenty campaign levels and remains immutable
+ok 150 - a valid sample pack validates without forcing twenty campaign levels and remains immutable
+  ---
+  duration_ms: 1.833699
+  type: 'test'
+  ...
+# Subtest: locates duplicate player
+ok 151 - locates duplicate player
+  ---
+  duration_ms: 0.898174
+  type: 'test'
+  ...
+# Subtest: locates duplicate tower
+ok 152 - locates duplicate tower
+  ---
+  duration_ms: 0.833832
+  type: 'test'
+  ...
+# Subtest: locates unknown tower archetype
+ok 153 - locates unknown tower archetype
+  ---
+  duration_ms: 0.552775
+  type: 'test'
+  ...
+# Subtest: locates unknown owner
+ok 154 - locates unknown owner
+  ---
+  duration_ms: 0.433297
+  type: 'test'
+  ...
+# Subtest: locates unknown troop
+ok 155 - locates unknown troop
+  ---
+  duration_ms: 0.481499
+  type: 'test'
+  ...
+# Subtest: locates unknown bot
+ok 156 - locates unknown bot
+  ---
+  duration_ms: 0.458364
+  type: 'test'
+  ...
+# Subtest: locates missing bot
+ok 157 - locates missing bot
+  ---
+  duration_ms: 0.435892
+  type: 'test'
+  ...
+# Subtest: locates too much garrison
+ok 158 - locates too much garrison
+  ---
+  duration_ms: 0.412496
+  type: 'test'
+  ...
+# Subtest: locates outside bounds
+ok 159 - locates outside bounds
+  ---
+  duration_ms: 0.397808
+  type: 'test'
+  ...
+# Subtest: locates footprint outside bounds
+ok 160 - locates footprint outside bounds
+  ---
+  duration_ms: 0.408749
+  type: 'test'
+  ...
+# Subtest: locates overlap
+ok 161 - locates overlap
+  ---
+  duration_ms: 0.394012
+  type: 'test'
+  ...
+# Subtest: locates coincident zero-radius towers
+ok 162 - locates coincident zero-radius towers
+  ---
+  duration_ms: 0.4609
+  type: 'test'
+  ...
+# Subtest: locates player owns no tower
+ok 163 - locates player owns no tower
+  ---
+  duration_ms: 0.393241
+  type: 'test'
+  ...
+# Subtest: locates one owner
+ok 164 - locates one owner
+  ---
+  duration_ms: 0.471751
+  type: 'test'
+  ...
+# Subtest: locates no human
+ok 165 - locates no human
+  ---
+  duration_ms: 0.425161
+  type: 'test'
+  ...
+# Subtest: locates no bot
+ok 166 - locates no bot
+  ---
+  duration_ms: 0.457573
+  type: 'test'
+  ...
+# Subtest: locates speed zero
+ok 167 - locates speed zero
+  ---
+  duration_ms: 0.497108
+  type: 'test'
+  ...
+# Subtest: locates speed too high
+ok 168 - locates speed too high
+  ---
+  duration_ms: 0.540011
+  type: 'test'
+  ...
+# Subtest: locates coordinate limit
+ok 169 - locates coordinate limit
+  ---
+  duration_ms: 0.404513
+  type: 'test'
+  ...
+# Subtest: locates generation zero
+ok 170 - locates generation zero
+  ---
+  duration_ms: 0.458466
+  type: 'test'
+  ...
+# Subtest: locates unordered thresholds
+ok 171 - locates unordered thresholds
+  ---
+  duration_ms: 0.479555
+  type: 'test'
+  ...
+# Subtest: locates unsupported troop
+ok 172 - locates unsupported troop
+  ---
+  duration_ms: 0.663967
+  type: 'test'
+  ...
+# Subtest: aggregates numeric precision and schema errors across fields and files
+ok 173 - aggregates numeric precision and schema errors across fields and files
+  ---
+  duration_ms: 0.724333
+  type: 'test'
+  ...
+# Subtest: default loading checks every reference; explicit partial loading supports isolated tools
+ok 174 - default loading checks every reference; explicit partial loading supports isolated tools
+  ---
+  duration_ms: 1.020278
+  type: 'test'
+  ...
+# Subtest: explicit teams resolve to player ids and must remain distinct
+ok 175 - explicit teams resolve to player ids and must remain distinct
+  ---
+  duration_ms: 1.266086
+  type: 'test'
+  ...
+# Subtest: v1 rejects four bots and each reserved array entry
+ok 176 - v1 rejects four bots and each reserved array entry
+  ---
+  duration_ms: 1.331411
+  type: 'test'
+  ...
+# Subtest: inherited archetypes are checked and threshold at cap produces located warning
+ok 177 - inherited archetypes are checked and threshold at cap produces located warning
+  ---
+  duration_ms: 2.01189
+  type: 'test'
+  ...
+# Subtest: numeric overrides apply before cap, troop-reference and registry checks
+ok 178 - numeric overrides apply before cap, troop-reference and registry checks
+  ---
+  duration_ms: 3.776187
+  type: 'test'
+  ...
+# Subtest: bot resolver inherits weights, rejects depth/cycles/kind mismatch and tooling references
+ok 179 - bot resolver inherits weights, rejects depth/cycles/kind mismatch and tooling references
+  ---
+  duration_ms: 4.334031
+  type: 'test'
+  ...
+# Subtest: campaign present orders start at one and are unique/contiguous; a full campaign ends at twenty
+ok 180 - campaign present orders start at one and are unique/contiguous; a full campaign ends at twenty
+  ---
+  duration_ms: 3.927205
+  type: 'test'
+  ...
+# Subtest: optional manifest requires complete shape and checks visuals, every palette and fallback/explicit themes
+ok 181 - optional manifest requires complete shape and checks visuals, every palette and fallback/explicit themes
+  ---
+  duration_ms: 7.077467
+  type: 'test'
+  ...
+# Subtest: footprint touching is valid and geometry uses exact milli-unit squared distances
+ok 182 - footprint touching is valid and geometry uses exact milli-unit squared distances
+  ---
+  duration_ms: 0.762957
+  type: 'test'
+  ...
+# Subtest: deleting all troops/bots/archetypes cannot bypass loader reference checks
+ok 183 - deleting all troops/bots/archetypes cannot bypass loader reference checks
+  ---
+  duration_ms: 1.780327
+  type: 'test'
+  ...
+# Subtest: an invalid override does not hide an independent cap violation
+ok 184 - an invalid override does not hide an independent cap violation
+  ---
+  duration_ms: 0.505004
+  type: 'test'
+  ...
+# Subtest: level overrides do not mutate another level or shared loaded entities
+ok 185 - level overrides do not mutate another level or shared loaded entities
+  ---
+  duration_ms: 0.797282
+  type: 'test'
+  ...
+# Subtest: inherited warning pointers locate authored base thresholds; override warnings locate cap patches
+ok 186 - inherited warning pointers locate authored base thresholds; override warnings locate cap patches
+  ---
+  duration_ms: 0.924745
+  type: 'test'
+  ...
+# Subtest: semantic validation remains browser-safe with Node globals absent
+ok 187 - semantic validation remains browser-safe with Node globals absent
+  ---
+  duration_ms: 691.175853
+  type: 'test'
+  ...
+# Subtest: override component targets must be own components, including prototype names
+ok 188 - override component targets must be own components, including prototype names
+  ---
+  duration_ms: 1.430471
+  type: 'test'
+  ...
+# Subtest: path-keyed loading preserves source paths named like object prototype properties
+ok 189 - path-keyed loading preserves source paths named like object prototype properties
+  ---
+  duration_ms: 0.250106
+  type: 'test'
+  ...
+# Subtest: content schema accepts its authored shape and rejects unknown fields and missing envelope
+ok 190 - content schema accepts its authored shape and rejects unknown fields and missing envelope
+  ---
+  duration_ms: 21.391134
+  type: 'test'
+  ...
+# Subtest: balance schema accepts its authored shape and rejects unknown fields and missing envelope
+ok 191 - balance schema accepts its authored shape and rejects unknown fields and missing envelope
+  ---
+  duration_ms: 20.888775
+  type: 'test'
+  ...
+# Subtest: archetype schema accepts its authored shape and rejects unknown fields and missing envelope
+ok 192 - archetype schema accepts its authored shape and rejects unknown fields and missing envelope
+  ---
+  duration_ms: 22.854898
+  type: 'test'
+  ...
+# Subtest: level schema accepts its authored shape and rejects unknown fields and missing envelope
+ok 193 - level schema accepts its authored shape and rejects unknown fields and missing envelope
+  ---
+  duration_ms: 40.209686
+  type: 'test'
+  ...
+# Subtest: archetype params permit partial inheritance and future components but reject structural junk
+ok 194 - archetype params permit partial inheritance and future components but reject structural junk
+  ---
+  duration_ms: 18.535373
+  type: 'test'
+  ...
+# Subtest: level permits reserved objects and param patches but rejects entity and component structure additions
+ok 195 - level permits reserved objects and param patches but rejects entity and component structure additions
+  ---
+  duration_ms: 38.547585
+  type: 'test'
+  ...
+# Subtest: balance keeps tickRate out of data and requires both v1 defaults
+ok 196 - balance keeps tickRate out of data and requires both v1 defaults
+  ---
+  duration_ms: 12.576352
+  type: 'test'
+  ...
+# Subtest: loader dispatches core files and converts nested and override field units without scaling counts
+ok 197 - loader dispatches core files and converts nested and override field units without scaling counts
+  ---
+  duration_ms: 10.47467
+  type: 'test'
+  ...
+# Subtest: extension params keep untagged numbers integral and scale reserved and future component units
+ok 198 - extension params keep untagged numbers integral and scale reserved and future component units
+  ---
+  duration_ms: 20.134665
+  type: 'test'
+  ...
+# Subtest: generated editor duration schemas enforce positive int32 ticks for defaults, levels and overrides
+ok 199 - generated editor duration schemas enforce positive int32 ticks for defaults, levels and overrides
+  ---
+  duration_ms: 39.045567
+  type: 'test'
+  ...
+# Subtest: pure SHA-256 agrees with published vectors and UTF-8 including surrogate replacement
+ok 200 - pure SHA-256 agrees with published vectors and UTF-8 including surrogate replacement
+  ---
+  duration_ms: 65.856071
+  type: 'test'
+  ...
+# Subtest: canonical JSON sorts keys, preserves arrays and rejects noninteger sim values
+ok 201 - canonical JSON sorts keys, preserves arrays and rejects noninteger sim values
+  ---
+  duration_ms: 0.512057
+  type: 'test'
+  ...
+# Subtest: resolved rates, speeds, positions, ownership, garrison, teams and time limits change sim identity
+ok 202 - resolved rates, speeds, positions, ownership, garrison, teams and time limits change sim identity
+  ---
+  duration_ms: 30.068323
+  type: 'test'
+  ...
+# Subtest: reskins, names, metadata, unused entities and bot tuning preserve sim identity
+ok 203 - reskins, names, metadata, unused entities and bot tuning preserve sim identity
+  ---
+  duration_ms: 1.888093
+  type: 'test'
+  ...
+# Subtest: key, file and entity ordering are immaterial and bot inheritance provenance is excluded
+ok 204 - key, file and entity ordering are immaterial and bot inheritance provenance is excluded
+  ---
+  duration_ms: 3.597005
+  type: 'test'
+  ...
+# Subtest: bot generated schema validates its contract and rejects extra or missing envelope fields
+ok 205 - bot generated schema validates its contract and rejects extra or missing envelope fields
+  ---
+  duration_ms: 45.06321
+  type: 'test'
+  ...
+# Subtest: manifest generated schema validates its contract and rejects extra or missing envelope fields
+ok 206 - manifest generated schema validates its contract and rejects extra or missing envelope fields
+  ---
+  duration_ms: 41.242036
+  type: 'test'
+  ...
+# Subtest: bot tiers accept params.extends and only skill changes, and every profile requires kind
+ok 207 - bot tiers accept params.extends and only skill changes, and every profile requires kind
+  ---
+  duration_ms: 30.084363
+  type: 'test'
+  ...
+# Subtest: bot schema rejects invalid skill bounds, nonintegral counts and weights above 10000 milli
+ok 208 - bot schema rejects invalid skill bounds, nonintegral counts and weights above 10000 milli
+  ---
+  duration_ms: 19.183932
+  type: 'test'
+  ...
+# Subtest: loader recognizes bot bases and tiers and converts skill and bounded weights to milli
+ok 209 - loader recognizes bot bases and tiers and converts skill and bounded weights to milli
+  ---
+  duration_ms: 5.567404
+  type: 'test'
+  ...
+# Subtest: manifest rejects invalid palettes, models, animation kinds and unknown nested fields
+ok 210 - manifest rejects invalid palettes, models, animation kinds and unknown nested fields
+  ---
+  duration_ms: 21.036717
+  type: 'test'
+  ...
+# Subtest: hosted TypeBox contracts and plain schema exports support browser validation
+ok 211 - hosted TypeBox contracts and plain schema exports support browser validation
+  ---
+  duration_ms: 49.50142
+  type: 'test'
+  ...
+# Subtest: positive fx3 underflow throws a located error
+ok 212 - positive fx3 underflow throws a located error
+  ---
+  duration_ms: 2.07471
+  type: 'test'
+  ...
+# Subtest: positive fx3 underflow aggregates without stopping traversal
+ok 213 - positive fx3 underflow aggregates without stopping traversal
+  ---
+  duration_ms: 0.921519
+  type: 'test'
+  ...
+# Subtest: zero remains valid for fx3 fields that do not declare a positive minimum
+ok 214 - zero remains valid for fx3 fields that do not declare a positive minimum
+  ---
+  duration_ms: 0.183911
+  type: 'test'
+  ...
+# Subtest: loads strings and objects, scales only tagged fields, and leaves inputs untouched
+ok 215 - loads strings and objects, scales only tagged fields, and leaves inputs untouched
+  ---
+  duration_ms: 2.133402
+  type: 'test'
+  ...
+# Subtest: loads the three-decimal boundary 0.001
+ok 216 - loads the three-decimal boundary 0.001
+  ---
+  duration_ms: 0.294372
+  type: 'test'
+  ...
+# Subtest: loads the three-decimal boundary 0.29
+ok 217 - loads the three-decimal boundary 0.29
+  ---
+  duration_ms: 0.308649
+  type: 'test'
+  ...
+# Subtest: loads the three-decimal boundary 1.001
+ok 218 - loads the three-decimal boundary 1.001
+  ---
+  duration_ms: 0.262512
+  type: 'test'
+  ...
+# Subtest: loads the three-decimal boundary 100
+ok 219 - loads the three-decimal boundary 100
+  ---
+  duration_ms: 0.3359
+  type: 'test'
+  ...
+# Subtest: rejects four decimal places with the source file and JSON pointer
+ok 220 - rejects four decimal places with the source file and JSON pointer
+  ---
+  duration_ms: 0.977526
+  type: 'test'
+  ...
+# Subtest: rejects NaN with the source file and JSON pointer
+ok 221 - rejects NaN with the source file and JSON pointer
+  ---
+  duration_ms: 0.600125
+  type: 'test'
+  ...
+# Subtest: rejects infinity with the source file and JSON pointer
+ok 222 - rejects infinity with the source file and JSON pointer
+  ---
+  duration_ms: 0.421255
+  type: 'test'
+  ...
+# Subtest: rejects scaled overflow with the source file and JSON pointer
+ok 223 - rejects scaled overflow with the source file and JSON pointer
+  ---
+  duration_ms: 0.232034
+  type: 'test'
+  ...
+# Subtest: converts nested tagged fields and escapes JSON pointer property names
+ok 224 - converts nested tagged fields and escapes JSON pointer property names
+  ---
+  duration_ms: 0.410423
+  type: 'test'
+  ...
+# Subtest: accepts the PRD int32 limits and rejects values beyond either limit
+ok 225 - accepts the PRD int32 limits and rejects values beyond either limit
+  ---
+  duration_ms: 0.307478
+  type: 'test'
+  ...
+# Subtest: loader rejects unknown fields
+ok 226 - loader rejects unknown fields
+  ---
+  duration_ms: 0.240098
+  type: 'test'
+  ...
+# Subtest: loader rejects invalid speed range
+ok 227 - loader rejects invalid speed range
+  ---
+  duration_ms: 0.13643
+  type: 'test'
+  ...
+# Subtest: loader rejects wrong speed type
+ok 228 - loader rejects wrong speed type
+  ---
+  duration_ms: 0.202065
+  type: 'test'
+  ...
+# Subtest: loader rejects missing required fields
+ok 229 - loader rejects missing required fields
+  ---
+  duration_ms: 0.196436
+  type: 'test'
+  ...
+# Subtest: loader rejects unsupported schema
+ok 230 - loader rejects unsupported schema
+  ---
+  duration_ms: 0.133465
+  type: 'test'
+  ...
+# Subtest: loader rejects invalid JSON
+ok 231 - loader rejects invalid JSON
+  ---
+  duration_ms: 0.128616
+  type: 'test'
+  ...
+# Subtest: the unchanged loader runs without Node globals in a browser-like runtime
+ok 232 - the unchanged loader runs without Node globals in a browser-like runtime
+  ---
+  duration_ms: 913.920233
+  type: 'test'
+  ...
+# Subtest: fx3 accepts exactly the doubles nearest a three-decimal value
+ok 233 - fx3 accepts exactly the doubles nearest a three-decimal value
+  ---
+  duration_ms: 0.503412
+  type: 'test'
+  ...
+# Subtest: the emitted schema validates the authored regular troop file
+ok 234 - the emitted schema validates the authored regular troop file
+  ---
+  duration_ms: 1.3782
+  type: 'test'
+  ...
+# Subtest: the emitted schema rejects unknown fields
+ok 235 - the emitted schema rejects unknown fields
+  ---
+  duration_ms: 0.17853
+  type: 'test'
+  ...
+# Subtest: the emitted schema rejects invalid ids
+ok 236 - the emitted schema rejects invalid ids
+  ---
+  duration_ms: 0.112043
+  type: 'test'
+  ...
+# Subtest: the emitted schema rejects non-positive speed
+ok 237 - the emitted schema rejects non-positive speed
+  ---
+  duration_ms: 0.109079
+  type: 'test'
+  ...
+# Subtest: the emitted schema rejects speed above the simulation bound
+ok 238 - the emitted schema rejects speed above the simulation bound
+  ---
+  duration_ms: 0.254575
+  type: 'test'
+  ...
+# Subtest: the emitted schema rejects fractional troop value
+ok 239 - the emitted schema rejects fractional troop value
+  ---
+  duration_ms: 0.229658
+  type: 'test'
+  ...
+# Subtest: the emitted schema rejects unsupported schema versions
+ok 240 - the emitted schema rejects unsupported schema versions
+  ---
+  duration_ms: 0.135338
+  type: 'test'
+  ...
+# Subtest: the emitted schema requires the editor schema reference
+ok 241 - the emitted schema requires the editor schema reference
+  ---
+  duration_ms: 0.180384
+  type: 'test'
+  ...
+# Subtest: the shared Ajv rejects unknown schema keywords in strict mode
+ok 242 - the shared Ajv rejects unknown schema keywords in strict mode
+  ---
+  duration_ms: 8.284671
+  type: 'test'
+  ...
+# Subtest: the shared validator reports every invalid field without mutating input
+ok 243 - the shared validator reports every invalid field without mutating input
+  ---
+  duration_ms: 1.308877
+  type: 'test'
+  ...
+# Subtest: regenerating hashes still rejects a semantic edit without an increasing content version
+ok 244 - regenerating hashes still rejects a semantic edit without an increasing content version
+  ---
+  duration_ms: 16.34831
+  type: 'test'
+  ...
+# Subtest: bot-only edits have separate lock identity and defer BOT_VERSION enforcement to SP04
+ok 245 - bot-only edits have separate lock identity and defer BOT_VERSION enforcement to SP04
+  ---
+  duration_ms: 5.340452
+  type: 'test'
+  ...
+# Subtest: level removal and addition require version bump; first dataset can bootstrap
+ok 246 - level removal and addition require version bump; first dataset can bootstrap
+  ---
+  duration_ms: 1.738318
+  type: 'test'
+  ...
+# Subtest: rules header, exported constant and content metadata must agree
+ok 247 - rules header, exported constant and content metadata must agree
+  ---
+  duration_ms: 0.444618
+  type: 'test'
+  ...
+1..247
+# tests 247
+# suites 0
+# pass 247
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15379.780087
+
+> @node-arena/sim@0.0.0 test /root/projects/node-arena/.worktrees/feat/game-design/packages/sim
+> node --test test/*.test.cjs
+
+TAP version 13
+# Subtest: performance budgets reject each breached metric and CI tolerates only 5x
+ok 1 - performance budgets reject each breached metric and CI tolerates only 5x
+  ---
+  duration_ms: 3.588509
+  type: 'test'
+  ...
+# Subtest: benchmark fixture sustains real 2000-class FIFO work with generation and clashes
+ok 2 - benchmark fixture sustains real 2000-class FIFO work with generation and clashes
+  ---
+  duration_ms: 273.721416
+  type: 'test'
+  ...
+# Subtest: 2x event modes execute identical active workloads and quiet mode emits zero
+ok 3 - 2x event modes execute identical active workloads and quiet mode emits zero
+  ---
+  duration_ms: 169.754633
+  type: 'test'
+  ...
+# Subtest: ring word streaming preserves logical FIFO words across wrap and growth
+ok 4 - ring word streaming preserves logical FIFO words across wrap and growth
+  ---
+  duration_ms: 0.909355
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-01: cut fronts clash at equality, tank retains value and loop stops at next unready front
+ok 5 - covers R-CMB-01: cut fronts clash at equality, tank retains value and loop stops at next unready front
+  ---
+  duration_ms: 10.872529
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-01: clash repeats qualifying fronts and reports canonical own-source progress
+ok 6 - covers R-CMB-01: clash repeats qualifying fronts and reports canonical own-source progress
+  ---
+  duration_ms: 1.428787
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-04: friendly mixed fronts block later hostile fronts and crossing pairs never clash
+ok 7 - covers R-ENT-04: friendly mixed fronts block later hostile fronts and crossing pairs never clash
+  ---
+  duration_ms: 4.409715
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-02: overshoot order re-evaluates later arrivals through capture and recapture
+ok 8 - covers R-CMB-02: overshoot order re-evaluates later arrivals through capture and recapture
+  ---
+  duration_ms: 0.984058
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-02: exact arrival ties use channel key then FIFO, independent of troop sequence
+ok 9 - covers R-CMB-02: exact arrival ties use channel key then FIFO, independent of troop sequence
+  ---
+  duration_ms: 2.996328
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-03: tank leftover capture bounds garrison and accounts overflow and neutral hostility
+ok 10 - covers R-CMB-03: tank leftover capture bounds garrison and accounts overflow and neutral hostility
+  ---
+  duration_ms: 1.439657
+  type: 'test'
+  ...
+# Subtest: covers R-CAP-01: same-team arrivals reinforce with excess counted to troop owner
+ok 11 - covers R-CAP-01: same-team arrivals reinforce with excess counted to troop owner
+  ---
+  duration_ms: 0.748819
+  type: 'test'
+  ...
+# Subtest: covers R-CPT-02: capture cuts old outgoing permission, resets registered state and preserves transit
+ok 12 - covers R-CPT-02: capture cuts old outgoing permission, resets registered state and preserves transit
+  ---
+  duration_ms: 5.278624
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-04: analytic motion leaves in-flight bases unchanged and new departures at zero
+ok 13 - covers R-TCK-04: analytic motion leaves in-flight bases unchanged and new departures at zero
+  ---
+  duration_ms: 1.380455
+  type: 'test'
+  ...
+# Subtest: registry hooks control arrival mechanics without core knowledge of component names
+ok 14 - registry hooks control arrival mechanics without core knowledge of component names
+  ---
+  duration_ms: 0.951746
+  type: 'test'
+  ...
+# Subtest: value conservation across clash, hit, reinforcement, cap overflow and events:false
+ok 15 - value conservation across clash, hit, reinforcement, cap overflow and events:false
+  ---
+  duration_ms: 1.255316
+  type: 'test'
+  ...
+# Subtest: registered clash and arrival systems run around core queues in phase order
+ok 16 - registered clash and arrival systems run around core queues in phase order
+  ---
+  duration_ms: 0.598803
+  type: 'test'
+  ...
+# Subtest: sim exposes a reusable determinism preset
+ok 17 - sim exposes a reusable determinism preset
+  ---
+  duration_ms: 1.943478
+  type: 'test'
+  ...
+# Subtest: rejects Math.random(1);
+ok 18 - rejects Math.random(1);
+  ---
+  duration_ms: 90.901668
+  type: 'test'
+  ...
+# Subtest: rejects Math.sqrt(1);
+ok 19 - rejects Math.sqrt(1);
+  ---
+  duration_ms: 9.436599
+  type: 'test'
+  ...
+# Subtest: rejects Math.sin(1);
+ok 20 - rejects Math.sin(1);
+  ---
+  duration_ms: 5.290557
+  type: 'test'
+  ...
+# Subtest: rejects Math.cos(1);
+ok 21 - rejects Math.cos(1);
+  ---
+  duration_ms: 4.247555
+  type: 'test'
+  ...
+# Subtest: rejects Math.tan(1);
+ok 22 - rejects Math.tan(1);
+  ---
+  duration_ms: 4.143929
+  type: 'test'
+  ...
+# Subtest: rejects Math.asin(1);
+ok 23 - rejects Math.asin(1);
+  ---
+  duration_ms: 3.184056
+  type: 'test'
+  ...
+# Subtest: rejects Math.acos(1);
+ok 24 - rejects Math.acos(1);
+  ---
+  duration_ms: 5.298362
+  type: 'test'
+  ...
+# Subtest: rejects Math.atan(1);
+ok 25 - rejects Math.atan(1);
+  ---
+  duration_ms: 2.527042
+  type: 'test'
+  ...
+# Subtest: rejects Math.atan2(1);
+ok 26 - rejects Math.atan2(1);
+  ---
+  duration_ms: 5.167482
+  type: 'test'
+  ...
+# Subtest: rejects Math.pow(1);
+ok 27 - rejects Math.pow(1);
+  ---
+  duration_ms: 3.641008
+  type: 'test'
+  ...
+# Subtest: rejects Math.exp(1);
+ok 28 - rejects Math.exp(1);
+  ---
+  duration_ms: 4.298182
+  type: 'test'
+  ...
+# Subtest: rejects Math.log(1);
+ok 29 - rejects Math.log(1);
+  ---
+  duration_ms: 2.991299
+  type: 'test'
+  ...
+# Subtest: rejects Math.hypot(1);
+ok 30 - rejects Math.hypot(1);
+  ---
+  duration_ms: 4.060979
+  type: 'test'
+  ...
+# Subtest: rejects Math.round(1);
+ok 31 - rejects Math.round(1);
+  ---
+  duration_ms: 8.591366
+  type: 'test'
+  ...
+# Subtest: rejects Math.floor(1);
+ok 32 - rejects Math.floor(1);
+  ---
+  duration_ms: 14.631473
+  type: 'test'
+  ...
+# Subtest: rejects Math.trunc(1);
+ok 33 - rejects Math.trunc(1);
+  ---
+  duration_ms: 8.810935
+  type: 'test'
+  ...
+# Subtest: rejects Math.imul(1);
+ok 34 - rejects Math.imul(1);
+  ---
+  duration_ms: 5.717071
+  type: 'test'
+  ...
+# Subtest: rejects Math["random"]();
+ok 35 - rejects Math["random"]();
+  ---
+  duration_ms: 8.733878
+  type: 'test'
+  ...
+# Subtest: rejects const { random } = Math;
+ok 36 - rejects const { random } = Math;
+  ---
+  duration_ms: 4.269098
+  type: 'test'
+  ...
+# Subtest: rejects new Date();
+ok 37 - rejects new Date();
+  ---
+  duration_ms: 1.823971
+  type: 'test'
+  ...
+# Subtest: rejects Date.now();
+ok 38 - rejects Date.now();
+  ---
+  duration_ms: 1.50375
+  type: 'test'
+  ...
+# Subtest: rejects performance.now();
+ok 39 - rejects performance.now();
+  ---
+  duration_ms: 3.104464
+  type: 'test'
+  ...
+# Subtest: rejects setTimeout(() => {}, 1);
+ok 40 - rejects setTimeout(() => {}, 1);
+  ---
+  duration_ms: 3.104135
+  type: 'test'
+  ...
+# Subtest: rejects setInterval(() => {}, 1);
+ok 41 - rejects setInterval(() => {}, 1);
+  ---
+  duration_ms: 4.903759
+  type: 'test'
+  ...
+# Subtest: rejects clearTimeout(1);
+ok 42 - rejects clearTimeout(1);
+  ---
+  duration_ms: 2.448201
+  type: 'test'
+  ...
+# Subtest: rejects queueMicrotask(() => {});
+ok 43 - rejects queueMicrotask(() => {});
+  ---
+  duration_ms: 2.852874
+  type: 'test'
+  ...
+# Subtest: rejects console.log(1);
+ok 44 - rejects console.log(1);
+  ---
+  duration_ms: 2.810142
+  type: 'test'
+  ...
+# Subtest: rejects new Intl.Collator();
+ok 45 - rejects new Intl.Collator();
+  ---
+  duration_ms: 2.624778
+  type: 'test'
+  ...
+# Subtest: rejects globalThis.Math.random();
+ok 46 - rejects globalThis.Math.random();
+  ---
+  duration_ms: 3.280831
+  type: 'test'
+  ...
+# Subtest: rejects globalThis.Date.now();
+ok 47 - rejects globalThis.Date.now();
+  ---
+  duration_ms: 3.674232
+  type: 'test'
+  ...
+# Subtest: rejects const n = 1.5;
+ok 48 - rejects const n = 1.5;
+  ---
+  duration_ms: 2.897841
+  type: 'test'
+  ...
+# Subtest: rejects const n = 1e-3;
+ok 49 - rejects const n = 1e-3;
+  ---
+  duration_ms: 2.533485
+  type: 'test'
+  ...
+# Subtest: rejects for (const key in {}) {}
+ok 50 - rejects for (const key in {}) {}
+  ---
+  duration_ms: 4.498004
+  type: 'test'
+  ...
+# Subtest: rejects [2, 1].sort();
+ok 51 - rejects [2, 1].sort();
+  ---
+  duration_ms: 2.224876
+  type: 'test'
+  ...
+# Subtest: rejects [2, 1]["sort"]();
+ok 52 - rejects [2, 1]["sort"]();
+  ---
+  duration_ms: 1.432866
+  type: 'test'
+  ...
+# Subtest: rejects import { compileLevel } from "@node-arena/content";
+ok 53 - rejects import { compileLevel } from "@node-arena/content";
+  ---
+  duration_ms: 2.283558
+  type: 'test'
+  ...
+# Subtest: rejects import type { Stats } from "node:fs";
+ok 54 - rejects import type { Stats } from "node:fs";
+  ---
+  duration_ms: 1.452391
+  type: 'test'
+  ...
+# Subtest: only src/math.ts can use integer Math helpers
+ok 55 - only src/math.ts can use integer Math helpers
+  ---
+  duration_ms: 5.456042
+  type: 'test'
+  ...
+# Subtest: hash paths cannot stringify JSON
+ok 56 - hash paths cannot stringify JSON
+  ---
+  duration_ms: 5.021362
+  type: 'test'
+  ...
+# Subtest: integer math, explicit sort, strings and content type imports remain valid
+ok 57 - integer math, explicit sort, strings and content type imports remain valid
+  ---
+  duration_ms: 5.696832
+  type: 'test'
+  ...
+# Subtest: bots can import the preset with their own src/math.ts exception
+ok 58 - bots can import the preset with their own src/math.ts exception
+  ---
+  duration_ms: 9.188286
+  type: 'test'
+  ...
+# Subtest: division and division assignment are confined to src/math.ts
+ok 59 - division and division assignment are confined to src/math.ts
+  ---
+  duration_ms: 7.356459
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-01: canDraw shares atomic validation and malformed commands never throw
+ok 60 - covers R-LIN-01: canDraw shares atomic validation and malformed commands never throw
+  ---
+  duration_ms: 6.325071
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-03: stable player ordering preserves commands within each player
+ok 61 - covers R-TCK-03: stable player ordering preserves commands within each player
+  ---
+  duration_ms: 1.274332
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-03: replacement and cuts preserve in-flight troops; rejection preserves reverse permission
+ok 62 - covers R-LIN-03: replacement and cuts preserve in-flight troops; rejection preserves reverse permission
+  ---
+  duration_ms: 1.450307
+  type: 'test'
+  ...
+# Subtest: covers R-GEN-02: fractional generation, neutral and missing components, slots refresh
+ok 63 - covers R-GEN-02: fractional generation, neutral and missing components, slots refresh
+  ---
+  duration_ms: 2.297254
+  type: 'test'
+  ...
+# Subtest: covers R-SND-02: sending freezes count and shares generation by sorted targets through cuts
+ok 64 - covers R-SND-02: sending freezes count and shares generation by sorted targets through cuts
+  ---
+  duration_ms: 0.933521
+  type: 'test'
+  ...
+# Subtest: covers R-CAP-02: no-bank cap preserves fractional remainder, discards overflow and keeps sending
+ok 65 - covers R-CAP-02: no-bank cap preserves fractional remainder, discards overflow and keeps sending
+  ---
+  duration_ms: 0.656362
+  type: 'test'
+  ...
+# Subtest: value-unit accounting supports tank departures and garrison overflow; events:false keeps identical economy
+ok 66 - value-unit accounting supports tank departures and garrison overflow; events:false keeps identical economy
+  ---
+  duration_ms: 0.952788
+  type: 'test'
+  ...
+# Subtest: covers R-CPT-01: capture helper resets registered accumulator/cursor without touching transit
+ok 67 - covers R-CPT-01: capture helper resets registered accumulator/cursor without touching transit
+  ---
+  duration_ms: 0.595757
+  type: 'test'
+  ...
+# Subtest: registered extension systems execute in order without component-specific core interpretation
+ok 68 - registered extension systems execute in order without component-specific core interpretation
+  ---
+  duration_ms: 0.750862
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-05: cuts validate channel ownership without mutating its permission or troops
+ok 69 - covers R-LIN-05: cuts validate channel ownership without mutating its permission or troops
+  ---
+  duration_ms: 0.758588
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-03: staged gameover gate rejects previews and makes later steps a no-op
+ok 70 - covers R-WIN-03: staged gameover gate rejects previews and makes later steps a no-op
+  ---
+  duration_ms: 0.431353
+  type: 'test'
+  ...
+# Subtest: shoots fixture runs after clash and before arrivals, removes real value and adds automatically hashed/snapshotted state
+ok 71 - shoots fixture runs after clash and before arrivals, removes real value and adds automatically hashed/snapshotted state
+  ---
+  duration_ms: 6.667795
+  type: 'test'
+  ...
+# Subtest: killFront caps removal at one remaining front and decrements its owner transit without assigning a cause
+ok 72 - killFront caps removal at one remaining front and decrements its owner transit without assigning a cause
+  ---
+  duration_ms: 1.867003
+  type: 'test'
+  ...
+# Subtest: phase extensions reject typos/duplicates and stay isolated from v1 and already-created simulations
+ok 73 - phase extensions reject typos/duplicates and stay isolated from v1 and already-created simulations
+  ---
+  duration_ms: 5.254378
+  type: 'test'
+  ...
+# Subtest: test-only tank value two reinforces, hits and captures leftover through the existing component hooks
+ok 74 - test-only tank value two reinforces, hits and captures leftover through the existing component hooks
+  ---
+  duration_ms: 1.380505
+  type: 'test'
+  ...
+# Subtest: test-only tank fronts survive partial clash then repeat clash with remaining value
+ok 75 - test-only tank fronts survive partial clash then repeat clash with remaining value
+  ---
+  duration_ms: 0.837428
+  type: 'test'
+  ...
+# Subtest: sim:golden checks committed recorder-based golden replays
+ok 76 - sim:golden checks committed recorder-based golden replays
+  ---
+  duration_ms: 1193.114352
+  type: 'test'
+  ...
+# Subtest: every committed record plays, commands are applied, and fixtures exercise their named mechanic
+ok 77 - every committed record plays, commands are applied, and fixtures exercise their named mechanic
+  ---
+  duration_ms: 38.938872
+  type: 'test'
+  ...
+# Subtest: golden updates require appropriate strictly increased versions, including identical output
+ok 78 - golden updates require appropriate strictly increased versions, including identical output
+  ---
+  duration_ms: 12.715387
+  type: 'test'
+  ...
+# Subtest: git baseline prevents deletion/bootstrap bypass, and refused writes preserve the file
+ok 79 - git baseline prevents deletion/bootstrap bypass, and refused writes preserve the file
+  ---
+  duration_ms: 70.784597
+  type: 'test'
+  ...
+# Subtest: same-state --update refuses the authoritative versions without touching the committed baseline
+ok 80 - same-state --update refuses the authoritative versions without touching the committed baseline
+  ---
+  duration_ms: 1161.137917
+  type: 'test'
+  ...
+# Subtest: Node and Chromium golden hashes, full event logs and playback records agree exactly
+ok 81 - Node and Chromium golden hashes, full event logs and playback records agree exactly
+  ---
+  duration_ms: 1632.140196
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-02: signed division truncates exactly, without negative zero
+ok 82 - covers R-TCK-02: signed division truncates exactly, without negative zero
+  ---
+  duration_ms: 13.987214
+  type: 'test'
+  ...
+# Subtest: division and multiply-divide reject unsafe, fractional or zero-divisor arithmetic
+ok 83 - division and multiply-divide reject unsafe, fractional or zero-divisor arithmetic
+  ---
+  duration_ms: 9.008591
+  type: 'test'
+  ...
+# Subtest: integer square root floors at exact square boundaries through MAX_SAFE_INTEGER
+ok 84 - integer square root floors at exact square boundaries through MAX_SAFE_INTEGER
+  ---
+  duration_ms: 22.497774
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-02: fixed-point spike matches BigInt floor-length arrival at 20 Hz
+ok 85 - covers R-TCK-02: fixed-point spike matches BigInt floor-length arrival at 20 Hz
+  ---
+  duration_ms: 147.984557
+  type: 'test'
+  ...
+# Subtest: Sfc32 emits exact unsigned 32-bit words and snapshots copy all four lanes
+ok 86 - Sfc32 emits exact unsigned 32-bit words and snapshots copy all four lanes
+  ---
+  duration_ms: 8.71905
+  type: 'test'
+  ...
+# Subtest: mixSeed is reproducible, ordered and distinguishes trailing zero parts
+ok 87 - mixSeed is reproducible, ordered and distinguishes trailing zero parts
+  ---
+  duration_ms: 0.29309
+  type: 'test'
+  ...
+# Subtest: accepted authored generation stays exact beyond aggregate int32 (debug=false)
+ok 88 - accepted authored generation stays exact beyond aggregate int32 (debug=false)
+  ---
+  duration_ms: 88.029197
+  type: 'test'
+  ...
+# Subtest: accepted authored generation stays exact beyond aggregate int32 (debug=true)
+ok 89 - accepted authored generation stays exact beyond aggregate int32 (debug=true)
+  ---
+  duration_ms: 114.122664
+  type: 'test'
+  ...
+# Subtest: overflow, kill and capture credits remain exact beyond int32 and stay excluded from hash
+ok 90 - overflow, kill and capture credits remain exact beyond int32 and stay excluded from hash
+  ---
+  duration_ms: 3.968714
+  type: 'test'
+  ...
+# Subtest: stat additions reject loss of exact safe-integer precision in production
+ok 91 - stat additions reject loss of exact safe-integer precision in production
+  ---
+  duration_ms: 3.468069
+  type: 'test'
+  ...
+# Subtest: debug stat invariants reject fractions and unsafe integers
+ok 92 - debug stat invariants reject fractions and unsafe integers
+  ---
+  duration_ms: 5.586822
+  type: 'test'
+  ...
+# Subtest: create and both replay paths enforce positive int32 duration ticks
+ok 93 - create and both replay paths enforce positive int32 duration ticks
+  ---
+  duration_ms: 5.51755
+  type: 'test'
+  ...
+# Subtest: seeded bounds, slots, independent conservation and transit hold after every step
+ok 94 - seeded bounds, slots, independent conservation and transit hold after every step
+  ---
+  duration_ms: 6166.558695
+  type: 'test'
+  ...
+# Subtest: seeded duplicate runs and paused/split driver scheduling have identical hashes
+ok 95 - seeded duplicate runs and paused/split driver scheduling have identical hashes
+  ---
+  duration_ms: 4840.786756
+  type: 'test'
+  ...
+# Subtest: seeded replay round-trips random invalid submissions, partial and finished runs
+ok 96 - seeded replay round-trips random invalid submissions, partial and finished runs
+  ---
+  duration_ms: 4598.928587
+  type: 'test'
+  ...
+# Subtest: view exposes stable zero-copy columns and live original team ids, player stats, drawn channel order
+ok 97 - view exposes stable zero-copy columns and live original team ids, player stats, drawn channel order
+  ---
+  duration_ms: 5.91048
+  type: 'test'
+  ...
+# Subtest: readTroops reads cut-channel FIFO rings without object traversal, returns required count on overflow and reuses buffers
+ok 98 - readTroops reads cut-channel FIFO rings without object traversal, returns required count on overflow and reuses buffers
+  ---
+  duration_ms: 1.3207
+  type: 'test'
+  ...
+# Subtest: hash covers rule state, partial troops and global sequences, excludes reporting and derived caches
+ok 99 - hash covers rule state, partial troops and global sequences, excludes reporting and derived caches
+  ---
+  duration_ms: 7.722478
+  type: 'test'
+  ...
+# Subtest: new declared component columns are snapshotted and hashed generically with framed column names
+ok 100 - new declared component columns are snapshotted and hashed generically with framed column names
+  ---
+  duration_ms: 1.154203
+  type: 'test'
+  ...
+# Subtest: snapshots detach all nested data and serialize canonical channel/FIFO and column order
+ok 101 - snapshots detach all nested data and serialize canonical channel/FIFO and column order
+  ---
+  duration_ms: 1.169161
+  type: 'test'
+  ...
+# Subtest: identical seeds and commands produce stable hashes independent of events and ring storage history
+ok 102 - identical seeds and commands produce stable hashes independent of events and ring storage history
+  ---
+  duration_ms: 6.144637
+  type: 'test'
+  ...
+# Subtest: readTroops preserves logical FIFO order across physical wrap and capacity growth
+ok 103 - readTroops preserves logical FIFO order across physical wrap and capacity growth
+  ---
+  duration_ms: 0.567904
+  type: 'test'
+  ...
+# Subtest: public types reject mutable view columns and hide internal state access
+ok 104 - public types reject mutable view columns and hide internal state access
+  ---
+  duration_ms: 2391.426303
+  type: 'test'
+  ...
+# Subtest: replay round-trips submitted order, rejected commands, checkpoints and manually stopped tick
+ok 105 - replay round-trips submitted order, rejected commands, checkpoints and manually stopped tick
+  ---
+  duration_ms: 29.753612
+  type: 'test'
+  ...
+# Subtest: recorder clones submissions before caller and event mutation and detaches exported records
+ok 106 - recorder clones submissions before caller and event mutation and detaches exported records
+  ---
+  duration_ms: 4.482414
+  type: 'test'
+  ...
+# Subtest: pause, split and twice-per-driver-interval yield identical replay hashes
+ok 107 - pause, split and twice-per-driver-interval yield identical replay hashes
+  ---
+  duration_ms: 18.764059
+  type: 'test'
+  ...
+# Subtest: completed games round-trip and postgame calls neither record commands nor duplicate checkpoints
+ok 108 - completed games round-trip and postgame calls neither record commands nor duplicate checkpoints
+  ---
+  duration_ms: 3.603017
+  type: 'test'
+  ...
+# Subtest: header versions, identity, seed format and malformed records are refused
+ok 109 - header versions, identity, seed format and malformed records are refused
+  ---
+  duration_ms: 6.935085
+  type: 'test'
+  ...
+# Subtest: rulesVersion requires equal major.minor only; patch may differ, minor and major refused
+ok 110 - rulesVersion requires equal major.minor only; patch may differ, minor and major refused
+  ---
+  duration_ms: 4.534494
+  type: 'test'
+  ...
+# Subtest: playback ending early (engine outcome differs from recording) reports divergence instead of throwing
+ok 111 - playback ending early (engine outcome differs from recording) reports divergence instead of throwing
+  ---
+  duration_ms: 1.974248
+  type: 'test'
+  ...
+# Subtest: checkpoint reports first observable divergent tick and final hash, outcome and changed seed fail
+ok 112 - checkpoint reports first observable divergent tick and final hash, outcome and changed seed fail
+  ---
+  duration_ms: 8.778463
+  type: 'test'
+  ...
+# Subtest: aftergame commands and final ticks beyond gameover are refused
+ok 113 - aftergame commands and final ticks beyond gameover are refused
+  ---
+  duration_ms: 1.673805
+  type: 'test'
+  ...
+# Subtest: authored sample content compiles outside sim and full timeout replay runs without bots
+ok 114 - authored sample content compiles outside sim and full timeout replay runs without bots
+  ---
+  duration_ms: 815.318689
+  type: 'test'
+  ...
+# Subtest: empty initial recording and gameover before first checkpoint are deterministic
+ok 115 - empty initial recording and gameover before first checkpoint are deterministic
+  ---
+  duration_ms: 1.066546
+  type: 'test'
+  ...
+# Subtest: lossy and cyclic submissions are refused atomically before stepping
+ok 116 - lossy and cyclic submissions are refused atomically before stepping
+  ---
+  duration_ms: 0.897794
+  type: 'test'
+  ...
+# Subtest: same-tick command order is playback order before canonical player grouping
+ok 117 - same-tick command order is playback order before canonical player grouping
+  ---
+  duration_ms: 1.28877
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-01: pause is inert and twenty scheduled steps equal one simulated second
+ok 118 - covers R-TCK-01: pause is inert and twenty scheduled steps equal one simulated second
+  ---
+  duration_ms: 11.598595
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-04: E-TICK speed 3.001 over length 6.002 arrives after exactly forty elapsed ticks
+ok 119 - covers R-TCK-04: E-TICK speed 3.001 over length 6.002 arrives after exactly forty elapsed ticks
+  ---
+  duration_ms: 2.950491
+  type: 'test'
+  ...
+# Subtest: covers R-GEN-01: E-GENERATION produces only for owned generating towers
+ok 120 - covers R-GEN-01: E-GENERATION produces only for owned generating towers
+  ---
+  duration_ms: 0.983157
+  type: 'test'
+  ...
+# Subtest: covers R-SND-01: E-GENERATION persists sending at shared rate with a frozen starting stack
+ok 121 - covers R-SND-01: E-GENERATION persists sending at shared rate with a frozen starting stack
+  ---
+  duration_ms: 1.870531
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: every v1 component registers and absent capabilities stay absent
+ok 122 - covers R-ENT-01: every v1 component registers and absent capabilities stay absent
+  ---
+  duration_ms: 15.200538
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-02: unit troops use their kind while presentation leaves mechanics and identity unchanged
+ok 123 - covers R-ENT-02: unit troops use their kind while presentation leaves mechanics and identity unchanged
+  ---
+  duration_ms: 18.380327
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-03: E-CUT retains channel FIFO and departure owner after permission is removed
+ok 124 - covers R-ENT-03: E-CUT retains channel FIFO and departure owner after permission is removed
+  ---
+  duration_ms: 1.917599
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-04: straight crossing paths pass through each other without combat or blocking
+ok 125 - covers R-LIN-04: straight crossing paths pass through each other without combat or blocking
+  ---
+  duration_ms: 3.78902
+  type: 'test'
+  ...
+# Subtest: data changes alone alter generation, speed, position, capacity and strict slot thresholds
+ok 126 - data changes alone alter generation, speed, position, capacity and strict slot thresholds
+  ---
+  duration_ms: 17.023267
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-02: public loader enforces three decimal places and compiles milli-units
+ok 127 - covers R-TCK-02: public loader enforces three decimal places and compiles milli-units
+  ---
+  duration_ms: 2.159673
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-03: compiler selects explicit duration or balance default for the public timer
+ok 128 - covers R-WIN-03: compiler selects explicit duration or balance default for the public timer
+  ---
+  duration_ms: 3.209535
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-02: E-SLOTS grants 1, 2, 2, 3 slots at counts 10, 11, 30, 31
+ok 129 - covers R-LIN-02: E-SLOTS grants 1, 2, 2, 3 slots at counts 10, 11, 30, 31
+  ---
+  duration_ms: 0.772084
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-04: compiled default teams and human/bot commands use identical ownership validation
+ok 130 - covers R-ENT-04: compiled default teams and human/bot commands use identical ownership validation
+  ---
+  duration_ms: 1.673625
+  type: 'test'
+  ...
+# Subtest: covers R-CPT-01: inline capture resets state, cancels outgoing lines and generates only next tick
+ok 131 - covers R-CPT-01: inline capture resets state, cancels outgoing lines and generates only next tick
+  ---
+  duration_ms: 0.855432
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-03: E-CAPTURE unit hits distinguish empty, exact depletion and surviving defense
+ok 132 - covers R-CMB-03: E-CAPTURE unit hits distinguish empty, exact depletion and surviving defense
+  ---
+  duration_ms: 1.234436
+  type: 'test'
+  ...
+# Subtest: covers R-CAP-01: E-CAP three friendly unit arrivals fill one space and lose two to overflow
+ok 133 - covers R-CAP-01: E-CAP three friendly unit arrivals fill one space and lose two to overflow
+  ---
+  duration_ms: 0.554118
+  type: 'test'
+  ...
+# Subtest: create derives indexed integer columns, strict slot thresholds and visual metadata without touching bots
+ok 134 - create derives indexed integer columns, strict slot thresholds and visual metadata without touching bots
+  ---
+  duration_ms: 4.437358
+  type: 'test'
+  ...
+# Subtest: registry parity rejects missing, extra and unknown level components; fixture injection matches its own content
+ok 135 - registry parity rejects missing, extra and unknown level components; fixture injection matches its own content
+  ---
+  duration_ms: 2.587608
+  type: 'test'
+  ...
+# Subtest: lazy channels keep FIFO data through wrap, growth, partial front consumption and line cutting
+ok 136 - lazy channels keep FIFO data through wrap, growth, partial front consumption and line cutting
+  ---
+  duration_ms: 1.934412
+  type: 'test'
+  ...
+# Subtest: the shipped sample crosses the real content compiler boundary into create
+ok 137 - the shipped sample crosses the real content compiler boundary into create
+  ---
+  duration_ms: 634.403167
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-05: arrivals lower slots and cut greatest drawSeq repeatedly, retaining troops
+ok 138 - covers R-TCK-05: arrivals lower slots and cut greatest drawSeq repeatedly, retaining troops
+  ---
+  duration_ms: 7.045075
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-02: reinforcement and capture refresh final slots before next command
+ok 139 - covers R-LIN-02: reinforcement and capture refresh final slots before next command
+  ---
+  duration_ms: 1.546151
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-01: eliminated tower owner survives in transit until its last troop is gone
+ok 140 - covers R-WIN-01: eliminated tower owner survives in transit until its last troop is gone
+  ---
+  duration_ms: 1.292556
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-02: human elimination loses even with multiple bot teams, unique winner only
+ok 141 - covers R-WIN-02: human elimination loses even with multiple bot teams, unique winner only
+  ---
+  duration_ms: 0.957247
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-01: teams determine winner, neutral towers do not keep a player alive
+ok 142 - covers R-WIN-01: teams determine winner, neutral towers do not keep a player alive
+  ---
+  duration_ms: 1.524961
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-02: simultaneous last-front destruction produces draw and one elimination per player
+ok 143 - covers R-WIN-02: simultaneous last-front destruction produces draw and one elimination per player
+  ---
+  duration_ms: 0.745543
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-03: timeout boundary overrides win, loss and draw; postgame is completely inert
+ok 144 - covers R-WIN-03: timeout boundary overrides win, loss and draw; postgame is completely inert
+  ---
+  duration_ms: 1.876832
+  type: 'test'
+  ...
+# Subtest: all seven registered phases execute in order, win after slots; events:false preserves outcomes and rejects
+ok 145 - all seven registered phases execute in order, win after slots; events:false preserves outcomes and rejects
+  ---
+  duration_ms: 1.195852
+  type: 'test'
+  ...
+# Subtest: debug asserts transit recount, conservation, int32 scalars; normal steps avoid scanning troop rings
+ok 146 - debug asserts transit recount, conservation, int32 scalars; normal steps avoid scanning troop rings
+  ---
+  duration_ms: 4.078172
+  type: 'test'
+  ...
+# Subtest: debug conservation includes neutral defense, generation, overflow and clash losses without relying on kills
+ok 147 - debug conservation includes neutral defense, generation, overflow and clash losses without relying on kills
+  ---
+  duration_ms: 2.270113
+  type: 'test'
+  ...
+# Subtest: debug rejects int32 overflow before ring writes silently truncate values
+ok 148 - debug rejects int32 overflow before ring writes silently truncate values
+  ---
+  duration_ms: 2.089267
+  type: 'test'
+  ...
+# Subtest: debug accounting measures every neutral hit and each clash value exactly
+ok 149 - debug accounting measures every neutral hit and each clash value exactly
+  ---
+  duration_ms: 0.904286
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-01: elimination emits once while other teams continue fighting
+ok 150 - covers R-WIN-01: elimination emits once while other teams continue fighting
+  ---
+  duration_ms: 0.679146
+  type: 'test'
+  ...
+# Subtest: registered win systems observe enforced slots and refreshed derived capacity
+ok 151 - registered win systems observe enforced slots and refreshed derived capacity
+  ---
+  duration_ms: 0.742288
+  type: 'test'
+  ...
+# Subtest: debug conservation accounts discarded hostile leftovers on a valid garrison-only tower
+ok 152 - debug conservation accounts discarded hostile leftovers on a valid garrison-only tower
+  ---
+  duration_ms: 0.528959
+  type: 'test'
+  ...
+1..152
+# tests 152
+# suites 0
+# pass 152
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17159.210411
+
+> @node-arena/bots@0.0.0 test /root/projects/node-arena/.worktrees/feat/game-design/packages/bots
+> node --test test/*.test.cjs
+
+TAP version 13
+# Subtest: Node and Chromium complete identical compiled-level bot runs with full logs and hashes
+ok 1 - Node and Chromium complete identical compiled-level bot runs with full logs and hashes
+  ---
+  duration_ms: 2385.619148
+  type: 'test'
+  ...
+# Subtest: guard preserves the live public view and draw/troop reads across a sim step
+ok 2 - guard preserves the live public view and draw/troop reads across a sim step
+  ---
+  duration_ms: 11.007017
+  type: 'test'
+  ...
+# Subtest: guard rejects every extra string or symbol read including inherited properties
+ok 3 - guard rejects every extra string or symbol read including inherited properties
+  ---
+  duration_ms: 1.296895
+  type: 'test'
+  ...
+# Subtest: guard exposes only its three capabilities through reflection and cannot be extended
+ok 4 - guard exposes only its three capabilities through reflection and cannot be extended
+  ---
+  duration_ms: 1.275264
+  type: 'test'
+  ...
+# Subtest: bounded validated authored/random corpus completes legally and reproduces every recorded command
+ok 5 - bounded validated authored/random corpus completes legally and reproduces every recorded command
+  ---
+  duration_ms: 1389.451354
+  type: 'test'
+  ...
+# Subtest: utility bot captures an undefended neutral then cuts that actual surviving line
+ok 6 - utility bot captures an undefended neutral then cuts that actual surviving line
+  ---
+  duration_ms: 81.949754
+  type: 'test'
+  ...
+# Subtest: authored rusher makes its first attack before authored turtle on the same view history
+ok 7 - authored rusher makes its first attack before authored turtle on the same view history
+  ---
+  duration_ms: 103.690686
+  type: 'test'
+  ...
+# Subtest: all authored tiers preserve personality through the bot compiler boundary
+ok 8 - all authored tiers preserve personality through the bot compiler boundary
+  ---
+  duration_ms: 74.337216
+  type: 'test'
+  ...
+# Subtest: loaded milli-second cadence floors to ticks and uses the ordered per-seat seed phase
+ok 9 - loaded milli-second cadence floors to ticks and uses the ordered per-seat seed phase
+  ---
+  duration_ms: 20.612558
+  type: 'test'
+  ...
+# Subtest: sub-tick interval clamps to one and omitted skill defaults to every tick
+ok 10 - sub-tick interval clamps to one and omitted skill defaults to every tick
+  ---
+  duration_ms: 6.179453
+  type: 'test'
+  ...
+# Subtest: idle and empty driver emit no commands
+ok 11 - idle and empty driver emit no commands
+  ---
+  duration_ms: 1.012823
+  type: 'test'
+  ...
+# Subtest: same inputs reproduce complete command logs and final hashes without events
+ok 12 - same inputs reproduce complete command logs and final hashes without events
+  ---
+  duration_ms: 22.493698
+  type: 'test'
+  ...
+# Subtest: driver passes the ordered seat seed to utility noise independently of simulation seed
+ok 13 - driver passes the ordered seat seed to utility noise independently of simulation seed
+  ---
+  duration_ms: 3.858443
+  type: 'test'
+  ...
+# Subtest: repeated invocation on one tick emits no duplicate commands or noise draws
+ok 14 - repeated invocation on one tick emits no duplicate commands or noise draws
+  ---
+  duration_ms: 3.977811
+  type: 'test'
+  ...
+# Subtest: driver reads only the public clock and guarded visible capabilities
+ok 15 - driver reads only the public clock and guarded visible capabilities
+  ---
+  duration_ms: 0.824473
+  type: 'test'
+  ...
+# Subtest: all compiled bot entries drive their own dense player seats
+ok 16 - all compiled bot entries drive their own dense player seats
+  ---
+  duration_ms: 0.765602
+  type: 'test'
+  ...
+# Subtest: invalid dense player mappings and duplicate bot seats fail before decisions
+ok 17 - invalid dense player mappings and duplicate bot seats fail before decisions
+  ---
+  duration_ms: 1.243012
+  type: 'test'
+  ...
+# Subtest: scripted stamped commands win and record a playable replay with no bot on playback
+ok 18 - scripted stamped commands win and record a playable replay with no bot on playback
+  ---
+  duration_ms: 20.043993
+  type: 'test'
+  ...
+# Subtest: idle match reaches configured timeout while safety cap explicitly truncates
+ok 19 - idle match reaches configured timeout while safety cap explicitly truncates
+  ---
+  duration_ms: 7.093867
+  type: 'test'
+  ...
+# Subtest: Bot controllers see only guarded player capabilities and run before each tick
+ok 20 - Bot controllers see only guarded player capabilities and run before each tick
+  ---
+  duration_ms: 2.448213
+  type: 'test'
+  ...
+# Subtest: profile factory binds human proxy with identical driver cadence and seat seed
+ok 21 - profile factory binds human proxy with identical driver cadence and seat seed
+  ---
+  duration_ms: 4.027025
+  type: 'test'
+  ...
+# Subtest: real utility opponents reproduce full recorded matches and integer final stats
+ok 22 - real utility opponents reproduce full recorded matches and integer final stats
+  ---
+  duration_ms: 12.678546
+  type: 'test'
+  ...
+# Subtest: controller mappings and scripted inputs fail before any decisions
+ok 23 - controller mappings and scripted inputs fail before any decisions
+  ---
+  duration_ms: 0.991312
+  type: 'test'
+  ...
+# Subtest: cross-seat commands and cumulative command rejection fail loudly without events
+ok 24 - cross-seat commands and cumulative command rejection fail loudly without events
+  ---
+  duration_ms: 0.835094
+  type: 'test'
+  ...
+# Subtest: bot-only roster preserves the simulation outcome instead of inventing a win
+ok 25 - bot-only roster preserves the simulation outcome instead of inventing a win
+  ---
+  duration_ms: 0.813032
+  type: 'test'
+  ...
+# Subtest: root lint rejects Math.random();
+ok 26 - root lint rejects Math.random();
+  ---
+  duration_ms: 973.75889
+  type: 'test'
+  ...
+# Subtest: root lint rejects Math.sqrt(4);
+ok 27 - root lint rejects Math.sqrt(4);
+  ---
+  duration_ms: 13.093307
+  type: 'test'
+  ...
+# Subtest: root lint rejects new Date();
+ok 28 - root lint rejects new Date();
+  ---
+  duration_ms: 10.106338
+  type: 'test'
+  ...
+# Subtest: root lint rejects const n = 1.5;
+ok 29 - root lint rejects const n = 1.5;
+  ---
+  duration_ms: 10.796924
+  type: 'test'
+  ...
+# Subtest: root lint rejects import fs from "node:fs";
+ok 30 - root lint rejects import fs from "node:fs";
+  ---
+  duration_ms: 26.857325
+  type: 'test'
+  ...
+# Subtest: root lint rejects import { loadContent } from "@node-arena/content";
+ok 31 - root lint rejects import { loadContent } from "@node-arena/content";
+  ---
+  duration_ms: 14.047407
+  type: 'test'
+  ...
+# Subtest: root lint rejects import { create } from "@node-arena/sim/src/state.js";
+ok 32 - root lint rejects import { create } from "@node-arena/sim/src/state.js";
+  ---
+  duration_ms: 10.720349
+  type: 'test'
+  ...
+# Subtest: root lint rejects import { create } from "../../sim/src/state.js";
+ok 33 - root lint rejects import { create } from "../../sim/src/state.js";
+  ---
+  duration_ms: 21.693981
+  type: 'test'
+  ...
+# Subtest: root lint rejects export { create } from "../../sim/src/state.js";
+ok 34 - root lint rejects export { create } from "../../sim/src/state.js";
+  ---
+  duration_ms: 14.355466
+  type: 'test'
+  ...
+# Subtest: root lint rejects import("node:fs");
+ok 35 - root lint rejects import("node:fs");
+  ---
+  duration_ms: 7.903033
+  type: 'test'
+  ...
+# Subtest: root lint allows public sim imports and content types
+ok 36 - root lint allows public sim imports and content types
+  ---
+  duration_ms: 7.512777
+  type: 'test'
+  ...
+# Subtest: package lint rejects Math.random();
+ok 37 - package lint rejects Math.random();
+  ---
+  duration_ms: 8.904094
+  type: 'test'
+  ...
+# Subtest: package lint rejects Math.sqrt(4);
+ok 38 - package lint rejects Math.sqrt(4);
+  ---
+  duration_ms: 4.526569
+  type: 'test'
+  ...
+# Subtest: package lint rejects new Date();
+ok 39 - package lint rejects new Date();
+  ---
+  duration_ms: 6.816919
+  type: 'test'
+  ...
+# Subtest: package lint rejects const n = 1.5;
+ok 40 - package lint rejects const n = 1.5;
+  ---
+  duration_ms: 11.557685
+  type: 'test'
+  ...
+# Subtest: package lint rejects import fs from "node:fs";
+ok 41 - package lint rejects import fs from "node:fs";
+  ---
+  duration_ms: 13.859159
+  type: 'test'
+  ...
+# Subtest: package lint rejects import { loadContent } from "@node-arena/content";
+ok 42 - package lint rejects import { loadContent } from "@node-arena/content";
+  ---
+  duration_ms: 6.574547
+  type: 'test'
+  ...
+# Subtest: package lint rejects import { create } from "@node-arena/sim/src/state.js";
+ok 43 - package lint rejects import { create } from "@node-arena/sim/src/state.js";
+  ---
+  duration_ms: 4.133087
+  type: 'test'
+  ...
+# Subtest: package lint rejects import { create } from "../../sim/src/state.js";
+ok 44 - package lint rejects import { create } from "../../sim/src/state.js";
+  ---
+  duration_ms: 4.751869
+  type: 'test'
+  ...
+# Subtest: package lint rejects export { create } from "../../sim/src/state.js";
+ok 45 - package lint rejects export { create } from "../../sim/src/state.js";
+  ---
+  duration_ms: 3.619347
+  type: 'test'
+  ...
+# Subtest: package lint rejects import("node:fs");
+ok 46 - package lint rejects import("node:fs");
+  ---
+  duration_ms: 3.436117
+  type: 'test'
+  ...
+# Subtest: package lint allows public sim imports and content types
+ok 47 - package lint allows public sim imports and content types
+  ---
+  duration_ms: 5.553548
+  type: 'test'
+  ...
+# Subtest: timeToTake uses actual diagonal channel progress length and speed per tick
+ok 48 - timeToTake uses actual diagonal channel progress length and speed per tick
+  ---
+  duration_ms: 26.880989
+  type: 'test'
+  ...
+# Subtest: mid-flight cut-channel arrival flow matches public progress and original channel length
+ok 49 - mid-flight cut-channel arrival flow matches public progress and original channel length
+  ---
+  duration_ms: 5.353055
+  type: 'test'
+  ...
+# Subtest: pure public BOT_VERSION uses canonical semver
+ok 50 - pure public BOT_VERSION uses canonical semver
+  ---
+  duration_ms: 26.235918
+  type: 'test'
+  ...
+# Subtest: golden comparison catches a command mutation and same-version updates refuse
+ok 51 - golden comparison catches a command mutation and same-version updates refuse
+  ---
+  duration_ms: 1783.972505
+  type: 'test'
+  ...
+# Subtest: benchmark enforces strict and CI budgets at their exact boundaries
+ok 52 - benchmark enforces strict and CI budgets at their exact boundaries
+  ---
+  duration_ms: 39.946073
+  type: 'test'
+  ...
+# Subtest: attacks closest non-friendly target and ignores allied other owners
+ok 53 - attacks closest non-friendly target and ignores allied other owners
+  ---
+  duration_ms: 11.578647
+  type: 'test'
+  ...
+# Subtest: minimal valid profile has deterministic useful defaults and zero-noise seed invariance
+ok 54 - minimal valid profile has deterministic useful defaults and zero-noise seed invariance
+  ---
+  duration_ms: 1.747495
+  type: 'test'
+  ...
+# Subtest: strict hold threshold prevents action at equality and when maps have no weights
+ok 55 - strict hold threshold prevents action at equality and when maps have no weights
+  ---
+  duration_ms: 0.818683
+  type: 'test'
+  ...
+# Subtest: source and target indices break equal scores, with newly used slots limiting a batch
+ok 56 - source and target indices break equal scores, with newly used slots limiting a batch
+  ---
+  duration_ms: 0.678184
+  type: 'test'
+  ...
+# Subtest: attack entrants skip authoritative canDraw rejection
+ok 57 - attack entrants skip authoritative canDraw rejection
+  ---
+  duration_ms: 0.570499
+  type: 'test'
+  ...
+# Subtest: cuts only own existing friendly lines and does not draw a paired reverse in same batch
+ok 58 - cuts only own existing friendly lines and does not draw a paired reverse in same batch
+  ---
+  duration_ms: 0.591218
+  type: 'test'
+  ...
+# Subtest: reinforces own threatened tower while safe targets and allied other owners score no threat
+ok 59 - reinforces own threatened tower while safe targets and allied other owners score no threat
+  ---
+  duration_ms: 0.495486
+  type: 'test'
+  ...
+# Subtest: all considerations return bounded integers; capture feasibility models generation and remaining time
+ok 60 - all considerations return bounded integers; capture feasibility models generation and remaining time
+  ---
+  duration_ms: 0.68609
+  type: 'test'
+  ...
+# Subtest: source danger lowers source safety; in-flight troops on a cut line still count
+ok 61 - source danger lowers source safety; in-flight troops on a cut line still count
+  ---
+  duration_ms: 1.790817
+  type: 'test'
+  ...
+# Subtest: adding shoots extractor changes targetValue without modifying the consideration
+ok 62 - adding shoots extractor changes targetValue without modifying the consideration
+  ---
+  duration_ms: 0.67054
+  type: 'test'
+  ...
+# Subtest: integer weighted normalization precedes bias and additive seeded noise is reproducible
+ok 63 - integer weighted normalization precedes bias and additive seeded noise is reproducible
+  ---
+  duration_ms: 1.05872
+  type: 'test'
+  ...
+# Subtest: stickiness discourages reversing a just-cut pair within cooldown
+ok 64 - stickiness discourages reversing a just-cut pair within cooldown
+  ---
+  duration_ms: 4.740587
+  type: 'test'
+  ...
+# Subtest: registry rejects missing, extra, and duplicate IDs at startup
+ok 65 - registry rejects missing, extra, and duplicate IDs at startup
+  ---
+  duration_ms: 461.972366
+  type: 'test'
+  ...
+# Subtest: reversing a previous draw direction incurs stickiness even though both actions are draws
+ok 66 - reversing a previous draw direction incurs stickiness even though both actions are draws
+  ---
+  duration_ms: 0.488612
+  type: 'test'
+  ...
+# Subtest: real simulation accepts a batch without overslots or a replaced-line cut rejection
+ok 67 - real simulation accepts a batch without overslots or a replaced-line cut rejection
+  ---
+  duration_ms: 4.530615
+  type: 'test'
+  ...
+# Subtest: every consideration remains bounded at supported count, weight and flow limits
+ok 68 - every consideration remains bounded at supported count, weight and flow limits
+  ---
+  duration_ms: 1.128463
+  type: 'test'
+  ...
+# Subtest: valid structural component weights contribute target value instead of throwing
+ok 69 - valid structural component weights contribute target value instead of throwing
+  ---
+  duration_ms: 0.263984
+  type: 'test'
+  ...
+# Subtest: distance, weakness, dominance, sliceCost and targetValue have independent exact units
+ok 70 - distance, weakness, dominance, sliceCost and targetValue have independent exact units
+  ---
+  duration_ms: 0.308228
+  type: 'test'
+  ...
+# Subtest: timeToTake decreases with defense and travel, increases with allied incoming flow
+ok 71 - timeToTake decreases with defense and travel, increases with allied incoming flow
+  ---
+  duration_ms: 0.635855
+  type: 'test'
+  ...
+# Subtest: threat units distinguish hostile, allied and neutral flows and invert for cuts
+ok 72 - threat units distinguish hostile, allied and neutral flows and invert for cuts
+  ---
+  duration_ms: 0.348865
+  type: 'test'
+  ...
+# Subtest: lineUseless distinguishes useful attack flow from redundant allied flow and captured target
+ok 73 - lineUseless distinguishes useful attack flow from redundant allied flow and captured target
+  ---
+  duration_ms: 0.308678
+  type: 'test'
+  ...
+# Subtest: safe own towers never receive threat-only reinforcement, while idle and hold emit nothing
+ok 74 - safe own towers never receive threat-only reinforcement, while idle and hold emit nothing
+  ---
+  duration_ms: 0.391808
+  type: 'test'
+  ...
+# Subtest: zero noise preserves per-decision choices across seeds; positive noise changes actual choices
+ok 75 - zero noise preserves per-decision choices across seeds; positive noise changes actual choices
+  ---
+  duration_ms: 18.605527
+  type: 'test'
+  ...
+# Subtest: pair geometry is cached between decisions and refreshes for a replacement public tower array
+ok 76 - pair geometry is cached between decisions and refreshes for a replacement public tower array
+  ---
+  duration_ms: 0.644701
+  type: 'test'
+  ...
+# Subtest: lineUseless excludes the candidate own pipeline but preserves another source pipeline
+ok 77 - lineUseless excludes the candidate own pipeline but preserves another source pipeline
+  ---
+  duration_ms: 0.364165
+  type: 'test'
+  ...
+# Subtest: complete scoring uses per-decision public column and team caches
+ok 78 - complete scoring uses per-decision public column and team caches
+  ---
+  duration_ms: 0.545701
+  type: 'test'
+  ...
+# Subtest: one decision reads each public team once per preparation and enumeration
+ok 79 - one decision reads each public team once per preparation and enumeration
+  ---
+  duration_ms: 2.904523
+  type: 'test'
+  ...
+# Subtest: full nearest legal attack list avoids validating strictly farther discarded candidates
+ok 80 - full nearest legal attack list avoids validating strictly farther discarded candidates
+  ---
+  duration_ms: 0.372761
+  type: 'test'
+  ...
+# Subtest: reinforcement feasibility uses public facts and revalidates only selected candidates
+ok 81 - reinforcement feasibility uses public facts and revalidates only selected candidates
+  ---
+  duration_ms: 0.433548
+  type: 'test'
+  ...
+# Subtest: cached nearest ordering avoids displaced validations and refreshes dynamic feasibility
+ok 82 - cached nearest ordering avoids displaced validations and refreshes dynamic feasibility
+  ---
+  duration_ms: 0.600876
+  type: 'test'
+  ...
+1..82
+# tests 82
+# suites 0
+# pass 82
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3687.451228
+
+> @node-arena/web@0.0.0 test /root/projects/node-arena/.worktrees/feat/game-design/apps/web
+> vitest run
+
+
+ RUN  v5.0.3 /root/projects/node-arena/.worktrees/feat/game-design/apps/web
+
+
+ Test Files  17 passed (17)
+      Tests  135 passed (135)
+   Start at  17:57:22
+   Duration  3.31s (import 58%, transform 24%, tests 16%, worker 1%)
+
+    Isolate  17 workers spawned · ~132ms startup each (spawn + environment, per file)
+             at least ~618ms faster with isolate: false — reuses workers across files instead of one per file
+
+
+> @node-arena/tools@0.0.0 test /root/projects/node-arena/.worktrees/feat/game-design/tools
+> tsx --test test/*.test.ts
+
+TAP version 13
+# Subtest: authored winning and unwinnable corpora reach the CLI match gate with fresh locks
+ok 1 - authored winning and unwinnable corpora reach the CLI match gate with fresh locks
+  ---
+  duration_ms: 4440.068273
+  type: 'test'
+  ...
+# Subtest: authored automatic idle win is rejected with the missing bot ownership location
+ok 2 - authored automatic idle win is rejected with the missing bot ownership location
+  ---
+  duration_ms: 2008.712991
+  type: 'test'
+  ...
+# Subtest: CLI rejects a complete personality copied into an inherited tier before checking locks
+ok 3 - CLI rejects a complete personality copied into an inherited tier before checking locks
+  ---
+  duration_ms: 3883.394496
+  type: 'test'
+  ...
+# Subtest: campaign balance runs the full seed suite and is byte identical for jobs 1 and 2 in both formats
+ok 4 - campaign balance runs the full seed suite and is byte identical for jobs 1 and 2 in both formats
+  ---
+  duration_ms: 9339.909315
+  type: 'test'
+  ...
+# Subtest: balance flags target violations and rejects invalid bounds and malformed options
+ok 5 - balance flags target violations and rejects invalid bounds and malformed options
+  ---
+  duration_ms: 14379.837582
+  type: 'test'
+  ...
+# Subtest: arena rotations cover every seat per profile and count bot-team wins from human-relative lost outcomes
+ok 6 - arena rotations cover every seat per profile and count bot-team wins from human-relative lost outcomes
+  ---
+  duration_ms: 4463.886184
+  type: 'test'
+  ...
+# Subtest: target schema refuses missing bands, unknown fields, nonfinite and out-of-range percentages
+ok 7 - target schema refuses missing bands, unknown fields, nonfinite and out-of-range percentages
+  ---
+  duration_ms: 560.524063
+  type: 'test'
+  ...
+# Subtest: worker failures reject rather than returning a partial seed suite or hanging
+ok 8 - worker failures reject rather than returning a partial seed suite or hanging
+  ---
+  duration_ms: 926.552408
+  type: 'test'
+  ...
+# Subtest: validate-content adapter catches regenerated bot locks and locates the required BOT_VERSION bump
+ok 9 - validate-content adapter catches regenerated bot locks and locates the required BOT_VERSION bump
+  ---
+  duration_ms: 113.154596
+  type: 'test'
+  ...
+# Subtest: repo content and manifest pass with JSON reports
+ok 10 - repo content and manifest pass with JSON reports
+  ---
+  duration_ms: 4043.937951
+  type: 'test'
+  ...
+# Subtest: stale sim and bot locks fail without modifying files
+ok 11 - stale sim and bot locks fail without modifying files
+  ---
+  duration_ms: 4092.634195
+  type: 'test'
+  ...
+# Subtest: missing visual key fails with source and JSON pointer
+ok 12 - missing visual key fails with source and JSON pointer
+  ---
+  duration_ms: 2037.500009
+  type: 'test'
+  ...
+# Subtest: manifest file and credits validation runs the Node adapter
+ok 13 - manifest file and credits validation runs the Node adapter
+  ---
+  duration_ms: 6025.13037
+  type: 'test'
+  ...
+# Subtest: malformed content and invalid baseline emit JSON diagnostics and exit one
+ok 14 - malformed content and invalid baseline emit JSON diagnostics and exit one
+  ---
+  duration_ms: 4081.932237
+  type: 'test'
+  ...
+# Subtest: default human output reports a failed gate and rejects unknown options
+ok 15 - default human output reports a failed gate and rejects unknown options
+  ---
+  duration_ms: 1905.319112
+  type: 'test'
+  ...
+# Subtest: regenerated sim lock still requires a contentVersion increase over explicit baseline
+ok 16 - regenerated sim lock still requires a contentVersion increase over explicit baseline
+  ---
+  duration_ms: 4788.38373
+  type: 'test'
+  ...
+# Subtest: rulesVersion mismatch fails with metadata location
+ok 17 - rulesVersion mismatch fails with metadata location
+  ---
+  duration_ms: 2147.899546
+  type: 'test'
+  ...
+# Subtest: content symlinks cannot silently skip validation
+ok 18 - content symlinks cannot silently skip validation
+  ---
+  duration_ms: 1966.179739
+  type: 'test'
+  ...
+# Subtest: real reference wins all four, idle never wins; final hash rerun matches
+ok 19 - real reference wins all four, idle never wins; final hash rerun matches
+  ---
+  duration_ms: 126.244658
+  type: 'test'
+  ...
+# Subtest: unwinnable and automatically won levels fail the real runtime gate
+ok 20 - unwinnable and automatically won levels fail the real runtime gate
+  ---
+  duration_ms: 71.093447
+  type: 'test'
+  ...
+# Subtest: band four accepts three actual wins of four; K=1 requires exactly zero wins
+ok 21 - band four accepts three actual wins of four; K=1 requires exactly zero wins
+  ---
+  duration_ms: 73.712995
+  type: 'test'
+  ...
+# Subtest: winning solution verifies playback and human-only script against authored opponents
+ok 22 - winning solution verifies playback and human-only script against authored opponents
+  ---
+  duration_ms: 99.978651
+  type: 'test'
+  ...
+# Subtest: unrelated and foreign commands cannot satisfy solution fallback
+ok 23 - unrelated and foreign commands cannot satisfy solution fallback
+  ---
+  duration_ms: 42.557467
+  type: 'test'
+  ...
+# Subtest: CLI runs content validation first and emits per-level JSON and Markdown
+ok 24 - CLI runs content validation first and emits per-level JSON and Markdown
+  ---
+  duration_ms: 13184.326188
+  type: 'test'
+  ...
+# Subtest: a verified replay with overridden foreign bots fails authored-script verification
+ok 25 - a verified replay with overridden foreign bots fails authored-script verification
+  ---
+  duration_ms: 48.77339
+  type: 'test'
+  ...
+# Subtest: corpus fallback accepts only a replay committed at the exact solution path
+ok 26 - corpus fallback accepts only a replay committed at the exact solution path
+  ---
+  duration_ms: 118.168486
+  type: 'test'
+  ...
+# Subtest: stale content lock fails before level selection or running matches
+ok 27 - stale content lock fails before level selection or running matches
+  ---
+  duration_ms: 2064.264837
+  type: 'test'
+  ...
+# Subtest: check:rules passes the repository with JSON and Markdown reports
+ok 28 - check:rules passes the repository with JSON and Markdown reports
+  ---
+  duration_ms: 4447.909623
+  type: 'test'
+  ...
+# Subtest: check:rules fails untested headings and unknown title tags
+ok 29 - check:rules fails untested headings and unknown title tags
+  ---
+  duration_ms: 1749.763066
+  type: 'test'
+  ...
+# Subtest: rule coverage ignores body references, code fences, tombstones and helper/comment tags
+ok 30 - rule coverage ignores body references, code fences, tombstones and helper/comment tags
+  ---
+  duration_ms: 3734.11832
+  type: 'test'
+  ...
+# Subtest: disabled suite ancestry cannot satisfy rule coverage while matching active suites do
+ok 31 - disabled suite ancestry cannot satisfy rule coverage while matching active suites do
+  ---
+  duration_ms: 797.079289
+  type: 'test'
+  ...
+# Subtest: disabled suite pruning preserves active siblings and their unknown rule diagnostics
+ok 32 - disabled suite pruning preserves active siblings and their unknown rule diagnostics
+  ---
+  duration_ms: 7.777534
+  type: 'test'
+  ...
+# Subtest: coverage traversal skips build/dependencies and refuses test symlinks
+ok 33 - coverage traversal skips build/dependencies and refuses test symlinks
+  ---
+  duration_ms: 3634.817413
+  type: 'test'
+  ...
+# Subtest: replay:verify golden scans all eleven sim and three bot recordings
+ok 34 - replay:verify golden scans all eleven sim and three bot recordings
+  ---
+  duration_ms: 1912.083621
+  type: 'test'
+  ...
+# Subtest: standalone file and recursive directory resolve levels from content without bots
+ok 35 - standalone file and recursive directory resolve levels from content without bots
+  ---
+  duration_ms: 3658.339711
+  type: 'test'
+  ...
+# Subtest: tampered checkpoints report the first divergence tick and final hashes report final tick
+ok 36 - tampered checkpoints report the first divergence tick and final hashes report final tick
+  ---
+  duration_ms: 3660.619672
+  type: 'test'
+  ...
+# Subtest: header identity, unknown levels, malformed JSON and empty directories fail
+ok 37 - header identity, unknown levels, malformed JSON and empty directories fail
+  ---
+  duration_ms: 10936.752792
+  type: 'test'
+  ...
+# Subtest: golden bundles use authoritative versions and recompute embedded compiled identities
+ok 38 - golden bundles use authoritative versions and recompute embedded compiled identities
+  ---
+  duration_ms: 3765.145569
+  type: 'test'
+  ...
+# Subtest: directory traversal cannot silently skip malformed replay objects among good records
+ok 39 - directory traversal cannot silently skip malformed replay objects among good records
+  ---
+  duration_ms: 1923.373623
+  type: 'test'
+  ...
+# Subtest: auxiliary golden command-only logs coexist with recordings without running their commands
+ok 40 - auxiliary golden command-only logs coexist with recordings without running their commands
+  ---
+  duration_ms: 1855.865781
+  type: 'test'
+  ...
+1..40
+# tests 40
+# suites 0
+# pass 40
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 70647.789606
+
+> node-arena@ check:schemas /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/content schemas:check
+
+
+> @node-arena/content@0.0.0 schemas:check /root/projects/node-arena/.worktrees/feat/game-design/packages/content
+> tsx scripts/generate-schemas.ts --check
+
+content.schema.json is current
+balance.schema.json is current
+troop.schema.json is current
+archetype.schema.json is current
+level.schema.json is current
+bot.schema.json is current
+manifest.schema.json is current
+
+> node-arena@ check:content /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/content lock:check --base 1716a53
+
+
+> @node-arena/content@0.0.0 lock:check /root/projects/node-arena/.worktrees/feat/game-design/packages/content
+> tsx scripts/content-lock.ts --check --base 1716a53
+
+Content hashes current (1 levels, 24 bots); rules/content/BOT_VERSION gates agree
+
+> node-arena@ validate:content /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/tools validate:content --base 1716a53
+
+
+> @node-arena/tools@0.0.0 validate:content /root/projects/node-arena/.worktrees/feat/game-design/tools
+> tsx src/cli.ts validate:content --base 1716a53
+
+# validate:content: PASS
+
+Content valid; hashes current (1 levels, 24 bots); rules/content/BOT_VERSION gates agree.
+
+> node-arena@ check:manifest /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/tools check:manifest
+
+
+> @node-arena/tools@0.0.0 check:manifest /root/projects/node-arena/.worktrees/feat/game-design/tools
+> tsx src/cli.ts check:manifest
+
+# check:manifest: PASS
+
+Content visual/theme/palette keys and manifest asset/credits/budgets valid.
+
+> node-arena@ check:rules /root/projects/node-arena/.worktrees/feat/game-design
+> tsx tools/src/cli.ts check:rules
+
+# check:rules: PASS
+
+28 active rules; 28 covered; 0 tombstones exempt.
+
+> node-arena@ validate:levels /root/projects/node-arena/.worktrees/feat/game-design
+> tsx tools/src/cli.ts validate:levels --seeds 4 --base 1716a53
+
+# validate:levels: PASS
+
+Content valid; hashes current (1 levels, 24 bots); rules/content/BOT_VERSION gates agree. 1/1 levels passed.
+
+## sample: PASS
+
+Band 1; reference 4/4 (required 4); idle 0/4; deterministic true.
+
+| Proxy | Seed | Outcome | Winner team | Ticks | Final hash | Rejected |
+| --- | --- | --- | --- | --- | --- | --- |
+| reference | 1 | won | p1 | 4487 | f7110b7f93b40838 | 0 |
+| reference | 2 | won | p1 | 4258 | ccd3b92f7164f702 | 0 |
+| reference | 3 | won | p1 | 4257 | 20761e32dabc6a7b | 0 |
+| reference | 4 | won | p1 | 4487 | 642cef9395839bd4 | 0 |
+| idle | 1 | timeout |  | 6000 | 37cb92ec320a7f48 | 0 |
+| idle | 2 | timeout |  | 6000 | 48c91689cd9440de | 0 |
+| idle | 3 | timeout |  | 6000 | 1a3ef0e880b88a21 | 0 |
+| idle | 4 | timeout |  | 6000 | c02d9a2a353b7ab6 | 0 |
+
+> node-arena@ replay:verify /root/projects/node-arena/.worktrees/feat/game-design
+> tsx tools/src/cli.ts replay:verify golden
+
+# replay:verify: PASS
+
+14 replays verified of 14; header, checkpoints and final hash checked without running bots.
+
+> node-arena@ sim:golden /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/sim sim:golden
+
+
+> @node-arena/sim@0.0.0 sim:golden /root/projects/node-arena/.worktrees/feat/game-design/packages/sim
+> node scripts/golden.cjs
+
+11 golden replays verified (Node)
+
+> node-arena@ bots:golden /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/bots golden
+
+
+> @node-arena/bots@0.0.0 golden /root/projects/node-arena/.worktrees/feat/game-design/packages/bots
+> node scripts/golden.mjs
+
+Verified 3 bot match goldens at BOT_VERSION 1.0.0
+
+> node-arena@ bench:sim /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/sim bench:sim
+
+
+> @node-arena/sim@0.0.0 bench:sim /root/projects/node-arena/.worktrees/feat/game-design/packages/sim
+> node scripts/bench.cjs
+
+{
+  "environment": {
+    "node": "v22.23.3",
+    "platform": "linux",
+    "arch": "x64",
+    "cpu": "AMD EPYC-Rome Processor",
+    "cpus": 4
+  },
+  "mode": "strict",
+  "budgetsMs": {
+    "mean": 0.3,
+    "p99": 1,
+    "hash": 0.5,
+    "hashP99": 0.5
+  },
+  "baseline": {
+    "events": true,
+    "seed": 1592594996,
+    "warmup": 3000,
+    "intervals": 10000,
+    "stepsPerInterval": 1,
+    "activeSamples": 10000,
+    "tick": 13001,
+    "lineCount": 30,
+    "troopMin": 2100,
+    "troopMax": 2100,
+    "hashTroops": 2100,
+    "seats": [
+      {
+        "id": "p0",
+        "kind": "human",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p1",
+        "kind": "bot",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p2",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      },
+      {
+        "id": "p3",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      }
+    ],
+    "mean": 0.06264378510000032,
+    "p99": 0.17956300000003012,
+    "hash": 0.14834341199999834,
+    "hashP99": 0.2183759999998074,
+    "hashSamples": 1000,
+    "workloadRuntimeMs": 664.016107,
+    "eventCount": 450000,
+    "eventTypes": {
+      "TroopSpawned": 300000,
+      "Clash": 150000
+    },
+    "generated": 300000,
+    "clashes": 150000,
+    "finalHash": "69e190506e03b1fa",
+    "rejected": 0
+  },
+  "twiceVisible": {
+    "events": true,
+    "seed": 1592594996,
+    "warmup": 3000,
+    "intervals": 5000,
+    "stepsPerInterval": 2,
+    "activeSamples": 10000,
+    "tick": 13001,
+    "lineCount": 30,
+    "troopMin": 2100,
+    "troopMax": 2100,
+    "hashTroops": 2100,
+    "seats": [
+      {
+        "id": "p0",
+        "kind": "human",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p1",
+        "kind": "bot",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p2",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      },
+      {
+        "id": "p3",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      }
+    ],
+    "mean": 0.06027863680000071,
+    "p99": 0.16471500000011474,
+    "hash": 0.10797547400000167,
+    "hashP99": 0.14860399999997753,
+    "hashSamples": 1000,
+    "workloadRuntimeMs": 639.8646559999997,
+    "eventCount": 450000,
+    "eventTypes": {
+      "TroopSpawned": 300000,
+      "Clash": 150000
+    },
+    "generated": 300000,
+    "clashes": 150000,
+    "finalHash": "69e190506e03b1fa",
+    "rejected": 0
+  },
+  "twiceQuiet": {
+    "events": false,
+    "seed": 1592594996,
+    "warmup": 3000,
+    "intervals": 5000,
+    "stepsPerInterval": 2,
+    "activeSamples": 10000,
+    "tick": 13001,
+    "lineCount": 30,
+    "troopMin": 2100,
+    "troopMax": 2100,
+    "hashTroops": 2100,
+    "seats": [
+      {
+        "id": "p0",
+        "kind": "human",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p1",
+        "kind": "bot",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p2",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      },
+      {
+        "id": "p3",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      }
+    ],
+    "mean": 0.06205425360000404,
+    "p99": 0.14574799999991228,
+    "hash": 0.10844425399999819,
+    "hashP99": 0.1671000000001186,
+    "hashSamples": 1000,
+    "workloadRuntimeMs": 638.535871,
+    "eventCount": 0,
+    "eventTypes": {},
+    "generated": 300000,
+    "clashes": 150000,
+    "finalHash": "69e190506e03b1fa",
+    "rejected": 0
+  }
+}
+PASS: active workload, event parity, and all performance budgets
+
+> node-arena@ bench:bots /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/bots bench --ci
+
+
+> @node-arena/bots@0.0.0 bench /root/projects/node-arena/.worktrees/feat/game-design/packages/bots
+> node scripts/bench.mjs --ci
+
+{
+  "environment": {
+    "node": "v22.23.3",
+    "platform": "linux",
+    "arch": "x64",
+    "cpu": "AMD EPYC-Rome Processor"
+  },
+  "mode": "ci",
+  "budgetMs": 5,
+  "result": {
+    "botVersion": "1.0.0",
+    "profile": "rusher-expert",
+    "seed": 704,
+    "towers": 50,
+    "troops": 2000,
+    "lines": 50,
+    "ownTowers": 25,
+    "warmup": 1000,
+    "samples": 5000,
+    "commandCount": 10000,
+    "mean": 0.6345434109999953,
+    "p99": 0.9561749999998028
+  }
+}

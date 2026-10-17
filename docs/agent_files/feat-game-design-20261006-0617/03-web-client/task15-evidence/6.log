@@ -1,0 +1,196 @@
+
+> node-arena@ bench:sim /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/sim bench:sim
+
+
+> @node-arena/sim@0.0.0 bench:sim /root/projects/node-arena/.worktrees/feat/game-design/packages/sim
+> node scripts/bench.cjs
+
+{
+  "environment": {
+    "node": "v22.23.3",
+    "platform": "linux",
+    "arch": "x64",
+    "cpu": "AMD EPYC-Rome Processor",
+    "cpus": 4
+  },
+  "mode": "strict",
+  "budgetsMs": {
+    "mean": 0.3,
+    "p99": 1,
+    "hash": 0.5,
+    "hashP99": 0.5
+  },
+  "baseline": {
+    "events": true,
+    "seed": 1592594996,
+    "warmup": 3000,
+    "intervals": 10000,
+    "stepsPerInterval": 1,
+    "activeSamples": 10000,
+    "tick": 13001,
+    "lineCount": 30,
+    "troopMin": 2100,
+    "troopMax": 2100,
+    "hashTroops": 2100,
+    "seats": [
+      {
+        "id": "p0",
+        "kind": "human",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p1",
+        "kind": "bot",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p2",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      },
+      {
+        "id": "p3",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      }
+    ],
+    "mean": 0.06795433519999995,
+    "p99": 0.20207600000003367,
+    "hash": 0.13022779700000137,
+    "hashP99": 0.16906300000005103,
+    "hashSamples": 1000,
+    "workloadRuntimeMs": 720.0329389999999,
+    "eventCount": 450000,
+    "eventTypes": {
+      "TroopSpawned": 300000,
+      "Clash": 150000
+    },
+    "generated": 300000,
+    "clashes": 150000,
+    "finalHash": "69e190506e03b1fa",
+    "rejected": 0
+  },
+  "twiceVisible": {
+    "events": true,
+    "seed": 1592594996,
+    "warmup": 3000,
+    "intervals": 5000,
+    "stepsPerInterval": 2,
+    "activeSamples": 10000,
+    "tick": 13001,
+    "lineCount": 30,
+    "troopMin": 2100,
+    "troopMax": 2100,
+    "hashTroops": 2100,
+    "seats": [
+      {
+        "id": "p0",
+        "kind": "human",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p1",
+        "kind": "bot",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p2",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      },
+      {
+        "id": "p3",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      }
+    ],
+    "mean": 0.05654284869999806,
+    "p99": 0.09602399999994304,
+    "hash": 0.13401186299999382,
+    "hashP99": 0.2098399999999856,
+    "hashSamples": 1000,
+    "workloadRuntimeMs": 604.721556,
+    "eventCount": 450000,
+    "eventTypes": {
+      "TroopSpawned": 300000,
+      "Clash": 150000
+    },
+    "generated": 300000,
+    "clashes": 150000,
+    "finalHash": "69e190506e03b1fa",
+    "rejected": 0
+  },
+  "twiceQuiet": {
+    "events": false,
+    "seed": 1592594996,
+    "warmup": 3000,
+    "intervals": 5000,
+    "stepsPerInterval": 2,
+    "activeSamples": 10000,
+    "tick": 13001,
+    "lineCount": 30,
+    "troopMin": 2100,
+    "troopMax": 2100,
+    "hashTroops": 2100,
+    "seats": [
+      {
+        "id": "p0",
+        "kind": "human",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p1",
+        "kind": "bot",
+        "towers": 8,
+        "lines": 8,
+        "transit": 560
+      },
+      {
+        "id": "p2",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      },
+      {
+        "id": "p3",
+        "kind": "bot",
+        "towers": 7,
+        "lines": 7,
+        "transit": 490
+      }
+    ],
+    "mean": 0.05715455589999815,
+    "p99": 0.18220900000005713,
+    "hash": 0.1228456030000034,
+    "hashP99": 0.17815999999993437,
+    "hashSamples": 1000,
+    "workloadRuntimeMs": 589.7720899999999,
+    "eventCount": 0,
+    "eventTypes": {},
+    "generated": 300000,
+    "clashes": 150000,
+    "finalHash": "69e190506e03b1fa",
+    "rejected": 0
+  }
+}
+PASS: active workload, event parity, and all performance budgets

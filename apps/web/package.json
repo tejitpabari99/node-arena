@@ -1,0 +1,32 @@
+{
+  "name": "@node-arena/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "build:test": "tsc --noEmit && VITE_TEST_HOOKS=1 vite build --outDir dist-test",
+    "preview": "vite preview --host 127.0.0.1",
+    "preview:test": "vite preview --host 127.0.0.1 --outDir dist-test",
+    "test": "vitest run",
+    "test:e2e": "pnpm build:test && playwright test",
+    "slice:verify": "pnpm build:test && SLICE=1 playwright test e2e/slice.spec.ts --workers=1",
+    "test:e2e:dev": "WEB_TEST_SERVER=dev playwright test",
+    "test:e2e:all": "pnpm build:test && playwright test --workers=1 && WEB_TEST_SERVER=dev playwright test --workers=1"
+  },
+  "dependencies": {
+    "@node-arena/bots": "workspace:*",
+    "@node-arena/content": "workspace:*",
+    "@node-arena/sim": "workspace:*",
+    "preact": "10.29.8",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@preact/preset-vite": "2.10.6",
+    "@types/three": "0.186.0",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

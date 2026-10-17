@@ -1,0 +1,177 @@
+{
+  "config": {
+    "argv": [
+      "/root/.nvm/versions/node/v22.23.3/bin/node",
+      "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/node_modules/@playwright/test/cli.js",
+      "test",
+      "e2e/acceptance.spec.ts",
+      "--grep",
+      "full runtime stress",
+      "--workers=1",
+      "--reporter=json"
+    ],
+    "configFile": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/playwright.config.ts",
+    "rootDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "chromium",
+        "testDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+        "snapshotDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4173",
+          "trace": "retain-on-failure",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium",
+          "launchOptions": {
+            "args": [
+              "--use-gl=angle",
+              "--use-angle=swiftshader",
+              "--enable-unsafe-swiftshader"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": {
+      "command": "pnpm dev --port 4173 --strictPort",
+      "url": "http://127.0.0.1:4173",
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "acceptance.spec.ts",
+      "file": "acceptance.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "full runtime stress and twenty level-switch GPU/DOM baseline",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 27223,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:05:09.013Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "full-runtime-stress.json",
+                      "contentType": "application/json",
+                      "body": "eyJ2YWx1ZXMiOlswLjkwMDAwMDA5NTM2NzQzMTYsMiwxLjI5OTk5OTk1MjMxNjI4NDIsMS41OTk5OTk5MDQ2MzI1Njg0LDYuMTAwMDAwMTQzMDUxMTQ3NSwzLjEwMDAwMDE0MzA1MTE0NzUsMS4yOTk5OTk5NTIzMTYyODQyLDEuMzk5OTk5ODU2OTQ4ODUyNSwxLjI5OTk5OTk1MjMxNjI4NDIsMi40MDAwMDAwOTUzNjc0MzE2LDIuNzAwMDAwMDQ3NjgzNzE2LDQuMTAwMDAwMTQzMDUxMTQ3NSwyLjQwMDAwMDA5NTM2NzQzMTYsMS4zOTk5OTk4NTY5NDg4NTI1LDEuNTk5OTk5OTA0NjMyNTY4NCwxLjc5OTk5OTk1MjMxNjI4NDIsMS40MDAwMDAwOTUzNjc0MzE2LDEuNSwwLjg5OTk5OTg1Njk0ODg1MjUsMS42MDAwMDAxNDMwNTExNDc1LDMuNzk5OTk5OTUyMzE2Mjg0LDEuNDAwMDAwMDk1MzY3NDMxNiwxLjA5OTk5OTkwNDYzMjU2ODQsMy44OTk5OTk4NTY5NDg4NTI1LDIuMjAwMDAwMDQ3NjgzNzE2LDEuMTAwMDAwMTQzMDUxMTQ3NSwxLjEwMDAwMDE0MzA1MTE0NzUsMS4zOTk5OTk4NTY5NDg4NTI1LDEuMTAwMDAwMTQzMDUxMTQ3NSwxLjA5OTk5OTkwNDYzMjU2ODQsMS4zMDAwMDAxOTA3MzQ4NjMzLDIuNSwxLjA5OTk5OTkwNDYzMjU2ODQsMS4wOTk5OTk5MDQ2MzI1Njg0LDEuNzAwMDAwMDQ3NjgzNzE1OCwxLDMuOTAwMDAwMDk1MzY3NDMxNiwxLjQwMDAwMDA5NTM2NzQzMTYsMSwxLjI5OTk5OTk1MjMxNjI4NDIsMy42OTk5OTk4MDkyNjUxMzY3LDEsMS40MDAwMDAwOTUzNjc0MzE2LDIuOTAwMDAwMDk1MzY3NDMxNiwxLjcwMDAwMDA0NzY4MzcxNTgsMSwzLjI5OTk5OTk1MjMxNjI4NCwxLjMwMDAwMDE5MDczNDg2MzMsMiw0LjUsMS4xMDAwMDAxNDMwNTExNDc1LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjA5OTk5OTkwNDYzMjU2ODQsMS4yMDAwMDAwNDc2ODM3MTU4LDEuODAwMDAwMTkwNzM0ODYzMywxLjcwMDAwMDA0NzY4MzcxNTgsMS4xMDAwMDAxNDMwNTExNDc1LDEuNSwxLjEwMDAwMDE0MzA1MTE0NzUsMi43OTk5OTk5NTIzMTYyODQsMi4wOTk5OTk5MDQ2MzI1Njg0LDEuMTAwMDAwMTQzMDUxMTQ3NSwxLjI5OTk5OTk1MjMxNjI4NDIsMS45MDAwMDAwOTUzNjc0MzE2LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjIwMDAwMDA0NzY4MzcxNTgsNC40MDAwMDAwOTUzNjc0MzIsMS40MDAwMDAwOTUzNjc0MzE2LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjIwMDAwMDA0NzY4MzcxNTgsMS4zMDAwMDAxOTA3MzQ4NjMzLDEuNzAwMDAwMDQ3NjgzNzE1OCwxLjkwMDAwMDA5NTM2NzQzMTYsMy42MDAwMDAxNDMwNTExNDc1LDIuMTAwMDAwMTQzMDUxMTQ3NSwxLjUsMS4zOTk5OTk4NTY5NDg4NTI1LDEuMTAwMDAwMTQzMDUxMTQ3NSwxLDEuNjk5OTk5ODA5MjY1MTM2NywxLDEuMTAwMDAwMTQzMDUxMTQ3NSwyLjIwMDAwMDA0NzY4MzcxNiwyLjc5OTk5OTk1MjMxNjI4NCwxLDIuMDk5OTk5OTA0NjMyNTY4NCwyLjY5OTk5OTgwOTI2NTEzNjcsMy40MDAwMDAwOTUzNjc0MzE2LDEuMDk5OTk5OTA0NjMyNTY4NCwxLjU5OTk5OTkwNDYzMjU2ODQsMS41OTk5OTk5MDQ2MzI1Njg0LDEuMjk5OTk5OTUyMzE2Mjg0MiwxLjIwMDAwMDA0NzY4MzcxNTgsMS45MDAwMDAwOTUzNjc0MzE2LDIuNzk5OTk5OTUyMzE2Mjg0LDEuMDk5OTk5OTA0NjMyNTY4NCwzLjQwMDAwMDA5NTM2NzQzMTYsMS4xOTk5OTk4MDkyNjUxMzY3LDEuMTk5OTk5ODA5MjY1MTM2NywxLjI5OTk5OTk1MjMxNjI4NDIsMS4wOTk5OTk5MDQ2MzI1Njg0LDEuMzk5OTk5ODU2OTQ4ODUyNSwxLjc5OTk5OTk1MjMxNjI4NDIsMS4yOTk5OTk5NTIzMTYyODQyLDEuMTk5OTk5ODA5MjY1MTM2NywyLjc5OTk5OTk1MjMxNjI4NCwzLjYwMDAwMDE0MzA1MTE0NzUsMS41OTk5OTk5MDQ2MzI1Njg0LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjgwMDAwMDE5MDczNDg2MzMsMS4xMDAwMDAxNDMwNTExNDc1LDEuMjAwMDAwMDQ3NjgzNzE1OCwyLjUsMS40MDAwMDAwOTUzNjc0MzE2LDEuMjAwMDAwMDQ3NjgzNzE1OCwzLDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjIwMDAwMDA0NzY4MzcxNTgsMS4yOTk5OTk5NTIzMTYyODQyLDMuMDk5OTk5OTA0NjMyNTY4NF0sImNhbGxzIjpbMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTUsMTVdLCJwOTUiOjMuNzk5OTk5OTUyMzE2Mjg0LCJ0cm9vcHMiOjMyMDAsIm1lbW9yeSI6eyJjdXJyZW50Ijp7Imdlb21ldHJpZXMiOjE0LCJ0ZXh0dXJlcyI6NH0sInJldGlyZWQiOltdLCJsYWJlbHMiOjMsImNhbnZhc2VzIjoxfX0="
+                    },
+                    {
+                      "name": "full-runtime-lifetime.json",
+                      "contentType": "application/json",
+                      "body": "eyJiYXNlbGluZSI6eyJnZW9tZXRyaWVzIjoxMywidGV4dHVyZXMiOjR9LCJtZW1vcnkiOnsiY3VycmVudCI6bnVsbCwicmV0aXJlZCI6W3siZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9XSwibGFiZWxzIjowLCJjYW52YXNlcyI6MH0sImlkbGVMaWZldGltZSI6eyJsaXN0ZW5lcnMiOjAsInJhZiI6MH0sImFjdGl2ZUxpZmV0aW1lIjp7Imxpc3RlbmVycyI6MTMsInJhZiI6MH19"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-f5e1c199347792ea272a",
+          "file": "acceptance.spec.ts",
+          "line": 92,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-09T16:05:06.340Z",
+    "duration": 30120.814000000002,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

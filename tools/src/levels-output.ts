@@ -1,0 +1,4 @@
+import type { LevelReport } from './levels.js';
+export function levelsMarkdown(levels: readonly LevelReport[]): string {
+  return levels.map(level => `## ${level.id}: ${level.ok ? 'PASS' : 'FAIL'}\n\nBand ${level.band}; reference ${level.referenceWins}/${level.seeds} (required ${level.requiredWins}); idle ${level.idleWins}/${level.seeds}; deterministic ${level.deterministic}.${level.solution ? ` Solution: ${level.solution.ok ? 'PASS' : 'FAIL'}.` : ''}\n\n| Proxy | Seed | Outcome | Winner team | Ticks | Final hash | Rejected |\n| --- | --- | --- | --- | --- | --- | --- |\n${(['reference','idle'] as const).flatMap(proxy => level[proxy].map(run => `| ${proxy} | ${run.seed} | ${run.outcome.outcome} | ${run.outcome.winnerTeam ?? ''} | ${run.ticks} | ${run.finalHash} | ${run.rejected} |`)).join('\n')}`).join('\n\n');
+}

@@ -1,0 +1,4 @@
+
+> node-arena@ lint /root/projects/node-arena/.worktrees/feat/game-design
+> eslint .
+

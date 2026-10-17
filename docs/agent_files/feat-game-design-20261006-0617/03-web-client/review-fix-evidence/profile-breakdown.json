@@ -1,0 +1,1224 @@
+{
+  "method": "Chromium CDP Profiler sampling 100 microseconds; sample totals inclusive overlap, approximate CPU attribution, not wall-time budget substitution",
+  "sample": {
+    "values": [
+      2.5,
+      2.5,
+      1.4000000953674316,
+      1.7000000476837158,
+      5.300000190734863,
+      3.5999999046325684,
+      1.2999999523162842,
+      6.700000047683716,
+      1.7000000476837158,
+      1.3999998569488525,
+      1.7999999523162842,
+      2.700000047683716,
+      2.5999999046325684,
+      2.299999952316284,
+      1,
+      1.5999999046325684,
+      1,
+      1,
+      1.1000001430511475,
+      1.6000001430511475,
+      1.7000000476837158,
+      0.9000000953674316,
+      1.1000001430511475,
+      0.8999998569488525,
+      1.2000000476837158,
+      1.2000000476837158,
+      1.1999998092651367,
+      1.0999999046325684,
+      1.2999999523162842,
+      1.2000000476837158,
+      1.0999999046325684,
+      0.9000000953674316,
+      1.2999999523162842,
+      2.299999952316284,
+      1.5,
+      1,
+      1.1999998092651367,
+      1.1000001430511475,
+      1,
+      1.1999998092651367,
+      1.1000001430511475,
+      1.4000000953674316,
+      1.2999999523162842,
+      1,
+      1.2000000476837158,
+      1.2000000476837158,
+      1.2000000476837158,
+      1.1000001430511475,
+      1.0999999046325684,
+      1,
+      1.5,
+      1.2000000476837158,
+      1.7000000476837158,
+      1.7000000476837158,
+      1.5,
+      2.200000047683716,
+      1.1000001430511475,
+      1.1000001430511475,
+      2.4000000953674316,
+      1.4000000953674316,
+      1.7000000476837158,
+      1.2999999523162842,
+      1.2000000476837158,
+      1.2000000476837158,
+      3.200000047683716,
+      1.9000000953674316,
+      1.1999998092651367,
+      1,
+      2.5,
+      1.1000001430511475,
+      3.200000047683716,
+      1.0999999046325684,
+      1,
+      1.2999999523162842,
+      1.0999999046325684,
+      1.8999998569488525,
+      1.1000001430511475,
+      3.799999952316284,
+      1.1000001430511475,
+      1.5,
+      1,
+      1.5999999046325684,
+      1.2000000476837158,
+      1.0999999046325684,
+      1,
+      1.2999999523162842,
+      1,
+      0.9000000953674316,
+      1,
+      1.2999999523162842,
+      1.2999999523162842,
+      1.3000001907348633,
+      3,
+      1.6000001430511475,
+      1.6000001430511475,
+      1.1000001430511475,
+      1,
+      1.2000000476837158,
+      2.700000047683716,
+      1.7999999523162842,
+      1.1999998092651367,
+      1.5,
+      1.2000000476837158,
+      1.0999999046325684,
+      2.799999952316284,
+      1.4000000953674316,
+      1.1000001430511475,
+      1.2000000476837158,
+      3.3999998569488525,
+      1.5999999046325684,
+      1,
+      1.1000001430511475,
+      0.9000000953674316,
+      1.6000001430511475,
+      1.3999998569488525,
+      1.2000000476837158,
+      3,
+      1,
+      1.3999998569488525,
+      2.9000000953674316
+    ],
+    "calls": [
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15
+    ],
+    "p95": 3.200000047683716,
+    "troops": 3200,
+    "memory": {
+      "current": {
+        "geometries": 14,
+        "textures": 4
+      },
+      "retired": [],
+      "labels": 3,
+      "canvases": 1
+    }
+  },
+  "inclusive": [
+    {
+      "function": "(root)",
+      "url": "",
+      "line": 0,
+      "sampledMs": 9709.174
+    },
+    {
+      "function": "(idle)",
+      "url": "",
+      "line": 0,
+      "sampledMs": 9176.525
+    },
+    {
+      "function": "(program)",
+      "url": "",
+      "line": 0,
+      "sampledMs": 309.411
+    },
+    {
+      "function": "sample",
+      "url": "http://127.0.0.1:4173/src/test-harness/index.ts",
+      "line": 95,
+      "sampledMs": 189.422
+    },
+    {
+      "function": "step",
+      "url": "http://127.0.0.1:4173/src/driver/index.ts",
+      "line": 151,
+      "sampledMs": 172.518
+    },
+    {
+      "function": "emitFrame",
+      "url": "http://127.0.0.1:4173/src/driver/index.ts",
+      "line": 189,
+      "sampledMs": 140.874
+    },
+    {
+      "function": "onFrame",
+      "url": "http://127.0.0.1:4173/src/app/state.ts",
+      "line": 78,
+      "sampledMs": 140.739
+    },
+    {
+      "function": "frame",
+      "url": "http://127.0.0.1:4173/src/app/runtime.ts",
+      "line": 91,
+      "sampledMs": 140.573
+    },
+    {
+      "function": "step",
+      "url": "http://127.0.0.1:4173/src/app/state.ts",
+      "line": 369,
+      "sampledMs": 139.581
+    },
+    {
+      "function": "render",
+      "url": "http://127.0.0.1:4173/src/render/scene.ts",
+      "line": 145,
+      "sampledMs": 93.822
+    },
+    {
+      "function": "WebGLRenderer.render",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 51996,
+      "sampledMs": 92.602
+    },
+    {
+      "function": "",
+      "url": "",
+      "line": 1,
+      "sampledMs": 67.793
+    },
+    {
+      "function": "renderScene",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 52125,
+      "sampledMs": 64.232
+    },
+    {
+      "function": "renderObject",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 52210,
+      "sampledMs": 62.185
+    },
+    {
+      "function": "renderObjects",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 52200,
+      "sampledMs": 62.185
+    },
+    {
+      "function": "WebGLRenderer.renderBufferDirect",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 51786,
+      "sampledMs": 59.239
+    },
+    {
+      "function": "setProgram",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 52328,
+      "sampledMs": 40.658
+    },
+    {
+      "function": "q",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 154,
+      "sampledMs": 35.576
+    },
+    {
+      "function": "update",
+      "url": "http://127.0.0.1:4173/src/render/troops.ts",
+      "line": 117,
+      "sampledMs": 34.77
+    },
+    {
+      "function": "evaluate",
+      "url": "",
+      "line": 364,
+      "sampledMs": 33.987
+    },
+    {
+      "function": "render",
+      "url": "http://127.0.0.1:4173/src/test-harness/index.ts",
+      "line": 20,
+      "sampledMs": 33.631
+    },
+    {
+      "function": "projectObject",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 52080,
+      "sampledMs": 29.635
+    },
+    {
+      "function": "fixedStep",
+      "url": "http://127.0.0.1:4173/src/driver/index.ts",
+      "line": 167,
+      "sampledMs": 29.605
+    },
+    {
+      "function": "",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/node_modules/.pnpm/@prefresh+core@1.5.11_preact@10.29.8/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=71372b9b",
+      "line": 11,
+      "sampledMs": 27.523
+    },
+    {
+      "function": "H",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 81,
+      "sampledMs": 26.615
+    },
+    {
+      "function": "I",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 67,
+      "sampledMs": 25.9
+    },
+    {
+      "function": "onTick",
+      "url": "http://127.0.0.1:4173/src/app/state.ts",
+      "line": 79,
+      "sampledMs": 24.157
+    },
+    {
+      "function": "tick",
+      "url": "http://127.0.0.1:4173/src/app/runtime.ts",
+      "line": 101,
+      "sampledMs": 20.987
+    },
+    {
+      "function": "L",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 88,
+      "sampledMs": 18.03
+    },
+    {
+      "function": "refresh",
+      "url": "http://127.0.0.1:4173/src/input/index.ts",
+      "line": 220,
+      "sampledMs": 17.783
+    },
+    {
+      "function": "nearestLine",
+      "url": "http://127.0.0.1:4173/src/input/index.ts",
+      "line": 135,
+      "sampledMs": 15.866
+    },
+    {
+      "function": "projectedLines",
+      "url": "http://127.0.0.1:4173/src/input/index.ts",
+      "line": 105,
+      "sampledMs": 15.706
+    },
+    {
+      "function": "readTroops",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/state.ts",
+      "line": 192,
+      "sampledMs": 15.158
+    },
+    {
+      "function": "readTroops",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/replay.ts",
+      "line": 88,
+      "sampledMs": 15.158
+    },
+    {
+      "function": "getBoundingClientRect",
+      "url": "",
+      "line": 0,
+      "sampledMs": 13.344
+    },
+    {
+      "function": "setValue",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 45406,
+      "sampledMs": 13.317
+    },
+    {
+      "function": "G",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 208,
+      "sampledMs": 12.77
+    },
+    {
+      "function": "Q",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 254,
+      "sampledMs": 12.17
+    },
+    {
+      "function": "upload",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 45414,
+      "sampledMs": 12.064
+    },
+    {
+      "function": "",
+      "url": "http://127.0.0.1:4173/src/test-harness/index.ts",
+      "line": 100,
+      "sampledMs": 12.039
+    },
+    {
+      "function": "App",
+      "url": "http://127.0.0.1:4173/src/ui/App.tsx",
+      "line": 183,
+      "sampledMs": 11.449
+    },
+    {
+      "function": "readTroops",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/read.ts",
+      "line": 65,
+      "sampledMs": 10.118
+    },
+    {
+      "function": "setValueM4",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 45003,
+      "sampledMs": 9.432
+    },
+    {
+      "function": "requestAnimationFrame",
+      "url": "",
+      "line": 0,
+      "sampledMs": 9.32
+    },
+    {
+      "function": "useProgram",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 47704,
+      "sampledMs": 8.598
+    },
+    {
+      "function": "useProgram",
+      "url": "",
+      "line": 0,
+      "sampledMs": 8.424
+    },
+    {
+      "function": "options.vnode",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/node_modules/.pnpm/@prefresh+core@1.5.11_preact@10.29.8/node_modules/@prefresh/core/src/runtime/vnode.js?v=71372b9b",
+      "line": 24,
+      "sampledMs": 8.203
+    },
+    {
+      "function": "l$1.vnode",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact_debug.js?v=71372b9b",
+      "line": 183,
+      "sampledMs": 8.036
+    },
+    {
+      "function": "uniformMatrix4fv",
+      "url": "",
+      "line": 0,
+      "sampledMs": 7.858
+    },
+    {
+      "function": "setMaterial",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 47819,
+      "sampledMs": 7.695
+    },
+    {
+      "function": "update",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 42100,
+      "sampledMs": 7.651
+    },
+    {
+      "function": "update",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 44378,
+      "sampledMs": 7.651
+    },
+    {
+      "function": "update",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 44598,
+      "sampledMs": 7.651
+    },
+    {
+      "function": "read",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/state.ts",
+      "line": 56,
+      "sampledMs": 7.341
+    },
+    {
+      "function": "updateBuffer",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 42062,
+      "sampledMs": 6.972
+    },
+    {
+      "function": "render",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 42753,
+      "sampledMs": 6.948
+    },
+    {
+      "function": "updateMatrixWorld",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 10046,
+      "sampledMs": 6.907
+    },
+    {
+      "function": "bindTexture",
+      "url": "",
+      "line": 0,
+      "sampledMs": 5.966
+    },
+    {
+      "function": "bindTexture",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 47885,
+      "sampledMs": 5.966
+    },
+    {
+      "function": "setTexture2D",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 48387,
+      "sampledMs": 5.966
+    },
+    {
+      "function": "setValueT1",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 45119,
+      "sampledMs": 5.966
+    },
+    {
+      "function": "setValueV3f",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 44937,
+      "sampledMs": 5.306
+    },
+    {
+      "function": "(garbage collector)",
+      "url": "",
+      "line": 0,
+      "sampledMs": 5.224
+    },
+    {
+      "function": "update",
+      "url": "http://127.0.0.1:4173/src/render/towers.ts",
+      "line": 99,
+      "sampledMs": 5.134
+    },
+    {
+      "function": "bufferSubData",
+      "url": "",
+      "line": 0,
+      "sampledMs": 5.11
+    },
+    {
+      "function": "uniform3f",
+      "url": "",
+      "line": 0,
+      "sampledMs": 5.028
+    },
+    {
+      "function": "setMask",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 47474,
+      "sampledMs": 5.014
+    },
+    {
+      "function": "step",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/replay.ts",
+      "line": 91,
+      "sampledMs": 4.975
+    },
+    {
+      "function": "render",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 44439,
+      "sampledMs": 4.798
+    },
+    {
+      "function": "refreshMaterialUniforms",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 50048,
+      "sampledMs": 4.486
+    },
+    {
+      "function": "depthMask",
+      "url": "",
+      "line": 0,
+      "sampledMs": 4.417
+    },
+    {
+      "function": "drawElements",
+      "url": "",
+      "line": 0,
+      "sampledMs": 4.201
+    },
+    {
+      "function": "clear",
+      "url": "",
+      "line": 0,
+      "sampledMs": 3.846
+    },
+    {
+      "function": "WebGLRenderer.clear",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 51653,
+      "sampledMs": 3.846
+    },
+    {
+      "function": "setup",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 42887,
+      "sampledMs": 3.686
+    },
+    {
+      "function": "refreshUniformsCommon",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 50083,
+      "sampledMs": 3.554
+    },
+    {
+      "function": "step",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/state.ts",
+      "line": 218,
+      "sampledMs": 3.473
+    },
+    {
+      "function": "c.diffed",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact_hooks.js?v=71372b9b",
+      "line": 139,
+      "sampledMs": 3.298
+    },
+    {
+      "function": "step",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/commands.ts",
+      "line": 36,
+      "sampledMs": 3.122
+    },
+    {
+      "function": "update",
+      "url": "http://127.0.0.1:4173/src/render/labels.ts",
+      "line": 51,
+      "sampledMs": 3.119
+    }
+  ],
+  "self": [
+    {
+      "function": "(idle)",
+      "url": "",
+      "line": 0,
+      "sampledMs": 9176.525
+    },
+    {
+      "function": "(program)",
+      "url": "",
+      "line": 0,
+      "sampledMs": 309.411
+    },
+    {
+      "function": "update",
+      "url": "http://127.0.0.1:4173/src/render/troops.ts",
+      "line": 117,
+      "sampledMs": 16.576
+    },
+    {
+      "function": "getBoundingClientRect",
+      "url": "",
+      "line": 0,
+      "sampledMs": 13.344
+    },
+    {
+      "function": "frame",
+      "url": "http://127.0.0.1:4173/src/app/runtime.ts",
+      "line": 91,
+      "sampledMs": 9.736
+    },
+    {
+      "function": "requestAnimationFrame",
+      "url": "",
+      "line": 0,
+      "sampledMs": 9.32
+    },
+    {
+      "function": "useProgram",
+      "url": "",
+      "line": 0,
+      "sampledMs": 8.424
+    },
+    {
+      "function": "App",
+      "url": "http://127.0.0.1:4173/src/ui/App.tsx",
+      "line": 183,
+      "sampledMs": 8.206
+    },
+    {
+      "function": "l$1.vnode",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact_debug.js?v=71372b9b",
+      "line": 183,
+      "sampledMs": 7.867
+    },
+    {
+      "function": "uniformMatrix4fv",
+      "url": "",
+      "line": 0,
+      "sampledMs": 7.858
+    },
+    {
+      "function": "read",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/state.ts",
+      "line": 56,
+      "sampledMs": 7.341
+    },
+    {
+      "function": "bindTexture",
+      "url": "",
+      "line": 0,
+      "sampledMs": 5.966
+    },
+    {
+      "function": "(garbage collector)",
+      "url": "",
+      "line": 0,
+      "sampledMs": 5.224
+    },
+    {
+      "function": "bufferSubData",
+      "url": "",
+      "line": 0,
+      "sampledMs": 5.11
+    },
+    {
+      "function": "readTroops",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/state.ts",
+      "line": 192,
+      "sampledMs": 5.04
+    },
+    {
+      "function": "uniform3f",
+      "url": "",
+      "line": 0,
+      "sampledMs": 5.028
+    },
+    {
+      "function": "depthMask",
+      "url": "",
+      "line": 0,
+      "sampledMs": 4.417
+    },
+    {
+      "function": "drawElements",
+      "url": "",
+      "line": 0,
+      "sampledMs": 4.201
+    },
+    {
+      "function": "clear",
+      "url": "",
+      "line": 0,
+      "sampledMs": 3.846
+    },
+    {
+      "function": "sample",
+      "url": "http://127.0.0.1:4173/src/test-harness/index.ts",
+      "line": 95,
+      "sampledMs": 3.283
+    },
+    {
+      "function": "readTroops",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/read.ts",
+      "line": 65,
+      "sampledMs": 2.777
+    },
+    {
+      "function": "",
+      "url": "http://127.0.0.1:4173/src/test-harness/index.ts",
+      "line": 100,
+      "sampledMs": 2.719
+    },
+    {
+      "function": "uniformMatrix3fv",
+      "url": "",
+      "line": 0,
+      "sampledMs": 2.651
+    },
+    {
+      "function": "toArray",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 8764,
+      "sampledMs": 2.47
+    },
+    {
+      "function": "step",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/commands.ts",
+      "line": 36,
+      "sampledMs": 2.289
+    },
+    {
+      "function": "projectObject",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 52080,
+      "sampledMs": 2.251
+    },
+    {
+      "function": "WebGLRenderer.renderBufferDirect",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 51786,
+      "sampledMs": 2.227
+    },
+    {
+      "function": "multiplyScalar",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 11247,
+      "sampledMs": 2.224
+    },
+    {
+      "function": "setProgram",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 52328,
+      "sampledMs": 2.202
+    },
+    {
+      "function": "renderObject",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 52210,
+      "sampledMs": 2.189
+    },
+    {
+      "function": "bindVertexArray",
+      "url": "",
+      "line": 0,
+      "sampledMs": 2.009
+    },
+    {
+      "function": "l$1.diffed",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact_debug.js?v=71372b9b",
+      "line": 193,
+      "sampledMs": 2.001
+    },
+    {
+      "function": "updateMatrixWorld",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 10046,
+      "sampledMs": 1.838
+    },
+    {
+      "function": "push",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 46566,
+      "sampledMs": 1.755
+    },
+    {
+      "function": "updateMatrix",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 10023,
+      "sampledMs": 1.693
+    },
+    {
+      "function": "step",
+      "url": "http://127.0.0.1:4173/src/driver/index.ts",
+      "line": 151,
+      "sampledMs": 1.657
+    },
+    {
+      "function": "renderScene",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 52125,
+      "sampledMs": 1.633
+    },
+    {
+      "function": "bindBuffer",
+      "url": "",
+      "line": 0,
+      "sampledMs": 1.602
+    },
+    {
+      "function": "refresh",
+      "url": "http://127.0.0.1:4173/src/input/index.ts",
+      "line": 220,
+      "sampledMs": 1.572
+    },
+    {
+      "function": "setupLights",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 47051,
+      "sampledMs": 1.454
+    },
+    {
+      "function": "enable",
+      "url": "",
+      "line": 0,
+      "sampledMs": 1.452
+    },
+    {
+      "function": "get outputColorSpace",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 52914,
+      "sampledMs": 1.419
+    },
+    {
+      "function": "setValue",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 45406,
+      "sampledMs": 1.4
+    },
+    {
+      "function": "text",
+      "url": "http://127.0.0.1:4173/src/render/labels.ts",
+      "line": 11,
+      "sampledMs": 1.39
+    },
+    {
+      "function": "update",
+      "url": "http://127.0.0.1:4173/src/render/towers.ts",
+      "line": 99,
+      "sampledMs": 1.284
+    },
+    {
+      "function": "render",
+      "url": "http://127.0.0.1:4173/src/render/scene.ts",
+      "line": 145,
+      "sampledMs": 1.22
+    },
+    {
+      "function": "WebGLRenderer.render",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 51996,
+      "sampledMs": 1.071
+    },
+    {
+      "function": "setup",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 42887,
+      "sampledMs": 1.043
+    },
+    {
+      "function": "refreshUniformsCommon",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 50083,
+      "sampledMs": 1.029
+    },
+    {
+      "function": "N",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 127,
+      "sampledMs": 0.909
+    },
+    {
+      "function": "",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/node_modules/.pnpm/@prefresh+core@1.5.11_preact@10.29.8/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=71372b9b",
+      "line": 11,
+      "sampledMs": 0.908
+    },
+    {
+      "function": "applySettings",
+      "url": "http://127.0.0.1:4173/src/audio/index.ts",
+      "line": 28,
+      "sampledMs": 0.864
+    },
+    {
+      "function": "L",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 88,
+      "sampledMs": 0.823
+    },
+    {
+      "function": "onTick",
+      "url": "http://127.0.0.1:4173/src/app/state.ts",
+      "line": 79,
+      "sampledMs": 0.811
+    },
+    {
+      "function": "projectedLines",
+      "url": "http://127.0.0.1:4173/src/input/index.ts",
+      "line": 105,
+      "sampledMs": 0.789
+    },
+    {
+      "function": "snapshot",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/read.ts",
+      "line": 85,
+      "sampledMs": 0.765
+    },
+    {
+      "function": "Q",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 254,
+      "sampledMs": 0.721
+    },
+    {
+      "function": "H",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 81,
+      "sampledMs": 0.715
+    },
+    {
+      "function": "update",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 42100,
+      "sampledMs": 0.679
+    },
+    {
+      "function": "setValueM4",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 45003,
+      "sampledMs": 0.676
+    },
+    {
+      "function": "update",
+      "url": "http://127.0.0.1:4173/src/render/labels.ts",
+      "line": 51,
+      "sampledMs": 0.676
+    },
+    {
+      "function": "push",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/state.ts",
+      "line": 23,
+      "sampledMs": 0.656
+    },
+    {
+      "function": "options.diffed",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/node_modules/.pnpm/@prefresh+core@1.5.11_preact@10.29.8/node_modules/@prefresh/core/src/runtime/vnode.js?v=71372b9b",
+      "line": 57,
+      "sampledMs": 0.641
+    },
+    {
+      "function": "getAttribute",
+      "url": "",
+      "line": 0,
+      "sampledMs": 0.632
+    },
+    {
+      "function": "readOverlays",
+      "url": "http://127.0.0.1:4173/src/render/overlays.ts",
+      "line": 20,
+      "sampledMs": 0.624
+    },
+    {
+      "function": "upload",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 45414,
+      "sampledMs": 0.62
+    },
+    {
+      "function": "setMask",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 47474,
+      "sampledMs": 0.597
+    },
+    {
+      "function": "refreshMaterialUniforms",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 50048,
+      "sampledMs": 0.59
+    },
+    {
+      "function": "setMaterial",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 47819,
+      "sampledMs": 0.581
+    },
+    {
+      "function": "",
+      "url": "http://127.0.0.1:4173/src/render/lines.ts",
+      "line": 163,
+      "sampledMs": 0.579
+    },
+    {
+      "function": "arraysEqual",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 44900,
+      "sampledMs": 0.567
+    },
+    {
+      "function": "canStep",
+      "url": "http://127.0.0.1:4173/src/driver/index.ts",
+      "line": 164,
+      "sampledMs": 0.551
+    },
+    {
+      "function": "step",
+      "url": "http://127.0.0.1:4173/src/app/state.ts",
+      "line": 369,
+      "sampledMs": 0.525
+    },
+    {
+      "function": "setFromProjectionMatrix",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 18755,
+      "sampledMs": 0.519
+    },
+    {
+      "function": "disable",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 47667,
+      "sampledMs": 0.513
+    },
+    {
+      "function": "m",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact.js?v=71372b9b",
+      "line": 22,
+      "sampledMs": 0.509
+    },
+    {
+      "function": "setClear",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/three.module-C1ZFymXr.js?v=71372b9b",
+      "line": 42844,
+      "sampledMs": 0.508
+    },
+    {
+      "function": "validateSave",
+      "url": "http://127.0.0.1:4173/src/save/index.ts",
+      "line": 73,
+      "sampledMs": 0.508
+    },
+    {
+      "function": "word",
+      "url": "http://127.0.0.1:4173/@fs/root/projects/node-arena/.worktrees/feat/game-design/packages/sim/src/math.ts",
+      "line": 100,
+      "sampledMs": 0.493
+    },
+    {
+      "function": "c.diffed",
+      "url": "http://127.0.0.1:4173/node_modules/.vite/deps/preact_hooks.js?v=71372b9b",
+      "line": 139,
+      "sampledMs": 0.485
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "command": "pnpm --filter @node-arena/web exec playwright test --workers=1 --reporter=json",
+    "exitCode": 0,
+    "elapsedSeconds": 120.3,
+    "log": "pose-cache-preview.log",
+    "stderr": "pose-cache-preview-stderr.log",
+    "stats": {
+      "startTime": "2026-10-09T16:14:40.287Z",
+      "duration": 119097.603,
+      "expected": 17,
+      "skipped": 14,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  {
+    "command": "WEB_TEST_SERVER=dev pnpm --filter @node-arena/web exec playwright test --workers=1 --reporter=json",
+    "exitCode": 1,
+    "elapsedSeconds": 178.25,
+    "log": "pose-cache-dev.log",
+    "stderr": "pose-cache-dev-stderr.log",
+    "stats": {
+      "startTime": "2026-10-09T16:16:40.488Z",
+      "duration": 177100.734,
+      "expected": 30,
+      "skipped": 0,
+      "unexpected": 1,
+      "flaky": 0
+    }
+  }
+]

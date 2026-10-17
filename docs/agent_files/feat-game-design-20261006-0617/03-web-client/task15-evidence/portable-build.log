@@ -1,0 +1,21 @@
+
+> @node-arena/web@0.0.0 build /root/projects/node-arena/.worktrees/feat/game-design/apps/web
+> tsc --noEmit && vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 523 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                         0.63 kB │ gzip:  0.32 kB
+dist/spike.html                         0.67 kB │ gzip:  0.43 kB
+dist/assets/main-B3k7ZO1P.css           4.20 kB │ gzip:  1.61 kB
+dist/assets/fixtures-BPaytsE4.js        1.29 kB │ gzip:  0.61 kB
+dist/assets/test-harness-6wXETBzB.js    2.06 kB │ gzip:  1.09 kB
+dist/assets/spike-D6lZbLPo.js           3.17 kB │ gzip:  1.72 kB
+dist/assets/main-CDckQGSP.js          163.25 kB │ gzip: 54.17 kB
+dist/assets/three.core-B6nDPpYj.js    221.23 kB │ gzip: 58.98 kB
+dist/assets/src-NQCGHOjY.js           233.68 kB │ gzip: 67.37 kB
+dist/assets/three.module-BiLd8gic.js  352.96 kB │ gzip: 85.11 kB
+
+✓ built in 462ms

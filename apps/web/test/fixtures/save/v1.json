@@ -1,0 +1,6 @@
+{
+  "v": 1,
+  "completed": {"level-b": {"firstAt": "2026-10-01T12:00:00.000Z"}, "level-a": {"firstAt": "2026-09-30T10:00:00.000Z"}},
+  "settings": {"musicVol": 0.4, "sfxVol": 0.8, "musicMute": true, "sfxMute": false, "colorblind": true, "quality": "low", "reducedMotion": false},
+  "lastLevel": "level-b"
+}

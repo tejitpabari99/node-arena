@@ -1,0 +1,2430 @@
+{
+  "botVersion": "1.0.7",
+  "metadata": {
+    "rulesVersion": "1.0.0",
+    "schemaVersion": "1.0.0",
+    "contentVersion": "1.1.5"
+  },
+  "botHash": {
+    "random-6-seed-1": {
+      "economist-expert": "3bf3be10f22b3efdce632b0ccf545bde815b3ff5b901519a3dea358b3ee26d40",
+      "opportunist-normal": "6b8377b76e20e586a968b759d0a84918d63bdd93a29700211d5165d93824eea5"
+    },
+    "random-0-seed-37": {
+      "rusher-hard": "3b67d2a17d3e2733ac46adaa1b477398c3794a8375e878835cdb5cf52ac2015d",
+      "turtle-normal": "a9ca15680bd453606ff45c4862ef02fbca7b7f6765560191d41806f849559b24"
+    },
+    "random-3-seed-704": {
+      "opportunist-easy": "d17fe4679a87896f87ad0656aff3bfe127a9be01da976e818c2e90078cb147a4",
+      "rusher-normal": "47a493dd43cab5e6f4c8fa0f810b462258f8587ee06fc19133a233ca5bf723b2"
+    }
+  },
+  "scenarios": [
+    {
+      "name": "random-6-seed-1",
+      "level": {
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "id": "random-6",
+        "timeLimitSec": 18,
+        "visual": "city.day",
+        "bounds": {
+          "w": 240000,
+          "h": 160000
+        },
+        "globals": {
+          "timeLimitSec": 300,
+          "theme": "city.day"
+        },
+        "towers": [
+          {
+            "id": "t0",
+            "archetype": "large",
+            "x": -90000,
+            "y": -35000,
+            "owner": 2,
+            "garrison": 10,
+            "visual": "tower.large",
+            "footprintRadius": 4000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10,
+                  30
+                ]
+              },
+              "garrison": {
+                "cap": 80
+              },
+              "generates": {
+                "ratePerSec": 1500,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t1",
+            "archetype": "large",
+            "x": -30000,
+            "y": -35000,
+            "owner": 0,
+            "garrison": 5,
+            "visual": "tower.large",
+            "footprintRadius": 4000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10,
+                  30
+                ]
+              },
+              "garrison": {
+                "cap": 80
+              },
+              "generates": {
+                "ratePerSec": 1500,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t2",
+            "archetype": "standard",
+            "x": 30000,
+            "y": -35000,
+            "owner": 1,
+            "garrison": 5,
+            "visual": "tower.standard",
+            "footprintRadius": 3000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 30
+              },
+              "generates": {
+                "ratePerSec": 1000,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t3",
+            "archetype": "standard",
+            "x": 90000,
+            "y": -35000,
+            "owner": -1,
+            "garrison": 10,
+            "visual": "tower.standard",
+            "footprintRadius": 3000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 30
+              },
+              "generates": {
+                "ratePerSec": 1000,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t4",
+            "archetype": "small",
+            "x": -90000,
+            "y": 35000,
+            "owner": 0,
+            "garrison": 5,
+            "visual": "tower.small",
+            "footprintRadius": 2000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 20
+              },
+              "generates": {
+                "ratePerSec": 600,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t5",
+            "archetype": "standard",
+            "x": -30000,
+            "y": 35000,
+            "owner": -1,
+            "garrison": 0,
+            "visual": "tower.standard",
+            "footprintRadius": 3000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 30
+              },
+              "generates": {
+                "ratePerSec": 1000,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t6",
+            "archetype": "small",
+            "x": 30000,
+            "y": 35000,
+            "owner": 0,
+            "garrison": 19,
+            "visual": "tower.small",
+            "footprintRadius": 2000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 20
+              },
+              "generates": {
+                "ratePerSec": 600,
+                "troop": 0
+              }
+            }
+          }
+        ],
+        "players": [
+          {
+            "id": "b1",
+            "kind": "bot",
+            "colorKey": "player.2",
+            "team": "b1"
+          },
+          {
+            "id": "b2",
+            "kind": "bot",
+            "colorKey": "player.3",
+            "team": "b2"
+          },
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "player.1",
+            "team": "p1"
+          }
+        ],
+        "kinds": [
+          {
+            "id": "regular",
+            "value": 1,
+            "speedMilli": 25000,
+            "visual": "troop.regular"
+          }
+        ],
+        "bots": [
+          {
+            "player": 0,
+            "profile": {
+              "id": "economist-expert",
+              "kind": "utility",
+              "params": {
+                "skill": {
+                  "decisionIntervalSec": 800,
+                  "noise": 30,
+                  "actionsPerDecision": 2
+                },
+                "bias": {
+                  "attack": 1000,
+                  "reinforce": 700,
+                  "cut": 800
+                },
+                "holdThreshold": 350,
+                "maxTargetsPerSource": 8,
+                "cooldownSec": 5000,
+                "componentValue": {
+                  "generates": 3000,
+                  "garrison": 200
+                },
+                "weights": {
+                  "attack": {
+                    "targetValue": 6000,
+                    "timeToTake": 3000,
+                    "distance": 1000,
+                    "threatToSource": 2000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 2000,
+                    "lineUseless": 0,
+                    "stickiness": 1000
+                  },
+                  "reinforce": {
+                    "targetValue": 5000,
+                    "timeToTake": 0,
+                    "distance": 1000,
+                    "threatToSource": 0,
+                    "threatToTarget": 3000,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 0,
+                    "lineUseless": 0,
+                    "stickiness": 1000
+                  },
+                  "cut": {
+                    "targetValue": 0,
+                    "timeToTake": 0,
+                    "distance": 0,
+                    "threatToSource": 2000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 2000,
+                    "lineUseless": 4000,
+                    "stickiness": 1000
+                  }
+                }
+              }
+            }
+          },
+          {
+            "player": 1,
+            "profile": {
+              "id": "opportunist-normal",
+              "kind": "utility",
+              "params": {
+                "skill": {
+                  "decisionIntervalSec": 2200,
+                  "noise": 200,
+                  "actionsPerDecision": 1
+                },
+                "bias": {
+                  "attack": 1100,
+                  "reinforce": 500,
+                  "cut": 900
+                },
+                "holdThreshold": 300,
+                "maxTargetsPerSource": 8,
+                "cooldownSec": 3000,
+                "componentValue": {
+                  "generates": 1000,
+                  "garrison": 400
+                },
+                "weights": {
+                  "attack": {
+                    "targetValue": 2000,
+                    "timeToTake": 3000,
+                    "distance": 2000,
+                    "threatToSource": 1000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 5000,
+                    "ownerDominance": 4000,
+                    "sliceCost": 1000,
+                    "lineUseless": 0,
+                    "stickiness": 1000
+                  },
+                  "reinforce": {
+                    "targetValue": 2000,
+                    "timeToTake": 0,
+                    "distance": 1000,
+                    "threatToSource": 0,
+                    "threatToTarget": 3000,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 0,
+                    "lineUseless": 0,
+                    "stickiness": 1000
+                  },
+                  "cut": {
+                    "targetValue": 0,
+                    "timeToTake": 0,
+                    "distance": 0,
+                    "threatToSource": 2000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 0,
+                    "lineUseless": 5000,
+                    "stickiness": 1000
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "simHash": "8d4bfd60924e0ff8bd89029c98abf5b27ffb221918b5387f17f51c3b5e123c47",
+        "botHash": {
+          "economist-expert": "3bf3be10f22b3efdce632b0ccf545bde815b3ff5b901519a3dea358b3ee26d40",
+          "opportunist-normal": "6b8377b76e20e586a968b759d0a84918d63bdd93a29700211d5165d93824eea5"
+        }
+      },
+      "seed": 1
+    },
+    {
+      "name": "random-0-seed-37",
+      "level": {
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "id": "random-0",
+        "timeLimitSec": 12,
+        "visual": "city.day",
+        "bounds": {
+          "w": 240000,
+          "h": 160000
+        },
+        "globals": {
+          "timeLimitSec": 300,
+          "theme": "city.day"
+        },
+        "towers": [
+          {
+            "id": "t0",
+            "archetype": "small",
+            "x": -90000,
+            "y": -35000,
+            "owner": 2,
+            "garrison": 10,
+            "visual": "tower.small",
+            "footprintRadius": 2000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 20
+              },
+              "generates": {
+                "ratePerSec": 600,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t1",
+            "archetype": "large",
+            "x": -30000,
+            "y": -35000,
+            "owner": 0,
+            "garrison": 10,
+            "visual": "tower.large",
+            "footprintRadius": 4000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10,
+                  30
+                ]
+              },
+              "garrison": {
+                "cap": 80
+              },
+              "generates": {
+                "ratePerSec": 1500,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t2",
+            "archetype": "small",
+            "x": 30000,
+            "y": -35000,
+            "owner": 1,
+            "garrison": 19,
+            "visual": "tower.small",
+            "footprintRadius": 2000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 20
+              },
+              "generates": {
+                "ratePerSec": 600,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t3",
+            "archetype": "standard",
+            "x": 90000,
+            "y": -35000,
+            "owner": 1,
+            "garrison": 19,
+            "visual": "tower.standard",
+            "footprintRadius": 3000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 90
+              },
+              "generates": {
+                "ratePerSec": 1000,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t4",
+            "archetype": "small",
+            "x": -90000,
+            "y": 35000,
+            "owner": 0,
+            "garrison": 5,
+            "visual": "tower.small",
+            "footprintRadius": 2000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 20
+              },
+              "generates": {
+                "ratePerSec": 600,
+                "troop": 0
+              }
+            }
+          }
+        ],
+        "players": [
+          {
+            "id": "b1",
+            "kind": "bot",
+            "colorKey": "player.2",
+            "team": "b1"
+          },
+          {
+            "id": "b2",
+            "kind": "bot",
+            "colorKey": "player.3",
+            "team": "b2"
+          },
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "player.1",
+            "team": "p1"
+          }
+        ],
+        "kinds": [
+          {
+            "id": "regular",
+            "value": 1,
+            "speedMilli": 10000,
+            "visual": "troop.regular"
+          }
+        ],
+        "bots": [
+          {
+            "player": 0,
+            "profile": {
+              "id": "rusher-hard",
+              "kind": "utility",
+              "params": {
+                "skill": {
+                  "decisionIntervalSec": 1400,
+                  "noise": 100,
+                  "actionsPerDecision": 2
+                },
+                "bias": {
+                  "attack": 1200,
+                  "reinforce": 400,
+                  "cut": 500
+                },
+                "holdThreshold": 300,
+                "maxTargetsPerSource": 6,
+                "cooldownSec": 4000,
+                "componentValue": {
+                  "generates": 1000,
+                  "garrison": 300
+                },
+                "weights": {
+                  "attack": {
+                    "targetValue": 3000,
+                    "timeToTake": 2000,
+                    "distance": 2000,
+                    "threatToSource": 1000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 2000,
+                    "ownerDominance": 0,
+                    "sliceCost": 1000,
+                    "lineUseless": 0,
+                    "stickiness": 1000
+                  },
+                  "reinforce": {
+                    "targetValue": 1000,
+                    "timeToTake": 0,
+                    "distance": 0,
+                    "threatToSource": 0,
+                    "threatToTarget": 3000,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 0,
+                    "lineUseless": 0,
+                    "stickiness": 1000
+                  },
+                  "cut": {
+                    "targetValue": 0,
+                    "timeToTake": 0,
+                    "distance": 0,
+                    "threatToSource": 1000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 0,
+                    "lineUseless": 3000,
+                    "stickiness": 1000
+                  }
+                }
+              }
+            }
+          },
+          {
+            "player": 1,
+            "profile": {
+              "id": "turtle-normal",
+              "kind": "utility",
+              "params": {
+                "skill": {
+                  "decisionIntervalSec": 2200,
+                  "noise": 200,
+                  "actionsPerDecision": 1
+                },
+                "bias": {
+                  "attack": 600,
+                  "reinforce": 1200,
+                  "cut": 1000
+                },
+                "holdThreshold": 400,
+                "maxTargetsPerSource": 4,
+                "cooldownSec": 6000,
+                "componentValue": {
+                  "generates": 1000,
+                  "garrison": 800
+                },
+                "weights": {
+                  "attack": {
+                    "targetValue": 1000,
+                    "timeToTake": 2000,
+                    "distance": 2000,
+                    "threatToSource": 5000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 3000,
+                    "lineUseless": 0,
+                    "stickiness": 2000
+                  },
+                  "reinforce": {
+                    "targetValue": 2000,
+                    "timeToTake": 0,
+                    "distance": 2000,
+                    "threatToSource": 0,
+                    "threatToTarget": 5000,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 1000,
+                    "lineUseless": 0,
+                    "stickiness": 2000
+                  },
+                  "cut": {
+                    "targetValue": 0,
+                    "timeToTake": 0,
+                    "distance": 0,
+                    "threatToSource": 5000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 0,
+                    "lineUseless": 4000,
+                    "stickiness": 2000
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "simHash": "9c331abfdcd4b98ae786c4c136aa0f0b45aa3860a70a935cbc5d64e4d1de9e95",
+        "botHash": {
+          "rusher-hard": "3b67d2a17d3e2733ac46adaa1b477398c3794a8375e878835cdb5cf52ac2015d",
+          "turtle-normal": "a9ca15680bd453606ff45c4862ef02fbca7b7f6765560191d41806f849559b24"
+        }
+      },
+      "seed": 37
+    },
+    {
+      "name": "random-3-seed-704",
+      "level": {
+        "componentNames": [
+          "capturable",
+          "drawsLines",
+          "garrison",
+          "generates"
+        ],
+        "id": "random-3",
+        "timeLimitSec": 15,
+        "visual": "city.day",
+        "bounds": {
+          "w": 240000,
+          "h": 160000
+        },
+        "globals": {
+          "timeLimitSec": 300,
+          "theme": "city.day"
+        },
+        "towers": [
+          {
+            "id": "t0",
+            "archetype": "small",
+            "x": -90000,
+            "y": -35000,
+            "owner": 2,
+            "garrison": 0,
+            "visual": "tower.small",
+            "footprintRadius": 2000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 20
+              },
+              "generates": {
+                "ratePerSec": 600,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t1",
+            "archetype": "small",
+            "x": -30000,
+            "y": -35000,
+            "owner": 0,
+            "garrison": 5,
+            "visual": "tower.small",
+            "footprintRadius": 2000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 20
+              },
+              "generates": {
+                "ratePerSec": 600,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t2",
+            "archetype": "standard",
+            "x": 30000,
+            "y": -35000,
+            "owner": 1,
+            "garrison": 19,
+            "visual": "tower.standard",
+            "footprintRadius": 3000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 30
+              },
+              "generates": {
+                "ratePerSec": 1000,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t3",
+            "archetype": "large",
+            "x": 90000,
+            "y": -35000,
+            "owner": -1,
+            "garrison": 10,
+            "visual": "tower.large",
+            "footprintRadius": 4000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10,
+                  30
+                ]
+              },
+              "garrison": {
+                "cap": 80
+              },
+              "generates": {
+                "ratePerSec": 1500,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t4",
+            "archetype": "small",
+            "x": -90000,
+            "y": 35000,
+            "owner": 2,
+            "garrison": 0,
+            "visual": "tower.small",
+            "footprintRadius": 2000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 20
+              },
+              "generates": {
+                "ratePerSec": 600,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t5",
+            "archetype": "standard",
+            "x": -30000,
+            "y": 35000,
+            "owner": 1,
+            "garrison": 0,
+            "visual": "tower.standard",
+            "footprintRadius": 3000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 30
+              },
+              "generates": {
+                "ratePerSec": 1000,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t6",
+            "archetype": "large",
+            "x": 30000,
+            "y": 35000,
+            "owner": 0,
+            "garrison": 19,
+            "visual": "tower.large",
+            "footprintRadius": 4000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10,
+                  30
+                ]
+              },
+              "garrison": {
+                "cap": 80
+              },
+              "generates": {
+                "ratePerSec": 1500,
+                "troop": 0
+              }
+            }
+          },
+          {
+            "id": "t7",
+            "archetype": "standard",
+            "x": 90000,
+            "y": 35000,
+            "owner": 1,
+            "garrison": 5,
+            "visual": "tower.standard",
+            "footprintRadius": 3000,
+            "components": {
+              "capturable": {},
+              "drawsLines": {
+                "extraSlotAbove": [
+                  10
+                ]
+              },
+              "garrison": {
+                "cap": 30
+              },
+              "generates": {
+                "ratePerSec": 1000,
+                "troop": 0
+              }
+            }
+          }
+        ],
+        "players": [
+          {
+            "id": "b1",
+            "kind": "bot",
+            "colorKey": "player.2",
+            "team": "b1"
+          },
+          {
+            "id": "b2",
+            "kind": "bot",
+            "colorKey": "player.3",
+            "team": "b2"
+          },
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "player.1",
+            "team": "p1"
+          }
+        ],
+        "kinds": [
+          {
+            "id": "regular",
+            "value": 1,
+            "speedMilli": 10000,
+            "visual": "troop.regular"
+          }
+        ],
+        "bots": [
+          {
+            "player": 0,
+            "profile": {
+              "id": "opportunist-easy",
+              "kind": "utility",
+              "params": {
+                "skill": {
+                  "decisionIntervalSec": 3500,
+                  "noise": 350,
+                  "actionsPerDecision": 1
+                },
+                "bias": {
+                  "attack": 1100,
+                  "reinforce": 500,
+                  "cut": 900
+                },
+                "holdThreshold": 300,
+                "maxTargetsPerSource": 8,
+                "cooldownSec": 3000,
+                "componentValue": {
+                  "generates": 1000,
+                  "garrison": 400
+                },
+                "weights": {
+                  "attack": {
+                    "targetValue": 2000,
+                    "timeToTake": 3000,
+                    "distance": 2000,
+                    "threatToSource": 1000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 5000,
+                    "ownerDominance": 4000,
+                    "sliceCost": 1000,
+                    "lineUseless": 0,
+                    "stickiness": 1000
+                  },
+                  "reinforce": {
+                    "targetValue": 2000,
+                    "timeToTake": 0,
+                    "distance": 1000,
+                    "threatToSource": 0,
+                    "threatToTarget": 3000,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 0,
+                    "lineUseless": 0,
+                    "stickiness": 1000
+                  },
+                  "cut": {
+                    "targetValue": 0,
+                    "timeToTake": 0,
+                    "distance": 0,
+                    "threatToSource": 2000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 0,
+                    "lineUseless": 5000,
+                    "stickiness": 1000
+                  }
+                }
+              }
+            }
+          },
+          {
+            "player": 1,
+            "profile": {
+              "id": "rusher-normal",
+              "kind": "utility",
+              "params": {
+                "skill": {
+                  "decisionIntervalSec": 2200,
+                  "noise": 200,
+                  "actionsPerDecision": 1
+                },
+                "bias": {
+                  "attack": 1200,
+                  "reinforce": 400,
+                  "cut": 500
+                },
+                "holdThreshold": 300,
+                "maxTargetsPerSource": 6,
+                "cooldownSec": 4000,
+                "componentValue": {
+                  "generates": 1000,
+                  "garrison": 300
+                },
+                "weights": {
+                  "attack": {
+                    "targetValue": 3000,
+                    "timeToTake": 2000,
+                    "distance": 2000,
+                    "threatToSource": 1000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 2000,
+                    "ownerDominance": 0,
+                    "sliceCost": 1000,
+                    "lineUseless": 0,
+                    "stickiness": 1000
+                  },
+                  "reinforce": {
+                    "targetValue": 1000,
+                    "timeToTake": 0,
+                    "distance": 0,
+                    "threatToSource": 0,
+                    "threatToTarget": 3000,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 0,
+                    "lineUseless": 0,
+                    "stickiness": 1000
+                  },
+                  "cut": {
+                    "targetValue": 0,
+                    "timeToTake": 0,
+                    "distance": 0,
+                    "threatToSource": 1000,
+                    "threatToTarget": 0,
+                    "targetWeakness": 0,
+                    "ownerDominance": 0,
+                    "sliceCost": 0,
+                    "lineUseless": 3000,
+                    "stickiness": 1000
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "simHash": "ed57bc0b68d0cdf04630b77372e949a509c63103614d75d0ba512a9043c893df",
+        "botHash": {
+          "opportunist-easy": "d17fe4679a87896f87ad0656aff3bfe127a9be01da976e818c2e90078cb147a4",
+          "rusher-normal": "47a493dd43cab5e6f4c8fa0f810b462258f8587ee06fc19133a233ca5bf723b2"
+        }
+      },
+      "seed": 704
+    }
+  ],
+  "results": [
+    {
+      "name": "random-6-seed-1",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.1.5",
+          "levelId": "random-6",
+          "simHash": "8d4bfd60924e0ff8bd89029c98abf5b27ffb221918b5387f17f51c3b5e123c47",
+          "seed": 1
+        },
+        "commands": [
+          {
+            "tick": 6,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 6,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 22,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 22,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 22,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t2",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 38,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 38,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 54,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 54,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 70,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 70,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 86,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t3"
+            }
+          },
+          {
+            "tick": 86,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 102,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 118,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 118,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 134,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 134,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 150,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 150,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 166,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 166,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 182,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 182,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 198,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 198,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 214,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 214,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 230,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 230,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 246,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 246,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 262,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 262,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t5",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 278,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 278,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 286,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b2",
+              "from": "t2",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 294,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 294,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 330,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t5",
+              "to": "t0"
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "799c58f8298ac544"
+          },
+          {
+            "tick": 40,
+            "hash": "37be1803e1c83400"
+          },
+          {
+            "tick": 60,
+            "hash": "fa29ee99c1b22d2d"
+          },
+          {
+            "tick": 80,
+            "hash": "c211c7e7c0913b97"
+          },
+          {
+            "tick": 100,
+            "hash": "9d2bcb5a65a21c49"
+          },
+          {
+            "tick": 120,
+            "hash": "163efb56c63b06f3"
+          },
+          {
+            "tick": 140,
+            "hash": "7f99db6725c1526e"
+          },
+          {
+            "tick": 160,
+            "hash": "65cef7c2e823aff8"
+          },
+          {
+            "tick": 180,
+            "hash": "d92160ac408887f5"
+          },
+          {
+            "tick": 200,
+            "hash": "89b8596755b64d2a"
+          },
+          {
+            "tick": 220,
+            "hash": "ba7d86138231251e"
+          },
+          {
+            "tick": 240,
+            "hash": "f549729bdd6116b7"
+          },
+          {
+            "tick": 260,
+            "hash": "22b4e215adaae39a"
+          },
+          {
+            "tick": 280,
+            "hash": "adea1575d4a1da5d"
+          },
+          {
+            "tick": 300,
+            "hash": "52d00f5af13e49ff"
+          },
+          {
+            "tick": 320,
+            "hash": "9e1c1594eb3bdf3b"
+          },
+          {
+            "tick": 340,
+            "hash": "62665520f3ff99d3"
+          },
+          {
+            "tick": 360,
+            "hash": "4a99b56829ada48a"
+          }
+        ],
+        "finalTick": 360,
+        "finalHash": "4a99b56829ada48a",
+        "outcome": {
+          "outcome": "timeout",
+          "winnerTeam": null
+        }
+      },
+      "commandlog": [
+        {
+          "tick": 6,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 6,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 22,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 22,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 22,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t2",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 38,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 38,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 54,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 54,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 70,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 70,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 86,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t3"
+          }
+        },
+        {
+          "tick": 86,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 102,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 118,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 118,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 134,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 134,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 150,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 150,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 166,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 166,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 182,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 182,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 198,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 198,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 214,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 214,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 230,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 230,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 246,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 246,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 262,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 262,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t5",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 278,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 278,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 286,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b2",
+            "from": "t2",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 294,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 294,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 330,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t5",
+            "to": "t0"
+          }
+        }
+      ],
+      "outcome": {
+        "outcome": "timeout",
+        "winnerTeam": null
+      },
+      "ticks": 360,
+      "finalHash": "4a99b56829ada48a"
+    },
+    {
+      "name": "random-0-seed-37",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.1.5",
+          "levelId": "random-0",
+          "simHash": "9c331abfdcd4b98ae786c4c136aa0f0b45aa3860a70a935cbc5d64e4d1de9e95",
+          "seed": 37
+        },
+        "commands": [
+          {
+            "tick": 26,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t3"
+            }
+          },
+          {
+            "tick": 26,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 31,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t2",
+              "to": "t3"
+            }
+          },
+          {
+            "tick": 54,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 75,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t3",
+              "to": "t2"
+            }
+          },
+          {
+            "tick": 119,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t2",
+              "to": "t3"
+            }
+          },
+          {
+            "tick": 163,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b2",
+              "from": "t2",
+              "to": "t3"
+            }
+          },
+          {
+            "tick": 207,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t3",
+              "to": "t2"
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "b1d491431f0270f2"
+          },
+          {
+            "tick": 40,
+            "hash": "ef2acb6d1f0fe973"
+          },
+          {
+            "tick": 60,
+            "hash": "7e7c8f5c46154ac4"
+          },
+          {
+            "tick": 80,
+            "hash": "5992646e3be8730f"
+          },
+          {
+            "tick": 100,
+            "hash": "6c1c92539cffe26d"
+          },
+          {
+            "tick": 120,
+            "hash": "e2e03384e3150b7c"
+          },
+          {
+            "tick": 140,
+            "hash": "6fc7a83f12345d39"
+          },
+          {
+            "tick": 160,
+            "hash": "1b800534d00a85f9"
+          },
+          {
+            "tick": 180,
+            "hash": "78cc2dc4e60f7871"
+          },
+          {
+            "tick": 200,
+            "hash": "b886e8fe9541cef5"
+          },
+          {
+            "tick": 220,
+            "hash": "74d3c1af2c3223d1"
+          },
+          {
+            "tick": 240,
+            "hash": "6d1856b5ac88ff59"
+          }
+        ],
+        "finalTick": 240,
+        "finalHash": "6d1856b5ac88ff59",
+        "outcome": {
+          "outcome": "timeout",
+          "winnerTeam": null
+        }
+      },
+      "commandlog": [
+        {
+          "tick": 26,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t3"
+          }
+        },
+        {
+          "tick": 26,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 31,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t2",
+            "to": "t3"
+          }
+        },
+        {
+          "tick": 54,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 75,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t3",
+            "to": "t2"
+          }
+        },
+        {
+          "tick": 119,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t2",
+            "to": "t3"
+          }
+        },
+        {
+          "tick": 163,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b2",
+            "from": "t2",
+            "to": "t3"
+          }
+        },
+        {
+          "tick": 207,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t3",
+            "to": "t2"
+          }
+        }
+      ],
+      "outcome": {
+        "outcome": "timeout",
+        "winnerTeam": null
+      },
+      "ticks": 240,
+      "finalHash": "6d1856b5ac88ff59"
+    },
+    {
+      "name": "random-3-seed-704",
+      "replay": {
+        "header": {
+          "rulesVersion": "1.0.0",
+          "schemaVersion": "1.0.0",
+          "contentVersion": "1.1.5",
+          "levelId": "random-3",
+          "simHash": "ed57bc0b68d0cdf04630b77372e949a509c63103614d75d0ba512a9043c893df",
+          "seed": 704
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t7"
+            }
+          },
+          {
+            "tick": 15,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t2",
+              "to": "t3"
+            }
+          },
+          {
+            "tick": 59,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t2",
+              "to": "t6"
+            }
+          },
+          {
+            "tick": 70,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t7"
+            }
+          },
+          {
+            "tick": 103,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t5",
+              "to": "t6"
+            }
+          },
+          {
+            "tick": 140,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t4"
+            }
+          },
+          {
+            "tick": 147,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t7",
+              "to": "t3"
+            }
+          },
+          {
+            "tick": 191,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b2",
+              "from": "t7",
+              "to": "t6"
+            }
+          },
+          {
+            "tick": 210,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t4"
+            }
+          },
+          {
+            "tick": 279,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b2",
+              "from": "t7",
+              "to": "t3"
+            }
+          },
+          {
+            "tick": 280,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t3"
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "973a6e22d121df92"
+          },
+          {
+            "tick": 40,
+            "hash": "43814bf7416cfeae"
+          },
+          {
+            "tick": 60,
+            "hash": "525703fe24c9011d"
+          },
+          {
+            "tick": 80,
+            "hash": "84274ef84ce0cba7"
+          },
+          {
+            "tick": 100,
+            "hash": "5e1c6fdbd8dc1c3b"
+          },
+          {
+            "tick": 120,
+            "hash": "d5997079b3e3afab"
+          },
+          {
+            "tick": 140,
+            "hash": "c5ec2a23b31e8e5c"
+          },
+          {
+            "tick": 160,
+            "hash": "b439566055c37b96"
+          },
+          {
+            "tick": 180,
+            "hash": "b010539d8c707077"
+          },
+          {
+            "tick": 200,
+            "hash": "854ad8c1082242be"
+          },
+          {
+            "tick": 220,
+            "hash": "0bbc8b0de49815de"
+          },
+          {
+            "tick": 240,
+            "hash": "2dce9318a58b3cd7"
+          },
+          {
+            "tick": 260,
+            "hash": "9d588429435bee44"
+          },
+          {
+            "tick": 280,
+            "hash": "b2e7190ba2adb320"
+          },
+          {
+            "tick": 300,
+            "hash": "9d9d415f7ffde64e"
+          }
+        ],
+        "finalTick": 300,
+        "finalHash": "9d9d415f7ffde64e",
+        "outcome": {
+          "outcome": "timeout",
+          "winnerTeam": null
+        }
+      },
+      "commandlog": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t7"
+          }
+        },
+        {
+          "tick": 15,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t2",
+            "to": "t3"
+          }
+        },
+        {
+          "tick": 59,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t2",
+            "to": "t6"
+          }
+        },
+        {
+          "tick": 70,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t7"
+          }
+        },
+        {
+          "tick": 103,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t5",
+            "to": "t6"
+          }
+        },
+        {
+          "tick": 140,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t4"
+          }
+        },
+        {
+          "tick": 147,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t7",
+            "to": "t3"
+          }
+        },
+        {
+          "tick": 191,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b2",
+            "from": "t7",
+            "to": "t6"
+          }
+        },
+        {
+          "tick": 210,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t4"
+          }
+        },
+        {
+          "tick": 279,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b2",
+            "from": "t7",
+            "to": "t3"
+          }
+        },
+        {
+          "tick": 280,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t3"
+          }
+        }
+      ],
+      "outcome": {
+        "outcome": "timeout",
+        "winnerTeam": null
+      },
+      "ticks": 300,
+      "finalHash": "9d9d415f7ffde64e"
+    }
+  ]
+}

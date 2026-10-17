@@ -1,0 +1,44 @@
+[
+  {
+    "command": "pnpm test",
+    "exitCode": 0,
+    "elapsedSeconds": 35.12,
+    "log": "0.log"
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0,
+    "elapsedSeconds": 15.61,
+    "log": "1.log"
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0,
+    "elapsedSeconds": 3.72,
+    "log": "2.log"
+  },
+  {
+    "command": "pnpm check:schemas",
+    "exitCode": 0,
+    "elapsedSeconds": 1.62,
+    "log": "3.log"
+  },
+  {
+    "command": "pnpm check:content --base 343593c",
+    "exitCode": 0,
+    "elapsedSeconds": 1.62,
+    "log": "4.log"
+  },
+  {
+    "command": "pnpm sim:golden",
+    "exitCode": 0,
+    "elapsedSeconds": 1.0,
+    "log": "5.log"
+  },
+  {
+    "command": "pnpm bench:sim",
+    "exitCode": 0,
+    "elapsedSeconds": 3.88,
+    "log": "6.log"
+  }
+]

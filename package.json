@@ -1,0 +1,42 @@
+{
+  "name": "node-arena",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.6",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "test": "pnpm --workspace-concurrency=1 -r test",
+    "build": "pnpm -r build",
+    "lint": "eslint .",
+    "content:schemas": "pnpm --filter @node-arena/content schemas:generate",
+    "check:schemas": "pnpm --filter @node-arena/content schemas:check",
+    "content:lock": "pnpm --filter @node-arena/content lock:generate",
+    "check:content": "pnpm --filter @node-arena/content lock:check",
+    "sim:golden": "pnpm --filter @node-arena/sim sim:golden",
+    "bench:sim": "pnpm --filter @node-arena/sim bench:sim",
+    "dev": "pnpm --filter @node-arena/web dev",
+    "test:web:e2e": "pnpm --filter @node-arena/web test:e2e",
+    "slice:verify": "pnpm --filter @node-arena/web slice:verify",
+    "test:web:all": "pnpm --filter @node-arena/web test:e2e:all",
+    "validate:content": "pnpm --filter @node-arena/tools validate:content",
+    "check:manifest": "pnpm --filter @node-arena/tools check:manifest",
+    "check:rules": "tsx tools/src/cli.ts check:rules",
+    "replay:verify": "tsx tools/src/cli.ts replay:verify",
+    "validate:levels": "tsx tools/src/cli.ts validate:levels",
+    "bench:bots": "pnpm --filter @node-arena/bots bench",
+    "bots:golden": "pnpm --filter @node-arena/bots golden",
+    "balance": "tsx tools/src/cli.ts balance",
+    "build:prerequisites": "pnpm --filter @node-arena/content --filter @node-arena/sim --filter @node-arena/bots --workspace-concurrency=1 -r build",
+    "typecheck": "pnpm exec tsc -p packages/content/tsconfig.json --noEmit && pnpm exec tsc -p packages/content/tsconfig.check.json && pnpm exec tsc -p packages/sim/tsconfig.json --noEmit && pnpm exec tsc -p packages/sim/tsconfig.golden.json && pnpm exec tsc -p packages/bots/tsconfig.json --noEmit && pnpm exec tsc -p packages/bots/tsconfig.check.json && pnpm exec tsc -p tools/tsconfig.json && pnpm exec tsc -p apps/web/tsconfig.json",
+    "ci": "bash scripts/ci.sh"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "eslint": "10.12.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.2",
+    "typescript-eslint": "8.71.1"
+  }
+}

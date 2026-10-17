@@ -1,0 +1,56 @@
+[
+  {
+    "command": "pnpm --filter @node-arena/web test -- test/model-regressions.test.ts test/cache-regressions.test.ts",
+    "exitCode": 0,
+    "elapsedSeconds": 4.23,
+    "log": "fresh-0.log"
+  },
+  {
+    "command": "pnpm test",
+    "exitCode": 0,
+    "elapsedSeconds": 35.36,
+    "log": "fresh-1.log"
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0,
+    "elapsedSeconds": 16.19,
+    "log": "fresh-2.log"
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0,
+    "elapsedSeconds": 3.62,
+    "log": "fresh-3.log"
+  },
+  {
+    "command": "pnpm check:schemas",
+    "exitCode": 0,
+    "elapsedSeconds": 1.55,
+    "log": "fresh-4.log"
+  },
+  {
+    "command": "pnpm check:content --base 343593c",
+    "exitCode": 0,
+    "elapsedSeconds": 1.65,
+    "log": "fresh-5.log"
+  },
+  {
+    "command": "pnpm sim:golden",
+    "exitCode": 0,
+    "elapsedSeconds": 1.18,
+    "log": "fresh-6.log"
+  },
+  {
+    "command": "pnpm bench:sim",
+    "exitCode": 0,
+    "elapsedSeconds": 4.05,
+    "log": "fresh-7.log"
+  },
+  {
+    "command": "pnpm test:web:all",
+    "exitCode": 1,
+    "elapsedSeconds": 270.48,
+    "log": "fresh-8.log"
+  }
+]

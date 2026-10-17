@@ -1,0 +1,158 @@
+
+> node-arena@ test:web:all /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/web test:e2e:all
+
+
+> @node-arena/web@0.0.0 test:e2e:all /root/projects/node-arena/.worktrees/feat/game-design/apps/web
+> pnpm build && playwright test --workers=1 && WEB_TEST_SERVER=dev playwright test --workers=1
+
+
+> @node-arena/web@0.0.0 build /root/projects/node-arena/.worktrees/feat/game-design/apps/web
+> tsc --noEmit && vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 523 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                         0.63 kB │ gzip:  0.32 kB
+dist/spike.html                         0.67 kB │ gzip:  0.43 kB
+dist/assets/main-B3k7ZO1P.css           4.20 kB │ gzip:  1.61 kB
+dist/assets/fixtures-BPaytsE4.js        1.29 kB │ gzip:  0.61 kB
+dist/assets/test-harness-B0uHXepj.js    2.35 kB │ gzip:  1.19 kB
+dist/assets/spike-D6lZbLPo.js           3.17 kB │ gzip:  1.72 kB
+dist/assets/main-WQMmAyvy.js          164.35 kB │ gzip: 54.54 kB
+dist/assets/three.core-B6nDPpYj.js    221.23 kB │ gzip: 58.98 kB
+dist/assets/src-NQCGHOjY.js           233.68 kB │ gzip: 67.37 kB
+dist/assets/three.module-BiLd8gic.js  352.96 kB │ gzip: 85.11 kB
+
+✓ built in 459ms
+[WebServer] (node:3397913) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:3397926) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 31 tests using 1 worker
+
+(node:3397954) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/acceptance.spec.ts:21:1 › test API is absent normally, deterministic driver draws for 30 seconds and replays (1.5s)
+  ✓   2 [chromium] › e2e/acceptance.spec.ts:34:41 › right cut stops channel spawning but in-flight troops arrive (1.0s)
+  ✓   3 [chromium] › e2e/acceptance.spec.ts:34:41 › swipe cut stops channel spawning but in-flight troops arrive (1.3s)
+  ✓   4 [chromium] › e2e/acceptance.spec.ts:54:1 › 20 authored levels, completion survives reload, retry/next and timeout have no interstitial (10.5s)
+  ✓   5 [chromium] › e2e/acceptance.spec.ts:72:1 › capture, glyphs and clash use real event positions and current labels (6.0s)
+  ✓   6 [chromium] › e2e/acceptance.spec.ts:92:1 › full runtime stress and twenty level-switch GPU/DOM baseline (25.7s)
+  ✓   7 [chromium] › e2e/acceptance.spec.ts:119:1 › manifest GLB swap, failed-only asset Retry and invalid boot recovery (1.6s)
+  ✓   8 [chromium] › e2e/acceptance.spec.ts:151:1 › stable greybox menu, picker, game and colourblind software GL screenshots (1.3s)
+  -   9 [chromium] › e2e/app-flow.spec.ts:4:1 › future 20-level content runs through real results, retry, next and completed picker
+  -  10 [chromium] › e2e/assets.spec.ts:4:1 › asset error recovery, real GLTF/audio decode, and twenty GPU resource releases
+  -  11 [chromium] › e2e/audio.spec.ts:3:1 › real WebAudio decodes a test WAV, plays mapped voices, mutes independently and disposes
+  ✓  12 [chromium] › e2e/boot.spec.ts:2:1 › menu loads authored content; real runtime renders and pauses without simulation restart (3.6s)
+  -  13 [chromium] › e2e/cache-regressions.spec.ts:4:1 › application restarts and twenty shared-source switches retain decoded CPU assets without retired GPU owners
+  ✓  14 [chromium] › e2e/cache-regressions.spec.ts:66:1 › production shell retains GLB and WAV across offline restart and shared-source level switches (7.9s)
+  ✓  15 [chromium] › e2e/dev.spec.ts:2:1 › query gates live tuning; apply restarts and downloads actual authored JSON (4.9s)
+  ✓  16 [chromium] › e2e/input-palette.spec.ts:40:41 › saved default palette colors both valid preview and route (2.1s)
+  ✓  17 [chromium] › e2e/input-palette.spec.ts:40:41 › saved colourblind palette colors both valid preview and route (980ms)
+  ✓  18 [chromium] › e2e/input-palette.spec.ts:57:1 › pause settings update subsequent gestures and active preview without restarting the match (1.3s)
+  -  19 [chromium] › e2e/input.spec.ts:38:1 › draw snaps, queues next tick, explains duplicate/no-slot and Escape consumes active gesture
+  -  20 [chromium] › e2e/input.spec.ts:49:1 › right-click and contextmenu-only trackpad cut nearest own offset line; queued cut preserves arrivals
+  -  21 [chromium] › e2e/input.spec.ts:61:1 › empty-ground swipe cuts once per stroke, includes final segment and respects CSS tolerance
+  -  22 [chromium] › e2e/input.spec.ts:70:1 › paused/results ignore all gestures; pointer cancellation, canvas rebinding and disposal remove input
+  -  23 [chromium] › e2e/input.spec.ts:82:1 › 12px right-click threshold, primary pointer cancellation and canvas replacement preserve one binding
+  -  24 [chromium] › e2e/lines-fx.spec.ts:4:1 › real sim opposite ribbons, clash event coordinates, capture effects, scrolling shader and GPU cleanup
+  -  25 [chromium] › e2e/model-regressions.spec.ts:4:1 › actual GLB troops preserve mirrored exteriors and authored secondary texture sampling
+  -  26 [chromium] › e2e/scene.spec.ts:5:1 › compiled level themes, real GL props, fixed fit through resize, live quality context changes and disposal
+SPIKE_RESULT {"mode":"bob","environment":{"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","width":640,"height":360,"dpr":1,"troopCount":2000,"buckets":4,"trianglesPerTroop":60},"warmupFrames":30,"updateMs":{"samples":120,"min":0,"median":0,"p95":0.10000014305114746,"max":0.20000004768371582},"renderSubmissionMs":{"samples":120,"min":0.09999990463256836,"median":0.20000004768371582,"p95":0.5999999046325684,"max":8.600000143051147},"jsMs":{"samples":120,"min":0.09999990463256836,"median":0.2999999523162842,"p95":0.5999999046325684,"max":8.600000143051147},"frameMs":{"samples":119,"min":16.5,"median":66.59999999999945,"p95":116.79999999999927,"max":1150.0000000000002},"fps":16.15421163374737,"drawCalls":4,"triangles":120000}
+  ✓  27 [chromium] › e2e/spike.spec.ts:4:3 › troop spike measures bob in software GL (8.1s)
+SPIKE_RESULT {"mode":"static-bob","environment":{"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","width":640,"height":360,"dpr":1,"troopCount":2000,"buckets":4,"trianglesPerTroop":60},"warmupFrames":30,"updateMs":{"samples":120,"min":0,"median":0,"p95":0.10000014305114746,"max":0.3000001907348633},"renderSubmissionMs":{"samples":120,"min":0.09999990463256836,"median":0.2999999523162842,"p95":0.6000001430511475,"max":1.7000000476837158},"jsMs":{"samples":120,"min":0.10000014305114746,"median":0.2999999523162842,"p95":0.6000001430511475,"max":1.7000000476837158},"frameMs":{"samples":119,"min":16.5,"median":50,"p95":116.80000000000018,"max":1433.3000000000002},"fps":15.421699237986626,"drawCalls":4,"triangles":120000}
+  ✓  28 [chromium] › e2e/spike.spec.ts:4:3 › troop spike measures static-bob in software GL (9.8s)
+SPIKE_RESULT {"mode":"none","environment":{"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","width":640,"height":360,"dpr":1,"troopCount":2000,"buckets":4,"trianglesPerTroop":60},"warmupFrames":30,"updateMs":{"samples":120,"min":0,"median":0,"p95":0.10000014305114746,"max":0.40000009536743164},"renderSubmissionMs":{"samples":120,"min":0.09999990463256836,"median":0.20000004768371582,"p95":1.2000000476837158,"max":3.6999998092651367},"jsMs":{"samples":120,"min":0.09999990463256836,"median":0.2999999523162842,"p95":1.2000000476837158,"max":3.799999952316284},"frameMs":{"samples":119,"min":16.5,"median":50,"p95":116.60000000000036,"max":1333.3},"fps":16.04573709262031,"drawCalls":4,"triangles":120000}
+  ✓  29 [chromium] › e2e/spike.spec.ts:4:3 › troop spike measures none in software GL (9.4s)
+  -  30 [chromium] › e2e/towers.spec.ts:5:1 › manifest-only fixture towers, real capture recolour, component labels, glyphs, projection and cache-safe disposal
+  -  31 [chromium] › e2e/troops.spec.ts:4:1 › real public sim: 2,000 troops, head-on placement, cut-channel persistence, GPU cleanup and shader correctness
+
+  14 skipped
+  17 passed (1.7m)
+[WebServer] (node:3401276) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:3401289) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 31 tests using 1 worker
+
+(node:3401319) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/acceptance.spec.ts:21:1 › test API is absent normally, deterministic driver draws for 30 seconds and replays (2.4s)
+  ✓   2 [chromium] › e2e/acceptance.spec.ts:34:41 › right cut stops channel spawning but in-flight troops arrive (1.7s)
+  ✓   3 [chromium] › e2e/acceptance.spec.ts:34:41 › swipe cut stops channel spawning but in-flight troops arrive (1.8s)
+  ✓   4 [chromium] › e2e/acceptance.spec.ts:54:1 › 20 authored levels, completion survives reload, retry/next and timeout have no interstitial (11.7s)
+  ✓   5 [chromium] › e2e/acceptance.spec.ts:72:1 › capture, glyphs and clash use real event positions and current labels (6.7s)
+  ✘   6 [chromium] › e2e/acceptance.spec.ts:92:1 › full runtime stress and twenty level-switch GPU/DOM baseline (12.6s)
+(node:3401660) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   7 [chromium] › e2e/acceptance.spec.ts:119:1 › manifest GLB swap, failed-only asset Retry and invalid boot recovery (3.0s)
+  ✓   8 [chromium] › e2e/acceptance.spec.ts:151:1 › stable greybox menu, picker, game and colourblind software GL screenshots (1.8s)
+  ✓   9 [chromium] › e2e/app-flow.spec.ts:4:1 › future 20-level content runs through real results, retry, next and completed picker (2.8s)
+  ✓  10 [chromium] › e2e/assets.spec.ts:4:1 › asset error recovery, real GLTF/audio decode, and twenty GPU resource releases (1.8s)
+  ✓  11 [chromium] › e2e/audio.spec.ts:3:1 › real WebAudio decodes a test WAV, plays mapped voices, mutes independently and disposes (437ms)
+  ✓  12 [chromium] › e2e/boot.spec.ts:2:1 › menu loads authored content; real runtime renders and pauses without simulation restart (4.6s)
+  ✓  13 [chromium] › e2e/cache-regressions.spec.ts:4:1 › application restarts and twenty shared-source switches retain decoded CPU assets without retired GPU owners (7.6s)
+  ✓  14 [chromium] › e2e/cache-regressions.spec.ts:66:1 › production shell retains GLB and WAV across offline restart and shared-source level switches (8.0s)
+  ✓  15 [chromium] › e2e/dev.spec.ts:2:1 › query gates live tuning; apply restarts and downloads actual authored JSON (5.5s)
+  ✓  16 [chromium] › e2e/input-palette.spec.ts:40:41 › saved default palette colors both valid preview and route (2.8s)
+  ✓  17 [chromium] › e2e/input-palette.spec.ts:40:41 › saved colourblind palette colors both valid preview and route (1.6s)
+  ✓  18 [chromium] › e2e/input-palette.spec.ts:57:1 › pause settings update subsequent gestures and active preview without restarting the match (1.6s)
+  ✓  19 [chromium] › e2e/input.spec.ts:38:1 › draw snaps, queues next tick, explains duplicate/no-slot and Escape consumes active gesture (1.3s)
+  ✓  20 [chromium] › e2e/input.spec.ts:49:1 › right-click and contextmenu-only trackpad cut nearest own offset line; queued cut preserves arrivals (1.2s)
+  ✓  21 [chromium] › e2e/input.spec.ts:61:1 › empty-ground swipe cuts once per stroke, includes final segment and respects CSS tolerance (1.2s)
+  ✓  22 [chromium] › e2e/input.spec.ts:70:1 › paused/results ignore all gestures; pointer cancellation, canvas rebinding and disposal remove input (2.4s)
+  ✓  23 [chromium] › e2e/input.spec.ts:82:1 › 12px right-click threshold, primary pointer cancellation and canvas replacement preserve one binding (1.5s)
+LINES_FX_RESULT {"blue":4062,"red":3654,"scrolling":7899,"unchanged":true,"clash":{"type":"Clash","tick":6,"channel":1,"progA":100000,"progB":100000,"value":1},"clashPosition":[5,0.15,0],"sparkPixels":400,"captured":{"type":"Captured","tick":11,"tower":1,"from":1,"to":0},"capturePosition":[10,0.12,0],"captureEffect":"pulse","baseline":{"geometries":0,"textures":0},"after":{"geometries":0,"textures":0}}
+  ✓  24 [chromium] › e2e/lines-fx.spec.ts:4:1 › real sim opposite ribbons, clash event coordinates, capture effects, scrolling shader and GPU cleanup (1.8s)
+MODEL_REGRESSIONS {"front":[[0,255,0,255],[0,255,0,255]],"back":[[0,0,0,255],[0,0,0,255]],"channel":1,"singleSided":true}
+  ✓  25 [chromium] › e2e/model-regressions.spec.ts:4:1 › actual GLB troops preserve mirrored exteriors and authored secondary texture sampling (2.0s)
+  ✓  26 [chromium] › e2e/scene.spec.ts:5:1 › compiled level themes, real GL props, fixed fit through resize, live quality context changes and disposal (1.5s)
+SPIKE_RESULT {"mode":"bob","environment":{"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","width":640,"height":360,"dpr":1,"troopCount":2000,"buckets":4,"trianglesPerTroop":60},"warmupFrames":30,"updateMs":{"samples":120,"min":0,"median":0,"p95":0.10000014305114746,"max":1.3999998569488525},"renderSubmissionMs":{"samples":120,"min":0.09999990463256836,"median":0.20000004768371582,"p95":0.5999999046325684,"max":3.5999999046325684},"jsMs":{"samples":120,"min":0.10000014305114746,"median":0.2999999523162842,"p95":0.7000000476837158,"max":3.5999999046325684},"frameMs":{"samples":119,"min":16.599999999999454,"median":50.099999999999454,"p95":116.70000000000073,"max":1316.7},"fps":15.589996200757229,"drawCalls":4,"triangles":120000}
+  ✓  27 [chromium] › e2e/spike.spec.ts:4:3 › troop spike measures bob in software GL (8.8s)
+SPIKE_RESULT {"mode":"static-bob","environment":{"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","width":640,"height":360,"dpr":1,"troopCount":2000,"buckets":4,"trianglesPerTroop":60},"warmupFrames":30,"updateMs":{"samples":120,"min":0,"median":0,"p95":0.10000014305114746,"max":0.7000000476837158},"renderSubmissionMs":{"samples":120,"min":0.09999990463256836,"median":0.20000004768371582,"p95":0.5,"max":2.799999952316284},"jsMs":{"samples":120,"min":0.09999990463256836,"median":0.2999999523162842,"p95":0.5999999046325684,"max":2.9000000953674316},"frameMs":{"samples":119,"min":16.5,"median":50,"p95":116.69999999999982,"max":1433.2999999999997},"fps":16.33942056844707,"drawCalls":4,"triangles":120000}
+  ✓  28 [chromium] › e2e/spike.spec.ts:4:3 › troop spike measures static-bob in software GL (9.6s)
+SPIKE_RESULT {"mode":"none","environment":{"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","width":640,"height":360,"dpr":1,"troopCount":2000,"buckets":4,"trianglesPerTroop":60},"warmupFrames":30,"updateMs":{"samples":120,"min":0,"median":0,"p95":0.10000014305114746,"max":0.20000004768371582},"renderSubmissionMs":{"samples":120,"min":0.09999990463256836,"median":0.20000004768371582,"p95":0.5999999046325684,"max":2.700000047683716},"jsMs":{"samples":120,"min":0.09999990463256836,"median":0.2999999523162842,"p95":0.5999999046325684,"max":2.700000047683716},"frameMs":{"samples":119,"min":16.59999999999991,"median":50,"p95":116.69999999999982,"max":1233.2},"fps":16.56666341830129,"drawCalls":4,"triangles":120000}
+  ✓  29 [chromium] › e2e/spike.spec.ts:4:3 › troop spike measures none in software GL (9.5s)
+  ✓  30 [chromium] › e2e/towers.spec.ts:5:1 › manifest-only fixture towers, real capture recolour, component labels, glyphs, projection and cache-safe disposal (3.1s)
+TROOPS_RESULT {"count":2000,"cutCount":2000,"linesAfterCut":0,"calls":14,"triangles":72000,"colored":698,"projected":[-0.4012865467829268,0.23697801839245106,0.998044029480067],"fronts":[[20,0,-1.5707963705062866,1],[20,0,1.5707963705062866,2],[20,20,-1.5707963705062866,3],[20,20,1.5707963705062866,4]],"headVisible":[52,12],"baseline":{"geometries":0,"textures":1},"after":{"geometries":0,"textures":1},"renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","jsMs":{"samples":120,"median":0.5999999046325684,"p95":1.3999998569488525,"max":2.700000047683716},"updateMs":{"samples":120,"median":0.2999999523162842,"p95":0.40000009536743164,"max":1.2999999523162842}}
+  ✓  31 [chromium] › e2e/troops.spec.ts:4:1 › real public sim: 2,000 troops, head-on placement, cut-channel persistence, GPU cleanup and shader correctness (25.9s)
+
+
+  1) [chromium] › e2e/acceptance.spec.ts:92:1 › full runtime stress and twenty level-switch GPU/DOM baseline 
+
+    Error: expect(received).toBeLessThan(expected)
+
+    Expected: < 4
+    Received:   4.199999809265137
+
+       98 |   const stress=await page.evaluate(()=>window.__na!.sample());
+       99 |   await test.info().attach('full-runtime-stress.json',{body:JSON.stringify(stress),contentType:'application/json'});
+    > 100 |   expect(stress.troops).toBeGreaterThanOrEqual(2000); expect(Math.max(...stress.calls)).toBeLessThan(100); expect(stress.p95).toBeLessThan(4);
+          |                                                                                                                               ^
+      101 |   await page.evaluate(()=>{window.__na!.submit({type:'CutLine',player:'p1',from:'t1',to:'t2'});window.__na!.step();});
+      102 |   const baseline=await page.evaluate(()=>window.__na!.memory().current);
+      103 |   const activeLifetime=await page.evaluate(()=>window.__lifetime());
+        at /root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/acceptance.spec.ts:100:127
+
+    Error Context: test-results/acceptance-full-runtime-st-01cca-vel-switch-GPU-DOM-baseline-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/acceptance-full-runtime-st-01cca-vel-switch-GPU-DOM-baseline-chromium/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/acceptance-full-runtime-st-01cca-vel-switch-GPU-DOM-baseline-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e/acceptance.spec.ts:92:1 › full runtime stress and twenty level-switch GPU/DOM baseline 
+  30 passed (2.6m)
+/root/projects/node-arena/.worktrees/feat/game-design/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @node-arena/web@0.0.0 test:e2e:all: `pnpm build && playwright test --workers=1 && WEB_TEST_SERVER=dev playwright test --workers=1`
+Exit status 1
+ ELIFECYCLE  Command failed with exit code 1.

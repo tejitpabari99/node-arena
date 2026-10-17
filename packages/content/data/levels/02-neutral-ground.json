@@ -1,0 +1,92 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "02-neutral-ground",
+  "name": "Neutral Ground",
+  "order": 2,
+  "band": 1,
+  "visual": "city.day",
+  "timeLimitSec": 300,
+  "bounds": {
+    "w": 120,
+    "h": 80
+  },
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "player.1"
+    },
+    {
+      "id": "b1",
+      "kind": "bot",
+      "botProfile": "turtle-easy",
+      "colorKey": "player.2"
+    }
+  ],
+  "towers": [
+    {
+      "id": "t1",
+      "archetype": "standard",
+      "pos": {
+        "x": -40,
+        "y": -16
+      },
+      "owner": "p1",
+      "garrison": 25
+    },
+    {
+      "id": "t2",
+      "archetype": "standard",
+      "pos": {
+        "x": -2,
+        "y": -22
+      },
+      "owner": null,
+      "garrison": 9
+    },
+    {
+      "id": "t3",
+      "archetype": "standard",
+      "pos": {
+        "x": 38,
+        "y": -14
+      },
+      "owner": null,
+      "garrison": 14
+    },
+    {
+      "id": "t4",
+      "archetype": "standard",
+      "pos": {
+        "x": -38,
+        "y": 16
+      },
+      "owner": "p1",
+      "garrison": 12
+    },
+    {
+      "id": "t5",
+      "archetype": "standard",
+      "pos": {
+        "x": 4,
+        "y": 20
+      },
+      "owner": null,
+      "garrison": 22
+    },
+    {
+      "id": "t6",
+      "archetype": "standard",
+      "pos": {
+        "x": 40,
+        "y": 18
+      },
+      "owner": "b1",
+      "garrison": 8
+    }
+  ],
+  "obstacles": [],
+  "mapObjects": [],
+  "overrides": {}
+}

@@ -1,0 +1,8 @@
+{
+  "bands": {
+    "1": { "referenceWinMin": 100, "humanProxyWin": [90, 100], "timeoutMaxPct": 2, "idleWinMax": 0 },
+    "2": { "referenceWinMin": 98, "humanProxyWin": [65, 85], "timeoutMaxPct": 5, "idleWinMax": 0 },
+    "3": { "referenceWinMin": 90, "humanProxyWin": [40, 65], "timeoutMaxPct": 8, "idleWinMax": 0 },
+    "4": { "referenceWinMin": 80, "humanProxyWin": [20, 45], "timeoutMaxPct": 10, "idleWinMax": 0 }
+  }
+}

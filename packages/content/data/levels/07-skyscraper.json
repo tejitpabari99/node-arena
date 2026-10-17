@@ -1,0 +1,112 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "07-skyscraper",
+  "name": "Skyscraper",
+  "order": 7,
+  "band": 2,
+  "visual": "city.dusk",
+  "timeLimitSec": 300,
+  "bounds": {
+    "w": 120,
+    "h": 80
+  },
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "player.1"
+    },
+    {
+      "id": "b1",
+      "kind": "bot",
+      "botProfile": "opportunist-normal",
+      "colorKey": "player.2"
+    }
+  ],
+  "towers": [
+    {
+      "id": "home-1",
+      "archetype": "standard",
+      "pos": {
+        "x": -46,
+        "y": 6
+      },
+      "owner": "p1",
+      "garrison": 20
+    },
+    {
+      "id": "home-2",
+      "archetype": "standard",
+      "pos": {
+        "x": 46,
+        "y": 6
+      },
+      "owner": "b1",
+      "garrison": 12
+    },
+    {
+      "id": "rim-1",
+      "archetype": "standard",
+      "pos": {
+        "x": -22,
+        "y": -28
+      },
+      "owner": null,
+      "garrison": 11
+    },
+    {
+      "id": "rim-2",
+      "archetype": "standard",
+      "pos": {
+        "x": 22,
+        "y": -28
+      },
+      "owner": null,
+      "garrison": 11
+    },
+    {
+      "id": "lane-1",
+      "archetype": "small",
+      "pos": {
+        "x": -24,
+        "y": 22
+      },
+      "owner": "p1",
+      "garrison": 4
+    },
+    {
+      "id": "lane-2",
+      "archetype": "small",
+      "pos": {
+        "x": 24,
+        "y": 22
+      },
+      "owner": null,
+      "garrison": 9
+    },
+    {
+      "id": "core",
+      "archetype": "large",
+      "pos": {
+        "x": 0,
+        "y": 0
+      },
+      "owner": null,
+      "garrison": 26
+    },
+    {
+      "id": "side",
+      "archetype": "small",
+      "pos": {
+        "x": -28,
+        "y": -8
+      },
+      "owner": "p1",
+      "garrison": 8
+    }
+  ],
+  "obstacles": [],
+  "mapObjects": [],
+  "overrides": {}
+}

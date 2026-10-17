@@ -1,0 +1,148 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "17-pincer",
+  "name": "Pincer",
+  "order": 17,
+  "band": 4,
+  "visual": "city.night",
+  "timeLimitSec": 300,
+  "bounds": {
+    "w": 120,
+    "h": 80
+  },
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "player.1"
+    },
+    {
+      "id": "b1",
+      "kind": "bot",
+      "botProfile": "rusher-expert",
+      "colorKey": "player.2"
+    },
+    {
+      "id": "b2",
+      "kind": "bot",
+      "botProfile": "rusher-expert",
+      "colorKey": "player.3"
+    }
+  ],
+  "towers": [
+    {
+      "id": "home-1",
+      "archetype": "standard",
+      "pos": {
+        "x": -44,
+        "y": 0
+      },
+      "owner": "p1",
+      "garrison": 15
+    },
+    {
+      "id": "home-2",
+      "archetype": "standard",
+      "pos": {
+        "x": 11,
+        "y": -37
+      },
+      "owner": "b1",
+      "garrison": 15
+    },
+    {
+      "id": "home-3",
+      "archetype": "standard",
+      "pos": {
+        "x": 11,
+        "y": 37
+      },
+      "owner": "b2",
+      "garrison": 15
+    },
+    {
+      "id": "a-1",
+      "archetype": "standard",
+      "pos": {
+        "x": -21,
+        "y": -35
+      },
+      "owner": null,
+      "garrison": 9
+    },
+    {
+      "id": "a-2",
+      "archetype": "standard",
+      "pos": {
+        "x": -21,
+        "y": 35
+      },
+      "owner": null,
+      "garrison": 9
+    },
+    {
+      "id": "b-1",
+      "archetype": "small",
+      "pos": {
+        "x": -16,
+        "y": -15
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "b-2",
+      "archetype": "small",
+      "pos": {
+        "x": -16,
+        "y": 15
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "c-1",
+      "archetype": "standard",
+      "pos": {
+        "x": 23,
+        "y": -11
+      },
+      "owner": null,
+      "garrison": 15
+    },
+    {
+      "id": "c-2",
+      "archetype": "standard",
+      "pos": {
+        "x": 23,
+        "y": 11
+      },
+      "owner": null,
+      "garrison": 15
+    },
+    {
+      "id": "d-1",
+      "archetype": "small",
+      "pos": {
+        "x": 34,
+        "y": -30
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "d-2",
+      "archetype": "small",
+      "pos": {
+        "x": 34,
+        "y": 30
+      },
+      "owner": null,
+      "garrison": 10
+    }
+  ],
+  "obstacles": [],
+  "mapObjects": [],
+  "overrides": {}
+}

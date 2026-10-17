@@ -1,0 +1,1374 @@
+{
+  "config": {
+    "argv": [
+      "/root/.nvm/versions/node/v22.23.3/bin/node",
+      "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/node_modules/@playwright/test/cli.js",
+      "test",
+      "--workers=1",
+      "--reporter=json"
+    ],
+    "configFile": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/playwright.config.ts",
+    "rootDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "chromium",
+        "testDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+        "snapshotDir": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4173",
+          "trace": "retain-on-failure",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium",
+          "launchOptions": {
+            "args": [
+              "--use-gl=angle",
+              "--use-angle=swiftshader",
+              "--enable-unsafe-swiftshader"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": {
+      "command": "pnpm dev --port 4173 --strictPort",
+      "url": "http://127.0.0.1:4173",
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "acceptance.spec.ts",
+      "file": "acceptance.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "test API is absent normally, deterministic driver draws for 30 seconds and replays",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2690,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:16:42.437Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-d88a4d647360fd02406f",
+          "file": "acceptance.spec.ts",
+          "line": 21,
+          "column": 1
+        },
+        {
+          "title": "right cut stops channel spawning but in-flight troops arrive",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1675,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:16:45.269Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-fdd9a47df571f524dfad",
+          "file": "acceptance.spec.ts",
+          "line": 34,
+          "column": 41
+        },
+        {
+          "title": "swipe cut stops channel spawning but in-flight troops arrive",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2050,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:16:46.964Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-cfb3fb9650d95d04b577",
+          "file": "acceptance.spec.ts",
+          "line": 34,
+          "column": 41
+        },
+        {
+          "title": "20 authored levels, completion survives reload, retry/next and timeout have no interstitial",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11439,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:16:49.034Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-b45adfdc8c34af76b9f2",
+          "file": "acceptance.spec.ts",
+          "line": 54,
+          "column": 1
+        },
+        {
+          "title": "capture, glyphs and clash use real event positions and current labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9487,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:17:00.488Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-42b398450b6c426e159e",
+          "file": "acceptance.spec.ts",
+          "line": 72,
+          "column": 1
+        },
+        {
+          "title": "full runtime stress and twenty level-switch GPU/DOM baseline",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 19501,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m4\u001b[39m\nReceived:   \u001b[31m6\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m4\u001b[39m\nReceived:   \u001b[31m6\u001b[39m\n    at /root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/acceptance.spec.ts:100:127",
+                    "location": {
+                      "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/acceptance.spec.ts",
+                      "column": 127,
+                      "line": 100
+                    },
+                    "snippet": "   98 |   const stress=await page.evaluate(()=>window.__na!.sample());\n   99 |   await test.info().attach('full-runtime-stress.json',{body:JSON.stringify(stress),contentType:'application/json'});\n> 100 |   expect(stress.troops).toBeGreaterThanOrEqual(2000); expect(Math.max(...stress.calls)).toBeLessThan(100); expect(stress.p95).toBeLessThan(4);\n      |                                                                                                                               ^\n  101 |   await page.evaluate(()=>{window.__na!.submit({type:'CutLine',player:'p1',from:'t1',to:'t2'});window.__na!.step();});\n  102 |   const baseline=await page.evaluate(()=>window.__na!.memory().current);\n  103 |   const activeLifetime=await page.evaluate(()=>window.__lifetime());"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/acceptance.spec.ts",
+                        "column": 127,
+                        "line": 100
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m4\u001b[39m\nReceived:   \u001b[31m6\u001b[39m\n\n   98 |   const stress=await page.evaluate(()=>window.__na!.sample());\n   99 |   await test.info().attach('full-runtime-stress.json',{body:JSON.stringify(stress),contentType:'application/json'});\n> 100 |   expect(stress.troops).toBeGreaterThanOrEqual(2000); expect(Math.max(...stress.calls)).toBeLessThan(100); expect(stress.p95).toBeLessThan(4);\n      |                                                                                                                               ^\n  101 |   await page.evaluate(()=>{window.__na!.submit({type:'CutLine',player:'p1',from:'t1',to:'t2'});window.__na!.step();});\n  102 |   const baseline=await page.evaluate(()=>window.__na!.memory().current);\n  103 |   const activeLifetime=await page.evaluate(()=>window.__lifetime());\n    at /root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/acceptance.spec.ts:100:127"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:17:09.998Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "full-runtime-stress.json",
+                      "contentType": "application/json",
+                      "body": "eyJ2YWx1ZXMiOlsxLjM5OTk5OTg1Njk0ODg1MjUsMS44OTk5OTk4NTY5NDg4NTI1LDEuNzk5OTk5OTUyMzE2Mjg0MiwxLjM5OTk5OTg1Njk0ODg1MjUsMywxLjMwMDAwMDE5MDczNDg2MzMsMS4yOTk5OTk5NTIzMTYyODQyLDMuNDAwMDAwMDk1MzY3NDMxNiwyLjQwMDAwMDA5NTM2NzQzMTYsMi4yOTk5OTk5NTIzMTYyODQsNywxLjcwMDAwMDA0NzY4MzcxNTgsMS4zOTk5OTk4NTY5NDg4NTI1LDEuNDAwMDAwMDk1MzY3NDMxNiwxLjEwMDAwMDE0MzA1MTE0NzUsMS4zOTk5OTk4NTY5NDg4NTI1LDEuMTAwMDAwMTQzMDUxMTQ3NSwyLDQuMDk5OTk5OTA0NjMyNTY4LDEuMjk5OTk5OTUyMzE2Mjg0MiwxLjA5OTk5OTkwNDYzMjU2ODQsMS4yMDAwMDAwNDc2ODM3MTU4LDEuMTAwMDAwMTQzMDUxMTQ3NSwyLDEuMjAwMDAwMDQ3NjgzNzE1OCw0LDIsNC40MDAwMDAwOTUzNjc0MzIsMSwxLjg5OTk5OTg1Njk0ODg1MjUsMy4yMDAwMDAwNDc2ODM3MTYsMiwyLjUsNC4yMDAwMDAwNDc2ODM3MTYsMS40MDAwMDAwOTUzNjc0MzE2LDEuMDk5OTk5OTA0NjMyNTY4NCwxLDEuMDk5OTk5OTA0NjMyNTY4NCwxLjA5OTk5OTkwNDYzMjU2ODQsMS45MDAwMDAwOTUzNjc0MzE2LDMuOTAwMDAwMDk1MzY3NDMxNiwzLjA5OTk5OTkwNDYzMjU2ODQsNi41OTk5OTk5MDQ2MzI1NjgsMS4wOTk5OTk5MDQ2MzI1Njg0LDIuMTAwMDAwMTQzMDUxMTQ3NSw1LjcwMDAwMDA0NzY4MzcxNiwzLjc5OTk5OTk1MjMxNjI4NCwxLjA5OTk5OTkwNDYzMjU2ODQsMS4wOTk5OTk5MDQ2MzI1Njg0LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjA5OTk5OTkwNDYzMjU2ODQsMS4yMDAwMDAwNDc2ODM3MTU4LDYuNSwyLjM5OTk5OTg1Njk0ODg1MjUsMS4xMDAwMDAxNDMwNTExNDc1LDEuNDAwMDAwMDk1MzY3NDMxNiwzLDYsMS43OTk5OTk5NTIzMTYyODQyLDEuMTAwMDAwMTQzMDUxMTQ3NSwxLjIwMDAwMDA0NzY4MzcxNTgsNS42OTk5OTk4MDkyNjUxMzcsMi41LDQuMzAwMDAwMTkwNzM0ODYzLDIuNTk5OTk5OTA0NjMyNTY4NCwxLjUsMSwxLjMwMDAwMDE5MDczNDg2MzMsMS4zMDAwMDAxOTA3MzQ4NjMzLDEuNjAwMDAwMTQzMDUxMTQ3NSwxLjM5OTk5OTg1Njk0ODg1MjUsMy4wOTk5OTk5MDQ2MzI1Njg0LDEuMDk5OTk5OTA0NjMyNTY4NCwxLjIwMDAwMDA0NzY4MzcxNTgsMSwxLjA5OTk5OTkwNDYzMjU2ODQsMy4xMDAwMDAxNDMwNTExNDc1LDUuMjk5OTk5OTUyMzE2Mjg0LDMuOTAwMDAwMDk1MzY3NDMxNiwzLjI5OTk5OTk1MjMxNjI4NCw0LjkwMDAwMDA5NTM2NzQzMiwxLDcuMDk5OTk5OTA0NjMyNTY4LDIuOTAwMDAwMDk1MzY3NDMxNiwyLjYwMDAwMDE0MzA1MTE0NzUsMC44OTk5OTk4NTY5NDg4NTI1LDEuMDk5OTk5OTA0NjMyNTY4NCwzLjUsMSwxLDEuMjk5OTk5OTUyMzE2Mjg0MiwxLjA5OTk5OTkwNDYzMjU2ODQsMS41LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjA5OTk5OTkwNDYzMjU2ODQsMC44OTk5OTk4NTY5NDg4NTI1LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjU5OTk5OTkwNDYzMjU2ODQsMy40MDAwMDAwOTUzNjc0MzE2LDQuMzAwMDAwMTkwNzM0ODYzLDAuOTAwMDAwMDk1MzY3NDMxNiwxLjI5OTk5OTk1MjMxNjI4NDIsMS4xMDAwMDAxNDMwNTExNDc1LDkuMTk5OTk5ODA5MjY1MTM3LDEuMjAwMDAwMDQ3NjgzNzE1OCwxLjE5OTk5OTgwOTI2NTEzNjcsMS4xMDAwMDAxNDMwNTExNDc1LDcuNSwxLjIwMDAwMDA0NzY4MzcxNTgsMSwyLjkwMDAwMDA5NTM2NzQzMTYsNSwyLjIwMDAwMDA0NzY4MzcxNiwzLjUsMS4yOTk5OTk5NTIzMTYyODQyLDIuNjk5OTk5ODA5MjY1MTM2NywyLjUsMS4wOTk5OTk5MDQ2MzI1Njg0LDEsMS40MDAwMDAwOTUzNjc0MzE2XSwiY2FsbHMiOlsxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNSwxNV0sInA5NSI6NiwidHJvb3BzIjozMjAwLCJtZW1vcnkiOnsiY3VycmVudCI6eyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjR9LCJyZXRpcmVkIjpbXSwibGFiZWxzIjozLCJjYW52YXNlcyI6MX19"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/test-results/acceptance-full-runtime-st-01cca-vel-switch-GPU-DOM-baseline-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/test-results/acceptance-full-runtime-st-01cca-vel-switch-GPU-DOM-baseline-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/root/projects/node-arena/.worktrees/feat/game-design/apps/web/e2e/acceptance.spec.ts",
+                    "column": 127,
+                    "line": 100
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-f5e1c199347792ea272a",
+          "file": "acceptance.spec.ts",
+          "line": 92,
+          "column": 1
+        },
+        {
+          "title": "manifest GLB swap, failed-only asset Retry and invalid boot recovery",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3644,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:17:32.777Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-f4b3f7c88d4baac865e6",
+          "file": "acceptance.spec.ts",
+          "line": 119,
+          "column": 1
+        },
+        {
+          "title": "stable greybox menu, picker, game and colourblind software GL screenshots",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2348,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:17:36.545Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bf654160f377cf56a60-e37965ab12eb5ef1d1f4",
+          "file": "acceptance.spec.ts",
+          "line": 151,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "app-flow.spec.ts",
+      "file": "app-flow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "future 20-level content runs through real results, retry, next and completed picker",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3414,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:17:38.939Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8f8f7f41653bf1d58280-671e3a2e8aa9540987dc",
+          "file": "app-flow.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "assets.spec.ts",
+      "file": "assets.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "asset error recovery, real GLTF/audio decode, and twenty GPU resource releases",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1896,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:17:42.389Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "381c53c131d04f5e8243-4e65d4d8d21f1cec268a",
+          "file": "assets.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "audio.spec.ts",
+      "file": "audio.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "real WebAudio decodes a test WAV, plays mapped voices, mutes independently and disposes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 472,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:17:44.313Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "87be2dcdb54c25970a35-71e28d9f4a0665b68754",
+          "file": "audio.spec.ts",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "boot.spec.ts",
+      "file": "boot.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "menu loads authored content; real runtime renders and pauses without simulation restart",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7019,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:17:44.811Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3be9e5b40a014dc58fa3-2dc342723058827361a3",
+          "file": "boot.spec.ts",
+          "line": 2,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "cache-regressions.spec.ts",
+      "file": "cache-regressions.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "application restarts and twenty shared-source switches retain decoded CPU assets without retired GPU owners",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7426,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:17:51.865Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "cache-retention-lifetime.json",
+                      "contentType": "application/json",
+                      "body": "eyJiYXNlbGluZSI6eyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjV9LCJjdXJyZW50IjpbeyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjV9LHsiZ2VvbWV0cmllcyI6MTQsInRleHR1cmVzIjo1fSx7Imdlb21ldHJpZXMiOjE0LCJ0ZXh0dXJlcyI6NX0seyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjV9LHsiZ2VvbWV0cmllcyI6MTQsInRleHR1cmVzIjo1fSx7Imdlb21ldHJpZXMiOjE0LCJ0ZXh0dXJlcyI6NX0seyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjV9LHsiZ2VvbWV0cmllcyI6MTQsInRleHR1cmVzIjo1fSx7Imdlb21ldHJpZXMiOjE0LCJ0ZXh0dXJlcyI6NX0seyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjV9LHsiZ2VvbWV0cmllcyI6MTQsInRleHR1cmVzIjo1fSx7Imdlb21ldHJpZXMiOjE0LCJ0ZXh0dXJlcyI6NX0seyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjV9LHsiZ2VvbWV0cmllcyI6MTQsInRleHR1cmVzIjo1fSx7Imdlb21ldHJpZXMiOjE0LCJ0ZXh0dXJlcyI6NX0seyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjV9LHsiZ2VvbWV0cmllcyI6MTQsInRleHR1cmVzIjo1fSx7Imdlb21ldHJpZXMiOjE0LCJ0ZXh0dXJlcyI6NX0seyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjV9LHsiZ2VvbWV0cmllcyI6MTQsInRleHR1cmVzIjo1fV0sInJldGFpbmVkSWRlbnRpdHkiOnRydWUsImRlY29kZXMiOjEsImNhY2hlZCI6MiwiYWZ0ZXIiOjAsImJlZm9yZSI6eyJnZW9tZXRyeURpc3Bvc2FscyI6MCwidGV4dHVyZURpc3Bvc2FscyI6MH0sImRpc3Bvc2VkIjp7Imdlb21ldHJ5RGlzcG9zYWxzIjoxLCJ0ZXh0dXJlRGlzcG9zYWxzIjoxfSwic291cmNlTGlzdGVuZXJzIjpbMSwxXSwic291cmNlR2VvbWV0cnlDb3VudCI6MSwic291cmNlVGV4dHVyZUNvdW50IjoxLCJyZXRpcmVkIjpbeyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9XSwibGFiZWxzIjowLCJjYW52YXNlcyI6MCwicmVxdWVzdHMiOnsibW9kZWxzIjoxLCJhdWRpbyI6MX19"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4635fbca9337a3dc1dca-88e0d49009f4d178077a",
+          "file": "cache-regressions.spec.ts",
+          "line": 4,
+          "column": 1
+        },
+        {
+          "title": "production shell retains GLB and WAV across offline restart and shared-source level switches",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8449,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:17:59.307Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "production-offline-cache.json",
+                      "contentType": "application/json",
+                      "body": "eyJiYXNlbGluZSI6eyJnZW9tZXRyaWVzIjoxNCwidGV4dHVyZXMiOjR9LCJtZW1vcnkiOnsiY3VycmVudCI6bnVsbCwicmV0aXJlZCI6W3siZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9LHsiZ2VvbWV0cmllcyI6MCwidGV4dHVyZXMiOjEsImNvbnRleHRMb3N0Ijp0cnVlfSx7Imdlb21ldHJpZXMiOjAsInRleHR1cmVzIjoxLCJjb250ZXh0TG9zdCI6dHJ1ZX0seyJnZW9tZXRyaWVzIjowLCJ0ZXh0dXJlcyI6MSwiY29udGV4dExvc3QiOnRydWV9XSwibGFiZWxzIjowLCJjYW52YXNlcyI6MH0sInJlcXVlc3RzIjp7Im1vZGVscyI6MSwiYXVkaW8iOjF9LCJkZWNvZGVzIjoxfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4635fbca9337a3dc1dca-2f57789d3a35d4afe78c",
+          "file": "cache-regressions.spec.ts",
+          "line": 66,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "dev.spec.ts",
+      "file": "dev.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "query gates live tuning; apply restarts and downloads actual authored JSON",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8380,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:07.777Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e6974130559fd0f511c6-c375bc73cacfb38bb865",
+          "file": "dev.spec.ts",
+          "line": 2,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "input-palette.spec.ts",
+      "file": "input-palette.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "saved default palette colors both valid preview and route",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3451,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:16.197Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "343c9b741905cac19979-ba69902f9d7b39b31be6",
+          "file": "input-palette.spec.ts",
+          "line": 40,
+          "column": 41
+        },
+        {
+          "title": "saved colourblind palette colors both valid preview and route",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1948,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:19.684Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "343c9b741905cac19979-ba53349931d432375399",
+          "file": "input-palette.spec.ts",
+          "line": 40,
+          "column": 41
+        },
+        {
+          "title": "pause settings update subsequent gestures and active preview without restarting the match",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2250,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:21.653Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "343c9b741905cac19979-3cdbd924618f5fd50e88",
+          "file": "input-palette.spec.ts",
+          "line": 57,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "input.spec.ts",
+      "file": "input.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "draw snaps, queues next tick, explains duplicate/no-slot and Escape consumes active gesture",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1690,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:23.943Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "62978389d577d9e03e88-022b302770c872d4cac4",
+          "file": "input.spec.ts",
+          "line": 38,
+          "column": 1
+        },
+        {
+          "title": "right-click and contextmenu-only trackpad cut nearest own offset line; queued cut preserves arrivals",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1277,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:25.653Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "62978389d577d9e03e88-14c66338d47208a5c2db",
+          "file": "input.spec.ts",
+          "line": 49,
+          "column": 1
+        },
+        {
+          "title": "empty-ground swipe cuts once per stroke, includes final segment and respects CSS tolerance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1308,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:26.944Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "62978389d577d9e03e88-99bbe9a7b947fd908dc6",
+          "file": "input.spec.ts",
+          "line": 61,
+          "column": 1
+        },
+        {
+          "title": "paused/results ignore all gestures; pointer cancellation, canvas rebinding and disposal remove input",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2270,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:28.270Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "62978389d577d9e03e88-2b2f4b03fe8d2dccc5c1",
+          "file": "input.spec.ts",
+          "line": 70,
+          "column": 1
+        },
+        {
+          "title": "12px right-click threshold, primary pointer cancellation and canvas replacement preserve one binding",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1461,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:30.560Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "62978389d577d9e03e88-643da60d326ae07c89f5",
+          "file": "input.spec.ts",
+          "line": 82,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "lines-fx.spec.ts",
+      "file": "lines-fx.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "real sim opposite ribbons, clash event coordinates, capture effects, scrolling shader and GPU cleanup",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1751,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "LINES_FX_RESULT {\"blue\":4062,\"red\":3654,\"scrolling\":7899,\"unchanged\":true,\"clash\":{\"type\":\"Clash\",\"tick\":6,\"channel\":1,\"progA\":100000,\"progB\":100000,\"value\":1},\"clashPosition\":[5,0.15,0],\"sparkPixels\":400,\"captured\":{\"type\":\"Captured\",\"tick\":11,\"tower\":1,\"from\":1,\"to\":0},\"capturePosition\":[10,0.12,0],\"captureEffect\":\"pulse\",\"baseline\":{\"geometries\":0,\"textures\":0},\"after\":{\"geometries\":0,\"textures\":0}}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:32.059Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9281b0715130bd62a0c6-8869a0752fb5bd495025",
+          "file": "lines-fx.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "model-regressions.spec.ts",
+      "file": "model-regressions.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "actual GLB troops preserve mirrored exteriors and authored secondary texture sampling",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2084,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "MODEL_REGRESSIONS {\"front\":[[0,255,0,255],[0,255,0,255]],\"back\":[[0,0,0,255],[0,0,0,255]],\"channel\":1,\"singleSided\":true}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:33.842Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ac25427b7f57fd3aa9a1-d1c220ac9a43bec1b4e3",
+          "file": "model-regressions.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "scene.spec.ts",
+      "file": "scene.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "compiled level themes, real GL props, fixed fit through resize, live quality context changes and disposal",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1529,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:35.960Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3aa4c5b91f4bbc99f382-caec3e88c1c84ad2aace",
+          "file": "scene.spec.ts",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "spike.spec.ts",
+      "file": "spike.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "troop spike measures bob in software GL",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8258,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "SPIKE_RESULT {\"mode\":\"bob\",\"environment\":{\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36\",\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"width\":640,\"height\":360,\"dpr\":1,\"troopCount\":2000,\"buckets\":4,\"trianglesPerTroop\":60},\"warmupFrames\":30,\"updateMs\":{\"samples\":120,\"min\":0,\"median\":0,\"p95\":0.10000014305114746,\"max\":0.20000004768371582},\"renderSubmissionMs\":{\"samples\":120,\"min\":0.09999990463256836,\"median\":0.20000004768371582,\"p95\":0.5,\"max\":3},\"jsMs\":{\"samples\":120,\"min\":0.09999990463256836,\"median\":0.2999999523162842,\"p95\":0.5,\"max\":3},\"frameMs\":{\"samples\":119,\"min\":16.5,\"median\":49.899999999999636,\"p95\":116.70000000000073,\"max\":1316.6000000000001},\"fps\":16.414472322992676,\"drawCalls\":4,\"triangles\":120000}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:37.515Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f503dcb13d1b9f4cc52f-3ed9506f14beb50c4996",
+          "file": "spike.spec.ts",
+          "line": 4,
+          "column": 3
+        },
+        {
+          "title": "troop spike measures static-bob in software GL",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9983,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "SPIKE_RESULT {\"mode\":\"static-bob\",\"environment\":{\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36\",\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"width\":640,\"height\":360,\"dpr\":1,\"troopCount\":2000,\"buckets\":4,\"trianglesPerTroop\":60},\"warmupFrames\":30,\"updateMs\":{\"samples\":120,\"min\":0,\"median\":0,\"p95\":0.10000014305114746,\"max\":0.10000014305114746},\"renderSubmissionMs\":{\"samples\":120,\"min\":0.09999990463256836,\"median\":0.20000004768371582,\"p95\":0.5999999046325684,\"max\":1.6000001430511475},\"jsMs\":{\"samples\":120,\"min\":0.09999990463256836,\"median\":0.2999999523162842,\"p95\":0.5999999046325684,\"max\":1.6000001430511475},\"frameMs\":{\"samples\":119,\"min\":16.5,\"median\":50.099999999999454,\"p95\":116.69999999999982,\"max\":133.30000000000018},\"fps\":19.350222771472247,\"drawCalls\":4,\"triangles\":120000}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:45.791Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f503dcb13d1b9f4cc52f-6adb6fb42ed15b7ba786",
+          "file": "spike.spec.ts",
+          "line": 4,
+          "column": 3
+        },
+        {
+          "title": "troop spike measures none in software GL",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9357,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "SPIKE_RESULT {\"mode\":\"none\",\"environment\":{\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36\",\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"width\":640,\"height\":360,\"dpr\":1,\"troopCount\":2000,\"buckets\":4,\"trianglesPerTroop\":60},\"warmupFrames\":30,\"updateMs\":{\"samples\":120,\"min\":0,\"median\":0,\"p95\":0.10000014305114746,\"max\":0.5},\"renderSubmissionMs\":{\"samples\":120,\"min\":0.09999990463256836,\"median\":0.20000004768371582,\"p95\":0.5,\"max\":1.8999998569488525},\"jsMs\":{\"samples\":120,\"min\":0.09999990463256836,\"median\":0.2999999523162842,\"p95\":0.5,\"max\":1.8999998569488525},\"frameMs\":{\"samples\":119,\"min\":16.5,\"median\":50,\"p95\":116.69999999999982,\"max\":1249.8999999999999},\"fps\":16.52846646388044,\"drawCalls\":4,\"triangles\":120000}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:18:55.793Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f503dcb13d1b9f4cc52f-52ca4c095543a58a9b2e",
+          "file": "spike.spec.ts",
+          "line": 4,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "towers.spec.ts",
+      "file": "towers.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "manifest-only fixture towers, real capture recolour, component labels, glyphs, projection and cache-safe disposal",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2979,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:19:05.187Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f68a6381e1f656596953-7f1eda3c096c1046b653",
+          "file": "towers.spec.ts",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "troops.spec.ts",
+      "file": "troops.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "real public sim: 2,000 troops, head-on placement, cut-channel persistence, GPU cleanup and shader correctness",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 24620,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "TROOPS_RESULT {\"count\":2000,\"cutCount\":2000,\"linesAfterCut\":0,\"calls\":14,\"triangles\":72000,\"colored\":698,\"projected\":[-0.4012865467829268,0.23697801839245106,0.998044029480067],\"fronts\":[[20,0,-1.5707963705062866,1],[20,0,1.5707963705062866,2],[20,20,-1.5707963705062866,3],[20,20,1.5707963705062866,4]],\"headVisible\":[52,12],\"baseline\":{\"geometries\":0,\"textures\":1},\"after\":{\"geometries\":0,\"textures\":1},\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"jsMs\":{\"samples\":120,\"median\":0.5,\"p95\":1.1999998092651367,\"max\":3.5},\"updateMs\":{\"samples\":120,\"median\":0.20000004768371582,\"p95\":0.39999985694885254,\"max\":2.1000001430511475}}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T16:19:08.204Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d9685633d3b802980a57-e8d1284a076d60785d8b",
+          "file": "troops.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-09T16:16:40.488Z",
+    "duration": 177100.734,
+    "expected": 30,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
+undefined
+/root/projects/node-arena/.worktrees/feat/game-design/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --workers=1 --reporter=json

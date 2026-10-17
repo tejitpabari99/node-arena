@@ -1,0 +1,164 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "11-triple-threat",
+  "name": "Triple Threat",
+  "order": 11,
+  "band": 3,
+  "visual": "city.overcast",
+  "timeLimitSec": 300,
+  "bounds": {
+    "w": 120,
+    "h": 80
+  },
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "player.1"
+    },
+    {
+      "id": "b1",
+      "kind": "bot",
+      "botProfile": "rusher-hard",
+      "colorKey": "player.2"
+    },
+    {
+      "id": "b2",
+      "kind": "bot",
+      "botProfile": "turtle-hard",
+      "colorKey": "player.3"
+    },
+    {
+      "id": "b3",
+      "kind": "bot",
+      "botProfile": "economist-hard",
+      "colorKey": "player.4"
+    }
+  ],
+  "towers": [
+    {
+      "id": "home-1",
+      "archetype": "standard",
+      "pos": {
+        "x": -36,
+        "y": 2
+      },
+      "owner": "p1",
+      "garrison": 15
+    },
+    {
+      "id": "home-2",
+      "archetype": "standard",
+      "pos": {
+        "x": -2,
+        "y": -36
+      },
+      "owner": "b1",
+      "garrison": 15
+    },
+    {
+      "id": "home-3",
+      "archetype": "standard",
+      "pos": {
+        "x": 36,
+        "y": -2
+      },
+      "owner": "b2",
+      "garrison": 15
+    },
+    {
+      "id": "home-4",
+      "archetype": "standard",
+      "pos": {
+        "x": 2,
+        "y": 36
+      },
+      "owner": "b3",
+      "garrison": 15
+    },
+    {
+      "id": "corner-1",
+      "archetype": "standard",
+      "pos": {
+        "x": -21,
+        "y": -29
+      },
+      "owner": null,
+      "garrison": 11
+    },
+    {
+      "id": "corner-2",
+      "archetype": "standard",
+      "pos": {
+        "x": 29,
+        "y": -21
+      },
+      "owner": null,
+      "garrison": 11
+    },
+    {
+      "id": "corner-3",
+      "archetype": "standard",
+      "pos": {
+        "x": 21,
+        "y": 29
+      },
+      "owner": null,
+      "garrison": 11
+    },
+    {
+      "id": "corner-4",
+      "archetype": "standard",
+      "pos": {
+        "x": -29,
+        "y": 21
+      },
+      "owner": null,
+      "garrison": 11
+    },
+    {
+      "id": "inner-1",
+      "archetype": "small",
+      "pos": {
+        "x": -13,
+        "y": 5
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "inner-2",
+      "archetype": "small",
+      "pos": {
+        "x": -5,
+        "y": -13
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "inner-3",
+      "archetype": "small",
+      "pos": {
+        "x": 13,
+        "y": -5
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "inner-4",
+      "archetype": "small",
+      "pos": {
+        "x": 5,
+        "y": 13
+      },
+      "owner": null,
+      "garrison": 10
+    }
+  ],
+  "obstacles": [],
+  "mapObjects": [],
+  "overrides": {}
+}

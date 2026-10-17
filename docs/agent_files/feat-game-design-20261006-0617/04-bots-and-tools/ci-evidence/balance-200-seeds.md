@@ -1,0 +1,17 @@
+# balance: PASS
+
+3 balance rows; 0 flagged.
+
+Rules 1.0.0; content 1.0.0; BOT_VERSION 1.0.0.
+
+botHash: {"economist":"93b95be6659cd5975c1536b284d6c8bbc44af239fc705717bf1d1ca3f9ca223d","economist-easy":"003c090cf12d33833828ac6d689d3c9fee39d940528f672c9eddb059d414dbb7","economist-expert":"3bf3be10f22b3efdce632b0ccf545bde815b3ff5b901519a3dea358b3ee26d40","economist-hard":"eb6d8e86daf4ce8df85a1dfc5b84bf26c8f4a11aae761b08c2aa126704db031d","economist-normal":"00cf144b1f01421ae455485b2355659a4792540fe95e822e5fc21fabfcab514a","human-proxy":"759c054e22c31ba665b31f7ff2209851569b83089286f0271372fc3147d4e122","idle":"cfbed433d24e4bc79fbfeea8b4c3586e0a90a5a17a5350b589be2b368bd626a7","opportunist":"78f458a84072f555ee9190de0bb04c9fbe256cd85315bf4a359005fc185602e5","opportunist-easy":"d17fe4679a87896f87ad0656aff3bfe127a9be01da976e818c2e90078cb147a4","opportunist-expert":"173e02990410683a7402099194d2b5085ce5b8ba20e830a40aac23095dcd60cf","opportunist-hard":"8f51b466438a059a9ab0d768aada47a349546d30a97c77e96287ad1cbd6dd794","opportunist-normal":"6b8377b76e20e586a968b759d0a84918d63bdd93a29700211d5165d93824eea5","reference":"38193e5591ca6fdb76d563db0bdb26b33c0bc5dfc3fda1d31d4734402bbf759b","rusher":"459c94e25f8cc652195da9dde458bff970f7b2d8c7ded0cdc94abe981b91944a","rusher-easy":"78028d8002c77dc341293303363d2e93be4ce95385a6f7dd7b377908503b6447","rusher-expert":"c8e88b39aeeba60b7dee4d21783b6f11636f42116f8256375fcaa57214fe6f1a","rusher-hard":"3b67d2a17d3e2733ac46adaa1b477398c3794a8375e878835cdb5cf52ac2015d","rusher-normal":"47a493dd43cab5e6f4c8fa0f810b462258f8587ee06fc19133a233ca5bf723b2","sample-bot":"5d97b466044f0cb4e28ba3c24fffb6ab0a05c182d6aea2ccc5d0714d9cc42d5c","turtle":"96c108153f7b2f41a9751d7ca3125aef79f27b6bec69d5a8e4dff754f90bb9e4","turtle-easy":"7aadf5f5de9940c987e2b0a6e0be2eff14c9b250ad36f0a1af2369730fb88d66","turtle-expert":"4b6650268ad91d14f784f85b4c738b586ad6f506d34d2870515b8028424b5441","turtle-hard":"a79ee0f8281fe2dc2d9e61ded474e8a328fe6cd7409fc9e90dd70b95bb8436b1","turtle-normal":"a9ca15680bd453606ff45c4862ef02fbca7b7f6765560191d41806f849559b24"}
+
+Mode campaign; seeds 1..200. Targets absent; no band checks applied.
+
+| Level | Band | Proxy | Matches | Seat observations | Win % | Median seconds to win | Timeout % | Draw % | Median towers | Flags |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| sample | 1 | human-proxy | 200 | 200 | 100 | 189.925 | 0 | 0 | 3 |  |
+| sample | 1 | idle | 200 | 200 | 0 | — | 100 | 0 | 1 |  |
+| sample | 1 | reference | 200 | 200 | 65.5 | 224.35 | 34.5 | 0 | 3 |  |
+
+Level overrides: none.

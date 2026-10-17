@@ -1,0 +1,92 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "03-full-tank",
+  "name": "Full Tank",
+  "order": 3,
+  "band": 1,
+  "visual": "city.day",
+  "timeLimitSec": 300,
+  "bounds": {
+    "w": 120,
+    "h": 80
+  },
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "player.1"
+    },
+    {
+      "id": "b1",
+      "kind": "bot",
+      "botProfile": "turtle-easy",
+      "colorKey": "player.2"
+    }
+  ],
+  "towers": [
+    {
+      "id": "t1",
+      "archetype": "standard",
+      "pos": {
+        "x": -46,
+        "y": 2
+      },
+      "owner": "p1",
+      "garrison": 25
+    },
+    {
+      "id": "t2",
+      "archetype": "standard",
+      "pos": {
+        "x": -8,
+        "y": -30
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "t3",
+      "archetype": "standard",
+      "pos": {
+        "x": -12,
+        "y": -4
+      },
+      "owner": "p1",
+      "garrison": 15
+    },
+    {
+      "id": "t4",
+      "archetype": "standard",
+      "pos": {
+        "x": 14,
+        "y": 8
+      },
+      "owner": null,
+      "garrison": 18
+    },
+    {
+      "id": "t5",
+      "archetype": "standard",
+      "pos": {
+        "x": 10,
+        "y": 30
+      },
+      "owner": null,
+      "garrison": 14
+    },
+    {
+      "id": "t6",
+      "archetype": "standard",
+      "pos": {
+        "x": 46,
+        "y": -2
+      },
+      "owner": "b1",
+      "garrison": 6
+    }
+  ],
+  "obstacles": [],
+  "mapObjects": [],
+  "overrides": {}
+}

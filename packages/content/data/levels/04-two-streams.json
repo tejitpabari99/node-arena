@@ -1,0 +1,102 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "04-two-streams",
+  "name": "Two Streams",
+  "order": 4,
+  "band": 1,
+  "visual": "city.day",
+  "timeLimitSec": 300,
+  "bounds": {
+    "w": 120,
+    "h": 80
+  },
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "player.1"
+    },
+    {
+      "id": "b1",
+      "kind": "bot",
+      "botProfile": "rusher-easy",
+      "colorKey": "player.2"
+    }
+  ],
+  "towers": [
+    {
+      "id": "t1",
+      "archetype": "standard",
+      "pos": {
+        "x": -45,
+        "y": -5
+      },
+      "owner": "p1",
+      "garrison": 25
+    },
+    {
+      "id": "t2",
+      "archetype": "standard",
+      "pos": {
+        "x": 3,
+        "y": 4
+      },
+      "owner": null,
+      "garrison": 20
+    },
+    {
+      "id": "t3",
+      "archetype": "standard",
+      "pos": {
+        "x": 16,
+        "y": 28
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "t4",
+      "archetype": "standard",
+      "pos": {
+        "x": -30,
+        "y": 23
+      },
+      "owner": null,
+      "garrison": 10
+    },
+    {
+      "id": "t5",
+      "archetype": "standard",
+      "pos": {
+        "x": -16,
+        "y": -28
+      },
+      "owner": "p1",
+      "garrison": 12
+    },
+    {
+      "id": "t6",
+      "archetype": "standard",
+      "pos": {
+        "x": 30,
+        "y": -23
+      },
+      "owner": null,
+      "garrison": 12
+    },
+    {
+      "id": "t7",
+      "archetype": "standard",
+      "pos": {
+        "x": 45,
+        "y": 5
+      },
+      "owner": "b1",
+      "garrison": 8
+    }
+  ],
+  "obstacles": [],
+  "mapObjects": [],
+  "overrides": {}
+}

@@ -1,0 +1,747 @@
+[
+  {
+    "name": "unknown-component",
+    "files": {
+      "data/archetypes/standard.json": {
+        "$schema": "archetype.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "standard",
+        "visual": "tower",
+        "footprintRadius": 3,
+        "components": {
+          "garrison": {
+            "cap": 50
+          },
+          "generates": {
+            "troop": "regular",
+            "ratePerSec": 1.125
+          },
+          "drawsLines": {
+            "extraSlotAbove": [
+              10,
+              30
+            ]
+          },
+          "capturable": {},
+          "shoots": {
+            "radius": 12
+          }
+        }
+      }
+    },
+    "expected": [
+      {
+        "file": "data/archetypes/standard.json",
+        "pointer": "/components/shoots"
+      }
+    ],
+    "ruleIds": [
+      "R-ENT-01"
+    ]
+  },
+  {
+    "name": "unknown-field",
+    "files": {
+      "data/troops/regular.json": {
+        "$schema": "troop.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "regular",
+        "value": 1,
+        "speed": 10.125,
+        "visual": "soldier",
+        "health": 1
+      }
+    },
+    "expected": [
+      {
+        "file": "data/troops/regular.json",
+        "pointer": "/health"
+      }
+    ],
+    "ruleIds": [
+      "R-ENT-02"
+    ]
+  },
+  {
+    "name": "four-decimal-number",
+    "files": {
+      "data/troops/regular.json": {
+        "$schema": "troop.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "regular",
+        "value": 1,
+        "speed": 10.0001,
+        "visual": "soldier"
+      }
+    },
+    "expected": [
+      {
+        "file": "data/troops/regular.json",
+        "pointer": "/speed"
+      }
+    ],
+    "ruleIds": [
+      "R-TCK-02"
+    ]
+  },
+  {
+    "name": "dangling-reference",
+    "files": {
+      "data/archetypes/standard.json": {
+        "$schema": "archetype.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "standard",
+        "visual": "tower",
+        "footprintRadius": 3,
+        "components": {
+          "garrison": {
+            "cap": 50
+          },
+          "generates": {
+            "troop": "missing",
+            "ratePerSec": 1.125
+          },
+          "drawsLines": {
+            "extraSlotAbove": [
+              10,
+              30
+            ]
+          },
+          "capturable": {}
+        }
+      }
+    },
+    "expected": [
+      {
+        "file": "data/archetypes/standard.json",
+        "pointer": "/components/generates/troop"
+      }
+    ],
+    "ruleIds": [
+      "R-ENT-01"
+    ]
+  },
+  {
+    "name": "overlapping-towers",
+    "files": {
+      "data/levels/sample.json": {
+        "$schema": "level.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "sample",
+        "name": "Sample",
+        "order": 1,
+        "band": 1,
+        "bounds": {
+          "w": 120,
+          "h": 80
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "red"
+          },
+          {
+            "id": "b1",
+            "kind": "bot",
+            "colorKey": "blue",
+            "botProfile": "easy"
+          }
+        ],
+        "towers": [
+          {
+            "id": "t1",
+            "archetype": "standard",
+            "pos": {
+              "x": -40.125,
+              "y": 0.001
+            },
+            "owner": "p1",
+            "garrison": 10
+          },
+          {
+            "id": "t2",
+            "archetype": "standard",
+            "pos": {
+              "x": -40.125,
+              "y": 0.001
+            },
+            "owner": "b1",
+            "garrison": 15
+          }
+        ],
+        "obstacles": [],
+        "mapObjects": [],
+        "overrides": {}
+      }
+    },
+    "expected": [
+      {
+        "file": "data/levels/sample.json",
+        "pointer": "/towers/1/pos"
+      }
+    ],
+    "ruleIds": []
+  },
+  {
+    "name": "nonempty-obstacles",
+    "files": {
+      "data/levels/sample.json": {
+        "$schema": "level.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "sample",
+        "name": "Sample",
+        "order": 1,
+        "band": 1,
+        "bounds": {
+          "w": 120,
+          "h": 80
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "red"
+          },
+          {
+            "id": "b1",
+            "kind": "bot",
+            "colorKey": "blue",
+            "botProfile": "easy"
+          }
+        ],
+        "towers": [
+          {
+            "id": "t1",
+            "archetype": "standard",
+            "pos": {
+              "x": -40.125,
+              "y": 0.001
+            },
+            "owner": "p1",
+            "garrison": 10
+          },
+          {
+            "id": "t2",
+            "archetype": "standard",
+            "pos": {
+              "x": 40,
+              "y": -2.125
+            },
+            "owner": "b1",
+            "garrison": 15
+          }
+        ],
+        "obstacles": [
+          {
+            "kind": "wall"
+          }
+        ],
+        "mapObjects": [],
+        "overrides": {}
+      }
+    },
+    "expected": [
+      {
+        "file": "data/levels/sample.json",
+        "pointer": "/obstacles/0"
+      }
+    ],
+    "ruleIds": []
+  },
+  {
+    "name": "nonempty-map-objects",
+    "files": {
+      "data/levels/sample.json": {
+        "$schema": "level.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "sample",
+        "name": "Sample",
+        "order": 1,
+        "band": 1,
+        "bounds": {
+          "w": 120,
+          "h": 80
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "red"
+          },
+          {
+            "id": "b1",
+            "kind": "bot",
+            "colorKey": "blue",
+            "botProfile": "easy"
+          }
+        ],
+        "towers": [
+          {
+            "id": "t1",
+            "archetype": "standard",
+            "pos": {
+              "x": -40.125,
+              "y": 0.001
+            },
+            "owner": "p1",
+            "garrison": 10
+          },
+          {
+            "id": "t2",
+            "archetype": "standard",
+            "pos": {
+              "x": 40,
+              "y": -2.125
+            },
+            "owner": "b1",
+            "garrison": 15
+          }
+        ],
+        "obstacles": [],
+        "mapObjects": [
+          {
+            "kind": "gate"
+          }
+        ],
+        "overrides": {}
+      }
+    },
+    "expected": [
+      {
+        "file": "data/levels/sample.json",
+        "pointer": "/mapObjects/0"
+      }
+    ],
+    "ruleIds": []
+  },
+  {
+    "name": "troop-value-two",
+    "files": {
+      "data/troops/regular.json": {
+        "$schema": "troop.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "regular",
+        "value": 2,
+        "speed": 10.125,
+        "visual": "soldier"
+      }
+    },
+    "expected": [
+      {
+        "file": "data/troops/regular.json",
+        "pointer": "/value"
+      }
+    ],
+    "ruleIds": [
+      "R-ENT-02"
+    ]
+  },
+  {
+    "name": "missing-override-param",
+    "files": {
+      "data/levels/sample.json": {
+        "$schema": "level.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "sample",
+        "name": "Sample",
+        "order": 1,
+        "band": 1,
+        "bounds": {
+          "w": 120,
+          "h": 80
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "red"
+          },
+          {
+            "id": "b1",
+            "kind": "bot",
+            "colorKey": "blue",
+            "botProfile": "easy"
+          }
+        ],
+        "towers": [
+          {
+            "id": "t1",
+            "archetype": "standard",
+            "pos": {
+              "x": -40.125,
+              "y": 0.001
+            },
+            "owner": "p1",
+            "garrison": 10
+          },
+          {
+            "id": "t2",
+            "archetype": "standard",
+            "pos": {
+              "x": 40,
+              "y": -2.125
+            },
+            "owner": "b1",
+            "garrison": 15
+          }
+        ],
+        "obstacles": [],
+        "mapObjects": [],
+        "overrides": {
+          "archetypes": {
+            "standard": {
+              "components": {
+                "garrison": {
+                  "health": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "expected": [
+      {
+        "file": "data/levels/sample.json",
+        "pointer": "/overrides/archetypes/standard/components/garrison/health"
+      }
+    ],
+    "ruleIds": []
+  },
+  {
+    "name": "coordinate-over-500",
+    "files": {
+      "data/levels/sample.json": {
+        "$schema": "level.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "sample",
+        "name": "Sample",
+        "order": 1,
+        "band": 1,
+        "bounds": {
+          "w": 120,
+          "h": 80
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "red"
+          },
+          {
+            "id": "b1",
+            "kind": "bot",
+            "colorKey": "blue",
+            "botProfile": "easy"
+          }
+        ],
+        "towers": [
+          {
+            "id": "t1",
+            "archetype": "standard",
+            "pos": {
+              "x": 500.001,
+              "y": 0.001
+            },
+            "owner": "p1",
+            "garrison": 10
+          },
+          {
+            "id": "t2",
+            "archetype": "standard",
+            "pos": {
+              "x": 40,
+              "y": -2.125
+            },
+            "owner": "b1",
+            "garrison": 15
+          }
+        ],
+        "obstacles": [],
+        "mapObjects": [],
+        "overrides": {}
+      }
+    },
+    "expected": [
+      {
+        "file": "data/levels/sample.json",
+        "pointer": "/towers/0/pos/x"
+      }
+    ],
+    "ruleIds": [
+      "R-TCK-02"
+    ]
+  },
+  {
+    "name": "speed-over-100",
+    "files": {
+      "data/troops/regular.json": {
+        "$schema": "troop.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "regular",
+        "value": 1,
+        "speed": 100.001,
+        "visual": "soldier"
+      }
+    },
+    "expected": [
+      {
+        "file": "data/troops/regular.json",
+        "pointer": "/speed"
+      }
+    ],
+    "ruleIds": [
+      "R-TCK-02"
+    ]
+  },
+  {
+    "name": "tier-overrides-non-skill",
+    "files": {
+      "data/bots/easy.json": {
+        "$schema": "bot.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "easy",
+        "kind": "utility",
+        "params": {
+          "extends": "base",
+          "skill": {
+            "decisionIntervalSec": 1.25,
+            "noise": 0.3,
+            "actionsPerDecision": 2
+          },
+          "bias": {
+            "attack": 1
+          }
+        }
+      }
+    },
+    "expected": [
+      {
+        "file": "data/bots/easy.json",
+        "pointer": "/params/bias"
+      }
+    ],
+    "ruleIds": []
+  },
+  {
+    "name": "tooling-profile-reference",
+    "files": {
+      "data/levels/sample.json": {
+        "$schema": "level.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "sample",
+        "name": "Sample",
+        "order": 1,
+        "band": 1,
+        "bounds": {
+          "w": 120,
+          "h": 80
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "red"
+          },
+          {
+            "id": "b1",
+            "kind": "bot",
+            "colorKey": "blue",
+            "botProfile": "reference"
+          }
+        ],
+        "towers": [
+          {
+            "id": "t1",
+            "archetype": "standard",
+            "pos": {
+              "x": -40.125,
+              "y": 0.001
+            },
+            "owner": "p1",
+            "garrison": 10
+          },
+          {
+            "id": "t2",
+            "archetype": "standard",
+            "pos": {
+              "x": 40,
+              "y": -2.125
+            },
+            "owner": "b1",
+            "garrison": 15
+          }
+        ],
+        "obstacles": [],
+        "mapObjects": [],
+        "overrides": {}
+      },
+      "data/bots/reference.json": {
+        "$schema": "bot.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "reference",
+        "kind": "utility",
+        "params": {
+          "skill": {
+            "decisionIntervalSec": 1.25,
+            "noise": 0.1,
+            "actionsPerDecision": 2
+          },
+          "bias": {
+            "attack": 1.125
+          }
+        }
+      }
+    },
+    "expected": [
+      {
+        "file": "data/levels/sample.json",
+        "pointer": "/players/1/botProfile"
+      }
+    ],
+    "ruleIds": []
+  },
+  {
+    "name": "tooling-profile-human-proxy",
+    "files": {
+      "data/levels/sample.json": {
+        "$schema": "level.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "sample",
+        "name": "Sample",
+        "order": 1,
+        "band": 1,
+        "bounds": {
+          "w": 120,
+          "h": 80
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "red"
+          },
+          {
+            "id": "b1",
+            "kind": "bot",
+            "colorKey": "blue",
+            "botProfile": "human-proxy"
+          }
+        ],
+        "towers": [
+          {
+            "id": "t1",
+            "archetype": "standard",
+            "pos": {
+              "x": -40.125,
+              "y": 0.001
+            },
+            "owner": "p1",
+            "garrison": 10
+          },
+          {
+            "id": "t2",
+            "archetype": "standard",
+            "pos": {
+              "x": 40,
+              "y": -2.125
+            },
+            "owner": "b1",
+            "garrison": 15
+          }
+        ],
+        "obstacles": [],
+        "mapObjects": [],
+        "overrides": {}
+      },
+      "data/bots/human-proxy.json": {
+        "$schema": "bot.schema.json",
+        "schemaVersion": "1.0.0",
+        "id": "human-proxy",
+        "kind": "utility",
+        "params": {
+          "skill": {
+            "decisionIntervalSec": 1.25,
+            "noise": 0.1,
+            "actionsPerDecision": 2
+          },
+          "bias": {
+            "attack": 1.125
+          }
+        }
+      }
+    },
+    "expected": [
+      {
+        "file": "data/levels/sample.json",
+        "pointer": "/players/1/botProfile"
+      }
+    ],
+    "ruleIds": []
+  },
+  {
+    "name": "missing-manifest-key",
+    "files": {},
+    "manifest": {
+      "$schema": "manifest.schema.json",
+      "schemaVersion": "1.0.0",
+      "palettes": {
+        "default": {
+          "red": "#ff0000",
+          "blue": "#0000ff"
+        },
+        "colorblind": {
+          "red": "#ffff00",
+          "blue": "#00ffff"
+        }
+      },
+      "teamMarkers": {},
+      "models": {
+        "box": {
+          "primitive": "box",
+          "size": [
+            1,
+            1,
+            1
+          ]
+        }
+      },
+      "visuals": {
+        "soldier": {
+          "kind": "troop",
+          "model": "box",
+          "scale": 1
+        }
+      },
+      "themes": {
+        "city": {
+          "ground": "#000000",
+          "sky": "#ffffff",
+          "light": {
+            "dir": [
+              1,
+              1,
+              1
+            ],
+            "color": "#ffffff",
+            "intensity": 1
+          }
+        }
+      },
+      "events": {},
+      "camera": {
+        "pitchDeg": 45,
+        "fov": 50,
+        "margin": 0
+      }
+    },
+    "expected": [
+      {
+        "file": "data/archetypes/standard.json",
+        "pointer": "/visual"
+      }
+    ],
+    "ruleIds": []
+  }
+]

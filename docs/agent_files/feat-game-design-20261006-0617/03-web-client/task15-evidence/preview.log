@@ -1,0 +1,40 @@
+[WebServer] (node:2294814) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:2294827) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 25 tests using 1 worker
+
+(node:2294855) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/acceptance.spec.ts:21:1 › test API is absent normally, deterministic driver draws for 30 seconds and replays (1.3s)
+  ✓   2 [chromium] › e2e/acceptance.spec.ts:34:41 › right cut stops channel spawning but in-flight troops arrive (1.0s)
+  ✓   3 [chromium] › e2e/acceptance.spec.ts:34:41 › swipe cut stops channel spawning but in-flight troops arrive (1.3s)
+  ✓   4 [chromium] › e2e/acceptance.spec.ts:54:1 › 20 authored levels, completion survives reload, retry/next and timeout have no interstitial (10.3s)
+  ✓   5 [chromium] › e2e/acceptance.spec.ts:72:1 › capture, glyphs and clash use real event positions and current labels (5.6s)
+  ✓   6 [chromium] › e2e/acceptance.spec.ts:92:1 › full runtime stress and twenty level-switch GPU/DOM baseline (25.1s)
+  ✓   7 [chromium] › e2e/acceptance.spec.ts:119:1 › manifest GLB swap, failed-only asset Retry and invalid boot recovery (1.6s)
+  ✓   8 [chromium] › e2e/acceptance.spec.ts:151:1 › stable greybox menu, picker, game and colourblind software GL screenshots (1.4s)
+  -   9 [chromium] › e2e/app-flow.spec.ts:2:1 › future 20-level content runs through real results, retry, next and completed picker
+  -  10 [chromium] › e2e/assets.spec.ts:4:1 › asset error recovery, real GLTF/audio decode, and twenty GPU resource releases
+  -  11 [chromium] › e2e/audio.spec.ts:3:1 › real WebAudio decodes a test WAV, plays mapped voices, mutes independently and disposes
+  ✓  12 [chromium] › e2e/boot.spec.ts:2:1 › menu loads authored content; real runtime renders and pauses without simulation restart (3.5s)
+  ✓  13 [chromium] › e2e/dev.spec.ts:2:1 › query gates live tuning; apply restarts and downloads actual authored JSON (4.3s)
+  -  14 [chromium] › e2e/input.spec.ts:38:1 › draw snaps, queues next tick, explains duplicate/no-slot and Escape consumes active gesture
+  -  15 [chromium] › e2e/input.spec.ts:49:1 › right-click and contextmenu-only trackpad cut nearest own offset line; queued cut preserves arrivals
+  -  16 [chromium] › e2e/input.spec.ts:61:1 › empty-ground swipe cuts once per stroke, includes final segment and respects CSS tolerance
+  -  17 [chromium] › e2e/input.spec.ts:70:1 › paused/results ignore all gestures; pointer cancellation, canvas rebinding and disposal remove input
+  -  18 [chromium] › e2e/input.spec.ts:82:1 › 12px right-click threshold, primary pointer cancellation and canvas replacement preserve one binding
+  -  19 [chromium] › e2e/lines-fx.spec.ts:2:1 › real sim opposite ribbons, clash event coordinates, capture effects, scrolling shader and GPU cleanup
+  -  20 [chromium] › e2e/scene.spec.ts:5:1 › compiled level themes, real GL props, fixed fit through resize, live quality context changes and disposal
+SPIKE_RESULT {"mode":"bob","environment":{"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","width":640,"height":360,"dpr":1,"troopCount":2000,"buckets":4,"trianglesPerTroop":60},"warmupFrames":30,"updateMs":{"samples":120,"min":0,"median":0,"p95":0.10000014305114746,"max":0.20000004768371582},"renderSubmissionMs":{"samples":120,"min":0.09999990463256836,"median":0.2999999523162842,"p95":0.6000001430511475,"max":2.1000001430511475},"jsMs":{"samples":120,"min":0.10000014305114746,"median":0.2999999523162842,"p95":0.7999999523162842,"max":2.200000047683716},"frameMs":{"samples":119,"min":16.599999999999454,"median":50,"p95":116.69999999999982,"max":1299.9999999999998},"fps":16.22801036410746,"drawCalls":4,"triangles":120000}
+  ✓  21 [chromium] › e2e/spike.spec.ts:4:3 › troop spike measures bob in software GL (8.1s)
+SPIKE_RESULT {"mode":"static-bob","environment":{"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","width":640,"height":360,"dpr":1,"troopCount":2000,"buckets":4,"trianglesPerTroop":60},"warmupFrames":30,"updateMs":{"samples":120,"min":0,"median":0,"p95":0.10000014305114746,"max":0.10000014305114746},"renderSubmissionMs":{"samples":120,"min":0.09999990463256836,"median":0.2999999523162842,"p95":0.7000000476837158,"max":2.1999998092651367},"jsMs":{"samples":120,"min":0.09999990463256836,"median":0.2999999523162842,"p95":0.7000000476837158,"max":2.299999952316284},"frameMs":{"samples":119,"min":16.59999999999991,"median":50,"p95":116.5,"max":1283.1999999999998},"fps":16.605269033266353,"drawCalls":4,"triangles":120000}
+  ✓  22 [chromium] › e2e/spike.spec.ts:4:3 › troop spike measures static-bob in software GL (9.0s)
+SPIKE_RESULT {"mode":"none","environment":{"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)","width":640,"height":360,"dpr":1,"troopCount":2000,"buckets":4,"trianglesPerTroop":60},"warmupFrames":30,"updateMs":{"samples":120,"min":0,"median":0,"p95":0.10000014305114746,"max":0.10000014305114746},"renderSubmissionMs":{"samples":120,"min":0.09999990463256836,"median":0.2999999523162842,"p95":1.0999999046325684,"max":3.3999998569488525},"jsMs":{"samples":120,"min":0.09999990463256836,"median":0.2999999523162842,"p95":1.0999999046325684,"max":3.5},"frameMs":{"samples":119,"min":16.599999999999454,"median":50,"p95":116.69999999999982,"max":1333.2},"fps":16.52823689546932,"drawCalls":4,"triangles":120000}
+  ✓  23 [chromium] › e2e/spike.spec.ts:4:3 › troop spike measures none in software GL (9.1s)
+  -  24 [chromium] › e2e/towers.spec.ts:5:1 › manifest-only fixture towers, real capture recolour, component labels, glyphs, projection and cache-safe disposal
+  -  25 [chromium] › e2e/troops.spec.ts:2:1 › real public sim: 2,000 troops, head-on placement, cut-channel persistence, GPU cleanup and shader correctness
+
+  12 skipped
+  13 passed (1.5m)

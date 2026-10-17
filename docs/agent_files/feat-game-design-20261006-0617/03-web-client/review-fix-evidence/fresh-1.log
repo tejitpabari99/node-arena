@@ -1,0 +1,2342 @@
+
+> node-arena@ test /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm -r test
+
+Scope: 3 of 4 workspace projects
+packages/content test$ tsx --test test/*.test.ts
+packages/content test: TAP version 13
+packages/content test: # Subtest: AC4: rejection fixture baseline satisfies schema, registry, semantics and manifest
+packages/content test: ok 1 - AC4: rejection fixture baseline satisfies schema, registry, semantics and manifest
+packages/content test:   ---
+packages/content test:   duration_ms: 16.779611
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4 (covers R-ENT-01): rejects fixture unknown-component
+packages/content test: ok 2 - AC4 (covers R-ENT-01): rejects fixture unknown-component
+packages/content test:   ---
+packages/content test:   duration_ms: 2.827526
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4 (covers R-ENT-02): rejects fixture unknown-field
+packages/content test: ok 3 - AC4 (covers R-ENT-02): rejects fixture unknown-field
+packages/content test:   ---
+packages/content test:   duration_ms: 2.85634
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4 (covers R-TCK-02): rejects fixture four-decimal-number
+packages/content test: ok 4 - AC4 (covers R-TCK-02): rejects fixture four-decimal-number
+packages/content test:   ---
+packages/content test:   duration_ms: 2.144873
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4 (covers R-ENT-01): rejects fixture dangling-reference
+packages/content test: ok 5 - AC4 (covers R-ENT-01): rejects fixture dangling-reference
+packages/content test:   ---
+packages/content test:   duration_ms: 1.022371
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4: rejects fixture overlapping-towers
+packages/content test: ok 6 - AC4: rejects fixture overlapping-towers
+packages/content test:   ---
+packages/content test:   duration_ms: 1.821988
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4: rejects fixture nonempty-obstacles
+packages/content test: ok 7 - AC4: rejects fixture nonempty-obstacles
+packages/content test:   ---
+packages/content test:   duration_ms: 1.034915
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4: rejects fixture nonempty-map-objects
+packages/content test: ok 8 - AC4: rejects fixture nonempty-map-objects
+packages/content test:   ---
+packages/content test:   duration_ms: 0.852867
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4 (covers R-ENT-02): rejects fixture troop-value-two
+packages/content test: ok 9 - AC4 (covers R-ENT-02): rejects fixture troop-value-two
+packages/content test:   ---
+packages/content test:   duration_ms: 2.268299
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4: rejects fixture missing-override-param
+packages/content test: ok 10 - AC4: rejects fixture missing-override-param
+packages/content test:   ---
+packages/content test:   duration_ms: 1.75057
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4 (covers R-TCK-02): rejects fixture coordinate-over-500
+packages/content test: ok 11 - AC4 (covers R-TCK-02): rejects fixture coordinate-over-500
+packages/content test:   ---
+packages/content test:   duration_ms: 2.113464
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4 (covers R-TCK-02): rejects fixture speed-over-100
+packages/content test: ok 12 - AC4 (covers R-TCK-02): rejects fixture speed-over-100
+packages/content test:   ---
+packages/content test:   duration_ms: 1.130728
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4: rejects fixture tier-overrides-non-skill
+packages/content test: ok 13 - AC4: rejects fixture tier-overrides-non-skill
+packages/content test:   ---
+packages/content test:   duration_ms: 0.973468
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4: rejects fixture tooling-profile-reference
+packages/content test: ok 14 - AC4: rejects fixture tooling-profile-reference
+packages/content test:   ---
+packages/content test:   duration_ms: 0.971122
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4: rejects fixture tooling-profile-human-proxy
+packages/content test: ok 15 - AC4: rejects fixture tooling-profile-human-proxy
+packages/content test:   ---
+packages/content test:   duration_ms: 1.895006
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC4: rejects fixture missing-manifest-key
+packages/content test: ok 16 - AC4: rejects fixture missing-manifest-key
+packages/content test:   ---
+packages/content test:   duration_ms: 0.637536
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC5 (covers R-ENT-01, covers R-ENT-02): archer/tank fail only their support contract and pass a registry extension
+packages/content test: ok 17 - AC5 (covers R-ENT-01, covers R-ENT-02): archer/tank fail only their support contract and pass a registry extension
+packages/content test:   ---
+packages/content test:   duration_ms: 5.935998
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC3: generation rate changes simHash
+packages/content test: ok 18 - AC3: generation rate changes simHash
+packages/content test:   ---
+packages/content test:   duration_ms: 3.902948
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC3: troop speed changes simHash
+packages/content test: ok 19 - AC3: troop speed changes simHash
+packages/content test:   ---
+packages/content test:   duration_ms: 2.500732
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC3: tower position changes simHash
+packages/content test: ok 20 - AC3: tower position changes simHash
+packages/content test:   ---
+packages/content test:   duration_ms: 2.130156
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC3: level name preserves simHash
+packages/content test: ok 21 - AC3: level name preserves simHash
+packages/content test:   ---
+packages/content test:   duration_ms: 2.559284
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC3: archetype visual preserves simHash
+packages/content test: ok 22 - AC3: archetype visual preserves simHash
+packages/content test:   ---
+packages/content test:   duration_ms: 7.145645
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC3: troop visual preserves simHash
+packages/content test: ok 23 - AC3: troop visual preserves simHash
+packages/content test:   ---
+packages/content test:   duration_ms: 5.40819
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC3: level visual preserves simHash
+packages/content test: ok 24 - AC3: level visual preserves simHash
+packages/content test:   ---
+packages/content test:   duration_ms: 2.192394
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: shipped sample validates and compiles to usable integer simulation inputs
+packages/content test: ok 25 - shipped sample validates and compiles to usable integer simulation inputs
+packages/content test:   ---
+packages/content test:   duration_ms: 20.076892
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: shipped small and large variants preserve base behavior with distinct capacities and generation
+packages/content test: ok 26 - shipped small and large variants preserve base behavior with distinct capacities and generation
+packages/content test:   ---
+packages/content test:   duration_ms: 14.920784
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: valid sample balance edits change simulation identity while reskins preserve it
+packages/content test: ok 27 - valid sample balance edits change simulation identity while reskins preserve it
+packages/content test:   ---
+packages/content test:   duration_ms: 16.023086
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: AC6 (covers R-TCK-02, covers R-TCK-03): Node fs and a Vite raw glob compile identically in Chromium
+packages/content test: ok 28 - AC6 (covers R-TCK-02, covers R-TCK-03): Node fs and a Vite raw glob compile identically in Chromium
+packages/content test:   ---
+packages/content test:   duration_ms: 820.642892
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader.ts rejects the Node import fs
+packages/content test: ok 29 - loader.ts rejects the Node import fs
+packages/content test:   ---
+packages/content test:   duration_ms: 1488.179613
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader.ts rejects the Node import fs/promises
+packages/content test: ok 30 - loader.ts rejects the Node import fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 6.947547
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader.ts rejects the Node import node:fs
+packages/content test: ok 31 - loader.ts rejects the Node import node:fs
+packages/content test:   ---
+packages/content test:   duration_ms: 2.724941
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader.ts rejects the Node import node:fs/promises
+packages/content test: ok 32 - loader.ts rejects the Node import node:fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 2.315077
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader.ts rejects the Node import path
+packages/content test: ok 33 - loader.ts rejects the Node import path
+packages/content test:   ---
+packages/content test:   duration_ms: 3.44857
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader.ts rejects the Node import node:path
+packages/content test: ok 34 - loader.ts rejects the Node import node:path
+packages/content test:   ---
+packages/content test:   duration_ms: 2.483269
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader.ts rejects the Node import crypto
+packages/content test: ok 35 - loader.ts rejects the Node import crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 2.248771
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader.ts rejects the Node import node:crypto
+packages/content test: ok 36 - loader.ts rejects the Node import node:crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 1.412345
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validate.ts rejects the Node import fs
+packages/content test: ok 37 - validate.ts rejects the Node import fs
+packages/content test:   ---
+packages/content test:   duration_ms: 5.055839
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validate.ts rejects the Node import fs/promises
+packages/content test: ok 38 - validate.ts rejects the Node import fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 2.407845
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validate.ts rejects the Node import node:fs
+packages/content test: ok 39 - validate.ts rejects the Node import node:fs
+packages/content test:   ---
+packages/content test:   duration_ms: 1.487228
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validate.ts rejects the Node import node:fs/promises
+packages/content test: ok 40 - validate.ts rejects the Node import node:fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 1.143542
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validate.ts rejects the Node import path
+packages/content test: ok 41 - validate.ts rejects the Node import path
+packages/content test:   ---
+packages/content test:   duration_ms: 1.009005
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validate.ts rejects the Node import node:path
+packages/content test: ok 42 - validate.ts rejects the Node import node:path
+packages/content test:   ---
+packages/content test:   duration_ms: 1.614291
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validate.ts rejects the Node import crypto
+packages/content test: ok 43 - validate.ts rejects the Node import crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 1.093867
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validate.ts rejects the Node import node:crypto
+packages/content test: ok 44 - validate.ts rejects the Node import node:crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 1.17362
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler.ts rejects the Node import fs
+packages/content test: ok 45 - compiler.ts rejects the Node import fs
+packages/content test:   ---
+packages/content test:   duration_ms: 13.978344
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler.ts rejects the Node import fs/promises
+packages/content test: ok 46 - compiler.ts rejects the Node import fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 1.218665
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler.ts rejects the Node import node:fs
+packages/content test: ok 47 - compiler.ts rejects the Node import node:fs
+packages/content test:   ---
+packages/content test:   duration_ms: 0.935957
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler.ts rejects the Node import node:fs/promises
+packages/content test: ok 48 - compiler.ts rejects the Node import node:fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 1.127591
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler.ts rejects the Node import path
+packages/content test: ok 49 - compiler.ts rejects the Node import path
+packages/content test:   ---
+packages/content test:   duration_ms: 2.387897
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler.ts rejects the Node import node:path
+packages/content test: ok 50 - compiler.ts rejects the Node import node:path
+packages/content test:   ---
+packages/content test:   duration_ms: 1.079892
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler.ts rejects the Node import crypto
+packages/content test: ok 51 - compiler.ts rejects the Node import crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.936277
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler.ts rejects the Node import node:crypto
+packages/content test: ok 52 - compiler.ts rejects the Node import node:crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.867115
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash.ts rejects the Node import fs
+packages/content test: ok 53 - hash.ts rejects the Node import fs
+packages/content test:   ---
+packages/content test:   duration_ms: 1.165113
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash.ts rejects the Node import fs/promises
+packages/content test: ok 54 - hash.ts rejects the Node import fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 1.864096
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash.ts rejects the Node import node:fs
+packages/content test: ok 55 - hash.ts rejects the Node import node:fs
+packages/content test:   ---
+packages/content test:   duration_ms: 1.057538
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash.ts rejects the Node import node:fs/promises
+packages/content test: ok 56 - hash.ts rejects the Node import node:fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 0.877234
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash.ts rejects the Node import path
+packages/content test: ok 57 - hash.ts rejects the Node import path
+packages/content test:   ---
+packages/content test:   duration_ms: 1.679755
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash.ts rejects the Node import node:path
+packages/content test: ok 58 - hash.ts rejects the Node import node:path
+packages/content test:   ---
+packages/content test:   duration_ms: 0.939072
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash.ts rejects the Node import crypto
+packages/content test: ok 59 - hash.ts rejects the Node import crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.914334
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash.ts rejects the Node import node:crypto
+packages/content test: ok 60 - hash.ts rejects the Node import node:crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.847428
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loadContent.ts rejects the Node import fs
+packages/content test: ok 61 - loadContent.ts rejects the Node import fs
+packages/content test:   ---
+packages/content test:   duration_ms: 1.159733
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loadContent.ts rejects the Node import fs/promises
+packages/content test: ok 62 - loadContent.ts rejects the Node import fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 0.845925
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loadContent.ts rejects the Node import node:fs
+packages/content test: ok 63 - loadContent.ts rejects the Node import node:fs
+packages/content test:   ---
+packages/content test:   duration_ms: 0.898454
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loadContent.ts rejects the Node import node:fs/promises
+packages/content test: ok 64 - loadContent.ts rejects the Node import node:fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 0.811358
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loadContent.ts rejects the Node import path
+packages/content test: ok 65 - loadContent.ts rejects the Node import path
+packages/content test:   ---
+packages/content test:   duration_ms: 0.753318
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loadContent.ts rejects the Node import node:path
+packages/content test: ok 66 - loadContent.ts rejects the Node import node:path
+packages/content test:   ---
+packages/content test:   duration_ms: 0.843749
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loadContent.ts rejects the Node import crypto
+packages/content test: ok 67 - loadContent.ts rejects the Node import crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.718661
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loadContent.ts rejects the Node import node:crypto
+packages/content test: ok 68 - loadContent.ts rejects the Node import node:crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.694967
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validateContent.ts rejects the Node import fs
+packages/content test: ok 69 - validateContent.ts rejects the Node import fs
+packages/content test:   ---
+packages/content test:   duration_ms: 1.021959
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validateContent.ts rejects the Node import fs/promises
+packages/content test: ok 70 - validateContent.ts rejects the Node import fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 0.820265
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validateContent.ts rejects the Node import node:fs
+packages/content test: ok 71 - validateContent.ts rejects the Node import node:fs
+packages/content test:   ---
+packages/content test:   duration_ms: 1.455287
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validateContent.ts rejects the Node import node:fs/promises
+packages/content test: ok 72 - validateContent.ts rejects the Node import node:fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 1.094929
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validateContent.ts rejects the Node import path
+packages/content test: ok 73 - validateContent.ts rejects the Node import path
+packages/content test:   ---
+packages/content test:   duration_ms: 0.90087
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validateContent.ts rejects the Node import node:path
+packages/content test: ok 74 - validateContent.ts rejects the Node import node:path
+packages/content test:   ---
+packages/content test:   duration_ms: 0.896411
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validateContent.ts rejects the Node import crypto
+packages/content test: ok 75 - validateContent.ts rejects the Node import crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.964841
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validateContent.ts rejects the Node import node:crypto
+packages/content test: ok 76 - validateContent.ts rejects the Node import node:crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 1.056186
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compileLevel.ts rejects the Node import fs
+packages/content test: ok 77 - compileLevel.ts rejects the Node import fs
+packages/content test:   ---
+packages/content test:   duration_ms: 1.054613
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compileLevel.ts rejects the Node import fs/promises
+packages/content test: ok 78 - compileLevel.ts rejects the Node import fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 0.838811
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compileLevel.ts rejects the Node import node:fs
+packages/content test: ok 79 - compileLevel.ts rejects the Node import node:fs
+packages/content test:   ---
+packages/content test:   duration_ms: 0.75446
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compileLevel.ts rejects the Node import node:fs/promises
+packages/content test: ok 80 - compileLevel.ts rejects the Node import node:fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 0.704994
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compileLevel.ts rejects the Node import path
+packages/content test: ok 81 - compileLevel.ts rejects the Node import path
+packages/content test:   ---
+packages/content test:   duration_ms: 0.672062
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compileLevel.ts rejects the Node import node:path
+packages/content test: ok 82 - compileLevel.ts rejects the Node import node:path
+packages/content test:   ---
+packages/content test:   duration_ms: 0.912592
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compileLevel.ts rejects the Node import crypto
+packages/content test: ok 83 - compileLevel.ts rejects the Node import crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.792091
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compileLevel.ts rejects the Node import node:crypto
+packages/content test: ok 84 - compileLevel.ts rejects the Node import node:crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.696008
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash/sha256.ts rejects the Node import fs
+packages/content test: ok 85 - hash/sha256.ts rejects the Node import fs
+packages/content test:   ---
+packages/content test:   duration_ms: 35.875401
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash/sha256.ts rejects the Node import fs/promises
+packages/content test: ok 86 - hash/sha256.ts rejects the Node import fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 1.77617
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash/sha256.ts rejects the Node import node:fs
+packages/content test: ok 87 - hash/sha256.ts rejects the Node import node:fs
+packages/content test:   ---
+packages/content test:   duration_ms: 0.939302
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash/sha256.ts rejects the Node import node:fs/promises
+packages/content test: ok 88 - hash/sha256.ts rejects the Node import node:fs/promises
+packages/content test:   ---
+packages/content test:   duration_ms: 0.947298
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash/sha256.ts rejects the Node import path
+packages/content test: ok 89 - hash/sha256.ts rejects the Node import path
+packages/content test:   ---
+packages/content test:   duration_ms: 0.961244
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash/sha256.ts rejects the Node import node:path
+packages/content test: ok 90 - hash/sha256.ts rejects the Node import node:path
+packages/content test:   ---
+packages/content test:   duration_ms: 1.575666
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash/sha256.ts rejects the Node import crypto
+packages/content test: ok 91 - hash/sha256.ts rejects the Node import crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.94312
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hash/sha256.ts rejects the Node import node:crypto
+packages/content test: ok 92 - hash/sha256.ts rejects the Node import node:crypto
+packages/content test:   ---
+packages/content test:   duration_ms: 0.788284
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: a browser-safe validator may import Ajv
+packages/content test: ok 93 - a browser-safe validator may import Ajv
+packages/content test:   ---
+packages/content test:   duration_ms: 3.30093
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the browser boundary also rejects export { readFile } from 'node:fs';
+packages/content test: ok 94 - the browser boundary also rejects export { readFile } from 'node:fs';
+packages/content test:   ---
+packages/content test:   duration_ms: 2.655768
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the browser boundary also rejects const fs = await import('node:fs');
+packages/content test: ok 95 - the browser boundary also rejects const fs = await import('node:fs');
+packages/content test:   ---
+packages/content test:   duration_ms: 4.899809
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the browser boundary also rejects const crypto = require('node:crypto');
+packages/content test: ok 96 - the browser boundary also rejects const crypto = require('node:crypto');
+packages/content test:   ---
+packages/content test:   duration_ms: 3.339653
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: golden sample compiles to dense sorted integer inputs with resolved bots and presentation keys
+packages/content test: ok 97 - golden sample compiles to dense sorted integer inputs with resolved bots and presentation keys
+packages/content test:   ---
+packages/content test:   duration_ms: 14.384882
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: level values win over defaults and compiling another level cannot retain overrides
+packages/content test: ok 98 - level values win over defaults and compiling another level cannot retain overrides
+packages/content test:   ---
+packages/content test:   duration_ms: 7.26349
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: source path and array order cannot change compiled indices or resolved profile content
+packages/content test: ok 99 - source path and array order cannot change compiled indices or resolved profile content
+packages/content test:   ---
+packages/content test:   duration_ms: 5.193321
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: unknown level ids produce a located content error instead of another level
+packages/content test: ok 100 - unknown level ids produce a located content error instead of another level
+packages/content test:   ---
+packages/content test:   duration_ms: 1.402097
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiled metadata carries the actual content component registry names
+packages/content test: ok 101 - compiled metadata carries the actual content component registry names
+packages/content test:   ---
+packages/content test:   duration_ms: 1.470246
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: default duration accepts the int32 tick boundary and rejects the next second with location
+packages/content test: ok 102 - default duration accepts the int32 tick boundary and rejects the next second with location
+packages/content test:   ---
+packages/content test:   duration_ms: 2.721023
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler rejects default duration mutation beyond validated tick bounds
+packages/content test: ok 103 - compiler rejects default duration mutation beyond validated tick bounds
+packages/content test:   ---
+packages/content test:   duration_ms: 2.011058
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: explicit duration accepts the int32 tick boundary and rejects the next second with location
+packages/content test: ok 104 - explicit duration accepts the int32 tick boundary and rejects the next second with location
+packages/content test:   ---
+packages/content test:   duration_ms: 4.994561
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler rejects explicit duration mutation beyond validated tick bounds
+packages/content test: ok 105 - compiler rejects explicit duration mutation beyond validated tick bounds
+packages/content test:   ---
+packages/content test:   duration_ms: 0.981842
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: override duration accepts the int32 tick boundary and rejects the next second with location
+packages/content test: ok 106 - override duration accepts the int32 tick boundary and rejects the next second with location
+packages/content test:   ---
+packages/content test:   duration_ms: 3.902247
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: compiler rejects override duration mutation beyond validated tick bounds
+packages/content test: ok 107 - compiler rejects override duration mutation beyond validated tick bounds
+packages/content test:   ---
+packages/content test:   duration_ms: 1.426734
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-01: resolves small/large parameter variants in loaded units without mutating inputs
+packages/content test: ok 108 - covers R-ENT-01: resolves small/large parameter variants in loaded units without mutating inputs
+packages/content test:   ---
+packages/content test:   duration_ms: 6.221363
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-01: rejects unknown component at its source pointer
+packages/content test: ok 109 - covers R-ENT-01: rejects unknown component at its source pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 1.52004
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-01: rejects unknown param at its source pointer
+packages/content test: ok 110 - covers R-ENT-01: rejects unknown param at its source pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 0.445009
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-01: rejects missing required param at its source pointer
+packages/content test: ok 111 - covers R-ENT-01: rejects missing required param at its source pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 1.212503
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-01: rejects zero generation at its source pointer
+packages/content test: ok 112 - covers R-ENT-01: rejects zero generation at its source pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 0.466381
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-01: rejects noninteger cap at its source pointer
+packages/content test: ok 113 - covers R-ENT-01: rejects noninteger cap at its source pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 0.223666
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-01: rejects negative threshold at its source pointer
+packages/content test: ok 114 - covers R-ENT-01: rejects negative threshold at its source pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 0.747386
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-01: rejects unordered thresholds at its source pointer
+packages/content test: ok 115 - covers R-ENT-01: rejects unordered thresholds at its source pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 0.339077
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-01: rejects duplicate thresholds at its source pointer
+packages/content test: ok 116 - covers R-ENT-01: rejects duplicate thresholds at its source pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 0.579786
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-01: rejects capturable params at its source pointer
+packages/content test: ok 117 - covers R-ENT-01: rejects capturable params at its source pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 1.307385
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: covers R-ENT-02: v1 rejects tank combat value but permits unit value
+packages/content test: ok 118 - covers R-ENT-02: v1 rejects tank combat value but permits unit value
+packages/content test:   ---
+packages/content test:   duration_ms: 0.872957
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: rejects extends missing base
+packages/content test: ok 119 - rejects extends missing base
+packages/content test:   ---
+packages/content test:   duration_ms: 0.418809
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: rejects extends self cycle
+packages/content test: ok 120 - rejects extends self cycle
+packages/content test:   ---
+packages/content test:   duration_ms: 0.295964
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: rejects extends cycle
+packages/content test: ok 121 - rejects extends cycle
+packages/content test:   ---
+packages/content test:   duration_ms: 0.266669
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: rejects extends depth greater than one
+packages/content test: ok 122 - rejects extends depth greater than one
+packages/content test:   ---
+packages/content test:   duration_ms: 0.258593
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: rejects adding or removing inherited components, while omitted components remain inherited
+packages/content test: ok 123 - rejects adding or removing inherited components, while omitted components remain inherited
+packages/content test:   ---
+packages/content test:   duration_ms: 0.526846
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: invalid inherited params identify the base file and invalid patched params identify the variant
+packages/content test: ok 124 - invalid inherited params identify the base file and invalid patched params identify the variant
+packages/content test:   ---
+packages/content test:   duration_ms: 0.480046
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: an injected registry supports archer and tank without widening production schemas
+packages/content test: ok 125 - an injected registry supports archer and tank without widening production schemas
+packages/content test:   ---
+packages/content test:   duration_ms: 0.683275
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: CLI writes lock, detects stale output and rejects regenerated unversioned changes against git baseline
+packages/content test: ok 126 - CLI writes lock, detects stale output and rejects regenerated unversioned changes against git baseline
+packages/content test:   ---
+packages/content test:   duration_ms: 6265.739581
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: precontent baseline bootstraps a first dataset; absent dataset needs explicit bootstrap and cannot erase baseline
+packages/content test: ok 127 - precontent baseline bootstraps a first dataset; absent dataset needs explicit bootstrap and cannot erase baseline
+packages/content test:   ---
+packages/content test:   duration_ms: 3152.026046
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validator and loader reject positive underflow in troop speed at its authored location
+packages/content test: ok 128 - validator and loader reject positive underflow in troop speed at its authored location
+packages/content test:   ---
+packages/content test:   duration_ms: 13.50971
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validator and loader reject positive underflow in troop speed override at its authored location
+packages/content test: ok 129 - validator and loader reject positive underflow in troop speed override at its authored location
+packages/content test:   ---
+packages/content test:   duration_ms: 1.721796
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validator and loader reject positive underflow in generation rate at its authored location
+packages/content test: ok 130 - validator and loader reject positive underflow in generation rate at its authored location
+packages/content test:   ---
+packages/content test:   duration_ms: 6.16268
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validator and loader reject positive underflow in generation rate override at its authored location
+packages/content test: ok 131 - validator and loader reject positive underflow in generation rate override at its authored location
+packages/content test:   ---
+packages/content test:   duration_ms: 3.475953
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validator and loader reject positive underflow in bot decision interval at its authored location
+packages/content test: ok 132 - validator and loader reject positive underflow in bot decision interval at its authored location
+packages/content test:   ---
+packages/content test:   duration_ms: 2.521583
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: validator and loader reject positive underflow in tier decision interval at its authored location
+packages/content test: ok 133 - validator and loader reject positive underflow in tier decision interval at its authored location
+packages/content test:   ---
+packages/content test:   duration_ms: 1.698571
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: smallest positive speeds, generation rates and base/tier intervals compile to one milli-unit
+packages/content test: ok 134 - smallest positive speeds, generation rates and base/tier intervals compile to one milli-unit
+packages/content test:   ---
+packages/content test:   duration_ms: 9.514346
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: a valid sample pack validates without forcing twenty campaign levels and remains immutable
+packages/content test: ok 135 - a valid sample pack validates without forcing twenty campaign levels and remains immutable
+packages/content test:   ---
+packages/content test:   duration_ms: 2.016789
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates duplicate player
+packages/content test: ok 136 - locates duplicate player
+packages/content test:   ---
+packages/content test:   duration_ms: 4.201678
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates duplicate tower
+packages/content test: ok 137 - locates duplicate tower
+packages/content test:   ---
+packages/content test:   duration_ms: 1.23094
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates unknown tower archetype
+packages/content test: ok 138 - locates unknown tower archetype
+packages/content test:   ---
+packages/content test:   duration_ms: 0.688002
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates unknown owner
+packages/content test: ok 139 - locates unknown owner
+packages/content test:   ---
+packages/content test:   duration_ms: 0.518819
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates unknown troop
+packages/content test: ok 140 - locates unknown troop
+packages/content test:   ---
+packages/content test:   duration_ms: 0.612198
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates unknown bot
+packages/content test: ok 141 - locates unknown bot
+packages/content test:   ---
+packages/content test:   duration_ms: 0.630374
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates missing bot
+packages/content test: ok 142 - locates missing bot
+packages/content test:   ---
+packages/content test:   duration_ms: 0.510485
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates too much garrison
+packages/content test: ok 143 - locates too much garrison
+packages/content test:   ---
+packages/content test:   duration_ms: 0.839352
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates outside bounds
+packages/content test: ok 144 - locates outside bounds
+packages/content test:   ---
+packages/content test:   duration_ms: 0.497941
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates footprint outside bounds
+packages/content test: ok 145 - locates footprint outside bounds
+packages/content test:   ---
+packages/content test:   duration_ms: 5.655873
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates overlap
+packages/content test: ok 146 - locates overlap
+packages/content test:   ---
+packages/content test:   duration_ms: 0.6078
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates coincident zero-radius towers
+packages/content test: ok 147 - locates coincident zero-radius towers
+packages/content test:   ---
+packages/content test:   duration_ms: 4.352025
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates player owns no tower
+packages/content test: ok 148 - locates player owns no tower
+packages/content test:   ---
+packages/content test:   duration_ms: 0.477331
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates one owner
+packages/content test: ok 149 - locates one owner
+packages/content test:   ---
+packages/content test:   duration_ms: 0.565018
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates no human
+packages/content test: ok 150 - locates no human
+packages/content test:   ---
+packages/content test:   duration_ms: 3.679672
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates no bot
+packages/content test: ok 151 - locates no bot
+packages/content test:   ---
+packages/content test:   duration_ms: 0.572744
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates speed zero
+packages/content test: ok 152 - locates speed zero
+packages/content test:   ---
+packages/content test:   duration_ms: 0.54967
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates speed too high
+packages/content test: ok 153 - locates speed too high
+packages/content test:   ---
+packages/content test:   duration_ms: 3.476665
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates coordinate limit
+packages/content test: ok 154 - locates coordinate limit
+packages/content test:   ---
+packages/content test:   duration_ms: 0.472883
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates generation zero
+packages/content test: ok 155 - locates generation zero
+packages/content test:   ---
+packages/content test:   duration_ms: 0.444547
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates unordered thresholds
+packages/content test: ok 156 - locates unordered thresholds
+packages/content test:   ---
+packages/content test:   duration_ms: 0.475106
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: locates unsupported troop
+packages/content test: ok 157 - locates unsupported troop
+packages/content test:   ---
+packages/content test:   duration_ms: 0.426293
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: aggregates numeric precision and schema errors across fields and files
+packages/content test: ok 158 - aggregates numeric precision and schema errors across fields and files
+packages/content test:   ---
+packages/content test:   duration_ms: 0.615766
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: default loading checks every reference; explicit partial loading supports isolated tools
+packages/content test: ok 159 - default loading checks every reference; explicit partial loading supports isolated tools
+packages/content test:   ---
+packages/content test:   duration_ms: 7.175833
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: explicit teams resolve to player ids and must remain distinct
+packages/content test: ok 160 - explicit teams resolve to player ids and must remain distinct
+packages/content test:   ---
+packages/content test:   duration_ms: 5.180637
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: v1 rejects four bots and each reserved array entry
+packages/content test: ok 161 - v1 rejects four bots and each reserved array entry
+packages/content test:   ---
+packages/content test:   duration_ms: 1.192956
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: inherited archetypes are checked and threshold at cap produces located warning
+packages/content test: ok 162 - inherited archetypes are checked and threshold at cap produces located warning
+packages/content test:   ---
+packages/content test:   duration_ms: 1.737677
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: numeric overrides apply before cap, troop-reference and registry checks
+packages/content test: ok 163 - numeric overrides apply before cap, troop-reference and registry checks
+packages/content test:   ---
+packages/content test:   duration_ms: 2.941954
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: bot resolver inherits weights, rejects depth/cycles/kind mismatch and tooling references
+packages/content test: ok 164 - bot resolver inherits weights, rejects depth/cycles/kind mismatch and tooling references
+packages/content test:   ---
+packages/content test:   duration_ms: 8.180501
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: campaign present orders start at one and are unique/contiguous; a full campaign ends at twenty
+packages/content test: ok 165 - campaign present orders start at one and are unique/contiguous; a full campaign ends at twenty
+packages/content test:   ---
+packages/content test:   duration_ms: 4.392573
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: optional manifest requires complete shape and checks visuals, every palette and fallback/explicit themes
+packages/content test: ok 166 - optional manifest requires complete shape and checks visuals, every palette and fallback/explicit themes
+packages/content test:   ---
+packages/content test:   duration_ms: 14.41048
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: footprint touching is valid and geometry uses exact milli-unit squared distances
+packages/content test: ok 167 - footprint touching is valid and geometry uses exact milli-unit squared distances
+packages/content test:   ---
+packages/content test:   duration_ms: 0.787212
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: deleting all troops/bots/archetypes cannot bypass loader reference checks
+packages/content test: ok 168 - deleting all troops/bots/archetypes cannot bypass loader reference checks
+packages/content test:   ---
+packages/content test:   duration_ms: 1.678223
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: an invalid override does not hide an independent cap violation
+packages/content test: ok 169 - an invalid override does not hide an independent cap violation
+packages/content test:   ---
+packages/content test:   duration_ms: 2.609109
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: level overrides do not mutate another level or shared loaded entities
+packages/content test: ok 170 - level overrides do not mutate another level or shared loaded entities
+packages/content test:   ---
+packages/content test:   duration_ms: 0.821147
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: inherited warning pointers locate authored base thresholds; override warnings locate cap patches
+packages/content test: ok 171 - inherited warning pointers locate authored base thresholds; override warnings locate cap patches
+packages/content test:   ---
+packages/content test:   duration_ms: 1.897441
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: semantic validation remains browser-safe with Node globals absent
+packages/content test: ok 172 - semantic validation remains browser-safe with Node globals absent
+packages/content test:   ---
+packages/content test:   duration_ms: 792.685511
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: override component targets must be own components, including prototype names
+packages/content test: ok 173 - override component targets must be own components, including prototype names
+packages/content test:   ---
+packages/content test:   duration_ms: 1.53069
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: path-keyed loading preserves source paths named like object prototype properties
+packages/content test: ok 174 - path-keyed loading preserves source paths named like object prototype properties
+packages/content test:   ---
+packages/content test:   duration_ms: 0.21489
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: content schema accepts its authored shape and rejects unknown fields and missing envelope
+packages/content test: ok 175 - content schema accepts its authored shape and rejects unknown fields and missing envelope
+packages/content test:   ---
+packages/content test:   duration_ms: 25.285001
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: balance schema accepts its authored shape and rejects unknown fields and missing envelope
+packages/content test: ok 176 - balance schema accepts its authored shape and rejects unknown fields and missing envelope
+packages/content test:   ---
+packages/content test:   duration_ms: 17.038234
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: archetype schema accepts its authored shape and rejects unknown fields and missing envelope
+packages/content test: ok 177 - archetype schema accepts its authored shape and rejects unknown fields and missing envelope
+packages/content test:   ---
+packages/content test:   duration_ms: 18.076706
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: level schema accepts its authored shape and rejects unknown fields and missing envelope
+packages/content test: ok 178 - level schema accepts its authored shape and rejects unknown fields and missing envelope
+packages/content test:   ---
+packages/content test:   duration_ms: 47.303798
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: archetype params permit partial inheritance and future components but reject structural junk
+packages/content test: ok 179 - archetype params permit partial inheritance and future components but reject structural junk
+packages/content test:   ---
+packages/content test:   duration_ms: 13.83456
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: level permits reserved objects and param patches but rejects entity and component structure additions
+packages/content test: ok 180 - level permits reserved objects and param patches but rejects entity and component structure additions
+packages/content test:   ---
+packages/content test:   duration_ms: 32.861349
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: balance keeps tickRate out of data and requires both v1 defaults
+packages/content test: ok 181 - balance keeps tickRate out of data and requires both v1 defaults
+packages/content test:   ---
+packages/content test:   duration_ms: 10.80566
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader dispatches core files and converts nested and override field units without scaling counts
+packages/content test: ok 182 - loader dispatches core files and converts nested and override field units without scaling counts
+packages/content test:   ---
+packages/content test:   duration_ms: 8.133832
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: extension params keep untagged numbers integral and scale reserved and future component units
+packages/content test: ok 183 - extension params keep untagged numbers integral and scale reserved and future component units
+packages/content test:   ---
+packages/content test:   duration_ms: 14.754376
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: generated editor duration schemas enforce positive int32 ticks for defaults, levels and overrides
+packages/content test: ok 184 - generated editor duration schemas enforce positive int32 ticks for defaults, levels and overrides
+packages/content test:   ---
+packages/content test:   duration_ms: 29.844182
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: pure SHA-256 agrees with published vectors and UTF-8 including surrogate replacement
+packages/content test: ok 185 - pure SHA-256 agrees with published vectors and UTF-8 including surrogate replacement
+packages/content test:   ---
+packages/content test:   duration_ms: 73.878321
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: canonical JSON sorts keys, preserves arrays and rejects noninteger sim values
+packages/content test: ok 186 - canonical JSON sorts keys, preserves arrays and rejects noninteger sim values
+packages/content test:   ---
+packages/content test:   duration_ms: 0.517717
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: resolved rates, speeds, positions, ownership, garrison, teams and time limits change sim identity
+packages/content test: ok 187 - resolved rates, speeds, positions, ownership, garrison, teams and time limits change sim identity
+packages/content test:   ---
+packages/content test:   duration_ms: 19.454725
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: reskins, names, metadata, unused entities and bot tuning preserve sim identity
+packages/content test: ok 188 - reskins, names, metadata, unused entities and bot tuning preserve sim identity
+packages/content test:   ---
+packages/content test:   duration_ms: 1.926677
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: key, file and entity ordering are immaterial and bot inheritance provenance is excluded
+packages/content test: ok 189 - key, file and entity ordering are immaterial and bot inheritance provenance is excluded
+packages/content test:   ---
+packages/content test:   duration_ms: 3.513295
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: bot generated schema validates its contract and rejects extra or missing envelope fields
+packages/content test: ok 190 - bot generated schema validates its contract and rejects extra or missing envelope fields
+packages/content test:   ---
+packages/content test:   duration_ms: 26.144992
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: manifest generated schema validates its contract and rejects extra or missing envelope fields
+packages/content test: ok 191 - manifest generated schema validates its contract and rejects extra or missing envelope fields
+packages/content test:   ---
+packages/content test:   duration_ms: 49.359423
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: bot tiers accept params.extends and only skill changes, and every profile requires kind
+packages/content test: ok 192 - bot tiers accept params.extends and only skill changes, and every profile requires kind
+packages/content test:   ---
+packages/content test:   duration_ms: 35.913602
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: bot schema rejects invalid skill bounds, nonintegral counts and weights above 10000 milli
+packages/content test: ok 193 - bot schema rejects invalid skill bounds, nonintegral counts and weights above 10000 milli
+packages/content test:   ---
+packages/content test:   duration_ms: 59.043862
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader recognizes bot bases and tiers and converts skill and bounded weights to milli
+packages/content test: ok 194 - loader recognizes bot bases and tiers and converts skill and bounded weights to milli
+packages/content test:   ---
+packages/content test:   duration_ms: 11.336203
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: manifest rejects invalid palettes, models, animation kinds and unknown nested fields
+packages/content test: ok 195 - manifest rejects invalid palettes, models, animation kinds and unknown nested fields
+packages/content test:   ---
+packages/content test:   duration_ms: 38.489228
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: hosted TypeBox contracts and plain schema exports support browser validation
+packages/content test: ok 196 - hosted TypeBox contracts and plain schema exports support browser validation
+packages/content test:   ---
+packages/content test:   duration_ms: 67.374159
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: positive fx3 underflow throws a located error
+packages/content test: ok 197 - positive fx3 underflow throws a located error
+packages/content test:   ---
+packages/content test:   duration_ms: 4.287882
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: positive fx3 underflow aggregates without stopping traversal
+packages/content test: ok 198 - positive fx3 underflow aggregates without stopping traversal
+packages/content test:   ---
+packages/content test:   duration_ms: 3.838245
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: zero remains valid for fx3 fields that do not declare a positive minimum
+packages/content test: ok 199 - zero remains valid for fx3 fields that do not declare a positive minimum
+packages/content test:   ---
+packages/content test:   duration_ms: 0.18322
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loads strings and objects, scales only tagged fields, and leaves inputs untouched
+packages/content test: ok 200 - loads strings and objects, scales only tagged fields, and leaves inputs untouched
+packages/content test:   ---
+packages/content test:   duration_ms: 2.510801
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loads the three-decimal boundary 0.001
+packages/content test: ok 201 - loads the three-decimal boundary 0.001
+packages/content test:   ---
+packages/content test:   duration_ms: 0.282348
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loads the three-decimal boundary 0.29
+packages/content test: ok 202 - loads the three-decimal boundary 0.29
+packages/content test:   ---
+packages/content test:   duration_ms: 0.262922
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loads the three-decimal boundary 1.001
+packages/content test: ok 203 - loads the three-decimal boundary 1.001
+packages/content test:   ---
+packages/content test:   duration_ms: 0.215592
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loads the three-decimal boundary 100
+packages/content test: ok 204 - loads the three-decimal boundary 100
+packages/content test:   ---
+packages/content test:   duration_ms: 0.354828
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: rejects four decimal places with the source file and JSON pointer
+packages/content test: ok 205 - rejects four decimal places with the source file and JSON pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 0.889518
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: rejects NaN with the source file and JSON pointer
+packages/content test: ok 206 - rejects NaN with the source file and JSON pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 0.533238
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: rejects infinity with the source file and JSON pointer
+packages/content test: ok 207 - rejects infinity with the source file and JSON pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 0.394362
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: rejects scaled overflow with the source file and JSON pointer
+packages/content test: ok 208 - rejects scaled overflow with the source file and JSON pointer
+packages/content test:   ---
+packages/content test:   duration_ms: 0.172499
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: converts nested tagged fields and escapes JSON pointer property names
+packages/content test: ok 209 - converts nested tagged fields and escapes JSON pointer property names
+packages/content test:   ---
+packages/content test:   duration_ms: 0.457292
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: accepts the PRD int32 limits and rejects values beyond either limit
+packages/content test: ok 210 - accepts the PRD int32 limits and rejects values beyond either limit
+packages/content test:   ---
+packages/content test:   duration_ms: 0.296787
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader rejects unknown fields
+packages/content test: ok 211 - loader rejects unknown fields
+packages/content test:   ---
+packages/content test:   duration_ms: 0.245659
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader rejects invalid speed range
+packages/content test: ok 212 - loader rejects invalid speed range
+packages/content test:   ---
+packages/content test:   duration_ms: 0.142332
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader rejects wrong speed type
+packages/content test: ok 213 - loader rejects wrong speed type
+packages/content test:   ---
+packages/content test:   duration_ms: 0.220951
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader rejects missing required fields
+packages/content test: ok 214 - loader rejects missing required fields
+packages/content test:   ---
+packages/content test:   duration_ms: 0.134787
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader rejects unsupported schema
+packages/content test: ok 215 - loader rejects unsupported schema
+packages/content test:   ---
+packages/content test:   duration_ms: 0.103698
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: loader rejects invalid JSON
+packages/content test: ok 216 - loader rejects invalid JSON
+packages/content test:   ---
+packages/content test:   duration_ms: 0.119518
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the unchanged loader runs without Node globals in a browser-like runtime
+packages/content test: ok 217 - the unchanged loader runs without Node globals in a browser-like runtime
+packages/content test:   ---
+packages/content test:   duration_ms: 784.306842
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: fx3 accepts exactly the doubles nearest a three-decimal value
+packages/content test: ok 218 - fx3 accepts exactly the doubles nearest a three-decimal value
+packages/content test:   ---
+packages/content test:   duration_ms: 0.441693
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the emitted schema validates the authored regular troop file
+packages/content test: ok 219 - the emitted schema validates the authored regular troop file
+packages/content test:   ---
+packages/content test:   duration_ms: 1.331661
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the emitted schema rejects unknown fields
+packages/content test: ok 220 - the emitted schema rejects unknown fields
+packages/content test:   ---
+packages/content test:   duration_ms: 0.172108
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the emitted schema rejects invalid ids
+packages/content test: ok 221 - the emitted schema rejects invalid ids
+packages/content test:   ---
+packages/content test:   duration_ms: 0.116202
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the emitted schema rejects non-positive speed
+packages/content test: ok 222 - the emitted schema rejects non-positive speed
+packages/content test:   ---
+packages/content test:   duration_ms: 0.13061
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the emitted schema rejects speed above the simulation bound
+packages/content test: ok 223 - the emitted schema rejects speed above the simulation bound
+packages/content test:   ---
+packages/content test:   duration_ms: 0.19365
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the emitted schema rejects fractional troop value
+packages/content test: ok 224 - the emitted schema rejects fractional troop value
+packages/content test:   ---
+packages/content test:   duration_ms: 0.230861
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the emitted schema rejects unsupported schema versions
+packages/content test: ok 225 - the emitted schema rejects unsupported schema versions
+packages/content test:   ---
+packages/content test:   duration_ms: 0.122984
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the emitted schema requires the editor schema reference
+packages/content test: ok 226 - the emitted schema requires the editor schema reference
+packages/content test:   ---
+packages/content test:   duration_ms: 0.151208
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the shared Ajv rejects unknown schema keywords in strict mode
+packages/content test: ok 227 - the shared Ajv rejects unknown schema keywords in strict mode
+packages/content test:   ---
+packages/content test:   duration_ms: 14.886268
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: the shared validator reports every invalid field without mutating input
+packages/content test: ok 228 - the shared validator reports every invalid field without mutating input
+packages/content test:   ---
+packages/content test:   duration_ms: 1.586588
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: regenerating hashes still rejects a semantic edit without an increasing content version
+packages/content test: ok 229 - regenerating hashes still rejects a semantic edit without an increasing content version
+packages/content test:   ---
+packages/content test:   duration_ms: 16.529633
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: bot-only edits have separate lock identity and defer BOT_VERSION enforcement to SP04
+packages/content test: ok 230 - bot-only edits have separate lock identity and defer BOT_VERSION enforcement to SP04
+packages/content test:   ---
+packages/content test:   duration_ms: 5.80037
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: level removal and addition require version bump; first dataset can bootstrap
+packages/content test: ok 231 - level removal and addition require version bump; first dataset can bootstrap
+packages/content test:   ---
+packages/content test:   duration_ms: 1.774647
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: # Subtest: rules header, exported constant and content metadata must agree
+packages/content test: ok 232 - rules header, exported constant and content metadata must agree
+packages/content test:   ---
+packages/content test:   duration_ms: 0.399613
+packages/content test:   type: 'test'
+packages/content test:   ...
+packages/content test: 1..232
+packages/content test: # tests 232
+packages/content test: # suites 0
+packages/content test: # pass 232
+packages/content test: # fail 0
+packages/content test: # cancelled 0
+packages/content test: # skipped 0
+packages/content test: # todo 0
+packages/content test: # duration_ms 12121.653138
+packages/content test: Done
+packages/sim test$ node --test test/*.test.cjs
+packages/sim test: TAP version 13
+packages/sim test: # Subtest: performance budgets reject each breached metric and CI tolerates only 5x
+packages/sim test: ok 1 - performance budgets reject each breached metric and CI tolerates only 5x
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.707405
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: benchmark fixture sustains real 2000-class FIFO work with generation and clashes
+packages/sim test: ok 2 - benchmark fixture sustains real 2000-class FIFO work with generation and clashes
+packages/sim test:   ---
+packages/sim test:   duration_ms: 273.561915
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: 2x event modes execute identical active workloads and quiet mode emits zero
+packages/sim test: ok 3 - 2x event modes execute identical active workloads and quiet mode emits zero
+packages/sim test:   ---
+packages/sim test:   duration_ms: 168.027345
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: ring word streaming preserves logical FIFO words across wrap and growth
+packages/sim test: ok 4 - ring word streaming preserves logical FIFO words across wrap and growth
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.258131
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CMB-01: cut fronts clash at equality, tank retains value and loop stops at next unready front
+packages/sim test: ok 5 - covers R-CMB-01: cut fronts clash at equality, tank retains value and loop stops at next unready front
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.216836
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CMB-01: clash repeats qualifying fronts and reports canonical own-source progress
+packages/sim test: ok 6 - covers R-CMB-01: clash repeats qualifying fronts and reports canonical own-source progress
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.297677
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-ENT-04: friendly mixed fronts block later hostile fronts and crossing pairs never clash
+packages/sim test: ok 7 - covers R-ENT-04: friendly mixed fronts block later hostile fronts and crossing pairs never clash
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.310552
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CMB-02: overshoot order re-evaluates later arrivals through capture and recapture
+packages/sim test: ok 8 - covers R-CMB-02: overshoot order re-evaluates later arrivals through capture and recapture
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.98989
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CMB-02: exact arrival ties use channel key then FIFO, independent of troop sequence
+packages/sim test: ok 9 - covers R-CMB-02: exact arrival ties use channel key then FIFO, independent of troop sequence
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.60352
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CMB-03: tank leftover capture bounds garrison and accounts overflow and neutral hostility
+packages/sim test: ok 10 - covers R-CMB-03: tank leftover capture bounds garrison and accounts overflow and neutral hostility
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.213275
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CAP-01: same-team arrivals reinforce with excess counted to troop owner
+packages/sim test: ok 11 - covers R-CAP-01: same-team arrivals reinforce with excess counted to troop owner
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.182658
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CPT-02: capture cuts old outgoing permission, resets registered state and preserves transit
+packages/sim test: ok 12 - covers R-CPT-02: capture cuts old outgoing permission, resets registered state and preserves transit
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.873787
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-TCK-04: analytic motion leaves in-flight bases unchanged and new departures at zero
+packages/sim test: ok 13 - covers R-TCK-04: analytic motion leaves in-flight bases unchanged and new departures at zero
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.138102
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: registry hooks control arrival mechanics without core knowledge of component names
+packages/sim test: ok 14 - registry hooks control arrival mechanics without core knowledge of component names
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.748429
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: value conservation across clash, hit, reinforcement, cap overflow and events:false
+packages/sim test: ok 15 - value conservation across clash, hit, reinforcement, cap overflow and events:false
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.0117
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: registered clash and arrival systems run around core queues in phase order
+packages/sim test: ok 16 - registered clash and arrival systems run around core queues in phase order
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.564177
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: sim exposes a reusable determinism preset
+packages/sim test: ok 17 - sim exposes a reusable determinism preset
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.417556
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.random(1);
+packages/sim test: ok 18 - rejects Math.random(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 87.925237
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.sqrt(1);
+packages/sim test: ok 19 - rejects Math.sqrt(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 6.207195
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.sin(1);
+packages/sim test: ok 20 - rejects Math.sin(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.474531
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.cos(1);
+packages/sim test: ok 21 - rejects Math.cos(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.659353
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.tan(1);
+packages/sim test: ok 22 - rejects Math.tan(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.675754
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.asin(1);
+packages/sim test: ok 23 - rejects Math.asin(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.629428
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.acos(1);
+packages/sim test: ok 24 - rejects Math.acos(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 4.571644
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.atan(1);
+packages/sim test: ok 25 - rejects Math.atan(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.50461
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.atan2(1);
+packages/sim test: ok 26 - rejects Math.atan2(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.086978
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.pow(1);
+packages/sim test: ok 27 - rejects Math.pow(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.983703
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.exp(1);
+packages/sim test: ok 28 - rejects Math.exp(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.395299
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.log(1);
+packages/sim test: ok 29 - rejects Math.log(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.557271
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.hypot(1);
+packages/sim test: ok 30 - rejects Math.hypot(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.852063
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.round(1);
+packages/sim test: ok 31 - rejects Math.round(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 6.934933
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.floor(1);
+packages/sim test: ok 32 - rejects Math.floor(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 4.469309
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.trunc(1);
+packages/sim test: ok 33 - rejects Math.trunc(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 4.505547
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math.imul(1);
+packages/sim test: ok 34 - rejects Math.imul(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 4.771295
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Math["random"]();
+packages/sim test: ok 35 - rejects Math["random"]();
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.146311
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects const { random } = Math;
+packages/sim test: ok 36 - rejects const { random } = Math;
+packages/sim test:   ---
+packages/sim test:   duration_ms: 11.184675
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects new Date();
+packages/sim test: ok 37 - rejects new Date();
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.469192
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects Date.now();
+packages/sim test: ok 38 - rejects Date.now();
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.96035
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects performance.now();
+packages/sim test: ok 39 - rejects performance.now();
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.449873
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects setTimeout(() => {}, 1);
+packages/sim test: ok 40 - rejects setTimeout(() => {}, 1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 4.198892
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects setInterval(() => {}, 1);
+packages/sim test: ok 41 - rejects setInterval(() => {}, 1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.072375
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects clearTimeout(1);
+packages/sim test: ok 42 - rejects clearTimeout(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.292367
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects queueMicrotask(() => {});
+packages/sim test: ok 43 - rejects queueMicrotask(() => {});
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.528085
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects console.log(1);
+packages/sim test: ok 44 - rejects console.log(1);
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.532424
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects new Intl.Collator();
+packages/sim test: ok 45 - rejects new Intl.Collator();
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.761721
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects globalThis.Math.random();
+packages/sim test: ok 46 - rejects globalThis.Math.random();
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.914965
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects globalThis.Date.now();
+packages/sim test: ok 47 - rejects globalThis.Date.now();
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.757734
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects const n = 1.5;
+packages/sim test: ok 48 - rejects const n = 1.5;
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.568574
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects const n = 1e-3;
+packages/sim test: ok 49 - rejects const n = 1e-3;
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.520452
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects for (const key in {}) {}
+packages/sim test: ok 50 - rejects for (const key in {}) {}
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.255102
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects [2, 1].sort();
+packages/sim test: ok 51 - rejects [2, 1].sort();
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.834551
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects [2, 1]["sort"]();
+packages/sim test: ok 52 - rejects [2, 1]["sort"]();
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.160959
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects import { compileLevel } from "@node-arena/content";
+packages/sim test: ok 53 - rejects import { compileLevel } from "@node-arena/content";
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.084937
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rejects import type { Stats } from "node:fs";
+packages/sim test: ok 54 - rejects import type { Stats } from "node:fs";
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.061073
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: only src/math.ts can use integer Math helpers
+packages/sim test: ok 55 - only src/math.ts can use integer Math helpers
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.909848
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: hash paths cannot stringify JSON
+packages/sim test: ok 56 - hash paths cannot stringify JSON
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.439551
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: integer math, explicit sort, strings and content type imports remain valid
+packages/sim test: ok 57 - integer math, explicit sort, strings and content type imports remain valid
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.226624
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: bots can import the preset with their own src/math.ts exception
+packages/sim test: ok 58 - bots can import the preset with their own src/math.ts exception
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.511471
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: division and division assignment are confined to src/math.ts
+packages/sim test: ok 59 - division and division assignment are confined to src/math.ts
+packages/sim test:   ---
+packages/sim test:   duration_ms: 7.082656
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-LIN-01: canDraw shares atomic validation and malformed commands never throw
+packages/sim test: ok 60 - covers R-LIN-01: canDraw shares atomic validation and malformed commands never throw
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.561092
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-TCK-03: stable player ordering preserves commands within each player
+packages/sim test: ok 61 - covers R-TCK-03: stable player ordering preserves commands within each player
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.318786
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-LIN-03: replacement and cuts preserve in-flight troops; rejection preserves reverse permission
+packages/sim test: ok 62 - covers R-LIN-03: replacement and cuts preserve in-flight troops; rejection preserves reverse permission
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.454926
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-GEN-02: fractional generation, neutral and missing components, slots refresh
+packages/sim test: ok 63 - covers R-GEN-02: fractional generation, neutral and missing components, slots refresh
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.22666
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-SND-02: sending freezes count and shares generation by sorted targets through cuts
+packages/sim test: ok 64 - covers R-SND-02: sending freezes count and shares generation by sorted targets through cuts
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.643988
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CAP-02: no-bank cap preserves fractional remainder, discards overflow and keeps sending
+packages/sim test: ok 65 - covers R-CAP-02: no-bank cap preserves fractional remainder, discards overflow and keeps sending
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.704865
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: value-unit accounting supports tank departures and garrison overflow; events:false keeps identical economy
+packages/sim test: ok 66 - value-unit accounting supports tank departures and garrison overflow; events:false keeps identical economy
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.887184
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CPT-01: capture helper resets registered accumulator/cursor without touching transit
+packages/sim test: ok 67 - covers R-CPT-01: capture helper resets registered accumulator/cursor without touching transit
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.548306
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: registered extension systems execute in order without component-specific core interpretation
+packages/sim test: ok 68 - registered extension systems execute in order without component-specific core interpretation
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.915848
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-LIN-05: cuts validate channel ownership without mutating its permission or troops
+packages/sim test: ok 69 - covers R-LIN-05: cuts validate channel ownership without mutating its permission or troops
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.796649
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-WIN-03: staged gameover gate rejects previews and makes later steps a no-op
+packages/sim test: ok 70 - covers R-WIN-03: staged gameover gate rejects previews and makes later steps a no-op
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.409652
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: shoots fixture runs after clash and before arrivals, removes real value and adds automatically hashed/snapshotted state
+packages/sim test: ok 71 - shoots fixture runs after clash and before arrivals, removes real value and adds automatically hashed/snapshotted state
+packages/sim test:   ---
+packages/sim test:   duration_ms: 7.279884
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: killFront caps removal at one remaining front and decrements its owner transit without assigning a cause
+packages/sim test: ok 72 - killFront caps removal at one remaining front and decrements its owner transit without assigning a cause
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.000198
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: phase extensions reject typos/duplicates and stay isolated from v1 and already-created simulations
+packages/sim test: ok 73 - phase extensions reject typos/duplicates and stay isolated from v1 and already-created simulations
+packages/sim test:   ---
+packages/sim test:   duration_ms: 9.414726
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: test-only tank value two reinforces, hits and captures leftover through the existing component hooks
+packages/sim test: ok 74 - test-only tank value two reinforces, hits and captures leftover through the existing component hooks
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.245836
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: test-only tank fronts survive partial clash then repeat clash with remaining value
+packages/sim test: ok 75 - test-only tank fronts survive partial clash then repeat clash with remaining value
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.962948
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: sim:golden checks committed recorder-based golden replays
+packages/sim test: ok 76 - sim:golden checks committed recorder-based golden replays
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1179.891635
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: every committed record plays, commands are applied, and fixtures exercise their named mechanic
+packages/sim test: ok 77 - every committed record plays, commands are applied, and fixtures exercise their named mechanic
+packages/sim test:   ---
+packages/sim test:   duration_ms: 46.060087
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: golden updates require appropriate strictly increased versions, including identical output
+packages/sim test: ok 78 - golden updates require appropriate strictly increased versions, including identical output
+packages/sim test:   ---
+packages/sim test:   duration_ms: 4.539603
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: git baseline prevents deletion/bootstrap bypass, and refused writes preserve the file
+packages/sim test: ok 79 - git baseline prevents deletion/bootstrap bypass, and refused writes preserve the file
+packages/sim test:   ---
+packages/sim test:   duration_ms: 69.110572
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: same-state --update refuses the authoritative versions without touching the committed baseline
+packages/sim test: ok 80 - same-state --update refuses the authoritative versions without touching the committed baseline
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1351.075816
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: Node and Chromium golden hashes, full event logs and playback records agree exactly
+packages/sim test: ok 81 - Node and Chromium golden hashes, full event logs and playback records agree exactly
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1622.852694
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-TCK-02: signed division truncates exactly, without negative zero
+packages/sim test: ok 82 - covers R-TCK-02: signed division truncates exactly, without negative zero
+packages/sim test:   ---
+packages/sim test:   duration_ms: 12.171357
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: division and multiply-divide reject unsafe, fractional or zero-divisor arithmetic
+packages/sim test: ok 83 - division and multiply-divide reject unsafe, fractional or zero-divisor arithmetic
+packages/sim test:   ---
+packages/sim test:   duration_ms: 7.742534
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: integer square root floors at exact square boundaries through MAX_SAFE_INTEGER
+packages/sim test: ok 84 - integer square root floors at exact square boundaries through MAX_SAFE_INTEGER
+packages/sim test:   ---
+packages/sim test:   duration_ms: 26.426559
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-TCK-02: fixed-point spike matches BigInt floor-length arrival at 20 Hz
+packages/sim test: ok 85 - covers R-TCK-02: fixed-point spike matches BigInt floor-length arrival at 20 Hz
+packages/sim test:   ---
+packages/sim test:   duration_ms: 147.110349
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: Sfc32 emits exact unsigned 32-bit words and snapshots copy all four lanes
+packages/sim test: ok 86 - Sfc32 emits exact unsigned 32-bit words and snapshots copy all four lanes
+packages/sim test:   ---
+packages/sim test:   duration_ms: 8.435458
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: mixSeed is reproducible, ordered and distinguishes trailing zero parts
+packages/sim test: ok 87 - mixSeed is reproducible, ordered and distinguishes trailing zero parts
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.291627
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: accepted authored generation stays exact beyond aggregate int32 (debug=false)
+packages/sim test: ok 88 - accepted authored generation stays exact beyond aggregate int32 (debug=false)
+packages/sim test:   ---
+packages/sim test:   duration_ms: 91.654262
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: accepted authored generation stays exact beyond aggregate int32 (debug=true)
+packages/sim test: ok 89 - accepted authored generation stays exact beyond aggregate int32 (debug=true)
+packages/sim test:   ---
+packages/sim test:   duration_ms: 104.53339
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: overflow, kill and capture credits remain exact beyond int32 and stay excluded from hash
+packages/sim test: ok 90 - overflow, kill and capture credits remain exact beyond int32 and stay excluded from hash
+packages/sim test:   ---
+packages/sim test:   duration_ms: 4.011584
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: stat additions reject loss of exact safe-integer precision in production
+packages/sim test: ok 91 - stat additions reject loss of exact safe-integer precision in production
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.754727
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: debug stat invariants reject fractions and unsafe integers
+packages/sim test: ok 92 - debug stat invariants reject fractions and unsafe integers
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.520284
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: create and both replay paths enforce positive int32 duration ticks
+packages/sim test: ok 93 - create and both replay paths enforce positive int32 duration ticks
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.862337
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: seeded bounds, slots, independent conservation and transit hold after every step
+packages/sim test: ok 94 - seeded bounds, slots, independent conservation and transit hold after every step
+packages/sim test:   ---
+packages/sim test:   duration_ms: 6348.024836
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: seeded duplicate runs and paused/split driver scheduling have identical hashes
+packages/sim test: ok 95 - seeded duplicate runs and paused/split driver scheduling have identical hashes
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5085.922227
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: seeded replay round-trips random invalid submissions, partial and finished runs
+packages/sim test: ok 96 - seeded replay round-trips random invalid submissions, partial and finished runs
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5331.101749
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: view exposes stable zero-copy columns and live original team ids, player stats, drawn channel order
+packages/sim test: ok 97 - view exposes stable zero-copy columns and live original team ids, player stats, drawn channel order
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.493152
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: readTroops reads cut-channel FIFO rings without object traversal, returns required count on overflow and reuses buffers
+packages/sim test: ok 98 - readTroops reads cut-channel FIFO rings without object traversal, returns required count on overflow and reuses buffers
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.344957
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: hash covers rule state, partial troops and global sequences, excludes reporting and derived caches
+packages/sim test: ok 99 - hash covers rule state, partial troops and global sequences, excludes reporting and derived caches
+packages/sim test:   ---
+packages/sim test:   duration_ms: 6.601477
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: new declared component columns are snapshotted and hashed generically with framed column names
+packages/sim test: ok 100 - new declared component columns are snapshotted and hashed generically with framed column names
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.155065
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: snapshots detach all nested data and serialize canonical channel/FIFO and column order
+packages/sim test: ok 101 - snapshots detach all nested data and serialize canonical channel/FIFO and column order
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.222302
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: identical seeds and commands produce stable hashes independent of events and ring storage history
+packages/sim test: ok 102 - identical seeds and commands produce stable hashes independent of events and ring storage history
+packages/sim test:   ---
+packages/sim test:   duration_ms: 9.246014
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: readTroops preserves logical FIFO order across physical wrap and capacity growth
+packages/sim test: ok 103 - readTroops preserves logical FIFO order across physical wrap and capacity growth
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.706548
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: public types reject mutable view columns and hide internal state access
+packages/sim test: ok 104 - public types reject mutable view columns and hide internal state access
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2807.846998
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: replay round-trips submitted order, rejected commands, checkpoints and manually stopped tick
+packages/sim test: ok 105 - replay round-trips submitted order, rejected commands, checkpoints and manually stopped tick
+packages/sim test:   ---
+packages/sim test:   duration_ms: 12.345489
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: recorder clones submissions before caller and event mutation and detaches exported records
+packages/sim test: ok 106 - recorder clones submissions before caller and event mutation and detaches exported records
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.471368
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: pause, split and twice-per-driver-interval yield identical replay hashes
+packages/sim test: ok 107 - pause, split and twice-per-driver-interval yield identical replay hashes
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.785957
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: completed games round-trip and postgame calls neither record commands nor duplicate checkpoints
+packages/sim test: ok 108 - completed games round-trip and postgame calls neither record commands nor duplicate checkpoints
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.421472
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: header versions, identity, seed format and malformed records are refused
+packages/sim test: ok 109 - header versions, identity, seed format and malformed records are refused
+packages/sim test:   ---
+packages/sim test:   duration_ms: 5.706369
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: rulesVersion requires equal major.minor only; patch may differ, minor and major refused
+packages/sim test: ok 110 - rulesVersion requires equal major.minor only; patch may differ, minor and major refused
+packages/sim test:   ---
+packages/sim test:   duration_ms: 4.143648
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: playback ending early (engine outcome differs from recording) reports divergence instead of throwing
+packages/sim test: ok 111 - playback ending early (engine outcome differs from recording) reports divergence instead of throwing
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.121539
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: checkpoint reports first observable divergent tick and final hash, outcome and changed seed fail
+packages/sim test: ok 112 - checkpoint reports first observable divergent tick and final hash, outcome and changed seed fail
+packages/sim test:   ---
+packages/sim test:   duration_ms: 8.365122
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: aftergame commands and final ticks beyond gameover are refused
+packages/sim test: ok 113 - aftergame commands and final ticks beyond gameover are refused
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.988957
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: authored sample content compiles outside sim and full timeout replay runs without bots
+packages/sim test: ok 114 - authored sample content compiles outside sim and full timeout replay runs without bots
+packages/sim test:   ---
+packages/sim test:   duration_ms: 786.193255
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: empty initial recording and gameover before first checkpoint are deterministic
+packages/sim test: ok 115 - empty initial recording and gameover before first checkpoint are deterministic
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.035485
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: lossy and cyclic submissions are refused atomically before stepping
+packages/sim test: ok 116 - lossy and cyclic submissions are refused atomically before stepping
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.8649
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: same-tick command order is playback order before canonical player grouping
+packages/sim test: ok 117 - same-tick command order is playback order before canonical player grouping
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.293228
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-TCK-01: pause is inert and twenty scheduled steps equal one simulated second
+packages/sim test: ok 118 - covers R-TCK-01: pause is inert and twenty scheduled steps equal one simulated second
+packages/sim test:   ---
+packages/sim test:   duration_ms: 9.863382
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-TCK-04: E-TICK speed 3.001 over length 6.002 arrives after exactly forty elapsed ticks
+packages/sim test: ok 119 - covers R-TCK-04: E-TICK speed 3.001 over length 6.002 arrives after exactly forty elapsed ticks
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.955801
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-GEN-01: E-GENERATION produces only for owned generating towers
+packages/sim test: ok 120 - covers R-GEN-01: E-GENERATION produces only for owned generating towers
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.710957
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-SND-01: E-GENERATION persists sending at shared rate with a frozen starting stack
+packages/sim test: ok 121 - covers R-SND-01: E-GENERATION persists sending at shared rate with a frozen starting stack
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.347701
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-ENT-01: every v1 component registers and absent capabilities stay absent
+packages/sim test: ok 122 - covers R-ENT-01: every v1 component registers and absent capabilities stay absent
+packages/sim test:   ---
+packages/sim test:   duration_ms: 12.106793
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-ENT-02: unit troops use their kind while presentation leaves mechanics and identity unchanged
+packages/sim test: ok 123 - covers R-ENT-02: unit troops use their kind while presentation leaves mechanics and identity unchanged
+packages/sim test:   ---
+packages/sim test:   duration_ms: 23.239539
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-ENT-03: E-CUT retains channel FIFO and departure owner after permission is removed
+packages/sim test: ok 124 - covers R-ENT-03: E-CUT retains channel FIFO and departure owner after permission is removed
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.765399
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-LIN-04: straight crossing paths pass through each other without combat or blocking
+packages/sim test: ok 125 - covers R-LIN-04: straight crossing paths pass through each other without combat or blocking
+packages/sim test:   ---
+packages/sim test:   duration_ms: 4.222157
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: data changes alone alter generation, speed, position, capacity and strict slot thresholds
+packages/sim test: ok 126 - data changes alone alter generation, speed, position, capacity and strict slot thresholds
+packages/sim test:   ---
+packages/sim test:   duration_ms: 15.166892
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-TCK-02: public loader enforces three decimal places and compiles milli-units
+packages/sim test: ok 127 - covers R-TCK-02: public loader enforces three decimal places and compiles milli-units
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.444003
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-WIN-03: compiler selects explicit duration or balance default for the public timer
+packages/sim test: ok 128 - covers R-WIN-03: compiler selects explicit duration or balance default for the public timer
+packages/sim test:   ---
+packages/sim test:   duration_ms: 4.951239
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-LIN-02: E-SLOTS grants 1, 2, 2, 3 slots at counts 10, 11, 30, 31
+packages/sim test: ok 129 - covers R-LIN-02: E-SLOTS grants 1, 2, 2, 3 slots at counts 10, 11, 30, 31
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.927459
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-ENT-04: compiled default teams and human/bot commands use identical ownership validation
+packages/sim test: ok 130 - covers R-ENT-04: compiled default teams and human/bot commands use identical ownership validation
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.929853
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CPT-01: inline capture resets state, cancels outgoing lines and generates only next tick
+packages/sim test: ok 131 - covers R-CPT-01: inline capture resets state, cancels outgoing lines and generates only next tick
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.829803
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CMB-03: E-CAPTURE unit hits distinguish empty, exact depletion and surviving defense
+packages/sim test: ok 132 - covers R-CMB-03: E-CAPTURE unit hits distinguish empty, exact depletion and surviving defense
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.043882
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-CAP-01: E-CAP three friendly unit arrivals fill one space and lose two to overflow
+packages/sim test: ok 133 - covers R-CAP-01: E-CAP three friendly unit arrivals fill one space and lose two to overflow
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.478042
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: create derives indexed integer columns, strict slot thresholds and visual metadata without touching bots
+packages/sim test: ok 134 - create derives indexed integer columns, strict slot thresholds and visual metadata without touching bots
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.825861
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: registry parity rejects missing, extra and unknown level components; fixture injection matches its own content
+packages/sim test: ok 135 - registry parity rejects missing, extra and unknown level components; fixture injection matches its own content
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.597466
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: lazy channels keep FIFO data through wrap, growth, partial front consumption and line cutting
+packages/sim test: ok 136 - lazy channels keep FIFO data through wrap, growth, partial front consumption and line cutting
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.202283
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: the shipped sample crosses the real content compiler boundary into create
+packages/sim test: ok 137 - the shipped sample crosses the real content compiler boundary into create
+packages/sim test:   ---
+packages/sim test:   duration_ms: 614.988889
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-TCK-05: arrivals lower slots and cut greatest drawSeq repeatedly, retaining troops
+packages/sim test: ok 138 - covers R-TCK-05: arrivals lower slots and cut greatest drawSeq repeatedly, retaining troops
+packages/sim test:   ---
+packages/sim test:   duration_ms: 6.455949
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-LIN-02: reinforcement and capture refresh final slots before next command
+packages/sim test: ok 139 - covers R-LIN-02: reinforcement and capture refresh final slots before next command
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.477819
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-WIN-01: eliminated tower owner survives in transit until its last troop is gone
+packages/sim test: ok 140 - covers R-WIN-01: eliminated tower owner survives in transit until its last troop is gone
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.336301
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-WIN-02: human elimination loses even with multiple bot teams, unique winner only
+packages/sim test: ok 141 - covers R-WIN-02: human elimination loses even with multiple bot teams, unique winner only
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.990268
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-WIN-01: teams determine winner, neutral towers do not keep a player alive
+packages/sim test: ok 142 - covers R-WIN-01: teams determine winner, neutral towers do not keep a player alive
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.638386
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-WIN-02: simultaneous last-front destruction produces draw and one elimination per player
+packages/sim test: ok 143 - covers R-WIN-02: simultaneous last-front destruction produces draw and one elimination per player
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.661132
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-WIN-03: timeout boundary overrides win, loss and draw; postgame is completely inert
+packages/sim test: ok 144 - covers R-WIN-03: timeout boundary overrides win, loss and draw; postgame is completely inert
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.336989
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: all seven registered phases execute in order, win after slots; events:false preserves outcomes and rejects
+packages/sim test: ok 145 - all seven registered phases execute in order, win after slots; events:false preserves outcomes and rejects
+packages/sim test:   ---
+packages/sim test:   duration_ms: 1.328495
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: debug asserts transit recount, conservation, int32 scalars; normal steps avoid scanning troop rings
+packages/sim test: ok 146 - debug asserts transit recount, conservation, int32 scalars; normal steps avoid scanning troop rings
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.944329
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: debug conservation includes neutral defense, generation, overflow and clash losses without relying on kills
+packages/sim test: ok 147 - debug conservation includes neutral defense, generation, overflow and clash losses without relying on kills
+packages/sim test:   ---
+packages/sim test:   duration_ms: 3.687678
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: debug rejects int32 overflow before ring writes silently truncate values
+packages/sim test: ok 148 - debug rejects int32 overflow before ring writes silently truncate values
+packages/sim test:   ---
+packages/sim test:   duration_ms: 2.082865
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: debug accounting measures every neutral hit and each clash value exactly
+packages/sim test: ok 149 - debug accounting measures every neutral hit and each clash value exactly
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.871412
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: covers R-WIN-01: elimination emits once while other teams continue fighting
+packages/sim test: ok 150 - covers R-WIN-01: elimination emits once while other teams continue fighting
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.478042
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: registered win systems observe enforced slots and refreshed derived capacity
+packages/sim test: ok 151 - registered win systems observe enforced slots and refreshed derived capacity
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.491868
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: # Subtest: debug conservation accounts discarded hostile leftovers on a valid garrison-only tower
+packages/sim test: ok 152 - debug conservation accounts discarded hostile leftovers on a valid garrison-only tower
+packages/sim test:   ---
+packages/sim test:   duration_ms: 0.420091
+packages/sim test:   type: 'test'
+packages/sim test:   ...
+packages/sim test: 1..152
+packages/sim test: # tests 152
+packages/sim test: # suites 0
+packages/sim test: # pass 152
+packages/sim test: # fail 0
+packages/sim test: # cancelled 0
+packages/sim test: # skipped 0
+packages/sim test: # todo 0
+packages/sim test: # duration_ms 18217.992621
+packages/sim test: Done
+apps/web test$ vitest run
+apps/web test:  RUN  v5.0.3 /root/projects/node-arena/.worktrees/feat/game-design/apps/web
+apps/web test:  Test Files  17 passed (17)
+apps/web test:       Tests  133 passed (133)
+apps/web test:    Start at  15:59:32
+apps/web test:    Duration  3.08s (import 63%, transform 21%, tests 15%, worker 1%)
+apps/web test:     Isolate  17 workers spawned · ~136ms startup each (spawn + environment, per file)
+apps/web test:              at least ~636ms faster with isolate: false — reuses workers across files instead of one per file
+apps/web test: Done

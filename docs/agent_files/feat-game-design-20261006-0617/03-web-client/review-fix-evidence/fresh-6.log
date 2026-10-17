@@ -1,0 +1,9 @@
+
+> node-arena@ sim:golden /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm --filter @node-arena/sim sim:golden
+
+
+> @node-arena/sim@0.0.0 sim:golden /root/projects/node-arena/.worktrees/feat/game-design/packages/sim
+> node scripts/golden.cjs
+
+11 golden replays verified (Node)

@@ -1,0 +1,16 @@
+{
+  "command": "WEB_TEST_SERVER=dev pnpm --filter @node-arena/web exec playwright test --workers=1 --reporter=json",
+  "exitCode": 0,
+  "elapsedSeconds": 174.49,
+  "log": "quiescent-dev.log",
+  "stderr": "quiescent-dev-stderr.log",
+  "host": "quiescent-dev-host.log",
+  "stats": {
+    "startTime": "2026-10-09T16:22:55.047Z",
+    "duration": 173241.17799999999,
+    "expected": 31,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "command": "pnpm test",
+    "exitCode": 0,
+    "elapsedSeconds": 33.46,
+    "log": "pose-cache-test.log"
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 2,
+    "elapsedSeconds": 14.43,
+    "log": "pose-cache-build.log"
+  },
+  {
+    "command": "pnpm --filter @node-arena/web exec vitest run test/troops.test.ts test/model-regressions.test.ts test/cache-regressions.test.ts",
+    "exitCode": 0,
+    "elapsedSeconds": 1.61,
+    "log": "pose-cache-green-final.log"
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0,
+    "elapsedSeconds": 15.52,
+    "log": "pose-cache-build-final.log"
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0,
+    "elapsedSeconds": 3.57,
+    "log": "pose-cache-lint.log"
+  }
+]

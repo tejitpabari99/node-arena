@@ -1,0 +1,17 @@
+
+> node-arena@ build /root/projects/node-arena/.worktrees/feat/game-design
+> pnpm -r build
+
+Scope: 3 of 4 workspace projects
+packages/content build$ tsc -p tsconfig.json && tsc -p tsconfig.check.json
+packages/content build: Done
+packages/sim build$ tsc -p tsconfig.json && tsc -p tsconfig.golden.json
+packages/sim build: Done
+apps/web build$ tsc --noEmit && vite build
+apps/web build: test/troops.test.ts(67,24): error TS2339: Property 'updateRanges' does not exist on type 'BufferAttribute<BufferAttributeEventMap> | InterleavedBufferAttribute'.
+apps/web build:   Property 'updateRanges' does not exist on type 'InterleavedBufferAttribute'.
+apps/web build: Failed
+/root/projects/node-arena/.worktrees/feat/game-design/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @node-arena/web@0.0.0 build: `tsc --noEmit && vite build`
+Exit status 2
+ ELIFECYCLE  Command failed with exit code 2.

@@ -1,0 +1,27 @@
+{
+  "name": "@node-arena/bots",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./harness": {
+      "types": "./dist/harness.d.ts",
+      "import": "./dist/harness.js"
+    }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.cjs",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.check.json",
+    "lint": "eslint src",
+    "bench": "node scripts/bench.mjs",
+    "golden": "node scripts/golden.mjs"
+  },
+  "dependencies": {
+    "@node-arena/sim": "workspace:*",
+    "@node-arena/content": "workspace:*"
+  }
+}

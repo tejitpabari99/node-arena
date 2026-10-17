@@ -1,0 +1,29 @@
+name: Balance reports
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+permissions:
+  contents: read
+jobs:
+  balance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:prerequisites
+      - name: Produce statistical reports (informational, outside PR gates)
+        run: |
+          mkdir -p balance-report
+          pnpm --silent balance --levels all --proxy reference,human-proxy,idle --seeds 200 --jobs 2 --format md > balance-report/balance.md
+          pnpm --silent balance --levels all --proxy reference,human-proxy,idle --seeds 200 --jobs 2 --format json > balance-report/balance.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: balance-report
+          path: balance-report/
+          if-no-files-found: error
