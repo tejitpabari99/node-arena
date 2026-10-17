@@ -6,14 +6,14 @@ date: 2026-10-17
 
 # feat/visual-mechanics-overhaul - branch index
 
-Node Arena v1.1: re-skin as a close Tower War clone (diorama, painted stacked towers, ribbon lanes, chibi troops, visible head-on clash) and fix bot line churn. Game rules unchanged.
+Node Arena v1.1: re-skin to match the Tower War reference images as closely as possible (same camera feel, proportions, palette, tower shapes, number/dot style, lane look, troop look, props, HUD; ref/towerwar_*.jpg primarily) (diorama, painted stacked towers, ribbon lanes, chibi troops, visible head-on clash) and fix bot line churn. Game rules unchanged.
 
 ## Sub-projects
 | # | Name | Phase | Depends on | Scope | Docs |
 |---|---|---|---|---|---|
 | 01 | Visual QA harness | 1 | none | Deterministic Playwright capture, compose, probe metrics M01-M13, 24-item scored CHECKLIST, iteration-0 baseline | [PRD](01-visual-qa-harness/PRD.md) / [TASKS](01-visual-qa-harness/TASKS.md) (8 tasks) |
 | 02 | Bot line commitment | 1 | none | Min line lifetime, cut margin, redraw block, tie hysteresis as bot params; churn tool; goldens regenerated; balance bands held | [PRD](02-bot-line-commitment/PRD.md) / [TASKS](02-bot-line-commitment/TASKS.md) (7 tasks) |
-| 03 | Diorama + towers | 2 | 01 | ~65 deg camera, grass/sand/rock ground, CC0 props, code-built painted stacked towers, roof count + slot dots, labels removed, `grass` theme for all levels | [PRD](03-diorama-and-towers/PRD.md) / [TASKS](03-diorama-and-towers/TASKS.md) (7 tasks) |
+| 03 | Diorama + towers | 2 | 01 | ~65 deg camera, grass/sand/rock ground, ref-matched props, code-built painted stacked towers, roof count + slot dots, labels removed, `grass` theme for all levels | [PRD](03-diorama-and-towers/PRD.md) / [TASKS](03-diorama-and-towers/TASKS.md) (7 tasks) |
 | 04 | Lanes, troops, clash | 3 | 03 (uses 01) | Pair ribbon lanes with chevrons and build-out, shared head-on lane with smoothed split, brawl FX, tinted chibi troops, LOD | [PRD](04-lanes-troops-clash/PRD.md) / [TASKS](04-lanes-troops-clash/TASKS.md) (10 tasks) |
 | 05 | HUD, rollout, perf | 4 | 04 (03); 02 for churn numbers in final review | Level pill + strength bar, round buttons, tip, menu restyle, L1 slice gate, 20-level sweep, L18 60 fps, baseline refresh, `final-review.md` | [PRD](05-hud-rollout-perf/PRD.md) / [TASKS](05-hud-rollout-perf/TASKS.md) (13 tasks) |
 
@@ -29,12 +29,12 @@ Task Status values: todo → in-progress → done | blocked | Blocked-visual (se
 01 and 02 run in parallel; then 03, 04, 05 strictly in order.
 
 ## Locked decisions (from brainstorm.md)
-- Target look: Tower War clone; steep ~65 deg landscape camera; full-bleed grass diorama, sand/rock border with trees, rocks, crates, tires; no void or board edge.
+- Target look: match the reference images (`ref/towerwar_*.jpg` primarily) as closely as possible, same camera feel, proportions, palette, tower shapes, number/dot style, lane look, troop look, props, HUD; steep ~65 deg landscape camera; full-bleed grass diorama, sand/rock border with trees, rocks, crates, tires; no void or board edge.
 - Towers: whole tower in team colour (grey neutral), floors by count band (max 5), white outlined count on roof + 1-3 slot dots, "Max" at cap; colourblind glyph on roof only in that mode.
 - Lanes: flat translucent team ribbon ~1/3 tower width, white chevrons, darker edges, builds outward from source.
 - Head-on A->B + B->A = ONE lane split by colour at the live meeting point with a brawl (puffs + marker); other crossings just overlap. Renderer-only, sim untouched.
-- Troops: chunky CC0 chibi in team colour, single file; LOD fallback (> 600 troops or frame-time degrade).
-- Art: towers/lanes/ground in code; props from CC0 packs. One theme (`grass`) for all 20 levels, theme is data.
+- Troops: chunky chibi in team colour, single file; LOD fallback (> 600 troops or frame-time degrade).
+- Art: towers/lanes/ground in code; props/troops from any freely downloadable pack or code-built geometry, chosen purely for visual match to refs (licensing not a constraint; source noted in docs/CREDITS.md). One theme (`grass`) for all 20 levels, theme is data.
 - HUD: top-centre level pill + team-strength bar, round pause and 1x/2x buttons, help only as first-level tip. Menu/picker: palette restyle only.
 - Bots: min line lifetime ~8 s (danger override), cut margin, reduced near-tie noise; GAME_RULES unchanged; bot goldens regenerated deliberately.
 - Slice-first: L1 passes the checklist before rollout to 20 levels. Iteration is autonomous (capture -> score vs refs -> fix); user approves once, at `final-review.md`.
@@ -54,7 +54,7 @@ Cross-SP conventions: refs are never edited; thresholds are never lowered; scree
 ## Cross-cutting risks
 | Risk | Mitigation |
 |---|---|
-| CC0 chibi troops off-style or too heavy | SP04 stuck-rule fallback packs, seamless LOD; SP05 perf ladder |
+| Chibi troops off-style or too heavy | SP04 stuck-rule fallback packs, seamless LOD; SP05 perf ladder |
 | Roof numbers unreadable at steep angle with L18 density | SP03 glyph-height metrics at 1366x768; SP03 fallback (bigger roof plate, drop dots on small); SP05 sweep |
 | Shared-lane split jitter | SP04 critically damped spring + `settle()`; SP01 `splitTrace` check |
 | Vision scoring drifts or is lenient | Anchored 4/6/8/10 rubric, projection-first metrics (null fails), calibration on a ref, user final review |
@@ -62,7 +62,7 @@ Cross-SP conventions: refs are never edited; thresholds are never lowered; scree
 | Bot fix shifts difficulty and scene states | SP02 drift rule, bands untouched; SP01 scenes use scripted lines and structural metrics |
 | Captures differ across machines (fonts, GPU) | Same-machine comparison only; `run.json` records renderer/commit |
 | Executor lacks integrated GPU | fps informational on SwiftShader; throttled proxy; final-review flags user laptop spot-check |
-| Asset licences / filenames unverified until download | Executor verifies CC0 at download; Quaternius CC0 substitute; CREDITS + licence copies; `check:manifest` |
+| Asset filenames unverified until download | Executor picks closest visual match to refs; Quaternius etc. as alternates; source noted in CREDITS (traceability only); `check:manifest` |
 | Content hash churn from theme repoint | `check:content --base` must show unchanged simHash; follow version process otherwise |
 | Baseline churn masks regressions | Single deliberate regeneration in SP05 after gates, logged per baseline |
 

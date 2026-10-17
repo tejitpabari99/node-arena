@@ -92,7 +92,7 @@ Iteration: Non-visual. Measure: `pnpm --filter @node-arena/web test:e2e` twice, 
 
 ## Task 12 - README, CREDITS check, `ci` and e2e green
 What it is / what it means: R9, Acceptance Criteria.
-What changes at a high level: README replaces v1 look descriptions and adds 3 final composite screenshots copied to `docs/img/` from `BF/final/` (re-copy after T13 capture if needed). `docs/CREDITS.md` check: every GLB/texture under `apps/web/assets` has a row and licence copy; city-kit roads row gone. Fix gaps found.
+What changes at a high level: README replaces v1 look descriptions and adds 3 final composite screenshots copied to `docs/img/` from `BF/final/` (re-copy after T13 capture if needed). `docs/CREDITS.md` check: every GLB/texture under `apps/web/assets` has a source row (traceability only); city-kit roads row gone. Fix gaps found.
 Done when: grep-compare of assets vs CREDITS clean; `pnpm check:manifest` green; `pnpm run ci` and `pnpm --filter @node-arena/web test:e2e` green; `check:content --base HEAD` simHash unchanged.
 Iteration: Non-visual. Measure: `pnpm run ci` then e2e; on failure fix and re-run. Log in iteration-log.md. Stuck rule and cap 12.
 

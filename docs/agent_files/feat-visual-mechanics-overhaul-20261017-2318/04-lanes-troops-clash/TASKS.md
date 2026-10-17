@@ -15,7 +15,7 @@ Shared visual loop (every visual task repeats it): (1) `pnpm --filter @node-aren
 | 3 | Build-out, cut flash/retract, draining lanes | T2 | todo |
 | 4 | Shared head-on lane + smoothed split | T2, T3, SP01 T2 | todo |
 | 5 | Input: centre-line hit-test, hover, draw preview | T2, T4 | todo |
-| 6 | Troops: team-tinted chibi, size, gait, licences | T1 | todo |
+| 6 | Troops: team-tinted chibi, size, gait, credits | T1 | todo |
 | 7 | Troop LOD (auto/high/low) | T6 | todo |
 | 8 | Brawl FX at the split | T4, T7 | todo |
 | 9 | Remove v1 lane paths + update specs | T5, T8 | todo |
@@ -51,9 +51,9 @@ What changes at a high level: `projectSegments` returns centre lines per channel
 Done when: input unit test and `e2e/input.spec.ts` updated; run it and require green (except `SP05 baseline refresh` fixme specs, which SP05 T11 restores); preview and hover visible on l01.
 Iteration: Visual plus tests. Scene `l01` (hover/preview states via the harness handles). Capture `visual:capture --scene l01`, compose. Refs `towerwar_01.jpg`, `citytakeover_01.jpg`. Gated: V10, V11 must not regress (>= 8); no new metric. Run `pnpm --filter @node-arena/web test`. Update the e2e spec and run `pnpm --filter @node-arena/web exec playwright test input`, requiring green. Shared loop, cap 12.
 
-## Task 6 - Troops: team-tinted chibi, size, gait, licences
+## Task 6 - Troops: team-tinted chibi, size, gait, credits
 What it is / what it means: Req 8; Decisions 4, 5. Bigger, fully team-tinted Kenney Mini Characters with a procedural walk.
-What changes at a high level: mask-all tint variant in `troop-material.ts` (head 20% lighter); manifest `scale` for height 0.29 x tower width (~1.8 u standard); lower-half vertex shear gait `+/- sin(phase)` in the vertex patch; single file on lane centre. Stuck-rule fallbacks in order: Kenney Blocky Characters, Quaternius Ultimate Animated Characters (rig stripped, via `tools/assets/import-art.mjs`). Copy licence text to `apps/web/assets/licenses/`, add a CREDITS.md row per shipped model.
+What changes at a high level: mask-all tint variant in `troop-material.ts` (head 20% lighter); manifest `scale` for height 0.29 x tower width (~1.8 u standard); lower-half vertex shear gait `+/- sin(phase)` in the vertex patch; single file on lane centre. Stuck-rule fallbacks in order: Kenney Blocky Characters, Quaternius Ultimate Animated Characters (rig stripped, via `tools/assets/import-art.mjs`). Any other freely downloadable model that matches the refs better is fine (no licence check). Add a CREDITS.md source row per shipped model (traceability only).
 Done when: V13 >= 8; M06 passes; `pnpm check:manifest` green.
 Iteration: Visual. Scenes `l01`, `clash`. Capture `visual:capture --scene l01` and `--scene clash`, compose. Refs `towerwar_yt1.jpg`, `towerwar_01.jpg`. Gated: V13, M06 (height >= 1.5% viewport and 0.22-0.60 x tower width). Run `pnpm check:manifest` and troops unit test. Shared loop, cap 12.
 

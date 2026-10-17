@@ -1,6 +1,6 @@
 ---
 status: approved
-summary: Deterministic Playwright capture + side-by-side compose + projection/pixel metrics + scored CHECKLIST so every visual task can iterate autonomously against the Tower War references
+summary: Deterministic Playwright capture + side-by-side compose + projection/pixel metrics + scored CHECKLIST so every visual task can iterate autonomously against the Tower War references (goal: match them as closely as possible)
 date: 2026-10-17
 ---
 # PRD: Visual QA Harness (SP01)
