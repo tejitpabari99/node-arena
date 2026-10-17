@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 summary: v1.1 — re-skin Node Arena as a Tower War clone (diorama, painted towers, ribbon lanes, chibi troops), visible head-on clash, bot churn fix
 date: 2026-10-17
 ---
