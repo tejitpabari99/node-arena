@@ -11,7 +11,7 @@ Node Arena v1.1: re-skin to match the Tower War reference images as closely as p
 ## Sub-projects
 | # | Name | Phase | Depends on | Scope | Docs |
 |---|---|---|---|---|---|
-| 01 | Visual QA harness | 1 | none | Deterministic Playwright capture, compose, probe metrics M01-M13, 24-item scored CHECKLIST, iteration-0 baseline | [PRD](01-visual-qa-harness/PRD.md) / [TASKS](01-visual-qa-harness/TASKS.md) (8 tasks) |
+| 01 | Visual QA harness | 1 | none | Deterministic Playwright capture (9 scenes x 2 viewports), compose, probe+pixel metrics M01-M20 (HSV, ref-calibrated), 24-item scored CHECKLIST with blind second scorer (`visual:score-sheet`/`score-merge`), iteration-0 baseline + calibration | [PRD](01-visual-qa-harness/PRD.md) / [TASKS](01-visual-qa-harness/TASKS.md) (8 tasks) |
 | 02 | Bot line commitment | 1 | none | Min line lifetime, cut margin, redraw block, tie hysteresis as bot params; churn tool; goldens regenerated; balance bands held | [PRD](02-bot-line-commitment/PRD.md) / [TASKS](02-bot-line-commitment/TASKS.md) (7 tasks) |
 | 03 | Diorama + towers | 2 | 01 | ~65 deg camera, grass/sand/rock ground, ref-matched props, code-built stacked stone towers with team roof caps + trim, roof count + slot dots, labels removed, `grass` theme for all levels | [PRD](03-diorama-and-towers/PRD.md) / [TASKS](03-diorama-and-towers/TASKS.md) (7 tasks) |
 | 04 | Lanes, troops, clash | 3 | 03 (uses 01) | Pair ribbon lanes with chevrons and build-out, shared head-on lane with smoothed split, brawl FX, tinted chibi troops, LOD | [PRD](04-lanes-troops-clash/PRD.md) / [TASKS](04-lanes-troops-clash/TASKS.md) (10 tasks) |
@@ -45,7 +45,7 @@ Task Status values: todo → in-progress → done | blocked | Blocked-visual (se
 1. Read `AGENTS.md`, `brainstorm.md`, and this README.
 2. Run `pnpm install && pnpm build:prerequisites`.
 3. Execute with this explicit loop (no skill required; skills in `.agents/skills` may help but are optional): for each sub-project in dependency order (01 ∥ 02 → 03 → 04 → 05), for each task in its `TASKS.md` table order: set Status `in-progress`; implement via a sub-agent; run the task's Iteration block to its exit; run the tests named in Done-when; commit `<NN-name>: Task N — <short name>` (iteration commits `… — iter k: <change>`; hyphen vs em dash in per-SP files is cosmetic); set Status `done` / `blocked` / `Blocked-visual`. Never wait for human approval. At the end SP05 Task 13 writes `final-review.md`.
-4. **Scoring rigor (all visual iteration, SP03-SP05):** before scoring any item >= 8, log >= 3 concrete observable differences vs the ref; run objective pixel checks per SP01 metrics (`visual:score-sheet`, provided by SP01); a blind second scorer sub-agent sees only the composite + checklist and the item score = min of the two scores.
+4. **Scoring rigor (all visual iteration, SP03-SP05):** before scoring any item >= 8, log >= 3 concrete observable differences vs the ref; an item cannot score >= 8 while its mapped pixel check (CHECKLIST "Pixel check" column, M-ids via `visual:check`) fails; a blind second scorer sub-agent gets only the composite + the blank sheet from `visual:score-sheet --scene <id>` and `visual:score-merge` takes the per-item min (SP01 Scoring protocol; SP05 adds HUD metrics H01-H07).
    Every visual task follows the "Iteration protocol" section in its own PRD. Those sections are self-contained and authoritative; do not rely on any skill or environment feature for iteration behaviour.
 5. No human approval until `final-review.md` (written by SP05) in this folder.
 6. `Blocked-visual` tasks (12-iteration cap or stuck rule) do not stop the run: log them, record in TASKS.md and final-review, continue.
@@ -57,7 +57,7 @@ Cross-SP conventions: refs are never edited; thresholds are never lowered; scree
 |---|---|
 | Chibi troops off-style or too heavy | SP04 stuck-rule fallback packs, seamless LOD; SP05 perf ladder |
 | Roof numbers unreadable at steep angle with L18 density | SP03 glyph-height metrics at 1366x768; SP03 fallback (bigger roof plate, drop dots on small); SP05 sweep |
-| Shared-lane split jitter | SP04 critically damped spring + `settle()`; SP01 `splitTrace` check |
+| Shared-lane split jitter | SP04 critically damped spring + `settle()`; SP01 `clash` `splitTrace` + M12 check |
 | Vision scoring drifts or is lenient | Anchored 4/6/8/10 rubric, projection-first metrics (null fails), calibration on a ref, user final review |
 | Probe/tag contract broken by renderer rewrites | CHECKLIST probe-contract section; non-null probe fields in SP03/SP04 ACs |
 | Bot fix shifts difficulty and scene states | SP02 drift rule, bands untouched; SP01 scenes use scripted lines and structural metrics |
