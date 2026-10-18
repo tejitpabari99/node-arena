@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
-import { BOT_ACTIONS, BOT_CONSIDERATIONS, compileLevel, generateHashes, loadContent, validateContent, type BotProfile, type ContentFileMap, type Level } from '../src/index.js';
+import { BOT_ACTIONS, BOT_CONSIDERATIONS, compileLevel, generateHashes, loadContent, resolveProfiles, validateContent, type BotProfile, type ContentFileMap, type Level } from '../src/index.js';
 
 const personalities = ['rusher', 'turtle', 'economist', 'opportunist'];
 const tiers = { easy: [3500, 350, 1], normal: [2200, 200, 1], hard: [1400, 100, 2], expert: [800, 30, 2] };
@@ -31,6 +31,14 @@ test('named production bot corpus contains 23 distinct complete profiles and pre
     for (const action of BOT_ACTIONS) assert.deepEqual(Object.keys(params.weights![action]!).sort(), [...BOT_CONSIDERATIONS].sort());
   }
   const params = Object.fromEntries(personalities.map(id => [id, (loaded[pathFor(id)] as BotProfile).params]));
+  // SP02 R7/R8: personalities start at the PRD commitment defaults; reference is milder; idle has none.
+  const defaults = { minLineLifetimeSec: 8000, dangerOverride: 700, cutMargin: 150, redrawBlockSec: 10000, tieHysteresis: 50, slotGuardMargin: 3000, slotPreemptMargin: 1000 };
+  for (const id of personalities) assert.deepEqual(params[id]!.commitment, defaults, id);
+  const mild = (loaded[pathFor('reference')] as BotProfile).params.commitment!;
+  assert.ok(mild, 'reference: commitment');
+  for (const key of Object.keys(defaults) as (keyof typeof defaults)[]) assert.ok(mild[key] <= defaults[key], `reference commitment ${key} is milder`);
+  assert.ok(mild.minLineLifetimeSec < defaults.minLineLifetimeSec && mild.cutMargin < defaults.cutMargin);
+  assert.equal(Object.hasOwn((loaded[pathFor('idle')] as BotProfile).params, 'commitment'), false);
   assert.ok(params.rusher!.bias!.attack! > params.rusher!.bias!.reinforce!);
   assert.ok(params.rusher!.skill!.decisionIntervalSec < params.turtle!.skill!.decisionIntervalSec);
   assert.ok(params.turtle!.bias!.reinforce! > params.turtle!.bias!.attack!);
@@ -69,6 +77,9 @@ test('all sixteen three-line tiers compile inherited personality with exact skil
   const proxy = base[pathFor('human-proxy')] as BotProfile;
   assert.equal(proxy.params.extends, 'reference');
   assert.deepEqual(proxy.params.skill, { decisionIntervalSec: 1800, noise: 200, actionsPerDecision: 1 });
+  // human-proxy models a human, so it carries commitment, inherited from reference (variants may only set skill).
+  assert.equal(Object.hasOwn(proxy.params, 'commitment'), false);
+  assert.deepEqual(resolveProfiles(base)[pathFor('human-proxy')]!.params.commitment, (base[pathFor('reference')] as BotProfile).params.commitment);
 });
 
 // Merely checking the selected id would permit a skill-only alias of the reference bot in a level.

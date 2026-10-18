@@ -8,8 +8,8 @@ Source of truth: 02-bot-line-commitment/PRD.md. Bot-side only; sim, GAME_RULES.m
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Churn tool + committed v1 baseline | none | todo |
-| 2 | Commitment params: schema, profiles, versions | 1 | todo |
+| 1 | Churn tool + committed v1 baseline | none | done |
+| 2 | Commitment params: schema, profiles, versions | 1 | in-progress |
 | 3 | Bot enforcement of commitment | 2 | todo |
 | 4 | Commitment unit tests | 3 | todo |
 | 5 | Tune to churn targets, hold balance bands | 4 | todo |
