@@ -18,6 +18,8 @@ export interface TroopRendererOptions {
 interface Bucket {
   template: BufferGeometry; materials: Material[]; mesh: InstancedMesh; capacity: number; count: number;
   animation: ReturnType<typeof patchTroopMaterial>[]; pose: Float32Array;
+  /** Probe tag (test-harness visualProbe) copied onto each mesh; no effect on rendering. */
+  tag: Record<string, string | number>;
 }
 function buffer(capacity: number): TroopBuf {
   return { channel: new Int32Array(capacity), seq: new Int32Array(capacity), owner: new Int32Array(capacity), kind: new Int32Array(capacity), progress: new Int32Array(capacity) };
@@ -44,14 +46,14 @@ export function createTroopRenderer(options: TroopRendererOptions) {
   let capacity = Math.max(1, Math.ceil(options.initialCapacity ?? 128)), buf = buffer(capacity), live = 0, disposed = false;
   const buckets: Bucket[] = [], meshes: InstancedMesh[] = [], byVisual = new Map<string, Bucket[]>(), kindBuckets: Bucket[][] = [];
   const identity = new Matrix4();
-  function makeMesh(bucket: Pick<Bucket, 'template' | 'materials'>, size: number) {
+  function makeMesh(bucket: Pick<Bucket, 'template' | 'materials' | 'tag'>, size: number) {
     const geometry = bucket.template.clone();
     geometry.setAttribute('troopPose', new InstancedBufferAttribute(new Float32Array(size * 4), 4).setUsage(DynamicDrawUsage));
     const mesh = new InstancedMesh(geometry, bucket.materials, size);
     for (let i = 0; i < size; i++) mesh.setMatrixAt(i, identity);
     mesh.count = 0; mesh.frustumCulled = false; mesh.castShadow = false; mesh.receiveShadow = false;
     const visualRadius = geometry.boundingSphere?.radius ?? 1;
-    mesh.boundingSphere = new Sphere(center.clone(), mapRadius + visualRadius); scene.add(mesh); return mesh;
+    mesh.boundingSphere = new Sphere(center.clone(), mapRadius + visualRadius); mesh.userData = { ...bucket.tag }; scene.add(mesh); return mesh;
   }
   try {
     for (const kind of view.kinds) {
@@ -64,13 +66,15 @@ export function createTroopRenderer(options: TroopRendererOptions) {
         const modelRadius = (merged.geometry.boundingSphere?.center.length() ?? 0) + (merged.geometry.boundingSphere?.radius ?? 1);
         merged.geometry.boundingSphere = new Sphere(new Vector3(), modelRadius * visual.scale + Math.abs(visual.yOffset ?? 0) + (visual.anim?.type === 'bob' ? visual.anim.amp : 0));
         owners = [];
+        const box = merged.geometry.boundingBox, s = visual.scale;
+        const tag = { visualRole: 'troop', heightWorld: box ? (box.max.y - box.min.y) * s : 0, widthWorld: box ? Math.max(box.max.x - box.min.x, box.max.z - box.min.z) * s : 0, baseY: (visual.yOffset ?? 0) + (box ? box.min.y * s : 0) };
         for (let owner = 0; owner < view.players.length; owner++) {
           const team = new Color(resolver.color(view.players[owner]!.colorKey, options.palette));
           const materials = merged.materials.map(m => { const copy = m.clone(); scope.material(copy, false); return copy; });
           const animation = materials.map(m => patchTroopMaterial(m, visual, team, merged.hasTeamMaterial, clock, options.reducedMotion ?? false));
-          const mesh = makeMesh({ template: merged.geometry, materials }, capacity);
+          const mesh = makeMesh({ template: merged.geometry, materials, tag }, capacity);
           const pose = mesh.geometry.getAttribute('troopPose').array as Float32Array;
-          const bucket = { template: merged.geometry, materials, mesh, capacity, count: 0, animation, pose }; owners.push(bucket); buckets.push(bucket); meshes.push(mesh);
+          const bucket = { template: merged.geometry, materials, mesh, capacity, count: 0, animation, pose, tag }; owners.push(bucket); buckets.push(bucket); meshes.push(mesh);
         }
         byVisual.set(kind.visual, owners);
       }
