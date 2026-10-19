@@ -1,5 +1,5 @@
 {
-  "botVersion": "1.4.0",
+  "botVersion": "1.5.0",
   "metadata": {
     "rulesVersion": "1.0.0",
     "schemaVersion": "1.0.0",
@@ -8,14 +8,14 @@
   "botHash": {
     "random-6-seed-1": {
       "economist-expert": "5c67380a7683e51c57853d4b06d7922ed455c9858254aa9b1bc2dc96cc72698a",
-      "opportunist-normal": "99ac7ca60128ed5dfc75c545816719ef8d6691869c49d91ba724e874245c346e"
+      "opportunist-normal": "7e921561f4e32a24893ef25757ff67deba0ede3e3617531a2c7dd5dc3a25a8fc"
     },
     "random-0-seed-37": {
       "rusher-hard": "977fb30a52f21cf6c9a4c57fd69c2825549bd4c5a0dcf70866153dab72a59c53",
       "turtle-normal": "a9f0092c10ef125ea17248cb7156bd6a084747427a1f9887fc1386903533014a"
     },
     "random-3-seed-704": {
-      "opportunist-easy": "f383350166c90ebefb8e61443ac8fd0ae39a6f239aa84eed23968d05c794b51e",
+      "opportunist-easy": "c6fa00e71ec5f959e3b4240e2b22834f29f8735ceb9074a3bb3d5ddb6e036f95",
       "rusher-normal": "6ecfeb3ca64bace28393a0eed91a5aaf9d061d51e3dec9efca37897a1175d844"
     }
   },
@@ -348,9 +348,9 @@
                   "minLineLifetimeSec": 8000,
                   "dangerOverride": 700,
                   "cutMargin": 0,
-                  "redrawBlockSec": 10000,
+                  "redrawBlockSec": 0,
                   "tieHysteresis": 50,
-                  "slotGuardMargin": 3000,
+                  "slotGuardMargin": 2000,
                   "slotPreemptMargin": 1000
                 },
                 "weights": {
@@ -398,7 +398,7 @@
         "simHash": "8d4bfd60924e0ff8bd89029c98abf5b27ffb221918b5387f17f51c3b5e123c47",
         "botHash": {
           "economist-expert": "5c67380a7683e51c57853d4b06d7922ed455c9858254aa9b1bc2dc96cc72698a",
-          "opportunist-normal": "99ac7ca60128ed5dfc75c545816719ef8d6691869c49d91ba724e874245c346e"
+          "opportunist-normal": "7e921561f4e32a24893ef25757ff67deba0ede3e3617531a2c7dd5dc3a25a8fc"
         }
       },
       "seed": 1
@@ -1015,9 +1015,9 @@
                   "minLineLifetimeSec": 8000,
                   "dangerOverride": 700,
                   "cutMargin": 0,
-                  "redrawBlockSec": 10000,
+                  "redrawBlockSec": 0,
                   "tieHysteresis": 50,
-                  "slotGuardMargin": 3000,
+                  "slotGuardMargin": 2000,
                   "slotPreemptMargin": 1000
                 },
                 "weights": {
@@ -1137,7 +1137,7 @@
         ],
         "simHash": "ed57bc0b68d0cdf04630b77372e949a509c63103614d75d0ba512a9043c893df",
         "botHash": {
-          "opportunist-easy": "f383350166c90ebefb8e61443ac8fd0ae39a6f239aa84eed23968d05c794b51e",
+          "opportunist-easy": "c6fa00e71ec5f959e3b4240e2b22834f29f8735ceb9074a3bb3d5ddb6e036f95",
           "rusher-normal": "6ecfeb3ca64bace28393a0eed91a5aaf9d061d51e3dec9efca37897a1175d844"
         }
       },

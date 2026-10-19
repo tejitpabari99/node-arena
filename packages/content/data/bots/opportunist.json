@@ -25,9 +25,9 @@
       "minLineLifetimeSec": 8,
       "dangerOverride": 0.7,
       "cutMargin": 0,
-      "redrawBlockSec": 10,
+      "redrawBlockSec": 0,
       "tieHysteresis": 0.05,
-      "slotGuardMargin": 3,
+      "slotGuardMargin": 2,
       "slotPreemptMargin": 1
     },
     "weights": {
