@@ -56,7 +56,10 @@ export function createLineRenderer(options: LineRendererOptions) {
         start.x-nx*half,start.y,start.z-nz*half, start.x+nx*half,start.y,start.z+nz*half,
         end.x-nx*half,end.y,end.z-nz*half, end.x+nx*half,end.y,end.z+nz*half], 3));
       geometry.setAttribute('uv', new Float32BufferAttribute([0,0,0,1,length/1.2,0,length/1.2,1], 2)); geometry.setIndex([0,1,2,2,1,3]);
-      const mesh = new Mesh(geometry, material(line.owner)); mesh.renderOrder = 1; options.scene.add(mesh); meshes.push(mesh);
+      const mesh = new Mesh(geometry, material(line.owner)); mesh.renderOrder = 1;
+      // Probe tag only (test-harness visualProbe); no effect on rendering.
+      const id = (i: number) => view.ids?.towers[i] ?? String(i), lo = Math.min(line.from, line.to), hi = Math.max(line.from, line.to);
+      mesh.userData = { visualRole: 'lane', from: line.from, to: line.to, pair: `${id(lo)}-${id(hi)}` }; options.scene.add(mesh); meshes.push(mesh);
       segments.push({ channel: line.channel, owner: line.owner, from: line.from, to: line.to, start, end });
     }
     applyHighlight();

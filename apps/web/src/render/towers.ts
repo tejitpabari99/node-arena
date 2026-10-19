@@ -67,6 +67,8 @@ export function createTowerRenderer(options: TowerRendererOptions) {
       base.position.y = .06; base.receiveShadow = true; scope.object(base); group.add(base);
       const baseMarker = marker(Math.min(radius * .5, 1.8)), roofMarker = marker(Math.max(.4, Math.min(size.x, size.z, 2)));
       baseMarker.position.set(0, .13, radius * .78); roofMarker.position.y = Math.max(physical.max.y, .13) + .02;
+      // Probe tags only (test-harness visualProbe); no effect on rendering.
+      group.userData = { visualRole: 'tower', towerIndex: i }; model.userData.visualPart = 'model'; roofMarker.userData.visualRole = 'count';
       group.add(baseMarker, roofMarker); options.scene.add(group); scope.defer(() => group.removeFromParent());
       const values = readOverlays(registry, tower.components, options.view, i);
       const label = values.length ? labels.add(i, new Vector3(group.position.x, Math.max(visual.label?.height ?? physical.max.y + .8, physical.max.y + .2), group.position.z), values.map(value => value.key)) : undefined;
@@ -87,7 +89,7 @@ export function createTowerRenderer(options: TowerRendererOptions) {
           const texture = markerTexture(glyph); if (mesh.material.map !== texture) { mesh.material.map = texture; mesh.material.needsUpdate = true; }
           mesh.userData.glyph = glyph;
         }
-        previousTeams[i] = team;
+        previousTeams[i] = team; tower.group.userData.paintColor = color;
       }
       tower.label?.update(glyph, color, readOverlays(registry, view.towerStatic[i]!.components, view, i));
     }

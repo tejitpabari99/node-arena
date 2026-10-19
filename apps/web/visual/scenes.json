@@ -1,0 +1,60 @@
+{
+  "$comment": "SP01 visual:capture scenes (PRD Req 2). Later SPs may append scenes or adjust a capture tick with a logged reason. Commands are submitted at sim tick 0 (after load, before the first step) unless they carry their own `tick`. Frames: `tick` absolute, or `after` {event, plus} = first sim event of that type + plus. `settle:false` frames render unsettled with reducedMotion off.",
+  "seed": 1,
+  "viewports": ["1920x1080", "1366x768"],
+  "extraViewports": { "1920x1200": ["l01", "l10", "l18"] },
+  "settings": { "quality": "high", "reducedMotion": true, "colorblind": false },
+  "scenes": [
+    { "id": "l01", "level": "01-first-steps",
+      "commands": [{ "type": "DrawLine", "player": "p1", "from": "t1", "to": "t2" }],
+      "frames": [{ "tick": 240 }] },
+    { "id": "l10", "level": "10-two-foes",
+      "commands": [{ "type": "DrawLine", "player": "p1", "from": "home-1", "to": "edge-1" }],
+      "frames": [{ "tick": 400 }] },
+    { "id": "l18", "level": "18-free-for-all",
+      "commands": [{ "type": "DrawLine", "player": "p1", "from": "home-1", "to": "arm-1" }],
+      "frames": [{ "tick": 600 }] },
+    { "id": "clash", "level": "fixture-1", "fixture": "visual-clash",
+      "commands": [
+        { "type": "DrawLine", "player": "p1", "from": "a", "to": "b" },
+        { "type": "DrawLine", "player": "p2", "from": "b", "to": "a" },
+        { "type": "DrawLine", "player": "p1", "from": "c", "to": "d" }
+      ],
+      "frames": [
+        { "after": { "event": "Clash", "plus": 20 } },
+        { "label": "p6", "relative": 6, "settle": false }
+      ],
+      "splitTrace": { "ticks": 10 },
+      "silentBots": true },
+    { "id": "menu", "screen": "menu" },
+    { "id": "picker", "screen": "picker" },
+    { "id": "buildout", "level": "01-first-steps",
+      "commands": [{ "type": "DrawLine", "player": "p1", "from": "t1", "to": "t2" }],
+      "frames": [
+        { "label": "p2", "tick": 2, "settle": false },
+        { "label": "p6", "tick": 6, "settle": false },
+        { "label": "p12", "tick": 12, "settle": false }
+      ] },
+    { "id": "cut", "level": "01-first-steps",
+      "commands": [
+        { "type": "DrawLine", "player": "p1", "from": "t1", "to": "t2" },
+        { "type": "CutLine", "player": "p1", "from": "t1", "to": "t2", "tick": 120 }
+      ],
+      "frames": [
+        { "label": "p1", "tick": 121, "settle": false },
+        { "label": "p3", "tick": 123, "settle": false },
+        { "label": "p6", "tick": 126, "settle": false }
+      ],
+      "laneCrop": { "from": "t1", "to": "t2" },
+      "silentBots": true,
+      "fallback": { "level": "fixture-1", "fixture": "visual-clash",
+        "commands": [
+          { "type": "DrawLine", "player": "p1", "from": "c", "to": "d" },
+          { "type": "CutLine", "player": "p1", "from": "c", "to": "d", "tick": 120 }
+        ],
+        "laneCrop": { "from": "c", "to": "d" } } },
+    { "id": "l10cb", "level": "10-two-foes", "settings": { "colorblind": true },
+      "commands": [{ "type": "DrawLine", "player": "p1", "from": "home-1", "to": "edge-1" }],
+      "frames": [{ "tick": 400 }] }
+  ]
+}
