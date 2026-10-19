@@ -21,6 +21,15 @@
       "generates": 1,
       "garrison": 0.8
     },
+    "commitment": {
+      "minLineLifetimeSec": 8,
+      "dangerOverride": 0.7,
+      "cutMargin": 0.15,
+      "redrawBlockSec": 10,
+      "tieHysteresis": 0.05,
+      "slotGuardMargin": 3,
+      "slotPreemptMargin": 1
+    },
     "weights": {
       "attack": {
         "targetValue": 1,

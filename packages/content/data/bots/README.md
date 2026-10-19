@@ -23,3 +23,12 @@ inherits its personality with 1.8 seconds, 0.2 noise and one action. Both profil
 and their aliases are restricted to tooling; levels cannot select them. `idle`
 is legal in levels and issues no commands. Campaign levels use personality tiers
 or idle; production campaign authoring belongs to SP05.
+
+## Line commitment (SP02)
+
+Base profiles carry an optional `commitment` block (fx3 milli-units, bot-side only,
+sim rules unchanged): `minLineLifetimeSec`, `dangerOverride`, `cutMargin`,
+`redrawBlockSec`, `tieHysteresis`, `slotGuardMargin`, `slotPreemptMargin`. The four
+personalities start at the PRD defaults (8, 0.7, 0.15, 10, 0.05, 3, 1); `reference`
+uses a milder setting and `human-proxy` inherits it. Tiers may not set `commitment`
+(they inherit it). `idle` and profiles without the block behave exactly as v1.

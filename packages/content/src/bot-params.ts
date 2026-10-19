@@ -25,6 +25,27 @@ export const BotSkillSchema = Type.Object({
   noise: Type.Number({ minimum: 0, maximum: 1, 'x-unit': 'fx3' }),
   actionsPerDecision: Type.Integer({ minimum: 1, maximum: 2147483647 }),
 }, { additionalProperties: false });
+const fx3 = (maximum?: number) => Type.Number({ minimum: 0, ...(maximum === undefined ? {} : { maximum }), 'x-unit': 'fx3' });
+/** SP02 line commitment (bot-side only; sim rules unchanged). Absent block = v1 behaviour.
+ * Seconds and troop margins are fx3 milli-units; dangerOverride/cutMargin/tieHysteresis share the
+ * 0..1000 consideration-score scale. Base profiles only: skill-only variants inherit it.
+ */
+export const BotCommitmentSchema = Type.Object({
+  /** A bot-owned line younger than this is not a cut candidate (unless dangerOverride). */
+  minLineLifetimeSec: fx3(),
+  /** Source danger at or above this lifts the lifetime lock for cuts from that source. */
+  dangerOverride: fx3(1),
+  /** A cut needs cutScore - keepScore >= cutMargin. */
+  cutMargin: fx3(1),
+  /** After a pair is cut (own CutLine or sim slot-cut), DrawLine on it is blocked this long. */
+  redrawBlockSec: fx3(),
+  /** Near-tie band below which cut decisions ignore noise. */
+  tieHysteresis: fx3(1),
+  /** Do not draw into a slot gated by threshold T when garrison - T < this many troops. */
+  slotGuardMargin: fx3(),
+  /** At slot capacity with garrison - T <= this, cut the lowest-keep line deliberately. */
+  slotPreemptMargin: fx3(),
+}, { additionalProperties: false });
 export const BotParamsSchema = Type.Object({
   extends: Type.Optional(Type.String({ pattern: '^[a-z0-9][a-z0-9-]*$' })),
   skill: Type.Optional(BotSkillSchema),
@@ -33,6 +54,7 @@ export const BotParamsSchema = Type.Object({
   maxTargetsPerSource: Type.Optional(Type.Integer({ minimum: 1, maximum: 2147483647 })),
   cooldownSec: Type.Optional(Type.Number({ minimum: 0, 'x-unit': 'fx3' })),
   componentValue: Type.Optional(weightMap(Object.keys(COMPONENT_REGISTRY.components))),
+  commitment: Type.Optional(BotCommitmentSchema),
   weights: Type.Optional(Type.Object({
     attack: Type.Optional(BotConsiderationWeightsSchema),
     reinforce: Type.Optional(BotConsiderationWeightsSchema),
@@ -44,8 +66,9 @@ export const BotParamsSchema = Type.Object({
   if: { properties: { extends: {} }, required: ['extends'] },
   then: { properties: {
     skill: {}, bias: false, holdThreshold: false, maxTargetsPerSource: false,
-    cooldownSec: false, componentValue: false, weights: false,
+    cooldownSec: false, componentValue: false, weights: false, commitment: false,
   }, required: ['skill'] },
 });
+export type BotCommitment = Type.Static<typeof BotCommitmentSchema>;
 export type BotSkill = Type.Static<typeof BotSkillSchema>;
 export type BotParams = Type.Static<typeof BotParamsSchema>;
