@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // visual:capture (PRD SP01 Req 1, 2, 4, 9): deterministic screenshots + probe JSON of the scenes in scenes.json.
 // Usage: pnpm --filter @node-arena/web visual:capture [--scene id] [--viewport WxH] [--headed] [--gpu] [--dev] [--no-build]
-// Output (git-ignored): apps/web/visual-out/{<scene>-<WxH>[-<label>].png, metrics.json, run.json}
+// Output (git-ignored): apps/web/visual-out/{<scene>-<WxH>[-<label>].png, <scene>-<WxH>[-<label>]-magenta.png (M07 pass, first frame
+// of each level job), metrics.json (probe + dom + sim per frame; l18@1920x1080 `perf` for M13), run.json}
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -13,6 +14,8 @@ const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
 const log = (...a) => console.log('[visual:capture]', ...a);
 /** SwiftShader screenshots of 1920px WebGL frames can exceed Playwright's 30 s default when the host is loaded. */
 const SHOT_TIMEOUT = 120_000;
+/** M13 perf sample: fresh page after the captures (stored as `perf`, which selfcheck ignores). */
+const PERF = { scene: 'l18', viewport: '1920x1080', durationMs: 5000 };
 
 /** Headed without an X display: start a private Xvfb (xvfb-run needs xauth, often missing). Returns a stop function. */
 async function ensureDisplay(opts) {
@@ -48,6 +51,72 @@ async function pageFonts(page) {
     css: [...new Set([...document.querySelectorAll('*')].map(e => getComputedStyle(e).fontFamily))].sort(),
     faces: [...document.fonts].map(f => `${f.family}|${f.weight}|${f.style}|${f.status}`).sort(),
   }));
+}
+
+/**
+ * Per-frame record beside the probe (metrics M02/M12/M17/M19): DOM label/summary counts and card rects (page DOM, M17/M02),
+ * and sim-view facts (slots per tower, troop kinds, tower world + projected screen positions) — not renderer self-reports.
+ */
+function frameState() {
+  const na = window.__na, v = na.view, r3 = n => Math.round(n * 1000) / 1000;
+  return {
+    tick: v.tick, hash: na.hash(), over: v.over, screen: na.screen, probe: na.visualProbe(),
+    dom: {
+      labels: document.querySelectorAll('[data-tower-index], .tower-label').length,
+      summary: document.querySelectorAll('[data-tower-summary]').length,
+      cards: [...document.querySelectorAll('[data-tower-index]')].map(e => { const b = e.getBoundingClientRect(); return { index: Number(e.getAttribute('data-tower-index')), x: r3(b.x), y: r3(b.y), w: r3(b.width), h: r3(b.height) }; }),
+    },
+    sim: {
+      slots: [...v.tower.slots], lines: [...v.tower.lines], kinds: v.kinds.map(k => ({ id: k.id, speedPerTick: k.speedPerTick })),
+      towers: v.ids.towers.map((id, i) => { const p = na.project(id); return { id, x: v.towerStatic[i].x / 1000, z: v.towerStatic[i].y / 1000, screen: { x: r3(p.x), y: r3(p.y) } }; }),
+    },
+  };
+}
+
+/** M07: the same frame re-rendered with the clear colour forced to magenta, then the theme background restored. */
+async function magentaPass(page, file, settle) {
+  const paint = hex => page.evaluate(([h, s]) => { window.__na.clearColor(h); window.__na.render({ settle: s }); window.__na.render({ settle: s }); }, [hex, settle]);
+  await paint('#ff00ff');
+  await page.clock.runFor(32);
+  const shot = await screenshot(page, file);
+  await paint(null);
+  await page.clock.runFor(32);
+  return shot;
+}
+
+/**
+ * M13 perf (PRD: l18, 5 s real time, fresh page, no clock): sim stepped at 20 Hz from real time, one render per rAF.
+ * fps/frame p95 from rAF intervals, jsMs = step + render CPU per frame, drawCalls = max renderer.info calls.
+ */
+async function capturePerf(browser, config, scene, durationMs) {
+  const context = await newContext(browser, { width: 1920, height: 1080 });
+  const page = await context.newPage();
+  try {
+    await page.goto(`${BASE_URL}/?test=1`);
+    await page.waitForFunction(() => window.__na?.screen === 'menu');
+    await page.evaluate(s => window.__na.settings(s), { ...config.settings, ...(scene.settings ?? {}) });
+    await page.evaluate(([id, s]) => window.__na.load(id, s), [scene.level, config.seed]);
+    await page.waitForFunction(() => window.__na.screen === 'playing');
+    const target = sceneFrames(scene)[0].tick ?? 0;
+    await page.evaluate(([cmds, t]) => { for (const c of cmds) window.__na.submit(c); window.__na.step(t); }, [(scene.commands ?? []).filter(c => !c.tick).map(({ tick: _t, ...c }) => c), target]);
+    return await page.evaluate(async ms => {
+      const p95 = list => { const s = [...list].sort((a, b) => a - b); return s.length ? s[Math.ceil(s.length * 0.95) - 1] : null; };
+      const frames = [], js = [], calls = [], t0 = performance.now();
+      let last = t0, ticks = 0;
+      while (performance.now() - t0 < ms) {
+        await new Promise(r => requestAnimationFrame(() => r()));
+        const now = performance.now(); frames.push(now - last); last = now;
+        const due = Math.floor((now - t0) * 20 / 1000) - ticks, start = performance.now();
+        if (due > 0) { window.__na.step(Math.min(due, 5)); ticks += due; }
+        window.__na.render({ settle: false });
+        js.push(performance.now() - start); calls.push(window.__na.renderInfo().calls);
+      }
+      const elapsed = performance.now() - t0, r = n => (n === null ? null : Math.round(n * 1000) / 1000);
+      return { durationMs: r(elapsed), frames: frames.length, fps: r(frames.length / (elapsed / 1000)), frameMsP95: r(p95(frames)), jsMsP95: r(p95(js)), drawCalls: Math.max(0, ...calls), ticks, clock: 'real' };
+    }, durationMs);
+  } finally {
+    await context.close();
+  }
 }
 
 /** Command identity for matching scripted commands against the replay record. */
@@ -132,10 +201,12 @@ async function captureLevel(page, scene, config, viewport) {
       const x1 = Math.min(w, Math.ceil(Math.max(a.x, b.x) + pad)), y1 = Math.min(h, Math.ceil(Math.max(a.y, b.y) + pad));
       return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
     }, { ...scene.laneCrop, w: viewport.width, h: viewport.height });
-    const state = await page.evaluate(() => ({ tick: window.__na.view.tick, hash: window.__na.hash(), over: window.__na.view.over, screen: window.__na.screen, probe: window.__na.visualProbe() }));
-    const shot = await screenshot(page, frameFile(scene.id, `${viewport.width}x${viewport.height}`, frame.label));
-    const entry = { label: frame.label, settle: frame.settle, ...shot, tick: state.tick, simHash: state.hash, over: state.over, screen: state.screen, probe: state.probe };
+    const state = await page.evaluate(frameState);
+    const vp = `${viewport.width}x${viewport.height}`;
+    const shot = await screenshot(page, frameFile(scene.id, vp, frame.label));
+    const entry = { label: frame.label, settle: frame.settle, ...shot, tick: state.tick, simHash: state.hash, over: state.over, screen: state.screen, probe: state.probe, dom: state.dom, sim: state.sim };
     if (laneRect) entry.laneCrop = { rect: laneRect, sha256: sha256(await page.screenshot({ clip: laneRect, animations: 'disabled', caret: 'hide', timeout: SHOT_TIMEOUT })) };
+    if (!out.frames.length) entry.magenta = await magentaPass(page, frameFile(scene.id, vp, frame.label ? `${frame.label}-magenta` : 'magenta'), frame.settle);
     out.frames.push(entry);
     previous = state.tick;
     if (scene.splitTrace && traceEnd === null) { traceEnd = state.tick + scene.splitTrace.ticks - 1; await recordTrace(); }
@@ -229,8 +300,14 @@ async function main() {
       const { result, fonts } = job;
       fonts.css.forEach(f => css.add(f)); fonts.faces.forEach(f => faces.add(f));
       (scenes[scene.id] ??= {})[viewport] = result;
-      written.push(...result.frames.map(f => f.png));
+      written.push(...result.frames.flatMap(f => [f.png, f.magenta?.png].filter(Boolean)));
       log(`${scene.id} ${viewport}: ${result.frames.map(f => `${f.png}${f.tick !== undefined ? `@${f.tick}` : ''}`).join(', ')}${result.laneCrop ? ` laneCropDistinct=${result.laneCrop.framesDistinct}` : ''}${result.botCommands?.length ? ` botCommands=${result.botCommands.length}` : ''}`);
+    }
+    const perfJob = jobs.find(j => j.scene.id === PERF.scene && j.viewport === PERF.viewport);
+    if (perfJob) {
+      const perf = await capturePerf(browser, config, perfJob.scene, PERF.durationMs);
+      scenes[PERF.scene][PERF.viewport].perf = perf;
+      log(`perf ${PERF.scene} ${PERF.viewport} (${perf.durationMs} ms real time): fps ${perf.fps}, frame p95 ${perf.frameMsP95} ms, jsMs p95 ${perf.jsMsP95}, drawCalls ${perf.drawCalls}`);
     }
     // Stable key order: scenes.json order, viewports in capture order.
     const ordered = {};
