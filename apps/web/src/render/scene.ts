@@ -5,6 +5,7 @@ import { Disposables } from './disposables.js';
 import { cloneModel } from './model.js';
 import { fitCamera, levelVisualBounds } from './camera.js';
 import { createGround } from './ground.js';
+import { createProps, scatterProps } from './props.js';
 
 const HEMI_INTENSITY = 1;
 export type Quality = 'low' | 'med' | 'high';
@@ -32,6 +33,10 @@ export function createLevelScene(options: SceneOptions) {
   if (theme.fog) scene.fog = new Fog(theme.fog.color, theme.fog.near, theme.fog.far);
   const bounds = levelVisualBounds(level, manifest, models);
   const { ground } = createGround({ scene, scope, theme, bounds });
+  // Border dressing (seeded per level id); tower footprints from the compiled level (milli-units -> world).
+  const props = theme.scatter ? createProps({ scene, scope, theme, models, placements: scatterProps(level.id,
+    { minX: bounds.min.x, maxX: bounds.max.x, minZ: bounds.min.z, maxZ: bounds.max.z },
+    level.towers.map(t => ({ x: t.x / 1000, z: t.y / 1000, radius: t.footprintRadius / 1000 })), theme.scatter) }) : undefined;
   for (const prop of theme.props ?? []) {
     const model = models.get(prop.model); if (!model) throw new Error(`Missing loaded model: ${prop.model}`);
     const clone = cloneModel(model, scope); clone.position.fromArray(prop.pos); clone.scale.setScalar(prop.scale ?? 1);
@@ -74,7 +79,7 @@ export function createLevelScene(options: SceneOptions) {
   const applyQuality = () => {
     const settings = qualitySettings(quality, window.devicePixelRatio);
     renderer.shadowMap.enabled = settings.shadowSize > 0; renderer.shadowMap.type = PCFShadowMap;
-    light.castShadow = settings.shadowSize > 0;
+    light.castShadow = settings.shadowSize > 0; props?.setShadows(settings.shadowSize > 0);
     light.shadow.map?.dispose(); light.shadow.map = null;
     light.shadow.mapPass?.dispose(); light.shadow.mapPass = null;
     light.shadow.mapSize.set(settings.shadowSize || 1, settings.shadowSize || 1); light.shadow.needsUpdate = true;

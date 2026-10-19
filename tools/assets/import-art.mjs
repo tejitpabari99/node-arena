@@ -1,6 +1,8 @@
 // Import-time art processing (SP05 Task 6). Usage:
 //   pnpm --filter @node-arena/tools assets:import -- <dir with unzipped packs: commercial/ chars/> [outDir]
 // Inputs are Kenney CC0 GLBs (City Kit Commercial 2.1, Mini Characters 1.0; the road/light/cone prop pass was retired by SP03 Task 1). Output: optimised GLBs.
+// SP03 Task 3 `nature` pass: Kenney Nature Kit (nature/Models/GLTF format) + Survival Kit (survival/Models/GLB format) -> models/prop-*.glb.
+// Each pass is skipped when its pack dir is absent, so one pack can be re-imported alone.
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, EXTMeshoptCompression, KHRMeshQuantization } from '@gltf-transform/extensions';
 import { dedup, prune, weld, simplify, quantize, meshopt, textureCompress, flatten, join, resample } from '@gltf-transform/functions';
@@ -8,11 +10,13 @@ import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
 import sharp from 'sharp';
 import { resolve } from 'node:path';
 import { mkdir, stat } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 
 const [src, out = resolve(import.meta.dirname, '../../apps/web/assets/models')] = process.argv.slice(2);
 if (!src) throw new Error('usage: import-art.mjs <packs dir> [outDir]');
 const TEXTURE_MAX = 1024; // budget cap only: Kenney colormaps are 512 px palettes and shrinking them darkened/bled swatches
 const TROOP_TRIS = 300;
+const PROP_TRIS = 500;
 const WHITE_SWATCH_UV = [0.53, 0.8]; // character-male-a colormap.png (512 px): white swatch near x=272,y=410
 await MeshoptEncoder.ready; await MeshoptSimplifier.ready;
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder });
@@ -39,6 +43,14 @@ async function prop(input, file) {
   const doc = await io.read(resolve(src, 'roads/Models/GLB format', input));
   for (const prim of doc.getRoot().listMeshes().flatMap(m => m.listPrimitives())) prim.setAttribute('TANGENT', null);
   await finish(doc, file);
+}
+
+// Border props: same pipeline, tangents dropped, <= PROP_TRIS each.
+async function nature(pack, dir, input, file) {
+  const doc = await io.read(resolve(src, pack, dir, input));
+  for (const prim of doc.getRoot().listMeshes().flatMap(m => m.listPrimitives())) prim.setAttribute('TANGENT', null);
+  await finish(doc, file);
+  if (tris(doc) > PROP_TRIS) throw new Error(`${file}: ${tris(doc)} tris exceeds ${PROP_TRIS}`);
 }
 
 // Characters: static rest-pose mesh, skin + animations stripped (renderer `bob` replaces skinning), body/head split
@@ -75,7 +87,23 @@ async function character(input, file, ratios) {
 }
 
 await mkdir(out, { recursive: true });
-await building('building-d.glb', 'tower-small.glb');
-await building('building-g.glb', 'tower-standard.glb');
-await building('building-skyscraper-a.glb', 'tower-large.glb');
-await character('character-male-a.glb', 'troop-regular.glb', { ratio: Number(process.env.ART_RATIO ?? 0.4), error: Number(process.env.ART_ERROR ?? 0.1) });
+if (existsSync(resolve(src, 'commercial'))) {
+  await building('building-d.glb', 'tower-small.glb');
+  await building('building-g.glb', 'tower-standard.glb');
+  await building('building-skyscraper-a.glb', 'tower-large.glb');
+}
+if (existsSync(resolve(src, 'chars'))) {
+  await character('character-male-a.glb', 'troop-regular.glb', { ratio: Number(process.env.ART_RATIO ?? 0.4), error: Number(process.env.ART_ERROR ?? 0.1) });
+}
+if (existsSync(resolve(src, 'nature'))) {
+  const n = (input, file) => nature('nature', 'Models/GLTF format', input, file);
+  await n('tree_pineTallA.glb', 'prop-tree-pine.glb');
+  await n('tree_pineRoundC.glb', 'prop-tree-pine-round.glb');
+  await n('tree_default.glb', 'prop-tree-round.glb');
+  await n('stump_round.glb', 'prop-stump.glb');
+}
+if (existsSync(resolve(src, 'survival'))) {
+  const n = (input, file) => nature('survival', 'Models/GLB format', input, file);
+  await n('box.glb', 'prop-crate.glb');
+  await n('barrel.glb', 'prop-barrel.glb');
+}

@@ -59,6 +59,8 @@ export function createManifestResolver(manifest: Manifest) {
       for (const kind of level.kinds) { this.visual(kind.visual, 'troop'); visuals.add(kind.visual); }
       for (const key of visuals) { const visual = manifest.visuals[key]!; models.add(visual.model); if (visual.sfx) audio.add(visual.sfx); }
       for (const prop of theme.props ?? []) { this.model(prop.model); models.add(prop.model); }
+      // Themes with `scatter` load every `prop.*` model (border dressing; see render/props.ts).
+      if (theme.scatter) for (const key of Object.keys(manifest.models)) if (key.startsWith('prop.')) models.add(key);
       for (const event of Object.values(manifest.events)) if (event.sfx) audio.add(event.sfx);
       for (const player of level.players) { this.color(player.colorKey); this.color(player.colorKey, 'colorblind'); this.marker(player.colorKey); }
       return { visuals, models, audio, sources: new Set([...models].flatMap(key => { const model = this.model(key); return 'src' in model ? [model.src] : []; }).concat([...audio])) };

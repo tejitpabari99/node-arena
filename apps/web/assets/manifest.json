@@ -12,7 +12,13 @@
     "building.small": {"src": "models/tower-small.glb"},
     "building.standard": {"src": "models/tower-standard.glb"},
     "building.large": {"src": "models/tower-large.glb"},
-    "character.regular": {"src": "models/troop-regular.glb"}
+    "character.regular": {"src": "models/troop-regular.glb"},
+    "prop.tree.pine": {"src": "models/prop-tree-pine.glb"},
+    "prop.tree.pine.round": {"src": "models/prop-tree-pine-round.glb"},
+    "prop.tree.round": {"src": "models/prop-tree-round.glb"},
+    "prop.stump": {"src": "models/prop-stump.glb"},
+    "prop.crate": {"src": "models/prop-crate.glb"},
+    "prop.barrel": {"src": "models/prop-barrel.glb"}
   },
   "visuals": {
     "tower.standard": {"kind": "tower", "model": "building.standard", "scale": 3.2, "label": {"height": 7.6}},
@@ -23,7 +29,7 @@
   "themes": {
     "grass": { "ground": "#A3D419", "sky": "#FFE1B3", "light": {"dir": [-1, 2.2, 1.2], "color": "#FFF0D6", "intensity": 2.8},
       "palette": {"grass": "#A3D419", "grassAlt": "#9DCB10", "sand": "#FFE1B3", "sandShade": "#FFCF8D", "rock": "#BC5439", "tree": "#028C1D", "crate": "#FD8539"},
-      "scatter": {"seed": 1, "density": 0.6} }
+      "scatter": {"seed": 1, "density": 24} }
   },
   "events": {
     "Captured": {"fx": "pulse", "sfx": "audio/capture.ogg"},
