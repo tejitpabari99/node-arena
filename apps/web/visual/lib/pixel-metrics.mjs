@@ -10,16 +10,17 @@ export const FG_MIN_V = 0.35;
 /**
  * Roof number (M02/M16/M19), calibrated in T8 on towerwar_01 + towerwar_yt1 (JPEG/video-soft digits):
  * white fill S <= .25, V >= .70; outline ring (within 2 px of the fill boundary) = V <= .25, or darker than the roof plate
- * around it by >= .20 (yt1 "44": fill V .7-.9, ring V .6-.7 on a V ~.95 blue roof; tw01 ring V .3-.6). A slot dot has no
+ * around it by >= .15 (yt1 "44": fill V .7-.9, ring V .6-.7 on a V ~.95 blue roof; tw01 ring V .3-.6; down-sampled to the
+ * 33 px M01 floor the 1 px yt1 ring is only .15-.18 darker, so .20 lost it). A slot dot has no
  * such ring (its surround is the roof itself), so it is never taken for the digit.
  */
-export const DIGIT = { maxS: 0.25, minV: 0.70, outlineV: 0.25, outlineContrast: 0.20, outlineRadius: 2, minOutlineShare: 0.5, minPixels: 4 };
+export const DIGIT = { maxS: 0.25, minV: 0.70, outlineV: 0.25, outlineContrast: 0.15, outlineRadius: 2, minOutlineShare: 0.5, minPixels: 4 };
 /**
  * Size-dependent pixel metrics (M02, M16, M19, M20) on ref crops run after rescaling the tower bbox to this width (PRD step 4a):
- * the largest tower M01 allows at 1366x768, round(0.0875 x 768) = 67 px (T8 M01 band 4.35-8.75% of viewport height). It was
- * 75 px, the retired M01 width floor at 1366x768, which the calibrated M01 rejects. M16's px floors are derived at this size.
+ * the M01 floor at 1366x768, round(0.0245 x 1366) = 33 px (T8 M01 band 2.45-4.92% of viewport width). M16's px floors are the
+ * min ref glyph at this size +-2 px (31-35 px: 5 px). Was 67 px (round(0.0875 x 768), the vh band max; knife-edge M16 11 px).
  */
-export const REF_TOWER_WIDTH = 67;
+export const REF_TOWER_WIDTH = 33;
 
 /** Precomputes HSV planes once per image. */
 export function toHsv(img) {
@@ -256,13 +257,36 @@ export function digitHeight(hsv, locator) {
 export const GLYPH = { maxWidth: 0.3, maxCentreY: 0.6, minPlateV: 0.45 };
 const isGlyph = (b, rect) => b.outline >= DIGIT.minOutlineShare && b.plate !== null && b.plate >= GLYPH.minPlateV && b.w <= GLYPH.maxWidth * rect.w && (b.y0 + b.y1 + 1) / 2 - rect.y <= GLYPH.maxCentreY * rect.h;
 
-/** M16 / M19 digit: tallest glyph candidate (ties: closest to the locator's horizontal centre); null when none. */
+/**
+ * Joins glyph pieces stacked directly on top of each other (x ranges overlap, no empty row between the fills) into one glyph:
+ * at small tower sizes one dark JPEG pixel can cut a digit's fill in two (T8: tw01 "5" at 38 px). Glyph extent = union.
+ */
+function mergeStacked(glyphs) {
+  const out = [...glyphs].sort((a, b) => a.y0 - b.y0);
+  for (let i = 0; i < out.length; i++) for (let j = i + 1; j < out.length; j++) {
+    const a = out[i], b = out[j];
+    if (b.x0 > a.x1 || b.x1 < a.x0 || b.y0 > a.y1 + 1 || a.y0 > b.y1 + 1) continue;
+    const gy0 = Math.min(a.gy0, b.gy0), gy1 = Math.max(a.gy1, b.gy1);
+    out[i] = { ...a, x0: Math.min(a.x0, b.x0), x1: Math.max(a.x1, b.x1), y0: Math.min(a.y0, b.y0), y1: Math.max(a.y1, b.y1), n: a.n + b.n, pixels: [...a.pixels, ...b.pixels], gy0, gy1, glyphH: gy1 - gy0 + 1 };
+    out[i].w = out[i].x1 - out[i].x0 + 1; out[i].h = out[i].y1 - out[i].y0 + 1;
+    out.splice(j, 1); j = i;
+  }
+  return out;
+}
+
+/**
+ * M16 / M19 digit: tallest glyph candidate on the topmost glyph row (ties: closest to the locator's horizontal centre); null
+ * when none. The number always sits above its slot dots, so only the top row counts: at small tower sizes (~30-40 px, the M01
+ * floor) a blurred white slot dot picks up a partial dark ring and can tie the digit's glyph height (T8: yt1 "44" at 33 px).
+ */
 export function outlinedDigit(hsv, locator) {
   const cx = locator.x + locator.w / 2, off = b => Math.abs((b.x0 + b.x1 + 1) / 2 - cx);
-  const glyphs = whiteBlobs(hsv, locator).filter(b => isGlyph(b, locator)), digit = [...glyphs].sort((a, b) => b.glyphH - a.glyphH || off(a) - off(b))[0];
-  if (!digit) return null;
+  const glyphs = mergeStacked(whiteBlobs(hsv, locator).filter(b => isGlyph(b, locator)));
+  if (!glyphs.length) return null;
+  const top = glyphs.reduce((a, b) => (b.y0 < a.y0 ? b : a)), onRow = r => b => b.y0 <= r.y1 && b.y1 >= r.y0;
+  const digit = glyphs.filter(onRow(top)).sort((a, b) => b.glyphH - a.glyphH || off(a) - off(b))[0];
   // The whole number = every glyph on the digit's row ("44", "Max"): its x extent centres the slot-dot row.
-  const row = glyphs.filter(b => b.y0 <= digit.y1 && b.y1 >= digit.y0);
+  const row = glyphs.filter(onRow(digit));
   return { ...digit, numberX0: Math.min(...row.map(b => b.x0)), numberX1: Math.max(...row.map(b => b.x1)) };
 }
 
@@ -294,7 +318,14 @@ export function slotDotBlobs(hsv, towerRect, digit, team) {
     return hueOk && (hsv.v[p] - roofV >= 0.08 || roofS - hsv.s[p] >= 0.15);
   };
   const minSize = Math.max(2, towerRect.w * 0.04);
-  return components(hsv, region, dot).filter(c => {
+  // A dot component holding bright pixels is split into its bright cores: at small tower sizes the blurred, roof-lighter
+  // pixels between adjacent bright dots join them into one blob (T8: yt1 "44" at 30-36 px). Dim-only dots are kept whole.
+  const parts = components(hsv, region, dot).flatMap(c => {
+    const inC = new Set(c.pixels);
+    const cores = components(hsv, { x: c.x0, y: c.y0, w: c.w, h: c.h }, p => inC.has(p) && white(p));
+    return cores.length > 1 ? cores : [c];
+  });
+  return parts.filter(c => {
     const ccx = (c.x0 + c.x1 + 1) / 2, ccy = (c.y0 + c.y1 + 1) / 2;
     return isRound(c) && c.h >= minSize && c.w >= minSize && c.h <= towerRect.w * 0.3 && ccy <= rowEnd && Math.abs(ccx - cx) <= 0.25 * towerRect.w;
   });
@@ -308,6 +339,9 @@ export function decalBottom(hsv, towerRect, team) {
   const digit = outlinedDigit(hsv, roofRegion(towerRect)); if (!digit) return towerRect.y;
   return Math.max(digit.gy1, ...slotDotBlobs(hsv, towerRect, digit, team).map(c => c.y1)) + 1;
 }
+
+/** M20 minimum stripe run length as a share of the tower width (rounded, >= 1 px). */
+export const STRIPE_MIN_RUN = 0.03;
 
 /**
  * M20 floor stripes along the vertical centre line (3-px majority) of the tower rect, below `fromY` (bottom of number/dots):
@@ -328,7 +362,10 @@ export function floorStripes(hsv, rect, team, fromY = rect.y) {
   }
   const runs = [];
   for (const c of cls) { const last = runs.at(-1); if (last && last.c === c) last.n++; else runs.push({ c, n: 1 }); }
-  const kept = runs.filter(run => run.n >= 2 && run.c !== 'other');
+  // Min run length scales with the tower width (2 px at the 67 px+ sizes, 1 px below ~50 px, where a floor's white body is
+  // only 1-2 px tall: T8 yt1 "38"/"Max" at 31-35 px).
+  const minRun = Math.max(1, Math.round(r.w * STRIPE_MIN_RUN));
+  const kept = runs.filter(run => run.n >= minRun && run.c !== 'other');
   const teamIdx = kept.map((run, i) => (run.c === 'team' ? i : -1)).filter(i => i >= 0);
   let whiteRuns = 0;
   for (let k = 0; k + 1 < teamIdx.length; k++) if (kept.slice(teamIdx[k] + 1, teamIdx[k + 1]).some(run => run.c === 'white')) whiteRuns++;

@@ -58,13 +58,14 @@ describe('thresholds.json (PRD Metrics table verbatim)', () => {
   });
   it('machine limits encode the PRD numbers', () => {
     const m = thresholds.metrics;
-    // T8 calibrated M01: share of viewport HEIGHT, one rule for every viewport (refs tw01 ~5.8%, yt1 ~7% of height)
-    for (const v of ['1920x1080', '1366x768']) {
-      expect(limitsFor(m.M01!, 'l01', v)).toEqual({ min: 0.0435, max: 0.0875 });
-      expect(limitsFor(m.M01!, 'l10', v)).toEqual({ min: 0.0435, max: 0.0875 });
-      expect(limitsFor(m.M01!, 'l10cb', v)).toEqual({ min: 0.0435, max: 0.0875 });
-      expect(limitsFor(m.M01!, 'l18', v)).toEqual({ min: 0.0435, max: 0.0875 }); // l18 refs (tw03, yt1) sit inside the l01 band
+    // T8 M01 per the PRD letter: share of viewport WIDTH. Calibrated band 4.35-8.75% of viewport height (refs tw01 ~5.8%,
+    // yt1 ~7% of height, +-25% V01 8-anchor) converted at 16:9 (both gated viewports): x 9/16 -> 2.45-4.92% of width.
+    expect(m.M01!.viewports).toEqual(['1920x1080', '1366x768']);
+    for (const v of m.M01!.viewports) {
+      const [w, h] = v.split('x').map(Number); expect(w! / h!).toBeCloseTo(16 / 9, 2);
+      for (const scene of ['l01', 'l10', 'l10cb', 'l18']) expect(limitsFor(m.M01!, scene, v)).toEqual({ min: 0.0245, max: 0.0492 });
     }
+    expect(0.0435 * 9 / 16).toBeCloseTo(m.M01!.limits.min, 4); expect(0.0875 * 9 / 16).toBeCloseTo(m.M01!.limits.max, 4);
     expect(m.M02!.limits.ratio).toEqual({ min: 0.14, max: 0.30 });
     expect(m.M05!.limits.ratio).toEqual({ min: 0.20, max: 0.40 }); // T8: refs tw01 0.23-0.26, yt1 0.22-0.28
     expect(m.M06!.limits).toEqual({ heightShare: { min: 0.02 }, perTowerWidth: { min: 0.30, max: 0.60 } }); // T8: tightened from 0.015 / 0.22 on ref troop measurements
@@ -77,15 +78,24 @@ describe('thresholds.json (PRD Metrics table verbatim)', () => {
     expect(m.M15!.limits).toEqual({ minMargin: { min: 0.02 }, unionMargin: { max: 0.10 } });
     expect(m.M18!.limits).toEqual({ frame: { max: 0.20 }, tower: { max: 0.20 } });
   });
-  it('M16 floors are re-derived from the refs at the calibrated M01 band maximum (T8: 11 px L1, 9 px L18 at 1366x768)', () => {
+  it('M16 floors follow the PRD rule: ref crops at the M01 floor at 1366x768 (33 px), min ref glyph over +-2 px (T8: 5 px L1, 4 px L18)', () => {
     const m = thresholds.metrics;
-    // Ref crops are rescaled to the largest legal tower at 1366x768: M01 max share x 768 = 0.0875 x 768 -> 67 px.
-    expect(REF_TOWER_WIDTH).toBe(Math.round(m.M01!.limits.max * 768));
-    expect(REF_TOWER_WIDTH).toBe(67);
-    // L1 floor = min ref glyph at 67 px (tw01 11, yt1 11); L18 keeps the old 10/12 proportion: floor(11 x 10/12) = 9.
-    expect(limitsFor(m.M16!, 'l01', '1366x768')).toEqual({ min: 11, px: true, atHeight: 768 });
-    expect(limitsFor(m.M16!, 'l18', '1366x768')).toEqual({ min: 9, px: true, atHeight: 768 });
-    expect(scaleLimit(limitsFor(m.M16!, 'l01', '1920x1080'), 1080, 1080).min).toBeCloseTo(15.469, 3);
+    // PRD step 4a: ref tower crops are rescaled so the tower bbox is the M01 floor at 1366x768 wide: round(0.0245 x 1366) = 33 px.
+    expect(REF_TOWER_WIDTH).toBe(Math.round(m.M01!.limits.min * 1366));
+    expect(REF_TOWER_WIDTH).toBe(33);
+    // L1 = min ref glyph across 31-35 px (tw01 5 @31, yt1 5 @34/35; 6/6 at 33); L18 = floor(5 x 10/12) = 4.
+    expect(limitsFor(m.M16!, 'l01', '1366x768')).toEqual({ min: 5, px: true, atHeight: 768 });
+    expect(limitsFor(m.M16!, 'l18', '1366x768')).toEqual({ min: 4, px: true, atHeight: 768 });
+    expect(scaleLimit(limitsFor(m.M16!, 'l01', '1920x1080'), 1080, 1080).min).toBeCloseTo(7.031, 3);
+  });
+  it('M01, M02 and M16 are jointly satisfiable at the M01 floor for the ref digit ratio (0.164)', () => {
+    const m = thresholds.metrics, ratio = 0.164;
+    for (const [vw, vh] of [[1366, 768], [1920, 1080]] as const) {
+      const towerW = m.M01!.limits.min * vw, glyph = ratio * towerW;
+      expect(within(towerW / vw, limitsFor(m.M01!, 'l01', `${vw}x${vh}`))).toBe(true);
+      expect(within(ratio, m.M02!.limits.ratio)).toBe(true);
+      expect(glyph).toBeGreaterThanOrEqual(scaleLimit(limitsFor(m.M16!, 'l01', `${vw}x${vh}`), vh, 1080).min); // 5.49 >= 5; 7.71 >= 7.03
+    }
   });
   it('px thresholds scale by viewport height', () => {
     expect(scaleLimit({ max: 12, px: true }, 768, 1080).max).toBeCloseTo(8.533, 3);
@@ -110,20 +120,20 @@ describe('null never passes', () => {
     expect(evaluate('M03', { ...ctx('M03'), frame: { tick: 1 } }).status).toBe('fail');
     expect(evaluate('M03', ctx('M03', probe({ towers: [tower({ hasCard: true })] }))).status).toBe('fail');
   });
-  it('M01: median owned tower width as a share of viewport height against the l01 limits', () => {
+  it('M01: median owned tower width as a share of viewport width against the l01/l18 limits', () => {
     const w = (n: number) => tower({ model: { x: 0, y: 0, w: n, h: 90 } });
-    const m01 = (towers: object[], viewport = { w: 1000, h: 500 }, scene = 'l01') =>
+    const m01 = (towers: object[], viewport = { w: 1000, h: 562.5 }, scene = 'l01') =>
       evaluate('M01', { ...ctx('M01', probe({ viewport, towers })), limits: limitsFor(thresholds.metrics.M01!, scene, '1920x1080') });
-    expect(m01([w(30)]).status).toBe('pass'); // 6% vh (3% vw: the retired vw rule would fail it)
-    expect(m01([w(30)]).value).toBeCloseTo(0.06, 6);
-    expect(m01([w(20)]).status).toBe('fail'); // 4% vh < 4.35%
-    expect(m01([w(45)]).status).toBe('fail'); // 9% vh > 8.75%
-    expect(m01([w(20), w(30), w(40)]).status).toBe('pass'); // median 30 -> 6%
-    expect(m01([w(70)], { w: 554, h: 1200 }).status).toBe('pass'); // towerwar_01: 70/1200 = 5.8% (portrait)
-    expect(m01([w(50)], { w: 1280, h: 720 }).status).toBe('pass'); // towerwar_yt1: 50/720 = 6.9% (landscape)
-    expect(m01([w(22)], { w: 1000, h: 500 }, 'l18').status).toBe('pass'); // 4.4% vh
-    expect(m01([w(20.5)], { w: 1000, h: 500 }, 'l18').status).toBe('fail'); // 4.1% = v1 l18: no separate smaller l18 floor
-    expect(m01([w(45)], { w: 1000, h: 500 }, 'l18').status).toBe('fail'); // 9% > 8.75%
+    expect(m01([w(30)]).status).toBe('pass'); // 3% vw (5.3% vh)
+    expect(m01([w(30)]).value).toBeCloseTo(0.03, 6);
+    expect(m01([w(24)]).status).toBe('fail'); // 2.4% vw < 2.45%
+    expect(m01([w(50)]).status).toBe('fail'); // 5% vw > 4.92%
+    expect(m01([w(20), w(30), w(40)]).status).toBe('pass'); // median 30 -> 3%
+    expect(m01([w(57.4)], { w: 1920, h: 1080 }).status).toBe('pass'); // v1 l01 5.3% vh = 2.98% vw
+    expect(m01([w(43.2)], { w: 1920, h: 1080 }).status).toBe('fail'); // v1 l10 4.0% vh = 2.25% vw
+    expect(m01([w(25)], { w: 1000, h: 562.5 }, 'l18').status).toBe('pass'); // 2.5% vw
+    expect(m01([w(44.3)], { w: 1920, h: 1080 }, 'l18').status).toBe('fail'); // v1 l18 4.1% vh = 2.31% vw: no separate smaller l18 floor
+    expect(m01([w(50)], { w: 1000, h: 562.5 }, 'l18').status).toBe('fail'); // 5% > 4.92%
     expect(evaluate('M01', ctx('M01', probe({ towers: [tower({ owner: null })] }))).status).toBe('fail'); // no owned tower -> null
   });
   it('M05: lane / tower width ratio 0.20-0.40 (refs 0.22-0.28 pass)', () => {
@@ -282,6 +292,50 @@ describe('pixel metrics', () => {
   it('M20 floor stripes count white runs between team bands', () => {
     const tw = toHsv(image(9, 22, (_x, y) => (y < 6 || y === 10 || y === 11 || y === 16 || y === 17 ? '#2F7DE1' : '#F0F0F0')));
     expect(floorStripes(tw, { x: 0, y: 0, w: 9, h: 22 }, 'blue')).toEqual({ whiteRuns: 2, bands: 2, teamRuns: 3 });
+  });
+  it('M16/M19 small towers (M01 floor, ~33 px): the digit is on the topmost glyph row, a ringed slot dot below it is not the digit', () => {
+    const roof = '#3D8BF2', ring = '#14284A';
+    const img = toHsv(image(24, 30, (x, y) => {
+      if (x >= 9 && x < 15 && y >= 3 && y < 7) return '#FFFFFF'; // digit fill (4 rows), off-centre
+      if (x >= 8 && x < 16 && y >= 2 && y < 8) return ring; // glyph 6 px
+      if (x >= 10 && x < 14 && y >= 12 && y < 16) return '#FFFFFF'; // centred bright dot (4 rows)
+      if (x >= 10 && x < 14 && (y === 10 || y === 17)) return ring; // blurred partial ring 2 px off the dot: glyph 8 px
+      return roof;
+    }));
+    const d = outlinedDigit(img, { x: 0, y: 0, w: 24, h: 27 });
+    expect(d?.y0).toBe(3); expect(d?.glyphH).toBe(6);
+  });
+  it('M16/M02 a digit fill cut in two by one dark pixel row is measured as one glyph (tw01 "5" at 38 px)', () => {
+    const img = toHsv(image(24, 20, (x, y) => {
+      if (x >= 9 && x < 13 && y >= 3 && y < 6) return '#FFFFFF'; // upper piece
+      if ((x >= 13 && x < 15 && y >= 6 && y < 10) || (x >= 9 && x < 13 && y >= 7 && y < 10)) return '#FFFFFF'; // lower piece
+      if (x >= 7 && x < 17 && y >= 1 && y < 12) return '#14284A'; // ring (and the dark cut at y 6)
+      return '#3D8BF2';
+    }));
+    const locator = { x: 0, y: 0, w: 24, h: 20 };
+    expect(outlinedDigit(img, locator)?.glyphH).toBe(11);
+    expect(digitHeight(img, locator)).toBe(11);
+  });
+  it('M16/M19 a down-sampled soft ring (V .78 on a V .95 roof, contrast .17) still counts as the outline', () => {
+    const soft = toHsv(image(32, 24, (x, y) => (x >= 13 && x < 19 && y >= 4 && y < 9 ? '#E8E8EC' : x >= 12 && x < 20 && y >= 3 && y < 10 ? '#5A8AC7' : '#3D8BF2')));
+    expect(outlinedDigit(soft, { x: 0, y: 0, w: 32, h: 24 })?.glyphH).toBe(7);
+  });
+  it('M19 bright slot dots joined by roof-lighter blur pixels are counted one by one (yt1 "44" at 30-36 px)', () => {
+    const img = toHsv(image(24, 60, (x, y) => {
+      if (x >= 7 && x < 12 && y >= 3 && y < 11) return '#FFFFFF'; // digit fill
+      if (x >= 5 && x < 14 && y >= 1 && y < 13) return '#14284A'; // outline
+      if (y >= 16 && y < 19 && ((x >= 4 && x < 7) || (x >= 8 && x < 11) || (x >= 12 && x < 15))) return '#F4F6FA'; // 3 bright dots
+      if (y >= 16 && y < 19 && (x === 7 || x === 11)) return '#7FB2F6'; // lighter, less saturated blur between them
+      return '#3D8BF2';
+    }));
+    const digit = outlinedDigit(img, { x: 0, y: 0, w: 24, h: 27 });
+    expect(digit?.glyphH).toBe(12);
+    expect(slotDots(img, { x: 0, y: 0, w: 24, h: 60 }, digit, 'blue')).toBe(3);
+  });
+  it('M20 minimum stripe run scales with tower width: 1 px runs count on a 30 px tower, not on a 70 px one', () => {
+    const paint = (_x: number, y: number) => (y === 6 || y === 9 ? '#F0F0F0' : '#2F7DE1');
+    expect(floorStripes(toHsv(image(30, 20, paint)), { x: 0, y: 0, w: 30, h: 20 }, 'blue')).toEqual({ whiteRuns: 2, bands: 2, teamRuns: 3 });
+    expect(floorStripes(toHsv(image(70, 20, paint)), { x: 0, y: 0, w: 70, h: 20 }, 'blue')).toEqual({ whiteRuns: 0, bands: 2, teamRuns: 3 });
   });
   it('M18 TV distance', () => {
     expect(tvDistance([0.5, 0.5, 0], [0.5, 0, 0.5])).toBeCloseTo(0.5); expect(tvDistance(null, [1])).toBe(null);

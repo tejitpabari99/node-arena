@@ -20,9 +20,9 @@ export function loadRefCalib(file = path.join(VISUAL_DIR, 'ref-calib.json')) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
-/** Decodes every ref-calib ref with the pixel page and prepares it (frame crop, tower crops, class vectors). */
-export async function loadRefs(pixels, calib = loadRefCalib(), dir = resolveRefDir()) {
+/** Decodes every ref-calib ref with the pixel page and prepares it (frame crop, tower crops rescaled to `towerWidth`, class vectors). */
+export async function loadRefs(pixels, calib = loadRefCalib(), dir = resolveRefDir(), towerWidth = undefined) {
   const out = [];
-  for (const spec of calib.refs) out.push(prepareRef(spec, await pixels.decode(path.join(dir, spec.file))));
+  for (const spec of calib.refs) out.push(prepareRef(spec, await pixels.decode(path.join(dir, spec.file)), towerWidth));
   return out;
 }

@@ -5,6 +5,7 @@ export interface Blob { x0: number; y0: number; x1: number; y1: number; w: numbe
 export const FG_MIN_V: number;
 export const DIGIT: { maxS: number; minV: number; outlineV: number; outlineContrast: number; outlineRadius: number; minOutlineShare: number; minPixels: number; [k: string]: number };
 export const REF_TOWER_WIDTH: number;
+export const STRIPE_MIN_RUN: number;
 export function toHsv(img: Rgba): Hsv;
 export function crop(img: Rgba, rect: Rect): Rgba | null;
 export function resample(img: Rgba, width: number): Rgba;

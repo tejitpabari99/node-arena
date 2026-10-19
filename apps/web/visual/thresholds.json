@@ -5,10 +5,10 @@
   "gameScenes": ["l01", "l10", "l18", "clash", "l10cb", "buildout", "cut"],
   "metrics": {
     "M01": {
-      "name": "tower screen width, % viewport height (median owned tower)", "source": "probe", "status": "cal",
-      "threshold": "l01/l10/l18 4.35-8.75% of viewport height (all viewports)",
+      "name": "tower screen width, % viewport width (median owned tower)", "source": "probe", "status": "cal",
+      "threshold": "l01/l10/l18 2.45-4.92% of viewport width (= 4.35-8.75% of height at 16:9)",
       "scenes": ["l01", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
-      "limits": { "min": 0.0435, "max": 0.0875 }
+      "limits": { "min": 0.0245, "max": 0.0492 }
     },
     "M02": {
       "name": "count digit height / tower bbox width (roof number)", "source": "pixels", "status": "cal",
@@ -99,9 +99,9 @@
     },
     "M16": {
       "name": "roof number glyph height in px (outlined white-fill digit incl. its outline ring, tallest digit)", "source": "pixels", "status": "cal",
-      "threshold": ">=11 px at 1366x768 L1 (scaled by viewport height elsewhere); >=9 px at L18",
+      "threshold": ">=5 px at 1366x768 L1 (scaled by viewport height elsewhere); >=4 px at L18",
       "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
-      "limits": { "default": { "min": 11, "px": true, "atHeight": 768 }, "l18": { "min": 9, "px": true, "atHeight": 768 } }
+      "limits": { "default": { "min": 5, "px": true, "atHeight": 768 }, "l18": { "min": 4, "px": true, "atHeight": 768 } }
     },
     "M17": {
       "name": "DOM label count ([data-tower-index], .tower-label) and [data-tower-summary] count", "source": "page DOM", "status": "cal",

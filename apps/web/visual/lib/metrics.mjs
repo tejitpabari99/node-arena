@@ -76,10 +76,10 @@ export function roofLocator(t) {
 // ---------- probe / DOM / sim metrics: ctx = { entry, frame, probe, def, limits, scene, viewport, height, baseHeight, run } ----------
 
 const PROBE = {
-  /** T8 calibrated: tower width / viewport HEIGHT (aspect-independent; refs are portrait and landscape). */
+  /** PRD: tower width / viewport WIDTH; T8 band = the calibrated 4.35-8.75% of height converted at 16:9 (gated viewports). */
   M01({ probe, limits }) {
-    const w = towerWidth(probe), share = w === null ? null : w / probe.viewport.h;
-    return result(within(share, limits), share, `median owned tower w ${fmt(share)} of vh`);
+    const w = towerWidth(probe), share = w === null ? null : w / probe.viewport.w;
+    return result(within(share, limits), share, `median owned tower w ${fmt(share)} of vw`);
   },
   M03({ frame, probe, limits }) {
     const n = probe.towers.length; if (!n) return nullResult('no towers');
@@ -333,12 +333,15 @@ export async function evaluateJob({ scene, viewport, entry, thresholds, run, ref
 
 // ---------- refs (visual:calibrate + M18 reference vectors) ----------
 
-/** Ref record from ref-calib.json + decoded full image -> per-metric inputs in frame coordinates. */
-export function prepareRef(spec, img) {
+/**
+ * Ref record from ref-calib.json + decoded full image -> per-metric inputs in frame coordinates. Tower crops are rescaled to
+ * `towerWidth` px (default REF_TOWER_WIDTH; `visual:calibrate --tower-width N` overrides it for crop-size robustness sweeps).
+ */
+export function prepareRef(spec, img, towerWidth = REF_TOWER_WIDTH) {
   const frameImg = crop(img, spec.frame), hsv = toHsv(frameImg);
   const local = b => ({ x: b[0] - spec.frame.x, y: b[1] - spec.frame.y, w: b[2] - b[0], h: b[3] - b[1] });
   const towers = spec.towers.map(t => {
-    const rect = local(t.box), scaled = toHsv(resample(crop(frameImg, rect), REF_TOWER_WIDTH));
+    const rect = local(t.box), scaled = toHsv(resample(crop(frameImg, rect), towerWidth));
     return { ...t, rect, scaled, scaledRect: { x: 0, y: 0, w: scaled.width, h: scaled.height }, floors: t.team ? Math.min(5, Math.max(1, Math.ceil(5 * t.count / t.cap))) : null };
   });
   const play = { x: spec.playQuad.x - spec.frame.x, y: spec.playQuad.y - spec.frame.y, w: spec.playQuad.w, h: spec.playQuad.h };
@@ -361,7 +364,7 @@ export function calibrateRef(ref, others, thresholds) {
   const frameTv = bestTv(ref.frameVector, others.map(o => o.frameVector)), first = ref.towers.find(t => t.team);
   const towerTv = first ? bestTv(classVector(ref.hsv, first.rect, { fgOnly: true }), others.flatMap(o => o.towerVectors)) : null;
   push('M18', result(within(frameTv, L('M18').frame) && within(towerTv, L('M18').tower), { frame: frameTv, tower: towerTv }, `TV frame ${fmt(frameTv)}, tower ${fmt(towerTv)} (vs ${others.map(o => o.id).join(',')})`));
-  // Size-dependent pixel parts on crops rescaled to REF_TOWER_WIDTH (67 px = M01 band max at 1366x768; M16's calibration base).
+  // Size-dependent pixel parts on crops rescaled to REF_TOWER_WIDTH (33 px = M01 floor at 1366x768; M16's calibration base).
   const m02 = ref.towers.map(t => { const h = digitHeight(t.scaled, roofRegion(t.scaledRect)); return h === null ? null : h / t.scaledRect.w; });
   push('M02', m02.some(v => v === null) ? nullResult(`digit null on ${m02.filter(v => v === null).length}/${m02.length}`)
     : result(m02.every(v => within(v, L('M02').ratio)), range(m02), `digit/tower w ${fmtRange(range(m02))} [${m02.map(fmt).join(' ')}]`));
