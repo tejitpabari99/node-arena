@@ -18,7 +18,9 @@
     "visual:selfcheck": "node visual/selfcheck.mjs",
     "visual:check": "node visual/check.mjs",
     "visual:compose": "node visual/compose.mjs",
-    "visual:calibrate": "node visual/calibrate.mjs"
+    "visual:calibrate": "node visual/calibrate.mjs",
+    "visual:score-sheet": "node visual/score-sheet.mjs",
+    "visual:score-merge": "node visual/score-merge.mjs"
   },
   "dependencies": {
     "@node-arena/bots": "workspace:*",
