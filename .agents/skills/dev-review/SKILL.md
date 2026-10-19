@@ -13,8 +13,9 @@ with distinct blind spots, not one generic pass and not the full 7-specialist fa
 code changes, no state files — read the diff, write one findings file, hand back a
 routing decision.
 
-Shared dispatch/output conventions (cold-agent pattern, Sonnet 5.5/medium-effort sub-agents, commit format,
-frontmatter spec) live in `../_shared/dev-common.md`.
+Shared dispatch/output conventions (cold-agent pattern, commit format, frontmatter spec) live in
+`../_shared/dev-common.md`. **Model override:** all reviewer sub-agents in this skill run on
+Opus 5.5 (`model: opus`), overriding the shared Sonnet 5.5 default.
 
 **Bar for feedback: high-confidence only.** Confidence framing and the "never comment on"
 list are shared across this pipeline — see `../_shared/dev-common.md`. Each persona
@@ -39,8 +40,8 @@ silent rather than padding the findings list.
    commit range given). If a `PRD.md`/`TASKS.md` exists for this work (from `dev-design`/
    `dev-tasks`), read them — especially the PRD's `## Architecture` and `## Decisions`
    sections. Read the project `CLAUDE.md` if present.
-3. **Spawn 3 reviewer personas in parallel**, one `Agent` call each (`general-purpose`),
-   using `review-agent-prompt-template.md`. Each is cold — give full diff, relevant PRD
+3. **Spawn 3 reviewer personas in parallel**, one `Agent` call each (`general-purpose`,
+   `model: opus` — Opus 5.5), using `review-agent-prompt-template.md`. Each is cold — give full diff, relevant PRD
    excerpts, and its persona brief. None of them may edit files or spawn further agents.
 4. **Synthesize.** Dedupe overlapping findings (keep the higher severity, note if >1
    persona flagged it). Order by severity. Compute the overall verdict (rules below).

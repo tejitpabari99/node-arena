@@ -1,6 +1,6 @@
 # Reviewer-Persona Prompt Template (dev-review)
 
-3 `Agent` calls (`general-purpose`), all in **one message** (parallel). Each is cold —
+3 `Agent` calls (`general-purpose`, `model: opus` — Opus 5.5), all in **one message** (parallel). Each is cold —
 give it the full diff, not a summary. None may edit files, run tests, or spawn agents.
 
 ---
