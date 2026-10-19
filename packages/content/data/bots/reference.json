@@ -22,10 +22,10 @@
       "garrison": 0.4
     },
     "commitment": {
-      "minLineLifetimeSec": 4,
+      "minLineLifetimeSec": 2,
       "dangerOverride": 0.7,
-      "cutMargin": 0.08,
-      "redrawBlockSec": 6,
+      "cutMargin": 0.03,
+      "redrawBlockSec": 4,
       "tieHysteresis": 0.03,
       "slotGuardMargin": 2,
       "slotPreemptMargin": 1
