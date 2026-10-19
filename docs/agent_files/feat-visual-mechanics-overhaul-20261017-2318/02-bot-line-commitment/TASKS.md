@@ -4,7 +4,7 @@ summary: Tasks for bot line commitment - churn tool + v1 baseline, schema/params
 date: 2026-10-17
 ---
 # Tasks: Bot Line Commitment (SP02)
-Source of truth: 02-bot-line-commitment/PRD.md. Bot-side only; sim, GAME_RULES.md, levels and balance-targets.json stay untouched. All iteration happens autonomously; no human approval inside any task. Log file for all iteration rows: `docs/agent_files/feat-visual-mechanics-overhaul-20261017-2318/02-bot-line-commitment/iteration-log.md`. Commit format: `02-bot-line-commitment: Task N — <short name>`.
+Source of truth: 02-bot-line-commitment/PRD.md. Bot-side only; sim, GAME_RULES.md, levels and balance-targets.json stay untouched (exception: level 17 via Task 8, owner decision D13). All iteration happens autonomously; no human approval inside any task. Log file for all iteration rows: `docs/agent_files/feat-visual-mechanics-overhaul-20261017-2318/02-bot-line-commitment/iteration-log.md`. Commit format: `02-bot-line-commitment: Task N — <short name>`.
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
@@ -12,9 +12,10 @@ Source of truth: 02-bot-line-commitment/PRD.md. Bot-side only; sim, GAME_RULES.m
 | 2 | Commitment params: schema, profiles, versions | 1 | done |
 | 3 | Bot enforcement of commitment | 2 | done |
 | 4 | Commitment unit tests | 3 | done |
-| 5 | Tune to churn targets, hold balance bands | 4 | blocked |
+| 5 | Tune to churn targets, hold balance bands | 4 | done |
 | 6 | Regenerate goldens and benchmark evidence | 5 | done |
 | 7 | Docs, rules check, final verification | 6 | done |
+| 8 | Rebalance level 17 (17h) | 7 | todo |
 
 ## Task 1 — Churn tool + committed v1 baseline
 What it is / what it means: The headless metric that defines "bots keep changing nodes" (PRD R9, D6). Must exist and be baselined on unmodified code before any behaviour change, so targets are reproducible.
@@ -46,6 +47,8 @@ What changes at a high level: Tune only base-profile values, 1-2 params per iter
 Done when: **total** visible cut-then-redraw (any LineCut reason) >= 80% below baseline; bot cuts/min >= 40% below; slot-cuts/min reported (secondary target >= 60% below); `pnpm validate:levels` passes; `pnpm balance` passes every band in unmodified `tools/balance-targets.json`; bots/content/tools tests green.
 Iteration: Measure `pnpm bots:churn` on the frozen seed set vs `churn-baseline-v1.json`, then `pnpm balance` and `pnpm validate:levels`. Log row: iter #, date, commit, params, cuts/min, draws/min, cut-redraw/min and % vs baseline, flips/min, balance win rates per band, validate:levels pass/fail, top 3 gaps, planned change. Loop: fix top 1-2 gaps, re-run touched tests, commit each improving iteration as `02-bot-line-commitment: Task 5 — iter k: <change>`, revert any iteration that worsens a target metric or breaks a band. Exit: all targets above met and tests green. Stuck rule: 3 consecutive iterations without improvement, log hypotheses, switch approach (per-profile values, danger definition, keepScore definition). Hard cap 12 iterations, then mark `Blocked`, log, continue. Never edit `balance-targets.json`, never delete tests.
 
+Resolved by owner decision D13 (2026-10-19): 02h/10h drift accepted; 17h moved to Task 8.
+
 ## Task 6 — Regenerate goldens and benchmark evidence
 What it is / what it means: Bot-command shifts change goldens by design; regenerate deliberately with rationale (R10).
 What changes at a high level: Run `pnpm bots:golden --update`, `pnpm bench:bots` (updates `benchmark-evidence.json`), and regenerate any sim/replay goldens containing bot commands; confirm `pnpm replay:verify golden`. Each commit message states why each golden changed. Sim package diff must stay empty.
@@ -57,3 +60,9 @@ What it is / what it means: Close out documentation and acceptance (R11, Accepta
 What changes at a high level: Add a commitment section to `packages/bots/README.md` (params, defaults, RNG order, how to run churn). Grep `docs/GAME_RULES.md` for bot-behaviour text and log the result; no rules change expected. Run the full acceptance suite and add a final row to the iteration log.
 Done when: `GAME_RULES.md` and sim diffs empty; `pnpm check:schemas`, `check:content`, `validate:content`, `typecheck`, `lint`, `pnpm test` (bots, content, tools), `validate:levels`, `balance`, `replay:verify golden` all pass; baseline and final rows (and optional L10 note) exist in the iteration log.
 Iteration: Non-visual. Measurement: the full command list above; target all pass. Log a row per iteration (iter #, date, commit, command results, gaps). Fix the top failures, re-run, commit if improved; stuck rule 3 iterations then change approach; cap 12, then `Blocked`, log, continue.
+
+## Task 8 — Rebalance level 17 (17h)
+What it is / what it means: Bring level 17-pincer's human-proxy win rate into band 4 ([20,45]%) after commitment weakened its two rusher-expert opponents (17h 64% vs v1 43.5%). Per-level handicap is the standard genre pattern (see research-node-games-ai-2026-10-19.md). Owner-approved exception to SP02's "levels untouched" scope (D13).
+What changes at a high level: Minimal edit to `packages/content/data/levels/17-pincer.json` only. Preferred candidates: one opponent rusher-expert -> rusher-hard, or adjust opponent/player starting garrisons; pick the smallest change that lands the band. Bump content version/hashes per AGENTS.md (content change = content + content version/hash, not rules). No bot code/params, sim, rules, or `balance-targets.json` changes.
+Done when: `pnpm balance` (200 seeds) 17h within [20,45], 17r >= 80% (referenceWinMin), 17 timeouts <= 10%, idle 0; no new flagged rows vs Task 7 state other than accepted 02h/10h; `pnpm validate:levels` 21/21; `pnpm bots:churn` still meets all three churn targets; content checks (`check:content --base HEAD`, `validate:content --base HEAD`, `check:manifest`, `check:schemas`), `typecheck`, `lint`, tests, golden replay/bot goldens pass (regenerate only goldens that legitimately depend on level 17 content, and say so).
+Iteration: Screen candidates with `pnpm balance --levels 17-pincer` at 100-200 seeds first, then full run; log rows in iteration-log.md under a new "Task 8" section. Stuck rule: 3 non-improving iterations, log hypotheses, change approach; cap 10, then `Blocked`, log, continue.

@@ -6,7 +6,7 @@ date: 2026-10-17
 # PRD: Bot Line Commitment (SP02)
 
 Repo/branch: node-arena · feat/visual-mechanics-overhaul · Depends on: none
-Owns: `packages/bots/src/{utility,considerations,version}.ts`, `packages/bots/scripts/churn.mjs` (new), `packages/bots/test/**` (+ golden), `packages/bots/benchmark-evidence.json`, `packages/bots/README.md` (commitment section), `packages/content/src/bot-params.ts` + generated `schemas/bot.schema.json`, `packages/content/data/bots/*.json` (base profiles only), content lock/version files, `tools/balance-targets.json` only if explicitly justified (default: untouched). Does not own: sim, `docs/GAME_RULES.md`, level layouts, web.
+Owns: `packages/bots/src/{utility,considerations,version}.ts`, `packages/bots/scripts/churn.mjs` (new), `packages/bots/test/**` (+ golden), `packages/bots/benchmark-evidence.json`, `packages/bots/README.md` (commitment section), `packages/content/src/bot-params.ts` + generated `schemas/bot.schema.json`, `packages/content/data/bots/*.json` (base profiles only), content lock/version files, `tools/balance-targets.json` only if explicitly justified (default: untouched). Does not own: sim, `docs/GAME_RULES.md`, level layouts (exception: `17-pincer.json` per D13, Task 8), web.
 
 ## TL;DR
 - Bots re-score every own line as a "cut" candidate each decision, with no memory of line age and no keep-vs-cut comparison; seeded noise then flips near-ties. Result: draw, cut, redraw loops.
@@ -34,7 +34,7 @@ Variant profiles (`*-easy/normal/hard/expert`) may only set `skill` and `extends
 | Visibly stable lines: no flip-flop in a watched L10 match | Changing sim/rules/`GAME_RULES.md` |
 | Total visible cut-then-redraw (same pair, ≤10 s, **any LineCut reason**: player/slots/captured/replaced) ≥80% below v1 baseline | Making bots stronger/weaker as a goal (hold the bands) |
 | Total cuts/min materially lower (target ≥40% below baseline) | New bot archetypes, new considerations beyond commitment |
-| Params are data (schema + profiles), tunable per base profile | Level/balance edits; retuning `balance-targets.json` bands |
+| Params are data (schema + profiles), tunable per base profile | Level/balance edits (exception: D13 allows a level-17 edit, Task 8); retuning `balance-targets.json` bands |
 
 ## Requirements
 Defaults below are starting points; the iteration loop tunes them.
@@ -90,14 +90,16 @@ Non-visual loop (measure → log → change → re-measure; same metric and seed
 | D8 | Tier-aware commitment scaling (owner-approved 2026-10-19) | Code change: scale `minLineLifetimeSec`/`redrawBlockSec` by `decisionIntervalSec` vs a fixed reference (variants still only set `skill`, D4 unchanged) | Schema change letting variants override `commitment` | Tried in Task 5 resume iters 11-14 and **not shipped**: shortening fast-tier windows breaks the churn targets (turtle-expert cliff) and does not fix 17h (needs ~no rusher-expert commitment, a 5-6x churn budget overrun). See iteration log |
 | D9 | keepScore definition | Noise-free score of the line's own purpose (reinforce if target is own team, else attack) | max(attack, reinforce) | Task 5 iter 3: max() over-kept lines and broke bands |
 | D10 | cutMargin | 0 on all base profiles; `tieHysteresis` is the only cut band | PRD default 0.15 | Task 5 iter 4: margin plus hysteresis double-banded and blocked needed cuts |
-| D11 | Opportunist / turtle windows | Opportunist `redrawBlockSec` 0 + `slotGuardMargin` 2 (deviates from D7 "block always holds"; owner sign-off pending); turtle `minLineLifetimeSec` 6 (iter 7) | One shared set | Task 5 iter 6: opportunist bands; iter 7: turtle bands |
-| D12 | Reference / human-proxy commitment | None (v1 path) - R8 deviation, owner sign-off pending | All base profiles carry commitment | Task 5 iter 4: human-proxy bands failed with commitment |
+| D11 | Opportunist / turtle windows | Opportunist `redrawBlockSec` 0 + `slotGuardMargin` 2 (deviates from D7 "block always holds"; owner-approved 2026-10-19); turtle `minLineLifetimeSec` 6 (iter 7) | One shared set | Task 5 iter 6: opportunist bands; iter 7: turtle bands |
+| D12 | Reference / human-proxy commitment | None (v1 path) - R8 deviation, owner-approved 2026-10-19 | All base profiles carry commitment | Task 5 iter 4: human-proxy bands failed with commitment. Tooling-only profiles (content validator rejects them as level opponents); v1 path keeps balance bands comparable to v1 (measuring stick unchanged) |
+| D13 | Task 5 balance outcome (owner-approved 2026-10-19) | Options (a)+(c): accept 02h (3% timeouts vs 2% limit) and 10h (86.5% vs 85% cap) as residual noise-level drift vs v1; fix 17h (human-proxy 64% vs band-4 cap 45%; v1 43.5%) via small edit to `17-pincer.json` (two rusher-expert opponents) as Task 8. Owner-approved exception to "levels untouched" | (b) relax churn target (defeats SP02's purpose); (d) tier-sensitivity schema field (cannot separate 17 from 18/20, which also use rusher-expert) | Commitment weakens rusher-expert; per-level handicap is the standard genre pattern (research-node-games-ai-2026-10-19.md). Level 17 only; no bot/sim/rules/`balance-targets.json` change |
 
 ## Risks / Open Questions
 - [RESOLVED: lifetime lock may slow adaptation and cost win rate -> drift rule step 6; expert variants share base params so only base values are tuned]
 - [RESOLVED: `keepScore` ambiguity -> best of attack/reinforce score on same pair, noise-free — SUPERSEDED by D9 / D12 (Task 5)]
 - [RESOLVED: bots built on removed lines (replaced by opponent) -> age map entry dropped when line absent]
 - [RESOLVED: golden/bench churn is expected; explained in commit message]
+- [RESOLVED: Task 5 blocker (02h/10h drift, 17h human-proxy band) and pending owner sign-offs on D11/D12 -> see D11/D12/D13]
 - [DEFERRED] Applying commitment to human-proxy only vs all: default all base profiles; revisit if balance human-proxy bands fail. — SUPERSEDED by D9 / D12 (Task 5)
 
 ## Acceptance Criteria
