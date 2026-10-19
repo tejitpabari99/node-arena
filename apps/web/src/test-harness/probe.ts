@@ -1,12 +1,19 @@
-import { Box3, Color, Raycaster, SRGBColorSpace, Vector2, Vector3, type Camera, type InstancedBufferAttribute, type Object3D } from 'three';
+import { Box3, Color, Matrix4, Raycaster, SRGBColorSpace, Vector2, Vector3, type Camera, type InstancedBufferAttribute, type Object3D } from 'three';
 import type { SimEvent, SimView } from '@node-arena/sim';
 import { EVENT_FX_LOCATORS } from '../render/fx.js';
 
 /**
  * Probe contract (SP01, PRD "Probe"). Renderers tag objects non-visually via `userData`:
- * - `visualRole: 'tower'` on each tower root, with `towerIndex`; optional `paintColor` (hex), `floors`, `slotDots`, `visualWidthWorld`.
- *   Descendants tagged `visualPart: 'model'` bound the model rect (else the whole root minus `count`).
- * - `visualRole: 'count'` on the roof number decal mesh (inside its tower root).
+ * - `visualRole: 'tower'` on each tower root (any non-InstancedMesh object), identified by `towerIndex` (sim index) or
+ *   `towerId` (sim tower id; a one-element `towerIds` also works); optional `paintColor` (hex), `floors`, `slotDots`,
+ *   `visualWidthWorld` (alias `visualWidth`), `stackHeight` (world u, plinth to roof top).
+ *   Mesh path: descendants tagged `visualPart: 'model'` bound the model rect (else the whole root minus `count`).
+ *   Instanced path: when the root has no geometry (empty `Group`, towers drawn by shared `InstancedMesh`es tagged
+ *   `visualRole: 'tower'` with `towerIds[]` = instance -> tower id), the model rect is the projected box centred on the
+ *   root world position, `visualWidthWorld` wide/deep, from root y to `stackHeight` (default
+ *   `floors x FLOOR_HEIGHT_WORLD + 0.5 x visualWidthWorld`; floors default 1). Shared tower InstancedMeshes are never roots.
+ * - `visualRole: 'count'` on the roof number decal mesh: inside its tower root, or one shared `InstancedMesh` with
+ *   `towerIds[]` (each instance's geometry box under its instance matrix; zero-scale instances are skipped).
  * - `visualRole: 'lane'` on each lane mesh with `from`/`to` tower indices and `pair` ('lowId-highId');
  *   optional `widthWorld` and `splitWorld` (world distance from the lower-index tower).
  * - `visualRole: 'troop'` on troop InstancedMeshes (`troopPose` x/z per instance) with optional `heightWorld`, `widthWorld`, `baseY`.
@@ -35,6 +42,8 @@ export interface ProbeInput {
 }
 
 const SAMPLE_TROOPS = 8;
+/** Default floor height (world u) for the instanced-tower stack-height fallback (SP03 PRD R7: floor height ~0.9 u). */
+export const FLOOR_HEIGHT_WORLD = 0.9;
 const round = (v: number) => Math.round(v * 1000) / 1000;
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
@@ -53,7 +62,7 @@ export function buildVisualProbe(input: ProbeInput): VisualProbe {
   const meshPoints = (root: Object3D, skip: (o: Object3D) => boolean) => {
     const out: Point[] = [], world = new Box3();
     const visit = (node: Object3D) => {
-      if (skip(node) || !node.visible) return;
+      if (skip(node) || !node.visible || isShared(node)) return;
       const geometry = (node as Object3D & { geometry?: { boundingBox: Box3 | null; computeBoundingBox(): void } }).geometry;
       if (geometry) {
         if (!geometry.boundingBox) geometry.computeBoundingBox();
@@ -62,6 +71,23 @@ export function buildVisualProbe(input: ProbeInput): VisualProbe {
       for (const child of node.children) visit(child);
     };
     visit(root); return { points: out, world };
+  };
+  /** Shared instanced parts (`towerIds[]` on an InstancedMesh) span many towers; never traversed as one tower's mesh. */
+  function isShared(node: Object3D) { return (node as Object3D & { isInstancedMesh?: boolean }).isInstancedMesh === true && Array.isArray(node.userData.towerIds); }
+  /** World boxes of the instances of `mesh` that belong to tower `id` (zero-scale = hidden instances skipped). */
+  const instanceBoxes = (mesh: Object3D, id: string) => {
+    const inst = mesh as Object3D & { count: number; getMatrixAt(i: number, m: Matrix4): void; geometry: { boundingBox: Box3 | null; computeBoundingBox(): void } };
+    const towerIds = mesh.userData.towerIds as unknown[], out: { points: Point[]; world: Box3 }[] = [], m = new Matrix4();
+    if (!mesh.visible) return out;
+    if (!inst.geometry.boundingBox) inst.geometry.computeBoundingBox();
+    for (let k = 0; k < Math.min(inst.count, towerIds.length); k++) {
+      if (towerIds[k] !== id) continue;
+      inst.getMatrixAt(k, m); if (Math.abs(m.determinant()) < 1e-12) continue;
+      m.premultiply(mesh.matrixWorld);
+      const world = new Box3(), points = boxCorners(inst.geometry.boundingBox!).map(c => { const w = c.applyMatrix4(m); world.expandByPoint(w); return point(w); });
+      out.push({ points, world });
+    }
+    return out;
   };
   const tagged: Record<string, Object3D[]> = {};
   scene.traverse(node => { const role = node.userData.visualRole; if (typeof role === 'string') (tagged[role] ??= []).push(node); });
@@ -73,18 +99,33 @@ export function buildVisualProbe(input: ProbeInput): VisualProbe {
   const playQuadScreen = quad ? quad.map(([x, z]) => point(new Vector3(x, 0, z))) : null;
 
   const towerRoots = new Map<number, Object3D>();
-  for (const root of tagged.tower ?? []) { const i = num(root.userData.towerIndex); if (i !== null) towerRoots.set(i, root); }
+  for (const root of tagged.tower ?? []) {
+    if (isShared(root)) continue;
+    const d = root.userData, single = Array.isArray(d.towerIds) && d.towerIds.length === 1 ? d.towerIds[0] : undefined;
+    const tid = typeof d.towerId === 'string' ? d.towerId : typeof single === 'string' ? single : undefined;
+    const i = num(d.towerIndex) ?? (tid === undefined ? -1 : ids.indexOf(tid));
+    if (i !== null && i >= 0 && i < ids.length) towerRoots.set(i, root);
+  }
+  const sharedCounts = (tagged.count ?? []).filter(isShared);
   const garrison = view.tower.col['garrison.count'], caps = view.tower.col['garrison.cap'];
   const towers: VisualProbe['towers'] = [];
   for (let i = 0; i < ids.length; i++) {
     const root = towerRoots.get(i); if (!root) continue;
     const parts: Object3D[] = []; root.traverse(n => { if (n.userData.visualPart === 'model') parts.push(n); });
     const isCount = (o: Object3D) => o.userData.visualRole === 'count';
-    const modelPts = (parts.length ? parts : [root]).map(p => meshPoints(p, isCount));
+    const visualWidthWorld = num(root.userData.visualWidthWorld) ?? num(root.userData.visualWidth), floors = num(root.userData.floors);
+    let modelPts = (parts.length ? parts : [root]).map(p => meshPoints(p, isCount));
+    if (!modelPts.some(m => m.points.length) && visualWidthWorld !== null) {
+      // Instanced path: no own geometry, derive the stack box from the root transform.
+      const base = root.getWorldPosition(new Vector3()), half = visualWidthWorld / 2;
+      const height = num(root.userData.stackHeight) ?? (floors ?? 1) * FLOOR_HEIGHT_WORLD + 0.5 * visualWidthWorld;
+      const world = new Box3(new Vector3(base.x - half, base.y, base.z - half), new Vector3(base.x + half, base.y + height, base.z + half));
+      modelPts = [{ points: boxCorners(world).map(point), world }];
+    }
     const modelWorld = modelPts.reduce((box, m) => box.union(m.world), new Box3());
     const model = rectOf(modelPts.flatMap(m => m.points)) ?? { x: 0, y: 0, w: 0, h: 0 };
     const counts: Object3D[] = []; root.traverse(n => { if (isCount(n)) counts.push(n); });
-    const count = counts.map(c => meshPoints(c, () => false));
+    const count = [...counts.map(c => meshPoints(c, () => false)), ...sharedCounts.flatMap(c => instanceBoxes(c, ids[i]!))].filter(c => c.points.length);
     const countRect = rectOf(count.flatMap(c => c.points));
     let countOnRoof = false;
     if (countRect && !modelWorld.isEmpty()) {
@@ -95,9 +136,9 @@ export function buildVisualProbe(input: ProbeInput): VisualProbe {
     const owner = view.tower.owner[i]!, paint = root.userData.paintColor;
     towers.push({
       id: ids[i]!, owner: owner < 0 ? null : players[owner] ?? null, count: garrison?.[i] ?? 0, cap: caps?.[i] ?? null,
-      floors: num(root.userData.floors), model, countRect, countOnRoof, slotDots: num(root.userData.slotDots) ?? 0, hasCard: input.hasCard(i),
+      floors, model, countRect, countOnRoof, slotDots: num(root.userData.slotDots) ?? 0, hasCard: input.hasCard(i),
       paintHue: typeof paint === 'string' ? round(new Color(paint).getHSL({ h: 0, s: 0, l: 0 }, SRGBColorSpace).h * 360) : null,
-      visualWidthWorld: num(root.userData.visualWidthWorld),
+      visualWidthWorld,
     });
   }
 

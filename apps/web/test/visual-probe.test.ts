@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { BoxGeometry, Group, InstancedBufferAttribute, InstancedMesh, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, Scene } from 'three';
+import { BoxGeometry, Group, InstancedBufferAttribute, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, Scene, Vector3 } from 'three';
 import type { SimEvent, SimView } from '@node-arena/sim';
 import type { Manifest } from '@node-arena/content';
 import manifestJSON from './fixtures/greybox-manifest.json';
@@ -88,6 +88,36 @@ describe('visualProbe', () => {
     const { input } = fixture();
     input.camera.position.set(0, 10, 60); input.camera.lookAt(0, 0, 0); input.camera.updateMatrixWorld();
     expect(buildVisualProbe(input).ground.cornerRayHits.filter(Boolean).length).toBeLessThan(9);
+  });
+  it('derives instanced-tower model rects from empty Group roots + visualWidth + stack height', () => {
+    const { input } = fixture();
+    const scene = input.scene;
+    for (const c of [...scene.children]) if (c.userData.visualRole === 'tower') scene.remove(c);
+    // SP03 layout: empty roots (no geometry), one InstancedMesh per material across all towers, instanced roof decal.
+    const r0 = new Group(); r0.position.set(-10, 0, 0); r0.userData = { visualRole: 'tower', towerId: 't1', visualWidth: 2, floors: 2, slotDots: 1, paintColor: '#2f6fde' };
+    const r1 = new Group(); r1.position.set(10, 0, 0); r1.userData = { visualRole: 'tower', towerIndex: 1, visualWidthWorld: 3, stackHeight: 5 };
+    scene.add(r0, r1);
+    const body = new InstancedMesh(new BoxGeometry(1, 1, 1), new MeshBasicMaterial(), 3); body.userData = { visualRole: 'tower', towerIds: ['t2', 't1', 't2'] };
+    const decal = new InstancedMesh(new PlaneGeometry(1, 1), new MeshBasicMaterial(), 2); decal.userData = { visualRole: 'count', towerIds: ['t2', 't1'] };
+    decal.setMatrixAt(0, new Matrix4().makeRotationX(-Math.PI / 2).setPosition(10, 5.02, 0));
+    decal.setMatrixAt(1, new Matrix4().makeRotationX(-Math.PI / 2).setPosition(-10, 0.9 * 2 + 1 + .02, 0));
+    scene.add(body, decal);
+    const probe = buildVisualProbe(input);
+    expect(probe.towers.map(t => t.id)).toEqual(['t1', 't2']);
+    const [a, b] = probe.towers;
+    expect(a).toMatchObject({ id: 't1', owner: 'p1', floors: 2, slotDots: 1, visualWidthWorld: 2, countOnRoof: true });
+    expect(b).toMatchObject({ id: 't2', owner: null, floors: null, visualWidthWorld: 3, countOnRoof: true });
+    for (const t of probe.towers) { expect(t.model.w).toBeGreaterThan(0); expect(t.model.h).toBeGreaterThan(0); expect(t.countRect).not.toBeNull(); }
+    expect(a!.model.x + a!.model.w).toBeLessThan(400); expect(b!.model.x).toBeGreaterThan(400);
+    expect(b!.model.w).toBeGreaterThan(a!.model.w);
+    expect(a!.countRect!.x + a!.countRect!.w).toBeLessThan(400); expect(b!.countRect!.x).toBeGreaterThan(400);
+    // Model rect = projected box of root world position +- visualWidth/2, y 0..stack height.
+    const proj = (x: number, y: number, z: number) => { const q = new Vector3(x, y, z).project(input.camera); return { x: (q.x + 1) * 400, y: (1 - q.y) * 300 }; };
+    const top = proj(10, 5, -1.5), bottom = proj(10, 0, 1.5);
+    expect(b!.model.y).toBeCloseTo(top.y, 1); expect(b!.model.y + b!.model.h).toBeCloseTo(bottom.y, 1);
+    // Stack height default (no tag): floors x FLOOR_HEIGHT_WORLD + 0.5 x visualWidth.
+    const aTop = proj(-10, 0.9 * 2 + 1, -1);
+    expect(a!.model.y).toBeCloseTo(aTop.y, 1);
   });
   it('is identical when called twice on the same state', () => {
     const { input } = fixture();

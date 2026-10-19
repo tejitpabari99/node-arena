@@ -133,8 +133,8 @@ Tools: `pnpm --filter @node-arena/web visual:score-sheet --scene <id>` writes `a
 
 | Tag (`userData.visualRole`) | Carried by | Fields |
 |---|---|---|
-| `tower` | each tower root `Group` (PRD also allows an `InstancedMesh` with `userData.towerIds[]`; the SP that introduces one extends `probe.ts` to derive `model` from root transform + `visualWidthWorld` + stack height) | `towerIndex` (required), `paintColor` (hex, updated on team change), `floors`, `slotDots`, `visualWidthWorld`; descendants tagged `visualPart: 'model'` bound the model rect (else the whole root minus `count`) |
-| `count` | the roof number decal mesh, inside its tower root | position inside the model rect gives `countOnRoof` |
+| `tower` | each tower root (any non-`InstancedMesh` object, usually a `Group`; may be an empty `Group` with no geometry); shared tower `InstancedMesh`es may also carry `visualRole: 'tower'` plus `towerIds[]` (instance -> tower id) and are never treated as roots | tower identity: `towerIndex` (sim index) **or** `towerId` (sim tower id; a one-element `towerIds[]` on the root also works); `paintColor` (hex, updated on team change), `floors`, `slotDots`, `visualWidthWorld` (alias `visualWidth`, world u across flats; `visualWidthWorld` wins if both are set), `stackHeight` (world u, root y to roof top). **Mesh path:** descendants tagged `visualPart: 'model'` bound the model rect (else the whole root minus `count`). **Instanced path** (root has no own geometry): `model` = projected box centred on the root world position, `visualWidthWorld` wide and deep, from root y up to `stackHeight`, default `floors x 0.9 + 0.5 x visualWidthWorld` (`floors` default 1; 0.9 = `FLOOR_HEIGHT_WORLD` in `probe.ts`); without a width the rect is empty `{0,0,0,0}` and tower metrics fail |
+| `count` | the roof number decal mesh, inside its tower root, **or** one shared instanced decal `InstancedMesh` with `towerIds[]` (instance -> tower id; each instance's geometry box under its instance matrix, zero-scale instances skipped) | position inside the model rect gives `countOnRoof` |
 | `lane` | each lane mesh | `from`, `to` (tower indices), `pair` (`'lowId-highId'`), `widthWorld`, `splitWorld` (world distance from the lower-index tower) |
 | `troop` | troop `InstancedMesh`es | `heightWorld`, `widthWorld`, `baseY`; positions from the `troopPose` attribute `[x, z, rot, seq]` per instance |
 | `ground` | ground plane, border, props, rocks | `playQuad`: `[x, z][4]` world corners of the grass patch (absent => `playQuadScreen` null) |
@@ -147,7 +147,7 @@ Probe fields that must be **non-null** once the owner SP lands (v1 nulls are exp
 | `towers[].floors` | `tower.floors` | M04, M20 | SP03 |
 | `towers[].cap` | sim view | M04 | SP01 (present) |
 | `towers[].slotDots` (defaults to 0, never null) | `tower.slotDots` | V08 / M19 cross-check | SP03 (must equal the sim slot count) |
-| `towers[].visualWidthWorld` | `tower.visualWidthWorld` | M01 (instanced towers) | SP03 |
+| `towers[].visualWidthWorld` | `tower.visualWidthWorld` (or alias `tower.visualWidth`) | M01 (instanced towers), instanced-path `model` | SP03 |
 | `ground.playQuadScreen` | `ground.playQuad` | M09, M10 | SP03 |
 | `ground.cornerRayHits` (9 booleans) | `ground` meshes | M08 | SP01 (present; all true from SP03) |
 | `lanes[].widthWorld`, `screenWidthPx` | `lane.widthWorld` | M05 | SP04 |
