@@ -31,13 +31,11 @@ test('named production bot corpus contains 23 distinct complete profiles and pre
     for (const action of BOT_ACTIONS) assert.deepEqual(Object.keys(params.weights![action]!).sort(), [...BOT_CONSIDERATIONS].sort());
   }
   const params = Object.fromEntries(personalities.map(id => [id, (loaded[pathFor(id)] as BotProfile).params]));
-  // SP02 R7/R8: personalities start at the PRD commitment defaults; reference is milder; idle has none.
-  const defaults = { minLineLifetimeSec: 8000, dangerOverride: 700, cutMargin: 150, redrawBlockSec: 10000, tieHysteresis: 50, slotGuardMargin: 3000, slotPreemptMargin: 1000 };
-  for (const id of personalities) assert.deepEqual(params[id]!.commitment, defaults, id);
-  const mild = (loaded[pathFor('reference')] as BotProfile).params.commitment!;
-  assert.ok(mild, 'reference: commitment');
-  for (const key of Object.keys(defaults) as (keyof typeof defaults)[]) assert.ok(mild[key] <= defaults[key], `reference commitment ${key} is milder`);
-  assert.ok(mild.minLineLifetimeSec < defaults.minLineLifetimeSec && mild.cutMargin < defaults.cutMargin);
+  // SP02 R7/R8 as tuned in Task 5: personalities share one commitment block; the human-seat
+  // tooling profiles (reference, inherited by human-proxy) and idle run the v1 path.
+  const tuned = { minLineLifetimeSec: 8000, dangerOverride: 700, cutMargin: 0, redrawBlockSec: 10000, tieHysteresis: 50, slotGuardMargin: 3000, slotPreemptMargin: 1000 };
+  for (const id of personalities) assert.deepEqual(params[id]!.commitment, tuned, id);
+  assert.equal(Object.hasOwn((loaded[pathFor('reference')] as BotProfile).params, 'commitment'), false);
   assert.equal(Object.hasOwn((loaded[pathFor('idle')] as BotProfile).params, 'commitment'), false);
   assert.ok(params.rusher!.bias!.attack! > params.rusher!.bias!.reinforce!);
   assert.ok(params.rusher!.skill!.decisionIntervalSec < params.turtle!.skill!.decisionIntervalSec);

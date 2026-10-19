@@ -291,7 +291,9 @@ test('R8 profiles without commitment reproduce the v1 churn baseline matches exa
     return { ...profile, params };
   };
   const human = Object.values(content.resolveProfiles(loaded)).find(profile => profile.id === HUMAN_SEAT_PROFILE);
-  assert.ok(human.params.commitment, 'current human-proxy carries commitment');
+  // Since Task 5 iter 4 the human-seat proxies (reference/human-proxy) carry no commitment
+  // (tuned out to hold balance bands); strip() is then a no-op for the human seat.
+  assert.equal(human.params.commitment, undefined, 'human-proxy runs the v1 path');
   let stripped = 0, differs = 0;
   for (const expected of baseline.matches) {
     const level = content.compileLevel(loaded, expected.level);

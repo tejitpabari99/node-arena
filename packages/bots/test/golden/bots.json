@@ -1,5 +1,5 @@
 {
-  "botVersion": "1.3.0",
+  "botVersion": "1.4.0",
   "metadata": {
     "rulesVersion": "1.0.0",
     "schemaVersion": "1.0.0",
@@ -7,16 +7,16 @@
   },
   "botHash": {
     "random-6-seed-1": {
-      "economist-expert": "4b517f4b8a93bc37fa3a0f9e459bb466ff180a25497f214a3d7c2a66b625061b",
-      "opportunist-normal": "b4cb7a6ddef8339d44084dcdfd4d54a40cf7f5ae74512abc8d0947b0deb2a4aa"
+      "economist-expert": "5c67380a7683e51c57853d4b06d7922ed455c9858254aa9b1bc2dc96cc72698a",
+      "opportunist-normal": "99ac7ca60128ed5dfc75c545816719ef8d6691869c49d91ba724e874245c346e"
     },
     "random-0-seed-37": {
-      "rusher-hard": "f080c6beeda550b33ad125078f8869b7e2281722115a4ef56ed40bc05fe524ce",
-      "turtle-normal": "3264cb4793bdb4cfc9229974b1eb72920681c60ad408792c04649cf9190168af"
+      "rusher-hard": "977fb30a52f21cf6c9a4c57fd69c2825549bd4c5a0dcf70866153dab72a59c53",
+      "turtle-normal": "a9f0092c10ef125ea17248cb7156bd6a084747427a1f9887fc1386903533014a"
     },
     "random-3-seed-704": {
-      "opportunist-easy": "4a086bf2971708f6264e27ababa310a8517140bb79c6fba7c01a75f9a0818a33",
-      "rusher-normal": "353651d6a973c7e17116bcff7a973b28b6f730b8a0981ec52d547b3c22655695"
+      "opportunist-easy": "f383350166c90ebefb8e61443ac8fd0ae39a6f239aa84eed23968d05c794b51e",
+      "rusher-normal": "6ecfeb3ca64bace28393a0eed91a5aaf9d061d51e3dec9efca37897a1175d844"
     }
   },
   "scenarios": [
@@ -274,7 +274,7 @@
                 "commitment": {
                   "minLineLifetimeSec": 8000,
                   "dangerOverride": 700,
-                  "cutMargin": 150,
+                  "cutMargin": 0,
                   "redrawBlockSec": 10000,
                   "tieHysteresis": 50,
                   "slotGuardMargin": 3000,
@@ -347,7 +347,7 @@
                 "commitment": {
                   "minLineLifetimeSec": 8000,
                   "dangerOverride": 700,
-                  "cutMargin": 150,
+                  "cutMargin": 0,
                   "redrawBlockSec": 10000,
                   "tieHysteresis": 50,
                   "slotGuardMargin": 3000,
@@ -397,8 +397,8 @@
         ],
         "simHash": "8d4bfd60924e0ff8bd89029c98abf5b27ffb221918b5387f17f51c3b5e123c47",
         "botHash": {
-          "economist-expert": "4b517f4b8a93bc37fa3a0f9e459bb466ff180a25497f214a3d7c2a66b625061b",
-          "opportunist-normal": "b4cb7a6ddef8339d44084dcdfd4d54a40cf7f5ae74512abc8d0947b0deb2a4aa"
+          "economist-expert": "5c67380a7683e51c57853d4b06d7922ed455c9858254aa9b1bc2dc96cc72698a",
+          "opportunist-normal": "99ac7ca60128ed5dfc75c545816719ef8d6691869c49d91ba724e874245c346e"
         }
       },
       "seed": 1
@@ -606,7 +606,7 @@
                 "commitment": {
                   "minLineLifetimeSec": 8000,
                   "dangerOverride": 700,
-                  "cutMargin": 150,
+                  "cutMargin": 0,
                   "redrawBlockSec": 10000,
                   "tieHysteresis": 50,
                   "slotGuardMargin": 3000,
@@ -679,7 +679,7 @@
                 "commitment": {
                   "minLineLifetimeSec": 8000,
                   "dangerOverride": 700,
-                  "cutMargin": 150,
+                  "cutMargin": 0,
                   "redrawBlockSec": 10000,
                   "tieHysteresis": 50,
                   "slotGuardMargin": 3000,
@@ -729,8 +729,8 @@
         ],
         "simHash": "9c331abfdcd4b98ae786c4c136aa0f0b45aa3860a70a935cbc5d64e4d1de9e95",
         "botHash": {
-          "rusher-hard": "f080c6beeda550b33ad125078f8869b7e2281722115a4ef56ed40bc05fe524ce",
-          "turtle-normal": "3264cb4793bdb4cfc9229974b1eb72920681c60ad408792c04649cf9190168af"
+          "rusher-hard": "977fb30a52f21cf6c9a4c57fd69c2825549bd4c5a0dcf70866153dab72a59c53",
+          "turtle-normal": "a9f0092c10ef125ea17248cb7156bd6a084747427a1f9887fc1386903533014a"
         }
       },
       "seed": 37
@@ -1014,7 +1014,7 @@
                 "commitment": {
                   "minLineLifetimeSec": 8000,
                   "dangerOverride": 700,
-                  "cutMargin": 150,
+                  "cutMargin": 0,
                   "redrawBlockSec": 10000,
                   "tieHysteresis": 50,
                   "slotGuardMargin": 3000,
@@ -1087,7 +1087,7 @@
                 "commitment": {
                   "minLineLifetimeSec": 8000,
                   "dangerOverride": 700,
-                  "cutMargin": 150,
+                  "cutMargin": 0,
                   "redrawBlockSec": 10000,
                   "tieHysteresis": 50,
                   "slotGuardMargin": 3000,
@@ -1137,8 +1137,8 @@
         ],
         "simHash": "ed57bc0b68d0cdf04630b77372e949a509c63103614d75d0ba512a9043c893df",
         "botHash": {
-          "opportunist-easy": "4a086bf2971708f6264e27ababa310a8517140bb79c6fba7c01a75f9a0818a33",
-          "rusher-normal": "353651d6a973c7e17116bcff7a973b28b6f730b8a0981ec52d547b3c22655695"
+          "opportunist-easy": "f383350166c90ebefb8e61443ac8fd0ae39a6f239aa84eed23968d05c794b51e",
+          "rusher-normal": "6ecfeb3ca64bace28393a0eed91a5aaf9d061d51e3dec9efca37897a1175d844"
         }
       },
       "seed": 704
@@ -1212,16 +1212,7 @@
             }
           },
           {
-            "tick": 214,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t5"
-            }
-          },
-          {
-            "tick": 214,
+            "tick": 166,
             "cmd": {
               "type": "CutLine",
               "player": "b1",
@@ -1230,16 +1221,16 @@
             }
           },
           {
-            "tick": 230,
+            "tick": 166,
             "cmd": {
-              "type": "DrawLine",
+              "type": "CutLine",
               "player": "b1",
-              "from": "t4",
-              "to": "t0"
+              "from": "t1",
+              "to": "t5"
             }
           },
           {
-            "tick": 230,
+            "tick": 182,
             "cmd": {
               "type": "DrawLine",
               "player": "b1",
@@ -1248,11 +1239,29 @@
             }
           },
           {
-            "tick": 246,
+            "tick": 182,
             "cmd": {
               "type": "DrawLine",
               "player": "b1",
-              "from": "t5",
+              "from": "t4",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 198,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t6",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 214,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t6",
               "to": "t2"
             }
           }
@@ -1292,47 +1301,47 @@
           },
           {
             "tick": 180,
-            "hash": "74e0f31c53dec0f1"
+            "hash": "7bef675d55d7cdb9"
           },
           {
             "tick": 200,
-            "hash": "5ab942fe7c3cd78c"
+            "hash": "1600c70b89551207"
           },
           {
             "tick": 220,
-            "hash": "4974fcca43ee19cd"
+            "hash": "cc394db36774939f"
           },
           {
             "tick": 240,
-            "hash": "624629f452965322"
+            "hash": "7ea489686803e28a"
           },
           {
             "tick": 260,
-            "hash": "6f13b5d705d7b03a"
+            "hash": "fefa88f2156ee2fc"
           },
           {
             "tick": 280,
-            "hash": "8429b21932466977"
+            "hash": "55eff920d74d1b4f"
           },
           {
             "tick": 300,
-            "hash": "534ffb9c033a9a8b"
+            "hash": "a68d6812bd00a66f"
           },
           {
             "tick": 320,
-            "hash": "d79669af1c2e892d"
+            "hash": "1bc9e3d3deb7bbde"
           },
           {
             "tick": 340,
-            "hash": "220a1a39003282f4"
+            "hash": "41a7a2e758d2e8cd"
           },
           {
             "tick": 360,
-            "hash": "77fdcbbcbabb72f2"
+            "hash": "49122e54c7c1f518"
           }
         ],
         "finalTick": 360,
-        "finalHash": "77fdcbbcbabb72f2",
+        "finalHash": "49122e54c7c1f518",
         "outcome": {
           "outcome": "timeout",
           "winnerTeam": null
@@ -1394,16 +1403,7 @@
           }
         },
         {
-          "tick": 214,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t5"
-          }
-        },
-        {
-          "tick": 214,
+          "tick": 166,
           "cmd": {
             "type": "CutLine",
             "player": "b1",
@@ -1412,16 +1412,16 @@
           }
         },
         {
-          "tick": 230,
+          "tick": 166,
           "cmd": {
-            "type": "DrawLine",
+            "type": "CutLine",
             "player": "b1",
-            "from": "t4",
-            "to": "t0"
+            "from": "t1",
+            "to": "t5"
           }
         },
         {
-          "tick": 230,
+          "tick": 182,
           "cmd": {
             "type": "DrawLine",
             "player": "b1",
@@ -1430,11 +1430,29 @@
           }
         },
         {
-          "tick": 246,
+          "tick": 182,
           "cmd": {
             "type": "DrawLine",
             "player": "b1",
-            "from": "t5",
+            "from": "t4",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 198,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t6",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 214,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t6",
             "to": "t2"
           }
         }
@@ -1444,7 +1462,7 @@
         "winnerTeam": null
       },
       "ticks": 360,
-      "finalHash": "77fdcbbcbabb72f2"
+      "finalHash": "49122e54c7c1f518"
     },
     {
       "name": "random-0-seed-37",
