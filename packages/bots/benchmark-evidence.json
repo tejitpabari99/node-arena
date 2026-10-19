@@ -1,75 +1,65 @@
 {
-  "timestamp": "2026-10-09T17:43:16.163324+00:00",
+  "timestamp": "2026-10-19T14:22:00.173015+00:00",
   "allowedCpus": "0-3",
   "sampleBusyPct": {
-    "0": 7.0,
-    "1": 2.0,
-    "2": 6.030150753768845,
-    "3": 2.525252525252525
+    "0": 6.030150753768845,
+    "1": 2.985074626865672,
+    "2": 2.0100502512562812,
+    "3": 2.5
   },
-  "selectedCore": 1,
+  "selectedCore": 2,
   "hostLoadBefore": [
-    2.00341796875,
-    2.97900390625,
-    3.07568359375
+    0.85986328125,
+    1.802734375,
+    3.13330078125
   ],
   "processesBefore": [
     "    PID    PPID PSR %CPU COMMAND",
-    "3670547 3670546   1  100 ps",
-    "2307696 2306877   2  2.4 claude",
-    "3670546 3670361   3  1.9 python3",
-    "3670361 2205636   1  1.6 bash",
-    "1726988 1575154   0  1.4 claude",
-    "2205561 1849794   0  1.3 codex",
-    "   1038       1   2  1.1 rsyslogd",
-    "2205636 2205561   1  0.9 codex",
-    "    305       2   3  0.1 jbd2/sda1-8",
-    "   1094       1   2  0.1 preload",
-    "   1001       1   1  0.0 qemu-ga",
-    "3665148 2307696   3  0.0 bash",
-    "3573916       2   2  0.0 kworker/u8:2-iou_exit",
-    "1575153       1   3  0.0 tmux: server"
+    " 257897  257896   2  8.1 python3",
+    "      7       1   2  4.3 python",
+    " 256716  199779   2  2.3 claude",
+    "      1       0   0  0.0 tini",
+    " 199779  199776   0  0.0 MainThread",
+    " 199775       1   0  0.0 tmux: server",
+    " 199776  199775   0  0.0 bash",
+    " 257896  256716   0  0.0 bash",
+    " 257898  257897   3  0.0 ps"
   ],
-  "wallSeconds": 4.379727685824037,
-  "benchmarkCpuSeconds": 4.378012000000001,
-  "selectedCoreBusySeconds": 4.4,
-  "estimatedOtherSelectedCoreBusySeconds": 0.021987999999999452,
+  "wallSeconds": 6.888610053007142,
+  "benchmarkCpuSeconds": 6.889215999999999,
+  "selectedCoreBusySeconds": 6.9,
+  "estimatedOtherSelectedCoreBusySeconds": 0.010784000000001015,
   "processesAfter": [
     "    PID    PPID PSR %CPU COMMAND",
-    "2307696 2306877   2  2.4 claude",
-    "1726988 1575154   2  1.4 claude",
-    "2205561 1849794   0  1.3 codex",
-    "   1038       1   2  1.1 rsyslogd",
-    "2205636 2205561   1  0.9 codex",
-    "3670546 3670361   3  0.6 python3",
-    "3670361 2205636   1  0.5 bash",
-    "    305       2   0  0.1 jbd2/sda1-8",
-    "   1094       1   3  0.1 preload",
-    "   1001       1   3  0.0 qemu-ga",
-    "3665148 2307696   0  0.0 bash",
-    "3573916       2   2  0.0 kworker/u8:2-iou_exit",
-    "1575153       1   3  0.0 tmux: server",
-    "3542430       2   3  0.0 kworker/u8:3-iou_exit"
+    "      7       1   3  4.3 python",
+    " 256716  199779   0  2.3 claude",
+    " 257897  257896   0  2.1 python3",
+    "      1       0   0  0.0 tini",
+    " 199779  199776   0  0.0 MainThread",
+    " 199775       1   0  0.0 tmux: server",
+    " 199776  199775   0  0.0 bash",
+    " 257896  256716   0  0.0 bash",
+    " 257922  257897   3  0.0 ps"
   ],
   "hostLoadAfter": [
-    1.9228515625,
-    2.94580078125,
-    3.064453125
+    0.87109375,
+    1.7890625,
+    3.12158203125
   ],
-  "exitCode": 0,
-  "stderr": "",
-  "command": "taskset -c 1 node packages/bots/scripts/bench.mjs",
+  "exitCode": 1,
+  "stderr": "Bot decision p99 budget exceeded: 1.2684580000004644 ms; requires < 1 ms\n",
+  "command": "taskset -c 2 node packages/bots/scripts/bench.mjs",
   "benchmark": {
     "environment": {
-      "node": "v22.23.3",
+      "node": "v24.21.0",
       "platform": "linux",
       "arch": "x64",
-      "cpu": "AMD EPYC-Rome Processor"
+      "cpu": "AMD EPYC 7571"
     },
     "mode": "strict",
     "budgetMs": 1,
     "result": {
-      "botVersion": "1.0.0",
+      "botVersion": "1.6.0",
       "profile": "rusher-expert",
       "seed": 704,
       "towers": 50,
@@ -79,8 +69,36 @@
       "warmup": 1000,
       "samples": 5000,
       "commandCount": 10000,
-      "mean": 0.597238589000003,
-      "p99": 0.8818430000001172
+      "mean": 0.9571086969999982,
+      "p99": 1.2684580000004644
     }
+  },
+  "notes": "SP02 Task 6 re-run (BOT_VERSION 1.6.0) on a different host (AMD EPYC 7571, Node v24) than the Task8 evidence (EPYC-Rome, Node v22). Strict 1 ms p99 fails here for both v1 and 1.6.0 bot code; interleaved same-core runs show no commitment overhead. CI mode (5 ms, the scripts/ci.sh gate) passes.",
+  "ciModeRun": {
+    "mode": "ci",
+    "budgetMs": 5,
+    "p99": 1.364371000000574,
+    "mean": 1.0390093607999948
+  },
+  "v1Comparison": {
+    "core": 2,
+    "command": "taskset -c <core> node packages/bots/scripts/bench.mjs (v1 = packages/bots/src at f009317, BOT_VERSION 1.0.7, built against current sim/content)",
+    "interleaved": true,
+    "p99MsV1_0_7": [
+      1.324670000000424,
+      1.3437199999998484,
+      1.3787010000000919,
+      1.4253520000002027,
+      1.3432099999999991
+    ],
+    "p99MsV1_6_0": [
+      1.3895309999998062,
+      1.3743610000001354,
+      1.2964780000002065,
+      1.3796910000000935,
+      1.3187090000001263
+    ],
+    "meanP99V1_0_7": 1.363130600000113,
+    "meanP99V1_6_0": 1.3517540000000736
   }
 }

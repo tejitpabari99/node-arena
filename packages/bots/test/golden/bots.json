@@ -1,22 +1,22 @@
 {
-  "botVersion": "1.0.7",
+  "botVersion": "1.6.0",
   "metadata": {
     "rulesVersion": "1.0.0",
     "schemaVersion": "1.0.0",
-    "contentVersion": "1.1.5"
+    "contentVersion": "1.1.6"
   },
   "botHash": {
     "random-6-seed-1": {
-      "economist-expert": "3bf3be10f22b3efdce632b0ccf545bde815b3ff5b901519a3dea358b3ee26d40",
-      "opportunist-normal": "6b8377b76e20e586a968b759d0a84918d63bdd93a29700211d5165d93824eea5"
+      "economist-expert": "5c67380a7683e51c57853d4b06d7922ed455c9858254aa9b1bc2dc96cc72698a",
+      "opportunist-normal": "7e921561f4e32a24893ef25757ff67deba0ede3e3617531a2c7dd5dc3a25a8fc"
     },
     "random-0-seed-37": {
-      "rusher-hard": "3b67d2a17d3e2733ac46adaa1b477398c3794a8375e878835cdb5cf52ac2015d",
-      "turtle-normal": "a9ca15680bd453606ff45c4862ef02fbca7b7f6765560191d41806f849559b24"
+      "rusher-hard": "977fb30a52f21cf6c9a4c57fd69c2825549bd4c5a0dcf70866153dab72a59c53",
+      "turtle-normal": "349c47fefc43702feea7ab552dc94587a74405de88df4459a8e6f0abf671f71e"
     },
     "random-3-seed-704": {
-      "opportunist-easy": "d17fe4679a87896f87ad0656aff3bfe127a9be01da976e818c2e90078cb147a4",
-      "rusher-normal": "47a493dd43cab5e6f4c8fa0f810b462258f8587ee06fc19133a233ca5bf723b2"
+      "opportunist-easy": "c6fa00e71ec5f959e3b4240e2b22834f29f8735ceb9074a3bb3d5ddb6e036f95",
+      "rusher-normal": "6ecfeb3ca64bace28393a0eed91a5aaf9d061d51e3dec9efca37897a1175d844"
     }
   },
   "scenarios": [
@@ -271,6 +271,15 @@
                   "generates": 3000,
                   "garrison": 200
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 0,
+                  "redrawBlockSec": 10000,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 3000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 6000,
@@ -335,6 +344,15 @@
                   "generates": 1000,
                   "garrison": 400
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 0,
+                  "redrawBlockSec": 0,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 2000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 2000,
@@ -379,8 +397,8 @@
         ],
         "simHash": "8d4bfd60924e0ff8bd89029c98abf5b27ffb221918b5387f17f51c3b5e123c47",
         "botHash": {
-          "economist-expert": "3bf3be10f22b3efdce632b0ccf545bde815b3ff5b901519a3dea358b3ee26d40",
-          "opportunist-normal": "6b8377b76e20e586a968b759d0a84918d63bdd93a29700211d5165d93824eea5"
+          "economist-expert": "5c67380a7683e51c57853d4b06d7922ed455c9858254aa9b1bc2dc96cc72698a",
+          "opportunist-normal": "7e921561f4e32a24893ef25757ff67deba0ede3e3617531a2c7dd5dc3a25a8fc"
         }
       },
       "seed": 1
@@ -585,6 +603,15 @@
                   "generates": 1000,
                   "garrison": 300
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 0,
+                  "redrawBlockSec": 10000,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 3000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 3000,
@@ -649,6 +676,15 @@
                   "generates": 1000,
                   "garrison": 800
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 6000,
+                  "dangerOverride": 700,
+                  "cutMargin": 0,
+                  "redrawBlockSec": 10000,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 3000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 1000,
@@ -693,8 +729,8 @@
         ],
         "simHash": "9c331abfdcd4b98ae786c4c136aa0f0b45aa3860a70a935cbc5d64e4d1de9e95",
         "botHash": {
-          "rusher-hard": "3b67d2a17d3e2733ac46adaa1b477398c3794a8375e878835cdb5cf52ac2015d",
-          "turtle-normal": "a9ca15680bd453606ff45c4862ef02fbca7b7f6765560191d41806f849559b24"
+          "rusher-hard": "977fb30a52f21cf6c9a4c57fd69c2825549bd4c5a0dcf70866153dab72a59c53",
+          "turtle-normal": "349c47fefc43702feea7ab552dc94587a74405de88df4459a8e6f0abf671f71e"
         }
       },
       "seed": 37
@@ -975,6 +1011,15 @@
                   "generates": 1000,
                   "garrison": 400
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 0,
+                  "redrawBlockSec": 0,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 2000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 2000,
@@ -1039,6 +1084,15 @@
                   "generates": 1000,
                   "garrison": 300
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 0,
+                  "redrawBlockSec": 10000,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 3000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 3000,
@@ -1083,8 +1137,8 @@
         ],
         "simHash": "ed57bc0b68d0cdf04630b77372e949a509c63103614d75d0ba512a9043c893df",
         "botHash": {
-          "opportunist-easy": "d17fe4679a87896f87ad0656aff3bfe127a9be01da976e818c2e90078cb147a4",
-          "rusher-normal": "47a493dd43cab5e6f4c8fa0f810b462258f8587ee06fc19133a233ca5bf723b2"
+          "opportunist-easy": "c6fa00e71ec5f959e3b4240e2b22834f29f8735ceb9074a3bb3d5ddb6e036f95",
+          "rusher-normal": "6ecfeb3ca64bace28393a0eed91a5aaf9d061d51e3dec9efca37897a1175d844"
         }
       },
       "seed": 704
@@ -1097,7 +1151,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "random-6",
           "simHash": "8d4bfd60924e0ff8bd89029c98abf5b27ffb221918b5387f17f51c3b5e123c47",
           "seed": 1
@@ -1149,42 +1203,6 @@
             }
           },
           {
-            "tick": 38,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t5"
-            }
-          },
-          {
-            "tick": 38,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t5"
-            }
-          },
-          {
-            "tick": 54,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 54,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
             "tick": 70,
             "cmd": {
               "type": "DrawLine",
@@ -1194,7 +1212,43 @@
             }
           },
           {
-            "tick": 70,
+            "tick": 166,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 166,
+            "cmd": {
+              "type": "CutLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t5"
+            }
+          },
+          {
+            "tick": 182,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t1",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 182,
+            "cmd": {
+              "type": "DrawLine",
+              "player": "b1",
+              "from": "t4",
+              "to": "t0"
+            }
+          },
+          {
+            "tick": 198,
             "cmd": {
               "type": "CutLine",
               "player": "b1",
@@ -1203,264 +1257,12 @@
             }
           },
           {
-            "tick": 86,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t3"
-            }
-          },
-          {
-            "tick": 86,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 102,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 118,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 118,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 134,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 134,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 150,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 150,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 166,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 166,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 182,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 182,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 198,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 198,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
             "tick": 214,
             "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 214,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 230,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 230,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 246,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 246,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 262,
-            "cmd": {
               "type": "DrawLine",
               "player": "b1",
               "from": "t6",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 262,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 278,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 278,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 286,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b2",
-              "from": "t2",
-              "to": "t5"
-            }
-          },
-          {
-            "tick": 294,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 294,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 330,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b2",
-              "from": "t5",
-              "to": "t0"
+              "to": "t2"
             }
           }
         ],
@@ -1471,75 +1273,75 @@
           },
           {
             "tick": 40,
-            "hash": "37be1803e1c83400"
+            "hash": "126e24c0ec3a3342"
           },
           {
             "tick": 60,
-            "hash": "fa29ee99c1b22d2d"
+            "hash": "35ec13370e28211f"
           },
           {
             "tick": 80,
-            "hash": "c211c7e7c0913b97"
+            "hash": "6e9c591c7fa7e6ce"
           },
           {
             "tick": 100,
-            "hash": "9d2bcb5a65a21c49"
+            "hash": "96b180c2ee5b1b35"
           },
           {
             "tick": 120,
-            "hash": "163efb56c63b06f3"
+            "hash": "141c32d6e9966bba"
           },
           {
             "tick": 140,
-            "hash": "7f99db6725c1526e"
+            "hash": "98f9d994cf35600e"
           },
           {
             "tick": 160,
-            "hash": "65cef7c2e823aff8"
+            "hash": "7150c29efeae05f8"
           },
           {
             "tick": 180,
-            "hash": "d92160ac408887f5"
+            "hash": "7bef675d55d7cdb9"
           },
           {
             "tick": 200,
-            "hash": "89b8596755b64d2a"
+            "hash": "1600c70b89551207"
           },
           {
             "tick": 220,
-            "hash": "ba7d86138231251e"
+            "hash": "cc394db36774939f"
           },
           {
             "tick": 240,
-            "hash": "f549729bdd6116b7"
+            "hash": "7ea489686803e28a"
           },
           {
             "tick": 260,
-            "hash": "22b4e215adaae39a"
+            "hash": "fefa88f2156ee2fc"
           },
           {
             "tick": 280,
-            "hash": "adea1575d4a1da5d"
+            "hash": "55eff920d74d1b4f"
           },
           {
             "tick": 300,
-            "hash": "52d00f5af13e49ff"
+            "hash": "a68d6812bd00a66f"
           },
           {
             "tick": 320,
-            "hash": "9e1c1594eb3bdf3b"
+            "hash": "1bc9e3d3deb7bbde"
           },
           {
             "tick": 340,
-            "hash": "62665520f3ff99d3"
+            "hash": "41a7a2e758d2e8cd"
           },
           {
             "tick": 360,
-            "hash": "4a99b56829ada48a"
+            "hash": "49122e54c7c1f518"
           }
         ],
         "finalTick": 360,
-        "finalHash": "4a99b56829ada48a",
+        "finalHash": "49122e54c7c1f518",
         "outcome": {
           "outcome": "timeout",
           "winnerTeam": null
@@ -1592,42 +1394,6 @@
           }
         },
         {
-          "tick": 38,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t5"
-          }
-        },
-        {
-          "tick": 38,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t5"
-          }
-        },
-        {
-          "tick": 54,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 54,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
           "tick": 70,
           "cmd": {
             "type": "DrawLine",
@@ -1637,7 +1403,43 @@
           }
         },
         {
-          "tick": 70,
+          "tick": 166,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 166,
+          "cmd": {
+            "type": "CutLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t5"
+          }
+        },
+        {
+          "tick": 182,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t1",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 182,
+          "cmd": {
+            "type": "DrawLine",
+            "player": "b1",
+            "from": "t4",
+            "to": "t0"
+          }
+        },
+        {
+          "tick": 198,
           "cmd": {
             "type": "CutLine",
             "player": "b1",
@@ -1646,264 +1448,12 @@
           }
         },
         {
-          "tick": 86,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t3"
-          }
-        },
-        {
-          "tick": 86,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 102,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 118,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 118,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 134,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 134,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 150,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 150,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 166,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 166,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 182,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 182,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 198,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 198,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
           "tick": 214,
           "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 214,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 230,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 230,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 246,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 246,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 262,
-          "cmd": {
             "type": "DrawLine",
             "player": "b1",
             "from": "t6",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 262,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 278,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 278,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 286,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b2",
-            "from": "t2",
-            "to": "t5"
-          }
-        },
-        {
-          "tick": 294,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 294,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 330,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b2",
-            "from": "t5",
-            "to": "t0"
+            "to": "t2"
           }
         }
       ],
@@ -1912,7 +1462,7 @@
         "winnerTeam": null
       },
       "ticks": 360,
-      "finalHash": "4a99b56829ada48a"
+      "finalHash": "49122e54c7c1f518"
     },
     {
       "name": "random-0-seed-37",
@@ -1920,7 +1470,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "random-0",
           "simHash": "9c331abfdcd4b98ae786c4c136aa0f0b45aa3860a70a935cbc5d64e4d1de9e95",
           "seed": 37
@@ -1940,7 +1490,7 @@
             "cmd": {
               "type": "DrawLine",
               "player": "b1",
-              "from": "t1",
+              "from": "t4",
               "to": "t0"
             }
           },
@@ -1954,21 +1504,12 @@
             }
           },
           {
-            "tick": 54,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
             "tick": 75,
             "cmd": {
               "type": "DrawLine",
               "player": "b2",
               "from": "t3",
-              "to": "t2"
+              "to": "t1"
             }
           },
           {
@@ -1977,25 +1518,7 @@
               "type": "DrawLine",
               "player": "b2",
               "from": "t2",
-              "to": "t3"
-            }
-          },
-          {
-            "tick": 163,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b2",
-              "from": "t2",
-              "to": "t3"
-            }
-          },
-          {
-            "tick": 207,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b2",
-              "from": "t3",
-              "to": "t2"
+              "to": "t4"
             }
           }
         ],
@@ -2006,51 +1529,51 @@
           },
           {
             "tick": 40,
-            "hash": "ef2acb6d1f0fe973"
+            "hash": "b5dfc244f31d76d0"
           },
           {
             "tick": 60,
-            "hash": "7e7c8f5c46154ac4"
+            "hash": "228e77833a4b7f7c"
           },
           {
             "tick": 80,
-            "hash": "5992646e3be8730f"
+            "hash": "5598ceeb42125ef2"
           },
           {
             "tick": 100,
-            "hash": "6c1c92539cffe26d"
+            "hash": "cbf1255e68629b74"
           },
           {
             "tick": 120,
-            "hash": "e2e03384e3150b7c"
+            "hash": "49b1638a21649ff4"
           },
           {
             "tick": 140,
-            "hash": "6fc7a83f12345d39"
+            "hash": "452c28f7fcb01264"
           },
           {
             "tick": 160,
-            "hash": "1b800534d00a85f9"
+            "hash": "d2036d9bd1dcfd8f"
           },
           {
             "tick": 180,
-            "hash": "78cc2dc4e60f7871"
+            "hash": "7f516b03ed696afa"
           },
           {
             "tick": 200,
-            "hash": "b886e8fe9541cef5"
+            "hash": "e91c24f3e92297f2"
           },
           {
             "tick": 220,
-            "hash": "74d3c1af2c3223d1"
+            "hash": "5e0931df8931a10d"
           },
           {
             "tick": 240,
-            "hash": "6d1856b5ac88ff59"
+            "hash": "e4f216eb87b4445e"
           }
         ],
         "finalTick": 240,
-        "finalHash": "6d1856b5ac88ff59",
+        "finalHash": "e4f216eb87b4445e",
         "outcome": {
           "outcome": "timeout",
           "winnerTeam": null
@@ -2071,7 +1594,7 @@
           "cmd": {
             "type": "DrawLine",
             "player": "b1",
-            "from": "t1",
+            "from": "t4",
             "to": "t0"
           }
         },
@@ -2085,21 +1608,12 @@
           }
         },
         {
-          "tick": 54,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
           "tick": 75,
           "cmd": {
             "type": "DrawLine",
             "player": "b2",
             "from": "t3",
-            "to": "t2"
+            "to": "t1"
           }
         },
         {
@@ -2108,25 +1622,7 @@
             "type": "DrawLine",
             "player": "b2",
             "from": "t2",
-            "to": "t3"
-          }
-        },
-        {
-          "tick": 163,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b2",
-            "from": "t2",
-            "to": "t3"
-          }
-        },
-        {
-          "tick": 207,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b2",
-            "from": "t3",
-            "to": "t2"
+            "to": "t4"
           }
         }
       ],
@@ -2135,7 +1631,7 @@
         "winnerTeam": null
       },
       "ticks": 240,
-      "finalHash": "6d1856b5ac88ff59"
+      "finalHash": "e4f216eb87b4445e"
     },
     {
       "name": "random-3-seed-704",
@@ -2143,7 +1639,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "random-3",
           "simHash": "ed57bc0b68d0cdf04630b77372e949a509c63103614d75d0ba512a9043c893df",
           "seed": 704
@@ -2191,7 +1687,7 @@
               "type": "DrawLine",
               "player": "b2",
               "from": "t5",
-              "to": "t6"
+              "to": "t4"
             }
           },
           {
@@ -2200,7 +1696,7 @@
               "type": "DrawLine",
               "player": "b1",
               "from": "t6",
-              "to": "t4"
+              "to": "t0"
             }
           },
           {
@@ -2209,43 +1705,7 @@
               "type": "DrawLine",
               "player": "b2",
               "from": "t7",
-              "to": "t3"
-            }
-          },
-          {
-            "tick": 191,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b2",
-              "from": "t7",
               "to": "t6"
-            }
-          },
-          {
-            "tick": 210,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t4"
-            }
-          },
-          {
-            "tick": 279,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b2",
-              "from": "t7",
-              "to": "t3"
-            }
-          },
-          {
-            "tick": 280,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t3"
             }
           }
         ],
@@ -2272,47 +1732,47 @@
           },
           {
             "tick": 120,
-            "hash": "d5997079b3e3afab"
+            "hash": "615014f675a1989f"
           },
           {
             "tick": 140,
-            "hash": "c5ec2a23b31e8e5c"
+            "hash": "dd628c728d5df5e9"
           },
           {
             "tick": 160,
-            "hash": "b439566055c37b96"
+            "hash": "f04014fb262a86ff"
           },
           {
             "tick": 180,
-            "hash": "b010539d8c707077"
+            "hash": "04b994639a1ac9d1"
           },
           {
             "tick": 200,
-            "hash": "854ad8c1082242be"
+            "hash": "4b5b650728415f28"
           },
           {
             "tick": 220,
-            "hash": "0bbc8b0de49815de"
+            "hash": "12404ae5e38777d9"
           },
           {
             "tick": 240,
-            "hash": "2dce9318a58b3cd7"
+            "hash": "f236cbfa868a29eb"
           },
           {
             "tick": 260,
-            "hash": "9d588429435bee44"
+            "hash": "9f58b6727d77615c"
           },
           {
             "tick": 280,
-            "hash": "b2e7190ba2adb320"
+            "hash": "42a8d2072c738c51"
           },
           {
             "tick": 300,
-            "hash": "9d9d415f7ffde64e"
+            "hash": "cc06f951fba06b80"
           }
         ],
         "finalTick": 300,
-        "finalHash": "9d9d415f7ffde64e",
+        "finalHash": "cc06f951fba06b80",
         "outcome": {
           "outcome": "timeout",
           "winnerTeam": null
@@ -2361,7 +1821,7 @@
             "type": "DrawLine",
             "player": "b2",
             "from": "t5",
-            "to": "t6"
+            "to": "t4"
           }
         },
         {
@@ -2370,7 +1830,7 @@
             "type": "DrawLine",
             "player": "b1",
             "from": "t6",
-            "to": "t4"
+            "to": "t0"
           }
         },
         {
@@ -2379,43 +1839,7 @@
             "type": "DrawLine",
             "player": "b2",
             "from": "t7",
-            "to": "t3"
-          }
-        },
-        {
-          "tick": 191,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b2",
-            "from": "t7",
             "to": "t6"
-          }
-        },
-        {
-          "tick": 210,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t4"
-          }
-        },
-        {
-          "tick": 279,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b2",
-            "from": "t7",
-            "to": "t3"
-          }
-        },
-        {
-          "tick": 280,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t3"
           }
         }
       ],
@@ -2424,7 +1848,7 @@
         "winnerTeam": null
       },
       "ticks": 300,
-      "finalHash": "9d9d415f7ffde64e"
+      "finalHash": "cc06f951fba06b80"
     }
   ]
 }

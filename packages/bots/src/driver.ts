@@ -33,7 +33,8 @@ function createProfileSeat(level: CompiledLevel, matchSeed: number, player: stri
     Math.max(1, idiv(profile.params.skill.decisionIntervalSec * TICK_RATE, 1000));
   const phase = new Sfc32(seed).next() % intervalTicks;
   const bot: Bot = profile.kind === 'idle' ? { player, decide: () => [] } :
-    createUtilityBot({ player, profile, seed, towerCount: level.towers.length });
+    createUtilityBot({ player, profile, seed, towerCount: level.towers.length,
+      slotThresholds: level.towers.map(tower => tower.components.drawsLines?.extraSlotAbove) });
   let lastTick = -1;
   const scheduled: Bot = { player, decide(context, tick) {
     if (tick === lastTick) return [];

@@ -19,6 +19,65 @@ Omitted optional profile fields use deterministic neutral defaults: bias 1000 pe
 
 Tower and pair typed scratch arrays are allocated once. Geometric milli-distances and exact simulation progress lengths (coordinates multiplied by `TICK_RATE` before `isqrt`) cache against the immutable public `towerStatic` array identity. Nearest target order also caches against that identity. Dynamic numeric team identities, garrison, flow and danger inputs refresh during every preparation; weighted terms depending on only one tower are summed once per decision. Incoming allied flow tracks source pairs, so a line's own in-flight pipeline cannot mark that same line redundant. Reinforcement enumeration filters visible v1 ownership, slot, component and drawn-pair facts; selected commands always call authoritative `canDraw`. Attack entrants also call it to preserve nearest legal target fallback. Troop storage grows during preparation only when the public read reports a larger count. Enumeration, consideration scoring and top-N selection allocate no temporary arrays or objects; emitted commands and the returned array are ordinary allocations. Sim's own public validation may allocate internally. Run `pnpm --filter @node-arena/bots build`, `test` and `lint` to verify this package.
 
+## Line commitment
+
+Optional `params.commitment` (base profiles only; `extends` variants inherit it) keeps bot
+lines stable. It is bot-side candidate filtering: sim rules, `GAME_RULES.md` and replays are
+unchanged. A profile without the block runs the v1 path exactly (same candidates, scores and
+RNG draws). All fields are required inside the block and are fx3 (loaded as milli-units);
+`dangerOverride`, `cutMargin` and `tieHysteresis` use the 0..1000 consideration scale.
+
+| Field | Meaning | Schema range |
+|---|---|---|
+| `minLineLifetimeSec` | An own line younger than this is not a cut candidate | >= 0 |
+| `dangerOverride` | Source danger at or above this lifts the lifetime lock for cuts from that source | 0..1 |
+| `cutMargin` | A cut needs noise-free `cutScore - keepScore >= cutMargin`; `keepScore` = noise-free score of the line's own purpose (reinforce if the target is on the bot's team, else attack) | 0..1 |
+| `redrawBlockSec` | After an own cut, own reverse replacement, pre-emptive cut or detected sim slot-cut, DrawLine on that unordered pair is not enumerated this long (danger does not lift it) | >= 0 |
+| `tieHysteresis` | When a noisy cut beats the keep option by less than `cutMargin + tieHysteresis`, the cut competes with its noise-free score | 0..1 |
+| `slotGuardMargin` | No draw into a slot gated by threshold `T` when `garrison - T` < this (troops) | >= 0 |
+| `slotPreemptMargin` | At slot capacity with `garrison - T <= this`, cut the lowest-`keepScore` line deliberately (bypasses lifetime and margin, stamps the redraw block); 0 with guard 0 disables both | >= 0 |
+
+Shipped values (`BOT_VERSION` 1.6.0): rusher, turtle, economist and opportunist use
+`{ minLineLifetimeSec 8, dangerOverride 0.7, cutMargin 0, redrawBlockSec 10, tieHysteresis 0.05,
+slotGuardMargin 3, slotPreemptMargin 1 }`, except turtle `minLineLifetimeSec 6` and opportunist
+`redrawBlockSec 0, slotGuardMargin 2`. `reference`, `human-proxy`, `idle` and `sample-bot` carry
+no block (v1 path), which keeps the balance proxies comparable with v1.
+
+State is bot-local and pre-allocated: line age is the first-seen tick per own channel keyed by
+`drawSeq` (dropped when the line disappears), and `cutTick` per unordered pair. Both reset when a
+tick regression signals a new match. Slot thresholds come from the compiled level
+(`slotThresholds`, passed by the driver and `createProfileBot`); without them guard and pre-empt
+are off. Per decision: slot pre-empt first (uses one action), then draws (blocked pairs, guarded
+slots and reverse draws over a still-locked own line are skipped before scoring), then cuts
+(locked lines skipped; margin and hysteresis applied after scoring).
+
+**RNG order** (commitment path): reinforce draws (source asc, target asc), attack draws (source
+asc, nearest rank), then own cuts in `view.lines` order, one sfc32 word per scored candidate.
+Skipped candidates draw nothing, so enabling commitment shifts later draws and the goldens; the
+no-commitment path draws exactly as v1.
+
+### Churn metric
+
+```sh
+pnpm --filter @node-arena/bots build
+pnpm bots:churn                       # all 20 campaign levels x 8 fixed seeds
+pnpm bots:churn --seeds 2 --levels 13-crossfire,16-fortress --out /tmp/churn.json
+```
+
+`scripts/churn.mjs` (also the package script) runs every campaign level against the fixed seed
+list `[1,2,3,5,8,13,37,704]` (`--seeds N` takes a prefix; never change the list) with the human
+seat played by `human-proxy`, stepping the sim with events on. It reports, per seat-minute and per
+level/profile: bot cuts, draws, `LineCut` by reason (player/slots/captured/replaced), slot-cuts,
+cut-then-redraw of the same unordered pair within 10 s (by reason and total) and flips within
+20 s. Headline is `totals.bots` (authored bot seats). Output is byte-identical for the same code
+and content. The v1 baseline (`BOT_VERSION` 1.0.7) is `churn-baseline-v1.json`: cuts 17.175,
+cut-redraw 14.19, slot-cuts 0.364 /min. At 1.6.0: cuts 8.405 (-51%), cut-redraw 2.421 (-83%),
+slot-cuts 0.109 (-70%). `benchmark-evidence.json` was regenerated at 1.6.0 on an AMD EPYC 7571 /
+Node v24 host where the strict 1 ms p99 fails for v1 code as well (interleaved runs: v1.0.7
+1.363 ms vs 1.6.0 1.352 ms mean p99, so commitment adds no measurable cost); `--ci` passes.
+Tuning history:
+`docs/agent_files/feat-visual-mechanics-overhaul-20261017-2318/02-bot-line-commitment/iteration-log.md`.
+
 ## Headless matches
 
 Import `runMatch` from `@node-arena/bots/harness` (also exported at the package root).

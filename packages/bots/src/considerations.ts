@@ -355,15 +355,31 @@ export class UtilityScorer {
       }
     }
   }
-  score(action: BotAction, from: number, to: number): number {
+  /** Source danger 0..1000 from the last prepare (existing calculateDanger signal). */
+  danger(tower: number): number { return this.dangers[tower]!; }
+  /** Noise-free score: score() without its noise term; consumes no RNG. */
+  scoreRaw(action: BotAction, from: number, to: number): number {
     const a = ACTIONS.indexOf(action);
     if (this.totals[a] === 0) return 0;
+    return mulDiv(this.normalized(a, action, from, to), this.biases[a]!, 1000);
+  }
+  /** Commitment keep score: noise-free score of the line's own purpose on the pair (reinforce
+   * when the target is on the bot's team, otherwise attack). */
+  keepScore(from: number, to: number): number {
+    return this.scoreRaw(this.sameTeam(this.owners[to]!, this.playerIndex) ? 'reinforce' : 'attack', from, to);
+  }
+  private normalized(a: number, action: BotAction, from: number, to: number): number {
     let numerator = this.fixedSource[a * this.count + from]! + this.fixedTarget[a * this.count + to]!;
     for (let i = 0; i < this.activeCounts[a]!; i++) {
       const c = this.activeIds[a * 10 + i]!;
       numerator += this.weights[a * 10 + c]! * this.consideration(CONSIDERATION_IDS[c]!, action, from, to);
     }
-    const normalized = idiv(numerator, this.totals[a]!);
+    return idiv(numerator, this.totals[a]!);
+  }
+  score(action: BotAction, from: number, to: number): number {
+    const a = ACTIONS.indexOf(action);
+    if (this.totals[a] === 0) return 0;
+    const normalized = this.normalized(a, action, from, to);
     let noise = 0;
     if (this.noise > 0) {
       const span = this.noise * 2 + 1;

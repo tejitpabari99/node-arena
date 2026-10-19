@@ -136,6 +136,59 @@
           },
           "additionalProperties": false
         },
+        "commitment": {
+          "type": "object",
+          "required": [
+            "minLineLifetimeSec",
+            "dangerOverride",
+            "cutMargin",
+            "redrawBlockSec",
+            "tieHysteresis",
+            "slotGuardMargin",
+            "slotPreemptMargin"
+          ],
+          "properties": {
+            "minLineLifetimeSec": {
+              "type": "number",
+              "minimum": 0,
+              "x-unit": "fx3"
+            },
+            "dangerOverride": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "x-unit": "fx3"
+            },
+            "cutMargin": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "x-unit": "fx3"
+            },
+            "redrawBlockSec": {
+              "type": "number",
+              "minimum": 0,
+              "x-unit": "fx3"
+            },
+            "tieHysteresis": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "x-unit": "fx3"
+            },
+            "slotGuardMargin": {
+              "type": "number",
+              "minimum": 0,
+              "x-unit": "fx3"
+            },
+            "slotPreemptMargin": {
+              "type": "number",
+              "minimum": 0,
+              "x-unit": "fx3"
+            }
+          },
+          "additionalProperties": false
+        },
         "weights": {
           "type": "object",
           "properties": {
@@ -358,7 +411,8 @@
           "maxTargetsPerSource": false,
           "cooldownSec": false,
           "componentValue": false,
-          "weights": false
+          "weights": false,
+          "commitment": false
         },
         "required": [
           "skill"

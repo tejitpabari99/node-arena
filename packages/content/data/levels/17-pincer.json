@@ -20,13 +20,13 @@
     {
       "id": "b1",
       "kind": "bot",
-      "botProfile": "rusher-expert",
+      "botProfile": "rusher-normal",
       "colorKey": "player.2"
     },
     {
       "id": "b2",
       "kind": "bot",
-      "botProfile": "rusher-expert",
+      "botProfile": "rusher-normal",
       "colorKey": "player.3"
     }
   ],
