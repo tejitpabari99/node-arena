@@ -23,11 +23,11 @@
     "sample": "7815eec4dd6087dd6001e2e2e0491c4af7a14b7e05d894e3c6741a8efbdcbf79"
   },
   "bots": {
-    "economist": "9f3464c6709eae98d9c126fedec4d86b92cda9dffdd123af21fa4becc995777f",
-    "economist-easy": "99958588bf238a553fe5447e315baac23064787d7f05caa48cc47789b5629dd4",
-    "economist-expert": "4b517f4b8a93bc37fa3a0f9e459bb466ff180a25497f214a3d7c2a66b625061b",
-    "economist-hard": "9075d0531deed52e22310f2f450973e22c29b7d2e521b95c0ba20153f689dd29",
-    "economist-normal": "a3b127e8d084355718338e4a894ac27a06a0f523b140868a824a48ed6a41b8ab",
+    "economist": "d3f37ca20dc46ea1920053cdb0045833ff8f17461b5d113d6587db5fd9bbdd83",
+    "economist-easy": "64b8fbf77f9410b978413452b2e96286f881b7abf55d6862b3959ac8079ce184",
+    "economist-expert": "e0369f30b4c53b0ec1bb69c0ca289f2bab3bf0dae836441f6bb1a4eb33b05d15",
+    "economist-hard": "3c3e2b7b5c4943f92cef20d2531b822b80cada8b185c96c8a7032237ab0b0298",
+    "economist-normal": "44beca824fff4f8941ab5d686547c88c0b840f5d92f20304a61fd09f3121e55c",
     "human-proxy": "2b59b1c4364a38cca830fe0b65359f4f6e1aec07b1eb88faa281d2471cb0228b",
     "idle": "cfbed433d24e4bc79fbfeea8b4c3586e0a90a5a17a5350b589be2b368bd626a7",
     "opportunist": "385aa2d5280406c9b90dbce8825a74de24675a6c0c28db085b7c5cbbb1d86f06",
