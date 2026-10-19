@@ -363,9 +363,10 @@ export class UtilityScorer {
     if (this.totals[a] === 0) return 0;
     return mulDiv(this.normalized(a, action, from, to), this.biases[a]!, 1000);
   }
-  /** Commitment keep score: best noise-free retained use (attack or reinforce) of the pair. */
+  /** Commitment keep score: noise-free score of the line's own purpose on the pair (reinforce
+   * when the target is on the bot's team, otherwise attack). */
   keepScore(from: number, to: number): number {
-    return Math.max(this.scoreRaw('attack', from, to), this.scoreRaw('reinforce', from, to));
+    return this.scoreRaw(this.sameTeam(this.owners[to]!, this.playerIndex) ? 'reinforce' : 'attack', from, to);
   }
   private normalized(a: number, action: BotAction, from: number, to: number): number {
     let numerator = this.fixedSource[a * this.count + from]! + this.fixedTarget[a * this.count + to]!;
