@@ -22,7 +22,7 @@
       "garrison": 0.8
     },
     "commitment": {
-      "minLineLifetimeSec": 8,
+      "minLineLifetimeSec": 6,
       "dangerOverride": 0.7,
       "cutMargin": 0,
       "redrawBlockSec": 10,

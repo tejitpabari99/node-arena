@@ -42,10 +42,10 @@
     "rusher-hard": "977fb30a52f21cf6c9a4c57fd69c2825549bd4c5a0dcf70866153dab72a59c53",
     "rusher-normal": "6ecfeb3ca64bace28393a0eed91a5aaf9d061d51e3dec9efca37897a1175d844",
     "sample-bot": "5d97b466044f0cb4e28ba3c24fffb6ab0a05c182d6aea2ccc5d0714d9cc42d5c",
-    "turtle": "7dcf561db5d65181f14789e48255b10ddf73d738050a1722ac9a1fca1b158913",
-    "turtle-easy": "96e3d2644339dfff4c2e5be825d4480eac9ef92f9687e276ee8c3017614af16c",
-    "turtle-expert": "e3b5c2415be085b95e742167eb91249b097d66f39489fd18a5018669f47c423f",
-    "turtle-hard": "3ec0fa1c1983a907ffde1aff223f2e6cc72c20c09bcd475c438220379c22018e",
-    "turtle-normal": "a9f0092c10ef125ea17248cb7156bd6a084747427a1f9887fc1386903533014a"
+    "turtle": "29c6f00bf71e2ec0a84aabc7ff2e125fb41476e773763e0620a7c098a1d21d3a",
+    "turtle-easy": "d443e8b77cd682dae0eed44db6e5d0ff00de3187c52387e364315f4206c81c44",
+    "turtle-expert": "57e8d5bb1dc5da591d30d01794cad37ee494369c25b6c5eef7d148e0ecd28a4d",
+    "turtle-hard": "ff6301f44e67104762ccb5043132f56d102efc26ca5b4b97cb61fc99c295e7f4",
+    "turtle-normal": "349c47fefc43702feea7ab552dc94587a74405de88df4459a8e6f0abf671f71e"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "botVersion": "1.5.0",
+  "botVersion": "1.6.0",
   "metadata": {
     "rulesVersion": "1.0.0",
     "schemaVersion": "1.0.0",
@@ -12,7 +12,7 @@
     },
     "random-0-seed-37": {
       "rusher-hard": "977fb30a52f21cf6c9a4c57fd69c2825549bd4c5a0dcf70866153dab72a59c53",
-      "turtle-normal": "a9f0092c10ef125ea17248cb7156bd6a084747427a1f9887fc1386903533014a"
+      "turtle-normal": "349c47fefc43702feea7ab552dc94587a74405de88df4459a8e6f0abf671f71e"
     },
     "random-3-seed-704": {
       "opportunist-easy": "c6fa00e71ec5f959e3b4240e2b22834f29f8735ceb9074a3bb3d5ddb6e036f95",
@@ -677,7 +677,7 @@
                   "garrison": 800
                 },
                 "commitment": {
-                  "minLineLifetimeSec": 8000,
+                  "minLineLifetimeSec": 6000,
                   "dangerOverride": 700,
                   "cutMargin": 0,
                   "redrawBlockSec": 10000,
@@ -730,7 +730,7 @@
         "simHash": "9c331abfdcd4b98ae786c4c136aa0f0b45aa3860a70a935cbc5d64e4d1de9e95",
         "botHash": {
           "rusher-hard": "977fb30a52f21cf6c9a4c57fd69c2825549bd4c5a0dcf70866153dab72a59c53",
-          "turtle-normal": "a9f0092c10ef125ea17248cb7156bd6a084747427a1f9887fc1386903533014a"
+          "turtle-normal": "349c47fefc43702feea7ab552dc94587a74405de88df4459a8e6f0abf671f71e"
         }
       },
       "seed": 37

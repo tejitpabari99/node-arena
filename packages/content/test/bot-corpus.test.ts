@@ -32,10 +32,10 @@ test('named production bot corpus contains 23 distinct complete profiles and pre
   }
   const params = Object.fromEntries(personalities.map(id => [id, (loaded[pathFor(id)] as BotProfile).params]));
   // SP02 R7/R8 as tuned in Task 5: one commitment block per personality (opportunist has no
-  // redraw block and a smaller slot guard); the human-seat tooling profiles (reference,
-  // inherited by human-proxy) and idle run the v1 path.
+  // redraw block and a smaller slot guard; turtle has a shorter lifetime); the human-seat
+  // tooling profiles (reference, inherited by human-proxy) and idle run the v1 path.
   const tuned = { minLineLifetimeSec: 8000, dangerOverride: 700, cutMargin: 0, redrawBlockSec: 10000, tieHysteresis: 50, slotGuardMargin: 3000, slotPreemptMargin: 1000 };
-  const perProfile: Record<string, Partial<typeof tuned>> = { opportunist: { redrawBlockSec: 0, slotGuardMargin: 2000 } };
+  const perProfile: Record<string, Partial<typeof tuned>> = { opportunist: { redrawBlockSec: 0, slotGuardMargin: 2000 }, turtle: { minLineLifetimeSec: 6000 } };
   for (const id of personalities) assert.deepEqual(params[id]!.commitment, { ...tuned, ...perProfile[id] }, id);
   assert.equal(Object.hasOwn((loaded[pathFor('reference')] as BotProfile).params, 'commitment'), false);
   assert.equal(Object.hasOwn((loaded[pathFor('idle')] as BotProfile).params, 'commitment'), false);
