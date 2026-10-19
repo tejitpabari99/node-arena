@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { isGrass, isGrey, isMagenta, isRock, isSand, isTeamSat, isWhite, nearestTeam, rgbToHsv } from '../visual/lib/color.mjs';
-import { calibrateMock, evaluate, evaluateJob, headOn, limitsFor, loadThresholds, METRIC_IDS, scaleLimit, summarize, within } from '../visual/lib/metrics.mjs';
-import { digitHeight, floorStripes, outlinedDigit, slotDots, playQuadShares, polygonMask, toHsv, towerPaint, tvDistance, voidShare } from '../visual/lib/pixel-metrics.mjs';
+import { calibrateMock, evaluate, evaluateJob, headOn, limitsFor, loadThresholds, METRIC_IDS, prepareRef, scaleLimit, summarize, within } from '../visual/lib/metrics.mjs';
+import { digitHeight, floorStripes, outlinedDigit, slotDots, playQuadShares, polygonMask, REF_TOWER_WIDTH, toHsv, towerPaint, tvDistance, voidShare } from '../visual/lib/pixel-metrics.mjs';
 
 const hex = (h: string) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)] as const;
 const hsv = (h: string) => rgbToHsv(...hex(h));
@@ -76,6 +76,16 @@ describe('thresholds.json (PRD Metrics table verbatim)', () => {
     expect(m.M14!.limits.share).toEqual({ min: 0.30, max: 0.60 });
     expect(m.M15!.limits).toEqual({ minMargin: { min: 0.02 }, unionMargin: { max: 0.10 } });
     expect(m.M18!.limits).toEqual({ frame: { max: 0.20 }, tower: { max: 0.20 } });
+  });
+  it('M16 floors are re-derived from the refs at the calibrated M01 band maximum (T8: 11 px L1, 9 px L18 at 1366x768)', () => {
+    const m = thresholds.metrics;
+    // Ref crops are rescaled to the largest legal tower at 1366x768: M01 max share x 768 = 0.0875 x 768 -> 67 px.
+    expect(REF_TOWER_WIDTH).toBe(Math.round(m.M01!.limits.max * 768));
+    expect(REF_TOWER_WIDTH).toBe(67);
+    // L1 floor = min ref glyph at 67 px (tw01 11, yt1 11); L18 keeps the old 10/12 proportion: floor(11 x 10/12) = 9.
+    expect(limitsFor(m.M16!, 'l01', '1366x768')).toEqual({ min: 11, px: true, atHeight: 768 });
+    expect(limitsFor(m.M16!, 'l18', '1366x768')).toEqual({ min: 9, px: true, atHeight: 768 });
+    expect(scaleLimit(limitsFor(m.M16!, 'l01', '1920x1080'), 1080, 1080).min).toBeCloseTo(15.469, 3);
   });
   it('px thresholds scale by viewport height', () => {
     expect(scaleLimit({ max: 12, px: true }, 768, 1080).max).toBeCloseTo(8.533, 3);
@@ -206,6 +216,26 @@ describe('pixel metrics', () => {
     const ringed = toHsv(image(24, 14, (x, y) => (x >= 9 && x < 15 && y >= 2 && y < 12 ? '#FFFFFF' : x >= 7 && x < 17 && y >= 0 && y < 14 ? '#101010' : '#2F7DE1')));
     expect(outlinedDigit(ringed, { x: 0, y: 0, w: 24, h: 14 })?.glyphH).toBe(14);
     expect(digitHeight(ringed, { x: 0, y: 0, w: 24, h: 14 })).toBe(14);
+  });
+  it('M02 measures the same digit as M16: the tallest outlined glyph, not the glyph with the tallest white fill (yt1 "38" at 67 px)', () => {
+    // A: fill 8 px + 2 px ring each side -> glyph 12 px. B: fill 9 px + 1 px ring -> glyph 11 px. Fill order alone picks B.
+    const img = toHsv(image(40, 20, (x, y) => {
+      if (x >= 8 && x < 14 && y >= 4 && y < 12) return '#FFFFFF';
+      if (x >= 6 && x < 16 && y >= 2 && y < 14) return '#101010';
+      if (x >= 24 && x < 30 && y >= 3 && y < 12) return '#FFFFFF';
+      if (x >= 23 && x < 31 && y >= 2 && y < 13) return '#101010';
+      return '#2F7DE1';
+    }));
+    const locator = { x: 0, y: 0, w: 40, h: 20 };
+    expect(outlinedDigit(img, locator)?.glyphH).toBe(12);
+    expect(digitHeight(img, locator)).toBe(12);
+  });
+  it('visual:calibrate rescales every ref tower crop to REF_TOWER_WIDTH before the size-dependent metrics', () => {
+    const img = image(120, 120, () => '#8CD62A');
+    const spec = { id: 'r', file: 'r.jpg', frame: { x: 0, y: 0, w: 120, h: 120 }, playQuad: { x: 0, y: 0, w: 120, h: 120 }, towers: [{ box: [10, 10, 60, 90], team: 'blue', count: 5, cap: 10, slots: 1 }] };
+    const ref = prepareRef(spec, img);
+    expect(ref.towers[0]!.scaled.width).toBe(REF_TOWER_WIDTH);
+    expect(ref.towers[0]!.scaledRect).toEqual({ x: 0, y: 0, w: REF_TOWER_WIDTH, h: Math.round(80 * REF_TOWER_WIDTH / 50) });
   });
   it('M16/M19 JPEG-soft digit: light fill (V .85) with an outline only darker than the roof (V .62 on a V .95 roof) counts', () => {
     // yt1 "44": fill S<=.2 V .7-.9, outline dark blue V .6-.7, roof blue V ~.95 (no pixel reaches V<=.25).

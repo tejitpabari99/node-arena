@@ -14,8 +14,12 @@ export const FG_MIN_V = 0.35;
  * such ring (its surround is the roof itself), so it is never taken for the digit.
  */
 export const DIGIT = { maxS: 0.25, minV: 0.70, outlineV: 0.25, outlineContrast: 0.20, outlineRadius: 2, minOutlineShare: 0.5, minPixels: 4 };
-/** Size-dependent pixel metrics (M02, M16, M19, M20) on ref crops run after rescaling the tower bbox to this width (PRD step 4a). */
-export const REF_TOWER_WIDTH = 75;
+/**
+ * Size-dependent pixel metrics (M02, M16, M19, M20) on ref crops run after rescaling the tower bbox to this width (PRD step 4a):
+ * the largest tower M01 allows at 1366x768, round(0.0875 x 768) = 67 px (T8 M01 band 4.35-8.75% of viewport height). It was
+ * 75 px, the retired M01 width floor at 1366x768, which the calibrated M01 rejects. M16's px floors are derived at this size.
+ */
+export const REF_TOWER_WIDTH = 67;
 
 /** Precomputes HSV planes once per image. */
 export function toHsv(img) {
@@ -233,10 +237,15 @@ export function whiteBlobs(hsv, rect) {
     .sort((a, b) => b.h - a.h || b.n - a.n);
 }
 
-/** M02 pixel part: glyph height (px) of the outlined digit in the count locator, else the tallest white-fill height; null when none. */
+/**
+ * M02 pixel part: glyph height (px) of the outlined digit in the count locator — the same digit M16 measures (outlinedDigit:
+ * tallest fill + ring), not the glyph with the tallest fill (T8: yt1 "38" at 67 px) — else the tallest white-fill height; null when none.
+ */
 export function digitHeight(hsv, locator) {
-  const blobs = whiteBlobs(hsv, locator), digit = blobs.find(b => isGlyph(b, locator));
-  return digit ? digit.glyphH : blobs.length ? blobs[0].h : null;
+  const digit = outlinedDigit(hsv, locator);
+  if (digit) return digit.glyphH;
+  const blobs = whiteBlobs(hsv, locator);
+  return blobs.length ? blobs[0].h : null;
 }
 
 /**

@@ -361,7 +361,7 @@ export function calibrateRef(ref, others, thresholds) {
   const frameTv = bestTv(ref.frameVector, others.map(o => o.frameVector)), first = ref.towers.find(t => t.team);
   const towerTv = first ? bestTv(classVector(ref.hsv, first.rect, { fgOnly: true }), others.flatMap(o => o.towerVectors)) : null;
   push('M18', result(within(frameTv, L('M18').frame) && within(towerTv, L('M18').tower), { frame: frameTv, tower: towerTv }, `TV frame ${fmt(frameTv)}, tower ${fmt(towerTv)} (vs ${others.map(o => o.id).join(',')})`));
-  // Size-dependent pixel parts on crops rescaled to REF_TOWER_WIDTH (the pre-T8 M01 floor at 1366x768; M16's calibration base, unchanged).
+  // Size-dependent pixel parts on crops rescaled to REF_TOWER_WIDTH (67 px = M01 band max at 1366x768; M16's calibration base).
   const m02 = ref.towers.map(t => { const h = digitHeight(t.scaled, roofRegion(t.scaledRect)); return h === null ? null : h / t.scaledRect.w; });
   push('M02', m02.some(v => v === null) ? nullResult(`digit null on ${m02.filter(v => v === null).length}/${m02.length}`)
     : result(m02.every(v => within(v, L('M02').ratio)), range(m02), `digit/tower w ${fmtRange(range(m02))} [${m02.map(fmt).join(' ')}]`));

@@ -99,9 +99,9 @@
     },
     "M16": {
       "name": "roof number glyph height in px (outlined white-fill digit incl. its outline ring, tallest digit)", "source": "pixels", "status": "cal",
-      "threshold": ">=12 px at 1366x768 L1 (scaled by viewport height elsewhere); >=10 px at L18",
+      "threshold": ">=11 px at 1366x768 L1 (scaled by viewport height elsewhere); >=9 px at L18",
       "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
-      "limits": { "default": { "min": 12, "px": true, "atHeight": 768 }, "l18": { "min": 10, "px": true, "atHeight": 768 } }
+      "limits": { "default": { "min": 11, "px": true, "atHeight": 768 }, "l18": { "min": 9, "px": true, "atHeight": 768 } }
     },
     "M17": {
       "name": "DOM label count ([data-tower-index], .tower-label) and [data-tower-summary] count", "source": "page DOM", "status": "cal",
