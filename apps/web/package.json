@@ -17,6 +17,7 @@
     "visual:capture": "node visual/capture.mjs",
     "visual:selfcheck": "node visual/selfcheck.mjs",
     "visual:check": "node visual/check.mjs",
+    "visual:compose": "node visual/compose.mjs",
     "visual:calibrate": "node visual/calibrate.mjs"
   },
   "dependencies": {
