@@ -2,13 +2,18 @@
 // Probe rects are only locators; every pass/fail value here comes from pixels classified by the Colour spec.
 // Shared by visual:check (captures) and visual:calibrate (ref JPEG crops). Unit-tested in test/visual-metrics.test.ts.
 import {
-  isGrass, isGround, isMagenta, isRock, isSand, isSaturated, isTeamSat, isWhite, isGrey, paletteClass, PALETTE_CLASSES, rgbToHsv, TEAM_HUES,
+  isGrass, isGround, isMagenta, isRock, isSand, isSaturated, isTeamSat, isTreeGreen, isWhite, isGrey, paletteClass, PALETTE_CLASSES, rgbToHsv, TEAM_HUES,
 } from './color.mjs';
 
 /** Tower foreground: not ground-masked and V >= .35 (dark door/slit/outline pixels are excluded from fg; calibrated on tw01 grey25). */
 export const FG_MIN_V = 0.35;
-/** White fill of the roof number (M16/M19): S <= .15, V >= .92; dark outline ring: V <= .25 within 2 px. */
-export const DIGIT = { maxS: 0.15, minV: 0.92, outlineV: 0.25, outlineRadius: 2, minOutlineShare: 0.5, minPixels: 4 };
+/**
+ * Roof number (M02/M16/M19), calibrated in T8 on towerwar_01 + towerwar_yt1 (JPEG/video-soft digits):
+ * white fill S <= .25, V >= .70; outline ring (within 2 px of the fill boundary) = V <= .25, or darker than the roof plate
+ * around it by >= .20 (yt1 "44": fill V .7-.9, ring V .6-.7 on a V ~.95 blue roof; tw01 ring V .3-.6). A slot dot has no
+ * such ring (its surround is the roof itself), so it is never taken for the digit.
+ */
+export const DIGIT = { maxS: 0.25, minV: 0.70, outlineV: 0.25, outlineContrast: 0.20, outlineRadius: 2, minOutlineShare: 0.5, minPixels: 4 };
 /** Size-dependent pixel metrics (M02, M16, M19, M20) on ref crops run after rescaling the tower bbox to this width (PRD step 4a). */
 export const REF_TOWER_WIDTH = 75;
 
@@ -180,55 +185,92 @@ export function components(hsv, rect, pred) {
 }
 
 const isWhiteFill = hsv => p => hsv.s[p] <= DIGIT.maxS && hsv.v[p] >= DIGIT.minV;
+const median = values => { const s = [...values].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : null; };
 
-/** Share of a component's boundary pixels with a dark (V <= .25) pixel within 2 px (Chebyshev). */
-export function outlineShare(hsv, comp) {
+/** Upper quartile V of the non-fill pixels within 5 px of a component's bbox: the plate it sits on (the ring itself is darker). */
+export function plateV(hsv, comp) {
+  const white = isWhiteFill(hsv), pad = DIGIT.outlineRadius + 3;
+  const values = rectIndices(hsv, { x: comp.x0 - pad, y: comp.y0 - pad, w: comp.w + 2 * pad, h: comp.h + 2 * pad }).filter(p => !white(p)).map(p => hsv.v[p]).sort((x, y) => x - y);
+  return values.length ? values[Math.floor(values.length * 0.75)] : null;
+}
+
+/**
+ * Dark-outline ring of a fill component: boundary pixels with a dark pixel (V <= .25, or <= plate V - .20) within 2 px
+ * (Chebyshev). Returns { share, gy0, gy1 }: share of ringed boundary pixels and the vertical extent of fill + ring pixels.
+ */
+export function outlineRing(hsv, comp, backV = null) {
   const inComp = new Set(comp.pixels), W = hsv.width, R = DIGIT.outlineRadius;
-  let boundary = 0, ringed = 0;
+  const darkV = Math.max(DIGIT.outlineV, backV === null ? -1 : backV - DIGIT.outlineContrast);
+  let boundary = 0, ringed = 0, gy0 = comp.y0, gy1 = comp.y1;
   for (const p of comp.pixels) {
     const x = p % W, y = (p - x) / W;
     if ([[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dy]) => inComp.has((y + dy) * W + x + dx))) continue;
     boundary++;
-    search: for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+    let hit = false;
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
       const nx = x + dx, ny = y + dy;
-      if (nx < 0 || ny < 0 || nx >= W || ny >= hsv.height) continue;
-      if (hsv.v[ny * W + nx] <= DIGIT.outlineV) { ringed++; break search; }
+      if (nx < 0 || ny < 0 || nx >= W || ny >= hsv.height || hsv.v[ny * W + nx] > darkV) continue;
+      hit = true; if (ny < gy0) gy0 = ny; if (ny > gy1) gy1 = ny;
     }
+    if (hit) ringed++;
   }
-  return boundary ? ringed / boundary : 0;
+  return { share: boundary ? ringed / boundary : 0, gy0, gy1 };
 }
+
+/** Share of a component's boundary pixels with a dark outline pixel within 2 px (see outlineRing). */
+export const outlineShare = (hsv, comp, backV = null) => outlineRing(hsv, comp, backV).share;
 
 /** Upper 45% of a tower rect: where the roof number and slot dots live (M19 locator). */
 export const roofRegion = rect => ({ x: rect.x, y: rect.y, w: rect.w, h: rect.h * 0.45 });
 
-/** White-fill components in `rect`, with outline share; sorted tallest first. */
+/**
+ * White-fill components in `rect`, with outline share and glyph extent (fill + outline ring: gy0, gy1, glyphH);
+ * sorted tallest fill first.
+ */
 export function whiteBlobs(hsv, rect) {
   return components(hsv, rect, isWhiteFill(hsv)).filter(c => c.n >= DIGIT.minPixels)
-    .map(c => ({ ...c, outline: outlineShare(hsv, c) })).sort((a, b) => b.h - a.h || b.n - a.n);
+    .map(c => { const plate = plateV(hsv, c), ring = outlineRing(hsv, c, plate); return { ...c, plate, outline: ring.share, gy0: ring.gy0, gy1: ring.gy1, glyphH: ring.gy1 - ring.gy0 + 1 }; })
+    .sort((a, b) => b.h - a.h || b.n - a.n);
 }
 
-/** M02 pixel part: tallest white-fill component height (px) in the count locator; null when none. */
+/** M02 pixel part: glyph height (px) of the outlined digit in the count locator, else the tallest white-fill height; null when none. */
 export function digitHeight(hsv, locator) {
-  const blobs = whiteBlobs(hsv, locator);
-  return blobs.length ? blobs[0].h : null;
+  const blobs = whiteBlobs(hsv, locator), digit = blobs.find(b => isGlyph(b, locator));
+  return digit ? digit.glyphH : blobs.length ? blobs[0].h : null;
 }
 
-/** M16 / M19 digit: tallest white-fill component with a dark-outline ring; null when none. */
+/**
+ * Digit candidates: outlined, at most 0.3 of the locator width wide (a floor body is wider) and centred in the upper 60% of
+ * the locator (the roof cap's top face; side bevels / the top floor body sit lower: tw01 grey25, yt1 "38"/"44"), on a lit
+ * plate (upper-quartile surround V >= .45: refs .55 grey roof to ~.95 team roof; v1 DOM label cards are dark navy).
+ */
+export const GLYPH = { maxWidth: 0.3, maxCentreY: 0.6, minPlateV: 0.45 };
+const isGlyph = (b, rect) => b.outline >= DIGIT.minOutlineShare && b.plate !== null && b.plate >= GLYPH.minPlateV && b.w <= GLYPH.maxWidth * rect.w && (b.y0 + b.y1 + 1) / 2 - rect.y <= GLYPH.maxCentreY * rect.h;
+
+/** M16 / M19 digit: tallest glyph candidate (ties: closest to the locator's horizontal centre); null when none. */
 export function outlinedDigit(hsv, locator) {
-  return whiteBlobs(hsv, locator).find(b => b.outline >= DIGIT.minOutlineShare) ?? null;
+  const cx = locator.x + locator.w / 2, off = b => Math.abs((b.x0 + b.x1 + 1) / 2 - cx);
+  const glyphs = whiteBlobs(hsv, locator).filter(b => isGlyph(b, locator)), digit = [...glyphs].sort((a, b) => b.glyphH - a.glyphH || off(a) - off(b))[0];
+  if (!digit) return null;
+  // The whole number = every glyph on the digit's row ("44", "Max"): its x extent centres the slot-dot row.
+  const row = glyphs.filter(b => b.y0 <= digit.y1 && b.y1 >= digit.y0);
+  return { ...digit, numberX0: Math.min(...row.map(b => b.x0)), numberX1: Math.max(...row.map(b => b.x1)) };
 }
 
-const median = values => { const s = [...values].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : null; };
 const isRound = c => c.w >= 2 && c.h >= 2 && c.w / c.h >= 0.5 && c.w / c.h <= 2 && c.n / (c.w * c.h) >= 0.5;
 
 /**
- * M19 slot dots below the digit: bright (white-fill, no outline) or dim (roof-hued, clearly lighter/less saturated than the roof)
- * round blobs between the digit bottom and the end of the roof region. Dots smaller than 4% of the tower width are noise.
+ * M19 slot dots below the digit: bright (white-fill) or dim (roof-hued, clearly lighter/less saturated than the roof)
+ * round blobs whose centre lies in the dot row under the number: from the glyph bottom down 1.3 glyph heights (end of the
+ * roof region without a digit), within +-0.25 tower widths of the number's centre (tw01/yt1: dots sit centred under the number;
+ * roof-edge bevel highlights are off to the side). Dots smaller than 4% of the tower width are noise.
  */
-export function slotDots(hsv, towerRect, digit, team) {
-  const roof = roofRegion(towerRect), top = digit ? digit.y1 + 1 : roof.y;
+export function slotDotBlobs(hsv, towerRect, digit, team) {
+  const roof = roofRegion(towerRect), top = digit ? (digit.gy1 ?? digit.y1) + 1 : roof.y;
   const region = { x: roof.x, y: top, w: roof.w, h: roof.y + roof.h - top };
-  if (region.h <= 0) return 0;
+  if (region.h <= 0) return [];
+  const glyphH = digit ? (digit.glyphH ?? digit.h) : null;
+  const rowEnd = digit ? top + 1.3 * glyphH : roof.y + roof.h, cx = digit ? (digit.numberX0 + digit.numberX1 + 1) / 2 : towerRect.x + towerRect.w / 2;
   const hue = team ? TEAM_HUES[team] : null, roofPx = [];
   for (const p of rectIndices(hsv, region)) {
     const h = hsv.h[p], s = hsv.s[p], v = hsv.v[p];
@@ -238,12 +280,24 @@ export function slotDots(hsv, towerRect, digit, team) {
   const white = isWhiteFill(hsv);
   const dot = p => {
     if (white(p)) return true;
-    if (roofV === null || isGround(hsv.h[p], hsv.s[p], hsv.v[p])) return false;
+    if (roofV === null || isGrass(hsv.h[p], hsv.s[p], hsv.v[p]) || isTreeGreen(hsv.h[p], hsv.s[p])) return false; // not isGround: a pale yellow dim dot is sand-hued
     const hueOk = hue === null ? hsv.s[p] <= 0.2 : Math.abs(((hsv.h[p] - hue + 540) % 360) - 180) <= 25;
     return hueOk && (hsv.v[p] - roofV >= 0.08 || roofS - hsv.s[p] >= 0.15);
   };
   const minSize = Math.max(2, towerRect.w * 0.04);
-  return components(hsv, region, dot).filter(c => isRound(c) && c.h >= minSize && c.h <= towerRect.w * 0.3).length;
+  return components(hsv, region, dot).filter(c => {
+    const ccx = (c.x0 + c.x1 + 1) / 2, ccy = (c.y0 + c.y1 + 1) / 2;
+    return isRound(c) && c.h >= minSize && c.w >= minSize && c.h <= towerRect.w * 0.3 && ccy <= rowEnd && Math.abs(ccx - cx) <= 0.25 * towerRect.w;
+  });
+}
+
+/** M19 slot-dot count (see slotDotBlobs). */
+export const slotDots = (hsv, towerRect, digit, team) => slotDotBlobs(hsv, towerRect, digit, team).length;
+
+/** Bottom (exclusive) of the roof decal = number glyph + slot dots; M20 counts floor stripes below it. rect.y when no digit. */
+export function decalBottom(hsv, towerRect, team) {
+  const digit = outlinedDigit(hsv, roofRegion(towerRect)); if (!digit) return towerRect.y;
+  return Math.max(digit.gy1, ...slotDotBlobs(hsv, towerRect, digit, team).map(c => c.y1)) + 1;
 }
 
 /**

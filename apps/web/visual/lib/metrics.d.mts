@@ -24,5 +24,6 @@ export function evaluate(id: string, ctx: any): Omit<Row, 'scene' | 'viewport'>;
 export function evaluateJob(input: { scene: string; viewport: string; entry: any; thresholds: Thresholds; run: any; refs: any; pixels(png: string): Promise<any> }): Promise<Row[]>;
 export function prepareRef(spec: any, img: any): any;
 export function calibrateRef(ref: any, others: any[], thresholds: Thresholds): Row[];
+export function calibrateMock(hsv: import('./pixel-metrics.mjs').Hsv, quad: { x: number; y: number }[], thresholds: Thresholds, scene?: string): Row[];
 export function formatTable(rows: Row[], thresholds: Thresholds): string;
 export function summarize(rows: Row[]): Record<string, 'pass' | 'fail' | 'info' | 'missing'>;

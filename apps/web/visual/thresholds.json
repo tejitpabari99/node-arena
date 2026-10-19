@@ -39,10 +39,10 @@
       "limits": { "ratio": { "min": 0.25, "max": 0.40 } }
     },
     "M06": {
-      "name": "troop on-screen height, % viewport height; /tower width", "source": "probe", "status": "prov",
-      "threshold": ">=1.5% and 0.22-0.60",
+      "name": "troop on-screen height, % viewport height; /tower width", "source": "probe", "status": "cal",
+      "threshold": ">=2.0% and 0.30-0.60",
       "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
-      "limits": { "heightShare": { "min": 0.015 }, "perTowerWidth": { "min": 0.22, "max": 0.60 } }
+      "limits": { "heightShare": { "min": 0.02 }, "perTowerWidth": { "min": 0.30, "max": 0.60 } }
     },
     "M07": {
       "name": "void pixel share (magenta clear-colour pass)", "source": "pixels", "status": "cal",
@@ -76,14 +76,14 @@
       "limits": { "a": { "min": 0.85 }, "b": { "min": 0.35, "max": 0.72 }, "c": { "min": 0.15, "max": 0.45 }, "neutralSat": { "max": 0.05 }, "neutralGreyWhite": { "min": 0.90 } }
     },
     "M12": {
-      "name": "head-on: 1 lane per pair, crossing lane separate, split error vs most recent Clash", "source": "probe", "status": "prov",
+      "name": "head-on: 1 lane per pair, crossing lane separate, split error vs most recent Clash", "source": "probe", "status": "cal",
       "threshold": "(a) 1 / (b) 1 / (c) <=12 px (settled)",
       "note": "PRD Metric column: unsettled frames k ticks later (+6 PNG, splitTrace ticks): tolerance = 12 px + projected front-closure distance over k ticks (<= 2 x troop speed x k / TICK_RATE)",
       "scenes": ["clash"], "viewports": ["1920x1080", "1366x768"],
       "limits": { "pairLanes": { "eq": 1 }, "crossingLanes": { "eq": 1 }, "splitErrorPx": { "max": 12, "px": true }, "closureFactor": 2 }
     },
     "M13": {
-      "name": "perf (l18, 5 s real time, fresh page, no clock): fps, p95 frame ms, drawCalls, jsMs p95", "source": "__na sample + renderer.info", "status": "prov",
+      "name": "perf (l18, 5 s real time, fresh page, no clock): fps, p95 frame ms, drawCalls, jsMs p95", "source": "__na sample + renderer.info", "status": "cal",
       "threshold": "`gpu:true`: fps>=55; always: drawCalls<=100, jsMs p95<=8; fps on SwiftShader = `informational`",
       "scenes": ["l18"], "viewports": ["1920x1080"],
       "limits": { "fps": { "min": 55, "gpuOnly": true }, "drawCalls": { "max": 100 }, "jsMsP95": { "max": 8 }, "durationMs": 5000 }
@@ -95,13 +95,13 @@
       "limits": { "share": { "min": 0.30, "max": 0.60 } }
     },
     "M15": {
-      "name": "towers in frame: min edge margin; tightest-axis union margin", "source": "probe", "status": "prov",
+      "name": "towers in frame: min edge margin; tightest-axis union margin", "source": "probe", "status": "cal",
       "threshold": "min margin >=0.02 and tightest-axis union margin <=0.10",
       "scenes": ["l01", "l10", "l18"], "viewports": ["1920x1080", "1366x768"],
       "limits": { "minMargin": { "min": 0.02 }, "unionMargin": { "max": 0.10 } }
     },
     "M16": {
-      "name": "roof number glyph height in px (outlined white-fill component, tallest digit)", "source": "pixels", "status": "prov",
+      "name": "roof number glyph height in px (outlined white-fill digit incl. its outline ring, tallest digit)", "source": "pixels", "status": "cal",
       "threshold": ">=12 px at 1366x768 L1 (scaled by viewport height elsewhere); >=10 px at L18",
       "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
       "limits": { "default": { "min": 12, "px": true, "atHeight": 768 }, "l18": { "min": 10, "px": true, "atHeight": 768 } }
@@ -119,13 +119,13 @@
       "limits": { "frame": { "max": 0.20 }, "tower": { "max": 0.20 } }
     },
     "M19": {
-      "name": "roof-decal pixel visibility: outlined white number in upper 45% (height >= 0.10 x tower width) + dot count == sim slots", "source": "pixels + sim view", "status": "prov",
+      "name": "roof-decal pixel visibility: outlined white number centred in the upper roof on a lit plate (height >= 0.10 x tower width) + dot count under it == sim slots", "source": "pixels + sim view", "status": "cal",
       "threshold": "100% of towers; dots match 100%",
       "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
       "limits": { "minDigitRatio": 0.10, "numberShare": { "min": 1.0 }, "dotsShare": { "min": 1.0 } }
     },
     "M20": {
-      "name": "floor stripes along the vertical centre line: white runs between team bands", "source": "pixels", "status": "prov",
+      "name": "floor stripes along the vertical centre line: white runs between team bands", "source": "pixels", "status": "cal",
       "threshold": "runs within [floors-1, floors+1] and >=1 team-sat band run per white run",
       "scenes": ["l01", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
       "limits": { "slack": 1, "matchShare": { "min": 1.0 } }

@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { isGrass, isGrey, isMagenta, isRock, isSand, isTeamSat, isWhite, nearestTeam, rgbToHsv } from '../visual/lib/color.mjs';
-import { evaluate, evaluateJob, headOn, limitsFor, loadThresholds, METRIC_IDS, scaleLimit, summarize, within } from '../visual/lib/metrics.mjs';
-import { floorStripes, outlinedDigit, playQuadShares, polygonMask, toHsv, towerPaint, tvDistance, voidShare } from '../visual/lib/pixel-metrics.mjs';
+import { calibrateMock, evaluate, evaluateJob, headOn, limitsFor, loadThresholds, METRIC_IDS, scaleLimit, summarize, within } from '../visual/lib/metrics.mjs';
+import { digitHeight, floorStripes, outlinedDigit, slotDots, playQuadShares, polygonMask, toHsv, towerPaint, tvDistance, voidShare } from '../visual/lib/pixel-metrics.mjs';
 
 const hex = (h: string) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)] as const;
 const hsv = (h: string) => rgbToHsv(...hex(h));
@@ -63,7 +63,7 @@ describe('thresholds.json (PRD Metrics table verbatim)', () => {
     expect(limitsFor(m.M01!, 'l18', '1920x1080')).toEqual({ min: 0.03, max: 0.08 });
     expect(m.M02!.limits.ratio).toEqual({ min: 0.14, max: 0.30 });
     expect(m.M05!.limits.ratio).toEqual({ min: 0.25, max: 0.40 });
-    expect(m.M06!.limits).toEqual({ heightShare: { min: 0.015 }, perTowerWidth: { min: 0.22, max: 0.60 } });
+    expect(m.M06!.limits).toEqual({ heightShare: { min: 0.02 }, perTowerWidth: { min: 0.30, max: 0.60 } }); // T8: tightened from 0.015 / 0.22 on ref troop measurements
     expect(m.M07!.limits.share).toEqual({ max: 0.005 }); expect(m.M07!.viewports).toContain('1920x1200');
     expect(m.M08!.viewports).toContain('1920x1200');
     expect(m.M10!.limits).toEqual({ sandRock: { min: 0.60 }, grass: { max: 0.05 }, area: { min: 0.10 } });
@@ -173,10 +173,57 @@ describe('pixel metrics', () => {
     expect(grassOnly).toBe(null); // ground-masked -> no fg -> null (fails)
   });
   it('M16/M19 outlined digit: white fill with a dark ring is found, a plain white patch is not', () => {
-    const ringed = toHsv(image(12, 14, (x, y) => (x >= 3 && x < 9 && y >= 2 && y < 12 ? '#FFFFFF' : x >= 1 && x < 11 && y >= 0 && y < 14 ? '#101010' : '#2F7DE1')));
-    expect(outlinedDigit(ringed, { x: 0, y: 0, w: 12, h: 14 })?.h).toBe(10);
-    const plain = toHsv(image(12, 14, (x, y) => (x >= 3 && x < 9 && y >= 2 && y < 12 ? '#FFFFFF' : '#2F7DE1')));
-    expect(outlinedDigit(plain, { x: 0, y: 0, w: 12, h: 14 })).toBe(null);
+    const ringed = toHsv(image(24, 14, (x, y) => (x >= 9 && x < 15 && y >= 2 && y < 12 ? '#FFFFFF' : x >= 7 && x < 17 && y >= 0 && y < 14 ? '#101010' : '#2F7DE1')));
+    expect(outlinedDigit(ringed, { x: 0, y: 0, w: 24, h: 14 })?.h).toBe(10);
+    const plain = toHsv(image(24, 14, (x, y) => (x >= 9 && x < 15 && y >= 2 && y < 12 ? '#FFFFFF' : '#2F7DE1')));
+    expect(outlinedDigit(plain, { x: 0, y: 0, w: 24, h: 14 })).toBe(null);
+  });
+  it('M02/M16 glyph height = white fill plus its dark outline ring (calibrated on tw01 red5 / yt1 44)', () => {
+    const ringed = toHsv(image(24, 14, (x, y) => (x >= 9 && x < 15 && y >= 2 && y < 12 ? '#FFFFFF' : x >= 7 && x < 17 && y >= 0 && y < 14 ? '#101010' : '#2F7DE1')));
+    expect(outlinedDigit(ringed, { x: 0, y: 0, w: 24, h: 14 })?.glyphH).toBe(14);
+    expect(digitHeight(ringed, { x: 0, y: 0, w: 24, h: 14 })).toBe(14);
+  });
+  it('M16/M19 JPEG-soft digit: light fill (V .85) with an outline only darker than the roof (V .62 on a V .95 roof) counts', () => {
+    // yt1 "44": fill S<=.2 V .7-.9, outline dark blue V .6-.7, roof blue V ~.95 (no pixel reaches V<=.25).
+    const soft = toHsv(image(32, 24, (x, y) => (x >= 13 && x < 19 && y >= 4 && y < 12 ? '#D8D8DC' : x >= 11 && x < 21 && y >= 2 && y < 14 ? '#2A5A9E' : '#3D8BF2')));
+    const d = outlinedDigit(soft, { x: 0, y: 0, w: 32, h: 24 });
+    expect(d?.h).toBe(8);
+    expect(d?.glyphH).toBe(12);
+  });
+  it('M19 a bright slot dot on the roof (no darker ring) is not a digit, and is counted as a dot below the digit', () => {
+    const roof = '#3D8BF2';
+    const paint = (x: number, y: number) => {
+      if (x >= 9 && x < 15 && y >= 3 && y < 11) return '#FFFFFF'; // digit fill
+      if (x >= 7 && x < 17 && y >= 1 && y < 13) return '#14284A'; // outline
+      if (y >= 16 && y < 20 && ((x >= 4 && x < 8) || (x >= 16 && x < 20))) return '#F4F6FA'; // two bright dots
+      return roof;
+    };
+    const img = toHsv(image(24, 60, paint)), rect = { x: 0, y: 0, w: 24, h: 60 };
+    const dotOnly = toHsv(image(24, 60, (x, y) => (y >= 16 && y < 20 && x >= 4 && x < 8 ? '#F4F6FA' : roof)));
+    expect(outlinedDigit(dotOnly, { x: 0, y: 0, w: 24, h: 27 })).toBe(null);
+    const digit = outlinedDigit(img, { x: 0, y: 0, w: 24, h: 27 });
+    expect(digit?.glyphH).toBe(12);
+    expect(slotDots(img, rect, digit, 'blue')).toBe(2);
+  });
+  it('M16/M19 white text on a dark DOM label card (v1) is not a roof digit: the plate around the glyph must be lit (V >= .45)', () => {
+    const card = toHsv(image(32, 24, (x, y) => (x >= 13 && x < 19 && y >= 4 && y < 12 ? '#FFFFFF' : x >= 6 && x < 26 && y >= 0 && y < 18 ? '#141B2D' : '#9AA0A6')));
+    expect(outlinedDigit(card, { x: 0, y: 0, w: 32, h: 24 })).toBe(null);
+  });
+  it('M19/M20 a white floor body with a dark slit inside the roof locator is not the digit, side highlights are not dots', () => {
+    // yt1: the upper 45% of a 4-floor tower reaches the top floor body (white, 40+ px wide, dark slit window).
+    const roof = '#3D8BF2';
+    const paint = (x: number, y: number) => {
+      if (x >= 21 && x < 27 && y >= 3 && y < 11) return '#FFFFFF'; // digit fill
+      if (x >= 19 && x < 29 && y >= 1 && y < 13) return '#14284A'; // outline
+      if (y >= 15 && y < 19 && x >= 22 && x < 26) return '#F4F6FA'; // one bright dot under the digit
+      if (y >= 15 && y < 19 && x >= 43 && x < 47) return '#F4F6FA'; // white bevel highlight at the roof edge, off-centre
+      if (x >= 4 && x < 44 && y >= 22 && y < 36) return y === 28 && x >= 10 && x < 38 ? '#202020' : '#F0F0F0'; // top floor body + slit
+      return roof;
+    };
+    const img = toHsv(image(48, 80, paint)), rect = { x: 0, y: 0, w: 48, h: 80 };
+    const digit = outlinedDigit(img, { x: 0, y: 0, w: 48, h: 36 });
+    expect(digit?.x0).toBe(21);
+    expect(slotDots(img, rect, digit, 'blue')).toBe(1);
   });
   it('M20 floor stripes count white runs between team bands', () => {
     const tw = toHsv(image(9, 22, (_x, y) => (y < 6 || y === 10 || y === 11 || y === 16 || y === 17 ? '#2F7DE1' : '#F0F0F0')));
@@ -184,5 +231,22 @@ describe('pixel metrics', () => {
   });
   it('M18 TV distance', () => {
     expect(tvDistance([0.5, 0.5, 0], [0.5, 0, 0.5])).toBeCloseTo(0.5); expect(tvDistance(null, [1])).toBe(null);
+  });
+});
+
+describe('calibration (b): landscape mock (PRD Iteration protocol step 4b)', () => {
+  // Landscape layout: grass play quad in the centre, sand border on every side (not only above/below as in the portrait refs).
+  const quad = [{ x: 10, y: 8 }, { x: 90, y: 8 }, { x: 90, y: 52 }, { x: 10, y: 52 }];
+  const inQuad = (x: number, y: number) => x >= 10 && x < 90 && y >= 8 && y < 52;
+  // quad: grass with a white "tower" block (grass .83 inside the quad, .49 of the frame)
+  const landscape = (side: string) => toHsv(image(100, 60, (x, y) => (inQuad(x, y) ? (x >= 40 && x < 60 && y >= 15 && y < 45 ? '#F0F0F0' : '#8CD62A') : y < 8 || y >= 52 ? '#F5DEB3' : side)));
+  it('M09/M10/M14 pass when the border is sand on the top, bottom and sides', () => {
+    const rows = calibrateMock(landscape('#F5DEB3'), quad, thresholds, 'mock');
+    expect(rows.map(r => `${r.id}:${r.status}`)).toEqual(['M09:pass', 'M10:pass', 'M14:pass']);
+    expect(rows[0]!.scene).toBe('mock');
+  });
+  it('M10 fails when the side border is grass (region logic must look at every side outside the quad)', () => {
+    const rows = calibrateMock(landscape('#8CD62A'), quad, thresholds, 'mock');
+    expect(rows.find(r => r.id === 'M10')!.status).toBe('fail');
   });
 });

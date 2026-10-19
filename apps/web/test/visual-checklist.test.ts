@@ -43,7 +43,7 @@ describe('checkConsistency (CHECKLIST vs thresholds.json)', () => {
     expect(checkConsistency(cl, t1).join('\n')).toMatch(/M05 threshold/);
     const t2 = clone(th); (def(t2, 'M02').limits as { ratio: { min: number } }).ratio.min = 0.10;
     expect(checkConsistency(cl, t2).join('\n')).toMatch(/M02 limits/);
-    const t3 = clone(th); def(t3, 'M16').status = 'cal';
+    const t3 = clone(th); def(t3, 'M16').status = 'prov';
     expect(checkConsistency(cl, t3).join('\n')).toMatch(/M16 status/);
     const t4 = clone(th); def(t4, 'M09').scenes = ['l01'];
     expect(checkConsistency(cl, t4).join('\n')).toMatch(/M09 scenes/);

@@ -5,8 +5,8 @@ import path from 'node:path';
 import { nearestTeam } from './color.mjs';
 import { VISUAL_DIR } from './scenes.mjs';
 import {
-  classVector, crop, digitHeight, floorStripes, grassShare, outlinedDigit, playQuadShares, polygonMask, rectMask, resample,
-  roofRegion, slotDots, toHsv, towerPaint, tvDistance, voidShare, whiteBlobs, REF_TOWER_WIDTH,
+  classVector, crop, decalBottom, digitHeight, floorStripes, grassShare, outlinedDigit, playQuadShares, polygonMask, rectMask, resample,
+  roofRegion, slotDots, toHsv, towerPaint, tvDistance, voidShare, REF_TOWER_WIDTH,
 } from './pixel-metrics.mjs';
 
 /** Sim tick rate (packages/sim TICK_RATE) and progress units per world unit (combat progA scale = mm * TICK_RATE). */
@@ -219,7 +219,7 @@ const PIXEL = {
   },
   M16({ probe, hsv, limits, height, baseHeight }) {
     if (!probe.towers.length) return nullResult('no towers');
-    const lim = scaleLimit(limits, height, baseHeight), hs = probe.towers.map(t => outlinedDigit(hsv, roofLocator(t))?.h ?? null);
+    const lim = scaleLimit(limits, height, baseHeight), hs = probe.towers.map(t => outlinedDigit(hsv, roofLocator(t))?.glyphH ?? null);
     if (hs.some(h => h === null)) return nullResult(`no outlined digit on ${hs.filter(h => h === null).length}/${hs.length} (min ${fmt(lim.min)} px)`);
     const min = Math.min(...hs);
     return result(within(min, lim), min, `min digit ${fmt(min)} px >= ${fmt(lim.min)}`);
@@ -270,7 +270,7 @@ export function mergePaint(rows) {
 export function roofDecalResult(hsv, towers, limits) {
   let numbers = 0, dots = 0; const counts = [];
   for (const t of towers) {
-    const digit = outlinedDigit(hsv, roofRegion(t.rect)), okDigit = digit !== null && digit.h >= limits.minDigitRatio * t.rect.w;
+    const digit = outlinedDigit(hsv, roofRegion(t.rect)), okDigit = digit !== null && digit.glyphH >= limits.minDigitRatio * t.rect.w;
     const n = slotDots(hsv, t.rect, digit, t.team);
     if (okDigit) numbers++;
     if (typeof t.slots === 'number' && n === t.slots) dots++;
@@ -286,7 +286,7 @@ export function stripesResult(hsv, towers, limits) {
   let ok = 0; const parts = [];
   for (const t of towers) {
     if (!t.team || t.floors === null) { parts.push('null'); continue; }
-    const blobs = whiteBlobs(hsv, roofRegion(t.rect)), fromY = blobs.length ? Math.max(...blobs.map(b => b.y1)) + 1 : t.rect.y;
+    const fromY = decalBottom(hsv, t.rect, t.team);
     const s = floorStripes(hsv, t.rect, t.team, fromY);
     const pass = s !== null && s.whiteRuns >= Math.max(1, t.floors - limits.slack) && s.whiteRuns <= t.floors + limits.slack && s.bands >= s.whiteRuns;
     if (pass) ok++;
@@ -364,11 +364,26 @@ export function calibrateRef(ref, others, thresholds) {
   const m02 = ref.towers.map(t => { const h = digitHeight(t.scaled, roofRegion(t.scaledRect)); return h === null ? null : h / t.scaledRect.w; });
   push('M02', m02.some(v => v === null) ? nullResult(`digit null on ${m02.filter(v => v === null).length}/${m02.length}`)
     : result(m02.every(v => within(v, L('M02').ratio)), range(m02), `digit/tower w ${fmtRange(range(m02))} [${m02.map(fmt).join(' ')}]`));
-  const m16Lim = scaleLimit(L('M16'), 768, 1080), m16 = ref.towers.map(t => outlinedDigit(t.scaled, roofRegion(t.scaledRect))?.h ?? null);
+  const m16Lim = scaleLimit(L('M16'), 768, 1080), m16 = ref.towers.map(t => outlinedDigit(t.scaled, roofRegion(t.scaledRect))?.glyphH ?? null);
   push('M16', m16.some(v => v === null) ? nullResult(`no outlined digit on ${m16.filter(v => v === null).length}/${m16.length}`)
     : result(within(Math.min(...m16), m16Lim), Math.min(...m16), `min digit ${fmt(Math.min(...m16))} px >= ${fmt(m16Lim.min)}`));
   push('M19', roofDecalPerTower(ref, L('M19')));
   push('M20', stripesPerTower(ref, L('M20')));
+  return rows;
+}
+
+/**
+ * visual:calibrate (b) rows for the landscape mock (visual/calib/mock-landscape.html): M09, M10, M14 on a 1920x1080 frame whose
+ * play quad (`quad`, 4 screen points, same as ground.playQuadScreen) has border on every side. Limits as for l01@1920x1080.
+ */
+export function calibrateMock(hsv, quad, thresholds, scene = 'mock-landscape') {
+  const L = id => limitsFor(thresholds.metrics[id], 'l01', '1920x1080'), rows = [];
+  const push = (id, r) => rows.push({ id, scene, viewport: `${hsv.width}x${hsv.height}`, status: r.pass === null ? 'info' : r.pass ? 'pass' : 'fail', value: r.value ?? null, text: r.text });
+  const shares = playQuadShares(hsv, polygonMask(hsv.width, hsv.height, quad));
+  push('M09', result(within(shares.grassInside, L('M09').share), shares.grassInside, `grass in play quad ${fmt(shares.grassInside)}`));
+  push('M10', borderResult(shares.border, L('M10')));
+  const grass = grassShare(hsv);
+  push('M14', result(within(grass, L('M14').share), grass, `grass ${fmt(grass)}`));
   return rows;
 }
 

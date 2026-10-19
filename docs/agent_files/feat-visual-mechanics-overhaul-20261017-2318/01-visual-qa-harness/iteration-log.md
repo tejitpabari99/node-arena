@@ -25,3 +25,71 @@ date: 2026-10-18
 | 15 | 2026-10-19 | Task 6 | (Task 6 commit) | compose x9 after change: 81/81 sheet SHA-256 identical across runs; sheets re-viewed (l18, clash, cut, picker, l01 detail zoom) correct; `--scene cut` ok, unknown scene rejected; web unit 227/227 (26 files); typecheck 0; lint 0; determinism lint clean | remove browser image scaling entirely | template script decodes every source 1:1 to `<canvas>` (file access flag) and area-resamples crop/scale in JS (exact box filter), CPU raster kept |
 | 16 | 2026-10-19 | Task 7 | (Task 7 commit) | CHECKLIST.md written from PRD sections verbatim (Appendix A, Metrics table with M12 code-span pipes escaped `\|`, Colour spec, Scoring protocol, rules) + B.1 machine-limits table rendered from thresholds.json + probe contract. Test-first: visual-checklist.test.ts fails (lib/checklist.mjs missing) -> 11/11 | a hand-written mirror only stays honest if the check compares threshold text + status (Appendix B) AND scenes/viewports/limits JSON (B.1), so a changed number in `limits` cannot slip through with unchanged prose | visual/lib/checklist.mjs(+d.mts): parseChecklist, checkConsistency, itemsForScene, scoreSheet, stripMetricRefs, mergeScores; score-sheet.mjs, score-merge.mjs; check.mjs consistency gate (`--thresholds`, `--checklist`, `--checklist-only`) |
 | 17 | 2026-10-19 | Task 7 | (Task 7 commit) | `visual:check --strict --thresholds <copy with M05 limits.ratio.min .20 + M14 text 0.25-0.60>` -> 2 MISMATCH lines, exit 1; `--checklist <copy with M09 B.1 row prov / l01,l10>` -> 2 MISMATCH, exit 1; real files -> "CHECKLIST agrees" then the normal v1 table (176 rows, 175 fail, 1 info; exit 1 from metrics only). `visual:score-sheet` 9 sheets, grep `\bM[0-9]{2}\b\|threshold\|metric\|\.mjs\|src/` 0 hits; `visual:score-merge` fixture -> V01 8/4 -> 4 flagged, V02 9 (1 diff) capped 7 vs 8 -> 7, V03 2/3 -> 2. Web unit 238/238 (27 files); typecheck 0 (after typing test helpers); lint 0 | none (green) | none |
+| 18 | 2026-10-19 | Task 8 (iter-0 calibration, part A) | (Task 8 commit) | `visual:calibrate` 12/18: M02/M16/M19 FAIL on tw01 + yt1 (JPEG digits: fill V .7-.9, outline only V .3-.8, so neither white-fill S<=.15/V>=.92 nor dark ring V<=.25 matched; slot dots mis-assigned; M20 start row on lowest white blob) | the roof-number pixel definition only fits sharp synthetic digits, not real (JPEG-soft) refs; fix the metric, never the ref | test-first (6 new visual-metrics tests fail -> pass): white fill S<=.25,V>=.70; ring = V<=.25 or >=.20 darker than the plate (`plateV`); digit <=0.3 x tower w, centred in upper 60% of the roof locator, on a lit plate V>=.45 (excludes v1 DOM card text, slit windows, bevels); `glyphH` = fill + ring (M02/M16/M19); dots centred under the whole number within 1.3 glyph heights, min size both axes, pale dim dots no longer dropped as sand; M20 start = `decalBottom`. Landscape mock `visual/calib/mock-landscape.html` + `lib/mock.mjs` wired into `visual:calibrate` |
+| 19 | 2026-10-19 | Task 8 (iter-0 baseline + calibration) | (Task 8 commit) | calibrate 21/21 PASS (tw01 9, yt1 9, mock 3); `visual:check --strict` on v1: 176 rows, 175 FAIL, 1 INFO, every M01-M20 fails; merged scores 0-5 (57/61 scored scene items <=3; the 4 above: V16 4 on l18/clash, V22 5 on menu/picker); 0 items >=8; 7 flagged |self-blind|>=3 (all V22 in game scenes); controls inside limits; prov: M06 tightened, M12/M13/M15/M16/M19/M20 confirmed -> `cal`; M01/M05 stay `prov` (OPEN conflict, see below) | harness discriminates v1 from the refs on every item and metric; no anchor/threshold passes at baseline, so no discrimination tightening is needed | thresholds.json + CHECKLIST + PRD: M06 `>=2.0% and 0.30-0.60` (was >=1.5% / 0.22), statuses -> cal, M16/M19 definition text = calibrated pixel rule; tests updated for the new M06 limits and the M16 status-mismatch case. No anchor edited (needsRescore=false) |
+
+## T8 iteration 0 — v1 baseline (row 19 detail)
+
+- Date 2026-10-19; code = commit c70db66 (v1 visuals unmodified) + T8 harness-only changes; `visual:capture` exit 0 (21 captures, 48 PNGs), `visual:compose` exit 0 (9 compare-*.png, all viewed + both controls + towerwar_06).
+- Score files: `apps/web/visual-out/score-self-0-<id>.json`, `score-blind-0-<id>.json` (fresh blind scorers, composite + sheet only), `score-merged-0-<id>.json` (`visual:score-merge`, item = min, flag |diff|>=3); aggregate `score-self-0.json`.
+
+### Per-item scores (self / blind / merged; `!` = flagged |self-blind|>=3)
+
+| scene | items |
+|---|---|
+| l01 | V01 3/4/3, V02 3/3/3, V03 1/1/1, V04 3/4/3, V05 3/4/3, V06 3/4/3, V07 3/4/3, V10 3/4/3, V11 1/2/1, V13 3/4/3, V18 3/4/3, V19 3/4/3, V22 1/4/1!, V23 2/3/2 |
+| l10 | V01 3/4/3, V03 1/1/1, V04 3/4/3, V05 3/4/3, V06 3/4/3, V07 3/4/3, V08 3/4/3, V10 3/4/3, V13 3/4/3, V19 3/4/3, V22 1/4/1!, V23 2/3/2 |
+| l10cb | V04 3/4/3, V07 3/4/3, V09 3/4/3, V22 1/4/1! |
+| l18 | V01 3/4/3, V04 3/2/2, V06 3/3/3, V07 3/4/3, V08 3/4/3, V16 4/6/4, V22 1/4/1!, V23 2/2/2, V24 3/4/3 |
+| clash | V04 3/4/3, V07 3/4/3, V14 3/4/3, V15 1/3/1, V16 4/6/4, V22 1/4/1! |
+| buildout | V04 3/4/3, V07 3/4/3, V12 3/4/3, V22 1/4/1! |
+| cut | V04 3/4/3, V07 3/4/3, V17 2/2/2, V22 1/4/1! |
+| menu | V04 2/3/2, V07 0/2/0 (n/a: no towers), V20 3/4/3, V22 5/6/5 |
+| picker | V04 2/3/2, V07 0/2/0 (n/a: no towers), V21 3/4/3, V22 5/6/5 |
+
+All V01-V24 are scored in at least one scene. Flag note: every V22 flag is self 1 vs blind 4 — the blind scorer applied the 4-anchor "3+ present" literally (all four leftovers present), the self score used the 0-2 "wrong" band; merged 1 either way, and both are below the 4 anchor, so no anchor change.
+
+### Pixel checks and metrics (v1, `visual:check --strict`: 176 rows, 175 FAIL, 1 INFO)
+
+Every M01-M20 fails (expected-fail set M01/M02/M03/M05/M06/M07/M12 all fail). l01 @1920x1080: M01 tower w 0.03 vw; M02 digit null 2/5, card/tower 2.97; M03 cards+labels 10; M04 floors null 5/5; M05 lane width null; M06 troop 0.009 vh, 0.176 tower w; M07 void 60.2%; M08 1/9 rays; M09/M10 playQuad null; M11 b .07-.18 (4/5 fail); M14 grass 0; M15 margin 0.13; M16 no outlined digit 4/5; M17 labels 5, summary 0; M18 TV frame 0.87, tower 0.47; M19 outlined 0, dots 0; M20 match 0. clash: M12 a-b lanes 2, split null. l18: M13 drawCalls 109, jsMs p95 17.5 (fps 6.7 informational, SwiftShader). Item pixel checks (V01 M15/M08, V02 M09/M14/M18, V03 M10, V04 M18, V05 M11/M18/M20, V06 M04/M20, V07 M16/M19/M02, V08 M19, V22 M17) all fail, consistent with merged scores <=5.
+
+### Difference log (items >=8 — only calibration (c))
+
+No scene item reached 8. Calibration (c) differences (tw01 as capture vs yt1/tw03/tw06 anchors), >=3 each: V01 (8) portrait 554x1200 vs landscape anchor; tower w/frame h 5.8% vs yt1 7%; border 34% vs 44%; promo banner crop. V02 (9) tw01 grass brighter yellow-green than yt1; larger soft shadows; more tonal patches (M09 .677, M14 .452, M18 .139 pass). V03 (9) ~25 vs ~30 props; sand .49+rock .17 vs .39+.38; more crates vs stumps (M10 pass). V04 (9) warmer sand; extra yellow/grey neutrals; frame TV .139. V05 (9) red5 1 floor vs yt1 38 4 floors; wider plinth; thinner bands (M11/M20 pass). V06 (8) only 1-2 floors visible vs tw03 Max 5; grey25 slight taper vs stepped; neutral bands light grey. V07 (9) digit/tower .16-.20 vs .147-.16; outline near-black vs dark blue; same centred position (M02/M16/M19 pass). V08 (9) red5 one dim dot vs blue5 one bright; grey25 two bright; yt1 44 2 bright + 1 dim (M19 pass). V09 (8) no colourblind mode in TW; no extra glyphs; brief-only anchor. V10 (8) ribbon ~1/4 tower w; more opaque orange than tw06 blue; thin darker edge + dots. V13 (8) troop size (T8 re-measure: soldier 31 px / 1030 = 3.0% of frame height, not ~1.7%); sparse (2) vs tw06 queues; orange chibis + tank variant.
+
+### Calibration (a)-(d)
+
+| step | result |
+|---|---|
+| (a) `visual:calibrate` tw01 + yt1 | PASS 18/18 (after the row-18 metric fixes; no ref edited): M09 .677/.705; M10 sand+rock .663/.763, grass .014/.005, area .34/.444; M11 a .929-1/.952-.978, b .566-.662/.439-.478, c .252-.301/.26-.313, neutral sat .002 g+w .953; M14 .452/.394; M18 TV frame .139 tower .128; M02 .16-.20/.147-.16; M16 min 12 px both; M19 outlined + dots 4/4 and 3/3; M20 match 1 both. v1 captures: outlined-number share stays 0 |
+| (b) landscape mock `visual/calib/mock-landscape.html` 1920x1080 | PASS 3/3: M09 .705, M10 sand+rock .768 / grass .009 / area .486, M14 .367 |
+| (c) tw01 as capture, self, V01-V13 | V01-V10 and V13 score 8-9 with >=3 differences each. V11 = 2 and V12 = null: not scorable on this ref (Tower War has no chevrons, V11 anchor is City Takeover; build-out motion cannot be judged from a still). Recorded as "V01-V10, V13 >= 8; V11 and V12 not scorable on this ref" |
+| (d) blind discrimination controls | v1_playtest_1 merged (self/blind) V01 3 (3/4), V02 3, V03 1, V04 3, V05 3, V06 3, V07 3, V22 1 (1/2): all <=4 PASS. citytakeover_01 V05 4 (4/4) <=6 PASS. No control scored too high, so no anchor tightened |
+
+### prov thresholds (T8 confirm / fix, tighten only)
+
+| ID | decision | evidence |
+|---|---|---|
+| M06 | tightened -> `cal`: heightShare >=0.02 (was .015), perTowerWidth 0.30-0.60 (was .22) | soldier helmet-to-feet: tw01 31-33 px / 1030 = 3.0-3.1%, / tower 71 px = 0.44-0.46; yt1 ~18 px / 720 = 2.5%, / tower 43-55 px (visual / ref-calib box) = 0.33-0.42. Limits sit >=20% below every ref value |
+| M12 | confirmed -> `cal` | definitional (1 lane per pair, crossing lane separate, split vs sim Clash point); not ref-measurable |
+| M13 | confirmed -> `cal` | spec-derived perf goal, not ref-measurable; v1 l18 on SwiftShader drawCalls 109, jsMs p95 17.5 (already failing; see followup) |
+| M15 | confirmed unchanged -> `cal` | tw01 min/union margin 35/554 = 0.063; yt1 union ~0.09 (yellow right edge ~772 of 802), so tightening to the V01 8% target would fail yt1 |
+| M16 | confirmed -> `cal` | min glyph 12 px on both refs at 75 px tower width (= the limit; cannot tighten) |
+| M19 | confirmed -> `cal` | outlined number + dot count match on 7/7 ref towers; minDigitRatio .10 vs ref .147-.20 |
+| M20 | confirmed -> `cal` | match 1 on both refs (tw01 2w/2b, 1w/1b, 2w/2b; yt1 4w/4b x2, 4w/5b) |
+| M01 | **stays `prov` — OPEN, needs a decision** | at 1920x1080 the 6.0% vw floor = 115 px = 10.7% of frame height; refs 5.8-7% of height (= 3.3-3.9% vw at 16:9). V01's 8-anchor (within 25% of ref) needs <=~94 px (4.9% vw), so no camera passes M01 and V01>=8. Fixing means lowering the floor, which T8 may not do |
+| M05 | **stays `prov` — OPEN, needs a decision** | pixel profiles across ribbons: tw01 yellow 17 px / 71 = 0.24, blue 21 px / 80-90 = 0.23-0.26; yt1 ~12 px / 43-55 = 0.22-0.28. The 0.25 floor sits inside/above the ref range; lowering it = loosening |
+
+### Top 3 gaps (for SP02+)
+
+1. Camera + ground: shallow ~40 deg view of a grey plane in a void (M07 void 54-67%, M08 1/9, M09/M10/M14 grass/border absent, V01-V03 1-3).
+2. Towers + roof count: dark boxy stacks with DOM label cards ~3x tower area (M02/M03/M16/M17/M19 fail, M11 b/c, M20 0, V05-V08 3).
+3. Lanes + troops: thin dashed lines + road slab, 2 lane objects per head-on pair, troops 0.8-0.9% vh (M05 null, M06, M12 fail, V10/V11/V13-V16 1-4).
+
+### Regression gate
+
+web unit 245/245 (27 files); typecheck 0; lint 0; e2e 13 pass / 4 fail / 22 skip = the post-Task-1 baseline (3 pre-existing toHaveScreenshot diffs capture.png / glb-fixture.png / menu.png + perf stress p95 4.2 ms < 4, host-load flaky); `git diff main --stat -- apps/web/e2e` empty; `visual:selfcheck` NEAR-IDENTICAL (47/48 identical, menu-1920x1080 2 px delta 1, inside PRD fallback; 0 metrics diffs) exit 0, 406 s; `visual:check --checklist-only` agrees; `visual:calibrate` 21/21.
+
+### Planned change
+
+None in SP01 (tooling only; the look is unchanged). Next: SP02+ follow the visual loop against this baseline. Before SP03 starts, decide M01 and M05 (see table above).
