@@ -9,7 +9,7 @@ import { Disposables } from '../src/render/disposables.js';
 const manifest = structuredClone(manifestJSON) as Manifest;
 describe('fixed fitted camera', () => {
   it('shipped steep camera (pitch 65, fov 35) fits the tower bounds at 16:9 and 16:10 with the top ray >= 40 deg below the horizon', () => {
-    const settings = { pitchDeg: 65, fov: 35, margin: 8 };
+    const settings = { pitchDeg: 65, fov: 35, margin: 3 };
     const bounds = new Box3(new Vector3(-50, 0, -30), new Vector3(50, 6, 30));
     const camera = new PerspectiveCamera();
     for (const aspect of [16 / 9, 16 / 10, 4 / 3]) {
