@@ -87,6 +87,7 @@ Non-visual loop (measure → log → change → re-measure; same metric and seed
 | D5 | Noise | Noise-free scores for cuts; hysteresis on near-ties | Lower all noise | Keeps attack variety / difficulty feel |
 | D6 | Baseline | Commit v1 churn JSON before changes | Compare in-memory | Reproducible targets |
 | D7 | Redraw block vs danger | Block always holds | Lift on danger | Redraw loop is the exact complaint |
+| D8 | Tier-aware commitment scaling (owner-approved 2026-10-19) | Code change: scale `minLineLifetimeSec`/`redrawBlockSec` by `decisionIntervalSec` vs a fixed reference (variants still only set `skill`, D4 unchanged) | Schema change letting variants override `commitment` | Tried in Task 5 resume iters 11-14 and **not shipped**: shortening fast-tier windows breaks the churn targets (turtle-expert cliff) and does not fix 17h (needs ~no rusher-expert commitment, a 5-6x churn budget overrun). See iteration log |
 
 ## Risks / Open Questions
 - [RESOLVED: lifetime lock may slow adaptation and cost win rate -> drift rule step 6; expert variants share base params so only base values are tuned]
