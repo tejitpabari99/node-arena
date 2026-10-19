@@ -26,6 +26,7 @@ export function createTestHarness(files: ContentFileMap) {
         towers: ReturnType<typeof createTowerRenderer>; fx: ReturnType<typeof createFxRenderer>; troops: unknown;
       };
       /** Renderer modules may expose optional `settle()` / `advance(dt)` (see probe.ts); v1 modules define neither. */
+      let savedBackground: { value: Scene['background'] } | undefined;
       const hooks = (): HarnessRendererHooks[] => { if (!app.runtime) return []; const i = inspect(); return [i.towers, i.troops, i.lines, i.fx] as HarnessRendererHooks[]; };
       const render = ({ settle = true }: { settle?: boolean } = {}) => {
         if (settle) for (const module of hooks()) module.settle?.();
@@ -44,7 +45,7 @@ export function createTestHarness(files: ContentFileMap) {
         get view() { return app.driver?.sim.snapshot(); },
         get events() { return events; },
         get screen() { return app.snapshot().screen; },
-        async load(id: string, seed?: number) { if (app.runtime) retired.push(inspect().renderer); await app.startLevel(id, seed); },
+        async load(id: string, seed?: number) { savedBackground = undefined; if (app.runtime) retired.push(inspect().renderer); await app.startLevel(id, seed); },
         menu() { if (app.runtime) retired.push(inspect().renderer); app.menu(); },
         submit: (cmd: Command) => app.driver?.submit(cmd),
         render,
@@ -84,6 +85,15 @@ export function createTestHarness(files: ContentFileMap) {
           return buildVisualProbe({ scene, camera, view: app.driver!.sim.view, events, viewport: { w: canvas.width, h: canvas.height }, clearColor: `#${clear.getHexString()}`,
             hasCard: i => document.querySelector(`[data-tower-index="${i}"]`) !== null, fx: fx.meshes });
         },
+        /** M07 magenta pass (SP01): force the scene clear/background colour; `null` restores the theme background. */
+        clearColor(hex: string | null) {
+          const { scene } = inspect();
+          if (hex === null) { if (savedBackground) { scene.background = savedBackground.value; savedBackground = undefined; } return; }
+          savedBackground ??= { value: scene.background };
+          scene.background = new Color(hex);
+        },
+        /** renderer.info.render of the last rendered frame (M13 drawCalls). */
+        renderInfo() { const { calls, triangles } = inspect().renderer.info.render; return { calls, triangles }; },
         settings: (patch: Parameters<AppController['updateSettings']>[0]) => app.updateSettings(patch),
       };
     },

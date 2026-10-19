@@ -26,7 +26,7 @@ function dropKeys(value, drop) {
 
 /**
  * metrics.json reduced to the captured jobs (`scene@WxH`), `perf` removed at any depth, and the
- * SHA-256 fields (frame + laneCrop) removed only for frames whose PNG was judged near-identical.
+ * SHA-256 fields (frame + laneCrop, magenta pass) removed only for PNGs judged near-identical.
  */
 export function comparableMetrics(metrics, jobs, relaxedPngs) {
   const out = {};
@@ -40,6 +40,7 @@ export function comparableMetrics(metrics, jobs, relaxedPngs) {
       delete frame.sha256;
       if (frame.laneCrop) delete frame.laneCrop.sha256;
     }
+    for (const frame of clean.frames ?? []) if (frame.magenta && relaxedPngs.has(frame.magenta.png)) delete frame.magenta.sha256;
     out[job] = clean;
   }
   return out;

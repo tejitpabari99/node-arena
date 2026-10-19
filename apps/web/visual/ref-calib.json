@@ -1,0 +1,23 @@
+{
+  "$comment": "SP01 visual:calibrate inputs (PRD Iteration protocol step 4a). Coordinates are full-image px of the ref file; `frame` = measured area (tw01 y<1030 drops the promo banner, yt1 = central 324 px), `playQuad` = play band (grass patch locator, M09/M10), tower `box` = [x0,y0,x1,y1]. team null = neutral. slots per the Tower War rule (1 <10, 2 >=10, 3 >=30); floors are derived as clamp(ceil(5*count/cap),1,5). Refs are never edited: a metric that fails here is fixed in the metric.",
+  "refDirGlob": "docs/agent_files/*visual-mechanics-overhaul*/ref",
+  "refs": [
+    { "id": "towerwar_01", "file": "towerwar_01.jpg",
+      "frame": { "x": 0, "y": 0, "w": 554, "h": 1030 },
+      "playQuad": { "x": 0, "y": 190, "w": 554, "h": 680 },
+      "towers": [
+        { "name": "red5", "box": [50, 340, 125, 440], "team": "red", "count": 5, "cap": 63, "slots": 1 },
+        { "name": "blue5", "box": [415, 715, 505, 800], "team": "blue", "count": 5, "cap": 63, "slots": 1 },
+        { "name": "yellow4", "box": [405, 225, 480, 325], "team": "yellow", "count": 4, "cap": 63, "slots": 1 },
+        { "name": "grey25", "box": [35, 440, 115, 560], "team": null, "count": 25, "cap": 63, "slots": 2 }
+      ] },
+    { "id": "towerwar_yt1", "file": "towerwar_yt1.jpg",
+      "frame": { "x": 478, "y": 0, "w": 324, "h": 720 },
+      "playQuad": { "x": 478, "y": 180, "w": 324, "h": 400 },
+      "towers": [
+        { "name": "44", "box": [700, 395, 755, 480], "team": "blue", "count": 44, "cap": 63, "slots": 3 },
+        { "name": "38", "box": [525, 385, 580, 470], "team": "blue", "count": 38, "cap": 63, "slots": 3 },
+        { "name": "Max", "box": [600, 455, 650, 535], "team": "blue", "count": 63, "cap": 63, "slots": 3 }
+      ] }
+  ]
+}
