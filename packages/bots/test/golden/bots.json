@@ -1,5 +1,5 @@
 {
-  "botVersion": "1.0.7",
+  "botVersion": "1.1.0",
   "metadata": {
     "rulesVersion": "1.0.0",
     "schemaVersion": "1.0.0",
@@ -7,16 +7,16 @@
   },
   "botHash": {
     "random-6-seed-1": {
-      "economist-expert": "3bf3be10f22b3efdce632b0ccf545bde815b3ff5b901519a3dea358b3ee26d40",
-      "opportunist-normal": "6b8377b76e20e586a968b759d0a84918d63bdd93a29700211d5165d93824eea5"
+      "economist-expert": "4b517f4b8a93bc37fa3a0f9e459bb466ff180a25497f214a3d7c2a66b625061b",
+      "opportunist-normal": "b4cb7a6ddef8339d44084dcdfd4d54a40cf7f5ae74512abc8d0947b0deb2a4aa"
     },
     "random-0-seed-37": {
-      "rusher-hard": "3b67d2a17d3e2733ac46adaa1b477398c3794a8375e878835cdb5cf52ac2015d",
-      "turtle-normal": "a9ca15680bd453606ff45c4862ef02fbca7b7f6765560191d41806f849559b24"
+      "rusher-hard": "f080c6beeda550b33ad125078f8869b7e2281722115a4ef56ed40bc05fe524ce",
+      "turtle-normal": "3264cb4793bdb4cfc9229974b1eb72920681c60ad408792c04649cf9190168af"
     },
     "random-3-seed-704": {
-      "opportunist-easy": "d17fe4679a87896f87ad0656aff3bfe127a9be01da976e818c2e90078cb147a4",
-      "rusher-normal": "47a493dd43cab5e6f4c8fa0f810b462258f8587ee06fc19133a233ca5bf723b2"
+      "opportunist-easy": "4a086bf2971708f6264e27ababa310a8517140bb79c6fba7c01a75f9a0818a33",
+      "rusher-normal": "353651d6a973c7e17116bcff7a973b28b6f730b8a0981ec52d547b3c22655695"
     }
   },
   "scenarios": [
@@ -271,6 +271,15 @@
                   "generates": 3000,
                   "garrison": 200
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 150,
+                  "redrawBlockSec": 10000,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 3000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 6000,
@@ -335,6 +344,15 @@
                   "generates": 1000,
                   "garrison": 400
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 150,
+                  "redrawBlockSec": 10000,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 3000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 2000,
@@ -379,8 +397,8 @@
         ],
         "simHash": "8d4bfd60924e0ff8bd89029c98abf5b27ffb221918b5387f17f51c3b5e123c47",
         "botHash": {
-          "economist-expert": "3bf3be10f22b3efdce632b0ccf545bde815b3ff5b901519a3dea358b3ee26d40",
-          "opportunist-normal": "6b8377b76e20e586a968b759d0a84918d63bdd93a29700211d5165d93824eea5"
+          "economist-expert": "4b517f4b8a93bc37fa3a0f9e459bb466ff180a25497f214a3d7c2a66b625061b",
+          "opportunist-normal": "b4cb7a6ddef8339d44084dcdfd4d54a40cf7f5ae74512abc8d0947b0deb2a4aa"
         }
       },
       "seed": 1
@@ -585,6 +603,15 @@
                   "generates": 1000,
                   "garrison": 300
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 150,
+                  "redrawBlockSec": 10000,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 3000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 3000,
@@ -649,6 +676,15 @@
                   "generates": 1000,
                   "garrison": 800
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 150,
+                  "redrawBlockSec": 10000,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 3000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 1000,
@@ -693,8 +729,8 @@
         ],
         "simHash": "9c331abfdcd4b98ae786c4c136aa0f0b45aa3860a70a935cbc5d64e4d1de9e95",
         "botHash": {
-          "rusher-hard": "3b67d2a17d3e2733ac46adaa1b477398c3794a8375e878835cdb5cf52ac2015d",
-          "turtle-normal": "a9ca15680bd453606ff45c4862ef02fbca7b7f6765560191d41806f849559b24"
+          "rusher-hard": "f080c6beeda550b33ad125078f8869b7e2281722115a4ef56ed40bc05fe524ce",
+          "turtle-normal": "3264cb4793bdb4cfc9229974b1eb72920681c60ad408792c04649cf9190168af"
         }
       },
       "seed": 37
@@ -975,6 +1011,15 @@
                   "generates": 1000,
                   "garrison": 400
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 150,
+                  "redrawBlockSec": 10000,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 3000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 2000,
@@ -1039,6 +1084,15 @@
                   "generates": 1000,
                   "garrison": 300
                 },
+                "commitment": {
+                  "minLineLifetimeSec": 8000,
+                  "dangerOverride": 700,
+                  "cutMargin": 150,
+                  "redrawBlockSec": 10000,
+                  "tieHysteresis": 50,
+                  "slotGuardMargin": 3000,
+                  "slotPreemptMargin": 1000
+                },
                 "weights": {
                   "attack": {
                     "targetValue": 3000,
@@ -1083,8 +1137,8 @@
         ],
         "simHash": "ed57bc0b68d0cdf04630b77372e949a509c63103614d75d0ba512a9043c893df",
         "botHash": {
-          "opportunist-easy": "d17fe4679a87896f87ad0656aff3bfe127a9be01da976e818c2e90078cb147a4",
-          "rusher-normal": "47a493dd43cab5e6f4c8fa0f810b462258f8587ee06fc19133a233ca5bf723b2"
+          "opportunist-easy": "4a086bf2971708f6264e27ababa310a8517140bb79c6fba7c01a75f9a0818a33",
+          "rusher-normal": "353651d6a973c7e17116bcff7a973b28b6f730b8a0981ec52d547b3c22655695"
         }
       },
       "seed": 704

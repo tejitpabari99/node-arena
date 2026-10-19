@@ -6,7 +6,7 @@ export { ContentSchema, BalanceSchema, ArchetypeSchema, LevelSchema, ComponentPa
 export { COMPONENT_REGISTRY, validateComponents, validateTroopValue, type ComponentRegistry, type ComponentDefinition, type ParamRule } from './component-registry.js';
 export { resolveArchetypes } from './resolve-archetypes.js';
 export { BotSchema, BotJsonSchema, type BotProfile } from './bot.schema.js';
-export { BotParamsSchema, BotSkillSchema, BotConsiderationWeightsSchema, BOT_CONSIDERATIONS, BOT_ACTIONS, type BotParams, type BotSkill, type BotConsideration, type BotAction } from './bot-params.js';
+export { BotParamsSchema, BotSkillSchema, BotCommitmentSchema, BotConsiderationWeightsSchema, BOT_CONSIDERATIONS, BOT_ACTIONS, type BotParams, type BotSkill, type BotCommitment, type BotConsideration, type BotAction } from './bot-params.js';
 export { ManifestSchema, ManifestJsonSchema, type Manifest } from './manifest.schema.js';
 export { validateContent, type ValidationResult, type ValidateContentOptions } from './validate-content.js';
 export { parseContent } from './parse-content.js';
