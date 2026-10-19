@@ -200,7 +200,7 @@ export function plateV(hsv, comp) {
 }
 
 /**
- * Dark-outline ring of a fill component: boundary pixels with a dark pixel (V <= .25, or <= plate V - .20) within 2 px
+ * Dark-outline ring of a fill component: boundary pixels with a dark pixel (V <= .25, or <= plate V - .15) within 2 px
  * (Chebyshev). Returns { share, gy0, gy1 }: share of ringed boundary pixels and the vertical extent of fill + ring pixels.
  */
 export function outlineRing(hsv, comp, backV = null) {
@@ -345,7 +345,7 @@ export const STRIPE_MIN_RUN = 0.03;
 
 /**
  * M20 floor stripes along the vertical centre line (3-px majority) of the tower rect, below `fromY` (bottom of number/dots):
- * team-sat runs and white-body runs (>= 2 px). whiteRuns = gaps between consecutive team runs that contain a white run;
+ * team-sat runs and white-body runs (>= max(1, round(STRIPE_MIN_RUN x tower w)) px). whiteRuns = gaps between consecutive team runs that contain a white run;
  * bands = team runs after the first one (roof cap). Owned towers only.
  */
 export function floorStripes(hsv, rect, team, fromY = rect.y) {
