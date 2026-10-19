@@ -34,12 +34,14 @@ export function createLevelScene(options: SceneOptions) {
   const groundSize = groundBounds.getSize(new Vector3()), groundCenter = groundBounds.getCenter(new Vector3());
   const ground = new Mesh(new PlaneGeometry(Math.max(groundSize.x, .01), Math.max(groundSize.z, .01)), new MeshStandardMaterial({ color: theme.ground }));
   ground.rotation.x = -Math.PI / 2; ground.position.set(groundCenter.x, 0, groundCenter.z); ground.receiveShadow = true;
+  ground.userData.visualRole = 'ground'; // probe tag only (test-harness visualProbe)
   scene.add(ground); scope.object(ground);
   for (const prop of theme.props ?? []) {
     const model = models.get(prop.model); if (!model) throw new Error(`Missing loaded model: ${prop.model}`);
     const clone = cloneModel(model, scope); clone.position.fromArray(prop.pos); clone.scale.setScalar(prop.scale ?? 1);
     if (prop.rotation) clone.rotation.set(prop.rotation[0]!, prop.rotation[1]!, prop.rotation[2]!);
     clone.traverse(node => { if (node instanceof Mesh) { node.castShadow = true; node.receiveShadow = true; } });
+    clone.userData.visualRole = 'ground'; // probe tag only: border props count as ground
     scene.add(clone); bounds.union(new Box3().setFromObject(clone));
   }
   const light = new DirectionalLight(theme.light.color, theme.light.intensity);

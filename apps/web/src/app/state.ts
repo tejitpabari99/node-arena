@@ -119,7 +119,8 @@ export function createAppController(options: AppOptions) {
   let generation = 0,
     disposed = false,
     returnScreen: "menu" | "paused" = "menu",
-    compiled: CompiledLevel | undefined;
+    compiled: CompiledLevel | undefined,
+    matchSeed = 1;
   const publish = () => {
     state = { ...state, save: save.snapshot() };
     let notice;
@@ -154,7 +155,7 @@ export function createAppController(options: AppOptions) {
     try {
       driver = new GameDriver({
         level: compiled!,
-        matchSeed: 1,
+        matchSeed,
         autoStart: false,
         ...(options.createSim ? { createSim: options.createSim } : {}),
         ...(options.environment ? { environment: options.environment } : {}),
@@ -303,8 +304,10 @@ export function createAppController(options: AppOptions) {
         publish();
       }
     },
-    async startLevel(id: string) {
+    /** `seed` is for test hooks; the game always starts levels with the default seed 1. */
+    async startLevel(id: string, seed = 1) {
       if (!manager || !state.levels.some((l) => l.id === id)) return;
+      matchSeed = seed;
       const token = ++generation;
       clearLevel();
       state = {

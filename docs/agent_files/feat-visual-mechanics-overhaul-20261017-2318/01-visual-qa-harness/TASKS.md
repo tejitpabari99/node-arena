@@ -8,14 +8,14 @@ Source of truth: docs/agent_files/feat-visual-mechanics-overhaul-20261017-2318/0
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Probe tags and `visualProbe()` + harness hooks | none | todo |
-| 2 | `visual-clash` fixture | T1 | todo |
-| 3 | Scenes + deterministic `visual:capture` | T1, T2 | todo |
-| 4 | Pixel helper + `visual:selfcheck` (determinism loop + lint) | T3 | todo |
-| 5 | Metrics M01-M20 (HSV colour spec), `thresholds.json`, `visual:check`, `visual:calibrate` | T3, T4 | todo |
-| 6 | `ref-map.json` + `visual:compose` | T3 | todo |
-| 7 | CHECKLIST.md (24 items, metrics table, probe contract) + `visual:score-sheet`/`score-merge` | T5, T6 | todo |
-| 8 | Iteration-0 baseline + calibration (refs, landscape mock, controls) + regression gate | T4, T5, T6, T7 | todo |
+| 1 | Probe tags and `visualProbe()` + harness hooks | none | done |
+| 2 | `visual-clash` fixture | T1 | done |
+| 3 | Scenes + deterministic `visual:capture` | T1, T2 | done |
+| 4 | Pixel helper + `visual:selfcheck` (determinism loop + lint) | T3 | done |
+| 5 | Metrics M01-M20 (HSV colour spec), `thresholds.json`, `visual:check`, `visual:calibrate` | T3, T4 | done |
+| 6 | `ref-map.json` + `visual:compose` | T3 | done |
+| 7 | CHECKLIST.md (24 items, metrics table, probe contract) + `visual:score-sheet`/`score-merge` | T5, T6 | done |
+| 8 | Iteration-0 baseline + calibration (refs, landscape mock, controls) + regression gate | T4, T5, T6, T7 | done |
 
 ## Task 1 - Probe tags and `visualProbe()` + harness hooks
 What it is / what it means: The projection-first metric source (Architecture: Probe; Decision 3). Test hooks only, absent in prod build.

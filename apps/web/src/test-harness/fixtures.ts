@@ -21,6 +21,11 @@ export function fixtureFiles(source: ContentFileMap, mode: string): ContentFileM
   if (mode === 'capture' || mode === 'victory') {
     files['data/archetypes/fixture-defender.json'] = JSON.stringify({ ...standard, id: 'fixture-defender', components: { garrison: { cap: 1 }, drawsLines: { extraSlotAbove: [] }, capturable: {} } });
   }
+  // Idle profile: the least-active bot, so the capture window has zero bot commands (verified in visual-clash.test.ts).
+  const clashPlayers = [
+    { id: 'p1', kind: 'human', colorKey: 'player.1' },
+    { id: 'p2', kind: 'bot', botProfile: 'idle', colorKey: 'player.2' },
+  ];
   for (let i = 1; i <= 20; i++) {
     const towers = sample.towers.map((t: Record<string, unknown>) => ({ ...t }));
     if (mode === 'visual') towers[0].archetype = 'fixture-building';
@@ -28,6 +33,16 @@ export function fixtureFiles(source: ContentFileMap, mode: string): ContentFileM
       towers[2].owner = 'p1';
       towers[2].pos = { x: -40, y: 30 };
       towers.push({ ...towers[2], id: 't4', owner: null, pos: { x: 0, y: 30 } });
+    }
+    if (mode === 'visual-clash') {
+      // SP01 clash scene (tower ids a-d): A(p1)<->B(p2) head-on (scripted A->B, B->A); C(p1)->D(neutral) crosses A-B at x=-20, off the midpoint split.
+      towers.length = 0;
+      towers.push(
+        { id: 'a', archetype: 'standard', pos: { x: -40, y: 0 }, owner: 'p1', garrison: 10 },
+        { id: 'b', archetype: 'standard', pos: { x: 40, y: 0 }, owner: 'p2', garrison: 10 },
+        { id: 'c', archetype: 'standard', pos: { x: -20, y: -28 }, owner: 'p1', garrison: 10 },
+        { id: 'd', archetype: 'standard', pos: { x: -20, y: 28 }, owner: null, garrison: 40 },
+      );
     }
     if (mode === 'capture' || mode === 'victory') {
       towers[1].garrison = 1;
@@ -37,7 +52,7 @@ export function fixtureFiles(source: ContentFileMap, mode: string): ContentFileM
     } else if (mode === 'stress') towers[0].garrison = 100000;
     files[`data/levels/${String(i).padStart(2, '0')}-fixture.json`] = JSON.stringify({
       ...sample, id: `fixture-${i}`, name: `Fixture ${i}`, order: i,
-      towers, ...(mode === 'timeout' ? { timeLimitSec: 1 } : {}),
+      towers, ...(mode === 'visual-clash' ? { players: clashPlayers } : {}), ...(mode === 'timeout' ? { timeLimitSec: 1 } : {}),
     });
   }
   return files;
