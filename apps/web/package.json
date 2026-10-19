@@ -14,7 +14,8 @@
     "slice:verify": "pnpm build:test && SLICE=1 playwright test e2e/slice.spec.ts --workers=1",
     "test:e2e:dev": "WEB_TEST_SERVER=dev playwright test",
     "test:e2e:all": "pnpm build:test && playwright test --workers=1 && WEB_TEST_SERVER=dev playwright test --workers=1",
-    "visual:capture": "node visual/capture.mjs"
+    "visual:capture": "node visual/capture.mjs",
+    "visual:selfcheck": "node visual/selfcheck.mjs"
   },
   "dependencies": {
     "@node-arena/bots": "workspace:*",

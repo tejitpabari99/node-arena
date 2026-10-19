@@ -15,6 +15,17 @@ export default [
   { ignores: ['**/node_modules/**', '**/dist/**', '**/test-results/**', '**/playwright-report/**', '.worktrees/**'] },
   { files: ['**/*.ts', '**/*.tsx'], languageOptions: { parser: tseslint.parser } },
   {
+    // Render determinism (SP01 N6, mirrors apps/web/visual/lib/lint-determinism.mjs): seed jitter via src/render/rng.ts.
+    files: ['apps/web/src/render/**/*.{ts,tsx}', 'apps/web/src/fx/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-properties': ['error',
+        ...[['Math', 'random'], ['crypto', 'getRandomValues'], ['Date', 'now'], ['performance', 'now']].map(([object, property]) => ({
+          object, property, message: 'Render code must be deterministic: use seededRandom(pairKey, tick) from src/render/rng.ts (no wall clock / unseeded random).',
+        })),
+      ],
+    },
+  },
+  {
     files: ['packages/content/src/**/*.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: [{ group: nodeOnly, message: 'Content APIs must run in the browser; perform Node I/O in an external adapter.' }] }],

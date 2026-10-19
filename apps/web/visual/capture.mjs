@@ -11,6 +11,8 @@ import { BASE_URL, buildTest, CLOCK_TIME, gitCommit, launch, newContext, resolve
 
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
 const log = (...a) => console.log('[visual:capture]', ...a);
+/** SwiftShader screenshots of 1920px WebGL frames can exceed Playwright's 30 s default when the host is loaded. */
+const SHOT_TIMEOUT = 120_000;
 
 /** Headed without an X display: start a private Xvfb (xvfb-run needs xauth, often missing). Returns a stop function. */
 async function ensureDisplay(opts) {
@@ -37,7 +39,7 @@ async function finishFrame(page, settle) {
 }
 
 async function screenshot(page, file) {
-  const buf = await page.screenshot({ path: path.join(OUT_DIR, file), animations: 'disabled', caret: 'hide' });
+  const buf = await page.screenshot({ path: path.join(OUT_DIR, file), animations: 'disabled', caret: 'hide', timeout: SHOT_TIMEOUT });
   return { png: file, sha256: sha256(buf) };
 }
 
@@ -133,7 +135,7 @@ async function captureLevel(page, scene, config, viewport) {
     const state = await page.evaluate(() => ({ tick: window.__na.view.tick, hash: window.__na.hash(), over: window.__na.view.over, screen: window.__na.screen, probe: window.__na.visualProbe() }));
     const shot = await screenshot(page, frameFile(scene.id, `${viewport.width}x${viewport.height}`, frame.label));
     const entry = { label: frame.label, settle: frame.settle, ...shot, tick: state.tick, simHash: state.hash, over: state.over, screen: state.screen, probe: state.probe };
-    if (laneRect) entry.laneCrop = { rect: laneRect, sha256: sha256(await page.screenshot({ clip: laneRect, animations: 'disabled', caret: 'hide' })) };
+    if (laneRect) entry.laneCrop = { rect: laneRect, sha256: sha256(await page.screenshot({ clip: laneRect, animations: 'disabled', caret: 'hide', timeout: SHOT_TIMEOUT })) };
     out.frames.push(entry);
     previous = state.tick;
     if (scene.splitTrace && traceEnd === null) { traceEnd = state.tick + scene.splitTrace.ticks - 1; await recordTrace(); }
