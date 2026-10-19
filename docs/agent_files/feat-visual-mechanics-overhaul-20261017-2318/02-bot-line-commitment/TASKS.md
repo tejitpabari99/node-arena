@@ -12,7 +12,7 @@ Source of truth: 02-bot-line-commitment/PRD.md. Bot-side only; sim, GAME_RULES.m
 | 2 | Commitment params: schema, profiles, versions | 1 | done |
 | 3 | Bot enforcement of commitment | 2 | done |
 | 4 | Commitment unit tests | 3 | done |
-| 5 | Tune to churn targets, hold balance bands | 4 | blocked |
+| 5 | Tune to churn targets, hold balance bands | 4 | in-progress |
 | 6 | Regenerate goldens and benchmark evidence | 5 | done |
 | 7 | Docs, rules check, final verification | 6 | done |
 
