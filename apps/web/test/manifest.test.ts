@@ -23,7 +23,7 @@ describe('manifest pipeline', () => {
   it('schema validates greybox and resolves generic presentation keys', async () => {
     const m = parseManifest(greybox); const r = createManifestResolver(m);
     expect(r.visual('troop.regular').model).toMatchObject({ primitive: 'capsule' });
-    expect(r.theme('city.day').ground).toMatch(/^#/); expect(r.camera().fov).toBeGreaterThan(0);
+    expect(r.theme('grass').ground).toMatch(/^#/); expect(r.camera().fov).toBeGreaterThan(0);
     expect(r.color('player.1', 'colorblind')).toMatch(/^#/); expect(r.marker('player.1')).toBeTruthy();
     expect(r.event('Captured')?.fx).toBe('pulse'); expect(r.event('unknown')).toBeUndefined();
     await expect(validateManifest(m, { assetsDir: temp(), credits: '' })).resolves.toEqual(m);

@@ -1,10 +1,11 @@
-import { Box3, Color, DirectionalLight, Fog, Mesh, MeshStandardMaterial, PCFShadowMap, PerspectiveCamera, PlaneGeometry, Scene, Vector3, WebGLRenderer, type Object3D } from 'three';
+import { Box3, Color, DirectionalLight, Fog, HemisphereLight, Mesh, MeshStandardMaterial, PCFShadowMap, PerspectiveCamera, PlaneGeometry, Scene, Vector3, WebGLRenderer, type Object3D } from 'three';
 import type { CompiledLevel, Manifest } from '@node-arena/content';
 import { createManifestResolver } from '../manifest/resolve.js';
 import { Disposables } from './disposables.js';
 import { cloneModel } from './model.js';
 import { authoredBounds, fitCamera, levelVisualBounds } from './camera.js';
 
+const HEMI_INTENSITY = 1;
 export type Quality = 'low' | 'med' | 'high';
 export function qualitySettings(quality: Quality, dpr: number) {
   return { pixelRatio: quality === 'low' ? 1 : quality === 'med' ? 1.5 : Math.min(dpr, 2),
@@ -32,7 +33,12 @@ export function createLevelScene(options: SceneOptions) {
   // Ground follows authored extents as well as physical/footprint bounds; loaded extents are milli-units.
   const groundBounds = bounds.clone().union(authoredBounds(level));
   const groundSize = groundBounds.getSize(new Vector3()), groundCenter = groundBounds.getCenter(new Vector3());
-  const ground = new Mesh(new PlaneGeometry(Math.max(groundSize.x, .01), Math.max(groundSize.z, .01)), new MeshStandardMaterial({ color: theme.ground }));
+  // Sand base plane (>= 4x bounds) under everything: the clear colour is sand too, so no seam or void shows at any aspect.
+  const sand = new Mesh(new PlaneGeometry(Math.max(groundSize.x, 1) * 4, Math.max(groundSize.z, 1) * 4), new MeshStandardMaterial({ color: theme.palette?.sand ?? theme.sky }));
+  sand.rotation.x = -Math.PI / 2; sand.position.set(groundCenter.x, -.02, groundCenter.z); sand.receiveShadow = true;
+  sand.userData.visualRole = 'ground'; scene.add(sand); scope.object(sand);
+  const GRASS_PAD = 6; // grass play patch = level bounds + pad
+  const ground = new Mesh(new PlaneGeometry(Math.max(groundSize.x, .01) + 2 * GRASS_PAD, Math.max(groundSize.z, .01) + 2 * GRASS_PAD), new MeshStandardMaterial({ color: theme.ground }));
   ground.rotation.x = -Math.PI / 2; ground.position.set(groundCenter.x, 0, groundCenter.z); ground.receiveShadow = true;
   ground.userData.visualRole = 'ground'; // probe tag only (test-harness visualProbe)
   scene.add(ground); scope.object(ground);
@@ -49,6 +55,9 @@ export function createLevelScene(options: SceneOptions) {
   const radius = Math.max(size.length(), 1), direction = new Vector3().fromArray(theme.light.dir);
   // A zero authored vector has a deterministic overhead fallback.
   if (direction.lengthSq() === 0) direction.set(0, 1, 0);
+  // One warm key light plus a sky/sand hemisphere fill.
+  const fill = new HemisphereLight(theme.palette?.sand ?? theme.sky, theme.palette?.sandShade ?? theme.ground, HEMI_INTENSITY); scene.add(fill);
+  scope.defer(() => { fill.dispose(); fill.removeFromParent(); });
   light.position.copy(center).addScaledVector(direction.normalize(), radius * 2); light.target.position.copy(center);
   Object.assign(light.shadow.camera, { left: -radius, right: radius, top: radius, bottom: -radius, near: .01, far: radius * 4 });
   light.shadow.camera.updateProjectionMatrix(); scene.add(light, light.target);

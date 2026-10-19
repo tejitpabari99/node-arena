@@ -8,11 +8,11 @@ const skill = { decisionIntervalSec: 1.5, noise: 0.1, actionsPerDecision: 2 };
 const utility = { ...envelope('bot'), id: 'rusher', kind: 'utility', params: { skill, bias: { attack: 1 }, weights: { attack: { targetValue: 10 } } } };
 const tier = { ...envelope('bot'), id: 'rusher-easy', kind: 'utility', params: { extends: 'rusher', skill: { ...skill, noise: 0.35 } } };
 const manifest = {
-  ...envelope('manifest'), palettes: { default: { 'player.1': '#ff0000', neutral: '#808080' }, colorblind: { 'player.1': '#0000ff', neutral: '#808080' } },
+  ...envelope('manifest'), schemaVersion: '1.1.0', palettes: { default: { 'player.1': '#ff0000', neutral: '#808080' }, colorblind: { 'player.1': '#0000ff', neutral: '#808080' } },
   teamMarkers: { 'player.1': 'circle', neutral: 'square' },
   models: { office: { src: 'models/office.glb' }, walker: { primitive: 'capsule', size: [1, 2, 1] } },
-  visuals: { 'tower.standard': { kind: 'tower', model: 'office', scale: 1, yOffset: 0, teamMaterial: 'Accent', label: { height: 4.2 } }, 'troop.regular': { kind: 'troop', model: 'walker', scale: 0.6, yOffset: 0, anim: { type: 'bob', hz: 2.2, amp: 0.12, sway: 6 } } },
-  themes: { 'city.day': { ground: '#aaaaaa', sky: '#ffffff', light: { dir: [1, 2, 3], color: '#ffffff', intensity: 1 }, fog: { color: '#ffffff', near: 10, far: 100 }, props: [{ model: 'office', pos: [1, 0, 3], scale: 1 }] } },
+  visuals: { 'tower.standard': { kind: 'tower', model: 'office', scale: 1, yOffset: 0, build: 'stacked', teamMaterial: 'Accent', label: { height: 4.2 } }, 'troop.regular': { kind: 'troop', model: 'walker', scale: 0.6, yOffset: 0, anim: { type: 'bob', hz: 2.2, amp: 0.12, sway: 6 } } },
+  themes: { grass: { ground: '#aaaaaa', sky: '#ffffff', palette: { sand: '#ffe1b3' }, scatter: { seed: 1, density: 0.6 }, light: { dir: [1, 2, 3], color: '#ffffff', intensity: 1 }, fog: { color: '#ffffff', near: 10, far: 100 }, props: [{ model: 'office', pos: [1, 0, 3], scale: 1 }] } },
   events: { Captured: { sfx: 'audio/capture.ogg', fx: 'capture' } }, camera: { pitchDeg: 45, fov: 50, margin: 10 },
 };
 async function validator(name: string) {
@@ -69,8 +69,12 @@ test('manifest rejects invalid palettes, models, animation kinds and unknown nes
     { models: { broken: { primitive: 'sphere', size: [1, 1, 1] } } },
     { models: { broken: { primitive: 'box', size: [1, 1] } } },
     { visuals: { a: { kind: 'tower', model: 'office', scale: 1, anim: { type: 'vat' } } } },
-    { themes: { a: { ...manifest.themes['city.day'], light: { dir: [1, 2, 3], color: '#ffffff', intensity: 1, junk: 1 } } } },
+    { themes: { a: { ...manifest.themes.grass, light: { dir: [1, 2, 3], color: '#ffffff', intensity: 1, junk: 1 } } } },
     { camera: { ...manifest.camera, junk: true } },
+    { schemaVersion: '1.0.0' },
+    { visuals: { a: { kind: 'tower', model: 'office', scale: 1, build: 'voxel' } } },
+    { themes: { a: { ...manifest.themes.grass, scatter: { seed: 1.5, density: 0.6 } } } },
+    { themes: { a: { ...manifest.themes.grass, palette: { sand: 'tan' } } } },
   ]) assert.equal(validate({ ...manifest, ...patch }), false, JSON.stringify(patch));
 });
 

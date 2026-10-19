@@ -5,7 +5,7 @@
   "name": "Snip",
   "order": 6,
   "band": 2,
-  "visual": "city.dusk",
+  "visual": "grass",
   "timeLimitSec": 300,
   "bounds": {
     "w": 120,

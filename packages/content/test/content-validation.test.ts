@@ -197,7 +197,7 @@ test('campaign present orders start at one and are unique/contiguous; a full cam
 });
 
 function manifest() {
-  return { ...envelope('manifest'), palettes: { default: { red: '#ff0000', blue: '#0000ff' }, colorblind: { red: '#ffff00', blue: '#00ffff' } }, teamMarkers: {}, models: { box: { primitive: 'box', size: [1, 1, 1] } }, visuals: { tower: { kind: 'tower', model: 'box', scale: 1 }, soldier: { kind: 'troop', model: 'box', scale: 1 } }, themes: { city: { ground: '#000000', sky: '#ffffff', light: { dir: [1, 1, 1], color: '#ffffff', intensity: 1 } } }, events: {}, camera: { pitchDeg: 45, fov: 50, margin: 0 } };
+  return { ...envelope('manifest'), schemaVersion: '1.1.0', palettes: { default: { red: '#ff0000', blue: '#0000ff' }, colorblind: { red: '#ffff00', blue: '#00ffff' } }, teamMarkers: {}, models: { box: { primitive: 'box', size: [1, 1, 1] } }, visuals: { tower: { kind: 'tower', model: 'box', scale: 1 }, soldier: { kind: 'troop', model: 'box', scale: 1 } }, themes: { city: { ground: '#000000', sky: '#ffffff', light: { dir: [1, 1, 1], color: '#ffffff', intensity: 1 } } }, events: {}, camera: { pitchDeg: 45, fov: 50, margin: 0 } };
 }
 
 test('optional manifest requires complete shape and checks visuals, every palette and fallback/explicit themes', () => {

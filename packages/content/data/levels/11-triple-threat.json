@@ -5,7 +5,7 @@
   "name": "Triple Threat",
   "order": 11,
   "band": 3,
-  "visual": "city.overcast",
+  "visual": "grass",
   "timeLimitSec": 300,
   "bounds": {
     "w": 120,

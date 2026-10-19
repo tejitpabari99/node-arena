@@ -5,7 +5,7 @@
   "name": "Fortress",
   "order": 16,
   "band": 4,
-  "visual": "city.night",
+  "visual": "grass",
   "timeLimitSec": 300,
   "bounds": {
     "w": 120,

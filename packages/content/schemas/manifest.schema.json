@@ -18,7 +18,7 @@
     },
     "schemaVersion": {
       "type": "string",
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "palettes": {
       "type": "object",
@@ -151,6 +151,10 @@
             },
             "yOffset": {
               "type": "number"
+            },
+            "build": {
+              "type": "string",
+              "const": "stacked"
             },
             "teamMaterial": {
               "type": "string",
@@ -297,6 +301,34 @@
                 "far": {
                   "type": "number",
                   "exclusiveMinimum": 0
+                }
+              },
+              "additionalProperties": false
+            },
+            "palette": {
+              "type": "object",
+              "patternProperties": {
+                "^.*$": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                }
+              },
+              "additionalProperties": false
+            },
+            "scatter": {
+              "type": "object",
+              "required": [
+                "seed",
+                "density"
+              ],
+              "properties": {
+                "seed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "density": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "additionalProperties": false

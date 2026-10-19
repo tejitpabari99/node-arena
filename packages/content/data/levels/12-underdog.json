@@ -5,7 +5,7 @@
   "name": "Underdog",
   "order": 12,
   "band": 3,
-  "visual": "city.overcast",
+  "visual": "grass",
   "timeLimitSec": 300,
   "bounds": {
     "w": 120,

@@ -1,6 +1,6 @@
 // Import-time art processing (SP05 Task 6). Usage:
 //   pnpm --filter @node-arena/tools assets:import -- <dir with unzipped packs: commercial/ chars/> [outDir]
-// Inputs are Kenney CC0 GLBs (City Kit Commercial 2.1, Mini Characters 1.0, City Kit Roads 2.1; roads/ dir). Output: optimised GLBs.
+// Inputs are Kenney CC0 GLBs (City Kit Commercial 2.1, Mini Characters 1.0; the road/light/cone prop pass was retired by SP03 Task 1). Output: optimised GLBs.
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, EXTMeshoptCompression, KHRMeshQuantization } from '@gltf-transform/extensions';
 import { dedup, prune, weld, simplify, quantize, meshopt, textureCompress, flatten, join, resample } from '@gltf-transform/functions';
@@ -79,6 +79,3 @@ await building('building-d.glb', 'tower-small.glb');
 await building('building-g.glb', 'tower-standard.glb');
 await building('building-skyscraper-a.glb', 'tower-large.glb');
 await character('character-male-a.glb', 'troop-regular.glb', { ratio: Number(process.env.ART_RATIO ?? 0.4), error: Number(process.env.ART_ERROR ?? 0.1) });
-await prop('road-straight.glb', 'prop-road.glb');
-await prop('light-square.glb', 'prop-light.glb');
-await prop('construction-cone.glb', 'prop-cone.glb');

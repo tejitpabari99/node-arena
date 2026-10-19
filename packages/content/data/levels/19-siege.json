@@ -5,7 +5,7 @@
   "name": "Siege",
   "order": 19,
   "band": 4,
-  "visual": "city.night",
+  "visual": "grass",
   "timeLimitSec": 360,
   "bounds": {
     "w": 120,
