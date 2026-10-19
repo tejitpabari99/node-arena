@@ -114,3 +114,22 @@ R11 rules check: `grep -n -i '\bbot' docs/GAME_RULES.md` -> 3 hits, none bot beh
 | 1 | 2026-10-19 | Task 7 commit | after `pnpm build`: `check:schemas`, `check:content --base HEAD`, `validate:content --base HEAD`, `typecheck`, `lint` exit 0; tests bots 99/99, content 260/260, tools 47/47; `validate:levels` PASS 21/21; `replay:verify golden` 14/14; `bots:golden` 3 verified at 1.6.0; `sim:golden` 11; `check:rules` 28/28 covered; `balance` (200 seeds) exit 0 `balance: PASS`, 29/63 rows flagged, 19 non-idle, win% string byte-identical to Task 5 iter 7. README example `bots:churn --seeds 2 --levels 13-crossfire,16-fortress` runs (cut-redraw 2.482/min) | carried from Task 5 (Blocked, stuck rule): 3 balance rows flagged that v1 does not flag (02h timeout 3%, 10h 86.5%, 17h 64%); "every band" is unreachable for v1 too (18 non-idle flags) | done. Exit after 1 iter (all commands pass; no code change in scope) |
 
 **Final (SP02) vs baseline** (frozen 8 seeds x 20 levels, bot seats, per seat-minute): cuts 17.175 -> 8.405 (-51.1%, target >= 40%: met); total cut-redraw <= 10 s 14.19 -> 2.421 (-82.9%, target >= 80%: met); slot-cuts 0.364 -> 0.109 (-70.1%, secondary >= 60%: met); flips <= 20 s 15.622 -> 4.726 (-69.7%); draws 25.176 -> 14.448. `validate:levels` PASS. Balance bands: not all pass (see gap above; v1 does not pass all either). Optional L10 2x visual watch: not run (non-gating; no web change in SP02).
+
+## Task 8 — Rebalance level 17 (17h)
+
+Owner decision D13. Edit only `packages/content/data/levels/17-pincer.json` (bot seats b1/b2 `botProfile`); bot code/params, sim, rules and `balance-targets.json` untouched. Variant ids verified in `packages/content/data/bots/`: `rusher-normal|hard|expert`. Screen: `pnpm balance --levels 17-pincer --seeds 200 --jobs 2` (17h / 17r / 17h timeout %). Baseline (Task 7 state, b1=b2=rusher-expert): 17h 64 / 17r 100 / 0.
+
+| iter | date | commit | change (b1, b2) | 17h % | 17r % | 17h timeout % | decision |
+|---|---|---|---|---|---|---|---|
+| 1 | 2026-10-19 | none | expert, hard (b2 only) | 58 | 100 | 0 | above band 45 |
+| 2 | 2026-10-19 | none | hard, hard | 54 | 96.5 | 2 | above band |
+| 3 | 2026-10-19 | none | normal, normal | 33 | 90.5 | 4 | in band, centered |
+| 4 | 2026-10-19 | none | hard, normal | 44 | 95 | 2 | in band but 1 pt from upper bound (fragile) |
+| 5 | 2026-10-19 | none | expert, normal | 54 | 97 | 2.5 | above band |
+| 6 | 2026-10-19 | Task 8 commit | **normal, normal (chosen)** | 33 | 90.5 | 4 | full gates below |
+
+Chosen: both opponents `rusher-expert` -> `rusher-normal` (iter 3; iter 4 hard+normal also lands at 44 but with 1 pt margin, any later drift would break it). `contentVersion` 1.1.5 -> 1.1.6; `hashes.lock.json` unchanged (simHash/botHash do not cover a level's botProfile; `content:lock` rerun, no diff).
+
+Full `pnpm balance` (200 seeds): exit 0, 28/63 rows flagged (Task 7: 29), 18 non-idle flagged (Task 7: 19; 17h cleared). New vs v1: 02h (timeout 3%), 10h (86.5%) only; both accepted (D13). 17: h 33 / r 90.5 / idle 0; timeouts h 4, r 0.5, idle 2 (idle timeout expected). Churn (`bots:churn`, bot seats): cuts 8.004/min (-53.4%, target <= 10.305), cut-redraw total 2.311/min (-83.7%, <= 2.838), slot-cuts 0.124/min (-65.9%, <= 0.146): all met. `validate:levels` 21/21.
+
+Test/golden changes caused by the content edit: `packages/content/test/campaign-invariants.test.ts` per-level table (L17 bots); `packages/bots/test/commitment.test.cjs` R8 v1-baseline test pins 17-pincer seats to `rusher-expert` (baseline file predates the edit); `packages/sim/test/golden/baseline.json` and `packages/bots/test/golden/bots.json` regenerated for contentVersion metadata only (sim golden via `sim:golden --update`; bots golden rewritten with `buildBundle()` since `bots:golden --update` demands a BOT_VERSION bump and no bot code changed); match outputs identical (diff is contentVersion lines only). Tool solutions for levels 18/20 carry header contentVersion 1.1.5 and still verify.

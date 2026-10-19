@@ -290,13 +290,16 @@ test('R8 profiles without commitment reproduce the v1 churn baseline matches exa
     const { commitment: _drop, ...params } = profile.params;
     return { ...profile, params };
   };
-  const human = Object.values(content.resolveProfiles(loaded)).find(profile => profile.id === HUMAN_SEAT_PROFILE);
+  const resolved = content.resolveProfiles(loaded);
+  const human = Object.values(resolved).find(profile => profile.id === HUMAN_SEAT_PROFILE);
   // Since Task 5 iter 4 the human-seat proxies (reference/human-proxy) carry no commitment
   // (tuned out to hold balance bands); strip() is then a no-op for the human seat.
   assert.equal(human.params.commitment, undefined, 'human-proxy runs the v1 path');
   let stripped = 0, differs = 0;
   for (const expected of baseline.matches) {
     const level = content.compileLevel(loaded, expected.level);
+    // Task 8 moved 17-pincer's authored opponents off rusher-expert; the v1 baseline still has them.
+    if (expected.level === '17-pincer') level.bots = level.bots.map(seat => ({ ...seat, profile: Object.values(resolved).find(profile => profile.id === 'rusher-expert') }));
     stripped += level.bots.filter(seat => seat.profile.params.commitment).length;
     const v1 = { ...level, bots: level.bots.map(seat => ({ ...seat, profile: strip(seat.profile) })) };
     const match = runChurnMatch(v1, expected.seed, strip(human));

@@ -41,7 +41,7 @@ const table: [number, string[], number][] = [
   [9, ['rusher-hard'], 180],
   [11, ['economist-hard', 'opportunist-hard'], 300],
   [10, ['turtle-expert'], 300],
-  [11, ['rusher-expert', 'rusher-expert'], 300],
+  [11, ['rusher-normal', 'rusher-normal'], 300],
   [14, ['rusher-expert', 'turtle-expert', 'economist-expert'], 360],
   [12, ['opportunist-expert', 'turtle-expert'], 360],
   [14, ['rusher-expert', 'turtle-expert', 'economist-expert'], 360],

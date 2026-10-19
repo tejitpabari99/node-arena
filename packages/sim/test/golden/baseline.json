@@ -3,7 +3,7 @@
   "metadata": {
     "rulesVersion": "1.0.0",
     "schemaVersion": "1.0.0",
-    "contentVersion": "1.1.5"
+    "contentVersion": "1.1.6"
   },
   "scenarios": [
     {
@@ -1444,7 +1444,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "generation-cap",
           "simHash": "84ec962591009d28319419b56306e1cc6c0f30cd42f3d53c4a30d7185a5cdea1",
           "seed": 4294967295
@@ -1468,7 +1468,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "persistent-cut-replaced",
           "simHash": "376e0d16cf9c4c54d6e17219b7e05c311068bc907bbaeba116720a394b8c81fd",
           "seed": 4294967295
@@ -1533,7 +1533,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "slot-reduction",
           "simHash": "3985165b268824c84adb16db0a0795e032304fa2fd2559513e9134e20ed997c8",
           "seed": 4294967295
@@ -1580,7 +1580,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "head-on-clash",
           "simHash": "fe2daf5164a344a83efe5e0d1e720cb991e8bdbc46b2d6588cd57fac7c081329",
           "seed": 4294967295
@@ -1618,7 +1618,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "overshoot-capture",
           "simHash": "715c8dacb86e549aa1c3e863ee8bccba804e503bc4605823a5d5774af0286716",
           "seed": 4294967295
@@ -1656,7 +1656,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "cap-overflow",
           "simHash": "7281d1026d151782f8082a0fb81c66056da1eeb5b863484c74f98d8aa2370776",
           "seed": 4294967295
@@ -1685,7 +1685,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "command-rejections",
           "simHash": "592b81d4cb0431841f7925cbbb599e8499408d21e1c39e1d29cabd35eab01e5d",
           "seed": 4294967295
@@ -1746,7 +1746,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "mutual-defeat",
           "simHash": "ad5434f03a2fd8857008dbccf53cbc397cac7df5530ba4a0d27e9ce5001a993c",
           "seed": 4294967295
@@ -1768,7 +1768,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "full-transit-win",
           "simHash": "a71cd77375cd48ba89dbf1630e81fad91322b085c026424ffed1007d174e1ea8",
           "seed": 4294967295
@@ -1830,7 +1830,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "full-human-loss",
           "simHash": "854bc11af770dab01550f731fe6da43aa864c10463db06405982663fbbd761b4",
           "seed": 4294967295
@@ -1862,7 +1862,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "full-stalemate-timeout",
           "simHash": "3cfdfaf1ea2f2dd71c77d55d2a8baa1e6e402e75becfc012ab9c307b96b701de",
           "seed": 4294967295

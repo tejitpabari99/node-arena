@@ -3,7 +3,7 @@
   "metadata": {
     "rulesVersion": "1.0.0",
     "schemaVersion": "1.0.0",
-    "contentVersion": "1.1.5"
+    "contentVersion": "1.1.6"
   },
   "botHash": {
     "random-6-seed-1": {
@@ -1151,7 +1151,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "random-6",
           "simHash": "8d4bfd60924e0ff8bd89029c98abf5b27ffb221918b5387f17f51c3b5e123c47",
           "seed": 1
@@ -1470,7 +1470,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "random-0",
           "simHash": "9c331abfdcd4b98ae786c4c136aa0f0b45aa3860a70a935cbc5d64e4d1de9e95",
           "seed": 37
@@ -1639,7 +1639,7 @@
         "header": {
           "rulesVersion": "1.0.0",
           "schemaVersion": "1.0.0",
-          "contentVersion": "1.1.5",
+          "contentVersion": "1.1.6",
           "levelId": "random-3",
           "simHash": "ed57bc0b68d0cdf04630b77372e949a509c63103614d75d0ba512a9043c893df",
           "seed": 704
