@@ -28,7 +28,9 @@ or idle; production campaign authoring belongs to SP05.
 
 Base profiles carry an optional `commitment` block (fx3 milli-units, bot-side only,
 sim rules unchanged): `minLineLifetimeSec`, `dangerOverride`, `cutMargin`,
-`redrawBlockSec`, `tieHysteresis`, `slotGuardMargin`, `slotPreemptMargin`. The four
-personalities start at the PRD defaults (8, 0.7, 0.15, 10, 0.05, 3, 1); `reference`
-uses a milder setting and `human-proxy` inherits it. Tiers may not set `commitment`
-(they inherit it). `idle` and profiles without the block behave exactly as v1.
+`redrawBlockSec`, `tieHysteresis`, `slotGuardMargin`, `slotPreemptMargin`. Shipped
+values: rusher, turtle, economist and opportunist use (8, 0.7, 0, 10, 0.05, 3, 1), except
+turtle `minLineLifetimeSec` 6 and opportunist `redrawBlockSec` 0, `slotGuardMargin` 2.
+`reference`, `human-proxy` and `idle` carry no block (v1 path). Tiers may not set
+`commitment` (they inherit it). Profiles without the block behave exactly as v1. Field
+semantics: `packages/bots/README.md`.

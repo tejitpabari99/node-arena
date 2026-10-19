@@ -37,8 +37,9 @@ export interface UtilityBotOptions {
  *    reverse line (R-LIN-03) that is still under its lifetime lock (danger below dangerOverride).
  * 3. Cut candidates: an own line younger than minLineLifetimeSec is skipped (no RNG) unless
  *    danger(from) >= dangerOverride. Otherwise the noisy score is drawn (one RNG word, same
- *    enumeration position as v1) and the noise-free cutScore and keepScore (best noise-free
- *    attack/reinforce on the pair) are computed without RNG. The cut is dropped unless
+ *    enumeration position as v1) and the noise-free cutScore and keepScore (noise-free score of
+ *    the line's own purpose: reinforce if the target is on the bot's team, else attack) are
+ *    computed without RNG. The cut is dropped unless
  *    cutScore - keepScore >= cutMargin. Near-tie hysteresis (R4): when the noisy cut beats the
  *    keep option by less than cutMargin + tieHysteresis, the cut competes with its noise-free
  *    score, so noise cannot carry a marginal cut. Draw scores keep their noise.
