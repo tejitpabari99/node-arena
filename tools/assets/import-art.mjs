@@ -104,5 +104,4 @@ if (existsSync(resolve(src, 'nature'))) {
 if (existsSync(resolve(src, 'survival'))) {
   const n = (input, file) => nature('survival', 'Models/GLB format', input, file);
   await n('box.glb', 'prop-crate.glb');
-  await n('barrel.glb', 'prop-barrel.glb');
 }

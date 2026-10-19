@@ -33,15 +33,15 @@ describe('grass theme', () => {
     const theme = m.themes.grass!;
     expect(theme.ground).toBe('#A3D419'); expect(theme.sky).toBe('#FFE1B3'); expect(theme.fog).toBeUndefined();
     expect(theme.palette).toMatchObject({ grass: '#A3D419', grassAlt: '#9DCB10', sand: '#FFE1B3', sandShade: '#FFCF8D', rock: '#BC5439', tree: '#028C1D', crate: '#FD8539' });
-    expect(theme.scatter).toEqual({ seed: 1, density: 24 });
+    expect(theme.scatter).toEqual({ seed: 1, density: 34 });
     expect(theme.props ?? []).toEqual([]);
-    expect(Object.keys(m.models).filter(key => key.startsWith('prop.')).sort()).toEqual(['prop.barrel', 'prop.crate', 'prop.stump', 'prop.tree.pine', 'prop.tree.round']);
+    expect(Object.keys(m.models).filter(key => key.startsWith('prop.')).sort()).toEqual(['prop.crate', 'prop.stump', 'prop.tree.pine', 'prop.tree.round']);
   });
   it('steep camera: pitch 65, fov 35', () => { expect(m.camera).toMatchObject({ pitchDeg: 65, fov: 35 }); });
   it('keeps the default-theme fallback key defined', () => { expect(m.themes.grass).toBeDefined(); });
   it('resolves the sample level assets', () => {
     const assets = createManifestResolver(m).resolveLevelAssets({ ...level, visual: 'grass' });
-    expect([...assets.models].sort()).toEqual(['building.small', 'building.standard', 'character.regular', 'prop.barrel', 'prop.crate', 'prop.stump', 'prop.tree.pine', 'prop.tree.round']);
+    expect([...assets.models].sort()).toEqual(['building.small', 'building.standard', 'character.regular', 'prop.crate', 'prop.stump', 'prop.tree.pine', 'prop.tree.round']);
   });
 });
 

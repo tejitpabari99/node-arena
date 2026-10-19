@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry, Color, InstancedMesh, Material, Matrix4, MeshStandardMaterial, Quaternion, Scene, TorusGeometry, Vector3, type Object3D } from 'three';
+import { BufferAttribute, BufferGeometry, Color, CylinderGeometry, InstancedMesh, Material, Matrix4, MeshStandardMaterial, Quaternion, Scene, TorusGeometry, Vector3, type Object3D } from 'three';
 import type { Manifest } from '@node-arena/content';
 import type { Disposables } from './disposables.js';
 import { mergeModel } from './model.js';
@@ -9,22 +9,22 @@ import { CORNER_RADIUS, GRASS_PAD } from './ground.js';
  * Pure placement; no geometry inside the grass interior (SP04 lane contract, y = 0.04). All meshes carry visualRole 'ground'. */
 export const PROP_KINDS = ['treePine', 'treeRound', 'crate', 'barrel', 'stump', 'tyre'] as const;
 export type PropKind = typeof PROP_KINDS[number];
-export interface PropInstance { kind: PropKind; x: number; z: number; rotY: number; scale: number }
+export interface PropInstance { kind: PropKind; x: number; z: number; rotY: number; scale: number; /** stacked tyre level (0 = ground) */ stack?: number }
 export interface ScatterTower { x: number; z: number; radius: number }
 export interface ScatterBounds { minX: number; maxX: number; minZ: number; maxZ: number }
 export interface ScatterTheme { seed: number; density: number }
 
-/** Manifest model key per GLB-backed kind (tyres are code-built). Keys under `prop.` are auto-loaded for themes with `scatter`. */
+/** Manifest model key per GLB-backed kind (tyres and barrels are code-built). Keys under `prop.` are auto-loaded for themes with `scatter`. */
 export const PROP_MODEL: Partial<Record<PropKind, string>> = {
   treePine: 'prop.tree.pine', treeRound: 'prop.tree.round',
-  crate: 'prop.crate', barrel: 'prop.barrel', stump: 'prop.stump',
+  crate: 'prop.crate', stump: 'prop.stump',
 };
 /** Target world height (u) and collision radius per kind. */
 const SPEC: Record<PropKind, { height: number; radius: number }> = {
   treePine: { height: 7.5, radius: 1.6 }, treeRound: { height: 6, radius: 1.8 },
-  crate: { height: 3.2, radius: 2.1 }, barrel: { height: 3.4, radius: 1.6 }, stump: { height: 2.2, radius: 1.4 }, tyre: { height: 1.6, radius: 2.2 },
+  crate: { height: 2.4, radius: 1.6 }, barrel: { height: 3.4, radius: 1.6 }, stump: { height: 2.2, radius: 1.4 }, tyre: { height: 1.6, radius: 2.2 },
 };
-const BAND = 14, TREE_BAND = [-1, 3.5] as const, SAND_NEAR = 3.5, TOWER_CLEAR = 3, CORRIDOR = 2.5, NEAR_PAIR = 40;
+const BAND = 12, TREE_BAND = [-1, 3.5] as const, SAND_NEAR = 3.5, TOWER_CLEAR = 3, CORRIDOR = 2.5, NEAR_PAIR = 40;
 
 interface Core { cx: number; cz: number; w: number; h: number }
 /** Signed distance (u) from a point to the rounded-rect grass core; negative inside. */
@@ -60,7 +60,10 @@ export function scatterProps(levelId: string, bounds: ScatterBounds, towers: rea
   };
   const add = (kind: PropKind, x: number, z: number, scaleLo: number, scaleHi: number) => {
     if (!free(x, z, kind)) return false;
-    out.push({ kind, x, z, rotY: rand() * Math.PI * 2, scale: scaleLo + rand() * (scaleHi - scaleLo) }); return true;
+    const item: PropInstance = { kind, x, z, rotY: rand() * Math.PI * 2, scale: scaleLo + rand() * (scaleHi - scaleLo) }; out.push(item);
+    // Tyres come in stacks of 1-3 (ref: black stacked pairs).
+    if (kind === 'tyre') for (let level = 1, more = rand() < .7; more && level < 3; level++, more = rand() < .35) out.push({ ...item, rotY: rand() * Math.PI * 2, stack: level });
+    return true;
   };
   const ringPoint = (d: number, off: number): [number, number] => {
     d = ((d % perimeter) + perimeter) % perimeter; const hw = core.w / 2 + off, hh = core.h / 2 + off;
@@ -82,7 +85,7 @@ export function scatterProps(levelId: string, bounds: ScatterBounds, towers: rea
     }
   }
   // Sand-band groups: crates, barrels, tyres, stumps.
-  const sand: PropKind[] = ['crate', 'crate', 'barrel', 'barrel', 'tyre', 'tyre', 'stump'];
+  const sand: PropKind[] = ['crate', 'crate', 'crate', 'barrel', 'tyre', 'tyre', 'stump'];
   const ringArea = perimeter * (BAND - SAND_NEAR) / 1;
   const groups = Math.round(theme.density * ringArea / 1000 / 2.5);
   for (let g = 0; g < groups; g++) {
@@ -100,7 +103,7 @@ export function scatterProps(levelId: string, bounds: ScatterBounds, towers: rea
 }
 
 type Theme = Manifest['themes'][string];
-const TYRE_COLOR = '#2B2B2B';
+const TYRE_COLOR = '#2B2B2B', BARREL_COLOR = '#8E959C', TYRE_THICKNESS = 1.1;
 /** Builds one InstancedMesh per prop model part (<= ~12 draw calls). Trees cast shadows; props never do otherwise. Returns a shadow toggle for quality tiers. */
 export function createProps(options: { scene: Scene; scope: Disposables; theme: Theme; models: ReadonlyMap<string, Object3D>; placements: readonly PropInstance[] }) {
   const { scene, scope, theme, models, placements } = options;
@@ -112,7 +115,10 @@ export function createProps(options: { scene: Scene; scope: Disposables; theme: 
     const used = placements.filter(i => i.kind === kind), list = used.length ? used : [{ kind, x: 0, z: 0, rotY: 0, scale: 0 }];
     let geometry: BufferGeometry, materials: Material | Material[], baseScale: number, lift = 0;
     const key = PROP_MODEL[kind], model = key ? models.get(key) : undefined;
-    if (kind === 'tyre') {
+    if (kind === 'barrel') {
+      geometry = scope.add(new CylinderGeometry(.85, .85, 1.7, 8)); geometry.translate(0, .85, 0); geometry.computeBoundingBox();
+      materials = scope.add(new MeshStandardMaterial({ color: BARREL_COLOR, flatShading: true })); baseScale = SPEC.barrel.height / 1.7;
+    } else if (kind === 'tyre') {
       geometry = scope.add(new TorusGeometry(1.2, .55, 6, 14)); geometry.rotateX(Math.PI / 2); geometry.computeBoundingBox();
       materials = scope.add(new MeshStandardMaterial({ color: TYRE_COLOR, flatShading: true })); baseScale = 1; lift = .55;
     } else {
@@ -135,7 +141,7 @@ export function createProps(options: { scene: Scene; scope: Disposables; theme: 
     }
     const mesh = new InstancedMesh(geometry, materials, list.length);
     list.forEach((item, i) => {
-      q.setFromAxisAngle(up, item.rotY); p.set(item.x, lift * item.scale, item.z); s.setScalar(baseScale * item.scale);
+      q.setFromAxisAngle(up, item.rotY); p.set(item.x, (lift + (item.stack ?? 0) * TYRE_THICKNESS) * item.scale, item.z); s.setScalar(baseScale * item.scale);
       m.compose(p, q, s); mesh.setMatrixAt(i, m);
     });
     mesh.instanceMatrix.needsUpdate = true; mesh.receiveShadow = true; mesh.userData.visualRole = 'ground'; mesh.userData.propKind = kind;
