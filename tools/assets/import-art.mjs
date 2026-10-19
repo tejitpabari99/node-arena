@@ -98,7 +98,6 @@ if (existsSync(resolve(src, 'chars'))) {
 if (existsSync(resolve(src, 'nature'))) {
   const n = (input, file) => nature('nature', 'Models/GLTF format', input, file);
   await n('tree_pineTallA.glb', 'prop-tree-pine.glb');
-  await n('tree_pineRoundC.glb', 'prop-tree-pine-round.glb');
   await n('tree_default.glb', 'prop-tree-round.glb');
   await n('stump_round.glb', 'prop-stump.glb');
 }

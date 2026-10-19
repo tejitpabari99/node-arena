@@ -1,4 +1,4 @@
-import { BufferGeometry, Color, InstancedMesh, Material, Matrix4, MeshStandardMaterial, Quaternion, Scene, TorusGeometry, Vector3, type Object3D } from 'three';
+import { BufferAttribute, BufferGeometry, Color, InstancedMesh, Material, Matrix4, MeshStandardMaterial, Quaternion, Scene, TorusGeometry, Vector3, type Object3D } from 'three';
 import type { Manifest } from '@node-arena/content';
 import type { Disposables } from './disposables.js';
 import { mergeModel } from './model.js';
@@ -7,7 +7,7 @@ import { CORNER_RADIUS, GRASS_PAD } from './ground.js';
 
 /** Border dressing (PRD R4/R5): rim tree clusters on the grass edge, crates/barrels/tyres/stumps in the sand band.
  * Pure placement; no geometry inside the grass interior (SP04 lane contract, y = 0.04). All meshes carry visualRole 'ground'. */
-export const PROP_KINDS = ['treePine', 'treePineRound', 'treeRound', 'crate', 'barrel', 'stump', 'tyre'] as const;
+export const PROP_KINDS = ['treePine', 'treeRound', 'crate', 'barrel', 'stump', 'tyre'] as const;
 export type PropKind = typeof PROP_KINDS[number];
 export interface PropInstance { kind: PropKind; x: number; z: number; rotY: number; scale: number }
 export interface ScatterTower { x: number; z: number; radius: number }
@@ -16,13 +16,13 @@ export interface ScatterTheme { seed: number; density: number }
 
 /** Manifest model key per GLB-backed kind (tyres are code-built). Keys under `prop.` are auto-loaded for themes with `scatter`. */
 export const PROP_MODEL: Partial<Record<PropKind, string>> = {
-  treePine: 'prop.tree.pine', treePineRound: 'prop.tree.pine.round', treeRound: 'prop.tree.round',
+  treePine: 'prop.tree.pine', treeRound: 'prop.tree.round',
   crate: 'prop.crate', barrel: 'prop.barrel', stump: 'prop.stump',
 };
 /** Target world height (u) and collision radius per kind. */
 const SPEC: Record<PropKind, { height: number; radius: number }> = {
-  treePine: { height: 5.5, radius: 1.3 }, treePineRound: { height: 5, radius: 1.5 }, treeRound: { height: 4.5, radius: 1.5 },
-  crate: { height: 3.2, radius: 2.1 }, barrel: { height: 3.4, radius: 1.6 }, stump: { height: 2.2, radius: 1.4 }, tyre: { height: 1.2, radius: 1.8 },
+  treePine: { height: 7.5, radius: 1.6 }, treeRound: { height: 6, radius: 1.8 },
+  crate: { height: 3.2, radius: 2.1 }, barrel: { height: 3.4, radius: 1.6 }, stump: { height: 2.2, radius: 1.4 }, tyre: { height: 1.6, radius: 2.2 },
 };
 const BAND = 14, TREE_BAND = [-1, 3.5] as const, SAND_NEAR = 3.5, TOWER_CLEAR = 3, CORRIDOR = 2.5, NEAR_PAIR = 40;
 
@@ -71,7 +71,7 @@ export function scatterProps(levelId: string, bounds: ScatterBounds, towers: rea
   };
 
   // Tree clusters hugging the grass rim.
-  const trees: PropKind[] = ['treePine', 'treePine', 'treePineRound', 'treeRound'];
+  const trees: PropKind[] = ['treePine', 'treePine', 'treeRound'];
   const clusters = Math.max(1, Math.round(perimeter / 18));
   for (let c = 0; c < clusters; c++) {
     const [cx, cz] = ringPoint((c + rand()) / clusters * perimeter, 0.5 + rand() * 1.5), n = 3 + Math.floor(rand() * 4);
@@ -113,17 +113,24 @@ export function createProps(options: { scene: Scene; scope: Disposables; theme: 
     let geometry: BufferGeometry, materials: Material | Material[], baseScale: number, lift = 0;
     const key = PROP_MODEL[kind], model = key ? models.get(key) : undefined;
     if (kind === 'tyre') {
-      geometry = scope.add(new TorusGeometry(.9, .42, 6, 14)); geometry.rotateX(Math.PI / 2); geometry.computeBoundingBox();
-      materials = scope.add(new MeshStandardMaterial({ color: TYRE_COLOR, flatShading: true })); baseScale = 1; lift = .42;
+      geometry = scope.add(new TorusGeometry(1.2, .55, 6, 14)); geometry.rotateX(Math.PI / 2); geometry.computeBoundingBox();
+      materials = scope.add(new MeshStandardMaterial({ color: TYRE_COLOR, flatShading: true })); baseScale = 1; lift = .55;
     } else {
       if (!model) continue; // manifest without this prop model (e.g. primitive-only greybox): skip the kind, never fail the level
       const merged = mergeModel(model, undefined, scope); geometry = merged.geometry; materials = merged.materials;
       geometry.computeVertexNormals(); geometry.computeBoundingBox(); baseScale = SPEC[kind].height / Math.max(geometry.boundingBox!.max.y - geometry.boundingBox!.min.y, 1e-3);
-      for (const material of merged.materials) {
-        const tint = /leaf/i.test(material.name) && kind.startsWith('tree') ? palette.tree : undefined;
-        if (tint && material instanceof MeshStandardMaterial) {
-          material.color.set(tint).lerp(new Color('#6BE060'), .55); material.emissive.copy(material.color).multiplyScalar(.3); // lift hemisphere-only (shadow side) faces off near-black
-        }
+      const colors = merged.materials.map(material => {
+        const color = (material as MeshStandardMaterial).color.clone();
+        if (/leaf/i.test(material.name) && kind.startsWith('tree') && palette.tree) color.set(palette.tree).lerp(new Color('#6BE060'), .25);
+        return color;
+      });
+      if (!merged.materials.some(material => (material as MeshStandardMaterial).map)) {
+        // Flat-colour model: bake material colours into vertex colours so each model is ONE draw call (draw-call budget, M13).
+        const position = geometry.getAttribute('position'), attr = new BufferAttribute(new Float32Array(position.count * 3), 3);
+        for (const g of geometry.groups) for (let i = g.start; i < g.start + g.count; i++) colors[g.materialIndex ?? 0]!.toArray(attr.array as Float32Array, i * 3);
+        geometry.setAttribute('color', attr); geometry.clearGroups();
+        // Small emissive lift keeps shadow-side faces (hemisphere light only) off near-black.
+        materials = scope.add(new MeshStandardMaterial({ vertexColors: true, emissive: kind.startsWith('tree') ? '#0C2A10' : '#2A1A10', flatShading: true }));
       }
     }
     const mesh = new InstancedMesh(geometry, materials, list.length);

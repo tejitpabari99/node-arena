@@ -14,7 +14,6 @@
     "building.large": {"src": "models/tower-large.glb"},
     "character.regular": {"src": "models/troop-regular.glb"},
     "prop.tree.pine": {"src": "models/prop-tree-pine.glb"},
-    "prop.tree.pine.round": {"src": "models/prop-tree-pine-round.glb"},
     "prop.tree.round": {"src": "models/prop-tree-round.glb"},
     "prop.stump": {"src": "models/prop-stump.glb"},
     "prop.crate": {"src": "models/prop-crate.glb"},
