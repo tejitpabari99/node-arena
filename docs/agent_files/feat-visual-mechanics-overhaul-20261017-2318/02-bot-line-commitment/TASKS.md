@@ -15,7 +15,7 @@ Source of truth: 02-bot-line-commitment/PRD.md. Bot-side only; sim, GAME_RULES.m
 | 5 | Tune to churn targets, hold balance bands | 4 | done |
 | 6 | Regenerate goldens and benchmark evidence | 5 | done |
 | 7 | Docs, rules check, final verification | 6 | done |
-| 8 | Rebalance level 17 (17h) | 7 | todo |
+| 8 | Rebalance level 17 (17h) | 7 | done |
 
 ## Task 1 — Churn tool + committed v1 baseline
 What it is / what it means: The headless metric that defines "bots keep changing nodes" (PRD R9, D6). Must exist and be baselined on unmodified code before any behaviour change, so targets are reproducible.
