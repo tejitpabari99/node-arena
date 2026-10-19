@@ -127,7 +127,7 @@ export function createProps(options: { scene: Scene; scope: Disposables; theme: 
       geometry.computeVertexNormals(); geometry.computeBoundingBox(); baseScale = SPEC[kind].height / Math.max(geometry.boundingBox!.max.y - geometry.boundingBox!.min.y, 1e-3);
       const colors = merged.materials.map(material => {
         const color = (material as MeshStandardMaterial).color.clone();
-        if (/leaf/i.test(material.name) && kind.startsWith('tree') && palette.tree) color.set(palette.tree).lerp(new Color('#6BE060'), .25);
+        if (/leaf/i.test(material.name) && kind.startsWith('tree') && palette.tree) color.set(palette.tree).lerp(new Color('#6BE060'), .4);
         return color;
       });
       if (!merged.materials.some(material => (material as MeshStandardMaterial).map)) {

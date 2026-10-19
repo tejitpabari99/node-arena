@@ -48,13 +48,15 @@ export function createGround(options: { scene: Scene; scope: Disposables; theme:
 
   // Rock clusters (squashed dodecahedra) in a ring outside the grass patch, deterministic from theme.scatter.seed.
   const rand = mulberry32((theme.scatter?.seed ?? 1) * 7919 + 17);
-  const rockCount = 240, rocks = new InstancedMesh(new DodecahedronGeometry(1, 0), new MeshStandardMaterial({ color: palette.rock, flatShading: true }), rockCount);
+  const rockCount = 240, rocks = new InstancedMesh(new DodecahedronGeometry(1, 0), new MeshStandardMaterial({ color: palette.rock, flatShading: true, emissive: new Color(palette.rock).multiplyScalar(.22) }), rockCount);
   const m = new Matrix4(), q = new Quaternion(), p = new Vector3(), s = new Vector3(), up = new Vector3(0, 1, 0);
   const perimeter = 2 * (core.w + core.h); let placed = 0;
   while (placed < rockCount) {
-    const clusterAt = rand() * perimeter, n = 3 + Math.floor(rand() * 4);
+    // Cliff clusters: the four corners (ref: red cliffs at frame corners) plus two spots along the long edges.
+      const corners = [0, core.w, core.w + core.h, 2 * core.w + core.h, rand() * core.w, core.w + core.h + rand() * core.w];
+      const clusterAt = corners[Math.floor(rand() * corners.length)]! + (rand() - .5) * 6, n = 5 + Math.floor(rand() * 5);
     for (let k = 0; k < n && placed < rockCount; k++, placed++) {
-      let d = clusterAt + (rand() - .5) * 8; d = ((d % perimeter) + perimeter) % perimeter;
+      let d = clusterAt + (rand() - .5) * 22; d = ((d % perimeter) + perimeter) % perimeter;
       const off = EDGE_SOFT / 2 + 7 + rand() * 7; let rx: number, rz: number;
       if (d < core.w) { rx = d - core.w / 2; rz = -core.h / 2 - off; } else if (d < core.w + core.h) { rx = core.w / 2 + off; rz = d - core.w - core.h / 2; }
       else if (d < 2 * core.w + core.h) { rx = core.w / 2 - (d - core.w - core.h); rz = core.h / 2 + off; } else { rx = -core.w / 2 - off; rz = core.h / 2 - (d - 2 * core.w - core.h); }
