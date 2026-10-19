@@ -1,5 +1,5 @@
 {
-  "botVersion": "1.1.0",
+  "botVersion": "1.2.0",
   "metadata": {
     "rulesVersion": "1.0.0",
     "schemaVersion": "1.0.0",
@@ -1203,42 +1203,6 @@
             }
           },
           {
-            "tick": 38,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t5"
-            }
-          },
-          {
-            "tick": 38,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t5"
-            }
-          },
-          {
-            "tick": 54,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 54,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
             "tick": 70,
             "cmd": {
               "type": "DrawLine",
@@ -1248,273 +1212,12 @@
             }
           },
           {
-            "tick": 70,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t5"
-            }
-          },
-          {
-            "tick": 86,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t3"
-            }
-          },
-          {
-            "tick": 86,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 102,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 118,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 118,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 134,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 134,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 150,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 150,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 166,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 166,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 182,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 182,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 198,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 198,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 214,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 214,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 230,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
             "tick": 230,
             "cmd": {
               "type": "DrawLine",
               "player": "b1",
               "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 246,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 246,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 262,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 262,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t5",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 278,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 278,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 286,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b2",
-              "from": "t2",
-              "to": "t5"
-            }
-          },
-          {
-            "tick": 294,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 294,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t1",
-              "to": "t0"
-            }
-          },
-          {
-            "tick": 330,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b2",
-              "from": "t5",
-              "to": "t0"
+              "to": "t2"
             }
           }
         ],
@@ -1525,75 +1228,75 @@
           },
           {
             "tick": 40,
-            "hash": "37be1803e1c83400"
+            "hash": "126e24c0ec3a3342"
           },
           {
             "tick": 60,
-            "hash": "fa29ee99c1b22d2d"
+            "hash": "35ec13370e28211f"
           },
           {
             "tick": 80,
-            "hash": "c211c7e7c0913b97"
+            "hash": "6e9c591c7fa7e6ce"
           },
           {
             "tick": 100,
-            "hash": "9d2bcb5a65a21c49"
+            "hash": "96b180c2ee5b1b35"
           },
           {
             "tick": 120,
-            "hash": "163efb56c63b06f3"
+            "hash": "141c32d6e9966bba"
           },
           {
             "tick": 140,
-            "hash": "7f99db6725c1526e"
+            "hash": "98f9d994cf35600e"
           },
           {
             "tick": 160,
-            "hash": "65cef7c2e823aff8"
+            "hash": "7150c29efeae05f8"
           },
           {
             "tick": 180,
-            "hash": "d92160ac408887f5"
+            "hash": "74e0f31c53dec0f1"
           },
           {
             "tick": 200,
-            "hash": "89b8596755b64d2a"
+            "hash": "5ab942fe7c3cd78c"
           },
           {
             "tick": 220,
-            "hash": "ba7d86138231251e"
+            "hash": "f4a36b562e70b1c5"
           },
           {
             "tick": 240,
-            "hash": "f549729bdd6116b7"
+            "hash": "f19833570fca8761"
           },
           {
             "tick": 260,
-            "hash": "22b4e215adaae39a"
+            "hash": "5c964dabda379d5f"
           },
           {
             "tick": 280,
-            "hash": "adea1575d4a1da5d"
+            "hash": "2079ab5d0832d544"
           },
           {
             "tick": 300,
-            "hash": "52d00f5af13e49ff"
+            "hash": "b9cbdb07f5c9b975"
           },
           {
             "tick": 320,
-            "hash": "9e1c1594eb3bdf3b"
+            "hash": "a68944da158e0c59"
           },
           {
             "tick": 340,
-            "hash": "62665520f3ff99d3"
+            "hash": "f1db35b5daf33f29"
           },
           {
             "tick": 360,
-            "hash": "4a99b56829ada48a"
+            "hash": "ebec4ebdccfdb041"
           }
         ],
         "finalTick": 360,
-        "finalHash": "4a99b56829ada48a",
+        "finalHash": "ebec4ebdccfdb041",
         "outcome": {
           "outcome": "timeout",
           "winnerTeam": null
@@ -1646,42 +1349,6 @@
           }
         },
         {
-          "tick": 38,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t5"
-          }
-        },
-        {
-          "tick": 38,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t5"
-          }
-        },
-        {
-          "tick": 54,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 54,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
           "tick": 70,
           "cmd": {
             "type": "DrawLine",
@@ -1691,273 +1358,12 @@
           }
         },
         {
-          "tick": 70,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t5"
-          }
-        },
-        {
-          "tick": 86,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t3"
-          }
-        },
-        {
-          "tick": 86,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 102,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 118,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 118,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 134,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 134,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 150,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 150,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 166,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 166,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 182,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 182,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 198,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 198,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 214,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 214,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 230,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
           "tick": 230,
           "cmd": {
             "type": "DrawLine",
             "player": "b1",
             "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 246,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 246,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 262,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 262,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t5",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 278,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 278,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 286,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b2",
-            "from": "t2",
-            "to": "t5"
-          }
-        },
-        {
-          "tick": 294,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 294,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t1",
-            "to": "t0"
-          }
-        },
-        {
-          "tick": 330,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b2",
-            "from": "t5",
-            "to": "t0"
+            "to": "t2"
           }
         }
       ],
@@ -1966,7 +1372,7 @@
         "winnerTeam": null
       },
       "ticks": 360,
-      "finalHash": "4a99b56829ada48a"
+      "finalHash": "ebec4ebdccfdb041"
     },
     {
       "name": "random-0-seed-37",
@@ -1994,7 +1400,7 @@
             "cmd": {
               "type": "DrawLine",
               "player": "b1",
-              "from": "t1",
+              "from": "t4",
               "to": "t0"
             }
           },
@@ -2008,21 +1414,12 @@
             }
           },
           {
-            "tick": 54,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t4",
-              "to": "t0"
-            }
-          },
-          {
             "tick": 75,
             "cmd": {
               "type": "DrawLine",
               "player": "b2",
               "from": "t3",
-              "to": "t2"
+              "to": "t1"
             }
           },
           {
@@ -2031,25 +1428,7 @@
               "type": "DrawLine",
               "player": "b2",
               "from": "t2",
-              "to": "t3"
-            }
-          },
-          {
-            "tick": 163,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b2",
-              "from": "t2",
-              "to": "t3"
-            }
-          },
-          {
-            "tick": 207,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b2",
-              "from": "t3",
-              "to": "t2"
+              "to": "t4"
             }
           }
         ],
@@ -2060,51 +1439,51 @@
           },
           {
             "tick": 40,
-            "hash": "ef2acb6d1f0fe973"
+            "hash": "b5dfc244f31d76d0"
           },
           {
             "tick": 60,
-            "hash": "7e7c8f5c46154ac4"
+            "hash": "228e77833a4b7f7c"
           },
           {
             "tick": 80,
-            "hash": "5992646e3be8730f"
+            "hash": "5598ceeb42125ef2"
           },
           {
             "tick": 100,
-            "hash": "6c1c92539cffe26d"
+            "hash": "cbf1255e68629b74"
           },
           {
             "tick": 120,
-            "hash": "e2e03384e3150b7c"
+            "hash": "49b1638a21649ff4"
           },
           {
             "tick": 140,
-            "hash": "6fc7a83f12345d39"
+            "hash": "452c28f7fcb01264"
           },
           {
             "tick": 160,
-            "hash": "1b800534d00a85f9"
+            "hash": "d2036d9bd1dcfd8f"
           },
           {
             "tick": 180,
-            "hash": "78cc2dc4e60f7871"
+            "hash": "7f516b03ed696afa"
           },
           {
             "tick": 200,
-            "hash": "b886e8fe9541cef5"
+            "hash": "e91c24f3e92297f2"
           },
           {
             "tick": 220,
-            "hash": "74d3c1af2c3223d1"
+            "hash": "5e0931df8931a10d"
           },
           {
             "tick": 240,
-            "hash": "6d1856b5ac88ff59"
+            "hash": "e4f216eb87b4445e"
           }
         ],
         "finalTick": 240,
-        "finalHash": "6d1856b5ac88ff59",
+        "finalHash": "e4f216eb87b4445e",
         "outcome": {
           "outcome": "timeout",
           "winnerTeam": null
@@ -2125,7 +1504,7 @@
           "cmd": {
             "type": "DrawLine",
             "player": "b1",
-            "from": "t1",
+            "from": "t4",
             "to": "t0"
           }
         },
@@ -2139,21 +1518,12 @@
           }
         },
         {
-          "tick": 54,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t4",
-            "to": "t0"
-          }
-        },
-        {
           "tick": 75,
           "cmd": {
             "type": "DrawLine",
             "player": "b2",
             "from": "t3",
-            "to": "t2"
+            "to": "t1"
           }
         },
         {
@@ -2162,25 +1532,7 @@
             "type": "DrawLine",
             "player": "b2",
             "from": "t2",
-            "to": "t3"
-          }
-        },
-        {
-          "tick": 163,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b2",
-            "from": "t2",
-            "to": "t3"
-          }
-        },
-        {
-          "tick": 207,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b2",
-            "from": "t3",
-            "to": "t2"
+            "to": "t4"
           }
         }
       ],
@@ -2189,7 +1541,7 @@
         "winnerTeam": null
       },
       "ticks": 240,
-      "finalHash": "6d1856b5ac88ff59"
+      "finalHash": "e4f216eb87b4445e"
     },
     {
       "name": "random-3-seed-704",
@@ -2245,7 +1597,7 @@
               "type": "DrawLine",
               "player": "b2",
               "from": "t5",
-              "to": "t6"
+              "to": "t4"
             }
           },
           {
@@ -2254,7 +1606,7 @@
               "type": "DrawLine",
               "player": "b1",
               "from": "t6",
-              "to": "t4"
+              "to": "t0"
             }
           },
           {
@@ -2263,43 +1615,7 @@
               "type": "DrawLine",
               "player": "b2",
               "from": "t7",
-              "to": "t3"
-            }
-          },
-          {
-            "tick": 191,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b2",
-              "from": "t7",
               "to": "t6"
-            }
-          },
-          {
-            "tick": 210,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t4"
-            }
-          },
-          {
-            "tick": 279,
-            "cmd": {
-              "type": "CutLine",
-              "player": "b2",
-              "from": "t7",
-              "to": "t3"
-            }
-          },
-          {
-            "tick": 280,
-            "cmd": {
-              "type": "DrawLine",
-              "player": "b1",
-              "from": "t6",
-              "to": "t3"
             }
           }
         ],
@@ -2326,47 +1642,47 @@
           },
           {
             "tick": 120,
-            "hash": "d5997079b3e3afab"
+            "hash": "615014f675a1989f"
           },
           {
             "tick": 140,
-            "hash": "c5ec2a23b31e8e5c"
+            "hash": "dd628c728d5df5e9"
           },
           {
             "tick": 160,
-            "hash": "b439566055c37b96"
+            "hash": "f04014fb262a86ff"
           },
           {
             "tick": 180,
-            "hash": "b010539d8c707077"
+            "hash": "04b994639a1ac9d1"
           },
           {
             "tick": 200,
-            "hash": "854ad8c1082242be"
+            "hash": "4b5b650728415f28"
           },
           {
             "tick": 220,
-            "hash": "0bbc8b0de49815de"
+            "hash": "12404ae5e38777d9"
           },
           {
             "tick": 240,
-            "hash": "2dce9318a58b3cd7"
+            "hash": "f236cbfa868a29eb"
           },
           {
             "tick": 260,
-            "hash": "9d588429435bee44"
+            "hash": "9f58b6727d77615c"
           },
           {
             "tick": 280,
-            "hash": "b2e7190ba2adb320"
+            "hash": "42a8d2072c738c51"
           },
           {
             "tick": 300,
-            "hash": "9d9d415f7ffde64e"
+            "hash": "cc06f951fba06b80"
           }
         ],
         "finalTick": 300,
-        "finalHash": "9d9d415f7ffde64e",
+        "finalHash": "cc06f951fba06b80",
         "outcome": {
           "outcome": "timeout",
           "winnerTeam": null
@@ -2415,7 +1731,7 @@
             "type": "DrawLine",
             "player": "b2",
             "from": "t5",
-            "to": "t6"
+            "to": "t4"
           }
         },
         {
@@ -2424,7 +1740,7 @@
             "type": "DrawLine",
             "player": "b1",
             "from": "t6",
-            "to": "t4"
+            "to": "t0"
           }
         },
         {
@@ -2433,43 +1749,7 @@
             "type": "DrawLine",
             "player": "b2",
             "from": "t7",
-            "to": "t3"
-          }
-        },
-        {
-          "tick": 191,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b2",
-            "from": "t7",
             "to": "t6"
-          }
-        },
-        {
-          "tick": 210,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t4"
-          }
-        },
-        {
-          "tick": 279,
-          "cmd": {
-            "type": "CutLine",
-            "player": "b2",
-            "from": "t7",
-            "to": "t3"
-          }
-        },
-        {
-          "tick": 280,
-          "cmd": {
-            "type": "DrawLine",
-            "player": "b1",
-            "from": "t6",
-            "to": "t3"
           }
         }
       ],
@@ -2478,7 +1758,7 @@
         "winnerTeam": null
       },
       "ticks": 300,
-      "finalHash": "9d9d415f7ffde64e"
+      "finalHash": "cc06f951fba06b80"
     }
   ]
 }
