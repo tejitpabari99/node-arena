@@ -1,0 +1,131 @@
+{
+  "$comment": "SP01 metric thresholds (PRD Metrics table, verbatim in `threshold`; machine-readable limits in `limits`). Source of truth for visual:check and CHECKLIST.md Appendix B. status: cal = measured on the refs, prov = provisional (T8 confirms/fixes; afterwards only tightened). px limits are given at `pxBaseHeight` (or the limit's own `atHeight`) and scaled by viewport height. Never lower a threshold to make a capture pass.",
+  "schema": 1,
+  "pxBaseHeight": 1080,
+  "gameScenes": ["l01", "l10", "l18", "clash", "l10cb", "buildout", "cut"],
+  "metrics": {
+    "M01": {
+      "name": "tower screen width, % viewport width (median owned tower)", "source": "probe", "status": "prov",
+      "threshold": "l01/l10 >=6.0% at 1920x1080, >=5.5% at 1366x768, <=12%; l18 3.0-8%",
+      "scenes": ["l01", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": {
+        "default": { "1920x1080": { "min": 0.06, "max": 0.12 }, "1366x768": { "min": 0.055, "max": 0.12 } },
+        "l18": { "min": 0.03, "max": 0.08 }
+      }
+    },
+    "M02": {
+      "name": "count digit height / tower bbox width (roof number)", "source": "pixels", "status": "cal",
+      "threshold": "0.14-0.30; card area / tower area <=1.0",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "ratio": { "min": 0.14, "max": 0.30 }, "cardArea": { "max": 1.0 } }
+    },
+    "M03": {
+      "name": "count on roof: roof-decal mesh inside model rect AND hasCard none AND M17=0", "source": "probe", "status": "cal",
+      "threshold": "100% / 0",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "onRoofShare": { "min": 1.0 }, "cards": { "max": 0 } }
+    },
+    "M04": {
+      "name": "floors == clamp(ceil(5*count/cap), 1, 5) for all towers", "source": "probe vs sim", "status": "cal",
+      "threshold": "100%",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "matchShare": { "min": 1.0 } }
+    },
+    "M05": {
+      "name": "lane screen width / tower width (mid-lane)", "source": "probe", "status": "prov",
+      "threshold": "0.25-0.40",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "ratio": { "min": 0.25, "max": 0.40 } }
+    },
+    "M06": {
+      "name": "troop on-screen height, % viewport height; /tower width", "source": "probe", "status": "prov",
+      "threshold": ">=1.5% and 0.22-0.60",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "heightShare": { "min": 0.015 }, "perTowerWidth": { "min": 0.22, "max": 0.60 } }
+    },
+    "M07": {
+      "name": "void pixel share (magenta clear-colour pass)", "source": "pixels", "status": "cal",
+      "threshold": "<=0.5% (all views incl. 1920x1200)",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash", "buildout", "cut"], "viewports": ["1920x1080", "1366x768", "1920x1200"],
+      "limits": { "share": { "max": 0.005 } }
+    },
+    "M08": {
+      "name": "9 viewport sample rays hit ground/border", "source": "probe", "status": "cal",
+      "threshold": "9/9",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768", "1920x1200"],
+      "limits": { "hits": { "min": 9 } }
+    },
+    "M09": {
+      "name": "grass share inside the play quad (ground.playQuadScreen)", "source": "pixels", "status": "cal",
+      "threshold": "0.55-0.85 (l01/l10)",
+      "scenes": ["l01", "l10", "l10cb"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "share": { "min": 0.55, "max": 0.85 } }
+    },
+    "M10": {
+      "name": "border (outside the play quad): sand+rock share, grass share, border area", "source": "pixels", "status": "cal",
+      "threshold": "sand+rock >=0.60 of border pixels, grass <=0.05 of border, border area >=10% of frame",
+      "scenes": ["l01", "l10", "l10cb"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "sandRock": { "min": 0.60 }, "grass": { "max": 0.05 }, "area": { "min": 0.10 } }
+    },
+    "M11": {
+      "name": "tower paint (owned: team-sat/sat, team-sat/fg, white/fg; neutral: sat/fg, grey+white/fg)", "source": "pixels", "status": "cal",
+      "threshold": "(a) team-sat share of saturated fg pixels >=0.85; (b) team-sat / fg 0.35-0.72 and never >=0.80; (c) white-body / fg 0.15-0.45. Neutral towers: saturated pixels <=5% of fg and grey+white >=90% of fg",
+      "scenes": ["l01", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "a": { "min": 0.85 }, "b": { "min": 0.35, "max": 0.72 }, "c": { "min": 0.15, "max": 0.45 }, "neutralSat": { "max": 0.05 }, "neutralGreyWhite": { "min": 0.90 } }
+    },
+    "M12": {
+      "name": "head-on: 1 lane per pair, crossing lane separate, split error vs most recent Clash", "source": "probe", "status": "prov",
+      "threshold": "(a) 1 / (b) 1 / (c) <=12 px (settled); unsettled frames k ticks later: 12 px + projected front-closure distance over k ticks (<= 2 x troop speed x k / TICK_RATE)",
+      "scenes": ["clash"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "pairLanes": { "eq": 1 }, "crossingLanes": { "eq": 1 }, "splitErrorPx": { "max": 12, "px": true }, "closureFactor": 2 }
+    },
+    "M13": {
+      "name": "perf (l18, 5 s real time, fresh page, no clock): fps, p95 frame ms, drawCalls, jsMs p95", "source": "__na sample + renderer.info", "status": "prov",
+      "threshold": "gpu:true: fps>=55; always: drawCalls<=100, jsMs p95<=8; fps on SwiftShader = informational",
+      "scenes": ["l18"], "viewports": ["1920x1080"],
+      "limits": { "fps": { "min": 55, "gpuOnly": true }, "drawCalls": { "max": 100 }, "jsMsP95": { "max": 8 }, "durationMs": 5000 }
+    },
+    "M14": {
+      "name": "grass share of the whole frame", "source": "pixels", "status": "cal",
+      "threshold": "0.30-0.60",
+      "scenes": ["l01", "l10", "l10cb"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "share": { "min": 0.30, "max": 0.60 } }
+    },
+    "M15": {
+      "name": "towers in frame: min edge margin; tightest-axis union margin", "source": "probe", "status": "prov",
+      "threshold": "min margin >=0.02 and tightest-axis union margin <=0.10",
+      "scenes": ["l01", "l10", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "minMargin": { "min": 0.02 }, "unionMargin": { "max": 0.10 } }
+    },
+    "M16": {
+      "name": "roof number glyph height in px (outlined white-fill component, tallest digit)", "source": "pixels", "status": "prov",
+      "threshold": ">=12 px at 1366x768 L1 (scaled by viewport height elsewhere); >=10 px at L18",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "default": { "min": 12, "px": true, "atHeight": 768 }, "l18": { "min": 10, "px": true, "atHeight": 768 } }
+    },
+    "M17": {
+      "name": "DOM label count ([data-tower-index], .tower-label) and [data-tower-summary] count", "source": "page DOM", "status": "cal",
+      "threshold": "0 / exactly 1 (post SP03 T5)",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash", "buildout", "cut"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "labels": { "max": 0 }, "summary": { "eq": 1 } }
+    },
+    "M18": {
+      "name": "palette distance (TV of class shares) vs best mapped ref: (i) whole frame, (ii) first owned tower crop", "source": "pixels", "status": "cal",
+      "threshold": "(i) <=0.20, (ii) <=0.20",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "frame": { "max": 0.20 }, "tower": { "max": 0.20 } }
+    },
+    "M19": {
+      "name": "roof-decal pixel visibility: outlined white number in upper 45% (height >= 0.10 x tower width) + dot count == sim slots", "source": "pixels + sim view", "status": "prov",
+      "threshold": "100% of towers; dots match 100%",
+      "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "minDigitRatio": 0.10, "numberShare": { "min": 1.0 }, "dotsShare": { "min": 1.0 } }
+    },
+    "M20": {
+      "name": "floor stripes along the vertical centre line: white runs between team bands", "source": "pixels", "status": "prov",
+      "threshold": "runs within [floors-1, floors+1] and >=1 team-sat band run per white run",
+      "scenes": ["l01", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": { "slack": 1, "matchShare": { "min": 1.0 } }
+    }
+  }
+}
