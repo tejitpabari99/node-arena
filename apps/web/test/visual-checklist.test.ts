@@ -39,7 +39,7 @@ describe('CHECKLIST.md', () => {
 describe('checkConsistency (CHECKLIST vs thresholds.json)', () => {
   const cl = parseChecklist(md), th = loadThresholds();
   it('reports an altered threshold text, status, limit, scene list or a missing metric', () => {
-    const t1 = clone(th); def(t1, 'M05').threshold = '0.20-0.40';
+    const t1 = clone(th); def(t1, 'M05').threshold = '0.10-0.40';
     expect(checkConsistency(cl, t1).join('\n')).toMatch(/M05 threshold/);
     const t2 = clone(th); (def(t2, 'M02').limits as { ratio: { min: number } }).ratio.min = 0.10;
     expect(checkConsistency(cl, t2).join('\n')).toMatch(/M02 limits/);

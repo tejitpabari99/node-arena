@@ -58,11 +58,15 @@ describe('thresholds.json (PRD Metrics table verbatim)', () => {
   });
   it('machine limits encode the PRD numbers', () => {
     const m = thresholds.metrics;
-    expect(limitsFor(m.M01!, 'l01', '1920x1080')).toEqual({ min: 0.06, max: 0.12 });
-    expect(limitsFor(m.M01!, 'l10', '1366x768')).toEqual({ min: 0.055, max: 0.12 });
-    expect(limitsFor(m.M01!, 'l18', '1920x1080')).toEqual({ min: 0.03, max: 0.08 });
+    // T8 calibrated M01: share of viewport HEIGHT, one rule for every viewport (refs tw01 ~5.8%, yt1 ~7% of height)
+    for (const v of ['1920x1080', '1366x768']) {
+      expect(limitsFor(m.M01!, 'l01', v)).toEqual({ min: 0.0435, max: 0.0875 });
+      expect(limitsFor(m.M01!, 'l10', v)).toEqual({ min: 0.0435, max: 0.0875 });
+      expect(limitsFor(m.M01!, 'l10cb', v)).toEqual({ min: 0.0435, max: 0.0875 });
+      expect(limitsFor(m.M01!, 'l18', v)).toEqual({ min: 0.0435, max: 0.0875 }); // l18 refs (tw03, yt1) sit inside the l01 band
+    }
     expect(m.M02!.limits.ratio).toEqual({ min: 0.14, max: 0.30 });
-    expect(m.M05!.limits.ratio).toEqual({ min: 0.25, max: 0.40 });
+    expect(m.M05!.limits.ratio).toEqual({ min: 0.20, max: 0.40 }); // T8: refs tw01 0.23-0.26, yt1 0.22-0.28
     expect(m.M06!.limits).toEqual({ heightShare: { min: 0.02 }, perTowerWidth: { min: 0.30, max: 0.60 } }); // T8: tightened from 0.015 / 0.22 on ref troop measurements
     expect(m.M07!.limits.share).toEqual({ max: 0.005 }); expect(m.M07!.viewports).toContain('1920x1200');
     expect(m.M08!.viewports).toContain('1920x1200');
@@ -96,10 +100,30 @@ describe('null never passes', () => {
     expect(evaluate('M03', { ...ctx('M03'), frame: { tick: 1 } }).status).toBe('fail');
     expect(evaluate('M03', ctx('M03', probe({ towers: [tower({ hasCard: true })] }))).status).toBe('fail');
   });
-  it('M01: median owned tower width share against the l01 limits', () => {
-    expect(evaluate('M01', ctx('M01', probe({ towers: [tower({ model: { x: 0, y: 0, w: 70, h: 90 } })] }))).status).toBe('pass'); // 7%
-    expect(evaluate('M01', ctx('M01')).status).toBe('fail'); // 4%
+  it('M01: median owned tower width as a share of viewport height against the l01 limits', () => {
+    const w = (n: number) => tower({ model: { x: 0, y: 0, w: n, h: 90 } });
+    const m01 = (towers: object[], viewport = { w: 1000, h: 500 }, scene = 'l01') =>
+      evaluate('M01', { ...ctx('M01', probe({ viewport, towers })), limits: limitsFor(thresholds.metrics.M01!, scene, '1920x1080') });
+    expect(m01([w(30)]).status).toBe('pass'); // 6% vh (3% vw: the retired vw rule would fail it)
+    expect(m01([w(30)]).value).toBeCloseTo(0.06, 6);
+    expect(m01([w(20)]).status).toBe('fail'); // 4% vh < 4.35%
+    expect(m01([w(45)]).status).toBe('fail'); // 9% vh > 8.75%
+    expect(m01([w(20), w(30), w(40)]).status).toBe('pass'); // median 30 -> 6%
+    expect(m01([w(70)], { w: 554, h: 1200 }).status).toBe('pass'); // towerwar_01: 70/1200 = 5.8% (portrait)
+    expect(m01([w(50)], { w: 1280, h: 720 }).status).toBe('pass'); // towerwar_yt1: 50/720 = 6.9% (landscape)
+    expect(m01([w(22)], { w: 1000, h: 500 }, 'l18').status).toBe('pass'); // 4.4% vh
+    expect(m01([w(20.5)], { w: 1000, h: 500 }, 'l18').status).toBe('fail'); // 4.1% = v1 l18: no separate smaller l18 floor
+    expect(m01([w(45)], { w: 1000, h: 500 }, 'l18').status).toBe('fail'); // 9% > 8.75%
     expect(evaluate('M01', ctx('M01', probe({ towers: [tower({ owner: null })] }))).status).toBe('fail'); // no owned tower -> null
+  });
+  it('M05: lane / tower width ratio 0.20-0.40 (refs 0.22-0.28 pass)', () => {
+    const lane = (px: number | null) => ({ from: 't1', to: 't2', pair: 't1-t2', widthWorld: 1, screenWidthPx: px, splitWorld: null, splitScreen: null, mid: { x: 0, y: 0 } });
+    const m05 = (...px: (number | null)[]) => evaluate('M05', ctx('M05', probe({ towers: [tower({ model: { x: 0, y: 0, w: 100, h: 90 } })], lanes: px.map(lane) })));
+    expect(m05(22, 28).status).toBe('pass'); // yt1 range
+    expect(m05(23, 26).status).toBe('pass'); // tw01 range
+    expect(m05(19).status).toBe('fail'); expect(m05(41).status).toBe('fail');
+    expect(m05(25, 19).status).toBe('fail'); // every lane must pass
+    expect(m05(25, null).status).toBe('fail'); // null lane width never passes
   });
   it('a missing probe fails every probe metric', () => expect(evaluate('M08', { ...ctx('M08'), probe: null }).status).toBe('fail'));
   it('summarize: any fail -> fail, all info -> info, none -> missing', () => {

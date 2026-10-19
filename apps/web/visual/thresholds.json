@@ -5,13 +5,10 @@
   "gameScenes": ["l01", "l10", "l18", "clash", "l10cb", "buildout", "cut"],
   "metrics": {
     "M01": {
-      "name": "tower screen width, % viewport width (median owned tower)", "source": "probe", "status": "prov",
-      "threshold": "l01/l10 >=6.0% at 1920x1080, >=5.5% at 1366x768, <=12%; l18 3.0-8%",
+      "name": "tower screen width, % viewport height (median owned tower)", "source": "probe", "status": "cal",
+      "threshold": "l01/l10/l18 4.35-8.75% of viewport height (all viewports)",
       "scenes": ["l01", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
-      "limits": {
-        "default": { "1920x1080": { "min": 0.06, "max": 0.12 }, "1366x768": { "min": 0.055, "max": 0.12 } },
-        "l18": { "min": 0.03, "max": 0.08 }
-      }
+      "limits": { "min": 0.0435, "max": 0.0875 }
     },
     "M02": {
       "name": "count digit height / tower bbox width (roof number)", "source": "pixels", "status": "cal",
@@ -33,10 +30,10 @@
       "limits": { "matchShare": { "min": 1.0 } }
     },
     "M05": {
-      "name": "lane screen width / tower width (mid-lane)", "source": "probe", "status": "prov",
-      "threshold": "0.25-0.40",
+      "name": "lane screen width / tower width (mid-lane)", "source": "probe", "status": "cal",
+      "threshold": "0.20-0.40",
       "scenes": ["l01", "l10", "l10cb", "l18", "clash"], "viewports": ["1920x1080", "1366x768"],
-      "limits": { "ratio": { "min": 0.25, "max": 0.40 } }
+      "limits": { "ratio": { "min": 0.20, "max": 0.40 } }
     },
     "M06": {
       "name": "troop on-screen height, % viewport height; /tower width", "source": "probe", "status": "cal",
