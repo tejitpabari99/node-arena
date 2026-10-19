@@ -77,9 +77,11 @@ test('all sixteen three-line tiers compile inherited personality with exact skil
   const proxy = base[pathFor('human-proxy')] as BotProfile;
   assert.equal(proxy.params.extends, 'reference');
   assert.deepEqual(proxy.params.skill, { decisionIntervalSec: 1800, noise: 200, actionsPerDecision: 1 });
-  // human-proxy models a human, so it carries commitment, inherited from reference (variants may only set skill).
+  // R8 deviation (Task 5): reference and human-proxy carry no commitment (v1 path); human-proxy inherits that from reference.
   assert.equal(Object.hasOwn(proxy.params, 'commitment'), false);
-  assert.deepEqual(resolveProfiles(base)[pathFor('human-proxy')]!.params.commitment, (base[pathFor('reference')] as BotProfile).params.commitment);
+  const resolved = resolveProfiles(base);
+  assert.strictEqual(resolved[pathFor('reference')]!.params.commitment, undefined);
+  assert.strictEqual(resolved[pathFor('human-proxy')]!.params.commitment, undefined);
 });
 
 // Merely checking the selected id would permit a skill-only alias of the reference bot in a level.

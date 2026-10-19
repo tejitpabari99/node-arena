@@ -88,13 +88,17 @@ Non-visual loop (measure → log → change → re-measure; same metric and seed
 | D6 | Baseline | Commit v1 churn JSON before changes | Compare in-memory | Reproducible targets |
 | D7 | Redraw block vs danger | Block always holds | Lift on danger | Redraw loop is the exact complaint |
 | D8 | Tier-aware commitment scaling (owner-approved 2026-10-19) | Code change: scale `minLineLifetimeSec`/`redrawBlockSec` by `decisionIntervalSec` vs a fixed reference (variants still only set `skill`, D4 unchanged) | Schema change letting variants override `commitment` | Tried in Task 5 resume iters 11-14 and **not shipped**: shortening fast-tier windows breaks the churn targets (turtle-expert cliff) and does not fix 17h (needs ~no rusher-expert commitment, a 5-6x churn budget overrun). See iteration log |
+| D9 | keepScore definition | Noise-free score of the line's own purpose (reinforce if target is own team, else attack) | max(attack, reinforce) | Task 5 iter 3: max() over-kept lines and broke bands |
+| D10 | cutMargin | 0 on all base profiles; `tieHysteresis` is the only cut band | PRD default 0.15 | Task 5 iter 4: margin plus hysteresis double-banded and blocked needed cuts |
+| D11 | Opportunist / turtle windows | Opportunist `redrawBlockSec` 0 + `slotGuardMargin` 2 (deviates from D7 "block always holds"; owner sign-off pending); turtle `minLineLifetimeSec` 6 (iter 7) | One shared set | Task 5 iter 6: opportunist bands; iter 7: turtle bands |
+| D12 | Reference / human-proxy commitment | None (v1 path) - R8 deviation, owner sign-off pending | All base profiles carry commitment | Task 5 iter 4: human-proxy bands failed with commitment |
 
 ## Risks / Open Questions
 - [RESOLVED: lifetime lock may slow adaptation and cost win rate -> drift rule step 6; expert variants share base params so only base values are tuned]
-- [RESOLVED: `keepScore` ambiguity -> best of attack/reinforce score on same pair, noise-free]
+- [RESOLVED: `keepScore` ambiguity -> best of attack/reinforce score on same pair, noise-free — SUPERSEDED by D9 / D12 (Task 5)]
 - [RESOLVED: bots built on removed lines (replaced by opponent) -> age map entry dropped when line absent]
 - [RESOLVED: golden/bench churn is expected; explained in commit message]
-- [DEFERRED] Applying commitment to human-proxy only vs all: default all base profiles; revisit if balance human-proxy bands fail.
+- [DEFERRED] Applying commitment to human-proxy only vs all: default all base profiles; revisit if balance human-proxy bands fail. — SUPERSEDED by D9 / D12 (Task 5)
 
 ## Acceptance Criteria
 - `packages/bots/churn-baseline-v1.json` exists, produced from pre-change code, committed first.
