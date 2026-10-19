@@ -38,3 +38,12 @@ Hand-off to Task 5 (not Task 3 gates, measured on iter 1 code):
 - `pnpm balance`: PASS (exit 0), 63 rows, 43 flagged (reference 12, human-proxy 15, idle 16; v1 flag count not measured here). Reference win rates drop in 3-4 player levels (e.g. 11-triple-threat 13.5%, 18-free-for-all 34%).
 - `pnpm validate:levels`: FAIL, 7 errors: reference wins short on 11, 13, 14, 15, 18, 19; 18-free-for-all solution replay has 1 rejected command at tick 515.
 - Hypotheses: (a) commitment on reference/human-proxy weakens the human-seat proxy (drift rule: lower its `minLineLifetimeSec`/`cutMargin` first); (b) keepScore = max(attack, reinforce) makes cuts nearly impossible (attack bias > cut bias), lengthening matches (iter 4: purpose keepScore restored v1 match length); (c) remaining churn is ~56% `captured` and ~44% `replaced`; replacement margin (iters 3/5) removes most `replaced` flips but iter 3 broke `sample` for reference.
+
+## Task 4 — Commitment unit tests
+
+New file `packages/bots/test/commitment.test.cjs` (12 tests; R1, R1b, R2, R3 x3, R4, R5 x2, R8/R6, R12, R13). Each test pairs the committed behaviour with a control where only that rule's param is neutral. Sensitivity was also checked by mutating `dist/utility.js` (16 mutants, one rule disabled at a time; dist restored and verified byte-identical afterwards).
+
+| iter | date | commit | tests added / passing | gaps | decision |
+|---|---|---|---|---|---|
+| 1 | 2026-10-19 | none (draft) | 12 added; commitment 12/12, bots 99/99 | mutants 15/16 killed. Survivor: removing the reverse-replacement redraw stamp (R3), because the replacement test only checked the lifetime lock | extend the test |
+| 2 | 2026-10-19 | Task 4 commit | R3 replacement test now also checks that flip-back t1->t0 is blocked until LIFE+BLOCK (neutral control: flip-back right after the new line's lock ends); commitment 12/12; bots 99/99 on two consecutive runs (deterministic) | mutants 16/16 killed: lifetime, dangerOverride off, dangerOverride global (not per source), cutMargin, redraw block, slot-cut detection, capture-no-block, slot guard, pre-empt, pre-empt lowest-keepScore, tie hysteresis, age cleanup, per-match reset, reverse-line lock, own-cut stamp, replacement stamp. R8 v1-equivalence (160 baseline matches with commitment stripped) asserts its own sensitivity (`differs > 0`) | done. Exit |
