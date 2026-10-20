@@ -160,6 +160,7 @@ p {
   color: var(--c-sand);
 }
 .picker {
+  background: var(--c-blue-deep);
   width: min(960px, calc(100% - 72px));
   margin-top: 5vh;
 }
@@ -169,6 +170,7 @@ p {
   gap: 14px;
 }
 .level {
+  background: linear-gradient(180deg, #ffffff 0%, var(--c-sand) 100%);
   font-size: 1em;
   text-transform: none;
   min-height: 44px;
@@ -181,11 +183,14 @@ p {
 }
 .level-order {
   color: var(--c-blue-deep);
-  font-size: 28px;
+  font-size: 34px;
+  line-height: 1;
   font-weight: 900;
+  -webkit-text-stroke: 0.04em var(--c-blue-dark);
 }
 .level span:last-child {
   font-size: 15px;
+  font-weight: 900;
   color: var(--c-ink);
 }
 .setting {

@@ -32,4 +32,8 @@ H01-H07 pass on l01, l01-tip, l10 both viewports. l18/l10cb H rows fail only bec
 | 1 | :root tokens (--c-*), sand/grass gradient bg, navy rimmed 24px panels, blue primary / sand secondary chunky buttons, outlined headings, UI_TOKENS + ui-tokens.test.ts (all pairs >= 4.5:1, strict AA, no large-text allowance) | self 8/8/8/8; blind 7/7/7/7 | blind gaps: heading outline invisible on navy, sentence case, buttons thin/small, tiny body text. App.tsx untouched (selectors unchanged). Web unit 348/348, typecheck/lint pass |
 | 2 | uppercase 44px headings, 64px buttons, picker 150px tiles (1920 fits) | blind 7/7/7/6 | gaps: heading outline invisible, flat |
 | 3 | blue ribbon h2 (centered, white rim); HUD tip/round buttons reset to prior size (regression caught in l01-tip); H01-H07 l01/l01-tip/l10 all pass | blind 7/7/7/7 | gaps: outline, chunk |
-| 4 | ribbon --c-blue (dark outline now visible), 7-8px button drop shadows; large-text 3:1 test for heading on blue | pending | |
+| 4 | ribbon --c-blue (dark outline now visible), 7-8px button drop shadows; large-text 3:1 test for heading on blue | 7/7/7/7 | |
+| 5 | gradient sand/blue buttons, ribbon gradient, 0.3em heading stroke | 7/7/7/7 | |
+| 6 | 6px white panel rim, eyebrow 18px/subtle 17px | blind menu 8, pause 8, results 8, picker 7 (self 8) | blind picker gap: tiny tile text, dark slab vs light ref |
+| 7 | tile order 34px stroked, labels 15px bold | picker 7 | |
+| 8 (final) | picker panel --c-blue-deep, white->sand tiles | blind picker 8 (diffs: no red/yellow segmented header, bg warm vs sky-blue, flat tiles w/o icons, thin rim, L20 clipped at 1366) ; menu 8/pause 8/results 8 (diffs: header box vs red ribbon+tails, flat navy vs inset rows, no orange footer/art, cream pills absent in ref) | V20 8, V21 8 merged min(self 8, blind). Tests: web unit 349/349, typecheck+lint+check:manifest pass, app-flow e2e (dev) pass, H01-H07 0 FAIL on l01/l01-tip/l10, App.tsx untouched |
