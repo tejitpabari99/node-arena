@@ -2,7 +2,7 @@ import { Color, DoubleSide, ShaderMaterial } from 'three';
 /** Tower War style translucent team ribbon (dotted fill, darker edges) with City Takeover style white chevrons on top.
  * Lane space: uv.x runs 0..1 from the lower-index tower A to B, uv.y spans the width. `split` is the A/B colour boundary
  * (fraction of lane length); the A half scrolls chevrons A->B, the B half B->A. */
-export const LANE_WIDTH_FACTOR = .35, LANE_FILL_ALPHA = .58, LANE_TINT = .42, LANE_DRAIN_ALPHA = .4, LANE_CHEVRON_SPEED = 2.5, LANE_CHEVRON_PITCH = 1.0;
+export const LANE_WIDTH_FACTOR = .35, LANE_FILL_ALPHA = .74, LANE_TINT = .2, LANE_DRAIN_ALPHA = .4, LANE_CHEVRON_SPEED = 2.5, LANE_CHEVRON_PITCH = 1.0;
 /** Seconds: build-out ease-out, cut flash, cut retract. */
 export const LANE_BUILD_S = .35, LANE_FLASH_S = .08, LANE_RETRACT_S = .3;
 const vertexShader = 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
