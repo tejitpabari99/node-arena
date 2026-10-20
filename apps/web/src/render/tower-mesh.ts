@@ -5,10 +5,10 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
  * Bottom to top: team plinth + grey trim ring + door/buttresses, 1-5 floors (white body + dark slit on a thin team band, ~4% taper), team roof cap.
  * Unit space: tower width (plinth across-flats) = 1; every instance is scaled by the tower width. */
 export const MAX_FLOORS = 5;
-const PLINTH_H = .2, RING_H = .09, BAND_H = .11, ROOF_H = .17;
+const PLINTH_H = .2, RING_H = .11, BAND_H = .13, ROOF_H = .15;
 /** Floor pitch (w units) shrinks with the floor count (refs: a lone floor reads tall, 4-5 floors read tight; the steep camera hides side faces). */
-export const floorPitch = (floors: number) => (.56 + .3 * floors) / floors;
-const PLINTH_A = .5, RING_A = .47, FLOOR_A = .4, TAPER = .04, ROOF_OVERHANG = .025;
+export const floorPitch = (floors: number) => .4 + .46 / floors;
+const PLINTH_A = .5, RING_A = .47, FLOOR_A = .4, TAPER = .04, ROOF_OVERHANG = .01;
 const BASE_Y = PLINTH_H + RING_H;
 export const BODY_COLOR = '#E6E8EA', DETAIL_COLOR = '#1B2430', NEUTRAL_ROOF = '#8C8C8C', NEUTRAL_BAND = '#C0C0C0', NEUTRAL_PLINTH = '#8C8C8C', TRIM_COLOR = '#D5D9DD';
 /** Linear-RGB gain that cancels the theme's warm key + sand hemisphere light on grey/white parts (measured in l01: lit grey renders

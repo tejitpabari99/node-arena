@@ -1,7 +1,7 @@
 import { Box3, Matrix4, PerspectiveCamera, Vector3, type Object3D } from 'three';
 import type { CompiledLevel, Manifest } from '@node-arena/content';
 import { createManifestResolver } from '../manifest/resolve.js';
-import { MAX_FLOORS, stackHeight, towerWidth } from './tower-mesh.js';
+import { stackHeight, towerWidth } from './tower-mesh.js';
 
 /** Authored extents (milli-units) as a world-unit box centred on the origin, matching tower coordinates. */
 export function authoredBounds(level: Pick<CompiledLevel, 'bounds'>): Box3 {
@@ -16,9 +16,9 @@ export function levelVisualBounds(level: Pick<CompiledLevel, 'bounds' | 'towers'
   for (const tower of level.towers) {
     const x = tower.x / 1000, z = tower.y / 1000, radius = tower.footprintRadius / 1000;
     const visual = resolver.visual(tower.visual, 'tower');
-    if (visual.build === 'stacked') { // code-built stack: the visual width (not the footprint disc) and the tallest (5-floor) height frame the camera
+    if (visual.build === 'stacked') { // code-built stack: the visual width (not the footprint disc) and a 3-floor height frame the camera (5-floor stacks may rise past it; M15 min margin still holds)
       const width = towerWidth(radius, visual.scale), half = width / 2;
-      bounds.expandByPoint(new Vector3(x - half, stackHeight(MAX_FLOORS, width), z - half)); bounds.expandByPoint(new Vector3(x + half, 0, z + half)); continue;
+      bounds.expandByPoint(new Vector3(x - half, stackHeight(3, width), z - half)); bounds.expandByPoint(new Vector3(x + half, 0, z + half)); continue;
     }
     bounds.expandByPoint(new Vector3(x - radius, 0, z - radius));
     bounds.expandByPoint(new Vector3(x + radius, 0, z + radius));
