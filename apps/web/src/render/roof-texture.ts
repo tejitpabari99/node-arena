@@ -17,7 +17,7 @@ export function roofText(count: number, cap: number | null | undefined): string 
 }
 export const stateKey = (s: RoofState) => `${s.text}|${s.dots.map(d => (d === 'free' ? 'f' : 'u')).join('')}|${s.glyph}`;
 
-export const NUMBER_PX = 40, STROKE_PX = 16, FATTEN_PX = 3, LETTER_GAP_PX = 7, NUMBER_Y = 33, DOT_R = 10, DOT_PITCH = 28, DOT_Y = 75, GLYPH_PX = 34;
+export const NUMBER_PX = 40, STROKE_PX = 16, FATTEN_PX = 3, LETTER_GAP_PX = 7, NUMBER_Y = 33, DOT_R = 13, DOT_PITCH = 32, DOT_Y = 74, GLYPH_PX = 32, GLYPH_X = 20, GLYPH_Y = 34, GLYPH_SHIFT = 10;
 export const NUMBER_FILL = '#ffffff', NUMBER_OUTLINE = '#000000';
 export const BRIGHT_DOT = 'rgba(255,255,255,1)', DIM_DOT = 'rgba(255,255,255,.5)';
 
@@ -30,12 +30,14 @@ export function drawRoof(ctx: CanvasRenderingContext2D, ox: number, oy: number, 
   // Letter gap keeps adjacent digit fills from merging into one blob after the outline/fatten strokes (and after minification).
   (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = `${LETTER_GAP_PX}px`;
   ctx.font = `bold ${NUMBER_PX}px sans-serif`;
-  const fit = Math.min(1, (CELL - STROKE_PX - 24) / Math.max(1, ctx.measureText(state.text).width));
+  // With the colourblind glyph in the top-left corner the number moves right and stays clear of it.
+  const shift = state.glyph ? GLYPH_SHIFT : 0, room = state.glyph ? 72 : CELL - STROKE_PX - 24;
+  const fit = Math.min(1, room / Math.max(1, ctx.measureText(state.text).width));
   ctx.font = `bold ${Math.round(NUMBER_PX * fit)}px sans-serif`;
-  ctx.lineWidth = STROKE_PX; ctx.strokeStyle = NUMBER_OUTLINE; ctx.strokeText(state.text, ox + CELL / 2 + LETTER_GAP_PX / 2, oy + NUMBER_Y);
+  ctx.lineWidth = STROKE_PX; ctx.strokeStyle = NUMBER_OUTLINE; ctx.strokeText(state.text, ox + CELL / 2 + shift + LETTER_GAP_PX / 2, oy + NUMBER_Y);
   // Fill = glyph + a thin same-colour stroke: stems stay white (not grey) after mip minification on small towers.
-  ctx.fillStyle = NUMBER_FILL; ctx.fillText(state.text, ox + CELL / 2 + LETTER_GAP_PX / 2, oy + NUMBER_Y);
-  ctx.lineWidth = FATTEN_PX; ctx.strokeStyle = NUMBER_FILL; ctx.strokeText(state.text, ox + CELL / 2 + LETTER_GAP_PX / 2, oy + NUMBER_Y);
+  ctx.fillStyle = NUMBER_FILL; ctx.fillText(state.text, ox + CELL / 2 + shift + LETTER_GAP_PX / 2, oy + NUMBER_Y);
+  ctx.lineWidth = FATTEN_PX; ctx.strokeStyle = NUMBER_FILL; ctx.strokeText(state.text, ox + CELL / 2 + shift + LETTER_GAP_PX / 2, oy + NUMBER_Y);
   (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = '0px';
   // Slot dots: bright opaque white = free slot, dim translucent = slot in use.
   const n = state.dots.length, x0 = ox + CELL / 2 - (n - 1) * DOT_PITCH / 2;
@@ -45,8 +47,8 @@ export function drawRoof(ctx: CanvasRenderingContext2D, ox: number, oy: number, 
   });
   // Colourblind glyph: top-left, ~25% of the cell.
   if (state.glyph) {
-    ctx.font = `bold ${GLYPH_PX}px sans-serif`; ctx.lineWidth = 5; ctx.strokeStyle = '#000'; ctx.strokeText(state.glyph, ox + 20, oy + 20);
-    ctx.fillStyle = '#fff'; ctx.fillText(state.glyph, ox + 20, oy + 20);
+    ctx.font = `bold ${GLYPH_PX}px sans-serif`; ctx.lineWidth = 7; ctx.strokeStyle = NUMBER_OUTLINE; ctx.strokeText(state.glyph, ox + GLYPH_X, oy + GLYPH_Y);
+    ctx.fillStyle = NUMBER_FILL; ctx.fillText(state.glyph, ox + GLYPH_X, oy + GLYPH_Y);
   }
   ctx.restore();
 }
