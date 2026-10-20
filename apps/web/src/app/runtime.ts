@@ -84,6 +84,7 @@ export function createBrowserRuntime(
       frame(update) {
         const start = performance.now();
         const seconds = (update.sim.tick + update.alpha) / TICK_RATE;
+        towers.animate(seconds);
         troops.update(update.alpha, seconds);
         lines.update(seconds);
         fx.update(seconds);

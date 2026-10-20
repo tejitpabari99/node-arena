@@ -102,7 +102,9 @@ describe('manifest pipeline', () => {
   });
   it('shipped manifest parses and maps tower/troop visuals to imported models', () => {
     const r = createManifestResolver(parseManifest(shipped));
-    for (const key of ['tower.small', 'tower.standard', 'tower.large', 'troop.regular']) expect(r.visual(key).model).toHaveProperty('src');
+    expect(r.visual('troop.regular').model).toHaveProperty('src');
+    // SP03 T4: towers are code-built stacked meshes (block placeholder model, no GLB).
+    for (const key of ['tower.small', 'tower.standard', 'tower.large']) expect(r.visual(key)).toMatchObject({ build: 'stacked', model: { primitive: 'box' } });
     expect(shipped.visuals['troop.regular']).toMatchObject({ teamMaterial: 'Shirt', anim: { type: 'bob' } });
   });
 });

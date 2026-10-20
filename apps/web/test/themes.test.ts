@@ -41,7 +41,7 @@ describe('grass theme', () => {
   it('keeps the default-theme fallback key defined', () => { expect(m.themes.grass).toBeDefined(); });
   it('resolves the sample level assets', () => {
     const assets = createManifestResolver(m).resolveLevelAssets({ ...level, visual: 'grass' });
-    expect([...assets.models].sort()).toEqual(['building.small', 'building.standard', 'character.regular', 'prop.barrel', 'prop.crate', 'prop.stump', 'prop.tree.pine', 'prop.tree.round']);
+    expect([...assets.models].sort()).toEqual(['block', 'character.regular', 'prop.barrel', 'prop.crate', 'prop.stump', 'prop.tree.pine', 'prop.tree.round']);
   });
 });
 
