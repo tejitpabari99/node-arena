@@ -7,7 +7,7 @@ import { buildLowTroopGeometry } from './troop-lod.js';
 import type { Lane, TroopFronts } from './lines.js';
 
 /** Brawl FX at the shared-lane split (SP04 Req 7). Cosmetic: 2-6 team-tinted fighters, billboard puffs, a crossed-swords marker.
- * Three instanced meshes, all preallocated; every offset/lifetime is a pure function of (pair hash, sim tick), never `Math.random` or a clock. */
+ * Three instanced meshes, all preallocated; every offset/lifetime is a pure function of (pair hash, sim tick), never unseeded random or a clock. */
 export const BRAWLS = 6, PUFFS_PER_BRAWL = 12, AMBIENT_PUFFS = 6, BURST_PUFFS = PUFFS_PER_BRAWL - AMBIENT_PUFFS, MAX_FIGHTERS = 6;
 export const RECENT_CLASH_S = 1.2, EMA_TAU_S = 2, FADE_S = .25, PUFF_LIFE_S = .7, MARKER_LIFT = 1;
 export const PUFF_RATE_MIN = 2, PUFF_RATE_MAX = 10, MARKER_SCALE_MIN = .8, MARKER_SCALE_MAX = 1.2, CREAM = '#fff4d6';
@@ -46,8 +46,8 @@ export function drawSwords(ctx: CanvasRenderingContext2D, size: number): void {
   const c = size / 2, r = size * .36;
   for (const [outline, width, color] of [[true, size * .16, '#2a2118'], [false, size * .09, CREAM]] as const) for (const dir of [-1, 1]) {
     ctx.save(); ctx.translate(c, c); ctx.rotate(dir * Math.PI / 4); ctx.strokeStyle = color; ctx.lineWidth = width;
-    ctx.beginPath(); ctx.moveTo(0, -r); ctx.lineTo(0, r * .55); ctx.stroke();
-    ctx.lineWidth = width * (outline ? 1.2 : .8); ctx.beginPath(); ctx.moveTo(-r * .38, r * .5); ctx.lineTo(r * .38, r * .5); ctx.stroke(); ctx.restore();
+    ctx.beginPath(); ctx.moveTo(0, -r); ctx.lineTo(0, r * .7); ctx.stroke();
+    ctx.lineWidth = width * (outline ? 1.2 : .8); ctx.beginPath(); ctx.moveTo(-r * .38, r * .38); ctx.lineTo(r * .38, r * .38); ctx.stroke(); ctx.restore();
   }
 }
 
@@ -90,13 +90,13 @@ export function createBrawlRenderer(options: BrawlRendererOptions) {
   if (puffTexture) scope.add(puffTexture); if (swordsTexture) scope.add(swordsTexture);
   const quad = scope.add(new PlaneGeometry(1, 1)), puffGeometry = scope.add(quad.clone()), alphaAttr = new InstancedBufferAttribute(new Float32Array(BRAWLS * PUFFS_PER_BRAWL), 1).setUsage(DynamicDrawUsage);
   puffGeometry.setAttribute('aAlpha', alphaAttr);
-  const puffMaterial = scope.add(new MeshBasicMaterial({ map: puffTexture, color: CREAM, transparent: true, depthWrite: false }));
+  const puffMaterial = scope.add(new MeshBasicMaterial({ map: puffTexture, color: 0xffffff, transparent: true, depthWrite: false }));
   puffMaterial.onBeforeCompile = shader => {
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute float aAlpha;\nvarying float vAlpha;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlpha = aAlpha;');
     shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vAlpha;').replace('#include <alphamap_fragment>', '#include <alphamap_fragment>\ndiffuseColor.a *= vAlpha;');
   };
   const puffs = new InstancedMesh(puffGeometry, puffMaterial, BRAWLS * PUFFS_PER_BRAWL); puffs.count = 0; puffs.frustumCulled = false; puffs.renderOrder = 4; puffs.userData = { visualRole: 'brawl-puffs' };
-  puffs.instanceMatrix.setUsage(DynamicDrawUsage);
+  puffs.instanceMatrix.setUsage(DynamicDrawUsage); puffs.instanceColor = new InstancedBufferAttribute(new Float32Array(BRAWLS * PUFFS_PER_BRAWL * 3), 3).setUsage(DynamicDrawUsage);
   const markerMaterial = scope.add(new MeshBasicMaterial({ map: swordsTexture, transparent: true, depthWrite: false, alphaTest: .02 }));
   const markers = new InstancedMesh(quad, markerMaterial, BRAWLS); markers.count = 0; markers.frustumCulled = false; markers.renderOrder = 5; markers.userData = { visualRole: 'brawl-marker' };
   markers.instanceMatrix.setUsage(DynamicDrawUsage);
@@ -133,7 +133,10 @@ export function createBrawlRenderer(options: BrawlRendererOptions) {
     }
   }
 
-  function writePuff(index: number, x: number, y: number, z: number, size: number, alpha: number) {
+  const mix = new Color();
+  /** Puff tint: white blended `amount` toward the team colour of `owner`. */
+  function writePuff(index: number, x: number, y: number, z: number, size: number, alpha: number, owner = -1, amount = 0) {
+    mix.setRGB(1, 1, 1); if (amount > 0 && owner >= 0 && owner < owners) mix.lerp(teamColors[owner]!, amount); puffs.setColorAt(index, mix);
     scale.set(size, size, 1); position.set(x, y, z); matrix.compose(position, billboard, scale); puffs.setMatrixAt(index, matrix); alphaAttr.array[index] = alpha;
   }
   /** `seconds` is the absolute render clock (same as troops/lines); `camera` orients billboards. */
@@ -162,8 +165,8 @@ export function createBrawlRenderer(options: BrawlRendererOptions) {
         const born = s.burstBorn[k]!; if (born === -Infinity) continue;
         const age = Math.max(0, seconds - born);
         if (age >= PUFF_LIFE_S) { s.burstBorn[k] = -Infinity; continue; }
-        const seed = s.burstSeed[k]!, t = age / PUFF_LIFE_S, ang = (k / BURST_PUFFS + hash01(seed, 1) * .5) * TAU, speed = H * (.9 + hash01(seed, 2) * .9) * (reduced ? 0 : 1);
-        writePuff(p++, s.burstX[k]! + Math.cos(ang) * speed * age + (hash01(seed, 5) - .5) * H * .3, H * (.22 + .5 * t) + hash01(seed, 3) * H * .12, s.burstZ[k]! + Math.sin(ang) * speed * age + (hash01(seed, 6) - .5) * H * .3, H * (.55 + .9 * t), Math.min(1, t * 10) * (1 - t) * .9);
+        const seed = s.burstSeed[k]!, t = age / PUFF_LIFE_S, ang = (k / BURST_PUFFS + hash01(seed, 1) * .5) * TAU, speed = H * (.9 + hash01(seed, 2) * .9) * (reduced ? 0 : 1), po = s.lo >= 0 ? view.tower.owner[hash01(seed, 7) < .5 ? s.lo : s.hi] ?? -1 : -1;
+        writePuff(p++, s.burstX[k]! + Math.cos(ang) * speed * age + (hash01(seed, 5) - .5) * H * .3, H * (.22 + .5 * t) + hash01(seed, 3) * H * .12, s.burstZ[k]! + Math.sin(ang) * speed * age + (hash01(seed, 6) - .5) * H * .3, H * (.6 + .9 * t), Math.min(1, t * 10) * (1 - t * .6) * .8, po, .3);
       }
       if (s.vis <= 0) { s.fighters = s.ambient = 0; continue; }
       const intensity = intensityOf(s.ema), nF = fighterCount(intensity), vis = s.vis; s.fighters = 0;
@@ -186,8 +189,8 @@ export function createBrawlRenderer(options: BrawlRendererOptions) {
       const rate = puffRate(intensity), T = AMBIENT_PUFFS / rate, life = Math.min(PUFF_LIFE_S, T); s.ambient = 0;
       for (let j = 0; j < AMBIENT_PUFFS; j++) {
         const u = seconds + j * T / AMBIENT_PUFFS + hash01(s.pairH, 99) * T, cycle = Math.floor(u / T), age = u - cycle * T; if (age >= life) continue;
-        const start = Math.floor((seconds - age) * TICK_RATE), seed = brawlSeed(s.pairH, start) ^ Math.imul(j + 1, 0x27d4eb2f), t = age / life, ang = hash01(seed, 1) * TAU, rad = H * (.25 + hash01(seed, 2) * .4);
-        writePuff(p++, s.x + Math.cos(ang) * rad + s.dx * (reduced ? 0 : age * H * .2), H * (.18 + .55 * t) * (reduced ? .8 : 1) + hash01(seed, 3) * H * .2, s.z + Math.sin(ang) * rad, H * (.5 + .8 * t) * vis, Math.min(1, t * 8) * (1 - t) * .85 * vis); s.ambient++;
+        const start = Math.floor((seconds - age) * TICK_RATE), seed = brawlSeed(s.pairH, start) ^ Math.imul(j + 1, 0x27d4eb2f), t = age / life, ang = hash01(seed, 1) * TAU, rad = H * (.6 + hash01(seed, 2) * .9), po = view.tower.owner[hash01(seed, 7) < .5 ? s.lo : s.hi] ?? -1;
+        writePuff(p++, s.x + Math.cos(ang) * rad + s.dx * (reduced ? 0 : age * H * .2), H * (.35 + .5 * t) + hash01(seed, 3) * H * .25, s.z + Math.sin(ang) * rad, H * (.5 + .7 * t) * vis, Math.min(1, t * 8) * (1 - t * .5) * .75 * vis, po, hash01(seed, 8) < .5 ? .3 : 0); s.ambient++;
       }
       // Marker: billboard above the cluster; scale 0.8-1.2 by intensity.
       const ms = markerScale(intensity) * vis * H * .9;
@@ -195,7 +198,7 @@ export function createBrawlRenderer(options: BrawlRendererOptions) {
     }
     fighters.count = fighterCountNow = f; puffs.count = puffCountNow = p; markers.count = markerCountNow = m;
     if (f) { fighters.instanceMatrix.needsUpdate = true; fighters.instanceColor!.needsUpdate = true; }
-    if (p) { puffs.instanceMatrix.needsUpdate = true; alphaAttr.needsUpdate = true; }
+    if (p) { puffs.instanceMatrix.needsUpdate = true; puffs.instanceColor!.needsUpdate = true; alphaAttr.needsUpdate = true; }
     if (m) markers.instanceMatrix.needsUpdate = true;
   }
   function dispose() { if (disposed) return; disposed = true; fighters.count = puffs.count = markers.count = 0; scope.dispose(); }
