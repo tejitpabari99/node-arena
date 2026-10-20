@@ -26,9 +26,10 @@ void main(){
   base=mix(base,mix(col,vec3(0.),.1),edge); base=mix(base,vec3(1.),hover*edge*.8);
   alpha=mix(alpha,.72,edge);
   alpha=mix(alpha,min(alpha,${LANE_DRAIN_ALPHA.toFixed(2)}),drain);
-  float band=smoothstep(0.,.04,ph)*(1.-smoothstep(.1,.15,ph));
-  float chev=band*(1.-smoothstep(.42,.52,ac))*smoothstep(0.,fade,d)*smoothstep(0.,fade,laneLen-d)*(1.-drain);
-  gl_FragColor=vec4(mix(base,vec3(.97,.98,1.),chev*.9),mix(alpha,.92,chev));
+  alpha*=mix(.4,1.,smoothstep(0.,fade*.6,min(d,laneLen-d)));
+  float band=smoothstep(0.,.04,ph)*(1.-smoothstep(.15,.2,ph));
+  float chev=band*(1.-smoothstep(.5,.6,ac))*smoothstep(0.,fade,d)*smoothstep(0.,fade,laneLen-d)*(1.-drain);
+  gl_FragColor=vec4(mix(base,vec3(1.),chev),mix(alpha,.97,chev));
 }`;
 /** One material per lane (per-lane uniforms); `time`/`motion` are shared clock objects. */
 export function createLaneMaterial(clock: { value: number }, motion: { value: number }) {
