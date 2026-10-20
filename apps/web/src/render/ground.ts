@@ -17,7 +17,7 @@ export function createGround(options: { scene: Scene; scope: Disposables; theme:
   const core = { w: Math.max(size.x, .01) + 2 * GRASS_PAD, h: Math.max(size.z, .01) + 2 * GRASS_PAD };
 
   // Sand base plane >= 4x bounds.
-  const sand = new Mesh(new PlaneGeometry(Math.max(size.x, 1) * 4 + 100, Math.max(size.z, 1) * 4 + 100), new MeshStandardMaterial({ color: palette.sand }));
+  const sand = new Mesh(new PlaneGeometry(Math.max(size.x, 1) * 4 + 100, Math.max(size.z, 1) * 4 + 100), new MeshStandardMaterial({ color: palette.sand, emissive: new Color(0xffffff).multiplyScalar(.11) }));
   sand.rotation.x = -Math.PI / 2; sand.position.set(center.x, -.02, center.z); sand.receiveShadow = true;
   sand.userData.visualRole = 'ground'; scene.add(sand); scope.object(sand);
 
@@ -48,19 +48,19 @@ export function createGround(options: { scene: Scene; scope: Disposables; theme:
 
   // Rock clusters (squashed dodecahedra) in a ring outside the grass patch, deterministic from theme.scatter.seed.
   const rand = mulberry32((theme.scatter?.seed ?? 1) * 7919 + 17);
-  const rockCount = 240, rocks = new InstancedMesh(new DodecahedronGeometry(1, 0), new MeshStandardMaterial({ color: palette.rock, flatShading: true, emissive: new Color(palette.rock).multiplyScalar(.22) }), rockCount);
+  const rockCount = 120, rocks = new InstancedMesh(new DodecahedronGeometry(1, 1), new MeshStandardMaterial({ color: palette.rock, flatShading: false, emissive: new Color(palette.rock).multiplyScalar(.22) }), rockCount);
   const m = new Matrix4(), q = new Quaternion(), p = new Vector3(), s = new Vector3(), up = new Vector3(0, 1, 0);
   const perimeter = 2 * (core.w + core.h); let placed = 0;
   while (placed < rockCount) {
     // Cliff clusters: the four corners (ref: red cliffs at frame corners) plus two spots along the long edges.
       const corners = [0, core.w, core.w + core.h, 2 * core.w + core.h, rand() * core.w, core.w + core.h + rand() * core.w];
-      const clusterAt = corners[Math.floor(rand() * corners.length)]! + (rand() - .5) * 6, n = 5 + Math.floor(rand() * 5);
+      const clusterAt = corners[Math.floor(rand() * corners.length)]! + (rand() - .5) * 6, n = 3 + Math.floor(rand() * 3);
     for (let k = 0; k < n && placed < rockCount; k++, placed++) {
       let d = clusterAt + (rand() - .5) * 22; d = ((d % perimeter) + perimeter) % perimeter;
       const off = EDGE_SOFT / 2 + 7 + rand() * 7; let rx: number, rz: number;
       if (d < core.w) { rx = d - core.w / 2; rz = -core.h / 2 - off; } else if (d < core.w + core.h) { rx = core.w / 2 + off; rz = d - core.w - core.h / 2; }
       else if (d < 2 * core.w + core.h) { rx = core.w / 2 - (d - core.w - core.h); rz = core.h / 2 + off; } else { rx = -core.w / 2 - off; rz = core.h / 2 - (d - 2 * core.w - core.h); }
-      const sc = 1.2 + rand() * 2; s.set(sc * (1 + rand() * .5), sc * (.45 + rand() * .3), sc * (1 + rand() * .5));
+      const sc = 2.4 + rand() * 2.6; s.set(sc * (1 + rand() * .5), sc * (.45 + rand() * .3), sc * (1 + rand() * .5));
       q.setFromAxisAngle(up, rand() * Math.PI * 2); p.set(center.x + rx, 0, center.z + rz);
       m.compose(p, q, s); rocks.setMatrixAt(placed, m);
     }
