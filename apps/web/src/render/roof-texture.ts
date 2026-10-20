@@ -17,9 +17,9 @@ export function roofText(count: number, cap: number | null | undefined): string 
 }
 export const stateKey = (s: RoofState) => `${s.text}|${s.dots.map(d => (d === 'free' ? 'f' : 'u')).join('')}|${s.glyph}`;
 
-export const NUMBER_PX = 40, STROKE_PX = 16, FATTEN_PX = 3, LETTER_GAP_PX = 7, NUMBER_Y = 33, DOT_R = 13, DOT_PITCH = 32, DOT_Y = 74, GLYPH_PX = 32, GLYPH_X = 20, GLYPH_Y = 34, GLYPH_SHIFT = 10;
+export const NUMBER_PX = 40, STROKE_PX = 16, FATTEN_PX = 3, LETTER_GAP_PX = 7, NUMBER_Y = 33, DOT_R = 14, DOT_PITCH = 35, DOT_Y = 74, GLYPH_PX = 32, GLYPH_X = 20, GLYPH_Y = 34, GLYPH_SHIFT = 10;
 export const NUMBER_FILL = '#ffffff', NUMBER_OUTLINE = '#000000';
-export const BRIGHT_DOT = 'rgba(255,255,255,1)', DIM_DOT = 'rgba(255,255,255,.5)';
+export const BRIGHT_DOT = 'rgba(255,255,255,1)', DIM_DOT = 'rgba(255,255,255,.42)';
 
 /** Draw one tower's decal into a 128x128 region at (ox, oy). Pure canvas calls, no clock or randomness. */
 export function drawRoof(ctx: CanvasRenderingContext2D, ox: number, oy: number, state: RoofState): void {
@@ -44,6 +44,7 @@ export function drawRoof(ctx: CanvasRenderingContext2D, ox: number, oy: number, 
   state.dots.forEach((d, i) => {
     ctx.beginPath(); ctx.arc(x0 + i * DOT_PITCH, oy + DOT_Y, DOT_R, 0, Math.PI * 2);
     ctx.fillStyle = d === 'free' ? BRIGHT_DOT : DIM_DOT; ctx.fill();
+    if (d === 'free') { ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.stroke(); } // thin dark rim: free dots read at a glance
   });
   // Colourblind glyph: top-left, ~25% of the cell.
   if (state.glyph) {
