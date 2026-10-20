@@ -26,15 +26,15 @@ test('real sim opposite ribbons, clash event coordinates, capture effects, scrol
     let clash:any;for(let tick=0;tick<50&&!clash;tick++){const e=sim.step([]);clash=e.find((e:any)=>e.type==='Clash');lines.consumeEvents(e);if(clash)fx.consumeEvents([clash]);}
     fx.update(.1);gl.render(scene,camera);const clashPosition=fx.meshes.find((m:any)=>m.visible)?.position.toArray();
     const ndc=new Vector3(5,.15,0).project(camera),region=new Uint8Array(20*20*4);ctx.readPixels(Math.round((ndc.x+1)*400)-10,Math.round((ndc.y+1)*200)-10,20,20,ctx.RGBA,ctx.UNSIGNED_BYTE,region);const visibleSpark=new Uint8Array(region);for(const mesh of fx.meshes)mesh.visible=false;gl.render(scene,camera);ctx.readPixels(Math.round((ndc.x+1)*400)-10,Math.round((ndc.y+1)*200)-10,20,20,ctx.RGBA,ctx.UNSIGNED_BYTE,region);let sparkPixels=0;for(let i=0;i<region.length;i+=4)if(region[i]!==visibleSpark[i]||region[i+1]!==visibleSpark[i+1]||region[i+2]!==visibleSpark[i+2])sparkPixels++;
-    const unchanged=lines.meshes.every((m:any,i:number)=>m===initialMeshes[i]);scope.dispose();gl.render(scene,camera);
+    const laneCount=lines.meshes.length;const unchanged=lines.meshes.every((m:any,i:number)=>m===initialMeshes[i]);scope.dispose();gl.render(scene,camera);
     const captureSim=create(level(true),9),captureScope=new Disposables(),capture=createFxRenderer({view:captureSim.view,scene,scope:captureScope,manifest});let captured:any;
     let captureEvents=captureSim.step([{type:'DrawLine',player:'a',from:'t0',to:'t1'}]);for(let i=0;i<50&&!captured;i++){captureEvents=captureSim.step([]);captured=captureEvents.find((e:any)=>e.type==='Captured');}capture.consumeEvents(captureEvents);capture.update(.1);gl.render(scene,camera);
     const capturePosition=capture.meshes.find((m:any)=>m.visible)?.position.toArray(),captureEffect=capture.slots.find((s:any)=>s.active)?.effect;captureScope.dispose();gl.render(scene,camera);
     for(let i=0;i<20;i++){const s=new Disposables(),l=createLineRenderer({view:sim.view,scene,scope:s,manifest}),f=createFxRenderer({view:sim.view,scene,scope:s,manifest});f.consumeEvents([clash]);l.update(.3);gl.render(scene,camera);s.dispose();gl.render(scene,camera);}
-    const after={...gl.info.memory};gl.dispose();return {blue,red,scrolling,unchanged,clash,clashPosition,sparkPixels,captured,capturePosition,captureEffect,baseline,after};
+    const after={...gl.info.memory};gl.dispose();return {laneCount,blue,red,scrolling,unchanged,clash,clashPosition,sparkPixels,captured,capturePosition,captureEffect,baseline,after};
   }, publicSimPath);
   console.log(`LINES_FX_RESULT ${JSON.stringify(result)}`);
-  expect(errors).toEqual([]);expect(result.blue).toBeGreaterThan(100);expect(result.red).toBeGreaterThan(100);expect(result.scrolling).toBeGreaterThan(100);expect(result.unchanged).toBe(true);
+  expect(errors).toEqual([]);expect(result.laneCount).toBe(1);expect(result.blue).toBeGreaterThan(100);expect(result.red).toBeGreaterThan(100);expect(result.scrolling).toBeGreaterThan(100);expect(result.unchanged).toBe(true);
   expect(result.clash).toBeTruthy();expect(result.clashPosition![0]).toBe(result.clash.progA/20000);expect(result.clashPosition![0]).toBe(5);expect(result.sparkPixels).toBeGreaterThan(0);
   expect(result.captured).toBeTruthy();expect(result.capturePosition).toEqual([10,.12,0]);expect(result.captureEffect).toBe('pulse');expect(result.after).toEqual(result.baseline);
 });

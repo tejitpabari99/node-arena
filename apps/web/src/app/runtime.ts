@@ -49,6 +49,7 @@ export function createBrowserRuntime(
     });
     const lines = createLineRenderer({
       view: driver.sim.view,
+      visualWidth: (id) => towers.visualWidth(id),
       manifest,
       scene: scene.scene,
       scope,
@@ -86,7 +87,7 @@ export function createBrowserRuntime(
         const seconds = (update.sim.tick + update.alpha) / TICK_RATE;
         towers.animate(seconds);
         troops.update(update.alpha, seconds);
-        lines.update(seconds);
+        lines.update(seconds, troops);
         fx.update(seconds);
         input?.refresh();
         scene.render();

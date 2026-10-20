@@ -43,6 +43,7 @@ export function createTroopRenderer(options: TroopRendererOptions) {
   }
   if (!n) minX = maxX = minZ = maxZ = 0;
   const center = new Vector3((minX + maxX) / 2, 0, (minZ + maxZ) / 2), mapRadius = Math.hypot(maxX - minX, maxZ - minZ) / 2;
+  const frontProgress = new Int32Array(n * n), channelCount = new Int32Array(n * n);
   let capacity = Math.max(1, Math.ceil(options.initialCapacity ?? 128)), buf = buffer(capacity), live = 0, disposed = false;
   const buckets: Bucket[] = [], meshes: InstancedMesh[] = [], byVisual = new Map<string, Bucket[]>(), kindBuckets: Bucket[][] = [];
   const identity = new Matrix4();
@@ -103,7 +104,9 @@ export function createTroopRenderer(options: TroopRendererOptions) {
       }
       bucket.mesh.count = bucket.count; bucket.count = 0;
     }
+    frontProgress.fill(0); channelCount.fill(0);
     for (let i = 0; i < live; i++) {
+      const ch = buf.channel[i]!; channelCount[ch]!++; if (buf.progress[i]! > frontProgress[ch]!) frontProgress[ch] = buf.progress[i]!;
       const kind = buf.kind[i]!, bucket = kindBuckets[kind]![buf.owner[i]!]!, offset = buf.channel[i]! * 6;
       const length = channels[offset + 4]!, t = length ? Math.min(1, Math.max(0, (buf.progress[i]! + alpha * view.kinds[kind]!.speedPerTick) / length)) : 1;
       const data = bucket.pose, at = bucket.count++ * 4;
@@ -112,7 +115,9 @@ export function createTroopRenderer(options: TroopRendererOptions) {
     }
     for (const bucket of buckets) { const pose = bucket.mesh.geometry.getAttribute('troopPose') as InstancedBufferAttribute; pose.clearUpdateRanges(); pose.addUpdateRange(0, bucket.mesh.count * 4); pose.needsUpdate = true; }
   }
-  return { update, dispose, get count() { return live; }, get meshes(): readonly InstancedMesh[] { return meshes; },
+  return { update, dispose, get count() { return live; },
+    /** Read-only per channel (`from * n + to`): max (front) raw sim progress and troop count, refreshed each update. */
+    get frontProgress(): Readonly<Int32Array> { return frontProgress; }, get channelCount(): Readonly<Int32Array> { return channelCount; }, get meshes(): readonly InstancedMesh[] { return meshes; },
     setReducedMotion(value: boolean) { for (const bucket of buckets) for (const animation of bucket.animation) animation.setReducedMotion(value); },
     setPalette(palette: keyof Manifest['palettes']) { for (const owners of byVisual.values()) for (let owner = 0; owner < owners.length; owner++) {
       // Team Color instances are held by compiled material uniforms; mutate rather than recompile.

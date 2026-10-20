@@ -22,7 +22,7 @@ async function harness(page: Page) {
     function point(x:number,z:number){const p=new Vector3(x,0,z).project(camera),box=(canvas.isConnected?canvas:(window as any).inputHarness.replacement).getBoundingClientRect();return {x:box.left+(p.x+1)*box.width/2,y:box.top+(1-p.y)*box.height/2};}
     (window as any).inputHarness={input,driver,lines,scene,scope,submissions,events,point,get canvas(){return canvas;},
       center(){const segment=lines.projectSegments(camera,800,600).find((s:any)=>s.owner===0);const box=canvas.getBoundingClientRect();return {x:box.left+(segment.start.x+segment.end.x)/2,y:box.top+(segment.start.y+segment.end.y)/2};},
-      info(){return {tick:driver.sim.tick,lines:driver.sim.view.lines.map((l:any)=>({...l})),submissions:[...submissions],events:[...events],reason:document.querySelector('[data-input-reason]')?.textContent,reasonVisible:(document.querySelector('[data-input-reason]') as HTMLElement)?.style.display!=='none',preview:scene.children.some((m:any)=>m.renderOrder===3&&m.isMesh&&m.visible),highlight:lines.meshes.some((m:any)=>m.material.uniforms.highlight.value===1)};}};
+      info(){return {tick:driver.sim.tick,lines:driver.sim.view.lines.map((l:any)=>({...l})),submissions:[...submissions],events:[...events],reason:document.querySelector('[data-input-reason]')?.textContent,reasonVisible:(document.querySelector('[data-input-reason]') as HTMLElement)?.style.display!=='none',preview:scene.children.some((m:any)=>m.renderOrder===3&&m.isMesh&&m.visible),highlight:lines.meshes.some((m:any)=>m.material.uniforms.hoverA.value===1||m.material.uniforms.hoverB.value===1)};}};
   });
 }
 const point = (page: Page,x:number,z:number) => page.evaluate(([x,z])=>(window as any).inputHarness.point(x,z),[x,z]);
