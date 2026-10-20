@@ -71,3 +71,14 @@ Outcome: Blocked-visual (>=8 only V09, V19, V22). Hand-offs for final-review: gr
 | 4 | per-level camera margin L5/L8/L9/L12 | M15 union <= .1 |
 | 5 | revert digit to 40 | l01 M11 passes |
 | 6 | roofNumberPx: 44 except L1; rollout-params.test.ts | std-tower digit 10-12 px; no new gated fails; blind final R4 5-6, R5 6-7 -> Blocked-visual |
+
+## Task 9 — Perf instrumentation (non-visual)
+- `createPerfMetrics(capacity=120, history=7200)`: preallocated Float64Array rings (no per-frame allocation); snapshot adds `frames[]`, `frameP99`, `renderMs`, `sample{n,fpsMean,fps1Low,frameP95,frameP99,jsMsMean,jsMsP95,renderMsMean,renderMsP95}`; `percentile()` export; `reset()`; HUD-visible fields unchanged. renderMs = scene.render() only (informational; M13 jsMs unchanged).
+- Harness: `__na.perf()`, `__na.perfReset()`. capture `--gpu`: l18 perf = 5 s warm-up + 30 s sample (default 5 s untouched); perf record adds frameMsP99, fps1Low, jsMsMean, triangles, `app` (createPerfMetrics sample).
+- Unit: dev.test.ts 9/9 twice identical; web vitest 376/376; typecheck, lint clean.
+- Run: xvfb headed (private Xvfb :99) + `--gpu` on SwiftShader (no real GPU; fps informational, CPU-throttle/DPR proxy left for T10).
+| run | fps | p95 ms | p99 ms | 1% low | jsMs p95 | calls | tris | app n / renderMs p95 |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 0.87 | 1195.5 | 1205.4 | 0.83 | 7.1 | 44 | 151796 | 53 / 3.6 |
+| 2 | 0.88 | 1192.7 | 1236.5 | 0.81 | 7.5 | 44 | 151796 | 53 / 4.6 |
+- Note: SwiftShader 1920x1080 is readback-bound (~1.2 s/frame), so fps/1% low meaningless here; app n (53) > capture n (27) because the driver's own rAF loop also feeds the snapshot.

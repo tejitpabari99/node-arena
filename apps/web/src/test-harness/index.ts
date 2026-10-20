@@ -99,6 +99,9 @@ export function createTestHarness(files: ContentFileMap) {
         },
         /** renderer.info.render of the last rendered frame (M13 drawCalls). */
         renderInfo() { const { calls, triangles } = inspect().renderer.info.render; return { calls, triangles }; },
+        /** R7: runtime perf snapshot (frames[], p99, sample stats); fed by every driver frame/render. */
+        perf() { return app.runtime?.metrics ?? null; },
+        perfReset() { app.runtime?.resetMetrics?.(); },
         settings: (patch: Parameters<AppController['updateSettings']>[0]) => app.updateSettings(patch),
       };
     },

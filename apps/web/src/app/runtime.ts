@@ -98,6 +98,7 @@ export function createBrowserRuntime(
     const metrics = createPerfMetrics();
     return {
       get metrics() { return metrics.snapshot(); },
+      resetMetrics() { metrics.reset(); },
       get inspection() { return { scene:scene.scene, camera:scene.camera, renderer:scene.renderer, towers, troops, lines, fx, brawl, scope }; },
       frame(update) {
         const start = performance.now();
@@ -108,9 +109,11 @@ export function createBrowserRuntime(
         brawl.update(seconds, scene.camera, troops);
         fx.update(seconds);
         input?.refresh();
+        const renderStart = performance.now();
         scene.render();
-        metrics.frame(start,performance.now()-start+(update.preparationMs??0),driver.lastStepMs,scene.renderer.info.render.calls,scene.renderer.info.render.triangles,
-          troops.count);
+        const end = performance.now();
+        metrics.frame(start,end-start+(update.preparationMs??0),driver.lastStepMs,scene.renderer.info.render.calls,scene.renderer.info.render.triangles,
+          troops.count,end-renderStart);
       },
       tick(update) {
         towers.update(update.sim.view);

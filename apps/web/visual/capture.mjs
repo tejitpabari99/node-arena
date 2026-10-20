@@ -18,7 +18,9 @@ const log = (...a) => console.log('[visual:capture]', ...a);
 /** SwiftShader screenshots of 1920px WebGL frames can exceed Playwright's 30 s default when the host is loaded. */
 const SHOT_TIMEOUT = 120_000;
 /** M13 perf sample: fresh page after the captures (stored as `perf`, which selfcheck ignores). */
-const PERF = { scene: 'l18', viewport: '1920x1080', durationMs: 5000 };
+const PERF = { scene: 'l18', viewport: '1920x1080', durationMs: 5000, warmupMs: 0 };
+/** R7 `--gpu` perf mode: 5 s warm-up then a 30 s sample (default capture timing is untouched). */
+const PERF_GPU = { durationMs: 30_000, warmupMs: 5000 };
 
 /** Headed without an X display: start a private Xvfb (xvfb-run needs xauth, often missing). Returns a stop function. */
 async function ensureDisplay(opts) {
@@ -91,7 +93,7 @@ async function magentaPass(page, file, settle) {
  * M13 perf (PRD: l18, 5 s real time, fresh page, no clock): sim stepped at 20 Hz from real time, one render per rAF.
  * fps/frame p95 from rAF intervals, jsMs = step + render CPU per frame, drawCalls = max renderer.info calls.
  */
-async function capturePerf(browser, config, scene, durationMs) {
+async function capturePerf(browser, config, scene, durationMs, warmupMs = 0) {
   const context = await newContext(browser, { width: 1920, height: 1080 });
   const page = await context.newPage();
   try {
@@ -102,21 +104,34 @@ async function capturePerf(browser, config, scene, durationMs) {
     await page.waitForFunction(() => window.__na.screen === 'playing');
     const target = sceneFrames(scene)[0].tick ?? 0;
     await page.evaluate(([cmds, t]) => { for (const c of cmds) window.__na.submit(c); window.__na.step(t); }, [(scene.commands ?? []).filter(c => !c.tick).map(({ tick: _t, ...c }) => c), target]);
-    return await page.evaluate(async ms => {
-      const p95 = list => { const s = [...list].sort((a, b) => a - b); return s.length ? s[Math.ceil(s.length * 0.95) - 1] : null; };
-      const frames = [], js = [], calls = [], t0 = performance.now();
-      let last = t0, ticks = 0;
-      while (performance.now() - t0 < ms) {
-        await new Promise(r => requestAnimationFrame(() => r()));
-        const now = performance.now(); frames.push(now - last); last = now;
-        const due = Math.floor((now - t0) * 20 / 1000) - ticks, start = performance.now();
-        if (due > 0) { window.__na.step(Math.min(due, 5)); ticks += due; }
-        window.__na.render({ settle: false });
-        js.push(performance.now() - start); calls.push(window.__na.renderInfo().calls);
-      }
+    return await page.evaluate(async ([ms, warmup]) => {
+      const pct = (list, q) => { const s = [...list].sort((a, b) => a - b); return s.length ? s[Math.ceil(s.length * q) - 1] : null; };
+      const mean = list => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);
+      const frames = [], js = [], calls = [], tris = [], origin = performance.now();
+      let t0 = origin, last = t0, ticks = 0;
+      // Warm-up (shader compile, texture upload, first sim catch-up): same loop, nothing recorded.
+      const loop = async (until, record) => {
+        while (performance.now() < until) {
+          await new Promise(r => requestAnimationFrame(() => r()));
+          const now = performance.now(); if (record) frames.push(now - last); last = now;
+          const due = Math.floor((now - origin) * 20 / 1000) - ticks, start = performance.now();
+          if (due > 0) { window.__na.step(Math.min(due, 5)); ticks += due; }
+          window.__na.render({ settle: false });
+          if (record) { js.push(performance.now() - start); const info = window.__na.renderInfo(); calls.push(info.calls); tris.push(info.triangles); }
+        }
+      };
+      if (warmup > 0) { await loop(origin + warmup, false); window.__na.perfReset(); t0 = performance.now(); last = t0; }
+      await loop(t0 + ms, true);
       const elapsed = performance.now() - t0, r = n => (n === null ? null : Math.round(n * 1000) / 1000);
-      return { durationMs: r(elapsed), frames: frames.length, fps: r(frames.length / (elapsed / 1000)), frameMsP95: r(p95(frames)), jsMsP95: r(p95(js)), drawCalls: Math.max(0, ...calls), ticks, clock: 'real' };
-    }, durationMs);
+      const sorted = [...frames].sort((a, b) => a - b), worst = sorted.slice(Math.max(0, sorted.length - Math.max(1, Math.ceil(sorted.length * 0.01))));
+      const app = window.__na.perf()?.sample ?? null;
+      return {
+        durationMs: r(elapsed), warmupMs: warmup, frames: frames.length, fps: r(frames.length / (elapsed / 1000)), frameMsP95: r(pct(frames, 0.95)), jsMsP95: r(pct(js, 0.95)), drawCalls: Math.max(0, ...calls), ticks, clock: 'real',
+        frameMsP99: r(pct(frames, 0.99)), fps1Low: worst.length ? r(1000 / mean(worst)) : null, jsMsMean: r(mean(js)), triangles: Math.max(0, ...tris),
+        // Informational: the app's own createPerfMetrics sample (frames[] ring) over the same window; renderMs is scene.render() only (jsMs also includes sim catch-up).
+        app: app && Object.fromEntries(Object.entries(app).map(([k, v]) => [k, r(v)])),
+      };
+    }, [durationMs, warmupMs]);
   } finally {
     await context.close();
   }
@@ -324,7 +339,7 @@ async function main() {
     }
     const perfJob = jobs.find(j => j.scene.id === PERF.scene && j.viewport === PERF.viewport);
     if (perfJob) {
-      const perf = await capturePerf(browser, config, perfJob.scene, PERF.durationMs);
+      const perf = await capturePerf(browser, config, perfJob.scene, opts.gpu ? PERF_GPU.durationMs : PERF.durationMs, opts.gpu ? PERF_GPU.warmupMs : PERF.warmupMs);
       scenes[PERF.scene][PERF.viewport].perf = perf;
       log(`perf ${PERF.scene} ${PERF.viewport} (${perf.durationMs} ms real time): fps ${perf.fps}, frame p95 ${perf.frameMsP95} ms, jsMs p95 ${perf.jsMsP95}, drawCalls ${perf.drawCalls}`);
     }

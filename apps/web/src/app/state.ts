@@ -59,6 +59,8 @@ export interface AppSnapshot {
 }
 export interface LevelRuntime {
   readonly metrics?: PerfSnapshot;
+  /** R7 warm-up end: drop collected perf history (optional; harness only). */
+  resetMetrics?(): void;
   readonly inspection?: unknown;
   frame(update: FrameUpdate): void;
   tick(update: TickUpdate): void;

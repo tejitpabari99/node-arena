@@ -86,18 +86,44 @@ export function downloadFiles(files:readonly {path:string;json:string}[]) {
     document.body.appendChild(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),0);
   }
 }
-export interface PerfSnapshot {fps:number; frameP95:number; jsMs:number; simStepMs:number; drawCalls:number; triangles:number; troops:number}
-export function createPerfMetrics(capacity=120) {
-  let previous:number|undefined;
-  const frames:number[]=[],cpu:number[]=[],steps:number[]=[];
-  let counters={drawCalls:0,triangles:0,troops:0};
-  const push=(list:number[],value:number)=>{list.push(value); if(list.length>capacity) list.shift();};
-  const mean=(list:number[])=>list.length?list.reduce((a,b)=>a+b,0)/list.length:0;
+export interface PerfSample {n:number; fpsMean:number; fps1Low:number; frameP95:number; frameP99:number; jsMsMean:number; jsMsP95:number; renderMsMean:number; renderMsP95:number}
+export interface PerfSnapshot {fps:number; frameP95:number; frameP99:number; jsMs:number; simStepMs:number; renderMs:number; drawCalls:number; triangles:number; troops:number; frames:number[]; sample:PerfSample}
+/** Nearest-rank percentile (q in 0..1) of an ascending-sorted list. */
+export function percentile(sorted:readonly number[],q:number) { return sorted[Math.min(sorted.length-1,Math.max(0,Math.ceil(sorted.length*q)-1))]??0; }
+/** Fixed-size ring (preallocated; push never allocates). */
+function ring(size:number) {
+  const data=new Float64Array(size); let head=0,count=0;
   return {
-    frame(now:number,jsMs:number,simStepMs:number,drawCalls:number,triangles:number,troops:number) {
-      if(previous!==undefined && now>previous) push(frames,now-previous); previous=now;
-      push(cpu,jsMs); push(steps,simStepMs); counters={drawCalls,triangles,troops};
+    clear() { head=0; count=0; },
+    push(v:number) { data[head]=v; head=(head+1)%size; if(count<size) count++; },
+    /** Last `n` values (default all), oldest first. */
+    last(n=count):number[] { const k=Math.min(n,count),out=new Array<number>(k); for(let i=0;i<k;i++) out[i]=data[(head-k+i+size*2)%size]!; return out; },
+  };
+}
+const meanOf=(list:readonly number[])=>list.length?list.reduce((a,b)=>a+b,0)/list.length:0;
+const sortedCopy=(list:readonly number[])=>[...list].sort((a,b)=>a-b);
+/**
+ * `capacity` = rolling window for the HUD stats; `history` = ring size for `frames[]` and `sample` (R7: 30 s x 240 Hz = 7200).
+ * `sample.fps1Low` = 1000 / mean of the worst 1% frame times of the history.
+ */
+export function createPerfMetrics(capacity=120,history=7200) {
+  const size=Math.max(capacity,history);
+  let previous:number|undefined;
+  const frames=ring(size),cpu=ring(size),steps=ring(size),renders=ring(size);
+  let counters={drawCalls:0,triangles:0,troops:0};
+  return {
+    /** Drop collected history (end of warm-up). */
+    reset() { previous=undefined; for(const r of [frames,cpu,steps,renders]) r.clear(); },
+    frame(now:number,jsMs:number,simStepMs:number,drawCalls:number,triangles:number,troops:number,renderMs=0) {
+      if(previous!==undefined && now>previous) frames.push(now-previous); previous=now;
+      cpu.push(jsMs); steps.push(simStepMs); renders.push(renderMs); counters={drawCalls,triangles,troops};
     },
-    snapshot():PerfSnapshot { const sorted=[...frames].sort((a,b)=>a-b); return {fps:mean(frames)?1000/mean(frames):0,frameP95:sorted[Math.max(0,Math.ceil(sorted.length*.95)-1)]??0,jsMs:mean(cpu),simStepMs:mean(steps),...counters}; }
+    snapshot():PerfSnapshot {
+      const all=frames.last(),win=frames.last(capacity),sorted=sortedCopy(win),allSorted=sortedCopy(all);
+      const worst=allSorted.slice(Math.max(0,allSorted.length-Math.max(1,Math.ceil(allSorted.length*.01)))),cpuAll=sortedCopy(cpu.last()),renderAll=renders.last();
+      const renderSorted=sortedCopy(renderAll);
+      return {fps:meanOf(win)?1000/meanOf(win):0,frameP95:percentile(sorted,.95),frameP99:percentile(sorted,.99),jsMs:meanOf(cpu.last(capacity)),simStepMs:meanOf(steps.last(capacity)),renderMs:meanOf(renders.last(capacity)),...counters,frames:all,
+        sample:{n:all.length,fpsMean:meanOf(all)?1000/meanOf(all):0,fps1Low:meanOf(worst)?1000/meanOf(worst):0,frameP95:percentile(allSorted,.95),frameP99:percentile(allSorted,.99),jsMsMean:meanOf(cpuAll),jsMsP95:percentile(cpuAll,.95),renderMsMean:meanOf(renderAll),renderMsP95:percentile(renderSorted,.95)}};
+    }
   };
 }

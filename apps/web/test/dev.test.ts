@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { tuningFields, editField, createPerfMetrics } from '../src/dev';
+import { tuningFields, editField, createPerfMetrics, percentile } from '../src/dev';
 import { contentFiles } from '../src/app/boot';
 import { createAppController } from '../src/app/state';
 import { create } from '@node-arena/sim';
@@ -65,6 +65,41 @@ describe('schema tuning and telemetry', () => {
     expect(metrics.snapshot().jsMs).toBe(2);
     expect(metrics.snapshot().simStepMs).toBe(1);
     expect(metrics.snapshot().troops).toBe(12);
+  });
+  it('percentile uses nearest-rank maths', () => {
+    const list=Array.from({length:100},(_,i)=>i+1);
+    expect(percentile(list,.95)).toBe(95);
+    expect(percentile(list,.99)).toBe(99);
+    expect(percentile(list,1)).toBe(100);
+    expect(percentile([7],.99)).toBe(7);
+    expect(percentile([],.99)).toBe(0);
+  });
+  it('exposes frames[], p99, 1% low and sample stats; history ring is bounded', () => {
+    const metrics=createPerfMetrics(10,200);
+    let t=0;
+    for(let i=0;i<300;i++) { t+=i%100===99?50:10; metrics.frame(t,i%2?4:2,1,5,200,3,1.5); }
+    const s=metrics.snapshot();
+    expect(s.frames.length).toBe(200);
+    expect(s.sample.n).toBe(200);
+    expect(s.sample.frameP99).toBe(10);
+    expect(s.sample.frameP95).toBe(10);
+    // 200-frame history: worst 1% = 2 frames
+    const sorted=[...s.frames].sort((a,b)=>a-b),worst=sorted.slice(-2);
+    expect(s.sample.fps1Low).toBeCloseTo(1000/((worst[0]!+worst[1]!)/2));
+    expect(s.sample.fpsMean).toBeCloseTo(1000/(s.frames.reduce((a,b)=>a+b,0)/200));
+    expect(s.sample.jsMsMean).toBeCloseTo(3);
+    expect(s.sample.jsMsP95).toBe(4);
+    expect(s.renderMs).toBe(1.5);
+    expect(s.sample.renderMsP95).toBe(1.5);
+    expect(s.triangles).toBe(200);
+    expect(s.frameP99).toBe(s.frames.slice(-10).sort((a,b)=>a-b)[9]);
+  });
+  it('snapshot is empty-safe and frames[] is chronological', () => {
+    const metrics=createPerfMetrics(5,5);
+    expect(metrics.snapshot().frames).toEqual([]);
+    expect(metrics.snapshot().sample.fps1Low).toBe(0);
+    for(let i=0;i<8;i++) metrics.frame(i*i,0,0,0,0,0);
+    expect(metrics.snapshot().frames).toEqual([5,7,9,11,13]);
   });
   it('roof number fill vs outline has WCAG contrast above 4.5', () => {
     const linear=(v:number)=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4;
