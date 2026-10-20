@@ -96,3 +96,16 @@ Outcome: Blocked-visual (>=8 only V09, V19, V22). Hand-offs for final-review: gr
   - colorblind.png: as greybox, orange/blue colourblind palette in pill + towers; no bug.
 - e2e (preview) x2 plain: 21 passed, 23 skipped, 1 failed both runs = acceptance.spec.ts:95 stress p95 4.2-4.5 ms (<4 asserted; known SwiftShader flake, load avg ~3.8 from other sessions; passes intermittently, e.g. 1 of 5 alone). All 7 snapshot assertions pass on both runs.
 - Dev suite (`WEB_TEST_SERVER=dev`): 35 passed, 8 skipped, failures: :95 stress (same flake) and scene.spec.ts (stale 1.5 DPR, fixed -> see rerun).
+
+## Task 12 - README, CREDITS check, ci and e2e green
+- FUTURES.md: all six deferred items already present (tank factory, watchtower/archer, boosts, new SFX, level layout/balance pass, more themes); no edit. CREDITS.md: 8 GLBs under apps/web/assets/models all have rows, no city-kit roads row, no textures on disk; `pnpm check:manifest` PASS. `check:content --base HEAD` current (no content/sim files touched).
+- README: new "Look" section + 3 composites docs/img/{l01,l10,l18}-1920x1080.png (visual:capture --lod high, then PIL 256-colour quantise, ~200 KB each). T13 re-copies from BF/final after final capture.
+- `pnpm run ci`: exit 0 (376 web unit tests, all gates). Note: ci log has no Playwright step; e2e run separately.
+- `pnpm --filter @node-arena/web test:e2e` x2 (load avg 4.2-4.4, other sessions): 21 passed, 23 skipped, 1 failed both = acceptance.spec.ts:95 stress p95 (<4 ms).
+- Stress investigation (solo `playwright test acceptance -g "full runtime stress"`, p95 ms per run; threshold untouched):
+  - branch solo: 3.3(pass) 4.2 4.4 4.4 4.2 3.9(pass) 4.7 4.3 4.3 3.6(pass) 4.0 + later 3.0 3.4 3.8 4.0 4.2 4.3 4.6 5.0 (n=19)
+  - main d4111c8 (temp worktree, rebuilt dist-test): 3.4 3.7 3.4 3.9 3.5 3.5 + 2.4 3.6 3.7 3.8 3.8 3.9 4.1 4.6 (n=14); instrumented main runs 4.1/2.9/3.1/4.2/4.1/3.6/4.3/2.7 (also >=4)
+  - Medians branch ~4.1 vs main ~3.7: overlapping, host load avg 3.3-4.3 throughout (own runs + other sessions).
+  - Per-component in-page profile (frame mean ms, branch vs main): troops 0.37-0.41 vs 0.32-0.47; render 0.80-0.94 vs 0.59-0.95; lines 0.03 vs 0.001; brawl 0.006-0.03 vs n/a; tick_towers/input identical. Draw calls 19 vs 19. Extra cost <= ~0.1 ms mean; p95 tail is render (SwiftShader), not logic.
+  - Experiments: HUD unmounted -> p95 3.9-4.9 (no change); LOD forced 'high' -> 3.4-4.6 (no change). Not HUD, not LOD. No branch code change justified; no fix made.
+- menu.png 960x600: card bottom cut by viewport only (Play + Settings visible, further buttons below fold); body has min-height 100vh, no overflow hidden, so page scrolls; not clipped content. No CSS/baseline change.
