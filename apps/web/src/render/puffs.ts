@@ -4,11 +4,11 @@ import type { Disposables } from './disposables.js';
 /** Fixed-size pool of cosmetic dust puffs: preallocated meshes, zero allocation while spawning or updating.
  * Offsets and lifetimes are a pure function of the caller's integer `seed` (pair + tick), never wall clock or unseeded random.
  * `born` is resolved on the next `update(seconds)` so a puff spawned in a tick handler starts at the next rendered frame. */
-export const PUFF_LIFE = .5;
+export const PUFF_LIFE = .6;
 interface Puff { readonly mesh: Mesh<SphereGeometry, MeshBasicMaterial>; active: boolean; born: number; life: number; x: number; y: number; z: number; vx: number; vy: number; vz: number }
 export interface PuffPool { spawn(x: number, y: number, z: number, seed: number, count?: number, color?: number): void; update(seconds: number): void; clear(): void; readonly activeCount: number; readonly meshes: readonly Mesh[] }
 export function createPuffPool(scene: Scene, scope: Disposables, capacity = 8): PuffPool {
-  const geometry = scope.add(new SphereGeometry(.45, 8, 6)), puffs: Puff[] = []; let cursor = 0;
+  const geometry = scope.add(new SphereGeometry(.45, 14, 10)), puffs: Puff[] = []; let cursor = 0;
   for (let i = 0; i < capacity; i++) {
     const mesh = new Mesh(geometry, scope.add(new MeshBasicMaterial({ color: 0xffffff, transparent: true, depthWrite: false, opacity: 0 })));
     mesh.visible = false; mesh.renderOrder = 4; mesh.frustumCulled = false; scene.add(mesh); scope.defer(() => mesh.removeFromParent());
@@ -23,7 +23,7 @@ export function createPuffPool(scene: Scene, scope: Disposables, capacity = 8): 
       const rand = mulberry32(seed);
       for (let k = 0; k < count; k++) {
         const p = puffs[cursor]!; cursor = (cursor + 1) % puffs.length;
-        const angle = (k / count + rand() * .5) * Math.PI * 2, speed = 1.4 + rand() * 1.6;
+        const angle = (k / count + rand() * .5) * Math.PI * 2, speed = 3 + rand() * 2;
         p.active = true; p.born = NaN; p.life = PUFF_LIFE * (.8 + rand() * .4); p.x = x; p.y = y; p.z = z; p.vx = Math.cos(angle) * speed; p.vz = Math.sin(angle) * speed; p.vy = .6 + rand() * .8;
         p.mesh.material.color.setHex(color); p.mesh.visible = true; place(p, 0);
       }
