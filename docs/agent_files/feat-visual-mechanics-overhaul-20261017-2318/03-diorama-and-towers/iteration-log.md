@@ -45,3 +45,33 @@ Note: rows 101+ (Task 4) ran in a parallel worktree (feat/sp03-t4-towers) and we
 Stop reason (T5): Blocked-visual. Gated pixel checks pass; blind scorer holds V07/V08/V09 at 6-7 because towers are only ~30-60 px wide in the composite (number/dots small at frame scale); raising them is capped by M02 (<=0.30) and tower size (T4/camera). V05/V06 still 7 after labels removed (gaps are band thickness, plinth, taper = T4 geometry, not cards).
 
 | 26 | 2026-10-20 | T6 | (T6 commit) | n/a (non-visual) | specs moved label->summary/decal-state assertions (towers, dev, boot, acceptance, slice, cache-regressions); dev.spec colourblind split into harness test; cache-regressions strips prop.* models; slice summary regex `Tower ` | prod e2e 15 pass/25 skip; dev e2e 28 pass/1 fail (stress p95 4.0-4.2 ms host flake)/11 skip; slice:verify 8/8; test 47/47; check:rules 28/28; lint+typecheck clean | M17 PASS labels 0, summary 1 (l01 1920x1080, 1366x768) | - | commit |
+
+## Task 7 — L10/L18 smoke + perf sample (iters 27-29)
+
+| 27 | 2026-10-20 | T7 iter 0 | a1e9894 (baseline) | merged: l01 V01 6 V02 6 V03 6 V04 6 V05 6 V06 6 V07 6 V22 6; l10 V01 6 V03 6 V04 6 V05 6 V06 6 V07 6 V08 6 V22 6; l10cb V04 6 V07 6 V09 7 V22 6; l18 V01 6 V04 6 V06 6 V07 6 V08 6 V22 6 (self 6-7, blind 6-7) | first all-pieces-together pass: towers small at game scale on l10/l18 (M01 .029/.032 vs l01 .044), soft grass rim vs crisp ref edge, rocks as big smooth corner mesas ok, lanes thin (SP04), HUD bar (SP05). Blind: V01 towers ~3.5% frame h vs ref 5.8-7% (visual estimate; probe M01 .044 vw = 7.8% h) | l01 M01 .044, M07 0% all 3 viewports, M08 9/9, M09 .75, M10 .72/.63, M14 .39, M15 .094, M16 14/10 px, M17 0/1, M19, M20 PASS; l10 M01 .029, M09 FAIL .852@1080 (pre-existing, limit .85), M11 1/10 fail, M18 frame .204/.213 FAIL (tower .08 PASS); l18 M01 .032, M13 drawCalls 38 PASS, jsMs 8.9 (>8, noise), M11 5/14 fail (green hue-130 mask, SP01), M20 1 fail @1366, M18 frame .206/.222 FAIL | l10/l18 towers small; grass rim soft; M18 frame on l10/l18 | per-level tower boost; crisper rim |
+| 28 | 2026-10-20 | T7 | 44ff454 | merged: l01 V01 6 V02 7 V03 7 V04 7 V05 7 V06 6 V07 7 V22 8; l10 V01 6 V03 7 V04 7 V05 7 V06 6 V07 7 V08 7 V22 8; l10cb V04 7 V07 7 V09 7 V22 8; l18 V01 6 V04 7 V06 6 V07 7 V08 7 V22 8 (self 7, V22 self 8) | V22 (>=8 needs 3): HUD bar + dark top scrim remain (SP05) vs ref minimal HUD; lanes thin dashed vs ref ribbons (SP04); no road slab/grey plane/cards (M07 0%, M17 0). V01 6 blind: tower/frame ratio read low, l01 margin .094 vs ref .063, border share .48 vs ref .34-.44. V06 6: taper subtle (tried TAPER .065/plinth .54: M11 b .75, M20 extra runs -> reverted) | M01 l01 .044 / l10 .036 / l18 .040 PASS; M15 .094/.045/.043 PASS; M07 PASS; M16 PASS; M17 PASS; M13 drawCalls 38 PASS, jsMs 7.3-13.7 across runs (noise); M09 l01 PASS .75, l10@1080 .87 FAIL (was .852); M18 frame l10/l18 FAIL .20-.24 (tower crop PASS); M19 l18@1080 + l10cb@1080 FAIL (1 tower each: lane chevron speck above roof picked as topmost glyph, SP04 lane/SP01 locator); M20 l18@1366 FAIL (pre-existing); M11 unchanged fails | V01/V06 at 6; towers read small vs ref at frame scale; M18 frame | tried (all reverted, not committed): GRASS_PAD 8->6 (M18 worse, l01@1366 fails), TAPER .065+PLINTH .54 (M11/M20 worse), boost floor 1.08 (M16/M19/M20 worse), BOOST_REF 50-62 sweep (M19/M20 knife-edge whack-a-mole on 5-floor Max tower and lane chevrons) |
+
+Changes in iter 28: `towerSizeBoost` (tower-mesh.ts; towers.ts + camera.ts) = clamp(max(spanZ, spanX*9/16)/54, 1, 1.45) multiplies manifest scale (L1 unchanged 1.0, L10 ~1.24, L18 ~1.3); ground rim EDGE_SOFT 6 -> 3.5 plus sine-wobble. Unit test added. Tests: vitest 272/272, typecheck + lint clean, check:manifest/check:schemas/validate:content/check:content/sim:golden green, prod e2e 14 pass / 25 skip / 1 fail = `full runtime stress` (p95 4.3-4.5).
+
+### Perf sample (l18, 1920x1080, SwiftShader)
+drawCalls 38 (limit 100); jsMs p95 8.4-13.7 over 7 captures (7.3 once); fps 4.3-5.1 informational. jsMs>8 pre-existing (092ad00 baseline 11).
+### `full runtime stress` p95<4 ms: regression? NO. Dev-server, --workers=1, alternating, 3 each: branch b1 FAIL 4.5, b2 pass, b3 pass; main 100596a m1 pass, m2 FAIL 4.3, m3 FAIL 4.3. Host noise; same failure rate on main; threshold unchanged. SP05: re-run on real hardware.
+
+### PRD Acceptance Criteria
+- [x] L1 3 viewports: no void (M07 0% x3), grass+sand+props+rocks, no road slab, palette (M18 frame l01 .17/.19 PASS). Prop count >=20 verified visually (T3).
+- [~] Towers TW look (team hue only roof/bands/plinth; neutral grey; floors by band M04 100%; roof count/Max/dots/glyph; <=8 draw calls): met on L1 (M11/M04/M20/M19 PASS); L10/L18: 1/10 and 5/14 M11 fails = green hue 130 vs ground mask (SP01 metric) + 1 yellow tower (b .73>.72); M19 2 towers (lane chevron speck).
+- [x] Zero [data-tower-index]; labels.ts deleted; [data-tower-summary] present (M17 PASS all).
+- [x] L10/L18 render without errors, no void (M07 0%, M08 9/9; no console errors in captures).
+- [ ] Checklist >=8 on L1: NOT met. merged l01 V01 6, V02 7, V03 7, V04 7, V05 7, V06 6, V07 7, V22 8 (V08 l10 7, V09 l10cb 7). Metrics gating L1 pass.
+- [x] Unit tests: scatter determinism/keep-out, floor-band table, boost.
+- [x] Content: 20 levels grass; validate/check:content, check:manifest, check:schemas, sim:golden green; hashes unchanged.
+- [x] Spec impact: updated T6; snapshot tests fixme'd for SP05.
+
+### SP05 hand-offs (T7)
+1. L1 V01/V06 6, others 7: blind scorer sees towers small at frame scale (probe 7.8% h in band), subtle taper/band thickness; need real art pass (thicker bands, stronger taper) coordinated with M11 b<=.72 / M20 re-tune.
+2. M18 frame on l10/l18 .20-.24 (l10 ground/prop mix vs refs; GRASS_PAD 6 worse). M09 l10@1080 .87 (limit .85).
+3. M19: lane chevrons next to roof top read as glyph (l18 arm-3, l10cb home-1): lanes should start at tower edge / SP04.
+4. M20 knife-edge on 5-floor Max tower and l18@1366; M11 green hue 130 vs tree-green mask (SP01 metric); yellow tower b .73.
+5. M13 jsMs p95 8-14 (SwiftShader noise); stress p95 ~4.3 same on main; final gate on real GPU.
+6. SP04: lanes thin dashed vs ref ribbons; troops small (M05/M06 fail, out of scope). HUD hint bar overlays bottom (SP05).
+Stop reason (T7): done-when partly met (L10/L18 >= 6 met, zero errors, perf sampled); L1 gated items not >= 8 (blind-held 6-7). Recommended status: Blocked-visual.
