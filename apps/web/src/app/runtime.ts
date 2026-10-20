@@ -6,12 +6,12 @@ import { Disposables } from "../render/disposables";
 import { createLevelScene } from "../render/scene";
 import { createTowerRenderer } from "../render/towers";
 import { createTroopRenderer, troopSizeFactor } from "../render/troops";
-import { roofNumberPx } from "../render/roof-texture";
 import { parseLodMode } from "../render/troop-lod";
 import { createLineRenderer } from "../render/lines";
 import { createFxRenderer } from "../render/fx";
 import { createBrawlRenderer } from "../render/brawl";
 import { createInputController } from "../input";
+import { createManifestResolver } from "../manifest/resolve";
 /** Construction failures dispose the partially populated scope before the controller releases assets. */
 export function createBrowserRuntime(
   context: RuntimeContext,
@@ -39,7 +39,6 @@ export function createBrowserRuntime(
       camera: scene.camera,
       parent,
       scope,
-      roofNumberPx: roofNumberPx(level.id),
       colorblind: settings.colorblind,
     });
     const troops = createTroopRenderer({
@@ -48,7 +47,7 @@ export function createBrowserRuntime(
       models: session.models,
       scene: scene.scene,
       scope,
-      sizeFactor: troopSizeFactor(level.id, level.towers.filter((t) => t.owner >= 0).map((t) => towers.visualWidth(t.id) ?? NaN)),
+      sizeFactor: troopSizeFactor(level.towers.filter((t) => t.owner >= 0).map((t) => towers.visualWidth(t.id) ?? NaN), createManifestResolver(manifest).levelVisual(level.id)),
       reducedMotion: settings.reducedMotion,
       palette: settings.colorblind ? "colorblind" : "default",
       now: () => performance.now(),

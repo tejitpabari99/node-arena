@@ -70,7 +70,7 @@ export function createLevelScene(options: SceneOptions) {
     if (disposed) return;
     const width = Math.max(1, parent.clientWidth), height = Math.max(1, parent.clientHeight);
     renderer.setPixelRatio(qualitySettings(quality, window.devicePixelRatio).pixelRatio); renderer.setSize(width, height);
-    fitCamera(camera, bounds, cameraSettingsFor(level.id, manifest.camera), width / height);
+    fitCamera(camera, bounds, cameraSettingsFor(createManifestResolver(manifest).levelVisual(level.id), manifest.camera), width / height);
     if (scene.fog instanceof Fog && theme.fog) {
       const scale = Math.max(1, camera.position.distanceTo(fogCenter) / FOG_REFERENCE);
       scene.fog.near = theme.fog.near * scale; scene.fog.far = theme.fog.far * scale;

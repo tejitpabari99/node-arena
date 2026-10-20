@@ -1,6 +1,6 @@
 {
   "$schema": "../../../packages/content/schemas/manifest.schema.json",
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "palettes": {
     "default": {"neutral": "#8C8C8C", "player.1": "#2E8BFF", "player.2": "#F0313F", "player.3": "#FDC534", "player.4": "#35B84A"},
     "colorblind": {"neutral": "#999999", "player.1": "#0072B2", "player.2": "#D55E00", "player.3": "#F0E442", "player.4": "#009E73"}
@@ -36,6 +36,12 @@
     "LineDrawn": {"sfx": "audio/ui-click.ogg"},
     "GameOver": {"sfx": "audio/gameover.ogg"},
     "Music": {"sfx": "audio/music-insistent.ogg"}
+  },
+  "levelVisuals": {
+    "05-head-on": {"cameraMargin": 1.2},
+    "08-fork": {"cameraMargin": 1.2},
+    "09-chain-link": {"cameraMargin": -1, "troopScale": 0.9},
+    "12-underdog": {"cameraMargin": 1.2}
   },
   "camera": {"pitchDeg": 65, "fov": 35, "margin": 3}
 }

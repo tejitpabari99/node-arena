@@ -18,7 +18,7 @@
     },
     "schemaVersion": {
       "type": "string",
-      "const": "1.1.0"
+      "const": "1.2.0"
     },
     "palettes": {
       "type": "object",
@@ -389,6 +389,28 @@
             "fx": {
               "type": "string",
               "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "levelVisuals": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "properties": {
+            "cameraMargin": {
+              "type": "number",
+              "minimum": -2,
+              "maximum": 5
+            },
+            "troopScale": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 2
             }
           },
           "additionalProperties": false

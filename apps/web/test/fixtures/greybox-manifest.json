@@ -1,6 +1,6 @@
 {
   "$schema": "../../../../packages/content/schemas/manifest.schema.json",
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "palettes": {
     "default": { "neutral": "#A0A7B0", "player.1": "#2E86FF", "player.2": "#FF4D4D", "player.3": "#FFC933", "player.4": "#35C46B" },
     "colorblind": { "neutral": "#999999", "player.1": "#0072B2", "player.2": "#D55E00", "player.3": "#F0E442", "player.4": "#009E73" }

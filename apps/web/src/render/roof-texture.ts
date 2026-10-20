@@ -17,14 +17,11 @@ export function roofText(count: number, cap: number | null | undefined): string 
 }
 export const stateKey = (s: RoofState) => `${s.text}|${s.dots.map(d => (d === 'free' ? 'f' : 'u')).join('')}|${s.glyph}`;
 
-export const NUMBER_PX = 40, STROKE_PX = 16, FATTEN_PX = 3, LETTER_GAP_PX = 7, NUMBER_Y = 33, DOT_R = 14, DOT_PITCH = 35, DOT_Y = 74, GLYPH_PX = 32, GLYPH_X = 20, GLYPH_Y = 34, GLYPH_SHIFT = 10;
+export const NUMBER_PX = 44, STROKE_PX = 16, FATTEN_PX = 3, LETTER_GAP_PX = 7, NUMBER_Y = 33, DOT_R = 14, DOT_PITCH = 35, DOT_Y = 74, GLYPH_PX = 32, GLYPH_X = 20, GLYPH_Y = 34, GLYPH_SHIFT = 10;
 export const NUMBER_FILL = '#ffffff', NUMBER_OUTLINE = '#000000';
 export const BRIGHT_DOT = 'rgba(255,255,255,1)', DIM_DOT = 'rgba(255,255,255,.42)';
 
 /** Draw one tower's decal into a 128x128 region at (ox, oy). Pure canvas calls, no clock or randomness. */
-/** Roof number font size per level (SP05 rollout): L1 stays at NUMBER_PX (slice-gate M11 white-body share is at its 0.45 cap there); other levels use the larger size (standard-tower digit +1 px at 1366). */
-export const NUMBER_PX_LARGE = 44;
-export const roofNumberPx = (levelId: string): number => (levelId === '01-first-steps' ? NUMBER_PX : NUMBER_PX_LARGE);
 export function drawRoof(ctx: CanvasRenderingContext2D, ox: number, oy: number, state: RoofState, numberPx: number = NUMBER_PX): void {
   ctx.clearRect(ox, oy, CELL, CELL);
   ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, CELL, CELL); ctx.clip();

@@ -32,11 +32,9 @@ export function levelVisualBounds(level: Pick<CompiledLevel, 'bounds' | 'towers'
   return bounds.isEmpty() ? authoredBounds(level) : bounds;
 }
 
-/** Per-level camera margin overrides (world units, replaces manifest camera.margin; SP05 rollout, render params only). Keyed by level id; boards with loose fits (M15 union margin > 0.1). */
-export const CAMERA_MARGIN_OVERRIDE: Readonly<Record<string, number>> = { '05-head-on': 1.2, '08-fork': 1.2, '09-chain-link': -1, '12-underdog': 1.2 };
-export function cameraSettingsFor(levelId: string, settings: Manifest['camera']): Manifest['camera'] {
-  const margin = CAMERA_MARGIN_OVERRIDE[levelId];
-  return margin === undefined ? settings : { ...settings, margin };
+/** Camera settings with the level's manifest `levelVisuals.cameraMargin` override applied (render params only). */
+export function cameraSettingsFor(override: { cameraMargin?: number }, settings: Manifest['camera']): Manifest['camera'] {
+  return override.cameraMargin === undefined ? settings : { ...settings, margin: override.cameraMargin };
 }
 
 /** pitch=0 looks horizontally from +z; pitch=90 looks straight down with north at screen top.

@@ -35,12 +35,10 @@ interface Bucket extends LodSet { capacity: number; count: number; total: number
 function buffer(capacity: number): TroopBuf {
   return { channel: new Int32Array(capacity), seq: new Int32Array(capacity), owner: new Int32Array(capacity), kind: new Int32Array(capacity), progress: new Int32Array(capacity) };
 }
-/** Per-level troop size overrides keyed by level id (render params only; M06 troop height / tower width <= 0.60). */
-export const TROOP_SIZE_OVERRIDE: Readonly<Record<string, number>> = { '09-chain-link': 0.9 };
-/** Troop size factor for a level: shrinks troops on boards whose starting (owned) towers are small (median visual width < 4 u), times the per-level override. */
-export function troopSizeFactor(levelId: string, ownedTowerWidths: readonly number[]): number {
+/** Troop size factor for a level: shrinks troops on boards whose starting (owned) towers are small (median visual width < 4 u), times the manifest `levelVisuals.troopScale`. */
+export function troopSizeFactor(ownedTowerWidths: readonly number[], override: { troopScale?: number } = {}): number {
   const w = [...ownedTowerWidths].filter(x => Number.isFinite(x) && x > 0).sort((a, b) => a - b), median = w.length ? w[Math.floor(w.length / 2)]! : 4;
-  return Math.min(1, median / 4) * (TROOP_SIZE_OVERRIDE[levelId] ?? 1);
+  return Math.min(1, median / 4) * (override.troopScale ?? 1);
 }
 /** Public view/readTroops boundary only. Channels remain renderable after their draw line is cut. */
 export function createTroopRenderer(options: TroopRendererOptions) {

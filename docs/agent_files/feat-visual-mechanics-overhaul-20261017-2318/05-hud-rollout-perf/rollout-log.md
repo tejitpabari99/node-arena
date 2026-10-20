@@ -57,3 +57,6 @@ No cheap render-param fix exists (green/colourblind failures are metric mis-spec
 
 ## Outcome
 R1/R2/R3/R6 pass 20/20 and the M05/M06/M15 param issues are fixed via render params (6 iterations, commits above). R4 and R5 remain Blocked-visual on all 20 levels (blind 5-6 / 6-7). L10, L18 Blocked-visual (T7 scores, M11/M20 mis-specification). Gated metrics at final state = T7 baseline set only (M11 l10/l18/l10cb, M20 l18, M13 jsMs noise). Web unit 373/373 pass, lint + typecheck pass, `pnpm check:content --base main`: "Content hashes current (21 levels, 24 bots); rules/content/BOT_VERSION gates agree" (no content edits).
+
+## Review fix addendum (2026-10-20)
+Roof number is now a single global 44 px (iter 6 per-level special case removed); per-level camera margin / troop scale moved to manifest `levelVisuals` (schema 1.2.0). Re-captured all 20 levels: M15/M06 numbers unchanged vs the final matrix above; R4 digit sizes for L2-L20 unchanged; L1 digit 11 -> 11-12 px @1366 (44 px). l01@1920 M11 (c) white-body now .454 > .45 (fails; 1366 passes). See iteration-log.md.

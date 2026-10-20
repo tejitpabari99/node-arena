@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { allScenes, captureJobs, frameFile, loadScenes, OUT_DIR, parseArgs, parseViewport, sceneFrames } from './lib/scenes.mjs';
+import { allScenes, captureJobs, frameFile, loadScenes, OUT_DIR, parseArgs, parseViewport, runFileName, sceneFrames } from './lib/scenes.mjs';
 import { collectHud, HUD_SELECTORS } from './lib/hud-metrics.mjs';
 import { BASE_URL, buildTest, CLOCK_TIME, gitCommit, launch, newContext, resolveFonts, startServer, until } from './lib/browser.mjs';
 
@@ -367,7 +367,7 @@ async function main() {
       filters: { scenes: opts.scenes, viewports: opts.viewports }, jobs: jobs.map(j => `${j.scene.id}@${j.viewport}`), files: written,
       startedAt: new Date(started).toISOString(), durationMs: Date.now() - started,
     };
-    fs.writeFileSync(path.join(OUT_DIR, 'run.json'), `${JSON.stringify(run, null, 2)}\n`);
+    fs.writeFileSync(path.join(OUT_DIR, runFileName(opts)), `${JSON.stringify(run, null, 2)}\n`);
     log(`${jobs.length} captures, ${written.length} PNGs -> ${path.relative(process.cwd(), OUT_DIR) || OUT_DIR} (renderer: ${renderer?.renderer ?? 'none'})`);
   } finally {
     await browser.close();

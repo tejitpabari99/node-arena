@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ALL_LEVELS_TICK, allScenes, captureJobs, frameFile, levelScenes, loadScenes, parseArgs, sceneFrames, PORT } from '../visual/lib/scenes.mjs';
+import { ALL_LEVELS_TICK, allScenes, captureJobs, frameFile, levelScenes, loadScenes, parseArgs, runFileName, sceneFrames, PORT } from '../visual/lib/scenes.mjs';
 
 const LEVELS = path.resolve(__dirname, '../../../packages/content/data/levels');
 const config = loadScenes();
@@ -56,6 +56,7 @@ describe('visual scenes.json + capture args (SP01 Task 3)', () => {
     expect(parseArgs(['--scene', 'l01', '--viewport=1366x768', '--headed', '--gpu', '--no-build'])).toEqual({ scenes: ['l01'], viewports: ['1366x768'], headed: true, gpu: true, dev: false, build: false, lod: null, allLevels: false, throttle: 1, dpr: 1, perfQuality: null, perfOnly: false });
     expect(parseArgs(['--all-levels']).allLevels).toBe(true);
     expect(parseArgs(['--throttle', '4', '--dpr=2', '--perf-quality', 'med', '--perf-only'])).toMatchObject({ throttle: 4, dpr: 2, perfQuality: 'med', perfOnly: true });
+    expect(runFileName({ perfOnly: true })).toBe('perf-run.json'); expect(runFileName({ perfOnly: false })).toBe('run.json');
     expect(parseArgs(['--lod', 'low']).lod).toBe('low'); expect(() => parseArgs(['--lod', 'mid'])).toThrow(/low|high/);
     expect(parseArgs(['--dev']).build).toBe(false);
     expect(() => parseArgs(['--viewport', '800x600'])).toThrow(/unknown viewport/);

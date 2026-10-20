@@ -31,6 +31,9 @@ export function allScenes(config, dir = LEVELS_DIR) {
 }
 
 /** `--scene id`, `--viewport WxH` (repeatable or comma list), `--headed`, `--gpu`, `--dev`, `--no-build`, `--all-levels`, `--throttle N` / `--dpr N` / `--perf-quality q` (perf sample only: CDP CPU slowdown, device scale factor, quality override; SP05 R7 proxy), `--perf-only` (skip screenshots, perf sample only), `--lod low|high` (adds `?lod=` to the app URL; default auto). */
+/** Run-record filename: `--perf-only` must not clobber the full-capture run.json (it leaves metrics.json untouched). */
+export const runFileName = opts => (opts.perfOnly ? 'perf-run.json' : 'run.json');
+
 export function parseArgs(argv) {
   const opts = { scenes: [], viewports: [], headed: false, gpu: false, dev: false, build: true, lod: null, allLevels: false, throttle: 1, dpr: 1, perfQuality: null, perfOnly: false };
   for (let i = 0; i < argv.length; i++) {

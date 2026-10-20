@@ -17,6 +17,7 @@ export interface ScenesConfig { seed: number; viewports: string[]; extraViewport
 export interface CaptureOptions { scenes: string[]; viewports: string[]; headed: boolean; gpu: boolean; dev: boolean; build: boolean; lod: 'low' | 'high' | null; allLevels: boolean }
 export function loadScenes(file?: string): ScenesConfig;
 export function parseArgs(argv: string[]): CaptureOptions;
+export function runFileName(opts: { perfOnly: boolean }): string;
 export function parseViewport(id: string): { width: number; height: number };
 export function captureJobs(config: ScenesConfig, opts?: Pick<CaptureOptions, 'scenes' | 'viewports'> & { allLevels?: boolean }): { scene: Scene; viewport: string }[];
 export function frameFile(sceneId: string, viewport: string, label?: string | null): string;
