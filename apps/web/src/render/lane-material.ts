@@ -40,8 +40,11 @@ void main(){
   if(buildT<.999) df=buildSrc<.5?(buildT-x)*laneLen:(x-(1.-buildT))*laneLen;
   if(!inB&&retractA>.001) df=min(df,(split*(1.-retractA)-x)*laneLen);
   if(inB&&retractB>.001) df=min(df,(x-(1.-(1.-split)*(1.-retractB)))*laneLen);
-  float lead=gone?0.:1.-smoothstep(0.,laneW*2.6,df);
+  float lead=gone?0.:1.-smoothstep(0.,laneW*4.5,df);
   rgb=mix(rgb,vec3(1.),lead*.95); a=max(a,lead*.95);
+  // Cut afterglow: the surviving part stays bright and opaque while it retracts (decays with retract progress).
+  float rt=inB?retractB:retractA; float glow=gone?0.:step(.001,rt)*(1.-rt);
+  rgb=mix(rgb,vec3(1.),glow*.6); a=max(a,glow*.9);
   rgb=mix(rgb,vec3(1.),flash); a=max(a,flash*.95);
   gl_FragColor=vec4(rgb,a*alphaMul);
 }`;

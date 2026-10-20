@@ -69,6 +69,7 @@ export function createLineRenderer(options: LineRendererOptions) {
   function count(channel: number) { return fronts?.channelCount[channel] ?? 0; }
   /** Per-lane uniforms from pair state; prunes lanes with nothing left to show. */
   function refresh(dt = 0, snap = false) {
+    let newest = -1; for (const l of lanes.values()) if (l.seq > newest) newest = l.seq;
     for (const [key, lane] of lanes) {
       let build = 1; if (lane.buildAt !== -1) { const t = (now - lane.buildAt) / LANE_BUILD_S; if (Number.isNaN(t)) build = 0; else if (t >= 1) lane.buildAt = -1; else build = easeOut(Math.max(0, t)); }
       const retract = [0, 0], flash = [0, 0];
@@ -95,7 +96,7 @@ export function createLineRenderer(options: LineRendererOptions) {
       u.drainA!.value = a && lane.state[0] === 2 ? 1 : 0; u.drainB!.value = b && lane.state[1] === 2 ? 1 : 0;
       u.hoverA!.value = hover !== null && hover === lane.chan[0] && (hoverOwner === undefined || hoverOwner === lane.owner[0]) ? 1 : 0;
       u.hoverB!.value = hover !== null && hover === lane.chan[1] && (hoverOwner === undefined || hoverOwner === lane.owner[1]) ? 1 : 0;
-      lane.mesh.renderOrder = 1 + lane.seq % 100;
+      lane.mesh.renderOrder = 1 + lane.seq % 100; u.alphaMul!.value = lane.seq === newest ? 1 : .82; // newer lane over older; older one slightly more see-through where lanes cross
     }
     meshes.length = 0; for (const lane of lanes.values()) meshes.push(lane.mesh);
   }
