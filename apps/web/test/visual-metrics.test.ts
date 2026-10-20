@@ -3,6 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { isGrass, isGrey, isMagenta, isRock, isSand, isTeamSat, isWhite, nearestTeam, rgbToHsv } from '../visual/lib/color.mjs';
 import { calibrateMock, evaluate, evaluateJob, headOn, limitsFor, loadThresholds, METRIC_IDS, prepareRef, scaleLimit, summarize, within } from '../visual/lib/metrics.mjs';
+import { HUD_IDS } from '../visual/lib/hud-metrics.mjs';
 import { digitHeight, floorStripes, outlinedDigit, slotDots, playQuadShares, polygonMask, REF_TOWER_WIDTH, toHsv, towerPaint, tvDistance, voidShare } from '../visual/lib/pixel-metrics.mjs';
 
 const hex = (h: string) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)] as const;
@@ -53,7 +54,7 @@ describe('thresholds.json (PRD Metrics table verbatim)', () => {
   const rows = prd.split('\n').filter(l => /^\| M\d\d \|/.test(l)).map(l => { const c = l.split('|').map(s => s.trim()); return { id: c[1]!, threshold: c[c.length - 4]!, status: c[c.length - 2]! }; });
   it('has M01-M20, each with the PRD threshold text and status', () => {
     expect(rows.map(r => r.id)).toEqual(METRIC_IDS);
-    expect(Object.keys(thresholds.metrics)).toEqual(METRIC_IDS);
+    expect(Object.keys(thresholds.metrics)).toEqual([...METRIC_IDS, ...HUD_IDS]); // SP05 appended H01-H07 (test/visual-hud.test.ts)
     for (const r of rows) expect({ id: r.id, threshold: thresholds.metrics[r.id]!.threshold, status: thresholds.metrics[r.id]!.status }).toEqual(r);
   });
   it('machine limits encode the PRD numbers', () => {

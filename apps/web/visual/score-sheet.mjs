@@ -26,7 +26,8 @@ try {
   const opts = parse(process.argv.slice(2));
   const checklist = loadChecklist(), refMap = loadRefMap(), refDir = resolveRefDir();
   if (checklist.errors.length) throw new Error(`CHECKLIST.md: ${checklist.errors.join('; ')}`);
-  const scenes = opts.scenes.length ? opts.scenes : Object.keys(refMap.scenes);
+  // Default: every scored scene; entries with `items: []` (lvl-NN --all-levels scenes) are contact-sheet review only.
+  const scenes = opts.scenes.length ? opts.scenes : Object.entries(refMap.scenes).filter(([, e]) => !Array.isArray(e.items) || e.items.length).map(([id]) => id);
   fs.mkdirSync(OUT_DIR, { recursive: true });
   for (const scene of scenes) {
     const file = path.join(OUT_DIR, `score-sheet-${scene}.md`);

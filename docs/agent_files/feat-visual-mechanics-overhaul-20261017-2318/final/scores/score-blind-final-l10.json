@@ -1,0 +1,98 @@
+{
+ "V01": {
+  "score": 6,
+  "differences": [
+   "Towers ~3-4% of frame height vs ref 6-7%",
+   "Border band uneven, huge rocks left and bottom",
+   "Level fills centre blob; towers not centred in frame"
+  ]
+ },
+ "V03": {
+  "score": 7,
+  "differences": [
+   "Tyres cluster on left only, ref distributed",
+   "Rocks overly large and flat",
+   "Crates/trees sparse right side"
+  ]
+ },
+ "V04": {
+  "score": 7,
+  "differences": [
+   "Sand pinkish vs ref white/cream",
+   "Grass olive and dull in places",
+   "Red rock saturation ok but flat"
+  ]
+ },
+ "V05": {
+  "score": 6,
+  "differences": [
+   "Towers small, thin bands",
+   "Roof caps thin vs ref chunky",
+   "Neutral towers white not grey roof"
+  ]
+ },
+ "V06": {
+  "score": 6,
+  "differences": [
+   "Floors count varies but stack thin",
+   "Taper barely visible",
+   "Max tower reads as narrow stack vs ref chunky Max"
+  ]
+ },
+ "V07": {
+  "score": 6,
+  "differences": [
+   "Numbers tiny on overview (~0.12)",
+   "Outline thin",
+   "Detail crop number larger but overview small"
+  ]
+ },
+ "V08": {
+  "score": 6,
+  "differences": [
+   "Dots tiny and hard to read",
+   "Bright/dim states not clearly differentiated",
+   "Neutral shows few dots"
+  ]
+ },
+ "V10": {
+  "score": 6,
+  "differences": [
+   "Lane chevrons dense vs ref sparse dots",
+   "Opaque vs ref translucent",
+   "Lane width ~1/6 tower width, thinner than ref"
+  ]
+ },
+ "V13": {
+  "score": 6,
+  "differences": [
+   "Troops are round blobs on lane",
+   "Single blobs not chibi characters",
+   "Small ~1% screen height"
+  ]
+ },
+ "V19": {
+  "score": 7,
+  "differences": [
+   "No help bar visible",
+   "Matches ref none",
+   "Not tip scene"
+  ]
+ },
+ "V22": {
+  "score": 7,
+  "differences": [
+   "No label cards",
+   "Lane chevrons differ from ref",
+   "Hex-block props look unlike ref"
+  ]
+ },
+ "V23": {
+  "score": 6,
+  "differences": [
+   "Wide landscape vs portrait ref",
+   "Colours and towers same genre but tiny",
+   "Lane style different"
+  ]
+ }
+}

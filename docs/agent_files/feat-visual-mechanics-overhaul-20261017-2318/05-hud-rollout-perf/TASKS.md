@@ -10,19 +10,19 @@ Shared rules (repeated per task so each is executable alone). BF = docs/agent_fi
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | `strength()` pure function + unit tests | SP04 T10 | todo |
-| 2 | `tipSeen` save setting with default migration | none | todo |
-| 3 | Harness additions: `l01-tip`, `pause`, `results`, `--all-levels`, ref-map entries, H01-H07 | SP01 T8 | todo |
-| 4 | HUD: pill, strength meter, round buttons, tip | T1, T2, T3 | todo |
-| 5 | Palette restyle of menu, picker, results, pause | T3, T4 | todo |
-| 6 | Update HUD/menu e2e specs to new selectors | T4, T5 | todo |
-| 7 | L1 slice gate | T4, T5, T6, SP04 T10 | todo |
-| 8 | 20-level rollout sweep | T7 | todo |
-| 9 | Perf instrumentation (`frames[]`, p99) | T7 | todo |
-| 10 | L18 60 fps tuning ladder | T8, T9 | todo |
-| 11 | Restore fixme specs + regenerate 7 acceptance baselines | T8, T10 | todo |
-| 12 | README, CREDITS check, `ci` and e2e green | T11 | todo |
-| 13 | Final capture and `BF/final-review.md` | T12, SP02 T6 | todo |
+| 1 | `strength()` pure function + unit tests | SP04 T10 | done |
+| 2 | `tipSeen` save setting with default migration | none | done |
+| 3 | Harness additions: `l01-tip`, `pause`, `results`, `--all-levels`, ref-map entries, H01-H07 | SP01 T8 | done |
+| 4 | HUD: pill, strength meter, round buttons, tip | T1, T2, T3 | Blocked-visual |
+| 5 | Palette restyle of menu, picker, results, pause | T3, T4 | done |
+| 6 | Update HUD/menu e2e specs to new selectors | T4, T5 | done |
+| 7 | L1 slice gate | T4, T5, T6, SP04 T10 | Blocked-visual |
+| 8 | 20-level rollout sweep | T7 | Blocked-visual |
+| 9 | Perf instrumentation (`frames[]`, p99) | T7 | done |
+| 10 | L18 60 fps tuning ladder | T8, T9 | Perf-open |
+| 11 | Restore fixme specs + regenerate 7 acceptance baselines | T8, T10 | done |
+| 12 | README, CREDITS check, `ci` and e2e green | T11 | blocked |
+| 13 | Final capture and `BF/final-review.md` | T12, SP02 T6 | Blocked-visual |
 
 ## Task 1 - `strength()` pure function + unit tests
 What it is / what it means: R1, Decision 1. Team share from `SimView`.

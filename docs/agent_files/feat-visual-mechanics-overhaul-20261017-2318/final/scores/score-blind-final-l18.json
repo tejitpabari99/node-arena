@@ -1,0 +1,74 @@
+{
+ "V01": {
+  "score": 6,
+  "differences": [
+   "Towers ~3% of frame height vs ref 6-7%",
+   "Level occupies centre; border band ~45%",
+   "Camera angle steep but towers small"
+  ]
+ },
+ "V04": {
+  "score": 7,
+  "differences": [
+   "Pink sand vs ref white snow/cream",
+   "Olive grass dull",
+   "Team hues good"
+  ]
+ },
+ "V06": {
+  "score": 6,
+  "differences": [
+   "Stacks thin vs ref Max chunky",
+   "Taper hard to read at overview",
+   "Floor count differences barely visible"
+  ]
+ },
+ "V07": {
+  "score": 6,
+  "differences": [
+   "Numbers tiny in overview",
+   "Detail crop numbers fine",
+   "Outline thinner than ref"
+  ]
+ },
+ "V08": {
+  "score": 6,
+  "differences": [
+   "Dots tiny",
+   "Free vs used contrast weak",
+   "Ref shows 3 clear dots"
+  ]
+ },
+ "V16": {
+  "score": 7,
+  "differences": [
+   "Crossing lanes overlap cleanly in view",
+   "Colour mixing at crossings not visible/odd",
+   "Ref has translucent layered ribbons"
+  ]
+ },
+ "V22": {
+  "score": 7,
+  "differences": [
+   "No label cards",
+   "Clash X marker is a new element",
+   "Dots instead of chevrons mix"
+  ]
+ },
+ "V23": {
+  "score": 6,
+  "differences": [
+   "Towers too tiny and sparse vs ref dense",
+   "Wide landscape",
+   "Same genre via colours"
+  ]
+ },
+ "V24": {
+  "score": 6,
+  "differences": [
+   "Readable but towers small vs ref chunky dense",
+   "Clash puffs clear",
+   "Number legibility poor at 1366 size"
+  ]
+ }
+}

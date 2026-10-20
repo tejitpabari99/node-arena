@@ -10,16 +10,16 @@ Shared visual loop (every visual task repeats it): (1) `pnpm --filter @node-aren
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | SP04 baseline capture (iteration 0) | SP03 T7, SP01 T8 | todo |
-| 2 | Pair ribbon lanes: model, shader, troop front data path | T1, SP01 T1 | todo |
-| 3 | Build-out, cut flash/retract, draining lanes | T2 | todo |
-| 4 | Shared head-on lane + smoothed split | T2, T3, SP01 T2 | todo |
-| 5 | Input: centre-line hit-test, hover, draw preview | T2, T4 | todo |
-| 6 | Troops: team-tinted chibi, size, gait, credits | T1 | todo |
-| 7 | Troop LOD (auto/high/low) | T6 | todo |
-| 8 | Brawl FX at the split | T4, T7 | todo |
-| 9 | Remove v1 lane paths + update specs | T5, T8 | todo |
-| 10 | L10/L18 density, crossings, perf pass | T8, T9 | todo |
+| 1 | SP04 baseline capture (iteration 0) | SP03 T7, SP01 T8 | done |
+| 2 | Pair ribbon lanes: model, shader, troop front data path | T1, SP01 T1 | Blocked-visual |
+| 3 | Build-out, cut flash/retract, draining lanes | T2 | Blocked-visual |
+| 4 | Shared head-on lane + smoothed split | T2, T3, SP01 T2 | Blocked-visual |
+| 5 | Input: centre-line hit-test, hover, draw preview | T2, T4 | done |
+| 6 | Troops: team-tinted chibi, size, gait, credits | T1 | Blocked-visual |
+| 7 | Troop LOD (auto/high/low) | T6 | Blocked-visual |
+| 8 | Brawl FX at the split | T4, T7 | Blocked-visual |
+| 9 | Remove v1 lane paths + update specs | T5, T8 | done |
+| 10 | L10/L18 density, crossings, perf pass | T8, T9 | Blocked-visual |
 
 ## Task 1 - SP04 baseline capture (iteration 0)
 What it is / what it means: Starting point on the post-SP03 look (Iteration protocol; SP01 Decision 9 style). Includes the clash fixture caveat check.

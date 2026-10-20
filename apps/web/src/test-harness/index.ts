@@ -1,9 +1,10 @@
 import { loadContent, type ContentFileMap, type CompiledLevel } from '@node-arena/content';
 import { createReplayRecorder, playReplay, type Command, type ReplayRecorder, type SimEvent } from '@node-arena/sim';
 import { TICK_RATE } from '@node-arena/sim';
-import { Color, Mesh, MeshBasicMaterial, Vector3, type Scene, type WebGLRenderer } from 'three';
+import { Color, Mesh, ShaderMaterial, Vector3, type Scene, type WebGLRenderer } from 'three';
 import { buildVisualProbe, type HarnessRendererHooks } from './probe';
 import type { AppController } from '../app/state';
+import { strength } from '../ui/strength';
 import type { createTowerRenderer } from '../render/towers';
 import type { createFxRenderer } from '../render/fx';
 import type { PerspectiveCamera } from 'three';
@@ -48,6 +49,10 @@ export function createTestHarness(files: ContentFileMap) {
         async load(id: string, seed?: number) { savedBackground = undefined; if (app.runtime) retired.push(inspect().renderer); await app.startLevel(id, seed); },
         menu() { if (app.runtime) retired.push(inspect().renderer); app.menu(); },
         submit: (cmd: Command) => app.driver?.submit(cmd),
+        /** SP05 HUD harness: pause like the Pause button / Esc (screen becomes `paused`). */
+        pause() { app.pause(); },
+        /** SP05 HUD harness (H06): the pure `strength()` of the current view, for comparing with the meter segments. */
+        strength() { return strength(app.driver!.sim.view, { colorblind: app.snapshot().save.settings.colorblind }); },
         render,
         replay() { const record = recorder.record(); const result = playReplay({ level, metadata }, record); return { ok: result.ok, hash: result.sim.hash(), record }; },
         project(id: string) {
@@ -57,10 +62,10 @@ export function createTestHarness(files: ContentFileMap) {
           return { x: canvas.x + (p.x + 1) * canvas.width / 2, y: canvas.y + (1 - p.y) * canvas.height / 2 };
         },
         presentation() {
-          const preview = inspect().scene.children.find(node => node instanceof Mesh && node.renderOrder === 3);
+          const preview = inspect().scene.children.find(node => node instanceof Mesh && node.userData.inputPreview === true);
           return {
-            inputPreview: preview instanceof Mesh && preview.material instanceof MeshBasicMaterial
-              ? { visible: preview.visible, color: preview.material.color.getHexString() } : null,
+            inputPreview: preview instanceof Mesh && preview.material instanceof ShaderMaterial
+              ? { visible: preview.visible, color: (preview.material.uniforms.colA!.value as Color).getHexString() } : null,
             lines: inspect().lines.meshes.map(mesh => ({ color: mesh.material.uniforms.team!.value.getHexString() as string })),
             towers: inspect().towers.towers.map(t => ({ modelScale: t.model.scale.x, color: t.base.material.color.getHexString(), glyph: t.roofMarker.userData.glyph })),
             fx: inspect().fx.meshes.filter(m => m.visible).map(m => ({ position: m.position.toArray(), opacity: m.material.opacity })) };
@@ -94,6 +99,9 @@ export function createTestHarness(files: ContentFileMap) {
         },
         /** renderer.info.render of the last rendered frame (M13 drawCalls). */
         renderInfo() { const { calls, triangles } = inspect().renderer.info.render; return { calls, triangles }; },
+        /** R7: runtime perf snapshot (frames[], p99, sample stats); fed by every driver frame/render. */
+        perf() { return app.runtime?.metrics ?? null; },
+        perfReset() { app.runtime?.resetMetrics?.(); },
         settings: (patch: Parameters<AppController['updateSettings']>[0]) => app.updateSettings(patch),
       };
     },

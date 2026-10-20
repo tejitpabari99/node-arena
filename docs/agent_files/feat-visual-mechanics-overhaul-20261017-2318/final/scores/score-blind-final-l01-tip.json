@@ -1,0 +1,10 @@
+{
+ "V19": {
+  "score": 7,
+  "differences": [
+   "Tip card bottom-centre with Dismiss, ref has no help bar",
+   "Card is a small cream panel, 3-line text",
+   "Dismiss button is blue; tip appears only at tick 0 and is tidy but covers props"
+  ]
+ }
+}

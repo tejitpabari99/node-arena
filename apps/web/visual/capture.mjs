@@ -1,21 +1,26 @@
 #!/usr/bin/env node
 // visual:capture (PRD SP01 Req 1, 2, 4, 9): deterministic screenshots + probe JSON of the scenes in scenes.json.
-// Usage: pnpm --filter @node-arena/web visual:capture [--scene id] [--viewport WxH] [--headed] [--gpu] [--dev] [--no-build]
+// Usage: pnpm --filter @node-arena/web visual:capture [--scene id] [--viewport WxH] [--headed] [--gpu] [--dev] [--no-build] [--all-levels]
 // Output (git-ignored): apps/web/visual-out/{<scene>-<WxH>[-<label>].png, <scene>-<WxH>[-<label>]-magenta.png (M07 pass, first frame
 // of each level job), metrics.json (probe + dom + sim per frame; l18@1920x1080 `perf` for M13), run.json}
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { captureJobs, frameFile, loadScenes, OUT_DIR, parseArgs, parseViewport, sceneFrames } from './lib/scenes.mjs';
+import { allScenes, captureJobs, frameFile, loadScenes, OUT_DIR, parseArgs, parseViewport, runFileName, sceneFrames } from './lib/scenes.mjs';
+import { collectHud, HUD_SELECTORS } from './lib/hud-metrics.mjs';
 import { BASE_URL, buildTest, CLOCK_TIME, gitCommit, launch, newContext, resolveFonts, startServer, until } from './lib/browser.mjs';
 
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
+/** Set from `--lod`: appended to the app URL so the harness can force a troop LOD set. */
+let LOD_QUERY = '';
 const log = (...a) => console.log('[visual:capture]', ...a);
 /** SwiftShader screenshots of 1920px WebGL frames can exceed Playwright's 30 s default when the host is loaded. */
 const SHOT_TIMEOUT = 120_000;
 /** M13 perf sample: fresh page after the captures (stored as `perf`, which selfcheck ignores). */
-const PERF = { scene: 'l18', viewport: '1920x1080', durationMs: 5000 };
+const PERF = { scene: 'l18', viewport: '1920x1080', durationMs: 5000, warmupMs: 0 };
+/** R7 `--gpu` perf mode: 5 s warm-up then a 30 s sample (default capture timing is untouched). */
+const PERF_GPU = { durationMs: 30_000, warmupMs: 5000 };
 
 /** Headed without an X display: start a private Xvfb (xvfb-run needs xauth, often missing). Returns a stop function. */
 async function ensureDisplay(opts) {
@@ -88,32 +93,47 @@ async function magentaPass(page, file, settle) {
  * M13 perf (PRD: l18, 5 s real time, fresh page, no clock): sim stepped at 20 Hz from real time, one render per rAF.
  * fps/frame p95 from rAF intervals, jsMs = step + render CPU per frame, drawCalls = max renderer.info calls.
  */
-async function capturePerf(browser, config, scene, durationMs) {
-  const context = await newContext(browser, { width: 1920, height: 1080 });
+async function capturePerf(browser, config, scene, durationMs, warmupMs = 0, proxy = {}) {
+  const { throttle = 1, dpr = 1, quality = null } = proxy;
+  const context = await newContext(browser, { width: 1920, height: 1080 }, { deviceScaleFactor: dpr });
   const page = await context.newPage();
   try {
+    if (throttle > 1) await (await context.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: throttle });
     await page.goto(`${BASE_URL}/?test=1`);
     await page.waitForFunction(() => window.__na?.screen === 'menu');
-    await page.evaluate(s => window.__na.settings(s), { ...config.settings, ...(scene.settings ?? {}) });
+    await page.evaluate(s => window.__na.settings(s), { ...config.settings, ...(scene.settings ?? {}), ...(quality ? { quality } : {}) });
     await page.evaluate(([id, s]) => window.__na.load(id, s), [scene.level, config.seed]);
     await page.waitForFunction(() => window.__na.screen === 'playing');
     const target = sceneFrames(scene)[0].tick ?? 0;
     await page.evaluate(([cmds, t]) => { for (const c of cmds) window.__na.submit(c); window.__na.step(t); }, [(scene.commands ?? []).filter(c => !c.tick).map(({ tick: _t, ...c }) => c), target]);
-    return await page.evaluate(async ms => {
-      const p95 = list => { const s = [...list].sort((a, b) => a - b); return s.length ? s[Math.ceil(s.length * 0.95) - 1] : null; };
-      const frames = [], js = [], calls = [], t0 = performance.now();
-      let last = t0, ticks = 0;
-      while (performance.now() - t0 < ms) {
-        await new Promise(r => requestAnimationFrame(() => r()));
-        const now = performance.now(); frames.push(now - last); last = now;
-        const due = Math.floor((now - t0) * 20 / 1000) - ticks, start = performance.now();
-        if (due > 0) { window.__na.step(Math.min(due, 5)); ticks += due; }
-        window.__na.render({ settle: false });
-        js.push(performance.now() - start); calls.push(window.__na.renderInfo().calls);
-      }
+    return await page.evaluate(async ([ms, warmup, proxyThrottle, proxyDpr, proxyQuality]) => {
+      const pct = (list, q) => { const s = [...list].sort((a, b) => a - b); return s.length ? s[Math.ceil(s.length * q) - 1] : null; };
+      const mean = list => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);
+      const frames = [], js = [], calls = [], tris = [], origin = performance.now();
+      let t0 = origin, last = t0, ticks = 0;
+      // Warm-up (shader compile, texture upload, first sim catch-up): same loop, nothing recorded.
+      const loop = async (until, record) => {
+        while (performance.now() < until) {
+          await new Promise(r => requestAnimationFrame(() => r()));
+          const now = performance.now(); if (record) frames.push(now - last); last = now;
+          const due = Math.floor((now - origin) * 20 / 1000) - ticks, start = performance.now();
+          if (due > 0) { window.__na.step(Math.min(due, 5)); ticks += due; }
+          window.__na.render({ settle: false });
+          if (record) { js.push(performance.now() - start); const info = window.__na.renderInfo(); calls.push(info.calls); tris.push(info.triangles); }
+        }
+      };
+      if (warmup > 0) { await loop(origin + warmup, false); window.__na.perfReset(); t0 = performance.now(); last = t0; }
+      await loop(t0 + ms, true);
       const elapsed = performance.now() - t0, r = n => (n === null ? null : Math.round(n * 1000) / 1000);
-      return { durationMs: r(elapsed), frames: frames.length, fps: r(frames.length / (elapsed / 1000)), frameMsP95: r(p95(frames)), jsMsP95: r(p95(js)), drawCalls: Math.max(0, ...calls), ticks, clock: 'real' };
-    }, durationMs);
+      const sorted = [...frames].sort((a, b) => a - b), worst = sorted.slice(Math.max(0, sorted.length - Math.max(1, Math.ceil(sorted.length * 0.01))));
+      const app = window.__na.perf()?.sample ?? null;
+      return {
+        durationMs: r(elapsed), warmupMs: warmup, proxy: { throttle: proxyThrottle, dpr: proxyDpr, quality: proxyQuality }, frames: frames.length, fps: r(frames.length / (elapsed / 1000)), frameMsP95: r(pct(frames, 0.95)), jsMsP95: r(pct(js, 0.95)), drawCalls: Math.max(0, ...calls), ticks, clock: 'real',
+        frameMsP99: r(pct(frames, 0.99)), fps1Low: worst.length ? r(1000 / mean(worst)) : null, jsMsMean: r(mean(js)), triangles: Math.max(0, ...tris),
+        // Informational: the app's own createPerfMetrics sample (frames[] ring) over the same window; renderMs is scene.render() only (jsMs also includes sim catch-up).
+        app: app && Object.fromEntries(Object.entries(app).map(([k, v]) => [k, r(v)])),
+      };
+    }, [durationMs, warmupMs, throttle, dpr, quality ?? config.settings.quality]);
   } finally {
     await context.close();
   }
@@ -191,9 +211,21 @@ async function captureLevel(page, scene, config, viewport) {
       }, [frame.after.event, 5000]);
       if (found === null) throw new Error(`no ${frame.after.event} event`);
       target = found + frame.after.plus;
-    } else throw new Error(`frame without tick/relative/after in ${scene.id}`);
+    } else if (frame.action === 'results') {
+      await advanceTo(await tick()); // submit due scripted commands
+      target = await tick();
+    } else throw new Error(`frame without tick/relative/after/action in ${scene.id}`);
     if (target < await tick()) throw new Error(`frame tick ${target} already passed in ${scene.id}`);
     await advanceTo(target, { perTick: traceEnd !== null, settle: frame.settle });
+    if (frame.action === 'pause') {
+      await page.evaluate(() => window.__na.pause());
+      await until(page, () => window.__na.screen === 'paused', undefined, { what: `${scene.id} paused screen` });
+    } else if (frame.action === 'results') {
+      // Bounded fast-forward: the sim ends by its time limit at the latest (L1: 180 s = 3600 ticks); 40 x 500 ticks cap.
+      const reached = await page.evaluate(() => { for (let i = 0; i < 40 && window.__na.screen !== 'results'; i++) window.__na.step(500); return window.__na.screen; });
+      if (reached !== 'results') throw new Error(`${scene.id}: no result screen after 20000 ticks (screen ${reached})`);
+      await until(page, () => document.querySelector('[data-outcome]') !== null, undefined, { what: `${scene.id} results overlay` });
+    }
     await finishFrame(page, frame.settle);
     if (scene.laneCrop && !laneRect) laneRect = await page.evaluate(({ from, to, w, h }) => {
       const a = window.__na.project(from), b = window.__na.project(to), pad = 24;
@@ -204,7 +236,8 @@ async function captureLevel(page, scene, config, viewport) {
     const state = await page.evaluate(frameState);
     const vp = `${viewport.width}x${viewport.height}`;
     const shot = await screenshot(page, frameFile(scene.id, vp, frame.label));
-    const entry = { label: frame.label, settle: frame.settle, ...shot, tick: state.tick, simHash: state.hash, over: state.over, screen: state.screen, probe: state.probe, dom: state.dom, sim: state.sim };
+    const hud = await page.evaluate(collectHud, HUD_SELECTORS); // SP05 H01-H07 (lib/hud-metrics.mjs)
+    const entry = { label: frame.label, settle: frame.settle, ...shot, tick: state.tick, simHash: state.hash, over: state.over, screen: state.screen, probe: state.probe, dom: state.dom, hud, sim: state.sim };
     if (laneRect) entry.laneCrop = { rect: laneRect, sha256: sha256(await page.screenshot({ clip: laneRect, animations: 'disabled', caret: 'hide', timeout: SHOT_TIMEOUT })) };
     if (!out.frames.length) entry.magenta = await magentaPass(page, frameFile(scene.id, vp, frame.label ? `${frame.label}-magenta` : 'magenta'), frame.settle);
     out.frames.push(entry);
@@ -243,10 +276,11 @@ async function captureJob(browser, config, scene, viewportId) {
   page.on('pageerror', e => errors.push(String(e?.stack ?? e)));
   try {
     await page.clock.install({ time: CLOCK_TIME });
-    await page.goto(`${BASE_URL}/?test=1${scene.fixture ? `&fixture=${scene.fixture}` : ''}`);
+    await page.goto(`${BASE_URL}/?test=1${scene.fixture ? `&fixture=${scene.fixture}` : ''}${LOD_QUERY}`);
     await until(page, () => window.__na?.screen === 'menu', undefined, { what: 'menu screen' });
     await page.mouse.move(viewport.width - 1, 0); // parked: top-right corner, away from towers/lanes/HUD buttons
-    const settings = { ...config.settings, ...(scene.settings ?? {}) };
+    // SP05: every scene runs with the first-level tip dismissed (tipSeen) except l01-tip (fresh storage, tip visible).
+    const settings = { tipSeen: true, ...config.settings, ...(scene.settings ?? {}) };
     await page.evaluate(s => window.__na.settings(s), settings);
     let result;
     if (scene.screen === 'menu') {
@@ -274,6 +308,7 @@ async function captureJob(browser, config, scene, viewportId) {
 
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  if (opts.lod) LOD_QUERY = `&lod=${opts.lod}`;
   const config = loadScenes();
   const jobs = captureJobs(config, opts);
   fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -284,11 +319,12 @@ async function main() {
   const started = Date.now();
   try {
     const metricsFile = path.join(OUT_DIR, 'metrics.json');
-    const previous = opts.scenes.length || opts.viewports.length ? (fs.existsSync(metricsFile) ? JSON.parse(fs.readFileSync(metricsFile, 'utf8')) : null) : null;
+    const previous = opts.scenes.length || opts.viewports.length || opts.allLevels ? (fs.existsSync(metricsFile) ? JSON.parse(fs.readFileSync(metricsFile, 'utf8')) : null) : null;
     const scenes = {};
-    for (const s of config.scenes) if (previous?.scenes?.[s.id]) scenes[s.id] = previous.scenes[s.id];
+    const known = allScenes(config);
+    for (const s of known) if (previous?.scenes?.[s.id]) scenes[s.id] = previous.scenes[s.id];
     const css = new Set(), faces = new Set(), written = [];
-    for (const { scene, viewport } of jobs) {
+    for (const { scene, viewport } of opts.perfOnly ? [] : jobs) {
       let job = await captureJob(browser, config, scene, viewport);
       if (scene.silentBots && job.result.botCommandsThroughLastFrame > 0) {
         if (!scene.fallback) throw new Error(`${scene.id} ${viewport}: bots emitted ${job.result.botCommandsThroughLastFrame} commands in the capture window`);
@@ -305,14 +341,15 @@ async function main() {
     }
     const perfJob = jobs.find(j => j.scene.id === PERF.scene && j.viewport === PERF.viewport);
     if (perfJob) {
-      const perf = await capturePerf(browser, config, perfJob.scene, PERF.durationMs);
-      scenes[PERF.scene][PERF.viewport].perf = perf;
+      const perf = await capturePerf(browser, config, perfJob.scene, opts.gpu ? PERF_GPU.durationMs : PERF.durationMs, opts.gpu ? PERF_GPU.warmupMs : PERF.warmupMs, { throttle: opts.throttle, dpr: opts.dpr, quality: opts.perfQuality });
+      if (opts.perfOnly) fs.writeFileSync(path.join(OUT_DIR, 'perf.json'), `${JSON.stringify(perf, null, 2)}\n`);
+      else scenes[PERF.scene][PERF.viewport].perf = perf;
       log(`perf ${PERF.scene} ${PERF.viewport} (${perf.durationMs} ms real time): fps ${perf.fps}, frame p95 ${perf.frameMsP95} ms, jsMs p95 ${perf.jsMsP95}, drawCalls ${perf.drawCalls}`);
     }
     // Stable key order: scenes.json order, viewports in capture order.
     const ordered = {};
-    for (const s of config.scenes) if (scenes[s.id]) ordered[s.id] = scenes[s.id];
-    fs.writeFileSync(metricsFile, `${JSON.stringify({ schema: 1, seed: config.seed, scenes: ordered }, null, 2)}\n`);
+    for (const s of known) if (scenes[s.id]) ordered[s.id] = scenes[s.id];
+    if (!opts.perfOnly) fs.writeFileSync(metricsFile, `${JSON.stringify({ schema: 1, seed: config.seed, scenes: ordered }, null, 2)}\n`);
 
     const glPage = await browser.newPage();
     const renderer = await glPage.evaluate(() => {
@@ -330,7 +367,7 @@ async function main() {
       filters: { scenes: opts.scenes, viewports: opts.viewports }, jobs: jobs.map(j => `${j.scene.id}@${j.viewport}`), files: written,
       startedAt: new Date(started).toISOString(), durationMs: Date.now() - started,
     };
-    fs.writeFileSync(path.join(OUT_DIR, 'run.json'), `${JSON.stringify(run, null, 2)}\n`);
+    fs.writeFileSync(path.join(OUT_DIR, runFileName(opts)), `${JSON.stringify(run, null, 2)}\n`);
     log(`${jobs.length} captures, ${written.length} PNGs -> ${path.relative(process.cwd(), OUT_DIR) || OUT_DIR} (renderer: ${renderer?.renderer ?? 'none'})`);
   } finally {
     await browser.close();

@@ -32,6 +32,11 @@ export function levelVisualBounds(level: Pick<CompiledLevel, 'bounds' | 'towers'
   return bounds.isEmpty() ? authoredBounds(level) : bounds;
 }
 
+/** Camera settings with the level's manifest `levelVisuals.cameraMargin` override applied (render params only). */
+export function cameraSettingsFor(override: { cameraMargin?: number }, settings: Manifest['camera']): Manifest['camera'] {
+  return override.cameraMargin === undefined ? settings : { ...settings, margin: override.cameraMargin };
+}
+
 /** pitch=0 looks horizontally from +z; pitch=90 looks straight down with north at screen top.
  * Solve perspective inequalities for every padded bounding-box corner, including depth.
  */

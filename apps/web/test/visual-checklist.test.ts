@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { checkConsistency, itemsForScene, loadChecklist, mergeScores, parseChecklist, resolveChecklist, scoreSheet, splitRow, stripMetricRefs } from '../visual/lib/checklist.mjs';
 import { loadRefMap } from '../visual/lib/compose.mjs';
+import { HUD_IDS } from '../visual/lib/hud-metrics.mjs';
 import { loadThresholds, METRIC_IDS } from '../visual/lib/metrics.mjs';
 import { loadScenes } from '../visual/lib/scenes.mjs';
 
@@ -24,9 +25,9 @@ describe('CHECKLIST.md', () => {
     expect(md).toContain("test.fixme(true, 'SP05 baseline refresh: <reason>')");
     expect(md).toMatch(/## Probe contract/);
   });
-  it('has all 20 metrics with threshold + status, the machine limits table and the colour spec', () => {
-    expect(cl.metrics.map(m => m.id)).toEqual(METRIC_IDS);
-    expect(cl.limits.map(m => m.id)).toEqual(METRIC_IDS);
+  it('has all 20 metrics (+ SP05 H01-H07) with threshold + status, the machine limits table and the colour spec', () => {
+    expect(cl.metrics.map(m => m.id)).toEqual([...METRIC_IDS, ...HUD_IDS]);
+    expect(cl.limits.map(m => m.id)).toEqual([...METRIC_IDS, ...HUD_IDS]);
     expect(cl.metrics.find(m => m.id === 'M12')?.metric).toContain('`|splitScreen - project(');
     expect(md).toMatch(/\| grass \| H 55-105/);
   });
@@ -123,5 +124,20 @@ describe('score merge', () => {
     expect(mergeScores({ items: { V01: { score: 6, differences: [] } } }, { V01: { score: 7, differences: [] } }).items.V01?.merged).toBe(6);
     expect(() => mergeScores({ V01: { score: 11, differences: [] } }, {})).toThrow(/V01/);
     expect(() => mergeScores({ V01: { score: 5, differences: 'x' } }, {})).toThrow(/V01/);
+  });
+});
+
+describe('SP05 ref-map entries + score sheets', () => {
+  const cl = parseChecklist(md), map = loadRefMap();
+  it('l01-tip, pause, results carry items lists and emit sheets; lvl-NN need none', () => {
+    expect(itemsForScene(cl, map, 'l01-tip').map(i => i.id)).toEqual(['V19']);
+    expect(itemsForScene(cl, map, 'pause').map(i => i.id)).toEqual(['V20']);
+    expect(itemsForScene(cl, map, 'results').map(i => i.id)).toEqual(['V20']);
+    expect(map.scenes['l01-tip']!.refs.map(r => r.file)).toEqual(['towerwar_09.jpg', 'towerwar_yt1.jpg']);
+    expect(map.scenes.pause!.refs.map(r => r.file)).toEqual(['towerwar_08.jpg']);
+    for (const id of ['l01-tip', 'pause', 'results']) expect(scoreSheet({ checklist: cl, refMap: map, scene: id, refDir: '/refs', outDir: '/out' })).toContain(`/out/compare-${id}.png`);
+    const lvl = Object.keys(map.scenes).filter(id => id.startsWith('lvl-'));
+    expect(lvl).toHaveLength(20);
+    for (const id of lvl) expect(map.scenes[id]).toMatchObject({ items: [], refs: [{ file: 'towerwar_01.jpg' }, { file: 'towerwar_03.jpg' }] });
   });
 });

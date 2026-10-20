@@ -1,5 +1,6 @@
 import type { CompiledLevel, Manifest } from '@node-arena/content';
 
+export type LevelVisual = NonNullable<Manifest['levelVisuals']>[string];
 export type ManifestErrorCode = 'schema' | 'key' | 'palette' | 'path' | 'file' | 'credits' | 'budget' | 'asset';
 export class ManifestError extends Error {
   constructor(public readonly code: ManifestErrorCode, public readonly key: string, message: string, options?: ErrorOptions) {
@@ -52,6 +53,8 @@ export function createManifestResolver(manifest: Manifest) {
     marker: (key: string) => lookup(manifest.teamMarkers, key, 'marker'),
     event: (key: string) => Object.hasOwn(manifest.events, key) ? manifest.events[key] : undefined,
     camera: () => manifest.camera,
+    /** Per-level render overrides (empty when the level has none). */
+    levelVisual: (levelId: string): LevelVisual => (manifest.levelVisuals && Object.hasOwn(manifest.levelVisuals, levelId) ? manifest.levelVisuals[levelId]! : {}),
     resolveLevelAssets(level: Pick<CompiledLevel, 'visual' | 'towers' | 'kinds' | 'players'>) {
       const theme = lookup(manifest.themes, level.visual, 'theme');
       const visuals = new Set<string>(); const models = new Set<string>(); const audio = new Set<string>();

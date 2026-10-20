@@ -61,8 +61,15 @@ test.describe('slice verification (owner-run, SLICE=1)', () => {
     await open(page, '18-free-for-all', palette);
     // Let bots build up traffic, then show the SP03 perf HUD.
     await page.waitForTimeout(RUN_MS);
-    const toggle = page.getByRole('button', { name: 'Performance', exact: true });
-    if (await toggle.count()) await toggle.click();
+    // Performance HUD is a Settings checkbox (SP05); open Settings via pause, enable, resume.
+    const perfBox = page.getByRole('checkbox', { name: 'Performance HUD' });
+    if (!(await page.getByLabel('Performance metrics').count())) {
+      await page.getByRole('button', { name: 'Pause', exact: true }).click();
+      await page.getByRole('button', { name: 'Settings', exact: true }).click();
+      await perfBox.check();
+      await page.getByRole('button', { name: 'Done', exact: true }).click();
+      await page.getByRole('button', { name: 'Resume', exact: true }).click();
+    }
     const hud = page.getByLabel('Performance metrics');
     await expect(hud).toBeVisible();
     const frames = await page.evaluate(ms => new Promise<number[]>(resolve => {

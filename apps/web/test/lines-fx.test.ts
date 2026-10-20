@@ -11,24 +11,34 @@ function setup() {
   const manifest = structuredClone(manifestJSON) as Manifest, scene = new Scene(), scope = new Disposables();
   return { view, manifest, scene, scope };
 }
-it('offsets opposite directed ribbons, scrolls without rebuilding, exposes projection and highlights', () => {
-  const f = setup(), r = createLineRenderer(f); const [a, b] = r.segments;
-  expect(a!.start.z).toBeGreaterThan(0); expect(b!.start.z).toBeLessThan(0); expect(a!.end.x).toBe(10); expect(b!.end.x).toBe(0);
-  const mesh = r.meshes[0]!, geometry = mesh.geometry, dispose = vi.spyOn(geometry, 'dispose');
+it('builds one pair ribbon lane for opposite lines, scrolls without rebuilding, projects centre lines, highlights and drains', () => {
+  const f = setup(), r = createLineRenderer({ ...f, visualWidth: id => (id === '0' ? 6 : 6) });
+  expect(r.meshes).toHaveLength(1); const mesh = r.meshes[0]!, u = mesh.material.uniforms;
+  expect(mesh.userData).toMatchObject({ visualRole: 'lane', from: 0, to: 1, pair: '0-1', widthWorld: expect.closeTo(2.1) }); expect(mesh.renderOrder).toBeGreaterThanOrEqual(1);
+  expect(r.segments).toHaveLength(2); expect(r.segments[0]!.start.z).toBe(r.segments[1]!.end.z); expect(r.segments[0]!.end.x).toBe(10); expect(r.segments[1]!.end.x).toBe(0);
+  expect(u.laneLen!.value).toBe(10); expect(u.laneW!.value).toBeCloseTo(2.1); expect(u.split!.value).toBe(.5); expect(u.buildT!.value).toBe(1);
+  expect(mesh.material.transparent).toBe(true); expect(mesh.material.depthWrite).toBe(false); expect(mesh.material.polygonOffset).toBe(true);
+  const dispose = vi.spyOn(mesh.geometry, 'dispose');
   r.update(4); r.consumeEvents([{ type: 'Clash', tick: 1, channel: 1, progA: 100000, progB: 100000, value: 1 }]);
-  expect(r.meshes[0]).toBe(mesh); expect(mesh.material.uniforms.time!.value).toBe(4); expect(dispose).not.toHaveBeenCalled();
-  r.highlight(1, 0); expect(mesh.material.uniforms.highlight!.value).toBe(1); r.highlight(1, 1); expect(mesh.material.uniforms.highlight!.value).toBe(0);
+  expect(r.meshes[0]).toBe(mesh); expect(u.time!.value).toBe(4); expect(dispose).not.toHaveBeenCalled();
+  r.highlight(1, 0); expect(u.hoverA!.value).toBe(1); expect(u.hoverB!.value).toBe(0); r.highlight(1, 1); expect(u.hoverA!.value).toBe(0); r.highlight(null);
   const camera = new PerspectiveCamera(); camera.position.set(5, 20, 15); camera.lookAt(5, 0, 0); camera.updateMatrixWorld();
-  const projected = r.projectSegments(camera, 800, 600); expect(projected).toHaveLength(2); expect(projected[0]!.start.x).toBeCloseTo((a!.start.clone().project(camera).x + 1) * 400);
-  r.setPalette('colorblind'); expect(dispose).toHaveBeenCalledTimes(1); expect(r.meshes[0]!.material.uniforms.team!.value.equals(new Color(f.manifest.palettes.colorblind['player.1']))).toBe(true);
-  (f.view.lines as unknown[]).length = 0; r.consumeEvents([{ type: 'LineCut', tick: 2, channel: 1, reason: 'captured' }, { type: 'LineCut', tick: 2, channel: 2, reason: 'captured' }]); expect(r.meshes).toHaveLength(0);
+  const projected = r.projectSegments(camera, 800, 600); expect(projected).toHaveLength(2); for (const seg of projected) expect(seg.halfWidthPx).toBeGreaterThan(0); expect(projected[0]!.start.x).toBeCloseTo((r.segments[0]!.start.clone().project(camera).x + 1) * 400);
+  r.setPalette('colorblind'); expect(u.colA!.value.equals(new Color(f.manifest.palettes.colorblind['player.1']))).toBe(true); expect(u.team!.value).toBe(u.colA!.value);
+  // Cut only B->A: the lane stays single-direction A->B; cut channel with troops keeps a draining half until empty.
+  const lines = f.view.lines as unknown as { channel: number }[]; const kept = lines[0]!; lines.length = 0; lines.push(kept);
+  const counts = new Int32Array(4); counts[2] = 3; r.consumeEvents([{ type: 'LineCut', tick: 2, channel: 2, reason: 'player' }]);
+  expect(r.meshes[0]).toBe(mesh); expect(u.split!.value).toBe(.5); expect(u.drainB!.value).toBe(0); // B half retracts first (Task 3)
+  r.update(5, { frontProgress: new Int32Array(4), channelCount: counts }); r.update(5.4, { frontProgress: new Int32Array(4), channelCount: counts }); expect(u.drainB!.value).toBe(1); expect(u.split!.value).toBe(.5);
+  lines.length = 0; r.consumeEvents([{ type: 'LineCut', tick: 3, channel: 1, reason: 'player' }]); expect(r.meshes).toHaveLength(1); expect(u.drainA!.value).toBe(0);
+  r.update(6, { frontProgress: new Int32Array(4), channelCount: new Int32Array(4) }); r.update(6.4, { frontProgress: new Int32Array(4), channelCount: new Int32Array(4) }); expect(r.meshes).toHaveLength(0);
   f.scope.dispose(); expect(f.scene.children).toHaveLength(0);
 });
 it('uses exact fixed-point progA on canonical clash channel, manifest effects and bounded reusable pool', () => {
   const f = setup(); f.manifest.events.Clash!.fx = 'spark'; f.manifest.events.TroopSpawned = { fx: 'puff' };
   const r = createFxRenderer({ ...f, capacity: 2 }); const meshes = [...r.meshes];
   const clash: SimEvent = { type: 'Clash', tick: 1, channel: 1, progA: 50000, progB: 150000, value: 1 };
-  r.consumeEvents([clash]); expect(r.activeCount).toBe(1); expect(r.meshes[0]!.position.x).toBe(2.5); expect(r.meshes[0]!.visible).toBe(true); expect(r.slots[0]!.effect).toBe('spark');
+  r.consumeEvents([clash]); expect(r.activeCount).toBe(1); expect(r.meshes[0]!.position.x).toBe(2.5); expect(r.meshes[0]!.visible).toBe(true); expect(r.slots[0]!.effect).toBe('spark'); expect(r.meshes[0]!.material.color.getHexString()).toBe('fff4d6'); // Clash spark is cream, not a team colour
   r.consumeEvents([{ type: 'Captured', tick: 2, tower: 1, from: 1, to: 0 }]); expect(r.meshes[1]!.position.x).toBe(10); expect(r.slots[1]!.effect).toBe('pulse');
   r.update(.15); expect(r.meshes[0]!.material.opacity).toBeLessThan(1); r.consumeEvents([{ type: 'TroopSpawned', tick: 3, channel: 2, seq: 9, owner: 1 }]); expect(r.activeCount).toBe(2); expect(r.meshes).toEqual(meshes);
   r.update(2); expect(r.activeCount).toBe(0); r.consumeEvents([clash]); r.setReducedMotion(true); r.update(2.3); expect(r.activeCount).toBe(0);
@@ -42,4 +52,13 @@ it('uses tower visual capture fallback, generic locators, and floored diagonal s
   r.consumeEvents([{ type: 'Clash', tick: 0, channel: 1, progA: 100000, progB: 1, value: 1 }, { type: 'Captured', tick: 0, tower: 1, from: 1, to: 0 }, { type: 'GameOver', tick: 0, outcome: 'won', winnerTeam: 'a' }]);
   const length = Math.floor(Math.hypot(10001 * 20, 12345 * 20)); expect(r.meshes[0]!.position.x).toBeCloseTo(10.001 * 100000 / length); expect(r.meshes[0]!.position.z).toBeCloseTo(12.345 * 100000 / length);
   expect(r.slots[1]!.effect).toBe('puff'); expect(r.meshes[2]!.position).toEqual(new Vector3(9, 1, 8)); f.scope.dispose();
+});
+it('lane renderOrder stays in [1,2) below every effect layer, newer over older, for any drawSeq', () => {
+  const lines = [{ channel: 1, from: 0, to: 1, owner: 0, drawSeq: 1 }, { channel: 5, from: 1, to: 2, owner: 0, drawSeq: 150 }, { channel: 2, from: 0, to: 2, owner: 0, drawSeq: 7 }];
+  const view = { towerStatic: [{ x: 0, y: 0, visual: 'tower.standard' }, { x: 10000, y: 0, visual: 'tower.small' }, { x: 5000, y: 8000, visual: 'tower.small' }], tower: { owner: new Int32Array([0, 0, 0]) }, players: [{ colorKey: 'player.1' }], lines } as unknown as SimView;
+  const scene = new Scene(), scope = new Disposables(), r = createLineRenderer({ view, manifest: structuredClone(manifestJSON) as Manifest, scene, scope });
+  r.update(1); const order = (pair: string) => r.meshes.find(m => m.userData.pair === pair)!.renderOrder;
+  const o1 = order('0-1'), o150 = order('1-2'), o7 = order('0-2');
+  for (const o of [o1, o7, o150]) { expect(o).toBeGreaterThanOrEqual(1); expect(o).toBeLessThan(2); }
+  expect(o150).toBeGreaterThan(o7); expect(o7).toBeGreaterThan(o1); scope.dispose();
 });

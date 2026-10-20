@@ -15,6 +15,13 @@ Ad-free browser strategy game (persistent-route tower war) with solo campaign an
 
 - `apps/web/` — Vite + Preact + Three.js client scaffold, browser boot smoke tests and SP03 module layout.
 
+## Look
+Bright diorama style: a sand/grass island with low-poly props, stacked octagon towers with roof numbers, two-colour lanes with chevrons, chibi troops, and a blue pill HUD (level name, timer, team-strength meter). Deferred ideas (tank factory, watchtower/archer, boosts, themes, SFX) live in `docs/FUTURES.md`.
+
+| Level 1 | Level 10 | Level 18 |
+|---|---|---|
+| ![Level 1](docs/img/l01-1920x1080.png) | ![Level 10](docs/img/l10-1920x1080.png) | ![Level 18](docs/img/l18-1920x1080.png) |
+
 ## Development
 
 Requires Node >=22.13 and pnpm 10.34.6 (`packageManager` pins the version).

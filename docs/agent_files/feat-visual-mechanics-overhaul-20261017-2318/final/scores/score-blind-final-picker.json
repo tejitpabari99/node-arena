@@ -1,0 +1,34 @@
+{
+ "V04": {
+  "score": 7,
+  "differences": [
+   "Blue panel with cream cards vs CT sky/green",
+   "Backdrop plain gradient",
+   "No currency pills"
+  ]
+ },
+ "V07": {
+  "score": 5,
+  "differences": [
+   "No towers on picker; N/A",
+   "Not applicable",
+   "Number tiles instead"
+  ]
+ },
+ "V21": {
+  "score": 7,
+  "differences": [
+   "20 cards readable, cohesive blue/cream",
+   "Cards small text",
+   "No level-96 style bar or map art"
+  ]
+ },
+ "V22": {
+  "score": 7,
+  "differences": [
+   "No v1 leftovers",
+   "Plain backdrop",
+   "Tiny logo corner"
+  ]
+ }
+}

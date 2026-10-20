@@ -1,8 +1,9 @@
 import Type from 'typebox';
 
 /** Manifest file-format version (presentation only; independent of the simulation SCHEMA_VERSION so replay metadata is untouched).
- * 1.1.0: theme `palette` + `scatter`, tower visual `build`. */
-export const MANIFEST_SCHEMA_VERSION = '1.1.0';
+ * 1.1.0: theme `palette` + `scatter`, tower visual `build`.
+ * 1.2.0: optional `levelVisuals` per-level render overrides (camera margin, troop scale). */
+export const MANIFEST_SCHEMA_VERSION = '1.2.0';
 
 const closed = { additionalProperties: false };
 const key = () => Type.String({ minLength: 1 });
@@ -47,6 +48,12 @@ export const ManifestSchema = Type.Object({
     props: Type.Optional(Type.Array(Type.Object({ model: key(), pos: vector(), scale: Type.Optional(positive()), rotation: Type.Optional(vector()) }, closed))),
   }, closed)),
   events: map(Type.Object(effect, closed)),
+  /** Per-level render-only overrides keyed by content level id (cross-checked against level ids by tests).
+   * `cameraMargin` replaces `camera.margin` in world units; negative values crop into the fit box (loose-fit boards), documented range -2..5.
+   * `troopScale` multiplies the troop visual scale. */
+  levelVisuals: Type.Optional(map(Type.Object({
+    cameraMargin: Type.Optional(Type.Number({ minimum: -2, maximum: 5 })), troopScale: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 2 })),
+  }, closed))),
   camera: Type.Object({ pitchDeg: Type.Number({ minimum: 0, maximum: 90 }), fov: Type.Number({ exclusiveMinimum: 0, exclusiveMaximum: 180 }), margin: Type.Number({ minimum: 0 }) }, closed),
 }, {
   ...closed, $schema: 'http://json-schema.org/draft-07/schema#',

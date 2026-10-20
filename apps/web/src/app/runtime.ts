@@ -5,10 +5,13 @@ import type { LevelRuntime, RuntimeContext } from "./state";
 import { Disposables } from "../render/disposables";
 import { createLevelScene } from "../render/scene";
 import { createTowerRenderer } from "../render/towers";
-import { createTroopRenderer } from "../render/troops";
+import { createTroopRenderer, troopSizeFactor } from "../render/troops";
+import { parseLodMode } from "../render/troop-lod";
 import { createLineRenderer } from "../render/lines";
 import { createFxRenderer } from "../render/fx";
+import { createBrawlRenderer } from "../render/brawl";
 import { createInputController } from "../input";
+import { createManifestResolver } from "../manifest/resolve";
 /** Construction failures dispose the partially populated scope before the controller releases assets. */
 export function createBrowserRuntime(
   context: RuntimeContext,
@@ -44,11 +47,15 @@ export function createBrowserRuntime(
       models: session.models,
       scene: scene.scene,
       scope,
+      sizeFactor: troopSizeFactor(level.towers.filter((t) => t.owner >= 0).map((t) => towers.visualWidth(t.id) ?? NaN), createManifestResolver(manifest).levelVisual(level.id)),
       reducedMotion: settings.reducedMotion,
       palette: settings.colorblind ? "colorblind" : "default",
+      now: () => performance.now(),
+      lod: parseLodMode(new URLSearchParams(window.location.search).get("lod")), // ?lod=low|high forces a set (visual harness); default auto
     });
     const lines = createLineRenderer({
       view: driver.sim.view,
+      visualWidth: (id) => towers.visualWidth(id),
       manifest,
       scene: scene.scene,
       scope,
@@ -58,6 +65,16 @@ export function createBrowserRuntime(
       manifest,
       scene: scene.scene,
       scope,
+    });
+    const brawl = createBrawlRenderer({
+      view: driver.sim.view,
+      manifest,
+      scene: scene.scene,
+      scope,
+      lines,
+      figureHeight: troops.meshes[0]?.userData.heightWorld as number | undefined,
+      reducedMotion: settings.reducedMotion,
+      palette: settings.colorblind ? "colorblind" : "default",
     });
     input = createInputController({
       canvas: scene.canvas,
@@ -80,22 +97,27 @@ export function createBrowserRuntime(
     const metrics = createPerfMetrics();
     return {
       get metrics() { return metrics.snapshot(); },
-      get inspection() { return { scene:scene.scene, camera:scene.camera, renderer:scene.renderer, towers, troops, lines, fx, scope }; },
+      resetMetrics() { metrics.reset(); },
+      get inspection() { return { scene:scene.scene, camera:scene.camera, renderer:scene.renderer, towers, troops, lines, fx, brawl, scope }; },
       frame(update) {
         const start = performance.now();
         const seconds = (update.sim.tick + update.alpha) / TICK_RATE;
         towers.animate(seconds);
         troops.update(update.alpha, seconds);
-        lines.update(seconds);
+        lines.update(seconds, troops);
+        brawl.update(seconds, scene.camera, troops);
         fx.update(seconds);
         input?.refresh();
+        const renderStart = performance.now();
         scene.render();
-        metrics.frame(start,performance.now()-start+(update.preparationMs??0),driver.lastStepMs,scene.renderer.info.render.calls,scene.renderer.info.render.triangles,
-          troops.count);
+        const end = performance.now();
+        metrics.frame(start,end-start+(update.preparationMs??0),driver.lastStepMs,scene.renderer.info.render.calls,scene.renderer.info.render.triangles,
+          troops.count,end-renderStart);
       },
       tick(update) {
         towers.update(update.sim.view);
         lines.consumeEvents(update.events, update.sim.view);
+        brawl.consumeEvents(update.events, update.sim.view);
         fx.consumeEvents(update.events, update.sim.view);
         input?.refresh();
       },
@@ -106,9 +128,11 @@ export function createBrowserRuntime(
         troops.setPalette(palette);
         lines.setPalette(palette);
         fx.setPalette(palette);
+        brawl.setPalette(palette);
         troops.setReducedMotion(value.reducedMotion);
         lines.setReducedMotion(value.reducedMotion);
         fx.setReducedMotion(value.reducedMotion);
+        brawl.setReducedMotion(value.reducedMotion);
         input?.setPalette(palette);
         scene.render();
       },

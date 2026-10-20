@@ -1,0 +1,34 @@
+{
+ "V04": {
+  "score": 7,
+  "differences": [
+   "Gradient backdrop cream to lime vs ref dark blurred",
+   "Panel navy with blue title",
+   "Orange buttons"
+  ]
+ },
+ "V07": {
+  "score": 5,
+  "differences": [
+   "No towers on menu; N/A",
+   "Backdrop empty",
+   "No game scene"
+  ]
+ },
+ "V20": {
+  "score": 7,
+  "differences": [
+   "Navy panel with blue title and orange pills similar to ref",
+   "No hero art (VS helmets) as ref",
+   "Fonts less chunky; no pink/yellow banner"
+  ]
+ },
+ "V22": {
+  "score": 7,
+  "differences": [
+   "No v1 leftovers",
+   "Plain gradient backdrop empty",
+   "Small corner logo"
+  ]
+ }
+}

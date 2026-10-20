@@ -126,6 +126,55 @@
       "threshold": "runs within [floors-1, floors+1] and >=1 team-sat band run per white run",
       "scenes": ["l01", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
       "limits": { "slack": 1, "matchShare": { "min": 1.0 } }
+    },
+    "H01": {
+      "name": "pill centre x vs viewport centre x", "source": "dom (HUD record)", "status": "prov",
+      "threshold": "pill centre within +-2% of viewport centre x",
+      "note": "SP05 HUD metric; DOM contract in visual/lib/hud-metrics.mjs and CHECKLIST Appendix B.2; scenes without a HUD fail (null never passes)",
+      "scenes": ["l01", "l01-tip", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": {"centreOffset": {"max": 0.02}}
+    },
+    "H02": {
+      "name": "pill top edge, % of viewport height", "source": "dom (HUD record)", "status": "prov",
+      "threshold": "pill top <= 4% of viewport height",
+      "note": "SP05 HUD metric; DOM contract in visual/lib/hud-metrics.mjs and CHECKLIST Appendix B.2; scenes without a HUD fail (null never passes)",
+      "scenes": ["l01", "l01-tip", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": {"topShare": {"max": 0.04}}
+    },
+    "H03": {
+      "name": "pause and speed button size, CSS px (both sides)", "source": "dom (HUD record)", "status": "prov",
+      "threshold": "buttons >= 44 px and <= 64 px",
+      "note": "SP05 HUD metric; DOM contract in visual/lib/hud-metrics.mjs and CHECKLIST Appendix B.2; scenes without a HUD fail (null never passes)",
+      "scenes": ["l01", "l01-tip", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": {"size": {"min": 44, "max": 64}}
+    },
+    "H04": {
+      "name": "HUD DOM area / viewport area (data-hud elements, nested counted once)", "source": "dom (HUD record)", "status": "prov",
+      "threshold": "HUD DOM area / viewport <= 12%",
+      "note": "SP05 HUD metric; DOM contract in visual/lib/hud-metrics.mjs and CHECKLIST Appendix B.2; scenes without a HUD fail (null never passes)",
+      "scenes": ["l01", "l01-tip", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": {"areaShare": {"max": 0.12}}
+    },
+    "H05": {
+      "name": "bottom help bar (.instructions) count", "source": "dom (HUD record)", "status": "prov",
+      "threshold": "bottom help bar count 0",
+      "note": "SP05 HUD metric; DOM contract in visual/lib/hud-metrics.mjs and CHECKLIST Appendix B.2; scenes without a HUD fail (null never passes)",
+      "scenes": ["l01", "l01-tip", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": {"count": {"eq": 0}}
+    },
+    "H06": {
+      "name": "meter segment widths: sum vs bar width, and share vs strength() from window.__na.strength()", "source": "dom + sim", "status": "prov",
+      "threshold": "segment widths sum to bar width +-1 px and match strength() +-2%",
+      "note": "SP05 HUD metric; DOM contract in visual/lib/hud-metrics.mjs and CHECKLIST Appendix B.2; scenes without a HUD fail (null never passes)",
+      "scenes": ["l01", "l01-tip", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": {"sumPx": {"max": 1}, "shareErr": {"max": 0.02}}
+    },
+    "H07": {
+      "name": "pill text colour vs resolved pill background (WCAG contrast)", "source": "dom computed style", "status": "prov",
+      "threshold": "pill text contrast >= 4.5:1",
+      "note": "SP05 HUD metric; DOM contract in visual/lib/hud-metrics.mjs and CHECKLIST Appendix B.2; scenes without a HUD fail (null never passes)",
+      "scenes": ["l01", "l01-tip", "l10", "l10cb", "l18"], "viewports": ["1920x1080", "1366x768"],
+      "limits": {"ratio": {"min": 4.5}}
     }
   }
 }

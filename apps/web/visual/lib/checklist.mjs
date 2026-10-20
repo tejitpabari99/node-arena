@@ -7,7 +7,10 @@ import { isDeepStrictEqual } from 'node:util';
 import { REPO_DIR } from './refs.mjs';
 
 export const ITEM_IDS = Array.from({ length: 24 }, (_, i) => `V${String(i + 1).padStart(2, '0')}`);
-const METRIC_IDS = Array.from({ length: 20 }, (_, i) => `M${String(i + 1).padStart(2, '0')}`);
+const METRIC_IDS = [
+  ...Array.from({ length: 20 }, (_, i) => `M${String(i + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 7 }, (_, i) => `H${String(i + 1).padStart(2, '0')}`), // SP05 HUD metrics (visual/lib/hud-metrics.mjs)
+];
 const ITEM_HEAD = ['ID', 'Item', 'Scene', 'Anchor refs', '4', '6', '8', '10', 'Pixel check', 'Owner'];
 const METRIC_HEAD = ['ID', 'Metric', 'Source', 'Threshold', 'Ref calibration', 'St'];
 const LIMIT_HEAD = ['ID', 'St', 'Scenes', 'Viewports', 'Limits'];

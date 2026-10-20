@@ -3,11 +3,13 @@ import { isqrt, TICK_RATE, type SimEvent, type SimView } from '@node-arena/sim';
 import type { Manifest } from '@node-arena/content';
 import { createManifestResolver, ManifestError, BUILTIN_FX } from '../manifest/resolve.js';
 import { Disposables } from './disposables.js';
+/** Clash burst reads as dust/impact, not a team colour (SP04 Req 7). */
+export const CLASH_CREAM = '#fff4d6';
 type Effect = typeof BUILTIN_FX[number];
 /** Return the colour owner, or undefined to skip events with no meaningful position. Target is borrowed. */
 export type EventLocator = (event: SimEvent, view: SimView, target: Vector3) => number | undefined;
 export interface FxRendererOptions { view: SimView; manifest: Manifest; scene: Scene; scope: Disposables; capacity?: number; reducedMotion?: boolean; palette?: keyof Manifest['palettes']; eventLocators?: Partial<Record<SimEvent['type'], EventLocator>> }
-interface Slot { readonly mesh: Mesh<BufferGeometry, MeshBasicMaterial>; effect: Effect; owner: number; born: number; duration: number; active: boolean }
+interface Slot { readonly mesh: Mesh<BufferGeometry, MeshBasicMaterial>; effect: Effect; owner: number; cream: boolean; born: number; duration: number; active: boolean }
 function towerPosition(view: SimView, tower: number, target: Vector3) { const p = view.towerStatic[tower]; if (!p) return false; target.set(p.x / 1000, .12, p.y / 1000); return true; }
 /** This registry describes event payload geometry, never archetype or visual identities. */
 export const EVENT_FX_LOCATORS: Readonly<Partial<Record<SimEvent['type'], EventLocator>>> = {
@@ -36,9 +38,9 @@ export function createFxRenderer(options: FxRendererOptions) {
   for (let i=0;i<capacity;i++) {
     const material = scope.add(new MeshBasicMaterial({ transparent: true, depthWrite: false, side: DoubleSide }));
     const mesh = new Mesh(geometries.pulse, material); mesh.visible=false; mesh.renderOrder=2; options.scene.add(mesh); scope.defer(()=>mesh.removeFromParent());
-    meshes.push(mesh); slots.push({ mesh, effect:'pulse', owner:-1, born:0, duration:0, active:false });
+    meshes.push(mesh); slots.push({ mesh, effect:'pulse', owner:-1, cream:false, born:0, duration:0, active:false });
   }
-  function tint(slot: Slot) { slot.mesh.material.color.set(resolver.color(view.players[slot.owner]?.colorKey ?? 'neutral',palette)); }
+  function tint(slot: Slot) { slot.mesh.material.color.set(slot.cream ? CLASH_CREAM : resolver.color(view.players[slot.owner]?.colorKey ?? 'neutral',palette)); }
   function update(now: number) {
     if (disposed) return; seconds = now;
     for (let i=0;i<slots.length;i++) { const slot=slots[i]!; if(!slot.active) continue;
@@ -59,7 +61,7 @@ export function createFxRenderer(options: FxRendererOptions) {
       let slot: Slot | undefined;
       for(let i=0;i<slots.length;i++) { const candidate=slots[(cursor+i)%slots.length]!; if(!candidate.active){slot=candidate;cursor=(cursor+i+1)%slots.length;break;} }
       if(!slot){slot=slots[cursor]!;cursor=(cursor+1)%slots.length;}
-      slot.effect=fx as Effect;slot.owner=owner;slot.active=true;slot.born=seconds;slot.duration=durations[slot.effect]*(reduced?.35:1);
+      slot.effect=fx as Effect;slot.owner=owner;slot.cream=event.type==='Clash';slot.active=true;slot.born=seconds;slot.duration=durations[slot.effect]*(reduced?.35:1);
       slot.mesh.geometry=geometries[slot.effect];slot.mesh.position.copy(position);slot.mesh.scale.setScalar(.4);slot.mesh.rotation.set(0,0,0);slot.mesh.material.opacity=1;slot.mesh.visible=true;tint(slot);
     }
   }

@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "items": {
+    "V04": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 6,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Sand pink",
+          "Grass olive",
+          "Lane cut white stands out"
+        ]
+      }
+    },
+    "V07": {
+      "self": 5,
+      "selfRaw": 5,
+      "blind": 6,
+      "blindRaw": 6,
+      "merged": 5,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Number small",
+          "Outline thin",
+          "Overview illegible"
+        ]
+      }
+    },
+    "V17": {
+      "self": 5,
+      "selfRaw": 5,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 5,
+      "diff": 2,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "White flash on ribbon then fade at p3/p6",
+          "No visible retract motion",
+          "Flash broad white band vs ref none"
+        ]
+      }
+    },
+    "V22": {
+      "self": 8,
+      "selfRaw": 8,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "V22: tower ~3-4% frame height vs ref 5.8-7%",
+          "flat props/cream sand tone vs ref denser clutter",
+          "detail art (icons/banners/character) absent vs ref"
+        ],
+        "blind": [
+          "No label cards",
+          "White band unlike ref",
+          "Chevrons differ"
+        ]
+      }
+    }
+  },
+  "flagged": [],
+  "missing": [],
+  "self": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-self-final-cut.json",
+  "blind": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-blind-final-cut.json"
+}

@@ -73,7 +73,7 @@ test('compiled level themes, real GL props, fixed fit through resize, live quali
   expect(result.cameraState.sandPlanes).toBeGreaterThanOrEqual(2); // sand base + grass patch; no road slab
   expect(Math.max(...result.fit)).toBeLessThan(1);
   expect(result.qualities.map(q => [q.quality, q.ratio, q.shadows, q.size, q.antialias])).toEqual([
-    ['low', 1, false, 1, false], ['med', 1.5, true, 1024, true], ['high', 1, true, 2048, true], ['low', 1, false, 1, false],
+    ['low', 1, false, 1, false], ['med', 1.25, true, 1024, true], ['high', 1, true, 2048, true], ['low', 1, false, 1, false],
   ]);
   expect(result.qualities.every(q => q.draws > 0)).toBe(true); expect(result.changes).toBe(2);
   expect(result.retained && result.canvasReplaced && result.medHighSameCanvas && result.disposed && result.unchanged).toBe(true);

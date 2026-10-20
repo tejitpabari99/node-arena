@@ -12,3 +12,6 @@ export function segmentDistance(a: Point2, b: Point2, c: Point2, d: Point2): num
   // Endpoint distances also cover collinear overlap/touch, near-parallel and degenerate segments.
   return Math.min(pointSegmentDistance(a,c,d),pointSegmentDistance(b,c,d),pointSegmentDistance(c,a,b),pointSegmentDistance(d,a,b));
 }
+/** Hit radii in CSS px for a lane with half width `halfLanePx`: right-click/hover vs swipe. */
+export const hoverRadius = (halfLanePx: number) => Math.max(12, halfLanePx + 4);
+export const swipeRadius = (halfLanePx: number) => Math.max(8, halfLanePx);

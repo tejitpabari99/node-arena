@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "items": {
+    "V04": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 6,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Sand pink vs cream",
+          "Grass olive",
+          "Saturation ok"
+        ]
+      }
+    },
+    "V07": {
+      "self": 5,
+      "selfRaw": 5,
+      "blind": 6,
+      "blindRaw": 6,
+      "merged": 5,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Number small on overview",
+          "Detail crop ok",
+          "Outline thin"
+        ]
+      }
+    },
+    "V14": {
+      "self": 7,
+      "selfRaw": 7,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "One shared lane with blue/red split at meeting point",
+          "Split fairly hard-edged vs ref smooth",
+          "Split shown but lane colour opaque"
+        ]
+      }
+    },
+    "V15": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 6,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Puffs and X marker present",
+          "Puffs pale grey/white vs ref red/blue splats",
+          "Marker large X blocky"
+        ]
+      }
+    },
+    "V16": {
+      "self": 7,
+      "selfRaw": 7,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Perpendicular blue lane crosses cleanly",
+          "Overlap colour mix not visible",
+          "Ref lanes translucent"
+        ]
+      }
+    },
+    "V22": {
+      "self": 8,
+      "selfRaw": 8,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "V22: tower ~3-4% frame height vs ref 5.8-7%",
+          "flat props/cream sand tone vs ref denser clutter",
+          "detail art (icons/banners/character) absent vs ref"
+        ],
+        "blind": [
+          "No label cards",
+          "Dashed chevrons differ",
+          "Lane lacks soft edge"
+        ]
+      }
+    }
+  },
+  "flagged": [],
+  "missing": [],
+  "self": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-self-final-clash.json",
+  "blind": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-blind-final-clash.json"
+}

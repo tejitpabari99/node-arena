@@ -3,14 +3,14 @@ import type { CompiledLevel, Manifest } from '@node-arena/content';
 import { createManifestResolver } from '../manifest/resolve.js';
 import { Disposables } from './disposables.js';
 import { cloneModel } from './model.js';
-import { fitCamera, levelVisualBounds } from './camera.js';
+import { cameraSettingsFor, fitCamera, levelVisualBounds } from './camera.js';
 import { createGround } from './ground.js';
 import { createProps, scatterProps } from './props.js';
 
 const HEMI_INTENSITY = 1;
 export type Quality = 'low' | 'med' | 'high';
 export function qualitySettings(quality: Quality, dpr: number) {
-  return { pixelRatio: quality === 'low' ? 1 : quality === 'med' ? 1.5 : Math.min(dpr, 2),
+  return { pixelRatio: quality === 'low' ? 1 : quality === 'med' ? 1.25 : Math.min(dpr, 2),
     shadowSize: quality === 'low' ? 0 : quality === 'med' ? 1024 : 2048, antialias: quality !== 'low' };
 }
 export interface SceneOptions {
@@ -70,7 +70,7 @@ export function createLevelScene(options: SceneOptions) {
     if (disposed) return;
     const width = Math.max(1, parent.clientWidth), height = Math.max(1, parent.clientHeight);
     renderer.setPixelRatio(qualitySettings(quality, window.devicePixelRatio).pixelRatio); renderer.setSize(width, height);
-    fitCamera(camera, bounds, manifest.camera, width / height);
+    fitCamera(camera, bounds, cameraSettingsFor(createManifestResolver(manifest).levelVisual(level.id), manifest.camera), width / height);
     if (scene.fog instanceof Fog && theme.fog) {
       const scale = Math.max(1, camera.position.distanceTo(fogCenter) / FOG_REFERENCE);
       scene.fog.near = theme.fog.near * scale; scene.fog.far = theme.fog.far * scale;
@@ -79,7 +79,7 @@ export function createLevelScene(options: SceneOptions) {
   const applyQuality = () => {
     const settings = qualitySettings(quality, window.devicePixelRatio);
     renderer.shadowMap.enabled = settings.shadowSize > 0; renderer.shadowMap.type = PCFShadowMap;
-    light.castShadow = settings.shadowSize > 0; props?.setShadows(settings.shadowSize > 0);
+    light.castShadow = settings.shadowSize > 0; props?.setShadows(quality === 'high');
     light.shadow.map?.dispose(); light.shadow.map = null;
     light.shadow.mapPass?.dispose(); light.shadow.mapPass = null;
     light.shadow.mapSize.set(settings.shadowSize || 1, settings.shadowSize || 1); light.shadow.needsUpdate = true;
