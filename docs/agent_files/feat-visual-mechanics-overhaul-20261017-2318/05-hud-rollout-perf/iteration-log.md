@@ -25,3 +25,8 @@ date: 2026-10-20
 
 Differences (blind, consistent): ref pill has no timer/1x button (PRD mandates both); ref bar is bare tri-colour capsule; ref buttons single undo; tip is a card (PRD R3) vs ref banner art. V18 Blocked-visual at merged 7; V19 merged 8 (self 8, blind 8; diffs: tip card vs banner, small text at 1366, overlaps border props).
 H01-H07 pass on l01, l01-tip, l10 both viewports. l18/l10cb H rows fail only because those scenes were not recaptured (no pill in stale metrics).
+
+## Task 5 (palette restyle) — scenes menu, picker, pause, results @1920x1080 + 1366x768
+| iter | change | self/blind (menu V20, picker V21, pause V20, results V20) | notes |
+|---|---|---|---|
+| 1 | :root tokens (--c-*), sand/grass gradient bg, navy rimmed 24px panels, blue primary / sand secondary chunky buttons, outlined headings, UI_TOKENS + ui-tokens.test.ts (all pairs >= 4.5:1, strict AA, no large-text allowance) | self 8/8/8/8; blind 7/7/7/7 | blind gaps: heading outline invisible on navy, sentence case, buttons thin/small, tiny body text. App.tsx untouched (selectors unchanged). Web unit 348/348, typecheck/lint pass |

@@ -21,3 +21,16 @@ export function contrastRatio(a: string, b: string): number {
   const [hi, lo] = [relativeLuminance(a), relativeLuminance(b)].sort((x, y) => y - x) as [number, number];
   return (hi + 0.05) / (lo + 0.05);
 }
+
+/** Menu / picker / pause / results palette (Task 5). Mirrors the `--c-*` CSS custom properties in style.css `:root`. */
+export const UI_TOKENS = {
+  blue: HUD_TOKENS.blue,
+  blueDeep: '#1B5BC0',
+  blueDark: '#0D3A82',
+  navy: '#1C2C66',
+  sand: HUD_TOKENS.sand,
+  sandDark: '#C99A55',
+  grass: HUD_TOKENS.grass,
+  ink: '#3B2A12',
+  white: '#FFFFFF',
+} as const;
