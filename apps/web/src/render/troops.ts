@@ -72,7 +72,7 @@ export function createTroopRenderer(options: TroopRendererOptions) {
         for (let owner = 0; owner < view.players.length; owner++) {
           const team = new Color(resolver.color(view.players[owner]!.colorKey, options.palette));
           const materials = merged.materials.map(m => { const copy = m.clone(); scope.material(copy, false); return copy; });
-          const animation = materials.map(m => patchTroopMaterial(m, visual, team, merged.hasTeamMaterial, clock, options.reducedMotion ?? false));
+          const animation = materials.map(m => patchTroopMaterial(m, visual, team, merged.hasTeamMaterial, clock, options.reducedMotion ?? false, box ? box.max.y - box.min.y : 1));
           const mesh = makeMesh({ template: merged.geometry, materials, tag }, capacity);
           const pose = mesh.geometry.getAttribute('troopPose').array as Float32Array;
           const bucket = { template: merged.geometry, materials, mesh, capacity, count: 0, animation, pose, tag }; owners.push(bucket); buckets.push(bucket); meshes.push(mesh);
