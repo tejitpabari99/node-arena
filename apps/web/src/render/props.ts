@@ -1,6 +1,7 @@
 import { BufferAttribute, BufferGeometry, Color, CylinderGeometry, InstancedMesh, Material, Matrix4, MeshStandardMaterial, Quaternion, Scene, TorusGeometry, Vector3, type Object3D } from 'three';
 import type { Manifest } from '@node-arena/content';
 import type { Disposables } from './disposables.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { mergeModel } from './model.js';
 import { fnv1a, mulberry32 } from './rng.js';
 import { CORNER_RADIUS, GRASS_PAD } from './ground.js';
@@ -24,7 +25,7 @@ const SPEC: Record<PropKind, { height: number; radius: number }> = {
   treePine: { height: 7.5, radius: 1.6 }, treeRound: { height: 6, radius: 1.8 },
   crate: { height: 2.4, radius: 1.6 }, barrel: { height: 3.4, radius: 1.6 }, stump: { height: 2.2, radius: 1.4 }, tyre: { height: 1.6, radius: 2.2 },
 };
-const BAND = 12, TREE_BAND = [-1, 3.5] as const, SAND_NEAR = 3.5, TOWER_CLEAR = 3, CORRIDOR = 2.5, NEAR_PAIR = 40;
+const BAND = 13, TREE_BAND = [-1, 3.5] as const, SAND_NEAR = 3.5, TOWER_CLEAR = 3, CORRIDOR = 2.5, NEAR_PAIR = 40;
 
 interface Core { cx: number; cz: number; w: number; h: number }
 /** Signed distance (u) from a point to the rounded-rect grass core; negative inside. */
@@ -85,14 +86,14 @@ export function scatterProps(levelId: string, bounds: ScatterBounds, towers: rea
     }
   }
   // Sand-band groups: crates, barrels, tyres, stumps.
-  const sand: PropKind[] = ['crate', 'crate', 'crate', 'barrel', 'tyre', 'tyre', 'stump'];
+  const sand: PropKind[] = ['crate', 'crate', 'barrel', 'barrel', 'tyre', 'tyre', 'stump', 'stump'];
   const ringArea = perimeter * (BAND - SAND_NEAR) / 1;
   const groups = Math.round(theme.density * ringArea / 1000 / 2.5);
   for (let g = 0; g < groups; g++) {
     let gx = 0, gz = 0, ok = false;
     for (let t = 0; t < 20 && !ok; t++) { [gx, gz] = ringPoint(rand() * perimeter, SAND_NEAR + 1 + rand() * (BAND - SAND_NEAR - 2)); ok = rimDistance(gx, gz, core) >= SAND_NEAR && !blocked(gx, gz, 0); }
     if (!ok) continue;
-    const n = 1 + Math.floor(rand() * 3);
+    const n = 2 + Math.floor(rand() * 3);
     for (let k = 0, tries = 0; k < n && tries < n * 6; tries++) {
       const a = rand() * Math.PI * 2, r = k === 0 && tries === 0 ? 0 : 1.2 + rand() * 2.2, x = gx + Math.cos(a) * r, z = gz + Math.sin(a) * r;
       if (rimDistance(x, z, core) < SAND_NEAR) continue;
@@ -116,8 +117,13 @@ export function createProps(options: { scene: Scene; scope: Disposables; theme: 
     let geometry: BufferGeometry, materials: Material | Material[], baseScale: number, lift = 0;
     const key = PROP_MODEL[kind], model = key ? models.get(key) : undefined;
     if (kind === 'barrel') {
-      geometry = scope.add(new CylinderGeometry(.85, .85, 1.7, 8)); geometry.translate(0, .85, 0); geometry.computeBoundingBox();
-      materials = scope.add(new MeshStandardMaterial({ color: BARREL_COLOR, flatShading: true })); baseScale = SPEC.barrel.height / 1.7;
+      // Grey drum with a dark lid and band so it reads as a barrel (not a boulder) from above; flat vertex colours, one draw call.
+      const body = new CylinderGeometry(.85, .85, 1.7, 8), lid = new CylinderGeometry(.6, .6, .1, 8), band = new CylinderGeometry(.9, .9, .25, 8);
+      lid.translate(0, 1.72, 0); band.translate(0, .85, 0); body.translate(0, .85, 0);
+      const paint = (g: BufferGeometry, hex: string) => { const c = new Color(hex), n = g.getAttribute('position').count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) c.toArray(a, i * 3); g.setAttribute('color', new BufferAttribute(a, 3)); return g; };
+      geometry = mergeGeometries([paint(body.toNonIndexed(), BARREL_COLOR), paint(lid.toNonIndexed(), '#3F454C'), paint(band.toNonIndexed(), '#5C636B')])!;
+      body.dispose(); lid.dispose(); band.dispose(); scope.add(geometry); geometry.computeBoundingBox();
+      materials = scope.add(new MeshStandardMaterial({ vertexColors: true, flatShading: true })); baseScale = SPEC.barrel.height / 1.82;
     } else if (kind === 'tyre') {
       geometry = scope.add(new TorusGeometry(1.2, .55, 6, 14)); geometry.rotateX(Math.PI / 2); geometry.computeBoundingBox();
       materials = scope.add(new MeshStandardMaterial({ color: TYRE_COLOR, flatShading: true })); baseScale = 1; lift = .55;
