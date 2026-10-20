@@ -1,4 +1,5 @@
-import { BoxGeometry, BufferAttribute, BufferGeometry, Color, Float32BufferAttribute, Group, InstancedMesh, LatheGeometry, Matrix4, MeshStandardMaterial, Quaternion, Vector2, Vector3 } from 'three';
+import { BoxGeometry, BufferAttribute, BufferGeometry, Color, Float32BufferAttribute, Group, InstancedBufferAttribute, InstancedMesh, LatheGeometry, Matrix4, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, Quaternion, Vector2, Vector3 } from 'three';
+import { GRID, type RoofAtlas } from './roof-texture.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /** Code-built Tower War stacked tower (SP03 R7). One InstancedMesh per material across ALL towers (<= 6 meshes, independent of tower count).
@@ -15,6 +16,10 @@ export const BODY_COLOR = '#E6E8EA', DETAIL_COLOR = '#1B2430', NEUTRAL_ROOF = '#
  * x(.77,.64,.47)), so grey/white read neutral and team paint is vivid like the refs. Applied to every tower colour so the rendered paint matches the manifest palette (a lit #F0313F otherwise dims to V .75 and reads as rock). */
 export const LIGHT_GAIN = [1.3, 1.56, 2.15] as const;
 const lit = (c: Color, hex: string) => { c.set(hex); c.r *= LIGHT_GAIN[0]; c.g *= LIGHT_GAIN[1]; c.b *= LIGHT_GAIN[2]; return c; };
+/** Roof decal edge (w units): constant so the digit keeps one size relative to the tower whatever the floor count (content is centred; the margin is transparent). */
+export const DECAL_PLATE = .70;
+/** Decal centre sits slightly toward the back of the roof so number + dots stay in the upper roof (M19/M16 locators). */
+export const DECAL_SHIFT_Z = -.04;
 export const POP_FLOOR_MS = 150, POP_CAPTURE_MS = 250;
 
 /** floors = clamp(ceil(5 x count / cap), 1, 5); towers without a cap show one floor. */
@@ -85,7 +90,8 @@ type Part = typeof NAMES[number];
 const PER_TOWER: Record<Part, number> = { plinth: 1, trim: 1, band: MAX_FLOORS, body: MAX_FLOORS, roof: 1, dark: MAX_FLOORS + 1 };
 const HIDDEN = new Matrix4().makeScale(0, 0, 0);
 
-export function createTowerMeshes(specs: readonly StackedTowerSpec[]): TowerMeshes {
+/** `atlas` (roof-texture.ts) adds the one instanced roof-decal mesh (`visualRole='count'`, `towerIds[]`) = 7 meshes in total. */
+export function createTowerMeshes(specs: readonly StackedTowerSpec[], atlas?: RoofAtlas): TowerMeshes {
   const n = specs.length, geo = buildTowerGeometries(), group = new Group(), tmp = new Color();
   const material = (color: string, grey: boolean) => { const m = new MeshStandardMaterial({ flatShading: true, vertexColors: true, roughness: .85, metalness: 0 }); if (grey) { lit(m.color, color); m.emissive.set(color).multiplyScalar(.3); } else m.color.set(color); return m; }; // emissive = neutral fill: faces turned away from the key light stay white, not tan
   const meshes = {} as Record<Part, InstancedMesh>;
@@ -97,6 +103,23 @@ export function createTowerMeshes(specs: readonly StackedTowerSpec[]): TowerMesh
     for (let i = 0; i < mesh.count; i++) mesh.setMatrixAt(i, HIDDEN);
     if (part === 'plinth' || part === 'band' || part === 'roof') for (let i = 0; i < mesh.count; i++) mesh.setColorAt(i, tmp.set('#ffffff'));
     mesh.instanceMatrix.needsUpdate = true; group.add(mesh); meshes[part] = mesh;
+  }
+  let decal: InstancedMesh | undefined;
+  if (atlas) {
+    const geometry = new PlaneGeometry(1, 1).rotateX(-Math.PI / 2), cells = new Float32Array(n * 2);
+    for (let i = 0; i < n; i++) { const c = atlas.cell(i); cells[i * 2] = c.u; cells[i * 2 + 1] = c.v; }
+    geometry.setAttribute('aCell', new InstancedBufferAttribute(cells, 2));
+    const mat = new MeshBasicMaterial({ map: atlas.texture, transparent: true, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    mat.onBeforeCompile = shader => {
+      // Sharper than trilinear: small towers minify the 128 px cell ~6x, plain mips turn the white fill grey.
+      shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#ifdef USE_MAP\nvec4 sampledDiffuseColor = texture2D( map, vMapUv, -1.0 );\ndiffuseColor *= sampledDiffuseColor;\n#endif`);
+      shader.vertexShader = shader.vertexShader.replace('void main() {', 'attribute vec2 aCell;\nvoid main() {')
+        .replace('#include <uv_vertex>', `#include <uv_vertex>\n#ifdef USE_MAP\nvMapUv = vMapUv * ${(1 / GRID).toFixed(4)} + aCell;\n#endif`);
+    };
+    decal = new InstancedMesh(geometry, mat, Math.max(1, n)); decal.count = n; decal.frustumCulled = false; decal.name = 'tower-count'; decal.castShadow = false; decal.receiveShadow = false;
+    decal.renderOrder = 2; decal.userData.visualRole = 'count'; decal.userData.towerIds = specs.map(sp => sp.id);
+    for (let i = 0; i < n; i++) decal.setMatrixAt(i, HIDDEN);
+    decal.instanceMatrix.needsUpdate = true; group.add(decal);
   }
   const shear = new Array<number>(n).fill(0), pose = new Array<number>(n).fill(1), skew = new Matrix4(), tilt = new Matrix4();
   const floors = new Array<number>(n).fill(0), colors = new Array<string | null | undefined>(n).fill(undefined);
@@ -120,6 +143,7 @@ export function createTowerMeshes(specs: readonly StackedTowerSpec[]): TowerMesh
     }
     const ra = (floorHalf(F - 1) + ROOF_OVERHANG) * w;
     put('roof', 0, i, 0, (BASE_Y + F * floorPitch(F)) * w, 0, ra, ROOF_H * w, ra);
+    if (decal) { const plate = DECAL_PLATE * w; local.compose(p.set(0, (BASE_Y + F * floorPitch(F) + ROOF_H + .004) * w, DECAL_SHIFT_Z * w), q.identity(), s.set(plate, 1, plate)); world.multiplyMatrices(root, local); decal.setMatrixAt(i, world); decal.instanceMatrix.needsUpdate = true; }
     put('dark', MAX_FLOORS, i, 0, .115 * w, (PLINTH_A + .04) * w, .15 * w, .19 * w, .02 * w);
     for (const part of NAMES) meshes[part].instanceMatrix.needsUpdate = true;
   };
@@ -131,7 +155,7 @@ export function createTowerMeshes(specs: readonly StackedTowerSpec[]): TowerMesh
   };
   const ease = (t: number, amp: number) => 1 + amp * Math.sin(Math.PI * Math.min(1, Math.max(0, t)));
   return {
-    group, meshes: NAMES.map(k => meshes[k]),
+    group, meshes: [...NAMES.map(k => meshes[k]), ...(decal ? [decal] : [])],
     setState(i, state, now, captured) {
       const first = colors[i] === undefined, floorsChanged = floors[i] !== state.floors, colorChanged = colors[i] !== state.color;
       if (!floorsChanged && !colorChanged) return false;
@@ -153,6 +177,7 @@ export function createTowerMeshes(specs: readonly StackedTowerSpec[]): TowerMesh
     rootMatrix: (i, out) => out.makeTranslation(specs[i]!.x, 0, specs[i]!.z).multiply(skew.set(1, shear[i]!, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)),
     floors: i => floors[i] ?? 0,
     height: i => stackHeight(floors[i] || 1, specs[i]!.width),
-    dispose() { for (const part of NAMES) { meshes[part].geometry.dispose(); (meshes[part].material as MeshStandardMaterial).dispose(); meshes[part].dispose(); } group.removeFromParent(); },
+    dispose() { if (decal) { decal.geometry.dispose(); (decal.material as MeshBasicMaterial).dispose(); decal.dispose(); }
+      for (const part of NAMES) { meshes[part].geometry.dispose(); (meshes[part].material as MeshStandardMaterial).dispose(); meshes[part].dispose(); } group.removeFromParent(); },
   };
 }

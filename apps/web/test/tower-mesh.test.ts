@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Manifest } from '@node-arena/content';
 import type { SimView } from '@node-arena/sim';
 import { Matrix4, Vector3 } from 'three';
+import { createRoofAtlas } from '../src/render/roof-texture.js';
 import { createTowerMeshes, floorsFor, stackHeight, towerWidth, MAX_FLOORS, LIGHT_GAIN } from '../src/render/tower-mesh.js';
 
 describe('floorsFor (covers R-SP03-R7)', () => {
@@ -31,6 +32,15 @@ describe('tower meshes', () => {
     for (const m of many.meshes) { expect(m.userData.visualRole).toBe('tower'); expect(m.userData.towerIds.length).toBeGreaterThanOrEqual(m.count); expect(m.userData.towerIds[0]).toBe('t1'); }
     many.dispose(); few.dispose();
   });
+  it('roof decal: one more instanced mesh (7 total <= 8), role count, towerIds, sits on the roof top and follows floors', () => {
+    const canvas = { width: 0, height: 0, getContext: () => new Proxy({ measureText: () => ({ width: 10 }) } as Record<string, unknown>, { get: (t, k: string) => k in t ? t[k] : () => {}, set: () => true }) } as unknown as HTMLCanvasElement;
+    const atlas = createRoofAtlas(14, canvas), t = createTowerMeshes(specs(14), atlas), plain = createTowerMeshes(specs(14));
+    expect(t.meshes.length).toBe(plain.meshes.length + 1); expect(t.meshes.length).toBeLessThanOrEqual(8);
+    const decal = t.meshes.find(m => m.name === 'tower-count')!; expect(decal.userData.visualRole).toBe('count'); expect(decal.userData.towerIds).toHaveLength(14);
+    const y = (f: number) => { t.setState(0, { floors: f, color: '#ff0000' }); const m = new Matrix4(); decal.getMatrixAt(0, m); return new Vector3().setFromMatrixPosition(m).y; };
+    expect(y(1)).toBeCloseTo(stackHeight(1, 5.4) + .004 * 5.4); expect(y(4)).toBeGreaterThan(y(1));
+    t.dispose(); plain.dispose(); atlas.dispose();
+  });
   it('hidden floors are zero-scale instances; visible floors, team colour and neutral grey apply', () => {
     const t = createTowerMeshes(specs(2)), body = t.meshes.find(m => m.name === 'tower-body')!, roof = t.meshes.find(m => m.name === 'tower-roof')!;
     t.setState(0, { floors: 2, color: '#F0313F' }); t.setState(1, { floors: MAX_FLOORS, color: null });
@@ -57,15 +67,15 @@ describe('tower meshes', () => {
 
 describe('towers.visualWidth contract (covers R-SP03-R7)', () => {
   it('sets visualRole/visualWidth/floors on empty roots and towers.visualWidth(id) returns the width', async () => {
-    const el = () => ({ dataset: {} as Record<string, string>, style: { cssText: '' } as Record<string, string>, textContent: '', appendChild() {}, remove() {}, setAttribute() {}, getAttribute: () => null, clientWidth: 800, clientHeight: 600, getContext: () => new Proxy({}, { get: () => () => {}, set: () => true }) });
+    const el = () => ({ dataset: {} as Record<string, string>, style: { cssText: '' } as Record<string, string>, textContent: '', appendChild() {}, remove() {}, setAttribute() {}, getAttribute: () => null, clientWidth: 800, clientHeight: 600, getContext: () => new Proxy({ measureText: () => ({ width: 10 }) } as Record<string, unknown>, { get: (t, k: string) => k in t ? t[k] : () => {}, set: () => true }) });
     vi.stubGlobal('document', { createElement: el }); vi.stubGlobal('window', { addEventListener() {}, removeEventListener() {} }); vi.stubGlobal('getComputedStyle', () => ({ position: 'relative' }));
     const { createTowerRenderer } = await import('../src/render/towers.js');
     const { Scene, PerspectiveCamera } = await import('three');
     const { Disposables } = await import('../src/render/disposables.js');
     const manifest = { palettes: { default: { neutral: '#8C8C8C', 'player.1': '#2E8BFF' }, colorblind: { neutral: '#999999', 'player.1': '#0072B2' } }, teamMarkers: { neutral: 'o', 'player.1': 'a' },
       models: { block: { primitive: 'box', size: [4, 6, 4] } }, visuals: { 'tower.standard': { kind: 'tower', model: 'block', build: 'stacked', scale: .9 } } } as unknown as Manifest;
-    const view = { ids: { towers: ['a', 'b'] }, players: [{ colorKey: 'player.1' }], towerStatic: [{ x: 0, y: 0, footprintRadius: 3000, visual: 'tower.standard', components: [] }, { x: 20000, y: 0, footprintRadius: 3000, visual: 'tower.standard', components: [] }],
-      tower: { owner: [0, -1], col: { 'garrison.count': [30, 5], 'garrison.cap': [50, 50] } } } as unknown as SimView;
+    const view = { ids: { towers: ['a', 'b'] }, players: [{ colorKey: 'player.1' }], towerStatic: [{ x: 0, y: 0, footprintRadius: 3000, visual: 'tower.standard', components: ['garrison', 'drawsLines'] }, { x: 20000, y: 0, footprintRadius: 3000, visual: 'tower.standard', components: ['garrison', 'drawsLines'] }],
+      tower: { owner: [0, -1], slots: [2, 1], lines: [1, 0], col: { 'garrison.count': [30, 5], 'garrison.cap': [50, 50] } } } as unknown as SimView;
     const scene = new Scene(), scope = new Disposables();
     const r = createTowerRenderer({ view, manifest, models: new Map(), scene, camera: new PerspectiveCamera(), parent: el() as unknown as HTMLElement, scope });
     expect(r.visualWidth('a')).toBeCloseTo(5.4); expect(r.visualWidth('zzz')).toBeUndefined();
@@ -73,6 +83,9 @@ describe('towers.visualWidth contract (covers R-SP03-R7)', () => {
     expect(r.towers[1]!.group.userData.floors).toBe(1); expect(root.children.every(c => !('isMesh' in c && (c as { visible: boolean }).visible))).toBe(true);
     expect(scene.children.filter(c => c.userData.visualRole === 'tower' && (c as { isInstancedMesh?: boolean }).isInstancedMesh).length).toBe(0);
     expect(scene.children.some(c => c.type === 'Group' && c.children.some(m => (m as { isInstancedMesh?: boolean }).isInstancedMesh))).toBe(true);
+    expect(root.userData.slotDots).toBe(2); expect(r.towers[1]!.group.userData.slotDots).toBe(1); expect(root.userData.cap).toBe(50);
+    expect(scene.children.some(c => c.children.some(m => m.name === 'tower-count'))).toBe(true);
+    expect(r.summary.textContent).toContain('Garrison 30'); expect(r.summary.textContent).toContain('neutral');
     scope.dispose(); vi.unstubAllGlobals();
   });
 });
