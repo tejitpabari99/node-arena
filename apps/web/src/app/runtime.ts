@@ -9,6 +9,7 @@ import { createTroopRenderer } from "../render/troops";
 import { parseLodMode } from "../render/troop-lod";
 import { createLineRenderer } from "../render/lines";
 import { createFxRenderer } from "../render/fx";
+import { createBrawlRenderer } from "../render/brawl";
 import { createInputController } from "../input";
 /** Construction failures dispose the partially populated scope before the controller releases assets. */
 export function createBrowserRuntime(
@@ -63,6 +64,16 @@ export function createBrowserRuntime(
       scene: scene.scene,
       scope,
     });
+    const brawl = createBrawlRenderer({
+      view: driver.sim.view,
+      manifest,
+      scene: scene.scene,
+      scope,
+      lines,
+      figureHeight: troops.meshes[0]?.userData.heightWorld as number | undefined,
+      reducedMotion: settings.reducedMotion,
+      palette: settings.colorblind ? "colorblind" : "default",
+    });
     input = createInputController({
       canvas: scene.canvas,
       sim: driver.sim,
@@ -84,13 +95,14 @@ export function createBrowserRuntime(
     const metrics = createPerfMetrics();
     return {
       get metrics() { return metrics.snapshot(); },
-      get inspection() { return { scene:scene.scene, camera:scene.camera, renderer:scene.renderer, towers, troops, lines, fx, scope }; },
+      get inspection() { return { scene:scene.scene, camera:scene.camera, renderer:scene.renderer, towers, troops, lines, fx, brawl, scope }; },
       frame(update) {
         const start = performance.now();
         const seconds = (update.sim.tick + update.alpha) / TICK_RATE;
         towers.animate(seconds);
         troops.update(update.alpha, seconds);
         lines.update(seconds, troops);
+        brawl.update(seconds, scene.camera, troops);
         fx.update(seconds);
         input?.refresh();
         scene.render();
@@ -100,6 +112,7 @@ export function createBrowserRuntime(
       tick(update) {
         towers.update(update.sim.view);
         lines.consumeEvents(update.events, update.sim.view);
+        brawl.consumeEvents(update.events, update.sim.view);
         fx.consumeEvents(update.events, update.sim.view);
         input?.refresh();
       },
@@ -110,9 +123,11 @@ export function createBrowserRuntime(
         troops.setPalette(palette);
         lines.setPalette(palette);
         fx.setPalette(palette);
+        brawl.setPalette(palette);
         troops.setReducedMotion(value.reducedMotion);
         lines.setReducedMotion(value.reducedMotion);
         fx.setReducedMotion(value.reducedMotion);
+        brawl.setReducedMotion(value.reducedMotion);
         input?.setPalette(palette);
         scene.render();
       },

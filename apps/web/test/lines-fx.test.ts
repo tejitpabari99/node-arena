@@ -38,7 +38,7 @@ it('uses exact fixed-point progA on canonical clash channel, manifest effects an
   const f = setup(); f.manifest.events.Clash!.fx = 'spark'; f.manifest.events.TroopSpawned = { fx: 'puff' };
   const r = createFxRenderer({ ...f, capacity: 2 }); const meshes = [...r.meshes];
   const clash: SimEvent = { type: 'Clash', tick: 1, channel: 1, progA: 50000, progB: 150000, value: 1 };
-  r.consumeEvents([clash]); expect(r.activeCount).toBe(1); expect(r.meshes[0]!.position.x).toBe(2.5); expect(r.meshes[0]!.visible).toBe(true); expect(r.slots[0]!.effect).toBe('spark');
+  r.consumeEvents([clash]); expect(r.activeCount).toBe(1); expect(r.meshes[0]!.position.x).toBe(2.5); expect(r.meshes[0]!.visible).toBe(true); expect(r.slots[0]!.effect).toBe('spark'); expect(r.meshes[0]!.material.color.getHexString()).toBe('fff4d6'); // Clash spark is cream, not a team colour
   r.consumeEvents([{ type: 'Captured', tick: 2, tower: 1, from: 1, to: 0 }]); expect(r.meshes[1]!.position.x).toBe(10); expect(r.slots[1]!.effect).toBe('pulse');
   r.update(.15); expect(r.meshes[0]!.material.opacity).toBeLessThan(1); r.consumeEvents([{ type: 'TroopSpawned', tick: 3, channel: 2, seq: 9, owner: 1 }]); expect(r.activeCount).toBe(2); expect(r.meshes).toEqual(meshes);
   r.update(2); expect(r.activeCount).toBe(0); r.consumeEvents([clash]); r.setReducedMotion(true); r.update(2.3); expect(r.activeCount).toBe(0);
