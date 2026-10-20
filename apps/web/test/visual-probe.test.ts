@@ -41,7 +41,7 @@ describe('visualProbe', () => {
   it('returns the plain-JSON PRD shape from tags and camera projection', () => {
     const { input, lines } = fixture();
     expect(lines.meshes.map(m => m.userData)).toEqual([
-      { visualRole: 'lane', from: 0, to: 1, pair: 't1-t2', widthWorld: expect.any(Number), splitWorld: null }]);
+      { visualRole: 'lane', from: 0, to: 1, pair: 't1-t2', widthWorld: expect.any(Number), splitWorld: expect.any(Number) }]); // fixture lane is a shared head-on pair (SP04 T4)
     const probe: VisualProbe = buildVisualProbe(input);
     expect(JSON.parse(JSON.stringify(probe))).toEqual(probe);
     expect(Object.keys(probe).sort()).toEqual(['clash', 'clearColor', 'ground', 'lanes', 'towers', 'troops', 'viewport']);
@@ -66,12 +66,12 @@ describe('visualProbe', () => {
     expect(probe.clash).toMatchObject({ eventTick: 28, eventPair: 't1-t2', fxScreen: null });
     expect(probe.clash.eventScreen!.x).toBeLessThan(400);
   });
-  it('returns null for remaining v1 gaps (floors, split, play quad); lane width is non-null and clash-free states', () => {
+  it('returns null for remaining v1 gaps (floors, play quad); shared lanes carry a split; lane width is non-null and clash-free states', () => {
     const { input } = fixture();
     const probe = buildVisualProbe({ ...input, events: [] });
     expect(probe.ground.playQuadScreen).toBeNull();
     for (const t of probe.towers) { expect(t.floors).toBeNull(); expect(t.visualWidthWorld).toBeNull(); }
-    for (const l of probe.lanes) { expect(l.widthWorld).toBeGreaterThan(0); expect(l.screenWidthPx).toBeGreaterThan(0); expect(l.splitWorld).toBeNull(); expect(l.splitScreen).toBeNull(); }
+    for (const l of probe.lanes) { expect(l.widthWorld).toBeGreaterThan(0); expect(l.screenWidthPx).toBeGreaterThan(0); expect(l.splitWorld).toBeGreaterThan(0); expect(l.splitScreen).not.toBeNull(); }
     expect(probe.clash).toEqual({ fxScreen: null, eventScreen: null, eventTick: null, eventPair: null });
   });
   it('projects renderer-provided fields once later SPs tag them', () => {

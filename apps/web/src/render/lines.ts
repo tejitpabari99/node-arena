@@ -5,6 +5,8 @@ import { createManifestResolver } from '../manifest/resolve.js';
 import { Disposables } from './disposables.js';
 import { createLaneMaterial, LANE_BUILD_S, LANE_FLASH_S, LANE_RETRACT_S, LANE_WIDTH_FACTOR } from './lane-material.js';
 import { createPuffPool } from './puffs.js';
+import { splitTarget, stepSplit } from './lane-split.js';
+import { TICK_RATE } from '@node-arena/sim';
 export interface LineSegment { readonly channel: number; readonly owner: number; readonly from: number; readonly to: number; readonly start: Vector3; readonly end: Vector3 }
 export interface ProjectedLineSegment { readonly channel: number; readonly owner: number; readonly start: Vector2; readonly end: Vector2 }
 /** Read-only per-channel troop data filled by the troop renderer (`channel = from * n + to`, raw sim progress units). */
@@ -12,12 +14,13 @@ export interface TroopFronts { readonly frontProgress: ArrayLike<number>; readon
 export interface LineRendererOptions { view: SimView; manifest: Manifest; scene: Scene; scope: Disposables; /** Tower visual width in world units (SP03 `towers.visualWidth`). */ visualWidth?: (id: string) => number | undefined; palette?: keyof Manifest['palettes']; reducedMotion?: boolean }
 /** Half state: 0 absent, 1 drawn, 2 draining (cut but still carrying troops), 3 retracting (cut animation).
  * `buildAt`/`cutAt[side]` are render-clock start seconds: -1 none, NaN = starts at the next `update`. */
-export interface Lane { readonly mesh: Mesh<BufferGeometry, ShaderMaterial>; readonly lo: number; readonly hi: number; readonly pair: string; readonly chan: readonly [number, number]; readonly drawn: [boolean, boolean]; readonly owner: [number, number]; readonly state: [number, number]; seq: number; buildAt: number; buildSrc: number; readonly cutAt: [number, number]; widthWorld: number; readonly length: number }
+export interface Lane { readonly mesh: Mesh<BufferGeometry, ShaderMaterial>; readonly lo: number; readonly hi: number; readonly pair: string; readonly chan: readonly [number, number]; readonly drawn: [boolean, boolean]; readonly owner: [number, number]; readonly state: [number, number]; seq: number; buildAt: number; buildSrc: number; readonly cutAt: [number, number]; widthWorld: number; readonly length: number; /** Sim-unit lane length (progress units). */ readonly simLength: number; /** Smoothed split (fraction from lo; NaN = unset) and spring velocity. */ split: number; splitV: number; /** Last computed target. */ splitTarget: number }
 const LANE_Y = .04, PUFFS_PER_CUT = 4, easeOut = (t: number) => 1 - (1 - t) ** 2;
 /** One flat chevron ribbon per unordered tower pair (A = lower index). */
 export function createLineRenderer(options: LineRendererOptions) {
   const resolver = createManifestResolver(options.manifest), clock = { value: 0 }, motion = { value: options.reducedMotion ? 0 : 1 }, scope = new Disposables();
-  let view = options.view, palette = options.palette ?? 'default', disposed = false, fronts: TroopFronts | undefined, hover: number | null = null, hoverOwner: number | undefined, now = 0, reduced = options.reducedMotion ?? false, animate = false;
+  const spring = new Float64Array(1);
+  let lastSeconds: number | undefined, view = options.view, palette = options.palette ?? 'default', disposed = false, fronts: TroopFronts | undefined, hover: number | null = null, hoverOwner: number | undefined, now = 0, reduced = options.reducedMotion ?? false, animate = false;
   const puffs = createPuffPool(options.scene, scope, 16), lanes = new Map<number, Lane>(), meshes: Mesh<BufferGeometry, ShaderMaterial>[] = [], segments: LineSegment[] = [];
   const n = () => view.towerStatic.length, id = (i: number) => view.ids?.towers[i] ?? String(i);
   const color = (owner: number) => resolver.color(view.players[owner]?.colorKey ?? 'neutral', palette);
@@ -39,7 +42,7 @@ export function createLineRenderer(options: LineRendererOptions) {
     const material = createLaneMaterial(clock, motion); material.uniforms.team = material.uniforms.colA!;
     const mesh = new Mesh(geometry, material), nn = n(), pair = `${id(lo)}-${id(hi)}`;
     const a = view.towerStatic[lo]!, b = view.towerStatic[hi]!, length = Math.hypot(b.x - a.x, b.y - a.y) / 1000;
-    const lane: Lane = { mesh, lo, hi, pair, chan: [lo * nn + hi, hi * nn + lo], drawn: [false, false], owner: [-1, -1], state: [0, 0], seq: 0, buildAt: -1, buildSrc: 0, cutAt: [-1, -1], widthWorld: LANE_WIDTH_FACTOR * (towerWidth(lo) + towerWidth(hi)) / 2, length };
+    const lane: Lane = { mesh, lo, hi, pair, chan: [lo * nn + hi, hi * nn + lo], drawn: [false, false], owner: [-1, -1], state: [0, 0], seq: 0, buildAt: -1, buildSrc: 0, cutAt: [-1, -1], widthWorld: LANE_WIDTH_FACTOR * (towerWidth(lo) + towerWidth(hi)) / 2, length, simLength: Math.hypot(b.x - a.x, b.y - a.y) * TICK_RATE, split: NaN, splitV: 0, splitTarget: .5 };
     mesh.userData = { visualRole: 'lane', from: lo, to: hi, pair, widthWorld: lane.widthWorld, splitWorld: null };
     mesh.frustumCulled = false; options.scene.add(mesh); writeGeometry(lane); return lane;
   }
@@ -64,7 +67,7 @@ export function createLineRenderer(options: LineRendererOptions) {
   }
   function count(channel: number) { return fronts?.channelCount[channel] ?? 0; }
   /** Per-lane uniforms from pair state; prunes lanes with nothing left to show. */
-  function refresh() {
+  function refresh(dt = 0, snap = false) {
     for (const [key, lane] of lanes) {
       let build = 1; if (lane.buildAt !== -1) { const t = (now - lane.buildAt) / LANE_BUILD_S; if (Number.isNaN(t)) build = 0; else if (t >= 1) lane.buildAt = -1; else build = easeOut(Math.max(0, t)); }
       const retract = [0, 0], flash = [0, 0];
@@ -76,10 +79,16 @@ export function createLineRenderer(options: LineRendererOptions) {
       if (!lane.state[0] && !lane.state[1]) { remove(key); continue; }
       const u = lane.mesh.material.uniforms; u.buildT!.value = build; u.buildSrc!.value = lane.buildSrc; u.flashA!.value = flash[0]; u.flashB!.value = flash[1];
       const a = lane.state[0]! > 0, b = lane.state[1]! > 0;
-      // Single-direction lanes run the full length with that owner's colour; shared lanes default to the midpoint (Task 4 drives the live split).
+      // Single-direction lanes run the full length with that owner's colour; shared lanes spring toward the front-progress split target.
       const ownerA = a ? lane.owner[0]! : lane.owner[1]!, ownerB = b ? lane.owner[1]! : lane.owner[0]!;
       (u.colA!.value as { set(v: string): void }).set(color(ownerA)); (u.colB!.value as { set(v: string): void }).set(color(ownerB));
-      u.split!.value = a && b ? .5 : a ? 1 : 0;
+      // Shared lane: spring toward the front-progress target; otherwise the single owner covers the whole lane.
+      const present0 = lane.drawn[0] || count(lane.chan[0]!) > 0, present1 = lane.drawn[1] || count(lane.chan[1]!) > 0;
+      lane.splitTarget = splitTarget(present0, present1, count(lane.chan[0]!), fronts?.frontProgress[lane.chan[0]!] ?? 0, count(lane.chan[1]!), fronts?.frontProgress[lane.chan[1]!] ?? 0, lane.simLength);
+      if (!(a && b)) { lane.split = NaN; lane.splitV = 0; } // a lane that becomes shared starts at its target
+      else if (snap || reduced || Number.isNaN(lane.split)) { lane.split = lane.splitTarget; lane.splitV = 0; }
+      else { lane.split = stepSplit(lane.split, lane.splitV, lane.splitTarget, dt, spring); lane.splitV = spring[0]!; }
+      u.split!.value = a && b ? lane.split : a ? 1 : 0; lane.mesh.userData.splitWorld = a && b ? lane.split * lane.length : null;
       // Retract shrinks the bright half toward its source; a half that still carries troops keeps the faded draining base underneath (no troops on bare grass).
       for (let s = 0; s < 2; s++) { (s === 0 ? u.retractA! : u.retractB!).value = lane.state[s] === 2 ? 1 : retract[s]!; (s === 0 ? u.keepA! : u.keepB!).value = lane.state[s]! >= 2 && count(lane.chan[s]!) > 0 ? 1 : 0; }
       u.drainA!.value = a && lane.state[0] === 2 ? 1 : 0; u.drainB!.value = b && lane.state[1] === 2 ? 1 : 0;
@@ -98,7 +107,7 @@ export function createLineRenderer(options: LineRendererOptions) {
     puffs.spawn((a.x + b.x) / 2000, LANE_Y + .4, (a.y + b.y) / 2000, (Math.imul(lane.lo * nn + lane.hi + 1, 0x9e3779b1) ^ Math.imul(event.tick | 0, 0x85ebca6b)) | 0, PUFFS_PER_CUT);
   }
   /** Finish every build/cut animation and clear puffs (harness `render({settle:true})`); `update` never calls this. */
-  function settle() { for (const lane of lanes.values()) { lane.buildAt = -1; lane.cutAt[0] = lane.cutAt[1] = -1; } puffs.clear(); refresh(); }
+  function settle() { for (const lane of lanes.values()) { lane.buildAt = -1; lane.cutAt[0] = lane.cutAt[1] = -1; } puffs.clear(); refresh(0, true); }
   function highlight(channel: number | null, owner?: number) { if (disposed || (hover === channel && hoverOwner === owner)) return; hover = channel; hoverOwner = owner; refresh(); }
   function dispose() { if (disposed) return; disposed = true; for (const key of [...lanes.keys()]) remove(key); meshes.length = segments.length = 0; scope.dispose(); }
   options.scope.defer(dispose); sync();
@@ -109,9 +118,9 @@ export function createLineRenderer(options: LineRendererOptions) {
       if (changed) { animate = true; try { sync(); } finally { animate = false; } }
     },
     /** Seconds is the absolute render clock. Pass the troop renderer's fronts so cut channels still carrying troops stay drawn. */
-    update(seconds: number, troops?: TroopFronts) { if (disposed) return; clock.value = now = seconds; if (troops) fronts = troops;
+    update(seconds: number, troops?: TroopFronts) { if (disposed) return; const dt = lastSeconds === undefined ? 0 : seconds - lastSeconds; lastSeconds = seconds; clock.value = now = seconds; if (troops) fronts = troops;
       for (const lane of lanes.values()) { if (Number.isNaN(lane.buildAt)) lane.buildAt = seconds; for (let s = 0; s < 2; s++) if (Number.isNaN(lane.cutAt[s]!)) lane.cutAt[s] = seconds; }
-      puffs.update(seconds); refresh(); },
+      puffs.update(seconds); refresh(dt); },
     settle,
     setPalette(value: keyof Manifest['palettes']) { if (disposed) return; palette = value; refresh(); },
     setReducedMotion(value: boolean) { motion.value = value ? 0 : 1; reduced = value; if (value) settle(); },
