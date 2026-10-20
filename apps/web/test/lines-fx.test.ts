@@ -28,10 +28,10 @@ it('builds one pair ribbon lane for opposite lines, scrolls without rebuilding, 
   // Cut only B->A: the lane stays single-direction A->B; cut channel with troops keeps a draining half until empty.
   const lines = f.view.lines as unknown as { channel: number }[]; const kept = lines[0]!; lines.length = 0; lines.push(kept);
   const counts = new Int32Array(4); counts[2] = 3; r.consumeEvents([{ type: 'LineCut', tick: 2, channel: 2, reason: 'player' }]);
-  expect(r.meshes[0]).toBe(mesh); expect(u.split!.value).toBe(1); expect(u.drainB!.value).toBe(0);
-  r.update(5, { frontProgress: new Int32Array(4), channelCount: counts }); expect(u.drainB!.value).toBe(1); expect(u.split!.value).toBe(.5);
+  expect(r.meshes[0]).toBe(mesh); expect(u.split!.value).toBe(.5); expect(u.drainB!.value).toBe(0); // B half retracts first (Task 3)
+  r.update(5, { frontProgress: new Int32Array(4), channelCount: counts }); r.update(5.4, { frontProgress: new Int32Array(4), channelCount: counts }); expect(u.drainB!.value).toBe(1); expect(u.split!.value).toBe(.5);
   lines.length = 0; r.consumeEvents([{ type: 'LineCut', tick: 3, channel: 1, reason: 'player' }]); expect(r.meshes).toHaveLength(1); expect(u.drainA!.value).toBe(0);
-  r.update(6, { frontProgress: new Int32Array(4), channelCount: new Int32Array(4) }); expect(r.meshes).toHaveLength(0);
+  r.update(6, { frontProgress: new Int32Array(4), channelCount: new Int32Array(4) }); r.update(6.4, { frontProgress: new Int32Array(4), channelCount: new Int32Array(4) }); expect(r.meshes).toHaveLength(0);
   f.scope.dispose(); expect(f.scene.children).toHaveLength(0);
 });
 it('uses exact fixed-point progA on canonical clash channel, manifest effects and bounded reusable pool', () => {

@@ -3,20 +3,22 @@ import type { Manifest } from '@node-arena/content';
 import type { SimEvent, SimView } from '@node-arena/sim';
 import { createManifestResolver } from '../manifest/resolve.js';
 import { Disposables } from './disposables.js';
-import { createLaneMaterial, LANE_WIDTH_FACTOR } from './lane-material.js';
+import { createLaneMaterial, LANE_BUILD_S, LANE_FLASH_S, LANE_RETRACT_S, LANE_WIDTH_FACTOR } from './lane-material.js';
+import { createPuffPool } from './puffs.js';
 export interface LineSegment { readonly channel: number; readonly owner: number; readonly from: number; readonly to: number; readonly start: Vector3; readonly end: Vector3 }
 export interface ProjectedLineSegment { readonly channel: number; readonly owner: number; readonly start: Vector2; readonly end: Vector2 }
 /** Read-only per-channel troop data filled by the troop renderer (`channel = from * n + to`, raw sim progress units). */
 export interface TroopFronts { readonly frontProgress: ArrayLike<number>; readonly channelCount: ArrayLike<number> }
 export interface LineRendererOptions { view: SimView; manifest: Manifest; scene: Scene; scope: Disposables; /** Tower visual width in world units (SP03 `towers.visualWidth`). */ visualWidth?: (id: string) => number | undefined; palette?: keyof Manifest['palettes']; reducedMotion?: boolean }
-/** Half state: 0 absent, 1 drawn, 2 draining (cut but still carrying troops). */
-export interface Lane { readonly mesh: Mesh<BufferGeometry, ShaderMaterial>; readonly lo: number; readonly hi: number; readonly pair: string; readonly chan: readonly [number, number]; readonly drawn: [boolean, boolean]; readonly owner: [number, number]; readonly state: [number, number]; seq: number; widthWorld: number; readonly length: number }
-const LANE_Y = .04;
+/** Half state: 0 absent, 1 drawn, 2 draining (cut but still carrying troops), 3 retracting (cut animation).
+ * `buildAt`/`cutAt[side]` are render-clock start seconds: -1 none, NaN = starts at the next `update`. */
+export interface Lane { readonly mesh: Mesh<BufferGeometry, ShaderMaterial>; readonly lo: number; readonly hi: number; readonly pair: string; readonly chan: readonly [number, number]; readonly drawn: [boolean, boolean]; readonly owner: [number, number]; readonly state: [number, number]; seq: number; buildAt: number; buildSrc: number; readonly cutAt: [number, number]; widthWorld: number; readonly length: number }
+const LANE_Y = .04, PUFFS_PER_CUT = 4, easeOut = (t: number) => 1 - (1 - t) ** 2;
 /** One flat chevron ribbon per unordered tower pair (A = lower index). */
 export function createLineRenderer(options: LineRendererOptions) {
   const resolver = createManifestResolver(options.manifest), clock = { value: 0 }, motion = { value: options.reducedMotion ? 0 : 1 }, scope = new Disposables();
-  let view = options.view, palette = options.palette ?? 'default', disposed = false, fronts: TroopFronts | undefined, hover: number | null = null, hoverOwner: number | undefined;
-  const lanes = new Map<number, Lane>(), meshes: Mesh<BufferGeometry, ShaderMaterial>[] = [], segments: LineSegment[] = [];
+  let view = options.view, palette = options.palette ?? 'default', disposed = false, fronts: TroopFronts | undefined, hover: number | null = null, hoverOwner: number | undefined, now = 0, reduced = options.reducedMotion ?? false, animate = false;
+  const puffs = createPuffPool(options.scene, scope, 16), lanes = new Map<number, Lane>(), meshes: Mesh<BufferGeometry, ShaderMaterial>[] = [], segments: LineSegment[] = [];
   const n = () => view.towerStatic.length, id = (i: number) => view.ids?.towers[i] ?? String(i);
   const color = (owner: number) => resolver.color(view.players[owner]?.colorKey ?? 'neutral', palette);
   function towerWidth(i: number) {
@@ -37,7 +39,7 @@ export function createLineRenderer(options: LineRendererOptions) {
     const material = createLaneMaterial(clock, motion); material.uniforms.team = material.uniforms.colA!;
     const mesh = new Mesh(geometry, material), nn = n(), pair = `${id(lo)}-${id(hi)}`;
     const a = view.towerStatic[lo]!, b = view.towerStatic[hi]!, length = Math.hypot(b.x - a.x, b.y - a.y) / 1000;
-    const lane: Lane = { mesh, lo, hi, pair, chan: [lo * nn + hi, hi * nn + lo], drawn: [false, false], owner: [-1, -1], state: [0, 0], seq: 0, widthWorld: LANE_WIDTH_FACTOR * (towerWidth(lo) + towerWidth(hi)) / 2, length };
+    const lane: Lane = { mesh, lo, hi, pair, chan: [lo * nn + hi, hi * nn + lo], drawn: [false, false], owner: [-1, -1], state: [0, 0], seq: 0, buildAt: -1, buildSrc: 0, cutAt: [-1, -1], widthWorld: LANE_WIDTH_FACTOR * (towerWidth(lo) + towerWidth(hi)) / 2, length };
     mesh.userData = { visualRole: 'lane', from: lo, to: hi, pair, widthWorld: lane.widthWorld, splitWorld: null };
     mesh.frustumCulled = false; options.scene.add(mesh); writeGeometry(lane); return lane;
   }
@@ -52,7 +54,9 @@ export function createLineRenderer(options: LineRendererOptions) {
     for (const line of view.lines) {
       const lo = Math.min(line.from, line.to), hi = Math.max(line.from, line.to), key = lo * nn + hi;
       let lane = lanes.get(key); if (!lane) { lane = create(lo, hi); lanes.set(key, lane); }
-      const side = line.from === lo ? 0 : 1; lane.drawn[side] = true; lane.owner[side] = line.owner; lane.seq = Math.max(lane.seq, line.drawSeq ?? 0);
+      const side = line.from === lo ? 0 : 1, fresh = !lane.drawn[0] && !lane.drawn[1] && lane.state[0] === 0 && lane.state[1] === 0;
+      if (fresh && animate && !reduced && lane.buildAt === -1) { lane.buildAt = now; lane.buildSrc = side; }
+      lane.drawn[side] = true; lane.cutAt[side] = -1; lane.owner[side] = line.owner; lane.seq = Math.max(lane.seq, line.drawSeq ?? 0);
       const a = view.towerStatic[line.from]!, b = view.towerStatic[line.to]!;
       segments.push({ channel: line.channel, owner: line.owner, from: line.from, to: line.to, start: new Vector3(a.x / 1000, LANE_Y, a.y / 1000), end: new Vector3(b.x / 1000, LANE_Y, b.y / 1000) });
     }
@@ -62,13 +66,22 @@ export function createLineRenderer(options: LineRendererOptions) {
   /** Per-lane uniforms from pair state; prunes lanes with nothing left to show. */
   function refresh() {
     for (const [key, lane] of lanes) {
-      for (let s = 0; s < 2; s++) lane.state[s] = lane.drawn[s] ? 1 : count(lane.chan[s]!) > 0 ? 2 : 0;
+      let build = 1; if (lane.buildAt !== -1) { const t = (now - lane.buildAt) / LANE_BUILD_S; if (Number.isNaN(t)) build = 0; else if (t >= 1) lane.buildAt = -1; else build = easeOut(Math.max(0, t)); }
+      const retract = [0, 0], flash = [0, 0];
+      for (let s = 0; s < 2; s++) {
+        let cutting = false;
+        if (lane.cutAt[s] !== -1) { const age = now - lane.cutAt[s]!; if (Number.isNaN(age)) { cutting = true; flash[s] = 1; } else if (age >= LANE_RETRACT_S) lane.cutAt[s] = -1; else { cutting = true; retract[s] = Math.max(0, age) / LANE_RETRACT_S; flash[s] = age < LANE_FLASH_S ? 1 : 0; } }
+        lane.state[s] = lane.drawn[s] ? 1 : cutting ? 3 : count(lane.chan[s]!) > 0 ? 2 : 0;
+      }
       if (!lane.state[0] && !lane.state[1]) { remove(key); continue; }
-      const u = lane.mesh.material.uniforms, a = lane.state[0]! > 0, b = lane.state[1]! > 0;
+      const u = lane.mesh.material.uniforms; u.buildT!.value = build; u.buildSrc!.value = lane.buildSrc; u.flashA!.value = flash[0]; u.flashB!.value = flash[1];
+      const a = lane.state[0]! > 0, b = lane.state[1]! > 0;
       // Single-direction lanes run the full length with that owner's colour; shared lanes default to the midpoint (Task 4 drives the live split).
       const ownerA = a ? lane.owner[0]! : lane.owner[1]!, ownerB = b ? lane.owner[1]! : lane.owner[0]!;
       (u.colA!.value as { set(v: string): void }).set(color(ownerA)); (u.colB!.value as { set(v: string): void }).set(color(ownerB));
       u.split!.value = a && b ? .5 : a ? 1 : 0;
+      // Retract shrinks the bright half toward its source; a half that still carries troops keeps the faded draining base underneath (no troops on bare grass).
+      for (let s = 0; s < 2; s++) { (s === 0 ? u.retractA! : u.retractB!).value = lane.state[s] === 2 ? 1 : retract[s]!; (s === 0 ? u.keepA! : u.keepB!).value = lane.state[s]! >= 2 && count(lane.chan[s]!) > 0 ? 1 : 0; }
       u.drainA!.value = a && lane.state[0] === 2 ? 1 : 0; u.drainB!.value = b && lane.state[1] === 2 ? 1 : 0;
       u.hoverA!.value = hover !== null && hover === lane.chan[0] && (hoverOwner === undefined || hoverOwner === lane.owner[0]) ? 1 : 0;
       u.hoverB!.value = hover !== null && hover === lane.chan[1] && (hoverOwner === undefined || hoverOwner === lane.owner[1]) ? 1 : 0;
@@ -76,15 +89,33 @@ export function createLineRenderer(options: LineRendererOptions) {
     }
     meshes.length = 0; for (const lane of lanes.values()) meshes.push(lane.mesh);
   }
+  /** Start a cut animation on the half whose channel was cut; spawns the midpoint puffs (seeded from pair + tick). */
+  function cut(event: Extract<SimEvent, { type: 'LineCut' }>) {
+    if (reduced || event.reason === 'replaced') return;
+    const nn = n(), from = Math.floor(event.channel / nn), to = event.channel % nn, lo = Math.min(from, to), lane = lanes.get(lo * nn + Math.max(from, to)); if (!lane) return;
+    lane.cutAt[from === lo ? 0 : 1] = NaN;
+    const a = view.towerStatic[lane.lo]!, b = view.towerStatic[lane.hi]!;
+    puffs.spawn((a.x + b.x) / 2000, LANE_Y + .4, (a.y + b.y) / 2000, (Math.imul(lane.lo * nn + lane.hi + 1, 0x9e3779b1) ^ Math.imul(event.tick | 0, 0x85ebca6b)) | 0, PUFFS_PER_CUT);
+  }
+  /** Finish every build/cut animation and clear puffs (harness `render({settle:true})`); `update` never calls this. */
+  function settle() { for (const lane of lanes.values()) { lane.buildAt = -1; lane.cutAt[0] = lane.cutAt[1] = -1; } puffs.clear(); refresh(); }
   function highlight(channel: number | null, owner?: number) { if (disposed || (hover === channel && hoverOwner === owner)) return; hover = channel; hoverOwner = owner; refresh(); }
   function dispose() { if (disposed) return; disposed = true; for (const key of [...lanes.keys()]) remove(key); meshes.length = segments.length = 0; scope.dispose(); }
   options.scope.defer(dispose); sync();
   return { get meshes(): readonly Mesh<BufferGeometry, ShaderMaterial>[] { return meshes; }, get lanes(): ReadonlyMap<number, Lane> { return lanes; }, get segments(): readonly LineSegment[] { return segments; },
-    consumeEvents(events: readonly SimEvent[], nextView = view) { if (disposed) return; view = nextView; if (events.some(e => e.type === 'LineDrawn' || e.type === 'LineCut')) sync(); },
+    consumeEvents(events: readonly SimEvent[], nextView = view) {
+      if (disposed) return; view = nextView; let changed = false;
+      for (const e of events) { if (e.type === 'LineCut') { cut(e); changed = true; } else if (e.type === 'LineDrawn') changed = true; }
+      if (changed) { animate = true; try { sync(); } finally { animate = false; } }
+    },
     /** Seconds is the absolute render clock. Pass the troop renderer's fronts so cut channels still carrying troops stay drawn. */
-    update(seconds: number, troops?: TroopFronts) { if (disposed) return; clock.value = seconds; if (troops) fronts = troops; refresh(); },
+    update(seconds: number, troops?: TroopFronts) { if (disposed) return; clock.value = now = seconds; if (troops) fronts = troops;
+      for (const lane of lanes.values()) { if (Number.isNaN(lane.buildAt)) lane.buildAt = seconds; for (let s = 0; s < 2; s++) if (Number.isNaN(lane.cutAt[s]!)) lane.cutAt[s] = seconds; }
+      puffs.update(seconds); refresh(); },
+    settle,
     setPalette(value: keyof Manifest['palettes']) { if (disposed) return; palette = value; refresh(); },
-    setReducedMotion(value: boolean) { motion.value = value ? 0 : 1; },
+    setReducedMotion(value: boolean) { motion.value = value ? 0 : 1; reduced = value; if (value) settle(); },
+    get puffs() { return puffs; },
     highlight, setHighlighted: highlight,
     /** Caller may cache this until line changes or camera resize. Coordinates are CSS pixels. Both channels of a pair project onto the same centre line. */
     projectSegments(camera: Camera, viewportWidth: number, viewportHeight: number): ProjectedLineSegment[] {
