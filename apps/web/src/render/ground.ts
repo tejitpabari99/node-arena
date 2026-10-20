@@ -4,7 +4,7 @@ import type { Disposables } from './disposables.js';
 import { mulberry32 } from './rng.js';
 
 /** Grass patch = level bounds + GRASS_PAD, fading to sand over EDGE_SOFT. */
-export const GRASS_PAD = 8, EDGE_SOFT = 3.5, CORNER_RADIUS = 8;
+export const GRASS_PAD = 8, EDGE_SOFT = 6, CORNER_RADIUS = 8;
 const FALLBACK = { grass: '#A3D419', grassAlt: '#9DCB10', sand: '#FFE1B3', rock: '#BC5439' };
 type Theme = Manifest['themes'][string];
 
@@ -49,7 +49,7 @@ export function createGround(options: { scene: Scene; scope: Disposables; theme:
 
   // Rock clusters (squashed dodecahedra) in a ring outside the grass patch, deterministic from theme.scatter.seed.
   const rand = mulberry32((theme.scatter?.seed ?? 1) * 7919 + 17);
-  const rockCount = 120, rocks = new InstancedMesh(new DodecahedronGeometry(1, 1), new MeshStandardMaterial({ color: palette.rock, flatShading: false, emissive: new Color(palette.rock).multiplyScalar(.34) }), rockCount);
+  const rockCount = 240, rocks = new InstancedMesh(new DodecahedronGeometry(1, 1), new MeshStandardMaterial({ color: palette.rock, flatShading: false, emissive: new Color(palette.rock).multiplyScalar(.34) }), rockCount);
   const m = new Matrix4(), q = new Quaternion(), p = new Vector3(), s = new Vector3(), up = new Vector3(0, 1, 0);
   const perimeter = 2 * (core.w + core.h); let placed = 0;
   while (placed < rockCount) {
