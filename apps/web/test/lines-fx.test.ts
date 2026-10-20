@@ -14,9 +14,9 @@ function setup() {
 it('builds one pair ribbon lane for opposite lines, scrolls without rebuilding, projects centre lines, highlights and drains', () => {
   const f = setup(), r = createLineRenderer({ ...f, visualWidth: id => (id === '0' ? 6 : 6) });
   expect(r.meshes).toHaveLength(1); const mesh = r.meshes[0]!, u = mesh.material.uniforms;
-  expect(mesh.userData).toMatchObject({ visualRole: 'lane', from: 0, to: 1, pair: '0-1', widthWorld: 1.98 }); expect(mesh.renderOrder).toBeGreaterThanOrEqual(1);
+  expect(mesh.userData).toMatchObject({ visualRole: 'lane', from: 0, to: 1, pair: '0-1', widthWorld: expect.closeTo(2.1) }); expect(mesh.renderOrder).toBeGreaterThanOrEqual(1);
   expect(r.segments).toHaveLength(2); expect(r.segments[0]!.start.z).toBe(r.segments[1]!.end.z); expect(r.segments[0]!.end.x).toBe(10); expect(r.segments[1]!.end.x).toBe(0);
-  expect(u.laneLen!.value).toBe(10); expect(u.laneW!.value).toBeCloseTo(1.98); expect(u.split!.value).toBe(.5); expect(u.buildT!.value).toBe(1);
+  expect(u.laneLen!.value).toBe(10); expect(u.laneW!.value).toBeCloseTo(2.1); expect(u.split!.value).toBe(.5); expect(u.buildT!.value).toBe(1);
   expect(mesh.material.transparent).toBe(true); expect(mesh.material.depthWrite).toBe(false); expect(mesh.material.polygonOffset).toBe(true);
   const dispose = vi.spyOn(mesh.geometry, 'dispose');
   r.update(4); r.consumeEvents([{ type: 'Clash', tick: 1, channel: 1, progA: 100000, progB: 100000, value: 1 }]);

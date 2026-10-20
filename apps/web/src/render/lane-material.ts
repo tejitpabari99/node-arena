@@ -2,7 +2,7 @@ import { Color, DoubleSide, ShaderMaterial } from 'three';
 /** Tower War style translucent team ribbon (dotted fill, darker edges) with City Takeover style white chevrons on top.
  * Lane space: uv.x runs 0..1 from the lower-index tower A to B, uv.y spans the width. `split` is the A/B colour boundary
  * (fraction of lane length); the A half scrolls chevrons A->B, the B half B->A. */
-export const LANE_WIDTH_FACTOR = .33, LANE_FILL_ALPHA = .7, LANE_DRAIN_ALPHA = .4, LANE_CHEVRON_SPEED = 2.5, LANE_CHEVRON_PITCH = 1.3;
+export const LANE_WIDTH_FACTOR = .35, LANE_FILL_ALPHA = .7, LANE_DRAIN_ALPHA = .4, LANE_CHEVRON_SPEED = 2.5, LANE_CHEVRON_PITCH = 1.3;
 const vertexShader = 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
 const fragmentShader = `
 uniform float laneLen; uniform float laneW; uniform float split; uniform float buildT; uniform float fade;
@@ -25,7 +25,7 @@ void main(){
   float dir=inB?-1.:1.;
   float q=dir*d-${LANE_CHEVRON_SPEED.toFixed(2)}*(1.+.6*hover)*time*motion+ac*laneW*.45;
   float ph=fract(q/(${LANE_CHEVRON_PITCH.toFixed(2)}*laneW));
-  float band=smoothstep(0.,.04,ph)*(1.-smoothstep(.16,.21,ph));
+  float band=smoothstep(0.,.04,ph)*(1.-smoothstep(.12,.17,ph));
   float chev=band*(1.-smoothstep(.5,.6,ac))*smoothstep(0.,fade,d)*smoothstep(0.,fade,laneLen-d)*(1.-drain);
   gl_FragColor=vec4(mix(base,vec3(1.),chev),mix(alpha,.92,chev));
 }`;
