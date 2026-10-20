@@ -57,7 +57,7 @@ describe('fixed fitted camera', () => {
 });
 it('uses exact quality pixel ratios, shadow budgets and context antialias settings', () => {
   expect(qualitySettings('low', 3)).toEqual({ pixelRatio: 1, shadowSize: 0, antialias: false });
-  expect(qualitySettings('med', 1)).toEqual({ pixelRatio: 1.5, shadowSize: 1024, antialias: true });
+  expect(qualitySettings('med', 1)).toEqual({ pixelRatio: 1.25, shadowSize: 1024, antialias: true });
   expect(qualitySettings('high', 3)).toEqual({ pixelRatio: 2, shadowSize: 2048, antialias: true });
   expect(qualitySettings('high', 1)).toEqual({ pixelRatio: 1, shadowSize: 2048, antialias: true });
 });

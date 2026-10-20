@@ -10,7 +10,7 @@ import { createProps, scatterProps } from './props.js';
 const HEMI_INTENSITY = 1;
 export type Quality = 'low' | 'med' | 'high';
 export function qualitySettings(quality: Quality, dpr: number) {
-  return { pixelRatio: quality === 'low' ? 1 : quality === 'med' ? 1.5 : Math.min(dpr, 2),
+  return { pixelRatio: quality === 'low' ? 1 : quality === 'med' ? 1.25 : Math.min(dpr, 2),
     shadowSize: quality === 'low' ? 0 : quality === 'med' ? 1024 : 2048, antialias: quality !== 'low' };
 }
 export interface SceneOptions {
