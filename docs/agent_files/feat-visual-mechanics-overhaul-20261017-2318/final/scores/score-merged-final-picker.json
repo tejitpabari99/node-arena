@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "items": {
+    "V04": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 6,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Blue panel with cream cards vs CT sky/green",
+          "Backdrop plain gradient",
+          "No currency pills"
+        ]
+      }
+    },
+    "V07": {
+      "self": 5,
+      "selfRaw": 5,
+      "blind": 5,
+      "blindRaw": 5,
+      "merged": 5,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "No towers on picker; N/A",
+          "Not applicable",
+          "Number tiles instead"
+        ]
+      }
+    },
+    "V21": {
+      "self": 8,
+      "selfRaw": 8,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "V21: tower ~3-4% frame height vs ref 5.8-7%",
+          "flat props/cream sand tone vs ref denser clutter",
+          "detail art (icons/banners/character) absent vs ref"
+        ],
+        "blind": [
+          "20 cards readable, cohesive blue/cream",
+          "Cards small text",
+          "No level-96 style bar or map art"
+        ]
+      }
+    },
+    "V22": {
+      "self": 8,
+      "selfRaw": 8,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "V22: tower ~3-4% frame height vs ref 5.8-7%",
+          "flat props/cream sand tone vs ref denser clutter",
+          "detail art (icons/banners/character) absent vs ref"
+        ],
+        "blind": [
+          "No v1 leftovers",
+          "Plain backdrop",
+          "Tiny logo corner"
+        ]
+      }
+    }
+  },
+  "flagged": [],
+  "missing": [],
+  "self": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-self-final-picker.json",
+  "blind": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-blind-final-picker.json"
+}

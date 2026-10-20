@@ -1,0 +1,3013 @@
+{
+  "schema": 1,
+  "strict": true,
+  "summary": {
+    "M01": "pass",
+    "M02": "pass",
+    "M03": "pass",
+    "M04": "pass",
+    "M05": "pass",
+    "M06": "pass",
+    "M07": "pass",
+    "M08": "pass",
+    "M09": "pass",
+    "M10": "pass",
+    "M11": "fail",
+    "M12": "pass",
+    "M13": "fail",
+    "M14": "pass",
+    "M15": "pass",
+    "M16": "pass",
+    "M17": "pass",
+    "M18": "pass",
+    "M19": "pass",
+    "M20": "fail",
+    "H01": "pass",
+    "H02": "pass",
+    "H03": "pass",
+    "H04": "pass",
+    "H05": "pass",
+    "H06": "pass",
+    "H07": "pass"
+  },
+  "counts": {
+    "pass": 236,
+    "fail": 9,
+    "info": 1
+  },
+  "rows": [
+    {
+      "id": "M01",
+      "status": "pass",
+      "value": 0.0435109375,
+      "text": "median owned tower w 0.044 of vw",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M01",
+      "status": "pass",
+      "value": 0.043511713030746704,
+      "text": "median owned tower w 0.044 of vw",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M01",
+      "status": "pass",
+      "value": 0.03591875,
+      "text": "median owned tower w 0.036 of vw",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M01",
+      "status": "pass",
+      "value": 0.035901171303074665,
+      "text": "median owned tower w 0.036 of vw",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M01",
+      "status": "pass",
+      "value": 0.039884375,
+      "text": "median owned tower w 0.04 of vw",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M01",
+      "status": "pass",
+      "value": 0.03986530014641289,
+      "text": "median owned tower w 0.04 of vw",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M01",
+      "status": "pass",
+      "value": 0.03591875,
+      "text": "median owned tower w 0.036 of vw",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M01",
+      "status": "pass",
+      "value": 0.035901171303074665,
+      "text": "median owned tower w 0.036 of vw",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M02",
+      "status": "pass",
+      "value": {
+        "ratio": [
+          0.1666230273023732,
+          0.2041411490230388
+        ],
+        "cardMax": 0
+      },
+      "text": "digit/tower w 0.167..0.204, card/tower area 0",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M02",
+      "status": "pass",
+      "value": {
+        "ratio": [
+          0.18400802944128472,
+          0.21438908044950244
+        ],
+        "cardMax": 0
+      },
+      "text": "digit/tower w 0.184..0.214, card/tower area 0",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M02",
+      "status": "pass",
+      "value": {
+        "ratio": [
+          0.188504147091236,
+          0.23808106660317838
+        ],
+        "cardMax": 0
+      },
+      "text": "digit/tower w 0.189..0.238, card/tower area 0",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M02",
+      "status": "pass",
+      "value": {
+        "ratio": [
+          0.19549195550603093,
+          0.273248929775025
+        ],
+        "cardMax": 0
+      },
+      "text": "digit/tower w 0.195..0.273, card/tower area 0",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M02",
+      "status": "pass",
+      "value": {
+        "ratio": [
+          0.1659230854319531,
+          0.23664565540089927
+        ],
+        "cardMax": 0
+      },
+      "text": "digit/tower w 0.166..0.237, card/tower area 0",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M02",
+      "status": "pass",
+      "value": {
+        "ratio": [
+          0.18147408809270732,
+          0.2775254818851549
+        ],
+        "cardMax": 0
+      },
+      "text": "digit/tower w 0.181..0.278, card/tower area 0",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M02",
+      "status": "pass",
+      "value": {
+        "ratio": [
+          0.19120702622085686,
+          0.21824029405008039
+        ],
+        "cardMax": 0
+      },
+      "text": "digit/tower w 0.191..0.218, card/tower area 0",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M02",
+      "status": "pass",
+      "value": {
+        "ratio": [
+          0.1971820886960886,
+          0.22613836437351598
+        ],
+        "cardMax": 0
+      },
+      "text": "digit/tower w 0.197..0.226, card/tower area 0",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M02",
+      "status": "pass",
+      "value": {
+        "ratio": [
+          0.188504147091236,
+          0.23808106660317838
+        ],
+        "cardMax": 0
+      },
+      "text": "digit/tower w 0.189..0.238, card/tower area 0",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M02",
+      "status": "pass",
+      "value": {
+        "ratio": [
+          0.20391101323382477,
+          0.273248929775025
+        ],
+        "cardMax": 0
+      },
+      "text": "digit/tower w 0.204..0.273, card/tower area 0",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M03",
+      "status": "pass",
+      "value": {
+        "onRoof": 1,
+        "cards": 0
+      },
+      "text": "onRoof 1, cards+labels 0",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M03",
+      "status": "pass",
+      "value": {
+        "onRoof": 1,
+        "cards": 0
+      },
+      "text": "onRoof 1, cards+labels 0",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M03",
+      "status": "pass",
+      "value": {
+        "onRoof": 1,
+        "cards": 0
+      },
+      "text": "onRoof 1, cards+labels 0",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M03",
+      "status": "pass",
+      "value": {
+        "onRoof": 1,
+        "cards": 0
+      },
+      "text": "onRoof 1, cards+labels 0",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M03",
+      "status": "pass",
+      "value": {
+        "onRoof": 1,
+        "cards": 0
+      },
+      "text": "onRoof 1, cards+labels 0",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M03",
+      "status": "pass",
+      "value": {
+        "onRoof": 1,
+        "cards": 0
+      },
+      "text": "onRoof 1, cards+labels 0",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M03",
+      "status": "pass",
+      "value": {
+        "onRoof": 1,
+        "cards": 0
+      },
+      "text": "onRoof 1, cards+labels 0",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M03",
+      "status": "pass",
+      "value": {
+        "onRoof": 1,
+        "cards": 0
+      },
+      "text": "onRoof 1, cards+labels 0",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M03",
+      "status": "pass",
+      "value": {
+        "onRoof": 1,
+        "cards": 0
+      },
+      "text": "onRoof 1, cards+labels 0",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M03",
+      "status": "pass",
+      "value": {
+        "onRoof": 1,
+        "cards": 0
+      },
+      "text": "onRoof 1, cards+labels 0",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M04",
+      "status": "pass",
+      "value": 1,
+      "text": "floors match 1",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M04",
+      "status": "pass",
+      "value": 1,
+      "text": "floors match 1",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M04",
+      "status": "pass",
+      "value": 1,
+      "text": "floors match 1",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M04",
+      "status": "pass",
+      "value": 1,
+      "text": "floors match 1",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M04",
+      "status": "pass",
+      "value": 1,
+      "text": "floors match 1",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M04",
+      "status": "pass",
+      "value": 1,
+      "text": "floors match 1",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M04",
+      "status": "pass",
+      "value": 1,
+      "text": "floors match 1",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M04",
+      "status": "pass",
+      "value": 1,
+      "text": "floors match 1",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M04",
+      "status": "pass",
+      "value": 1,
+      "text": "floors match 1",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M04",
+      "status": "pass",
+      "value": 1,
+      "text": "floors match 1",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M05",
+      "status": "pass",
+      "value": [
+        0.27817478842723936,
+        0.27817478842723936
+      ],
+      "text": "lane/tower 0.278",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M05",
+      "status": "pass",
+      "value": [
+        0.2781768931810152,
+        0.2781768931810152
+      ],
+      "text": "lane/tower 0.278",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M05",
+      "status": "pass",
+      "value": [
+        0.26009222202888466,
+        0.37193318253001567
+      ],
+      "text": "lane/tower 0.26..0.372",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M05",
+      "status": "pass",
+      "value": [
+        0.2600884973797435,
+        0.371913297037173
+      ],
+      "text": "lane/tower 0.26..0.372",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M05",
+      "status": "pass",
+      "value": [
+        0.2613805531614824,
+        0.3213977904881297
+      ],
+      "text": "lane/tower 0.261..0.321",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M05",
+      "status": "pass",
+      "value": [
+        0.26138533862200675,
+        0.3213970912296165
+      ],
+      "text": "lane/tower 0.261..0.321",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M05",
+      "status": "pass",
+      "value": [
+        0.26673380157809534,
+        0.2919858761743298
+      ],
+      "text": "lane/tower 0.267..0.292",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M05",
+      "status": "pass",
+      "value": [
+        0.26673358907252714,
+        0.29199082207005345
+      ],
+      "text": "lane/tower 0.267..0.292",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M05",
+      "status": "pass",
+      "value": [
+        0.26009222202888466,
+        0.37193318253001567
+      ],
+      "text": "lane/tower 0.26..0.372",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M05",
+      "status": "pass",
+      "value": [
+        0.2600884973797435,
+        0.371913297037173
+      ],
+      "text": "lane/tower 0.26..0.372",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M06",
+      "status": "pass",
+      "value": {
+        "share": 0.042093518518518516,
+        "per": 0.5441759136232509
+      },
+      "text": "troop h 0.042 of vh, 0.544 of tower w",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M06",
+      "status": "pass",
+      "value": {
+        "share": 0.04211718749999999,
+        "per": 0.5442064707168934
+      },
+      "text": "troop h 0.042 of vh, 0.544 of tower w",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M06",
+      "status": "pass",
+      "value": {
+        "share": 0.030596296296296295,
+        "per": 0.47914854126790785
+      },
+      "text": "troop h 0.031 of vh, 0.479 of tower w",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M06",
+      "status": "pass",
+      "value": {
+        "share": 0.030597656249999997,
+        "per": 0.4791704899981648
+      },
+      "text": "troop h 0.031 of vh, 0.479 of tower w",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M06",
+      "status": "pass",
+      "value": {
+        "share": 0.02754537037037037,
+        "per": 0.38847972002402775
+      },
+      "text": "troop h 0.028 of vh, 0.388 of tower w",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M06",
+      "status": "pass",
+      "value": {
+        "share": 0.027545572916666667,
+        "per": 0.3884787718525048
+      },
+      "text": "troop h 0.028 of vh, 0.388 of tower w",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M06",
+      "status": "pass",
+      "value": {
+        "share": 0.034107407407407406,
+        "per": 0.46955346785809887
+      },
+      "text": "troop h 0.034 of vh, 0.47 of tower w",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M06",
+      "status": "pass",
+      "value": {
+        "share": 0.03410546875,
+        "per": 0.4695264044742409
+      },
+      "text": "troop h 0.034 of vh, 0.47 of tower w",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M06",
+      "status": "pass",
+      "value": {
+        "share": 0.030596296296296295,
+        "per": 0.47914854126790785
+      },
+      "text": "troop h 0.031 of vh, 0.479 of tower w",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M06",
+      "status": "pass",
+      "value": {
+        "share": 0.030597656249999997,
+        "per": 0.4791704899981648
+      },
+      "text": "troop h 0.031 of vh, 0.479 of tower w",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l01",
+      "viewport": "1920x1200"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l10",
+      "viewport": "1920x1200"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l18",
+      "viewport": "1920x1200"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "buildout",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "buildout",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "cut",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "cut",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M07",
+      "status": "pass",
+      "value": 0,
+      "text": "void 0%",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l01",
+      "viewport": "1920x1200"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l10",
+      "viewport": "1920x1200"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l18",
+      "viewport": "1920x1200"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M08",
+      "status": "pass",
+      "value": 9,
+      "text": "9/9 rays hit ground",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M09",
+      "status": "pass",
+      "value": 0.7405780020769673,
+      "text": "grass in play quad 0.741",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M09",
+      "status": "pass",
+      "value": 0.7416113450262186,
+      "text": "grass in play quad 0.742",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M09",
+      "status": "pass",
+      "value": 0.825696410533654,
+      "text": "grass in play quad 0.826",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M09",
+      "status": "pass",
+      "value": 0.8265597906562042,
+      "text": "grass in play quad 0.827",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M09",
+      "status": "pass",
+      "value": 0.8388714806015166,
+      "text": "grass in play quad 0.839",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M09",
+      "status": "pass",
+      "value": 0.8396930187079914,
+      "text": "grass in play quad 0.84",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M10",
+      "status": "pass",
+      "value": {
+        "sandRock": 0.846876969469729,
+        "grass": 0.0007877878916003862,
+        "area": 0.4836072530864198
+      },
+      "text": "border sand+rock 0.847, grass 0.001, area 0.484",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M10",
+      "status": "pass",
+      "value": {
+        "sandRock": 0.8310984291252717,
+        "grass": 0.0010885298142794602,
+        "area": 0.4833779435090288
+      },
+      "text": "border sand+rock 0.831, grass 0.001, area 0.483",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M10",
+      "status": "pass",
+      "value": {
+        "sandRock": 0.8687237611910101,
+        "grass": 0.000791379339414274,
+        "area": 0.4576466049382716
+      },
+      "text": "border sand+rock 0.869, grass 0.001, area 0.458",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M10",
+      "status": "pass",
+      "value": {
+        "sandRock": 0.854535501837845,
+        "grass": 0.0009719973192022545,
+        "area": 0.45797302037579307
+      },
+      "text": "border sand+rock 0.855, grass 0.001, area 0.458",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M10",
+      "status": "pass",
+      "value": {
+        "sandRock": 0.8687532666790309,
+        "grass": 0.007394286051491292,
+        "area": 0.4576466049382716
+      },
+      "text": "border sand+rock 0.869, grass 0.007, area 0.458",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M10",
+      "status": "pass",
+      "value": {
+        "sandRock": 0.8547290687558018,
+        "grass": 0.007838419494894413,
+        "area": 0.45797302037579307
+      },
+      "text": "border sand+rock 0.855, grass 0.008, area 0.458",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M11",
+      "status": "pass",
+      "value": [
+        {
+          "fg": 6490,
+          "a": 0.9968847352024922,
+          "b": 0.6409861325115562,
+          "c": 0.2839753466872111
+        },
+        {
+          "fg": 5384,
+          "a": 1,
+          "b": 0.662332838038633,
+          "c": 0.29791976225854383
+        },
+        {
+          "fg": 4910,
+          "sat": 0,
+          "greyWhite": 0.9877800407331976
+        },
+        {
+          "fg": 5588,
+          "sat": 0,
+          "greyWhite": 0.9912312097351468
+        },
+        {
+          "fg": 4872,
+          "a": 0.9521531100478469,
+          "b": 0.4493021346469622,
+          "c": 0.4445812807881773
+        }
+      ],
+      "text": "owned a 0.952..1 b 0.449..0.662 c 0.284..0.445; neutral sat 0 g+w 0.988..0.991",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M11",
+      "status": "pass",
+      "value": [
+        {
+          "fg": 3286,
+          "a": 0.9985693848354793,
+          "b": 0.6372489348752283,
+          "c": 0.2830188679245283
+        },
+        {
+          "fg": 2735,
+          "a": 1,
+          "b": 0.6460694698354662,
+          "c": 0.28921389396709324
+        },
+        {
+          "fg": 2485,
+          "sat": 0,
+          "greyWhite": 0.9802816901408451
+        },
+        {
+          "fg": 2807,
+          "sat": 0,
+          "greyWhite": 0.9800498753117207
+        },
+        {
+          "fg": 2507,
+          "a": 0.9309182813816343,
+          "b": 0.4407658556043079,
+          "c": 0.44116473873155165
+        }
+      ],
+      "text": "owned a 0.931..1 b 0.441..0.646 c 0.283..0.441; neutral sat 0 g+w 0.98..0.98",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M11",
+      "status": "fail",
+      "value": [
+        {
+          "fg": 9180,
+          "sat": 0.06666666666666667,
+          "greyWhite": 0.9273420479302832
+        },
+        {
+          "fg": 4699,
+          "a": 0.9978821037769149,
+          "b": 0.6016173653968929,
+          "c": 0.3426260906575867
+        },
+        {
+          "fg": 5247,
+          "sat": 0,
+          "greyWhite": 0.9878025538402897
+        },
+        {
+          "fg": 5160,
+          "sat": 0.01065891472868217,
+          "greyWhite": 0.9763565891472868
+        },
+        {
+          "fg": 5867,
+          "a": 1,
+          "b": 0.5587182546446224,
+          "c": 0.3257201295380944
+        },
+        {
+          "fg": 4692,
+          "a": 0.892872205820329,
+          "b": 0.4511935208866155,
+          "c": 0.42028985507246375
+        },
+        {
+          "fg": 5406,
+          "a": 1,
+          "b": 0.7456529781724011,
+          "c": 0.22697003329633741
+        },
+        {
+          "fg": 2911,
+          "a": 1,
+          "b": 0.5664720027481965,
+          "c": 0.3290965304019237
+        },
+        {
+          "fg": 2367,
+          "sat": 0.04393747359526827,
+          "greyWhite": 0.9391634980988594
+        },
+        {
+          "fg": 2365,
+          "sat": 0,
+          "greyWhite": 0.9818181818181818
+        }
+      ],
+      "text": "owned a 0.893..1 b 0.451..0.746 c 0.227..0.42; neutral sat 0..0.067 g+w 0.927..0.988 (2/10 fail)",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M11",
+      "status": "fail",
+      "value": [
+        {
+          "fg": 4699,
+          "sat": 0.07235582038731644,
+          "greyWhite": 0.9195573526282188
+        },
+        {
+          "fg": 2391,
+          "a": 0.9979035639412998,
+          "b": 0.5972396486825596,
+          "c": 0.33626097867001253
+        },
+        {
+          "fg": 2671,
+          "sat": 0,
+          "greyWhite": 0.9790340696368401
+        },
+        {
+          "fg": 2588,
+          "sat": 0.010046367851622875,
+          "greyWhite": 0.9772024729520865
+        },
+        {
+          "fg": 2967,
+          "a": 1,
+          "b": 0.5503875968992248,
+          "c": 0.3302999662959218
+        },
+        {
+          "fg": 2378,
+          "a": 0.8601626016260162,
+          "b": 0.4449116904962153,
+          "c": 0.41169049621530696
+        },
+        {
+          "fg": 2740,
+          "a": 1,
+          "b": 0.7456204379562044,
+          "c": 0.2197080291970803
+        },
+        {
+          "fg": 1485,
+          "a": 1,
+          "b": 0.5636363636363636,
+          "c": 0.30572390572390573
+        },
+        {
+          "fg": 1175,
+          "sat": 0.0425531914893617,
+          "greyWhite": 0.9395744680851064
+        },
+        {
+          "fg": 1200,
+          "sat": 0,
+          "greyWhite": 0.965
+        }
+      ],
+      "text": "owned a 0.86..1 b 0.445..0.746 c 0.22..0.412; neutral sat 0..0.072 g+w 0.92..0.979 (2/10 fail)",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M11",
+      "status": "fail",
+      "value": [
+        {
+          "fg": 6098,
+          "a": 1,
+          "b": 0.5167267956707117,
+          "c": 0.39455559199737616
+        },
+        {
+          "fg": 5278,
+          "sat": 0,
+          "greyWhite": 0.9905267146646457
+        },
+        {
+          "fg": 5493,
+          "a": 1,
+          "b": 0.7766247951938832,
+          "c": 0.2128163116693974
+        },
+        {
+          "fg": 5262,
+          "sat": 0,
+          "greyWhite": 0.9809958190801976
+        },
+        {
+          "fg": 3053,
+          "a": 0,
+          "b": 0,
+          "c": 0.9069767441860465
+        },
+        {
+          "fg": 4285,
+          "a": 0,
+          "b": 0,
+          "c": 0.5852975495915986
+        },
+        {
+          "fg": 5646,
+          "a": 0.9991060786650775,
+          "b": 0.593871767623096,
+          "c": 0.3482111229188806
+        },
+        {
+          "fg": 4088,
+          "a": 0.9207344379758173,
+          "b": 0.50293542074364,
+          "c": 0.40728962818003916
+        },
+        {
+          "fg": 4990,
+          "a": 1,
+          "b": 0.6983967935871743,
+          "c": 0.28577154308617236
+        },
+        {
+          "fg": 1354,
+          "a": null,
+          "b": 0,
+          "c": 0.8168389955686853
+        },
+        {
+          "fg": 2402,
+          "sat": 0,
+          "greyWhite": 0.9866777685262281
+        },
+        {
+          "fg": 2504,
+          "sat": 0,
+          "greyWhite": 0.9604632587859425
+        },
+        {
+          "fg": 2508,
+          "sat": 0,
+          "greyWhite": 0.9868421052631579
+        },
+        {
+          "fg": 2636,
+          "a": 1,
+          "b": 0.8399089529590288,
+          "c": 0.14036418816388468
+        }
+      ],
+      "text": "owned a null b 0..0.84 c 0.14..0.907; neutral sat 0 g+w 0.96..0.991 (5/14 fail)",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M11",
+      "status": "fail",
+      "value": [
+        {
+          "fg": 3089,
+          "a": 1,
+          "b": 0.5160246034315312,
+          "c": 0.4007769504694076
+        },
+        {
+          "fg": 2664,
+          "sat": 0,
+          "greyWhite": 0.9782282282282282
+        },
+        {
+          "fg": 2772,
+          "a": 1,
+          "b": 0.7597402597402597,
+          "c": 0.2132034632034632
+        },
+        {
+          "fg": 2692,
+          "sat": 0,
+          "greyWhite": 0.9725111441307578
+        },
+        {
+          "fg": 1587,
+          "a": null,
+          "b": 0,
+          "c": 0.8960302457466919
+        },
+        {
+          "fg": 2226,
+          "a": 0,
+          "b": 0,
+          "c": 0.587151841868823
+        },
+        {
+          "fg": 2860,
+          "a": 1,
+          "b": 0.5895104895104896,
+          "c": 0.33811188811188814
+        },
+        {
+          "fg": 2079,
+          "a": 0.8930762489044698,
+          "b": 0.49013949013949015,
+          "c": 0.39730639730639733
+        },
+        {
+          "fg": 2518,
+          "a": 1,
+          "b": 0.6906274821286735,
+          "c": 0.2811755361397935
+        },
+        {
+          "fg": 718,
+          "a": null,
+          "b": 0,
+          "c": 0.745125348189415
+        },
+        {
+          "fg": 1223,
+          "sat": 0,
+          "greyWhite": 0.9828291087489779
+        },
+        {
+          "fg": 1263,
+          "sat": 0,
+          "greyWhite": 0.9556611243072051
+        },
+        {
+          "fg": 1276,
+          "sat": 0,
+          "greyWhite": 0.9749216300940439
+        },
+        {
+          "fg": 1324,
+          "a": 1,
+          "b": 0.8368580060422961,
+          "c": 0.13972809667673716
+        }
+      ],
+      "text": "owned a null b 0..0.837 c 0.14..0.896; neutral sat 0 g+w 0.956..0.983 (5/14 fail)",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M11",
+      "status": "fail",
+      "value": [
+        {
+          "fg": 9447,
+          "sat": 0.09749126706891076,
+          "greyWhite": 0.8948872657986663
+        },
+        {
+          "fg": 4450,
+          "a": 0.9791666666666666,
+          "b": 0.5703370786516854,
+          "c": 0.37213483146067416
+        },
+        {
+          "fg": 5225,
+          "sat": 0,
+          "greyWhite": 0.9877511961722488
+        },
+        {
+          "fg": 5069,
+          "sat": 0,
+          "greyWhite": 0.9865851252712566
+        },
+        {
+          "fg": 5554,
+          "a": 0.9917326903203583,
+          "b": 0.5183651422398271,
+          "c": 0.35289881166726683
+        },
+        {
+          "fg": 5410,
+          "a": 0.9975116640746501,
+          "b": 0.5927911275415897,
+          "c": 0.35822550831792976
+        },
+        {
+          "fg": 2113,
+          "a": 1,
+          "b": 0.17274017983909135,
+          "c": 0.6161855182205395
+        },
+        {
+          "fg": 2789,
+          "a": 0.9766118836915297,
+          "b": 0.5539619935460739,
+          "c": 0.33990677662244534
+        },
+        {
+          "fg": 2383,
+          "sat": 0.04867813680234998,
+          "greyWhite": 0.9311791859001259
+        },
+        {
+          "fg": 2352,
+          "sat": 0,
+          "greyWhite": 0.98171768707483
+        }
+      ],
+      "text": "owned a 0.977..1 b 0.173..0.593 c 0.34..0.616; neutral sat 0..0.097 g+w 0.895..0.988 (2/10 fail)",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M11",
+      "status": "fail",
+      "value": [
+        {
+          "fg": 4858,
+          "sat": 0.10415808974886785,
+          "greyWhite": 0.8847262247838616
+        },
+        {
+          "fg": 2288,
+          "a": 0.972768532526475,
+          "b": 0.5620629370629371,
+          "c": 0.35926573426573427
+        },
+        {
+          "fg": 2669,
+          "sat": 0,
+          "greyWhite": 0.979018358935931
+        },
+        {
+          "fg": 2545,
+          "sat": 0,
+          "greyWhite": 0.9866404715127701
+        },
+        {
+          "fg": 2824,
+          "a": 0.9863201094391245,
+          "b": 0.5106232294617564,
+          "c": 0.3555240793201133
+        },
+        {
+          "fg": 2764,
+          "a": 0.9982078853046595,
+          "b": 0.6045586107091172,
+          "c": 0.3480463096960926
+        },
+        {
+          "fg": 1075,
+          "a": 1,
+          "b": 0.16186046511627908,
+          "c": 0.6027906976744186
+        },
+        {
+          "fg": 1424,
+          "a": 0.980246913580247,
+          "b": 0.5575842696629213,
+          "c": 0.3160112359550562
+        },
+        {
+          "fg": 1193,
+          "sat": 0.04945515507124895,
+          "greyWhite": 0.9287510477787091
+        },
+        {
+          "fg": 1199,
+          "sat": 0,
+          "greyWhite": 0.9649708090075062
+        }
+      ],
+      "text": "owned a 0.973..1 b 0.162..0.605 c 0.316..0.603; neutral sat 0..0.104 g+w 0.885..0.987 (2/10 fail)",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M12",
+      "status": "pass",
+      "value": {
+        "pairLanes": 1,
+        "crossing": 1,
+        "splitErrorPx": 0.6549999999999727,
+        "unsettled": {
+          "tick": 121,
+          "err": 0.6549999999999727,
+          "allowed": 26.604225000000003,
+          "margin": -25.94922500000003
+        }
+      },
+      "text": "(a) a-b lanes 1, (b) crossing 1, (c) split err 0.655 px <= 12, unsettled worst 0.655/26.604 px @121",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M12",
+      "status": "pass",
+      "value": {
+        "pairLanes": 1,
+        "crossing": 1,
+        "splitErrorPx": 0.4660000000000082,
+        "unsettled": {
+          "tick": 121,
+          "err": 0.4660000000000082,
+          "allowed": 18.918558333333337,
+          "margin": -18.45255833333333
+        }
+      },
+      "text": "(a) a-b lanes 1, (b) crossing 1, (c) split err 0.466 px <= 8.533, unsettled worst 0.466/18.919 px @121",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M13",
+      "status": "fail",
+      "value": {
+        "drawCalls": 44,
+        "jsMsP95": 13
+      },
+      "text": "drawCalls 44 (max 100), jsMs p95 13 (max 8)",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M13",
+      "status": "info",
+      "value": {
+        "fps": 5.348,
+        "frameMsP95": 896,
+        "gpu": false
+      },
+      "text": "fps 5.348, frame p95 896 ms (informational: SwiftShader)",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M14",
+      "status": "pass",
+      "value": 0.3828100887345679,
+      "text": "grass 0.383",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M14",
+      "status": "pass",
+      "value": 0.3836589494875549,
+      "text": "grass 0.384",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M14",
+      "status": "pass",
+      "value": 0.44818142361111113,
+      "text": "grass 0.448",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M14",
+      "status": "pass",
+      "value": 0.44846285535627134,
+      "text": "grass 0.448",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M14",
+      "status": "pass",
+      "value": 0.4583487654320988,
+      "text": "grass 0.458",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M14",
+      "status": "pass",
+      "value": 0.4587260553928746,
+      "text": "grass 0.459",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M15",
+      "status": "pass",
+      "value": {
+        "minMargin": 0.09380729166666667,
+        "union": 0.09380729166666667
+      },
+      "text": "min margin 0.094, tightest union margin 0.094",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M15",
+      "status": "pass",
+      "value": {
+        "minMargin": 0.09383455344070278,
+        "union": 0.09383455344070278
+      },
+      "text": "min margin 0.094, tightest union margin 0.094",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M15",
+      "status": "pass",
+      "value": {
+        "minMargin": 0.04459259259259264,
+        "union": 0.04459259259259267
+      },
+      "text": "min margin 0.045, tightest union margin 0.045",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M15",
+      "status": "pass",
+      "value": {
+        "minMargin": 0.04459244791666663,
+        "union": 0.04459244791666661
+      },
+      "text": "min margin 0.045, tightest union margin 0.045",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M15",
+      "status": "pass",
+      "value": {
+        "minMargin": 0.04293611111111109,
+        "union": 0.042936111111111196
+      },
+      "text": "min margin 0.043, tightest union margin 0.043",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M15",
+      "status": "pass",
+      "value": {
+        "minMargin": 0.042936197916666675,
+        "union": 0.042936197916666696
+      },
+      "text": "min margin 0.043, tightest union margin 0.043",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M16",
+      "status": "pass",
+      "value": 14,
+      "text": "min digit 14 px >= 7.031",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M16",
+      "status": "pass",
+      "value": 10,
+      "text": "min digit 10 px >= 5",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M16",
+      "status": "pass",
+      "value": 9,
+      "text": "min digit 9 px >= 7.031",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M16",
+      "status": "pass",
+      "value": 8,
+      "text": "min digit 8 px >= 5",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M16",
+      "status": "pass",
+      "value": 9,
+      "text": "min digit 9 px >= 5.625",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M16",
+      "status": "pass",
+      "value": 7,
+      "text": "min digit 7 px >= 4",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M16",
+      "status": "pass",
+      "value": 13,
+      "text": "min digit 13 px >= 7.031",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M16",
+      "status": "pass",
+      "value": 10,
+      "text": "min digit 10 px >= 5",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M16",
+      "status": "pass",
+      "value": 9,
+      "text": "min digit 9 px >= 7.031",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M16",
+      "status": "pass",
+      "value": 8,
+      "text": "min digit 8 px >= 5",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "buildout",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "buildout",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "cut",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "cut",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M17",
+      "status": "pass",
+      "value": {
+        "labels": 0,
+        "summary": 1
+      },
+      "text": "labels 0, [data-tower-summary] 1",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M18",
+      "status": "pass",
+      "value": {
+        "frame": 0.1287853116426612,
+        "tower": 0.021489495467798964
+      },
+      "text": "TV frame 0.129, tower 0.021",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M18",
+      "status": "pass",
+      "value": {
+        "frame": 0.1250333889850414,
+        "tower": 0.028281842043168734
+      },
+      "text": "TV frame 0.125, tower 0.028",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M18",
+      "status": "pass",
+      "value": {
+        "frame": 0.18831166651062023,
+        "tower": 0.04175192924266495
+      },
+      "text": "TV frame 0.188, tower 0.042",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M18",
+      "status": "pass",
+      "value": {
+        "frame": 0.18180738992131742,
+        "tower": 0.037705687852112625
+      },
+      "text": "TV frame 0.182, tower 0.038",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M18",
+      "status": "pass",
+      "value": {
+        "frame": 0.19954382314642272,
+        "tower": 0.09483324844441246
+      },
+      "text": "TV frame 0.2, tower 0.095",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M18",
+      "status": "pass",
+      "value": {
+        "frame": 0.19302951809359659,
+        "tower": 0.10198040894409144
+      },
+      "text": "TV frame 0.193, tower 0.102",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M18",
+      "status": "pass",
+      "value": {
+        "frame": 0.19462128134883389,
+        "tower": 0.010715933444292131
+      },
+      "text": "TV frame 0.195, tower 0.011",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M18",
+      "status": "pass",
+      "value": {
+        "frame": 0.18947370484358295,
+        "tower": 0.018129938117199075
+      },
+      "text": "TV frame 0.189, tower 0.018",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M18",
+      "status": "pass",
+      "value": {
+        "frame": 0.19172530092416806,
+        "tower": 0.07126067004575243
+      },
+      "text": "TV frame 0.192, tower 0.071",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M18",
+      "status": "pass",
+      "value": {
+        "frame": 0.18562213816297468,
+        "tower": 0.06281240359559122
+      },
+      "text": "TV frame 0.186, tower 0.063",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M19",
+      "status": "pass",
+      "value": {
+        "numberShare": 1,
+        "dotsShare": 1,
+        "counts": [
+          "2/2",
+          "1/1",
+          "1/1",
+          "2/2",
+          "2/2"
+        ]
+      },
+      "text": "outlined number 1, dots match 1 [2/2 1/1 1/1 2/2 2/2]",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M19",
+      "status": "pass",
+      "value": {
+        "numberShare": 1,
+        "dotsShare": 1,
+        "counts": [
+          "2/2",
+          "1/1",
+          "1/1",
+          "2/2",
+          "2/2"
+        ]
+      },
+      "text": "outlined number 1, dots match 1 [2/2 1/1 1/1 2/2 2/2]",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M19",
+      "status": "pass",
+      "value": {
+        "numberShare": 1,
+        "dotsShare": 1,
+        "counts": [
+          "1/1",
+          "1/1",
+          "2/2",
+          "1/1",
+          "2/2",
+          "2/2",
+          "2/2",
+          "2/2",
+          "1/1",
+          "1/1"
+        ]
+      },
+      "text": "outlined number 1, dots match 1 [1/1 1/1 2/2 1/1 2/2 2/2 2/2 2/2 1/1 1/1]",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M19",
+      "status": "pass",
+      "value": {
+        "numberShare": 1,
+        "dotsShare": 1,
+        "counts": [
+          "1/1",
+          "1/1",
+          "2/2",
+          "1/1",
+          "2/2",
+          "2/2",
+          "2/2",
+          "2/2",
+          "1/1",
+          "1/1"
+        ]
+      },
+      "text": "outlined number 1, dots match 1 [1/1 1/1 2/2 1/1 2/2 2/2 2/2 2/2 1/1 1/1]",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M19",
+      "status": "pass",
+      "value": {
+        "numberShare": 1,
+        "dotsShare": 1,
+        "counts": [
+          "2/2",
+          "2/2",
+          "1/1",
+          "2/2",
+          "1/1",
+          "1/1",
+          "2/2",
+          "1/1",
+          "1/1",
+          "1/1",
+          "1/1",
+          "1/1",
+          "1/1",
+          "1/1"
+        ]
+      },
+      "text": "outlined number 1, dots match 1 [2/2 2/2 1/1 2/2 1/1 1/1 2/2 1/1 1/1 1/1 1/1 1/1 1/1 1/1]",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M19",
+      "status": "pass",
+      "value": {
+        "numberShare": 1,
+        "dotsShare": 1,
+        "counts": [
+          "2/2",
+          "2/2",
+          "1/1",
+          "2/2",
+          "1/1",
+          "1/1",
+          "2/2",
+          "1/1",
+          "1/1",
+          "1/1",
+          "1/1",
+          "1/1",
+          "1/1",
+          "1/1"
+        ]
+      },
+      "text": "outlined number 1, dots match 1 [2/2 2/2 1/1 2/2 1/1 1/1 2/2 1/1 1/1 1/1 1/1 1/1 1/1 1/1]",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M19",
+      "status": "pass",
+      "value": {
+        "numberShare": 1,
+        "dotsShare": 1,
+        "counts": [
+          "1/1",
+          "1/1",
+          "1/1",
+          "3/3"
+        ]
+      },
+      "text": "outlined number 1, dots match 1 [1/1 1/1 1/1 3/3]",
+      "scene": "clash",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M19",
+      "status": "pass",
+      "value": {
+        "numberShare": 1,
+        "dotsShare": 1,
+        "counts": [
+          "1/1",
+          "1/1",
+          "1/1",
+          "3/3"
+        ]
+      },
+      "text": "outlined number 1, dots match 1 [1/1 1/1 1/1 3/3]",
+      "scene": "clash",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M19",
+      "status": "pass",
+      "value": {
+        "numberShare": 1,
+        "dotsShare": 1,
+        "counts": [
+          "1/1",
+          "1/1",
+          "2/2",
+          "1/1",
+          "2/2",
+          "2/2",
+          "2/2",
+          "2/2",
+          "1/1",
+          "1/1"
+        ]
+      },
+      "text": "outlined number 1, dots match 1 [1/1 1/1 2/2 1/1 2/2 2/2 2/2 2/2 1/1 1/1]",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M19",
+      "status": "pass",
+      "value": {
+        "numberShare": 1,
+        "dotsShare": 1,
+        "counts": [
+          "1/1",
+          "1/1",
+          "2/2",
+          "1/1",
+          "2/2",
+          "2/2",
+          "2/2",
+          "2/2",
+          "1/1",
+          "1/1"
+        ]
+      },
+      "text": "outlined number 1, dots match 1 [1/1 1/1 2/2 1/1 2/2 2/2 2/2 2/2 1/1 1/1]",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M20",
+      "status": "pass",
+      "value": {
+        "share": 1,
+        "parts": [
+          "2w/2b~2",
+          "1w/1b~1",
+          "3w/3b~3"
+        ]
+      },
+      "text": "stripes match 1 [2w/2b~2 1w/1b~1 3w/3b~3]",
+      "scene": "l01",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M20",
+      "status": "pass",
+      "value": {
+        "share": 1,
+        "parts": [
+          "2w/2b~2",
+          "1w/1b~1",
+          "3w/3b~3"
+        ]
+      },
+      "text": "stripes match 1 [2w/2b~2 1w/1b~1 3w/3b~3]",
+      "scene": "l01",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M20",
+      "status": "pass",
+      "value": {
+        "share": 1,
+        "parts": [
+          "1w/1b~1",
+          "2w/2b~2",
+          "2w/2b~2",
+          "2w/2b~2",
+          "4w/5b~5"
+        ]
+      },
+      "text": "stripes match 1 [1w/1b~1 2w/2b~2 2w/2b~2 2w/2b~2 4w/5b~5]",
+      "scene": "l10",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M20",
+      "status": "pass",
+      "value": {
+        "share": 1,
+        "parts": [
+          "1w/1b~1",
+          "2w/2b~2",
+          "2w/2b~2",
+          "1w/2b~2",
+          "5w/5b~5"
+        ]
+      },
+      "text": "stripes match 1 [1w/1b~1 2w/2b~2 2w/2b~2 1w/2b~2 5w/5b~5]",
+      "scene": "l10",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M20",
+      "status": "fail",
+      "value": {
+        "share": 0.8888888888888888,
+        "parts": [
+          "3w/3b~3",
+          "1w/1b~1",
+          "1w/1b~1",
+          "0w/0b~1",
+          "2w/2b~2",
+          "1w/1b~1",
+          "1w/1b~1",
+          "1w/1b~1",
+          "1w/1b~1"
+        ]
+      },
+      "text": "stripes match 0.889 [3w/3b~3 1w/1b~1 1w/1b~1 0w/0b~1 2w/2b~2 1w/1b~1 1w/1b~1 1w/1b~1 1w/1b~1]",
+      "scene": "l18",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M20",
+      "status": "fail",
+      "value": {
+        "share": 0.8888888888888888,
+        "parts": [
+          "3w/3b~3",
+          "1w/1b~1",
+          "1w/1b~1",
+          "0w/0b~1",
+          "2w/2b~2",
+          "1w/1b~1",
+          "1w/1b~1",
+          "1w/1b~1",
+          "1w/1b~1"
+        ]
+      },
+      "text": "stripes match 0.889 [3w/3b~3 1w/1b~1 1w/1b~1 0w/0b~1 2w/2b~2 1w/1b~1 1w/1b~1 1w/1b~1 1w/1b~1]",
+      "scene": "l18",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "M20",
+      "status": "pass",
+      "value": {
+        "share": 1,
+        "parts": [
+          "1w/1b~1",
+          "2w/2b~2",
+          "2w/2b~2",
+          "2w/2b~2",
+          "4w/5b~5"
+        ]
+      },
+      "text": "stripes match 1 [1w/1b~1 2w/2b~2 2w/2b~2 2w/2b~2 4w/5b~5]",
+      "scene": "l10cb",
+      "viewport": "1920x1080"
+    },
+    {
+      "id": "M20",
+      "status": "pass",
+      "value": {
+        "share": 1,
+        "parts": [
+          "1w/1b~1",
+          "2w/2b~2",
+          "2w/2b~2",
+          "2w/2b~2",
+          "5w/5b~5"
+        ]
+      },
+      "text": "stripes match 1 [1w/1b~1 2w/2b~2 2w/2b~2 2w/2b~2 5w/5b~5]",
+      "scene": "l10cb",
+      "viewport": "1366x768"
+    },
+    {
+      "id": "H01",
+      "scene": "l01",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0,
+      "text": "pill centre offset 0% of width"
+    },
+    {
+      "id": "H01",
+      "scene": "l01",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0,
+      "text": "pill centre offset 0% of width"
+    },
+    {
+      "id": "H01",
+      "scene": "l10",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0,
+      "text": "pill centre offset 0% of width"
+    },
+    {
+      "id": "H01",
+      "scene": "l10",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0,
+      "text": "pill centre offset 0% of width"
+    },
+    {
+      "id": "H01",
+      "scene": "l18",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0,
+      "text": "pill centre offset 0% of width"
+    },
+    {
+      "id": "H01",
+      "scene": "l18",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0,
+      "text": "pill centre offset 0% of width"
+    },
+    {
+      "id": "H01",
+      "scene": "l10cb",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0,
+      "text": "pill centre offset 0% of width"
+    },
+    {
+      "id": "H01",
+      "scene": "l10cb",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0,
+      "text": "pill centre offset 0% of width"
+    },
+    {
+      "id": "H01",
+      "scene": "l01-tip",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0,
+      "text": "pill centre offset 0% of width"
+    },
+    {
+      "id": "H01",
+      "scene": "l01-tip",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0,
+      "text": "pill centre offset 0% of width"
+    },
+    {
+      "id": "H02",
+      "scene": "l01",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0.011,
+      "text": "pill top 1.111% of height"
+    },
+    {
+      "id": "H02",
+      "scene": "l01",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0.016,
+      "text": "pill top 1.563% of height"
+    },
+    {
+      "id": "H02",
+      "scene": "l10",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0.011,
+      "text": "pill top 1.111% of height"
+    },
+    {
+      "id": "H02",
+      "scene": "l10",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0.016,
+      "text": "pill top 1.563% of height"
+    },
+    {
+      "id": "H02",
+      "scene": "l18",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0.011,
+      "text": "pill top 1.111% of height"
+    },
+    {
+      "id": "H02",
+      "scene": "l18",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0.016,
+      "text": "pill top 1.563% of height"
+    },
+    {
+      "id": "H02",
+      "scene": "l10cb",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0.011,
+      "text": "pill top 1.111% of height"
+    },
+    {
+      "id": "H02",
+      "scene": "l10cb",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0.016,
+      "text": "pill top 1.563% of height"
+    },
+    {
+      "id": "H02",
+      "scene": "l01-tip",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0.011,
+      "text": "pill top 1.111% of height"
+    },
+    {
+      "id": "H02",
+      "scene": "l01-tip",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0.016,
+      "text": "pill top 1.563% of height"
+    },
+    {
+      "id": "H03",
+      "scene": "l01",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": [
+        "pause 64x64",
+        "speed 64x64"
+      ],
+      "text": "buttons pause 64x64, speed 64x64 (CSS px, 44-64)"
+    },
+    {
+      "id": "H03",
+      "scene": "l01",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": [
+        "pause 64x64",
+        "speed 64x64"
+      ],
+      "text": "buttons pause 64x64, speed 64x64 (CSS px, 44-64)"
+    },
+    {
+      "id": "H03",
+      "scene": "l10",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": [
+        "pause 64x64",
+        "speed 64x64"
+      ],
+      "text": "buttons pause 64x64, speed 64x64 (CSS px, 44-64)"
+    },
+    {
+      "id": "H03",
+      "scene": "l10",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": [
+        "pause 64x64",
+        "speed 64x64"
+      ],
+      "text": "buttons pause 64x64, speed 64x64 (CSS px, 44-64)"
+    },
+    {
+      "id": "H03",
+      "scene": "l18",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": [
+        "pause 64x64",
+        "speed 64x64"
+      ],
+      "text": "buttons pause 64x64, speed 64x64 (CSS px, 44-64)"
+    },
+    {
+      "id": "H03",
+      "scene": "l18",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": [
+        "pause 64x64",
+        "speed 64x64"
+      ],
+      "text": "buttons pause 64x64, speed 64x64 (CSS px, 44-64)"
+    },
+    {
+      "id": "H03",
+      "scene": "l10cb",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": [
+        "pause 64x64",
+        "speed 64x64"
+      ],
+      "text": "buttons pause 64x64, speed 64x64 (CSS px, 44-64)"
+    },
+    {
+      "id": "H03",
+      "scene": "l10cb",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": [
+        "pause 64x64",
+        "speed 64x64"
+      ],
+      "text": "buttons pause 64x64, speed 64x64 (CSS px, 44-64)"
+    },
+    {
+      "id": "H03",
+      "scene": "l01-tip",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": [
+        "pause 64x64",
+        "speed 64x64"
+      ],
+      "text": "buttons pause 64x64, speed 64x64 (CSS px, 44-64)"
+    },
+    {
+      "id": "H03",
+      "scene": "l01-tip",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": [
+        "pause 64x64",
+        "speed 64x64"
+      ],
+      "text": "buttons pause 64x64, speed 64x64 (CSS px, 44-64)"
+    },
+    {
+      "id": "H04",
+      "scene": "l01",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0.029,
+      "text": "HUD area 2.89% of viewport"
+    },
+    {
+      "id": "H04",
+      "scene": "l01",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0.037,
+      "text": "HUD area 3.667% of viewport"
+    },
+    {
+      "id": "H04",
+      "scene": "l10",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0.029,
+      "text": "HUD area 2.89% of viewport"
+    },
+    {
+      "id": "H04",
+      "scene": "l10",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0.037,
+      "text": "HUD area 3.667% of viewport"
+    },
+    {
+      "id": "H04",
+      "scene": "l18",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0.029,
+      "text": "HUD area 2.89% of viewport"
+    },
+    {
+      "id": "H04",
+      "scene": "l18",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0.037,
+      "text": "HUD area 3.667% of viewport"
+    },
+    {
+      "id": "H04",
+      "scene": "l10cb",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0.029,
+      "text": "HUD area 2.89% of viewport"
+    },
+    {
+      "id": "H04",
+      "scene": "l10cb",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0.037,
+      "text": "HUD area 3.667% of viewport"
+    },
+    {
+      "id": "H04",
+      "scene": "l01-tip",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0.075,
+      "text": "HUD area 7.451% of viewport"
+    },
+    {
+      "id": "H04",
+      "scene": "l01-tip",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0.092,
+      "text": "HUD area 9.22% of viewport"
+    },
+    {
+      "id": "H05",
+      "scene": "l01",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0,
+      "text": ".instructions count 0"
+    },
+    {
+      "id": "H05",
+      "scene": "l01",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0,
+      "text": ".instructions count 0"
+    },
+    {
+      "id": "H05",
+      "scene": "l10",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0,
+      "text": ".instructions count 0"
+    },
+    {
+      "id": "H05",
+      "scene": "l10",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0,
+      "text": ".instructions count 0"
+    },
+    {
+      "id": "H05",
+      "scene": "l18",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0,
+      "text": ".instructions count 0"
+    },
+    {
+      "id": "H05",
+      "scene": "l18",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0,
+      "text": ".instructions count 0"
+    },
+    {
+      "id": "H05",
+      "scene": "l10cb",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0,
+      "text": ".instructions count 0"
+    },
+    {
+      "id": "H05",
+      "scene": "l10cb",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0,
+      "text": ".instructions count 0"
+    },
+    {
+      "id": "H05",
+      "scene": "l01-tip",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 0,
+      "text": ".instructions count 0"
+    },
+    {
+      "id": "H05",
+      "scene": "l01-tip",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 0,
+      "text": ".instructions count 0"
+    },
+    {
+      "id": "H06",
+      "scene": "l01",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": {
+        "sumErrPx": 0.016,
+        "worstShareErr": 0
+      },
+      "text": "segments 2/2, width sum off 0.016 px, worst share error 0.001%"
+    },
+    {
+      "id": "H06",
+      "scene": "l01",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": {
+        "sumErrPx": 0.015,
+        "worstShareErr": 0
+      },
+      "text": "segments 2/2, width sum off 0.015 px, worst share error 0.003%"
+    },
+    {
+      "id": "H06",
+      "scene": "l10",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": {
+        "sumErrPx": 0.016,
+        "worstShareErr": 0
+      },
+      "text": "segments 3/3, width sum off 0.016 px, worst share error 0.002%"
+    },
+    {
+      "id": "H06",
+      "scene": "l10",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": {
+        "sumErrPx": 0.015,
+        "worstShareErr": 0
+      },
+      "text": "segments 3/3, width sum off 0.015 px, worst share error 0.003%"
+    },
+    {
+      "id": "H06",
+      "scene": "l18",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": {
+        "sumErrPx": 0.016,
+        "worstShareErr": 0
+      },
+      "text": "segments 4/4, width sum off 0.016 px, worst share error 0.001%"
+    },
+    {
+      "id": "H06",
+      "scene": "l18",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": {
+        "sumErrPx": 0.03,
+        "worstShareErr": 0
+      },
+      "text": "segments 4/4, width sum off 0.03 px, worst share error 0.003%"
+    },
+    {
+      "id": "H06",
+      "scene": "l10cb",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": {
+        "sumErrPx": 0.016,
+        "worstShareErr": 0
+      },
+      "text": "segments 3/3, width sum off 0.016 px, worst share error 0.002%"
+    },
+    {
+      "id": "H06",
+      "scene": "l10cb",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": {
+        "sumErrPx": 0.015,
+        "worstShareErr": 0
+      },
+      "text": "segments 3/3, width sum off 0.015 px, worst share error 0.003%"
+    },
+    {
+      "id": "H06",
+      "scene": "l01-tip",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": {
+        "sumErrPx": 0.016,
+        "worstShareErr": 0
+      },
+      "text": "segments 2/2, width sum off 0.016 px, worst share error 0.002%"
+    },
+    {
+      "id": "H06",
+      "scene": "l01-tip",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": {
+        "sumErrPx": 0,
+        "worstShareErr": 0
+      },
+      "text": "segments 2/2, width sum off 0 px, worst share error 0%"
+    },
+    {
+      "id": "H07",
+      "scene": "l01",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 6.356,
+      "text": "pill text contrast 6.356:1"
+    },
+    {
+      "id": "H07",
+      "scene": "l01",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 6.356,
+      "text": "pill text contrast 6.356:1"
+    },
+    {
+      "id": "H07",
+      "scene": "l10",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 6.356,
+      "text": "pill text contrast 6.356:1"
+    },
+    {
+      "id": "H07",
+      "scene": "l10",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 6.356,
+      "text": "pill text contrast 6.356:1"
+    },
+    {
+      "id": "H07",
+      "scene": "l18",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 6.356,
+      "text": "pill text contrast 6.356:1"
+    },
+    {
+      "id": "H07",
+      "scene": "l18",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 6.356,
+      "text": "pill text contrast 6.356:1"
+    },
+    {
+      "id": "H07",
+      "scene": "l10cb",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 6.356,
+      "text": "pill text contrast 6.356:1"
+    },
+    {
+      "id": "H07",
+      "scene": "l10cb",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 6.356,
+      "text": "pill text contrast 6.356:1"
+    },
+    {
+      "id": "H07",
+      "scene": "l01-tip",
+      "viewport": "1920x1080",
+      "status": "pass",
+      "value": 6.356,
+      "text": "pill text contrast 6.356:1"
+    },
+    {
+      "id": "H07",
+      "scene": "l01-tip",
+      "viewport": "1366x768",
+      "status": "pass",
+      "value": 6.356,
+      "text": "pill text contrast 6.356:1"
+    }
+  ]
+}

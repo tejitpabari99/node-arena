@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "items": {
+    "V04": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 6,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Gradient backdrop cream to lime vs ref dark blurred",
+          "Panel navy with blue title",
+          "Orange buttons"
+        ]
+      }
+    },
+    "V07": {
+      "self": 5,
+      "selfRaw": 5,
+      "blind": 5,
+      "blindRaw": 5,
+      "merged": 5,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "No towers on menu; N/A",
+          "Backdrop empty",
+          "No game scene"
+        ]
+      }
+    },
+    "V20": {
+      "self": 8,
+      "selfRaw": 8,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "V20: tower ~3-4% frame height vs ref 5.8-7%",
+          "flat props/cream sand tone vs ref denser clutter",
+          "detail art (icons/banners/character) absent vs ref"
+        ],
+        "blind": [
+          "Navy panel with blue title and orange pills similar to ref",
+          "No hero art (VS helmets) as ref",
+          "Fonts less chunky; no pink/yellow banner"
+        ]
+      }
+    },
+    "V22": {
+      "self": 8,
+      "selfRaw": 8,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "V22: tower ~3-4% frame height vs ref 5.8-7%",
+          "flat props/cream sand tone vs ref denser clutter",
+          "detail art (icons/banners/character) absent vs ref"
+        ],
+        "blind": [
+          "No v1 leftovers",
+          "Plain gradient backdrop empty",
+          "Small corner logo"
+        ]
+      }
+    }
+  },
+  "flagged": [],
+  "missing": [],
+  "self": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-self-final-menu.json",
+  "blind": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-blind-final-menu.json"
+}

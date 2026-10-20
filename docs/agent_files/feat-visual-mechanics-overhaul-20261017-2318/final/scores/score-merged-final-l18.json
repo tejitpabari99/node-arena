@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "items": {
+    "V01": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 6,
+      "blindRaw": 6,
+      "merged": 6,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Towers ~3% of frame height vs ref 6-7%",
+          "Level occupies centre; border band ~45%",
+          "Camera angle steep but towers small"
+        ]
+      }
+    },
+    "V04": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 6,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Pink sand vs ref white snow/cream",
+          "Olive grass dull",
+          "Team hues good"
+        ]
+      }
+    },
+    "V06": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 6,
+      "blindRaw": 6,
+      "merged": 6,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Stacks thin vs ref Max chunky",
+          "Taper hard to read at overview",
+          "Floor count differences barely visible"
+        ]
+      }
+    },
+    "V07": {
+      "self": 5,
+      "selfRaw": 5,
+      "blind": 6,
+      "blindRaw": 6,
+      "merged": 5,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Numbers tiny in overview",
+          "Detail crop numbers fine",
+          "Outline thinner than ref"
+        ]
+      }
+    },
+    "V08": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 6,
+      "blindRaw": 6,
+      "merged": 6,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Dots tiny",
+          "Free vs used contrast weak",
+          "Ref shows 3 clear dots"
+        ]
+      }
+    },
+    "V16": {
+      "self": 7,
+      "selfRaw": 7,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Crossing lanes overlap cleanly in view",
+          "Colour mixing at crossings not visible/odd",
+          "Ref has translucent layered ribbons"
+        ]
+      }
+    },
+    "V22": {
+      "self": 8,
+      "selfRaw": 8,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "V22: tower ~3-4% frame height vs ref 5.8-7%",
+          "flat props/cream sand tone vs ref denser clutter",
+          "detail art (icons/banners/character) absent vs ref"
+        ],
+        "blind": [
+          "No label cards",
+          "Clash X marker is a new element",
+          "Dots instead of chevrons mix"
+        ]
+      }
+    },
+    "V23": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 6,
+      "blindRaw": 6,
+      "merged": 6,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Towers too tiny and sparse vs ref dense",
+          "Wide landscape",
+          "Same genre via colours"
+        ]
+      }
+    },
+    "V24": {
+      "self": 7,
+      "selfRaw": 7,
+      "blind": 6,
+      "blindRaw": 6,
+      "merged": 6,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Readable but towers small vs ref chunky dense",
+          "Clash puffs clear",
+          "Number legibility poor at 1366 size"
+        ]
+      }
+    }
+  },
+  "flagged": [],
+  "missing": [],
+  "self": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-self-final-l18.json",
+  "blind": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-blind-final-l18.json"
+}

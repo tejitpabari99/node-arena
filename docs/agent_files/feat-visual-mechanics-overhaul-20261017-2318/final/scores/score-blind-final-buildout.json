@@ -1,0 +1,34 @@
+{
+ "V04": {
+  "score": 7,
+  "differences": [
+   "Sand pink",
+   "Grass olive",
+   "Saturation moderate"
+  ]
+ },
+ "V07": {
+  "score": 6,
+  "differences": [
+   "Number small",
+   "Outline thin",
+   "Overview illegible"
+  ]
+ },
+ "V12": {
+  "score": 7,
+  "differences": [
+   "Lane grows from source across p2/p6/p12 smoothly",
+   "Head ends in white tip not under tower at p2",
+   "Final end sits at tower"
+  ]
+ },
+ "V22": {
+  "score": 7,
+  "differences": [
+   "No label cards",
+   "Lane white tip at head new artifact",
+   "Chevrons differ"
+  ]
+ }
+}

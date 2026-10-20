@@ -1,0 +1,114 @@
+{
+ "V01": {
+  "score": 6,
+  "differences": [
+   "Towers ~3% of frame height vs ref 5.8-7%",
+   "Border band ~50% of frame, above ref 34-44%",
+   "Level compressed into wide landscape strip, towers sparse"
+  ]
+ },
+ "V02": {
+  "score": 7,
+  "differences": [
+   "Grass is blotchy blurred blob with soft edge; ref crisp wavy edge",
+   "Grass hue more yellow-olive, ref brighter lime",
+   "Shadows are small; ref has large soft shadow blobs"
+  ]
+ },
+ "V03": {
+  "score": 7,
+  "differences": [
+   "Props dense but repetitive rocks/tyres evenly strewn",
+   "Ref has crates, stacked planks, barrels; ours mostly hex blocks and tyres",
+   "Rock masses huge and flat red vs ref chunkier sandstone"
+  ]
+ },
+ "V04": {
+  "score": 7,
+  "differences": [
+   "Sand is peach/pink vs ref warm cream",
+   "Grass duller olive than ref saturated lime",
+   "Red rocks more orange-red than ref"
+  ]
+ },
+ "V05": {
+  "score": 6,
+  "differences": [
+   "Tower tiny; team band per floor hard to read",
+   "Roof cap thin vs ref chunky cap",
+   "No visible door/plinth detail at scale; ref shows door and buttresses"
+  ]
+ },
+ "V06": {
+  "score": 6,
+  "differences": [
+   "Floors stack thin, 1px-like bands vs ref distinct tall floors",
+   "Taper hardly readable",
+   "Floor count tiny vs ref blocky readable steps"
+  ]
+ },
+ "V07": {
+  "score": 6,
+  "differences": [
+   "Number small (~0.12 of tower width) vs ref ~0.2",
+   "Outline less bold than yt1 '38'",
+   "Number sits partly off roof centre"
+  ]
+ },
+ "V10": {
+  "score": 6,
+  "differences": [
+   "Lane bright blue with chevrons, more opaque than ref soft tint",
+   "Lane relatively wide vs ref 1/4-1/3 tower width",
+   "Chevrons rather than tiny dots; no darker edge line seen"
+  ]
+ },
+ "V11": {
+  "score": 7,
+  "differences": [
+   "Chevrons clear and evenly spaced",
+   "Chevrons smaller/thinner than CT 01 triangles",
+   "Ours white-on-blue vs CT pale triangles on pale lane"
+  ]
+ },
+ "V13": {
+  "score": 6,
+  "differences": [
+   "Troops are blue blobs with brown, boxy vs ref chibi with arms",
+   "Troop height ~1.5% borderline",
+   "Not single-file readable, clustered"
+  ]
+ },
+ "V18": {
+  "score": 6,
+  "differences": [
+   "Pill has red/blue split with text; ref bar is slim with level label only",
+   "Round buttons at far corners rather than beside pill",
+   "Pill larger and more text (title+timer) than ref"
+  ]
+ },
+ "V19": {
+  "score": 7,
+  "differences": [
+   "No persistent help bar in L1 live capture",
+   "Ref has no help text",
+   "Tip presumably only in tip scene"
+  ]
+ },
+ "V22": {
+  "score": 7,
+  "differences": [
+   "No label cards or grey plane",
+   "Lane chevrons differ from ref dots",
+   "Sand/grass blur edge looks synthetic"
+  ]
+ },
+ "V23": {
+  "score": 6,
+  "differences": [
+   "Landscape wide strip vs ref portrait compact",
+   "Towers too small at thumbnail",
+   "Palette genre-match but towers unreadable"
+  ]
+ }
+}

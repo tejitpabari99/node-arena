@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "items": {
+    "V04": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 6,
+      "blindRaw": 6,
+      "merged": 6,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Cb palette shifts red to orange, yellow-ish; less saturated vs ref red/blue",
+          "Pill hatching looks busy",
+          "Grass still olive"
+        ]
+      }
+    },
+    "V07": {
+      "self": 6,
+      "selfRaw": 6,
+      "blind": 6,
+      "blindRaw": 6,
+      "merged": 6,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "see iteration logs (SP03/04/05) for item-specific gaps; unchanged code since last scored state"
+        ],
+        "blind": [
+          "Number small",
+          "Triangle glyph adds clutter next to number",
+          "Outline thinner than ref"
+        ]
+      }
+    },
+    "V09": {
+      "self": 8,
+      "selfRaw": 8,
+      "blind": 8,
+      "blindRaw": 8,
+      "merged": 8,
+      "diff": 0,
+      "flags": [],
+      "differences": {
+        "self": [
+          "V09: tower ~3-4% frame height vs ref 5.8-7%",
+          "flat props/cream sand tone vs ref denser clutter",
+          "detail art (icons/banners/character) absent vs ref"
+        ],
+        "blind": [
+          "Glyph triangle only in cb mode, small vs readable",
+          "Glyph is same on both blue towers; distinct per team only slightly",
+          "Glyph size ~half digit height"
+        ]
+      }
+    },
+    "V22": {
+      "self": 8,
+      "selfRaw": 8,
+      "blind": 7,
+      "blindRaw": 7,
+      "merged": 7,
+      "diff": 1,
+      "flags": [],
+      "differences": {
+        "self": [
+          "V22: tower ~3-4% frame height vs ref 5.8-7%",
+          "flat props/cream sand tone vs ref denser clutter",
+          "detail art (icons/banners/character) absent vs ref"
+        ],
+        "blind": [
+          "No label cards",
+          "Hatched pill unlike ref",
+          "Lane colour changes fine"
+        ]
+      }
+    }
+  },
+  "flagged": [],
+  "missing": [],
+  "self": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-self-final-l10cb.json",
+  "blind": "/root/projects/node-arena/.worktrees/feat/sp05-hud-rollout-perf/apps/web/visual-out/score-blind-final-l10cb.json"
+}

@@ -1,0 +1,50 @@
+{
+ "V04": {
+  "score": 7,
+  "differences": [
+   "Sand pink vs cream",
+   "Grass olive",
+   "Saturation ok"
+  ]
+ },
+ "V07": {
+  "score": 6,
+  "differences": [
+   "Number small on overview",
+   "Detail crop ok",
+   "Outline thin"
+  ]
+ },
+ "V14": {
+  "score": 7,
+  "differences": [
+   "One shared lane with blue/red split at meeting point",
+   "Split fairly hard-edged vs ref smooth",
+   "Split shown but lane colour opaque"
+  ]
+ },
+ "V15": {
+  "score": 7,
+  "differences": [
+   "Puffs and X marker present",
+   "Puffs pale grey/white vs ref red/blue splats",
+   "Marker large X blocky"
+  ]
+ },
+ "V16": {
+  "score": 7,
+  "differences": [
+   "Perpendicular blue lane crosses cleanly",
+   "Overlap colour mix not visible",
+   "Ref lanes translucent"
+  ]
+ },
+ "V22": {
+  "score": 7,
+  "differences": [
+   "No label cards",
+   "Dashed chevrons differ",
+   "Lane lacks soft edge"
+  ]
+ }
+}

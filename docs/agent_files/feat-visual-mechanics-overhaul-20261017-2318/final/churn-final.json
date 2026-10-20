@@ -1,0 +1,2655 @@
+{
+  "tool": "bots:churn",
+  "format": 1,
+  "botVersion": "1.6.1",
+  "rulesVersion": "1.0.0",
+  "contentVersion": "1.1.6",
+  "seeds": [
+    1,
+    2,
+    3,
+    5,
+    8,
+    13,
+    37,
+    704
+  ],
+  "levels": [
+    "01-first-steps",
+    "02-neutral-ground",
+    "03-full-tank",
+    "04-two-streams",
+    "05-head-on",
+    "06-snip",
+    "07-skyscraper",
+    "08-fork",
+    "09-chain-link",
+    "10-two-foes",
+    "11-triple-threat",
+    "12-underdog",
+    "13-crossfire",
+    "14-beat-the-clock",
+    "15-hub",
+    "16-fortress",
+    "17-pincer",
+    "18-free-for-all",
+    "19-siege",
+    "20-finale"
+  ],
+  "humanSeatProfile": "human-proxy",
+  "windows": {
+    "cutRedrawSec": 10,
+    "flipSec": 20
+  },
+  "note": "Rates are per seat-minute of match time. totals.bots = authored level bot seats (the opponents players see); allSeats adds the human-proxy seat.",
+  "totals": {
+    "bots": {
+      "seats": 248,
+      "seatMinutes": 482.144,
+      "cutsPerMin": 8.004,
+      "drawsPerMin": 14.052,
+      "slotCutsPerMin": 0.124,
+      "lineCutPerMin": {
+        "player": 8.004,
+        "slots": 0.124,
+        "captured": 3.829,
+        "replaced": 0.871
+      },
+      "cutRedrawPerMin": {
+        "player": 0.172,
+        "slots": 0,
+        "captured": 1.267,
+        "replaced": 0.871,
+        "total": 2.311
+      },
+      "flipsPerMin": 4.507,
+      "counts": {
+        "cuts": 3859,
+        "draws": 6775,
+        "lineCut": {
+          "player": 3859,
+          "slots": 60,
+          "captured": 1846,
+          "replaced": 420
+        },
+        "cutRedraw": {
+          "player": 83,
+          "slots": 0,
+          "captured": 611,
+          "replaced": 420,
+          "total": 1114
+        },
+        "flips": 2173
+      }
+    },
+    "allSeats": {
+      "seats": 408,
+      "seatMinutes": 756.072,
+      "cutsPerMin": 9.061,
+      "drawsPerMin": 16.008,
+      "slotCutsPerMin": 0.216,
+      "lineCutPerMin": {
+        "player": 9.061,
+        "slots": 0.216,
+        "captured": 3.273,
+        "replaced": 0.815
+      },
+      "cutRedrawPerMin": {
+        "player": 1.177,
+        "slots": 0.04,
+        "captured": 1.033,
+        "replaced": 0.815,
+        "total": 3.065
+      },
+      "flipsPerMin": 4.836,
+      "counts": {
+        "cuts": 6851,
+        "draws": 12103,
+        "lineCut": {
+          "player": 6851,
+          "slots": 163,
+          "captured": 2475,
+          "replaced": 616
+        },
+        "cutRedraw": {
+          "player": 890,
+          "slots": 30,
+          "captured": 781,
+          "replaced": 616,
+          "total": 2317
+        },
+        "flips": 3656
+      }
+    }
+  },
+  "byProfile": {
+    "economist-expert": {
+      "seats": 16,
+      "seatMinutes": 40.834,
+      "cutsPerMin": 6.955,
+      "drawsPerMin": 14.669,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 6.955,
+        "slots": 0,
+        "captured": 6.049,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 2.988,
+        "replaced": 0,
+        "total": 2.988
+      },
+      "flipsPerMin": 4.016,
+      "counts": {
+        "cuts": 284,
+        "draws": 599,
+        "lineCut": {
+          "player": 284,
+          "slots": 0,
+          "captured": 247,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 122,
+          "replaced": 0,
+          "total": 122
+        },
+        "flips": 164
+      }
+    },
+    "economist-hard": {
+      "seats": 16,
+      "seatMinutes": 30.444,
+      "cutsPerMin": 7.062,
+      "drawsPerMin": 14.814,
+      "slotCutsPerMin": 0.066,
+      "lineCutPerMin": {
+        "player": 7.062,
+        "slots": 0.066,
+        "captured": 5.026,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 1.971,
+        "replaced": 0,
+        "total": 1.971
+      },
+      "flipsPerMin": 2.923,
+      "counts": {
+        "cuts": 215,
+        "draws": 451,
+        "lineCut": {
+          "player": 215,
+          "slots": 2,
+          "captured": 153,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 60,
+          "replaced": 0,
+          "total": 60
+        },
+        "flips": 89
+      }
+    },
+    "economist-normal": {
+      "seats": 16,
+      "seatMinutes": 23.433,
+      "cutsPerMin": 1.366,
+      "drawsPerMin": 4.78,
+      "slotCutsPerMin": 0.341,
+      "lineCutPerMin": {
+        "player": 1.366,
+        "slots": 0.341,
+        "captured": 3.03,
+        "replaced": 0.043
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.341,
+        "replaced": 0.043,
+        "total": 0.384
+      },
+      "flipsPerMin": 0.683,
+      "counts": {
+        "cuts": 32,
+        "draws": 112,
+        "lineCut": {
+          "player": 32,
+          "slots": 8,
+          "captured": 71,
+          "replaced": 1
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 8,
+          "replaced": 1,
+          "total": 9
+        },
+        "flips": 16
+      }
+    },
+    "human-proxy (human seat)": {
+      "seats": 160,
+      "seatMinutes": 273.928,
+      "cutsPerMin": 10.923,
+      "drawsPerMin": 19.45,
+      "slotCutsPerMin": 0.376,
+      "lineCutPerMin": {
+        "player": 10.923,
+        "slots": 0.376,
+        "captured": 2.296,
+        "replaced": 0.716
+      },
+      "cutRedrawPerMin": {
+        "player": 2.946,
+        "slots": 0.11,
+        "captured": 0.621,
+        "replaced": 0.716,
+        "total": 4.392
+      },
+      "flipsPerMin": 5.414,
+      "counts": {
+        "cuts": 2992,
+        "draws": 5328,
+        "lineCut": {
+          "player": 2992,
+          "slots": 103,
+          "captured": 629,
+          "replaced": 196
+        },
+        "cutRedraw": {
+          "player": 807,
+          "slots": 30,
+          "captured": 170,
+          "replaced": 196,
+          "total": 1203
+        },
+        "flips": 1483
+      }
+    },
+    "idle": {
+      "seats": 8,
+      "seatMinutes": 10.212,
+      "cutsPerMin": 0,
+      "drawsPerMin": 0,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0,
+        "replaced": 0,
+        "total": 0
+      },
+      "flipsPerMin": 0,
+      "counts": {
+        "cuts": 0,
+        "draws": 0,
+        "lineCut": {
+          "player": 0,
+          "slots": 0,
+          "captured": 0,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 0,
+          "replaced": 0,
+          "total": 0
+        },
+        "flips": 0
+      }
+    },
+    "opportunist-expert": {
+      "seats": 8,
+      "seatMinutes": 18.523,
+      "cutsPerMin": 13.173,
+      "drawsPerMin": 19.544,
+      "slotCutsPerMin": 0.108,
+      "lineCutPerMin": {
+        "player": 13.173,
+        "slots": 0.108,
+        "captured": 3.509,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 2.969,
+        "slots": 0,
+        "captured": 1.998,
+        "replaced": 0,
+        "total": 4.967
+      },
+      "flipsPerMin": 5.561,
+      "counts": {
+        "cuts": 244,
+        "draws": 362,
+        "lineCut": {
+          "player": 244,
+          "slots": 2,
+          "captured": 65,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 55,
+          "slots": 0,
+          "captured": 37,
+          "replaced": 0,
+          "total": 92
+        },
+        "flips": 103
+      }
+    },
+    "opportunist-hard": {
+      "seats": 16,
+      "seatMinutes": 23.8,
+      "cutsPerMin": 10.21,
+      "drawsPerMin": 15.966,
+      "slotCutsPerMin": 0.252,
+      "lineCutPerMin": {
+        "player": 10.21,
+        "slots": 0.252,
+        "captured": 3.782,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 1.092,
+        "slots": 0,
+        "captured": 1.261,
+        "replaced": 0,
+        "total": 2.353
+      },
+      "flipsPerMin": 3.025,
+      "counts": {
+        "cuts": 243,
+        "draws": 380,
+        "lineCut": {
+          "player": 243,
+          "slots": 6,
+          "captured": 90,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 26,
+          "slots": 0,
+          "captured": 30,
+          "replaced": 0,
+          "total": 56
+        },
+        "flips": 72
+      }
+    },
+    "opportunist-normal": {
+      "seats": 8,
+      "seatMinutes": 8.161,
+      "cutsPerMin": 1.47,
+      "drawsPerMin": 4.656,
+      "slotCutsPerMin": 0.49,
+      "lineCutPerMin": {
+        "player": 1.47,
+        "slots": 0.49,
+        "captured": 2.696,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0.245,
+        "slots": 0,
+        "captured": 0.368,
+        "replaced": 0,
+        "total": 0.613
+      },
+      "flipsPerMin": 0.613,
+      "counts": {
+        "cuts": 12,
+        "draws": 38,
+        "lineCut": {
+          "player": 12,
+          "slots": 4,
+          "captured": 22,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 2,
+          "slots": 0,
+          "captured": 3,
+          "replaced": 0,
+          "total": 5
+        },
+        "flips": 5
+      }
+    },
+    "rusher-easy": {
+      "seats": 16,
+      "seatMinutes": 19.393,
+      "cutsPerMin": 1.547,
+      "drawsPerMin": 4.589,
+      "slotCutsPerMin": 0.361,
+      "lineCutPerMin": {
+        "player": 1.547,
+        "slots": 0.361,
+        "captured": 2.681,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.155,
+        "replaced": 0,
+        "total": 0.155
+      },
+      "flipsPerMin": 0.155,
+      "counts": {
+        "cuts": 30,
+        "draws": 89,
+        "lineCut": {
+          "player": 30,
+          "slots": 7,
+          "captured": 52,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 3,
+          "replaced": 0,
+          "total": 3
+        },
+        "flips": 3
+      }
+    },
+    "rusher-expert": {
+      "seats": 16,
+      "seatMinutes": 40.834,
+      "cutsPerMin": 8.841,
+      "drawsPerMin": 15.967,
+      "slotCutsPerMin": 0.024,
+      "lineCutPerMin": {
+        "player": 8.841,
+        "slots": 0.024,
+        "captured": 5.633,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 2.792,
+        "replaced": 0,
+        "total": 2.792
+      },
+      "flipsPerMin": 4.237,
+      "counts": {
+        "cuts": 361,
+        "draws": 652,
+        "lineCut": {
+          "player": 361,
+          "slots": 1,
+          "captured": 230,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 114,
+          "replaced": 0,
+          "total": 114
+        },
+        "flips": 173
+      }
+    },
+    "rusher-hard": {
+      "seats": 24,
+      "seatMinutes": 49.789,
+      "cutsPerMin": 9.821,
+      "drawsPerMin": 17.494,
+      "slotCutsPerMin": 0.1,
+      "lineCutPerMin": {
+        "player": 9.821,
+        "slots": 0.1,
+        "captured": 4.941,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 1.506,
+        "replaced": 0,
+        "total": 1.506
+      },
+      "flipsPerMin": 2.571,
+      "counts": {
+        "cuts": 489,
+        "draws": 871,
+        "lineCut": {
+          "player": 489,
+          "slots": 5,
+          "captured": 246,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 75,
+          "replaced": 0,
+          "total": 75
+        },
+        "flips": 128
+      }
+    },
+    "rusher-normal": {
+      "seats": 32,
+      "seatMinutes": 71.311,
+      "cutsPerMin": 3.267,
+      "drawsPerMin": 9.199,
+      "slotCutsPerMin": 0.337,
+      "lineCutPerMin": {
+        "player": 3.267,
+        "slots": 0.337,
+        "captured": 3.955,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.841,
+        "replaced": 0,
+        "total": 0.841
+      },
+      "flipsPerMin": 1.22,
+      "counts": {
+        "cuts": 233,
+        "draws": 656,
+        "lineCut": {
+          "player": 233,
+          "slots": 24,
+          "captured": 282,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 60,
+          "replaced": 0,
+          "total": 60
+        },
+        "flips": 87
+      }
+    },
+    "turtle-easy": {
+      "seats": 16,
+      "seatMinutes": 15.447,
+      "cutsPerMin": 3.949,
+      "drawsPerMin": 5.826,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 3.949,
+        "slots": 0,
+        "captured": 1.424,
+        "replaced": 0.453
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.194,
+        "replaced": 0.453,
+        "total": 0.647
+      },
+      "flipsPerMin": 1.618,
+      "counts": {
+        "cuts": 61,
+        "draws": 90,
+        "lineCut": {
+          "player": 61,
+          "slots": 0,
+          "captured": 22,
+          "replaced": 7
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 3,
+          "replaced": 7,
+          "total": 10
+        },
+        "flips": 25
+      }
+    },
+    "turtle-expert": {
+      "seats": 32,
+      "seatMinutes": 79.686,
+      "cutsPerMin": 14.871,
+      "drawsPerMin": 21.76,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 14.871,
+        "slots": 0,
+        "captured": 2.786,
+        "replaced": 3.689
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.841,
+        "replaced": 3.689,
+        "total": 4.53
+      },
+      "flipsPerMin": 12.022,
+      "counts": {
+        "cuts": 1185,
+        "draws": 1734,
+        "lineCut": {
+          "player": 1185,
+          "slots": 0,
+          "captured": 222,
+          "replaced": 294
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 67,
+          "replaced": 294,
+          "total": 361
+        },
+        "flips": 958
+      }
+    },
+    "turtle-hard": {
+      "seats": 16,
+      "seatMinutes": 39.668,
+      "cutsPerMin": 10.26,
+      "drawsPerMin": 16.109,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 10.26,
+        "slots": 0,
+        "captured": 3.05,
+        "replaced": 2.597
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.655,
+        "replaced": 2.597,
+        "total": 3.252
+      },
+      "flipsPerMin": 7.79,
+      "counts": {
+        "cuts": 407,
+        "draws": 639,
+        "lineCut": {
+          "player": 407,
+          "slots": 0,
+          "captured": 121,
+          "replaced": 103
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 26,
+          "replaced": 103,
+          "total": 129
+        },
+        "flips": 309
+      }
+    },
+    "turtle-normal": {
+      "seats": 8,
+      "seatMinutes": 10.608,
+      "cutsPerMin": 5.939,
+      "drawsPerMin": 9.615,
+      "slotCutsPerMin": 0.094,
+      "lineCutPerMin": {
+        "player": 5.939,
+        "slots": 0.094,
+        "captured": 2.168,
+        "replaced": 1.414
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.283,
+        "replaced": 1.414,
+        "total": 1.697
+      },
+      "flipsPerMin": 3.865,
+      "counts": {
+        "cuts": 63,
+        "draws": 102,
+        "lineCut": {
+          "player": 63,
+          "slots": 1,
+          "captured": 23,
+          "replaced": 15
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 3,
+          "replaced": 15,
+          "total": 18
+        },
+        "flips": 41
+      }
+    }
+  },
+  "byLevel": {
+    "01-first-steps": {
+      "seats": 8,
+      "seatMinutes": 10.212,
+      "cutsPerMin": 0,
+      "drawsPerMin": 0,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0,
+        "replaced": 0,
+        "total": 0
+      },
+      "flipsPerMin": 0,
+      "counts": {
+        "cuts": 0,
+        "draws": 0,
+        "lineCut": {
+          "player": 0,
+          "slots": 0,
+          "captured": 0,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 0,
+          "replaced": 0,
+          "total": 0
+        },
+        "flips": 0
+      }
+    },
+    "02-neutral-ground": {
+      "seats": 8,
+      "seatMinutes": 8.413,
+      "cutsPerMin": 4.517,
+      "drawsPerMin": 6.418,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 4.517,
+        "slots": 0,
+        "captured": 1.189,
+        "replaced": 0.713
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.238,
+        "replaced": 0.713,
+        "total": 0.951
+      },
+      "flipsPerMin": 2.258,
+      "counts": {
+        "cuts": 38,
+        "draws": 54,
+        "lineCut": {
+          "player": 38,
+          "slots": 0,
+          "captured": 10,
+          "replaced": 6
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 2,
+          "replaced": 6,
+          "total": 8
+        },
+        "flips": 19
+      }
+    },
+    "03-full-tank": {
+      "seats": 8,
+      "seatMinutes": 7.033,
+      "cutsPerMin": 3.27,
+      "drawsPerMin": 5.118,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 3.27,
+        "slots": 0,
+        "captured": 1.706,
+        "replaced": 0.142
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.142,
+        "replaced": 0.142,
+        "total": 0.284
+      },
+      "flipsPerMin": 0.853,
+      "counts": {
+        "cuts": 23,
+        "draws": 36,
+        "lineCut": {
+          "player": 23,
+          "slots": 0,
+          "captured": 12,
+          "replaced": 1
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 1,
+          "replaced": 1,
+          "total": 2
+        },
+        "flips": 6
+      }
+    },
+    "04-two-streams": {
+      "seats": 8,
+      "seatMinutes": 10.808,
+      "cutsPerMin": 1.666,
+      "drawsPerMin": 4.719,
+      "slotCutsPerMin": 0.37,
+      "lineCutPerMin": {
+        "player": 1.666,
+        "slots": 0.37,
+        "captured": 2.683,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.185,
+        "replaced": 0,
+        "total": 0.185
+      },
+      "flipsPerMin": 0.185,
+      "counts": {
+        "cuts": 18,
+        "draws": 51,
+        "lineCut": {
+          "player": 18,
+          "slots": 4,
+          "captured": 29,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 2,
+          "replaced": 0,
+          "total": 2
+        },
+        "flips": 2
+      }
+    },
+    "05-head-on": {
+      "seats": 8,
+      "seatMinutes": 8.586,
+      "cutsPerMin": 1.398,
+      "drawsPerMin": 4.426,
+      "slotCutsPerMin": 0.349,
+      "lineCutPerMin": {
+        "player": 1.398,
+        "slots": 0.349,
+        "captured": 2.679,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.116,
+        "replaced": 0,
+        "total": 0.116
+      },
+      "flipsPerMin": 0.116,
+      "counts": {
+        "cuts": 12,
+        "draws": 38,
+        "lineCut": {
+          "player": 12,
+          "slots": 3,
+          "captured": 23,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 1,
+          "replaced": 0,
+          "total": 1
+        },
+        "flips": 1
+      }
+    },
+    "06-snip": {
+      "seats": 8,
+      "seatMinutes": 6.9,
+      "cutsPerMin": 0.58,
+      "drawsPerMin": 3.333,
+      "slotCutsPerMin": 0.29,
+      "lineCutPerMin": {
+        "player": 0.58,
+        "slots": 0.29,
+        "captured": 2.319,
+        "replaced": 0.145
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.145,
+        "replaced": 0.145,
+        "total": 0.29
+      },
+      "flipsPerMin": 0.29,
+      "counts": {
+        "cuts": 4,
+        "draws": 23,
+        "lineCut": {
+          "player": 4,
+          "slots": 2,
+          "captured": 16,
+          "replaced": 1
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 1,
+          "replaced": 1,
+          "total": 2
+        },
+        "flips": 2
+      }
+    },
+    "07-skyscraper": {
+      "seats": 8,
+      "seatMinutes": 8.161,
+      "cutsPerMin": 1.47,
+      "drawsPerMin": 4.656,
+      "slotCutsPerMin": 0.49,
+      "lineCutPerMin": {
+        "player": 1.47,
+        "slots": 0.49,
+        "captured": 2.696,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0.245,
+        "slots": 0,
+        "captured": 0.368,
+        "replaced": 0,
+        "total": 0.613
+      },
+      "flipsPerMin": 0.613,
+      "counts": {
+        "cuts": 12,
+        "draws": 38,
+        "lineCut": {
+          "player": 12,
+          "slots": 4,
+          "captured": 22,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 2,
+          "slots": 0,
+          "captured": 3,
+          "replaced": 0,
+          "total": 5
+        },
+        "flips": 5
+      }
+    },
+    "08-fork": {
+      "seats": 8,
+      "seatMinutes": 12.018,
+      "cutsPerMin": 3.412,
+      "drawsPerMin": 8.82,
+      "slotCutsPerMin": 0.582,
+      "lineCutPerMin": {
+        "player": 3.412,
+        "slots": 0.582,
+        "captured": 4.826,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.832,
+        "replaced": 0,
+        "total": 0.832
+      },
+      "flipsPerMin": 1.415,
+      "counts": {
+        "cuts": 41,
+        "draws": 106,
+        "lineCut": {
+          "player": 41,
+          "slots": 7,
+          "captured": 58,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 10,
+          "replaced": 0,
+          "total": 10
+        },
+        "flips": 17
+      }
+    },
+    "09-chain-link": {
+      "seats": 8,
+      "seatMinutes": 10.608,
+      "cutsPerMin": 5.939,
+      "drawsPerMin": 9.615,
+      "slotCutsPerMin": 0.094,
+      "lineCutPerMin": {
+        "player": 5.939,
+        "slots": 0.094,
+        "captured": 2.168,
+        "replaced": 1.414
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.283,
+        "replaced": 1.414,
+        "total": 1.697
+      },
+      "flipsPerMin": 3.865,
+      "counts": {
+        "cuts": 63,
+        "draws": 102,
+        "lineCut": {
+          "player": 63,
+          "slots": 1,
+          "captured": 23,
+          "replaced": 15
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 3,
+          "replaced": 15,
+          "total": 18
+        },
+        "flips": 41
+      }
+    },
+    "10-two-foes": {
+      "seats": 16,
+      "seatMinutes": 33.067,
+      "cutsPerMin": 1.996,
+      "drawsPerMin": 6.018,
+      "slotCutsPerMin": 0.363,
+      "lineCutPerMin": {
+        "player": 1.996,
+        "slots": 0.363,
+        "captured": 3.175,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.514,
+        "replaced": 0,
+        "total": 0.514
+      },
+      "flipsPerMin": 0.907,
+      "counts": {
+        "cuts": 66,
+        "draws": 199,
+        "lineCut": {
+          "player": 66,
+          "slots": 12,
+          "captured": 105,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 17,
+          "replaced": 0,
+          "total": 17
+        },
+        "flips": 30
+      }
+    },
+    "11-triple-threat": {
+      "seats": 24,
+      "seatMinutes": 52.84,
+      "cutsPerMin": 8.724,
+      "drawsPerMin": 17.033,
+      "slotCutsPerMin": 0.057,
+      "lineCutPerMin": {
+        "player": 8.724,
+        "slots": 0.057,
+        "captured": 5.526,
+        "replaced": 0.852
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 1.874,
+        "replaced": 0.852,
+        "total": 2.725
+      },
+      "flipsPerMin": 4.769,
+      "counts": {
+        "cuts": 461,
+        "draws": 900,
+        "lineCut": {
+          "player": 461,
+          "slots": 3,
+          "captured": 292,
+          "replaced": 45
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 99,
+          "replaced": 45,
+          "total": 144
+        },
+        "flips": 252
+      }
+    },
+    "12-underdog": {
+      "seats": 8,
+      "seatMinutes": 10.969,
+      "cutsPerMin": 5.014,
+      "drawsPerMin": 8.478,
+      "slotCutsPerMin": 0.365,
+      "lineCutPerMin": {
+        "player": 5.014,
+        "slots": 0.365,
+        "captured": 2.37,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0.456,
+        "slots": 0,
+        "captured": 0.365,
+        "replaced": 0,
+        "total": 0.82
+      },
+      "flipsPerMin": 1.003,
+      "counts": {
+        "cuts": 55,
+        "draws": 93,
+        "lineCut": {
+          "player": 55,
+          "slots": 4,
+          "captured": 26,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 5,
+          "slots": 0,
+          "captured": 4,
+          "replaced": 0,
+          "total": 9
+        },
+        "flips": 11
+      }
+    },
+    "13-crossfire": {
+      "seats": 16,
+      "seatMinutes": 44.11,
+      "cutsPerMin": 10.247,
+      "drawsPerMin": 16.277,
+      "slotCutsPerMin": 0.068,
+      "lineCutPerMin": {
+        "player": 10.247,
+        "slots": 0.068,
+        "captured": 3.673,
+        "replaced": 1.315
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.975,
+        "replaced": 1.315,
+        "total": 2.29
+      },
+      "flipsPerMin": 5.441,
+      "counts": {
+        "cuts": 452,
+        "draws": 718,
+        "lineCut": {
+          "player": 452,
+          "slots": 3,
+          "captured": 162,
+          "replaced": 58
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 43,
+          "replaced": 58,
+          "total": 101
+        },
+        "flips": 240
+      }
+    },
+    "14-beat-the-clock": {
+      "seats": 8,
+      "seatMinutes": 10.121,
+      "cutsPerMin": 14.524,
+      "drawsPerMin": 23.318,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 14.524,
+        "slots": 0,
+        "captured": 3.261,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 1.087,
+        "replaced": 0,
+        "total": 1.087
+      },
+      "flipsPerMin": 2.174,
+      "counts": {
+        "cuts": 147,
+        "draws": 236,
+        "lineCut": {
+          "player": 147,
+          "slots": 0,
+          "captured": 33,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 11,
+          "replaced": 0,
+          "total": 11
+        },
+        "flips": 22
+      }
+    },
+    "15-hub": {
+      "seats": 16,
+      "seatMinutes": 25.662,
+      "cutsPerMin": 9.314,
+      "drawsPerMin": 15.354,
+      "slotCutsPerMin": 0.117,
+      "lineCutPerMin": {
+        "player": 9.314,
+        "slots": 0.117,
+        "captured": 3.78,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0.818,
+        "slots": 0,
+        "captured": 1.325,
+        "replaced": 0,
+        "total": 2.143
+      },
+      "flipsPerMin": 2.845,
+      "counts": {
+        "cuts": 239,
+        "draws": 394,
+        "lineCut": {
+          "player": 239,
+          "slots": 3,
+          "captured": 97,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 21,
+          "slots": 0,
+          "captured": 34,
+          "replaced": 0,
+          "total": 55
+        },
+        "flips": 73
+      }
+    },
+    "16-fortress": {
+      "seats": 8,
+      "seatMinutes": 20.329,
+      "cutsPerMin": 21.644,
+      "drawsPerMin": 29.317,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 21.644,
+        "slots": 0,
+        "captured": 1.476,
+        "replaced": 5.608
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.246,
+        "replaced": 5.608,
+        "total": 5.854
+      },
+      "flipsPerMin": 19.283,
+      "counts": {
+        "cuts": 440,
+        "draws": 596,
+        "lineCut": {
+          "player": 440,
+          "slots": 0,
+          "captured": 30,
+          "replaced": 114
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 5,
+          "replaced": 114,
+          "total": 119
+        },
+        "flips": 392
+      }
+    },
+    "17-pincer": {
+      "seats": 16,
+      "seatMinutes": 42.76,
+      "cutsPerMin": 3.601,
+      "drawsPerMin": 10.29,
+      "slotCutsPerMin": 0.257,
+      "lineCutPerMin": {
+        "player": 3.601,
+        "slots": 0.257,
+        "captured": 4.069,
+        "replaced": 0
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 0.935,
+        "replaced": 0,
+        "total": 0.935
+      },
+      "flipsPerMin": 1.263,
+      "counts": {
+        "cuts": 154,
+        "draws": 440,
+        "lineCut": {
+          "player": 154,
+          "slots": 11,
+          "captured": 174,
+          "replaced": 0
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 40,
+          "replaced": 0,
+          "total": 40
+        },
+        "flips": 54
+      }
+    },
+    "18-free-for-all": {
+      "seats": 24,
+      "seatMinutes": 52.095,
+      "cutsPerMin": 10.538,
+      "drawsPerMin": 19.119,
+      "slotCutsPerMin": 0,
+      "lineCutPerMin": {
+        "player": 10.538,
+        "slots": 0,
+        "captured": 5.682,
+        "replaced": 1.056
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 2.649,
+        "replaced": 1.056,
+        "total": 3.705
+      },
+      "flipsPerMin": 6.027,
+      "counts": {
+        "cuts": 549,
+        "draws": 996,
+        "lineCut": {
+          "player": 549,
+          "slots": 0,
+          "captured": 296,
+          "replaced": 55
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 138,
+          "replaced": 55,
+          "total": 193
+        },
+        "flips": 314
+      }
+    },
+    "19-siege": {
+      "seats": 16,
+      "seatMinutes": 37.045,
+      "cutsPerMin": 13.416,
+      "drawsPerMin": 19.409,
+      "slotCutsPerMin": 0.054,
+      "lineCutPerMin": {
+        "player": 13.416,
+        "slots": 0.054,
+        "captured": 3.104,
+        "replaced": 1.107
+      },
+      "cutRedrawPerMin": {
+        "player": 1.485,
+        "slots": 0,
+        "captured": 1.566,
+        "replaced": 1.107,
+        "total": 4.157
+      },
+      "flipsPerMin": 7.369,
+      "counts": {
+        "cuts": 497,
+        "draws": 719,
+        "lineCut": {
+          "player": 497,
+          "slots": 2,
+          "captured": 115,
+          "replaced": 41
+        },
+        "cutRedraw": {
+          "player": 55,
+          "slots": 0,
+          "captured": 58,
+          "replaced": 41,
+          "total": 154
+        },
+        "flips": 273
+      }
+    },
+    "20-finale": {
+      "seats": 24,
+      "seatMinutes": 70.408,
+      "cutsPerMin": 8.351,
+      "drawsPerMin": 14.714,
+      "slotCutsPerMin": 0.014,
+      "lineCutPerMin": {
+        "player": 8.351,
+        "slots": 0.014,
+        "captured": 4.588,
+        "replaced": 1.193
+      },
+      "cutRedrawPerMin": {
+        "player": 0,
+        "slots": 0,
+        "captured": 1.974,
+        "replaced": 1.193,
+        "total": 3.167
+      },
+      "flipsPerMin": 5.951,
+      "counts": {
+        "cuts": 588,
+        "draws": 1036,
+        "lineCut": {
+          "player": 588,
+          "slots": 1,
+          "captured": 323,
+          "replaced": 84
+        },
+        "cutRedraw": {
+          "player": 0,
+          "slots": 0,
+          "captured": 139,
+          "replaced": 84,
+          "total": 223
+        },
+        "flips": 419
+      }
+    }
+  },
+  "matches": [
+    {
+      "level": "01-first-steps",
+      "seed": 1,
+      "ticks": 1641,
+      "outcome": "won",
+      "finalHash": "341ebbf4de1daeac"
+    },
+    {
+      "level": "01-first-steps",
+      "seed": 2,
+      "ticks": 1533,
+      "outcome": "won",
+      "finalHash": "93a67a04ea669498"
+    },
+    {
+      "level": "01-first-steps",
+      "seed": 3,
+      "ticks": 1517,
+      "outcome": "won",
+      "finalHash": "cd4a9cae6a38a4e4"
+    },
+    {
+      "level": "01-first-steps",
+      "seed": 5,
+      "ticks": 1413,
+      "outcome": "won",
+      "finalHash": "8c520970a5c13fca"
+    },
+    {
+      "level": "01-first-steps",
+      "seed": 8,
+      "ticks": 1658,
+      "outcome": "won",
+      "finalHash": "d928aef60afc91de"
+    },
+    {
+      "level": "01-first-steps",
+      "seed": 13,
+      "ticks": 1499,
+      "outcome": "won",
+      "finalHash": "1915a241a56ed8ed"
+    },
+    {
+      "level": "01-first-steps",
+      "seed": 37,
+      "ticks": 1577,
+      "outcome": "won",
+      "finalHash": "446857b3c725ee92"
+    },
+    {
+      "level": "01-first-steps",
+      "seed": 704,
+      "ticks": 1417,
+      "outcome": "won",
+      "finalHash": "a2c56eeab0c7eda7"
+    },
+    {
+      "level": "02-neutral-ground",
+      "seed": 1,
+      "ticks": 879,
+      "outcome": "won",
+      "finalHash": "00b6de1238c4c433"
+    },
+    {
+      "level": "02-neutral-ground",
+      "seed": 2,
+      "ticks": 1245,
+      "outcome": "won",
+      "finalHash": "838c0108532ab67f"
+    },
+    {
+      "level": "02-neutral-ground",
+      "seed": 3,
+      "ticks": 952,
+      "outcome": "won",
+      "finalHash": "915e769908012a6d"
+    },
+    {
+      "level": "02-neutral-ground",
+      "seed": 5,
+      "ticks": 897,
+      "outcome": "won",
+      "finalHash": "5b76b891f1b851ef"
+    },
+    {
+      "level": "02-neutral-ground",
+      "seed": 8,
+      "ticks": 1816,
+      "outcome": "won",
+      "finalHash": "f1d6a1be5949612f"
+    },
+    {
+      "level": "02-neutral-ground",
+      "seed": 13,
+      "ticks": 907,
+      "outcome": "won",
+      "finalHash": "5a0a9a3be28a4d5a"
+    },
+    {
+      "level": "02-neutral-ground",
+      "seed": 37,
+      "ticks": 1009,
+      "outcome": "won",
+      "finalHash": "7ac251dd8f876d17"
+    },
+    {
+      "level": "02-neutral-ground",
+      "seed": 704,
+      "ticks": 2391,
+      "outcome": "won",
+      "finalHash": "77b23f410e4ee196"
+    },
+    {
+      "level": "03-full-tank",
+      "seed": 1,
+      "ticks": 641,
+      "outcome": "won",
+      "finalHash": "c7fbd958438cfd93"
+    },
+    {
+      "level": "03-full-tank",
+      "seed": 2,
+      "ticks": 1198,
+      "outcome": "won",
+      "finalHash": "1110f613e999c38a"
+    },
+    {
+      "level": "03-full-tank",
+      "seed": 3,
+      "ticks": 979,
+      "outcome": "won",
+      "finalHash": "38f075ce6e994745"
+    },
+    {
+      "level": "03-full-tank",
+      "seed": 5,
+      "ticks": 895,
+      "outcome": "won",
+      "finalHash": "bc5db9933435897f"
+    },
+    {
+      "level": "03-full-tank",
+      "seed": 8,
+      "ticks": 1494,
+      "outcome": "won",
+      "finalHash": "a7fe706f68295716"
+    },
+    {
+      "level": "03-full-tank",
+      "seed": 13,
+      "ticks": 1096,
+      "outcome": "won",
+      "finalHash": "8289c34f58f7d600"
+    },
+    {
+      "level": "03-full-tank",
+      "seed": 37,
+      "ticks": 815,
+      "outcome": "won",
+      "finalHash": "92d16f8ce2593a91"
+    },
+    {
+      "level": "03-full-tank",
+      "seed": 704,
+      "ticks": 1322,
+      "outcome": "won",
+      "finalHash": "612219daee19f65c"
+    },
+    {
+      "level": "04-two-streams",
+      "seed": 1,
+      "ticks": 1573,
+      "outcome": "won",
+      "finalHash": "6ab5822472f1de29"
+    },
+    {
+      "level": "04-two-streams",
+      "seed": 2,
+      "ticks": 1310,
+      "outcome": "won",
+      "finalHash": "d83b4db4b46ba3b5"
+    },
+    {
+      "level": "04-two-streams",
+      "seed": 3,
+      "ticks": 1908,
+      "outcome": "won",
+      "finalHash": "f351a0db906a1a76"
+    },
+    {
+      "level": "04-two-streams",
+      "seed": 5,
+      "ticks": 980,
+      "outcome": "won",
+      "finalHash": "2cb7ede13a0d7878"
+    },
+    {
+      "level": "04-two-streams",
+      "seed": 8,
+      "ticks": 2315,
+      "outcome": "won",
+      "finalHash": "828a9865daec1277"
+    },
+    {
+      "level": "04-two-streams",
+      "seed": 13,
+      "ticks": 1789,
+      "outcome": "won",
+      "finalHash": "7fba272983b5490c"
+    },
+    {
+      "level": "04-two-streams",
+      "seed": 37,
+      "ticks": 1144,
+      "outcome": "won",
+      "finalHash": "38beaac95e541ed5"
+    },
+    {
+      "level": "04-two-streams",
+      "seed": 704,
+      "ticks": 1950,
+      "outcome": "won",
+      "finalHash": "8b2668202d2ed057"
+    },
+    {
+      "level": "05-head-on",
+      "seed": 1,
+      "ticks": 1053,
+      "outcome": "won",
+      "finalHash": "853ee016846e210e"
+    },
+    {
+      "level": "05-head-on",
+      "seed": 2,
+      "ticks": 1175,
+      "outcome": "won",
+      "finalHash": "9c6dff01c9e7c5c6"
+    },
+    {
+      "level": "05-head-on",
+      "seed": 3,
+      "ticks": 1161,
+      "outcome": "won",
+      "finalHash": "ad08aa63816ea729"
+    },
+    {
+      "level": "05-head-on",
+      "seed": 5,
+      "ticks": 1293,
+      "outcome": "won",
+      "finalHash": "cc9153aa9d3c6a02"
+    },
+    {
+      "level": "05-head-on",
+      "seed": 8,
+      "ticks": 1562,
+      "outcome": "won",
+      "finalHash": "77d8939df2f575af"
+    },
+    {
+      "level": "05-head-on",
+      "seed": 13,
+      "ticks": 1637,
+      "outcome": "won",
+      "finalHash": "26a0dfd8e76e6bcb"
+    },
+    {
+      "level": "05-head-on",
+      "seed": 37,
+      "ticks": 1110,
+      "outcome": "won",
+      "finalHash": "536a252c32993693"
+    },
+    {
+      "level": "05-head-on",
+      "seed": 704,
+      "ticks": 1312,
+      "outcome": "won",
+      "finalHash": "6661b56c3f6177cd"
+    },
+    {
+      "level": "06-snip",
+      "seed": 1,
+      "ticks": 1048,
+      "outcome": "won",
+      "finalHash": "3fcfe51423cfef49"
+    },
+    {
+      "level": "06-snip",
+      "seed": 2,
+      "ticks": 1048,
+      "outcome": "won",
+      "finalHash": "8938f97fa21ae582"
+    },
+    {
+      "level": "06-snip",
+      "seed": 3,
+      "ticks": 1168,
+      "outcome": "won",
+      "finalHash": "bc2b06512aaa6d38"
+    },
+    {
+      "level": "06-snip",
+      "seed": 5,
+      "ticks": 1013,
+      "outcome": "won",
+      "finalHash": "1774efa3e8b8ec6a"
+    },
+    {
+      "level": "06-snip",
+      "seed": 8,
+      "ticks": 808,
+      "outcome": "won",
+      "finalHash": "25f901fe3f2a7701"
+    },
+    {
+      "level": "06-snip",
+      "seed": 13,
+      "ticks": 1608,
+      "outcome": "won",
+      "finalHash": "6a19bd7408fc24ff"
+    },
+    {
+      "level": "06-snip",
+      "seed": 37,
+      "ticks": 1036,
+      "outcome": "won",
+      "finalHash": "906ca0cfa9e5aff5"
+    },
+    {
+      "level": "06-snip",
+      "seed": 704,
+      "ticks": 551,
+      "outcome": "won",
+      "finalHash": "f0ec2bcbf88283b0"
+    },
+    {
+      "level": "07-skyscraper",
+      "seed": 1,
+      "ticks": 1433,
+      "outcome": "won",
+      "finalHash": "de1e1cf303e90206"
+    },
+    {
+      "level": "07-skyscraper",
+      "seed": 2,
+      "ticks": 1373,
+      "outcome": "won",
+      "finalHash": "9d2754743a8597e0"
+    },
+    {
+      "level": "07-skyscraper",
+      "seed": 3,
+      "ticks": 1819,
+      "outcome": "won",
+      "finalHash": "a79ebc767474daad"
+    },
+    {
+      "level": "07-skyscraper",
+      "seed": 5,
+      "ticks": 1095,
+      "outcome": "won",
+      "finalHash": "0f441bff71d93090"
+    },
+    {
+      "level": "07-skyscraper",
+      "seed": 8,
+      "ticks": 1040,
+      "outcome": "won",
+      "finalHash": "87ca28e1d08ffd7b"
+    },
+    {
+      "level": "07-skyscraper",
+      "seed": 13,
+      "ticks": 1013,
+      "outcome": "won",
+      "finalHash": "f62b887c4c7ae564"
+    },
+    {
+      "level": "07-skyscraper",
+      "seed": 37,
+      "ticks": 1044,
+      "outcome": "won",
+      "finalHash": "07c1ec78847f9ae0"
+    },
+    {
+      "level": "07-skyscraper",
+      "seed": 704,
+      "ticks": 976,
+      "outcome": "won",
+      "finalHash": "3a920d6a22929a99"
+    },
+    {
+      "level": "08-fork",
+      "seed": 1,
+      "ticks": 1183,
+      "outcome": "won",
+      "finalHash": "595f9df4e3254d15"
+    },
+    {
+      "level": "08-fork",
+      "seed": 2,
+      "ticks": 1926,
+      "outcome": "won",
+      "finalHash": "fc89c4c1a366be96"
+    },
+    {
+      "level": "08-fork",
+      "seed": 3,
+      "ticks": 2420,
+      "outcome": "won",
+      "finalHash": "ba2b5f55ba5ce5ce"
+    },
+    {
+      "level": "08-fork",
+      "seed": 5,
+      "ticks": 2540,
+      "outcome": "won",
+      "finalHash": "8196661d4df4f69b"
+    },
+    {
+      "level": "08-fork",
+      "seed": 8,
+      "ticks": 1429,
+      "outcome": "won",
+      "finalHash": "aff750737867a197"
+    },
+    {
+      "level": "08-fork",
+      "seed": 13,
+      "ticks": 1963,
+      "outcome": "won",
+      "finalHash": "00a5bc634e1ca4fb"
+    },
+    {
+      "level": "08-fork",
+      "seed": 37,
+      "ticks": 1799,
+      "outcome": "won",
+      "finalHash": "593b3ce02d8999e1"
+    },
+    {
+      "level": "08-fork",
+      "seed": 704,
+      "ticks": 1161,
+      "outcome": "won",
+      "finalHash": "f41d3a7577473cf7"
+    },
+    {
+      "level": "09-chain-link",
+      "seed": 1,
+      "ticks": 974,
+      "outcome": "won",
+      "finalHash": "b1bdccf6e7fa77f3"
+    },
+    {
+      "level": "09-chain-link",
+      "seed": 2,
+      "ticks": 1476,
+      "outcome": "won",
+      "finalHash": "5d24b60721855f61"
+    },
+    {
+      "level": "09-chain-link",
+      "seed": 3,
+      "ticks": 1594,
+      "outcome": "won",
+      "finalHash": "299412cba22ac668"
+    },
+    {
+      "level": "09-chain-link",
+      "seed": 5,
+      "ticks": 1420,
+      "outcome": "won",
+      "finalHash": "c5ef7566c78fbd14"
+    },
+    {
+      "level": "09-chain-link",
+      "seed": 8,
+      "ticks": 3010,
+      "outcome": "won",
+      "finalHash": "8c432a597def574d"
+    },
+    {
+      "level": "09-chain-link",
+      "seed": 13,
+      "ticks": 1268,
+      "outcome": "won",
+      "finalHash": "e2fbf1c352742b17"
+    },
+    {
+      "level": "09-chain-link",
+      "seed": 37,
+      "ticks": 1351,
+      "outcome": "won",
+      "finalHash": "7bc762172861b0cd"
+    },
+    {
+      "level": "09-chain-link",
+      "seed": 704,
+      "ticks": 1637,
+      "outcome": "won",
+      "finalHash": "d8cf083f1155207c"
+    },
+    {
+      "level": "10-two-foes",
+      "seed": 1,
+      "ticks": 2366,
+      "outcome": "won",
+      "finalHash": "89972374aa962c13"
+    },
+    {
+      "level": "10-two-foes",
+      "seed": 2,
+      "ticks": 1967,
+      "outcome": "won",
+      "finalHash": "4e0364007c9fd145"
+    },
+    {
+      "level": "10-two-foes",
+      "seed": 3,
+      "ticks": 3475,
+      "outcome": "lost",
+      "finalHash": "c19e8856b08ffb6b"
+    },
+    {
+      "level": "10-two-foes",
+      "seed": 5,
+      "ticks": 1872,
+      "outcome": "won",
+      "finalHash": "682d8103d73ff89a"
+    },
+    {
+      "level": "10-two-foes",
+      "seed": 8,
+      "ticks": 2166,
+      "outcome": "won",
+      "finalHash": "d568fcecaf5d4bec"
+    },
+    {
+      "level": "10-two-foes",
+      "seed": 13,
+      "ticks": 4114,
+      "outcome": "won",
+      "finalHash": "9649d785e0258497"
+    },
+    {
+      "level": "10-two-foes",
+      "seed": 37,
+      "ticks": 1772,
+      "outcome": "won",
+      "finalHash": "55b5d21364975884"
+    },
+    {
+      "level": "10-two-foes",
+      "seed": 704,
+      "ticks": 2108,
+      "outcome": "won",
+      "finalHash": "f09476a539896c18"
+    },
+    {
+      "level": "11-triple-threat",
+      "seed": 1,
+      "ticks": 3041,
+      "outcome": "won",
+      "finalHash": "010dc6911a53ed9e"
+    },
+    {
+      "level": "11-triple-threat",
+      "seed": 2,
+      "ticks": 2701,
+      "outcome": "lost",
+      "finalHash": "b0f777293c6c70f2"
+    },
+    {
+      "level": "11-triple-threat",
+      "seed": 3,
+      "ticks": 2656,
+      "outcome": "lost",
+      "finalHash": "357da6cf9378d86f"
+    },
+    {
+      "level": "11-triple-threat",
+      "seed": 5,
+      "ticks": 1983,
+      "outcome": "lost",
+      "finalHash": "7593eb166bc43d74"
+    },
+    {
+      "level": "11-triple-threat",
+      "seed": 8,
+      "ticks": 2107,
+      "outcome": "lost",
+      "finalHash": "eed8004edffe63b5"
+    },
+    {
+      "level": "11-triple-threat",
+      "seed": 13,
+      "ticks": 2963,
+      "outcome": "lost",
+      "finalHash": "9107128658594fa1"
+    },
+    {
+      "level": "11-triple-threat",
+      "seed": 37,
+      "ticks": 2201,
+      "outcome": "lost",
+      "finalHash": "18d5e15c93954432"
+    },
+    {
+      "level": "11-triple-threat",
+      "seed": 704,
+      "ticks": 3484,
+      "outcome": "won",
+      "finalHash": "323423d77b4ff179"
+    },
+    {
+      "level": "12-underdog",
+      "seed": 1,
+      "ticks": 1821,
+      "outcome": "won",
+      "finalHash": "d974c7909f1a32c8"
+    },
+    {
+      "level": "12-underdog",
+      "seed": 2,
+      "ticks": 1689,
+      "outcome": "lost",
+      "finalHash": "6dee29efb64b96c4"
+    },
+    {
+      "level": "12-underdog",
+      "seed": 3,
+      "ticks": 1777,
+      "outcome": "won",
+      "finalHash": "e47b219af1298b4e"
+    },
+    {
+      "level": "12-underdog",
+      "seed": 5,
+      "ticks": 1495,
+      "outcome": "won",
+      "finalHash": "1da852e845f303eb"
+    },
+    {
+      "level": "12-underdog",
+      "seed": 8,
+      "ticks": 1467,
+      "outcome": "won",
+      "finalHash": "1e5f80751f7bc91d"
+    },
+    {
+      "level": "12-underdog",
+      "seed": 13,
+      "ticks": 1907,
+      "outcome": "won",
+      "finalHash": "9858de00f9a169ed"
+    },
+    {
+      "level": "12-underdog",
+      "seed": 37,
+      "ticks": 1770,
+      "outcome": "won",
+      "finalHash": "52bb35fde111c90b"
+    },
+    {
+      "level": "12-underdog",
+      "seed": 704,
+      "ticks": 1237,
+      "outcome": "won",
+      "finalHash": "f703ae8147539d62"
+    },
+    {
+      "level": "13-crossfire",
+      "seed": 1,
+      "ticks": 6000,
+      "outcome": "timeout",
+      "finalHash": "5d24c9fb2a2dcd25"
+    },
+    {
+      "level": "13-crossfire",
+      "seed": 2,
+      "ticks": 2147,
+      "outcome": "lost",
+      "finalHash": "ca21d965a4ac2025"
+    },
+    {
+      "level": "13-crossfire",
+      "seed": 3,
+      "ticks": 2436,
+      "outcome": "lost",
+      "finalHash": "dd37771cad26e9d6"
+    },
+    {
+      "level": "13-crossfire",
+      "seed": 5,
+      "ticks": 2316,
+      "outcome": "lost",
+      "finalHash": "7bf6b8b38a991598"
+    },
+    {
+      "level": "13-crossfire",
+      "seed": 8,
+      "ticks": 2218,
+      "outcome": "won",
+      "finalHash": "167ba5c6279e821e"
+    },
+    {
+      "level": "13-crossfire",
+      "seed": 13,
+      "ticks": 4830,
+      "outcome": "won",
+      "finalHash": "4e3dbef34fd58374"
+    },
+    {
+      "level": "13-crossfire",
+      "seed": 37,
+      "ticks": 3131,
+      "outcome": "won",
+      "finalHash": "dab64abf2585adf8"
+    },
+    {
+      "level": "13-crossfire",
+      "seed": 704,
+      "ticks": 3388,
+      "outcome": "won",
+      "finalHash": "a2d2c2ffd8e95d60"
+    },
+    {
+      "level": "14-beat-the-clock",
+      "seed": 1,
+      "ticks": 2130,
+      "outcome": "won",
+      "finalHash": "28601fbedfa429fa"
+    },
+    {
+      "level": "14-beat-the-clock",
+      "seed": 2,
+      "ticks": 1419,
+      "outcome": "lost",
+      "finalHash": "031ce96637522b78"
+    },
+    {
+      "level": "14-beat-the-clock",
+      "seed": 3,
+      "ticks": 1371,
+      "outcome": "lost",
+      "finalHash": "c7757f6ef484c7f6"
+    },
+    {
+      "level": "14-beat-the-clock",
+      "seed": 5,
+      "ticks": 2466,
+      "outcome": "lost",
+      "finalHash": "b05cf06f5bc9369d"
+    },
+    {
+      "level": "14-beat-the-clock",
+      "seed": 8,
+      "ticks": 1297,
+      "outcome": "lost",
+      "finalHash": "283667f3e7738db2"
+    },
+    {
+      "level": "14-beat-the-clock",
+      "seed": 13,
+      "ticks": 1207,
+      "outcome": "lost",
+      "finalHash": "6854f730a7ba6d7d"
+    },
+    {
+      "level": "14-beat-the-clock",
+      "seed": 37,
+      "ticks": 1295,
+      "outcome": "won",
+      "finalHash": "b12ea20139bae11f"
+    },
+    {
+      "level": "14-beat-the-clock",
+      "seed": 704,
+      "ticks": 960,
+      "outcome": "lost",
+      "finalHash": "12b5d258f385f975"
+    },
+    {
+      "level": "15-hub",
+      "seed": 1,
+      "ticks": 1867,
+      "outcome": "lost",
+      "finalHash": "51e062b269a4e54c"
+    },
+    {
+      "level": "15-hub",
+      "seed": 2,
+      "ticks": 2153,
+      "outcome": "won",
+      "finalHash": "47d7e3af39d4e07b"
+    },
+    {
+      "level": "15-hub",
+      "seed": 3,
+      "ticks": 3023,
+      "outcome": "lost",
+      "finalHash": "3cd55dde548d0fc6"
+    },
+    {
+      "level": "15-hub",
+      "seed": 5,
+      "ticks": 2037,
+      "outcome": "won",
+      "finalHash": "883df864e88ee13d"
+    },
+    {
+      "level": "15-hub",
+      "seed": 8,
+      "ticks": 1293,
+      "outcome": "lost",
+      "finalHash": "865be38f55fa40cf"
+    },
+    {
+      "level": "15-hub",
+      "seed": 13,
+      "ticks": 1829,
+      "outcome": "lost",
+      "finalHash": "207c9301f47b2e21"
+    },
+    {
+      "level": "15-hub",
+      "seed": 37,
+      "ticks": 1439,
+      "outcome": "lost",
+      "finalHash": "893e6de47705be25"
+    },
+    {
+      "level": "15-hub",
+      "seed": 704,
+      "ticks": 1756,
+      "outcome": "lost",
+      "finalHash": "bdda7fd16dfb5bde"
+    },
+    {
+      "level": "16-fortress",
+      "seed": 1,
+      "ticks": 1572,
+      "outcome": "won",
+      "finalHash": "1016d05f0dac70e4"
+    },
+    {
+      "level": "16-fortress",
+      "seed": 2,
+      "ticks": 3408,
+      "outcome": "won",
+      "finalHash": "d1903ae865d44ac1"
+    },
+    {
+      "level": "16-fortress",
+      "seed": 3,
+      "ticks": 3342,
+      "outcome": "won",
+      "finalHash": "59103b06c849764a"
+    },
+    {
+      "level": "16-fortress",
+      "seed": 5,
+      "ticks": 2879,
+      "outcome": "won",
+      "finalHash": "304713a440125240"
+    },
+    {
+      "level": "16-fortress",
+      "seed": 8,
+      "ticks": 6000,
+      "outcome": "timeout",
+      "finalHash": "80d6cd998c57feaf"
+    },
+    {
+      "level": "16-fortress",
+      "seed": 13,
+      "ticks": 1816,
+      "outcome": "won",
+      "finalHash": "1462003c2536bde3"
+    },
+    {
+      "level": "16-fortress",
+      "seed": 37,
+      "ticks": 2722,
+      "outcome": "won",
+      "finalHash": "e94527b246ebc320"
+    },
+    {
+      "level": "16-fortress",
+      "seed": 704,
+      "ticks": 2656,
+      "outcome": "won",
+      "finalHash": "f26e2840041ed3a1"
+    },
+    {
+      "level": "17-pincer",
+      "seed": 1,
+      "ticks": 1488,
+      "outcome": "lost",
+      "finalHash": "e9407c260ac059de"
+    },
+    {
+      "level": "17-pincer",
+      "seed": 2,
+      "ticks": 3937,
+      "outcome": "lost",
+      "finalHash": "be534b4d7115a9f2"
+    },
+    {
+      "level": "17-pincer",
+      "seed": 3,
+      "ticks": 3668,
+      "outcome": "won",
+      "finalHash": "d7c7588beb0bc7fd"
+    },
+    {
+      "level": "17-pincer",
+      "seed": 5,
+      "ticks": 2742,
+      "outcome": "lost",
+      "finalHash": "06fa9f180f2db5ec"
+    },
+    {
+      "level": "17-pincer",
+      "seed": 8,
+      "ticks": 2196,
+      "outcome": "lost",
+      "finalHash": "40b8d41fb7f4cd5b"
+    },
+    {
+      "level": "17-pincer",
+      "seed": 13,
+      "ticks": 3608,
+      "outcome": "lost",
+      "finalHash": "c028ad0a355aa354"
+    },
+    {
+      "level": "17-pincer",
+      "seed": 37,
+      "ticks": 4873,
+      "outcome": "won",
+      "finalHash": "b26bc124a81ed7f4"
+    },
+    {
+      "level": "17-pincer",
+      "seed": 704,
+      "ticks": 3144,
+      "outcome": "lost",
+      "finalHash": "19455988cb1d832c"
+    },
+    {
+      "level": "18-free-for-all",
+      "seed": 1,
+      "ticks": 1450,
+      "outcome": "lost",
+      "finalHash": "b8e7ed611dc14f9e"
+    },
+    {
+      "level": "18-free-for-all",
+      "seed": 2,
+      "ticks": 1299,
+      "outcome": "lost",
+      "finalHash": "674f622a217ab0cd"
+    },
+    {
+      "level": "18-free-for-all",
+      "seed": 3,
+      "ticks": 3852,
+      "outcome": "won",
+      "finalHash": "86e9b83571a7d574"
+    },
+    {
+      "level": "18-free-for-all",
+      "seed": 5,
+      "ticks": 2974,
+      "outcome": "lost",
+      "finalHash": "aa3944e452f5af83"
+    },
+    {
+      "level": "18-free-for-all",
+      "seed": 8,
+      "ticks": 4482,
+      "outcome": "won",
+      "finalHash": "3d4eba1b3ad1ca30"
+    },
+    {
+      "level": "18-free-for-all",
+      "seed": 13,
+      "ticks": 2660,
+      "outcome": "lost",
+      "finalHash": "0449be112ac0df2b"
+    },
+    {
+      "level": "18-free-for-all",
+      "seed": 37,
+      "ticks": 2517,
+      "outcome": "lost",
+      "finalHash": "7d8cd4fc75944ecc"
+    },
+    {
+      "level": "18-free-for-all",
+      "seed": 704,
+      "ticks": 1604,
+      "outcome": "lost",
+      "finalHash": "011c6cc9a9a6f29a"
+    },
+    {
+      "level": "19-siege",
+      "seed": 1,
+      "ticks": 2481,
+      "outcome": "won",
+      "finalHash": "80707fffb01d27da"
+    },
+    {
+      "level": "19-siege",
+      "seed": 2,
+      "ticks": 3331,
+      "outcome": "won",
+      "finalHash": "538faf8b3475f146"
+    },
+    {
+      "level": "19-siege",
+      "seed": 3,
+      "ticks": 1415,
+      "outcome": "lost",
+      "finalHash": "fb74abf94316a73d"
+    },
+    {
+      "level": "19-siege",
+      "seed": 5,
+      "ticks": 1869,
+      "outcome": "lost",
+      "finalHash": "35167a6314e7b44d"
+    },
+    {
+      "level": "19-siege",
+      "seed": 8,
+      "ticks": 7200,
+      "outcome": "timeout",
+      "finalHash": "6bcca024f6e87e23"
+    },
+    {
+      "level": "19-siege",
+      "seed": 13,
+      "ticks": 1881,
+      "outcome": "lost",
+      "finalHash": "b929afa1a62c90fe"
+    },
+    {
+      "level": "19-siege",
+      "seed": 37,
+      "ticks": 2104,
+      "outcome": "lost",
+      "finalHash": "59289894d229288d"
+    },
+    {
+      "level": "19-siege",
+      "seed": 704,
+      "ticks": 1946,
+      "outcome": "lost",
+      "finalHash": "d1f06109a63f98fc"
+    },
+    {
+      "level": "20-finale",
+      "seed": 1,
+      "ticks": 3335,
+      "outcome": "won",
+      "finalHash": "afdb7471f19898c4"
+    },
+    {
+      "level": "20-finale",
+      "seed": 2,
+      "ticks": 2808,
+      "outcome": "won",
+      "finalHash": "16fe3922afa3a87f"
+    },
+    {
+      "level": "20-finale",
+      "seed": 3,
+      "ticks": 4718,
+      "outcome": "lost",
+      "finalHash": "933337f39e51b5d7"
+    },
+    {
+      "level": "20-finale",
+      "seed": 5,
+      "ticks": 4430,
+      "outcome": "won",
+      "finalHash": "05c735f329f2c3da"
+    },
+    {
+      "level": "20-finale",
+      "seed": 8,
+      "ticks": 4897,
+      "outcome": "won",
+      "finalHash": "7e6b5e64b5caa812"
+    },
+    {
+      "level": "20-finale",
+      "seed": 13,
+      "ticks": 2765,
+      "outcome": "lost",
+      "finalHash": "8dd1d45c73515b89"
+    },
+    {
+      "level": "20-finale",
+      "seed": 37,
+      "ticks": 2644,
+      "outcome": "won",
+      "finalHash": "adb516e7fbc9532d"
+    },
+    {
+      "level": "20-finale",
+      "seed": 704,
+      "ticks": 2566,
+      "outcome": "won",
+      "finalHash": "c8c36ad2eed54ad9"
+    }
+  ]
+}
