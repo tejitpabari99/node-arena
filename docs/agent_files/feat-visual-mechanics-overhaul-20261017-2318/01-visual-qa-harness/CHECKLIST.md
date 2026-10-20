@@ -77,6 +77,13 @@ Status column: `cal` = threshold measured on the refs (this PRD), `prov` = provi
 | M18 | palette distance (objective check for V02/V04/V05): total-variation distance between class-share vectors {grass, sand, rock, white, grey, team-sat, other} of the capture and of the best mapped ref, for (i) the whole frame and (ii) the crop of the first owned tower vs a ref tower crop (`ref-calib.json`) | pixels | (i) <=0.20, (ii) <=0.20 | tw01 vs yt1 frame TV = 0.125 (two refs of the same look pass) | cal |
 | M19 | roof-decal pixel visibility, probe-independent (objective check for V07/V08): in the upper 45% of each tower crop, >=1 white-fill component (S<=.25,V>=.70) with a dark-outline ring (within 2 px: V<=.25, or >=0.15 darker than the surrounding roof plate), <=0.3 x tower width wide, centred in the upper 60% of the roof locator on a lit plate (V>=.45), height (fill + ring) >= 0.10 x tower width; the number is the tallest such glyph on the topmost glyph row (fill pieces stacked with no empty row between them count as one glyph); plus the count of circular bright/dim dot blobs (min size in both axes) centred under the whole number within 1.3 glyph heights equals the sim's slot count (`__na` sim view, not the probe) | pixels + sim view | 100% of towers; dots match 100% | tw01/yt1: every tower has outlined number + 1-3 dots (verified visually). T8 `visual:calibrate`: outlined number 7/7 towers, dots match 7/7 (tw01 1/1/1/2, yt1 3/3/3), pass both; v1 captures 0 | cal |
 | M20 | floor stripes (objective check for V05/V06): along the vertical centre line of the tower rect, count runs of white-body pixels (>= max(1, round(0.03 x tower w)) px, i.e. 2 px from ~50 px tower width, 1 px below) between roof cap and plinth | pixels | runs within [floors-1, floors+1] and >=1 team-sat band run per white run | yt1 38: 3-4 white runs between blue bands. T8 `visual:calibrate` (start row = bottom of digit + dots): match 1 on tw01 (2w/2b, 1w/1b, 2w/2b) and yt1 (4w/4b x2, 4w/5b), pass both | cal |
+| H01 | pill centre x vs viewport centre x | dom (HUD record) | pill centre within +-2% of viewport centre x | PRD SP05 spec (towerwar_yt1, towerwar_09 pill layout) | prov |
+| H02 | pill top edge, % of viewport height | dom (HUD record) | pill top <= 4% of viewport height | PRD SP05 spec (towerwar_yt1, towerwar_09 pill layout) | prov |
+| H03 | pause and speed button size, CSS px (both sides) | dom (HUD record) | buttons >= 44 px and <= 64 px | PRD SP05 spec (towerwar_yt1, towerwar_09 pill layout) | prov |
+| H04 | HUD DOM area / viewport area (data-hud elements, nested counted once) | dom (HUD record) | HUD DOM area / viewport <= 12% | PRD SP05 spec (towerwar_yt1, towerwar_09 pill layout) | prov |
+| H05 | bottom help bar (.instructions) count | dom (HUD record) | bottom help bar count 0 | PRD SP05 spec (towerwar_yt1, towerwar_09 pill layout) | prov |
+| H06 | meter segment widths: sum vs bar width, and share vs strength() from window.__na.strength() | dom + sim | segment widths sum to bar width +-1 px and match strength() +-2% | PRD SP05 spec (towerwar_yt1, towerwar_09 pill layout) | prov |
+| H07 | pill text colour vs resolved pill background (WCAG contrast) | dom computed style | pill text contrast >= 4.5:1 | PRD SP05 spec (towerwar_yt1, towerwar_09 pill layout) | prov |
 
 ### B.1 Machine limits (mirror of `thresholds.json`; must match exactly)
 
@@ -102,6 +109,22 @@ Status column: `cal` = threshold measured on the refs (this PRD), `prov` = provi
 | M18 | cal | l01, l10, l10cb, l18, clash | 1920x1080, 1366x768 | `{"frame":{"max":0.2},"tower":{"max":0.2}}` |
 | M19 | cal | l01, l10, l10cb, l18, clash | 1920x1080, 1366x768 | `{"minDigitRatio":0.1,"numberShare":{"min":1},"dotsShare":{"min":1}}` |
 | M20 | cal | l01, l10, l10cb, l18 | 1920x1080, 1366x768 | `{"slack":1,"matchShare":{"min":1}}` |
+| H01 | prov | l01, l01-tip, l10, l10cb, l18 | 1920x1080, 1366x768 | `{"centreOffset":{"max":0.02}}` |
+| H02 | prov | l01, l01-tip, l10, l10cb, l18 | 1920x1080, 1366x768 | `{"topShare":{"max":0.04}}` |
+| H03 | prov | l01, l01-tip, l10, l10cb, l18 | 1920x1080, 1366x768 | `{"size":{"min":44,"max":64}}` |
+| H04 | prov | l01, l01-tip, l10, l10cb, l18 | 1920x1080, 1366x768 | `{"areaShare":{"max":0.12}}` |
+| H05 | prov | l01, l01-tip, l10, l10cb, l18 | 1920x1080, 1366x768 | `{"count":{"eq":0}}` |
+| H06 | prov | l01, l01-tip, l10, l10cb, l18 | 1920x1080, 1366x768 | `{"sumPx":{"max":1},"shareErr":{"max":0.02}}` |
+| H07 | prov | l01, l01-tip, l10, l10cb, l18 | 1920x1080, 1366x768 | `{"ratio":{"min":4.5}}` |
+
+### B.2 HUD DOM contract (SP05 Task 3; H01-H07; evaluator `apps/web/visual/lib/hud-metrics.mjs`)
+
+H ids are distinct from M01-M20 and add no CHECKLIST columns. The HUD (SP05 Task 4) must expose these hooks; `visual:capture` stores a `hud` record per level frame in `metrics.json` and `visual:check` evaluates H01-H07 from it (H rows fail until the HUD exists: null never passes).
+
+- `[data-hud="root"]` HUD container; `[data-hud="pill"]` top-centre pill (H01 centre, H02 top, H07 colours: pill `color` vs first non-transparent `background-color` up the ancestors); `[data-hud="meter"]` strength bar with `role="meter"`, containing `[data-hud-seg][data-team="<sim team id>"]` per team in `strength()` order (H06); `[data-hud="pause"]` and `[data-hud="speed"]` round buttons (H03); optional `[data-hud="tip"]`.
+- H04 area = sum of bounding boxes of `[data-hud]` elements other than root, nested ones counted once. H05 counts `.instructions` elements (v1 bottom help bar).
+- H06 expected shares come from the test harness `window.__na.strength()` (pure `strength()` of the current sim view), not from the meter's aria text.
+- Capture settings: every scene runs with `tipSeen: true` except `l01-tip` (fresh, tip visible); `l01-tip` has no scripted commands (the first DrawLine dismisses the tip).
 
 ### Colour spec
 

@@ -4,6 +4,7 @@ import { TICK_RATE } from '@node-arena/sim';
 import { Color, Mesh, ShaderMaterial, Vector3, type Scene, type WebGLRenderer } from 'three';
 import { buildVisualProbe, type HarnessRendererHooks } from './probe';
 import type { AppController } from '../app/state';
+import { strength } from '../ui/strength';
 import type { createTowerRenderer } from '../render/towers';
 import type { createFxRenderer } from '../render/fx';
 import type { PerspectiveCamera } from 'three';
@@ -48,6 +49,10 @@ export function createTestHarness(files: ContentFileMap) {
         async load(id: string, seed?: number) { savedBackground = undefined; if (app.runtime) retired.push(inspect().renderer); await app.startLevel(id, seed); },
         menu() { if (app.runtime) retired.push(inspect().renderer); app.menu(); },
         submit: (cmd: Command) => app.driver?.submit(cmd),
+        /** SP05 HUD harness: pause like the Pause button / Esc (screen becomes `paused`). */
+        pause() { app.pause(); },
+        /** SP05 HUD harness (H06): the pure `strength()` of the current view, for comparing with the meter segments. */
+        strength() { return strength(app.driver!.sim.view, { colorblind: app.snapshot().save.settings.colorblind }); },
         render,
         replay() { const record = recorder.record(); const result = playReplay({ level, metadata }, record); return { ok: result.ok, hash: result.sim.hash(), record }; },
         project(id: string) {

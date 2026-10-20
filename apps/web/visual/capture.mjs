@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // visual:capture (PRD SP01 Req 1, 2, 4, 9): deterministic screenshots + probe JSON of the scenes in scenes.json.
-// Usage: pnpm --filter @node-arena/web visual:capture [--scene id] [--viewport WxH] [--headed] [--gpu] [--dev] [--no-build]
+// Usage: pnpm --filter @node-arena/web visual:capture [--scene id] [--viewport WxH] [--headed] [--gpu] [--dev] [--no-build] [--all-levels]
 // Output (git-ignored): apps/web/visual-out/{<scene>-<WxH>[-<label>].png, <scene>-<WxH>[-<label>]-magenta.png (M07 pass, first frame
 // of each level job), metrics.json (probe + dom + sim per frame; l18@1920x1080 `perf` for M13), run.json}
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { captureJobs, frameFile, loadScenes, OUT_DIR, parseArgs, parseViewport, sceneFrames } from './lib/scenes.mjs';
+import { allScenes, captureJobs, frameFile, loadScenes, OUT_DIR, parseArgs, parseViewport, sceneFrames } from './lib/scenes.mjs';
+import { collectHud, HUD_SELECTORS } from './lib/hud-metrics.mjs';
 import { BASE_URL, buildTest, CLOCK_TIME, gitCommit, launch, newContext, resolveFonts, startServer, until } from './lib/browser.mjs';
 
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
@@ -193,9 +194,21 @@ async function captureLevel(page, scene, config, viewport) {
       }, [frame.after.event, 5000]);
       if (found === null) throw new Error(`no ${frame.after.event} event`);
       target = found + frame.after.plus;
-    } else throw new Error(`frame without tick/relative/after in ${scene.id}`);
+    } else if (frame.action === 'results') {
+      await advanceTo(await tick()); // submit due scripted commands
+      target = await tick();
+    } else throw new Error(`frame without tick/relative/after/action in ${scene.id}`);
     if (target < await tick()) throw new Error(`frame tick ${target} already passed in ${scene.id}`);
     await advanceTo(target, { perTick: traceEnd !== null, settle: frame.settle });
+    if (frame.action === 'pause') {
+      await page.evaluate(() => window.__na.pause());
+      await until(page, () => window.__na.screen === 'paused', undefined, { what: `${scene.id} paused screen` });
+    } else if (frame.action === 'results') {
+      // Bounded fast-forward: the sim ends by its time limit at the latest (L1: 180 s = 3600 ticks); 40 x 500 ticks cap.
+      const reached = await page.evaluate(() => { for (let i = 0; i < 40 && window.__na.screen !== 'results'; i++) window.__na.step(500); return window.__na.screen; });
+      if (reached !== 'results') throw new Error(`${scene.id}: no result screen after 20000 ticks (screen ${reached})`);
+      await until(page, () => document.querySelector('[data-outcome]') !== null, undefined, { what: `${scene.id} results overlay` });
+    }
     await finishFrame(page, frame.settle);
     if (scene.laneCrop && !laneRect) laneRect = await page.evaluate(({ from, to, w, h }) => {
       const a = window.__na.project(from), b = window.__na.project(to), pad = 24;
@@ -206,7 +219,8 @@ async function captureLevel(page, scene, config, viewport) {
     const state = await page.evaluate(frameState);
     const vp = `${viewport.width}x${viewport.height}`;
     const shot = await screenshot(page, frameFile(scene.id, vp, frame.label));
-    const entry = { label: frame.label, settle: frame.settle, ...shot, tick: state.tick, simHash: state.hash, over: state.over, screen: state.screen, probe: state.probe, dom: state.dom, sim: state.sim };
+    const hud = await page.evaluate(collectHud, HUD_SELECTORS); // SP05 H01-H07 (lib/hud-metrics.mjs)
+    const entry = { label: frame.label, settle: frame.settle, ...shot, tick: state.tick, simHash: state.hash, over: state.over, screen: state.screen, probe: state.probe, dom: state.dom, hud, sim: state.sim };
     if (laneRect) entry.laneCrop = { rect: laneRect, sha256: sha256(await page.screenshot({ clip: laneRect, animations: 'disabled', caret: 'hide', timeout: SHOT_TIMEOUT })) };
     if (!out.frames.length) entry.magenta = await magentaPass(page, frameFile(scene.id, vp, frame.label ? `${frame.label}-magenta` : 'magenta'), frame.settle);
     out.frames.push(entry);
@@ -248,7 +262,8 @@ async function captureJob(browser, config, scene, viewportId) {
     await page.goto(`${BASE_URL}/?test=1${scene.fixture ? `&fixture=${scene.fixture}` : ''}${LOD_QUERY}`);
     await until(page, () => window.__na?.screen === 'menu', undefined, { what: 'menu screen' });
     await page.mouse.move(viewport.width - 1, 0); // parked: top-right corner, away from towers/lanes/HUD buttons
-    const settings = { ...config.settings, ...(scene.settings ?? {}) };
+    // SP05: every scene runs with the first-level tip dismissed (tipSeen) except l01-tip (fresh storage, tip visible).
+    const settings = { tipSeen: true, ...config.settings, ...(scene.settings ?? {}) };
     await page.evaluate(s => window.__na.settings(s), settings);
     let result;
     if (scene.screen === 'menu') {
@@ -287,9 +302,10 @@ async function main() {
   const started = Date.now();
   try {
     const metricsFile = path.join(OUT_DIR, 'metrics.json');
-    const previous = opts.scenes.length || opts.viewports.length ? (fs.existsSync(metricsFile) ? JSON.parse(fs.readFileSync(metricsFile, 'utf8')) : null) : null;
+    const previous = opts.scenes.length || opts.viewports.length || opts.allLevels ? (fs.existsSync(metricsFile) ? JSON.parse(fs.readFileSync(metricsFile, 'utf8')) : null) : null;
     const scenes = {};
-    for (const s of config.scenes) if (previous?.scenes?.[s.id]) scenes[s.id] = previous.scenes[s.id];
+    const known = allScenes(config);
+    for (const s of known) if (previous?.scenes?.[s.id]) scenes[s.id] = previous.scenes[s.id];
     const css = new Set(), faces = new Set(), written = [];
     for (const { scene, viewport } of jobs) {
       let job = await captureJob(browser, config, scene, viewport);
@@ -314,7 +330,7 @@ async function main() {
     }
     // Stable key order: scenes.json order, viewports in capture order.
     const ordered = {};
-    for (const s of config.scenes) if (scenes[s.id]) ordered[s.id] = scenes[s.id];
+    for (const s of known) if (scenes[s.id]) ordered[s.id] = scenes[s.id];
     fs.writeFileSync(metricsFile, `${JSON.stringify({ schema: 1, seed: config.seed, scenes: ordered }, null, 2)}\n`);
 
     const glPage = await browser.newPage();

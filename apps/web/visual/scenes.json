@@ -55,6 +55,17 @@
         "laneCrop": { "from": "c", "to": "d" } } },
     { "id": "l10cb", "level": "10-two-foes", "settings": { "colorblind": true },
       "commands": [{ "type": "DrawLine", "player": "p1", "from": "home-1", "to": "edge-1" }],
-      "frames": [{ "tick": 400 }] }
+      "frames": [{ "tick": 400 }] },
+    { "id": "l01-tip", "level": "01-first-steps", "settings": { "tipSeen": false },
+      "$comment": "SP05: frame right after load with tipSeen fresh (tip visible once the HUD exists); no scripted line (the first DrawLine dismisses the tip).",
+      "frames": [{ "tick": 0 }] },
+    { "id": "pause", "level": "01-first-steps",
+      "$comment": "SP05: paused overlay; frame action `pause` = window.__na.pause() after reaching tick 240.",
+      "commands": [{ "type": "DrawLine", "player": "p1", "from": "t1", "to": "t2" }],
+      "frames": [{ "tick": 240, "action": "pause" }] },
+    { "id": "results", "level": "01-first-steps",
+      "$comment": "SP05: result screen; frame action `results` = step the sim until the result screen (bounded, deterministic).",
+      "commands": [{ "type": "DrawLine", "player": "p1", "from": "t1", "to": "t2" }],
+      "frames": [{ "action": "results" }] }
   ]
 }

@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { OUT_DIR, loadScenes } from './lib/scenes.mjs';
+import { OUT_DIR, levelScenes, loadScenes } from './lib/scenes.mjs';
 import { chromium } from '@playwright/test';
 import { gitCommit } from './lib/browser.mjs';
 import { resolveRefDir } from './lib/refs.mjs';
@@ -33,7 +33,8 @@ async function main() {
   const config = loadScenes(), refMap = loadRefMap(), refDir = resolveRefDir(), template = loadTemplate();
   const errors = validateRefMap(refMap, config, fs.readdirSync(refDir));
   if (errors.length) throw new Error(`ref-map.json invalid:\n  ${errors.join('\n  ')}`);
-  const known = config.scenes.map(s => s.id);
+  // lvl-NN (--all-levels) scenes are composed only when asked for by --scene.
+  const levels = levelScenes().filter(s => opts.scenes.includes(s.id)), known = [...config.scenes, ...levelScenes()].map(s => s.id);
   for (const id of opts.scenes) if (!known.includes(id)) throw new Error(`unknown scene ${id} (expected ${known.join('|')})`);
   const file = path.join(OUT_DIR, 'metrics.json');
   if (!fs.existsSync(file)) throw new Error(`${path.relative(process.cwd(), file)} missing: run visual:capture first`);
@@ -47,7 +48,7 @@ async function main() {
   try {
     const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, locale: 'en-US', timezoneId: 'UTC', colorScheme: 'light', reducedMotion: 'reduce' });
     const page = await context.newPage();
-    for (const scene of config.scenes) {
+    for (const scene of [...config.scenes, ...levels]) {
       if (opts.scenes.length && !opts.scenes.includes(scene.id)) continue;
       const byViewport = metrics.scenes?.[scene.id];
       if (!byViewport || !Object.keys(byViewport).length) { missing.push(scene.id); console.error(`[visual:compose] ${scene.id}: not in metrics.json (capture it first)`); continue; }

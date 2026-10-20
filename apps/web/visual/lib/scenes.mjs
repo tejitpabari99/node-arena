@@ -7,15 +7,32 @@ export const VISUAL_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.ur
 export const WEB_DIR = path.resolve(VISUAL_DIR, '..');
 export const OUT_DIR = path.join(WEB_DIR, 'visual-out');
 export const PORT = 4174;
+export const LEVELS_DIR = path.resolve(VISUAL_DIR, '../../../packages/content/data/levels');
+/** `--all-levels` capture tick (PRD SP05 R6). */
+export const ALL_LEVELS_TICK = 400;
 export const VIEWPORTS = ['1920x1080', '1366x768', '1920x1200'];
 
 export function loadScenes(file = path.join(VISUAL_DIR, 'scenes.json')) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
-/** `--scene id`, `--viewport WxH` (repeatable or comma list), `--headed`, `--gpu`, `--dev`, `--no-build`, `--lod low|high` (adds `?lod=` to the app URL; default auto). */
+/**
+ * `--all-levels` scenes (PRD SP05 R6): one per shipped level (`content/levels/NN-name.json`, not `sample.json`), id `lvl-NN`,
+ * no scripted commands, one settled frame at tick 400. Selected by `--all-levels` or `--scene lvl-NN`.
+ */
+export function levelScenes(dir = LEVELS_DIR) {
+  return fs.readdirSync(dir).filter(f => /^\d{2}-.+\.json$/.test(f)).sort()
+    .map(f => ({ id: `lvl-${f.slice(0, 2)}`, level: f.replace(/\.json$/, ''), generated: true, frames: [{ tick: ALL_LEVELS_TICK }] }));
+}
+
+/** scenes.json scenes plus the generated level scenes (metrics.json key order, valid `--scene` ids). */
+export function allScenes(config, dir = LEVELS_DIR) {
+  return [...config.scenes, ...levelScenes(dir)];
+}
+
+/** `--scene id`, `--viewport WxH` (repeatable or comma list), `--headed`, `--gpu`, `--dev`, `--no-build`, `--all-levels`, `--lod low|high` (adds `?lod=` to the app URL; default auto). */
 export function parseArgs(argv) {
-  const opts = { scenes: [], viewports: [], headed: false, gpu: false, dev: false, build: true, lod: null };
+  const opts = { scenes: [], viewports: [], headed: false, gpu: false, dev: false, build: true, lod: null, allLevels: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const [flag, inline] = arg.includes('=') ? [arg.slice(0, arg.indexOf('=')), arg.slice(arg.indexOf('=') + 1)] : [arg, undefined];
@@ -26,6 +43,7 @@ export function parseArgs(argv) {
     else if (flag === '--gpu') opts.gpu = true;
     else if (flag === '--dev') opts.dev = true;
     else if (flag === '--no-build') opts.build = false;
+    else if (flag === '--all-levels') opts.allLevels = true;
     else if (flag === '--lod') { opts.lod = value(); if (!['low', 'high'].includes(opts.lod)) throw new Error('--lod expects low|high'); }
     else throw new Error(`unknown argument ${arg}`);
   }
@@ -41,11 +59,11 @@ export function parseViewport(id) {
 
 /** Every (scene, viewport) capture job, in scenes.json order; filters from parseArgs. */
 export function captureJobs(config, opts = { scenes: [], viewports: [] }) {
-  const known = new Set(config.scenes.map(s => s.id));
+  const scenes = allScenes(config), known = new Set(scenes.map(s => s.id));
   for (const id of opts.scenes) if (!known.has(id)) throw new Error(`unknown scene ${id} (expected ${[...known].join('|')})`);
   const jobs = [];
-  for (const scene of config.scenes) {
-    if (opts.scenes.length && !opts.scenes.includes(scene.id)) continue;
+  for (const scene of scenes) {
+    if (opts.scenes.length ? !opts.scenes.includes(scene.id) : Boolean(opts.allLevels) !== Boolean(scene.generated)) continue;
     const viewports = [...config.viewports, ...Object.entries(config.extraViewports ?? {}).filter(([, ids]) => ids.includes(scene.id)).map(([v]) => v)];
     for (const viewport of viewports) if (!opts.viewports.length || opts.viewports.includes(viewport)) jobs.push({ scene, viewport });
   }
