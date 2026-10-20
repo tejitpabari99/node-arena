@@ -6,6 +6,7 @@ import { Disposables } from "../render/disposables";
 import { createLevelScene } from "../render/scene";
 import { createTowerRenderer } from "../render/towers";
 import { createTroopRenderer } from "../render/troops";
+import { parseLodMode } from "../render/troop-lod";
 import { createLineRenderer } from "../render/lines";
 import { createFxRenderer } from "../render/fx";
 import { createInputController } from "../input";
@@ -46,6 +47,8 @@ export function createBrowserRuntime(
       scope,
       reducedMotion: settings.reducedMotion,
       palette: settings.colorblind ? "colorblind" : "default",
+      now: () => performance.now(),
+      lod: parseLodMode(new URLSearchParams(window.location.search).get("lod")), // ?lod=low|high forces a set (visual harness); default auto
     });
     const lines = createLineRenderer({
       view: driver.sim.view,

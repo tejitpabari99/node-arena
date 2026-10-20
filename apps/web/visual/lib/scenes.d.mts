@@ -11,7 +11,7 @@ export interface Scene {
   splitTrace?: { ticks: number }; laneCrop?: { from: string; to: string }; silentBots?: boolean; fallback?: Partial<Scene>;
 }
 export interface ScenesConfig { seed: number; viewports: string[]; extraViewports?: Record<string, string[]>; settings: Record<string, unknown>; scenes: Scene[] }
-export interface CaptureOptions { scenes: string[]; viewports: string[]; headed: boolean; gpu: boolean; dev: boolean; build: boolean }
+export interface CaptureOptions { scenes: string[]; viewports: string[]; headed: boolean; gpu: boolean; dev: boolean; build: boolean; lod: 'low' | 'high' | null }
 export function loadScenes(file?: string): ScenesConfig;
 export function parseArgs(argv: string[]): CaptureOptions;
 export function parseViewport(id: string): { width: number; height: number };

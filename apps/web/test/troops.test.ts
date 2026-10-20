@@ -5,7 +5,7 @@ import type { Manifest } from '@node-arena/content';
 import manifestJSON from './fixtures/greybox-manifest.json';
 import { createTroopRenderer } from '../src/render/troops.js';
 import { Disposables } from '../src/render/disposables.js';
-function setup(count = 2) {
+function setup(count = 2, extra: Partial<Parameters<typeof createTroopRenderer>[0]> = {}) {
   const manifest = structuredClone(manifestJSON) as Manifest;
   manifest.models.fixture = { primitive: 'box', size: [1, 1, 1] };
   manifest.visuals['fixture.unit'] = { kind: 'troop', model: 'fixture', scale: 2, yOffset: 3, teamMaterial: 'shirt', tint: '#cccccc', anim: { type: 'bob', hz: 3, amp: .2, sway: 9 } };
@@ -14,13 +14,13 @@ function setup(count = 2) {
   let live = count;
   const readTroops = vi.fn((buf: TroopBuf) => { for (let i = 0; i < Math.min(live, buf.channel.length); i++) { buf.channel[i] = i % 2 ? 2 : 1; buf.owner[i] = i % 2; buf.kind[i] = i % 2; buf.seq[i] = i + 7; buf.progress[i] = 99500; } return live; });
   const scope = new Disposables(), scene = new Scene();
-  const renderer = createTroopRenderer({ sim: { view, readTroops }, scene, manifest, models: new Map([['fixture', source]]), scope, initialCapacity: 1 });
+  const renderer = createTroopRenderer({ sim: { view, readTroops }, scene, manifest, models: new Map([['fixture', source]]), scope, initialCapacity: 1, ...extra });
   return { renderer, readTroops, scene, scope, source, manifest, setLive: (n: number) => { live = n; } };
 }
 it('grows/rereads immediately, groups shared visuals by owner, and decodes cut channels with integer sim length units', () => {
   const f = setup(6); f.renderer.update(.5, 10);
-  expect(f.readTroops).toHaveBeenCalledTimes(2); expect(f.renderer.count).toBe(6); expect(f.renderer.meshes).toHaveLength(2);
-  const [a, b] = f.renderer.meshes; expect(a!.count).toBe(3); expect(b!.count).toBe(3);
+  expect(f.readTroops).toHaveBeenCalledTimes(2); expect(f.renderer.count).toBe(6); expect(f.renderer.meshes).toHaveLength(4); // high + low set per (visual, owner) bucket
+  const [a, b] = f.renderer.meshes; expect(a!.userData.lod).toBe('high'); expect(f.renderer.meshes[2]!.userData.lod).toBe('low'); expect(f.renderer.meshes[2]!.count).toBe(0); expect(a!.count).toBe(3); expect(b!.count).toBe(3);
   expect(a!.geometry.getAttribute('troopPose').array.slice(0, 4)).toEqual(new Float32Array([5, 0, -Math.PI / 2, 7]));
   expect(b!.geometry.getAttribute('troopPose').array.slice(0, 4)).toEqual(new Float32Array([5, 0, Math.PI / 2, 8]));
   expect(a!.geometry.getAttribute('troopPose')).not.toBe(b!.geometry.getAttribute('troopPose'));
@@ -53,7 +53,7 @@ it('resolves pose buffers once per bucket per frame and writes replacement buffe
   const f = setup(20); f.renderer.update(0, 0);
   for (const [count, alpha] of [[20, .5], [60, 1], [140, .25]] as const) {
     f.setLive(count); f.renderer.update(alpha, 1);
-    for (const [owner, mesh] of f.renderer.meshes.entries()) {
+    for (const [owner, mesh] of f.renderer.meshes.filter(m => m.userData.lod === 'high').entries()) {
       const attribute = mesh.geometry.getAttribute('troopPose') as InstancedBufferAttribute;
       let reads = 0;
       Object.defineProperty(mesh.geometry.attributes, 'troopPose', {
@@ -90,4 +90,38 @@ it('retains material groups, scope-owned texture wrappers, selective team masks 
   expect(copies[0]).not.toBe((renderer.meshes[1]!.material as MeshStandardMaterial[])[0]);
   f.scope.dispose(); expect(wrapperDispose).toHaveBeenCalledTimes(1); expect(textureDispose).not.toHaveBeenCalled(); new Disposables().object(source).dispose(); expect(textureDispose).toHaveBeenCalledTimes(1);
   new Disposables().object(f.source).dispose();
+});
+
+const lowOf = (f: ReturnType<typeof setup>) => f.renderer.meshes.filter(m => m.userData.lod === 'low'), highOf = (f: ReturnType<typeof setup>) => f.renderer.meshes.filter(m => m.userData.lod === 'high');
+const total = (meshes: readonly { count: number }[]) => meshes.reduce((sum, m) => sum + m.count, 0);
+it('lod forced high/low draws one set only; low set has the same tags, shared pose layout, ~80 tris and no extra attributes', () => {
+  for (const lod of ['high', 'low'] as const) {
+    const f = setup(10, { lod }); f.renderer.update(.5, 1);
+    expect(f.renderer.lod).toBe(lod); expect(total(highOf(f))).toBe(lod === 'high' ? 10 : 0); expect(total(lowOf(f))).toBe(lod === 'low' ? 10 : 0);
+    const [h, l] = [highOf(f)[0]!, lowOf(f)[0]!];
+    expect(l.userData).toEqual({ ...h.userData, lod: 'low' }); // height/width/baseY tags identical -> same placement for the probe
+    const pose = (m: typeof h) => Array.from(m.geometry.getAttribute('troopPose').array.slice(0, 4));
+    const [px, pz, pr, pw] = pose(lod === 'high' ? h : l); expect([px, pz, pw]).toEqual([5, 0, 7]); expect(pr).toBeCloseTo(-Math.PI / 2, 5);
+    const index = l.geometry.index, tris = (index ? index.count : l.geometry.getAttribute('position').count) / 3;
+    expect(tris).toBeGreaterThan(40); expect(tris).toBeLessThanOrEqual(100);
+    expect(l.geometry.groups).toHaveLength(1); expect(l.geometry.getAttribute('troopPose')).toBeDefined(); expect(l.geometry.getAttribute('teamMask')).toBeDefined(); expect((l.material as MeshStandardMaterial[])[0]!.vertexColors).toBe(true);
+    l.geometry.computeBoundingBox(); const lb = l.geometry.boundingBox!; h.geometry.computeBoundingBox(); const hb = h.geometry.boundingBox!;
+    expect((lb.max.y - lb.min.y) / (hb.max.y - hb.min.y)).toBeCloseTo(1, 2); expect(lb.min.y).toBeCloseTo(hb.min.y, 5);
+    f.scope.dispose(); new Disposables().object(f.source).dispose();
+  }
+});
+it('auto lod: both sets get pose data at <= 600 troops, only low above, swap is a count change with stable buffers', () => {
+  let t = 0; const f = setup(10, { now: () => t });
+  f.renderer.update(0, 1); expect(f.renderer.lod).toBe('high'); expect(total(highOf(f))).toBe(10); expect(total(lowOf(f))).toBe(0);
+  expect(lowOf(f)[0]!.geometry.getAttribute('troopPose').getW(0)).toBe(7); // low pose already written while high is shown
+  f.setLive(601); t += 16; f.renderer.update(0, 2);
+  expect(f.renderer.lod).toBe('low'); expect(total(highOf(f))).toBe(0); expect(total(lowOf(f))).toBe(601);
+  expect(highOf(f)[0]!.geometry.getAttribute('troopPose').getW(0)).toBe(0); // grown high buffer is never written above the threshold
+  expect(lowOf(f)[0]!.geometry.getAttribute('troopPose').getW(0)).toBe(7);
+  f.setLive(500); for (let i = 0; i < 400; i++) { t += 10; f.renderer.update(0, 3); } expect(f.renderer.lod).toBe('low'); // 500 is inside the hysteresis band
+  const stable = f.renderer.meshes.map(m => m.geometry.getAttribute('troopPose'));
+  f.setLive(399); for (let i = 0; i < 400; i++) { t += 10; f.renderer.update(0, 4); }
+  expect(f.renderer.lod).toBe('high'); expect(total(lowOf(f))).toBe(0); expect(total(highOf(f))).toBe(399);
+  expect(f.renderer.meshes.map(m => m.geometry.getAttribute('troopPose'))).toEqual(stable);
+  f.scope.dispose(); new Disposables().object(f.source).dispose();
 });

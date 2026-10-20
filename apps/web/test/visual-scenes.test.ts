@@ -51,8 +51,9 @@ describe('visual scenes.json + capture args (SP01 Task 3)', () => {
     }
   });
   it('parses capture flags', () => {
-    expect(parseArgs([])).toEqual({ scenes: [], viewports: [], headed: false, gpu: false, dev: false, build: true });
-    expect(parseArgs(['--scene', 'l01', '--viewport=1366x768', '--headed', '--gpu', '--no-build'])).toEqual({ scenes: ['l01'], viewports: ['1366x768'], headed: true, gpu: true, dev: false, build: false });
+    expect(parseArgs([])).toEqual({ scenes: [], viewports: [], headed: false, gpu: false, dev: false, build: true, lod: null });
+    expect(parseArgs(['--scene', 'l01', '--viewport=1366x768', '--headed', '--gpu', '--no-build'])).toEqual({ scenes: ['l01'], viewports: ['1366x768'], headed: true, gpu: true, dev: false, build: false, lod: null });
+    expect(parseArgs(['--lod', 'low']).lod).toBe('low'); expect(() => parseArgs(['--lod', 'mid'])).toThrow(/low|high/);
     expect(parseArgs(['--dev']).build).toBe(false);
     expect(() => parseArgs(['--viewport', '800x600'])).toThrow(/unknown viewport/);
     expect(() => parseArgs(['--bogus'])).toThrow(/unknown argument/);

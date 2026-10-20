@@ -13,9 +13,9 @@ export function loadScenes(file = path.join(VISUAL_DIR, 'scenes.json')) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
-/** `--scene id`, `--viewport WxH` (repeatable or comma list), `--headed`, `--gpu`, `--dev`, `--no-build`. */
+/** `--scene id`, `--viewport WxH` (repeatable or comma list), `--headed`, `--gpu`, `--dev`, `--no-build`, `--lod low|high` (adds `?lod=` to the app URL; default auto). */
 export function parseArgs(argv) {
-  const opts = { scenes: [], viewports: [], headed: false, gpu: false, dev: false, build: true };
+  const opts = { scenes: [], viewports: [], headed: false, gpu: false, dev: false, build: true, lod: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const [flag, inline] = arg.includes('=') ? [arg.slice(0, arg.indexOf('=')), arg.slice(arg.indexOf('=') + 1)] : [arg, undefined];
@@ -26,6 +26,7 @@ export function parseArgs(argv) {
     else if (flag === '--gpu') opts.gpu = true;
     else if (flag === '--dev') opts.dev = true;
     else if (flag === '--no-build') opts.build = false;
+    else if (flag === '--lod') { opts.lod = value(); if (!['low', 'high'].includes(opts.lod)) throw new Error('--lod expects low|high'); }
     else throw new Error(`unknown argument ${arg}`);
   }
   for (const v of opts.viewports) if (!VIEWPORTS.includes(v)) throw new Error(`unknown viewport ${v} (expected ${VIEWPORTS.join('|')})`);

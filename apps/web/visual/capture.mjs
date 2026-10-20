@@ -11,6 +11,8 @@ import { captureJobs, frameFile, loadScenes, OUT_DIR, parseArgs, parseViewport, 
 import { BASE_URL, buildTest, CLOCK_TIME, gitCommit, launch, newContext, resolveFonts, startServer, until } from './lib/browser.mjs';
 
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
+/** Set from `--lod`: appended to the app URL so the harness can force a troop LOD set. */
+let LOD_QUERY = '';
 const log = (...a) => console.log('[visual:capture]', ...a);
 /** SwiftShader screenshots of 1920px WebGL frames can exceed Playwright's 30 s default when the host is loaded. */
 const SHOT_TIMEOUT = 120_000;
@@ -243,7 +245,7 @@ async function captureJob(browser, config, scene, viewportId) {
   page.on('pageerror', e => errors.push(String(e?.stack ?? e)));
   try {
     await page.clock.install({ time: CLOCK_TIME });
-    await page.goto(`${BASE_URL}/?test=1${scene.fixture ? `&fixture=${scene.fixture}` : ''}`);
+    await page.goto(`${BASE_URL}/?test=1${scene.fixture ? `&fixture=${scene.fixture}` : ''}${LOD_QUERY}`);
     await until(page, () => window.__na?.screen === 'menu', undefined, { what: 'menu screen' });
     await page.mouse.move(viewport.width - 1, 0); // parked: top-right corner, away from towers/lanes/HUD buttons
     const settings = { ...config.settings, ...(scene.settings ?? {}) };
@@ -274,6 +276,7 @@ async function captureJob(browser, config, scene, viewportId) {
 
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  if (opts.lod) LOD_QUERY = `&lod=${opts.lod}`;
   const config = loadScenes();
   const jobs = captureJobs(config, opts);
   fs.mkdirSync(OUT_DIR, { recursive: true });
