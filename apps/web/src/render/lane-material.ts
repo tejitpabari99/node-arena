@@ -2,7 +2,7 @@ import { Color, DoubleSide, ShaderMaterial } from 'three';
 /** Tower War style translucent team ribbon (dotted fill, darker edges) with City Takeover style white chevrons on top.
  * Lane space: uv.x runs 0..1 from the lower-index tower A to B, uv.y spans the width. `split` is the A/B colour boundary
  * (fraction of lane length); the A half scrolls chevrons A->B, the B half B->A. */
-export const LANE_WIDTH_FACTOR = .33, LANE_FILL_ALPHA = .6, LANE_DRAIN_ALPHA = .4, LANE_CHEVRON_SPEED = 2.5, LANE_CHEVRON_PITCH = 1.1;
+export const LANE_WIDTH_FACTOR = .33, LANE_FILL_ALPHA = .72, LANE_DRAIN_ALPHA = .4, LANE_CHEVRON_SPEED = 2.5, LANE_CHEVRON_PITCH = 1.1;
 const vertexShader = 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
 const fragmentShader = `
 uniform float laneLen; uniform float laneW; uniform float split; uniform float buildT; uniform float fade;
@@ -15,12 +15,12 @@ void main(){
   vec3 col=inB?colB:colA; float drain=inB?drainB:drainA, hover=inB?hoverB:hoverA;
   vec2 f=fract(vec2(d,c*laneW*.5)/.42)-.5;
   float dots=1.-smoothstep(.18,.3,length(f));
-  vec3 tint=mix(col,vec3(1.),.1);
+  vec3 tint=mix(col,vec3(1.),.5);
   vec3 base=mix(tint,vec3(1.),.3*dots);
   float alpha=${LANE_FILL_ALPHA.toFixed(2)}+.1*dots;
   float edge=smoothstep(.84,.93,ac);
-  base=mix(base,col*.8,edge); base=mix(base,vec3(1.),hover*edge*.8);
-  alpha=mix(alpha,.75,edge);
+  base=mix(base,col*.85,edge); base=mix(base,vec3(1.),hover*edge*.8);
+  alpha=mix(alpha,.88,edge);
   alpha=mix(alpha,min(alpha,${LANE_DRAIN_ALPHA.toFixed(2)}),drain);
   float dir=inB?-1.:1.;
   float q=dir*d-${LANE_CHEVRON_SPEED.toFixed(2)}*(1.+.6*hover)*time*motion+ac*laneW*.45;
