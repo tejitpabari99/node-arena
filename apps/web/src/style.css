@@ -259,44 +259,45 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
   --hud-blue: #2e8bff;
   --hud-sand: #ffe1b3;
 }
-.hud-root { position: fixed; inset: 0; pointer-events: none; z-index: 2; font-weight: 800; }
+.hud-root { position: fixed; inset: 0; pointer-events: none; z-index: 2; font-weight: 800; font-size: clamp(24px, 3vh, 34px); }
 .hud-root button { pointer-events: auto; }
 .hud-pill {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-  min-width: 300px; max-width: min(520px, calc(100vw - 200px));
-  padding: 8px 18px 10px; border-radius: 22px;
+  min-width: 19em; max-width: min(26em, calc(100vw - 240px));
+  padding: 5px; border-radius: 999px;
   background: var(--hud-pill-bg); color: var(--hud-pill-text);
   border: 3px solid #fff; box-shadow: 0 4px 0 #0d3a82, 0 8px 18px #0004;
   pointer-events: none;
 }
-.hud-pill-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-.hud-level { font-size: 18px; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 #0d3a82; }
-.hud-timer { font-size: 20px; font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 #0d3a82; }
-.hud-meter { display: flex; height: 12px; margin-top: 6px; border-radius: 8px; overflow: hidden; background: #fff4; box-shadow: inset 0 0 0 2px #fff; }
+.hud-pill-row { position: absolute; inset: 5px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; z-index: 1; -webkit-text-stroke: 0.2em #0d3a82; paint-order: stroke fill; }
+.hud-level { font-size: 1.05em; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;  }
+.hud-timer { font-size: 1.15em; font-variant-numeric: tabular-nums;  }
+.hud-meter { display: flex; height: 2.1em; margin-top: 0; border-radius: 999px; overflow: hidden; background: #fff4; box-shadow: inset 0 0 0 3px #fff; }
 .hud-meter > span { display: block; height: 100%; flex: 0 0 auto; transition: width 250ms ease; }
+.hud-meter > span + span { border-left: 3px solid #fff; }
 .hud-meter.still > span { transition: none; }
 .hud-meter.cb > span[data-i="1"] { background-image: repeating-linear-gradient(45deg, #0004 0 3px, transparent 3px 7px) !important; }
 .hud-meter.cb > span[data-i="2"] { background-image: radial-gradient(#0006 1.5px, transparent 2px) !important; background-size: 6px 6px; }
 .hud-meter.cb > span[data-i="3"] { background-image: repeating-linear-gradient(-45deg, #0004 0 3px, transparent 3px 7px) !important; }
 .hud-meter.cb > span + span { border-left: 2px solid #fff; }
 .hud-round {
-  position: absolute; top: 12px; width: 52px; height: 52px; min-height: 52px; padding: 0; border-radius: 50%;
-  background: var(--hud-blue); color: #fff; border: 3px solid #fff; font-size: 20px; font-weight: 800;
+  position: absolute; top: 12px; width: 64px; height: 64px; min-height: 44px; padding: 0; border-radius: 50%;
+  background: #fff; color: #1b5bc0; border: 3px solid #1b5bc0; font-size: 26px; font-weight: 800;
   box-shadow: 0 4px 0 #0d3a82, 0 6px 14px #0004; display: grid; place-items: center;
 }
-.hud-round:hover { background: #4ba0ff; border-color: #fff; }
+.hud-round:hover { background: #e6f1ff; }
 .hud-round:disabled { opacity: 0.7; }
 .hud-round:focus-visible, .hud-tip button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 6px #1b5bc0; }
 .hud-pause { left: 16px; }
 .hud-speed { right: 16px; }
-.hud-pause-icon { width: 16px; height: 18px; border-left: 5px solid #fff; border-right: 5px solid #fff; }
+.hud-pause-icon { width: 16px; height: 18px; border-left: 6px solid #1b5bc0; border-right: 6px solid #1b5bc0; }
 .hud-tip {
   position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
-  width: min(560px, calc(100vw - 32px)); display: flex; align-items: center; gap: 14px;
+  width: min(760px, calc(100vw - 32px)); display: flex; align-items: center; gap: 14px;
   background: var(--hud-sand); color: #3b2a12; border: 3px solid #fff; border-radius: 20px; padding: 12px 16px;
   box-shadow: 0 4px 0 #c99a55, 0 8px 18px #0004; transition: opacity 350ms ease; pointer-events: none;
 }
-.hud-tip p { margin: 0; flex: 1; color: #3b2a12; font-size: 16px; line-height: 1.35; font-weight: 700; }
+.hud-tip p { margin: 0; flex: 1; color: #3b2a12; font-size: 0.72em; line-height: 1.35; font-weight: 700; }
 .hud-tip button { background: var(--hud-blue); color: #fff; border: 3px solid #fff; border-radius: 14px; padding: 6px 16px; min-height: 44px; font-weight: 800; }
 .hud-tip.fading { opacity: 0; }
 .hud-tip.fading button { pointer-events: none; }
