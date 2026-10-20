@@ -42,7 +42,7 @@ vTroopTeamMask = ${masked ? 'teamMask' : '1.0'};
       .replace('#include <color_fragment>', `#include <color_fragment>
 // Mask-all tint: the whole figure takes the team colour; unmasked parts (head) keep texture shading but are 20% lighter.
 float troopLum = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
-vec3 troopUnmasked = min(troopTeam * 1.2, vec3(1.0)) * (0.92 + 0.3 * troopLum);
+vec3 troopUnmasked = min(troopTeam * 1.2, vec3(1.0)) * (0.45 + 1.1 * troopLum);
 diffuseColor.rgb *= mix(vec3(1.0), troopTeam, vTroopTeamMask);
 diffuseColor.rgb = mix(troopUnmasked, diffuseColor.rgb, vTroopTeamMask);`);
   };
