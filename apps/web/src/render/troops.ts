@@ -88,7 +88,7 @@ export function createTroopRenderer(options: TroopRendererOptions) {
           const animation = materials.map(m => patchTroopMaterial(m, visual, team, merged.hasTeamMaterial, clock, options.reducedMotion ?? false, box ? box.max.y - box.min.y : 1));
           const mesh = makeMesh({ template: merged.geometry, materials, tag }, capacity);
           const pose = mesh.geometry.getAttribute('troopPose').array as Float32Array;
-          const lowMaterial = new MeshStandardMaterial({ vertexColors: true, roughness: .8, metalness: 0 }); scope.material(lowMaterial, false);
+          const lowMaterial = new MeshStandardMaterial({ vertexColors: true, roughness: .9, metalness: 0, emissive: new Color('#262626') }); scope.material(lowMaterial, false);
           const lowMaterials = [lowMaterial], lowAnimation = lowMaterials.map(m => patchTroopMaterial(m, visual, team, true, clock, options.reducedMotion ?? false, box ? box.max.y - box.min.y : 1));
           const lowMesh = makeMesh({ template: lowTemplate, materials: lowMaterials, tag: lowTag }, capacity);
           const low = { template: lowTemplate, materials: lowMaterials, mesh: lowMesh, animation: lowAnimation, pose: lowMesh.geometry.getAttribute('troopPose').array as Float32Array, tag: lowTag };

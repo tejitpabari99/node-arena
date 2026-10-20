@@ -44,11 +44,11 @@ export function createLodPolicy(overrides: Partial<LodThresholds> = {}, initial:
 export function buildLowTroopGeometry(box: Box3): BufferGeometry {
   const height = Math.max(1e-3, box.max.y - box.min.y), foot = Math.max(box.max.x - box.min.x, box.max.z - box.min.z);
   const cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2;
-  const rb = Math.min(foot / 2, .22 * height), rh = .16 * height, bodyTop = .7 * height;
+  const rb = Math.min(foot / 2, .26 * height), rh = .16 * height, bodyTop = .7 * height;
   const body = new CapsuleGeometry(rb, Math.max(1e-3, bodyTop - 2 * rb), 1, 8); body.translate(cx, box.min.y + bodyTop / 2, cz);
-  const head = new SphereGeometry(rh, 8, 3); head.translate(cx, box.min.y + height - rh, cz);
+  const head = new SphereGeometry(rh, 8, 4); head.translate(cx, box.min.y + height - rh, cz);
   const parts: BufferGeometry[] = [];
-  for (const [geometry, color, mask] of [[body, [1, 1, 1], 1], [head, [.95, .78, .62], 0]] as const) {
+  for (const [geometry, color, mask] of [[body, [1, 1, 1], 1], [head, [1, 1, 1], 1]] as const) {
     geometry.deleteAttribute('uv'); const n = geometry.getAttribute('position').count;
     geometry.setAttribute('color', new Float32BufferAttribute(Array.from({ length: n }, (_, i) => color[i % 3]!), 3));
     geometry.setAttribute('teamMask', new BufferAttribute(new Float32Array(n).fill(mask), 1)); parts.push(geometry);
