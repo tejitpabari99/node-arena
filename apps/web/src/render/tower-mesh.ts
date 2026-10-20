@@ -31,6 +31,15 @@ export function floorsFor(count: number, cap: number | null | undefined): number
 }
 /** World width (across flats) of a stacked tower: 2 x footprint radius x manifest scale. */
 export function towerWidth(footprintRadiusWorld: number, scale: number): number { return 2 * footprintRadiusWorld * scale; }
+/** Size boost for levels whose towers span a wide area: the camera frames the tower extent, so a spread-out level (tall 14-tower maps) would
+ * render towers small. boost = clamp(H / REF, 1, MAX) with H = max(span z, span x / 16:9) in world units (REF = L1's framing extent). */
+export const BOOST_REF = 54, BOOST_MAX = 1.45;
+export function towerSizeBoost(points: readonly { x: number; y: number }[]): number {
+  if (points.length < 2) return 1;
+  const xs = points.map(p => p.x / 1000), ys = points.map(p => p.y / 1000);
+  const h = Math.max(Math.max(...ys) - Math.min(...ys), (Math.max(...xs) - Math.min(...xs)) * 9 / 16);
+  return Math.min(BOOST_MAX, Math.max(1, h / BOOST_REF));
+}
 /** Plinth-to-roof-top height in world units for `floors` floors at tower `width`. */
 export function stackHeight(floors: number, width: number): number { return (BASE_Y + floors * floorPitch(floors) + ROOF_H) * width; }
 const floorHalf = (k: number) => FLOOR_A * (1 - TAPER * k);

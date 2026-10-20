@@ -5,7 +5,7 @@ import { createManifestResolver } from '../manifest/resolve.js';
 import { Disposables } from './disposables.js';
 import { cloneModel } from './model.js';
 import { createRoofAtlas, dotStates, roofText, type RoofAtlas } from './roof-texture.js';
-import { createTowerMeshes, floorsFor, stackHeight, towerWidth, type StackedTowerSpec, type TowerMeshes } from './tower-mesh.js';
+import { createTowerMeshes, floorsFor, stackHeight, towerSizeBoost, towerWidth, type StackedTowerSpec, type TowerMeshes } from './tower-mesh.js';
 import { createOverlayRegistry, readOverlays, type OverlayRegistry } from './overlays.js';
 
 type ColoredMaterial = Material & { color: Color };
@@ -54,11 +54,11 @@ export function createTowerRenderer(options: TowerRendererOptions) {
   summary.style.cssText = 'position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;pointer-events:none';
   options.parent.appendChild(summary);
   // Stacked towers (manifest `build: 'stacked'`) are code-built instanced meshes shared by all towers; others use their model.
-  const specs: StackedTowerSpec[] = [], stackedIndex: number[] = [];
+  const specs: StackedTowerSpec[] = [], stackedIndex: number[] = [], boost = towerSizeBoost(options.view.towerStatic);
   for (let i = 0; i < options.view.towerStatic.length; i++) {
     const tower = options.view.towerStatic[i]!, visual = resolver.visual(tower.visual, 'tower');
     if (visual.build !== 'stacked') { stackedIndex.push(-1); continue; }
-    stackedIndex.push(specs.length); specs.push({ id: options.view.ids.towers[i]!, x: tower.x / 1000, z: tower.y / 1000, width: towerWidth(tower.footprintRadius / 1000, visual.scale) });
+    stackedIndex.push(specs.length); specs.push({ id: options.view.ids.towers[i]!, x: tower.x / 1000, z: tower.y / 1000, width: towerWidth(tower.footprintRadius / 1000, visual.scale * boost) });
   }
   const atlas: RoofAtlas | undefined = specs.length ? scope.add(createRoofAtlas(specs.length)) : undefined;
   const meshes: TowerMeshes | undefined = specs.length ? createTowerMeshes(specs, atlas) : undefined;

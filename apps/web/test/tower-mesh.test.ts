@@ -3,7 +3,7 @@ import type { Manifest } from '@node-arena/content';
 import type { SimView } from '@node-arena/sim';
 import { Matrix4, Vector3 } from 'three';
 import { createRoofAtlas } from '../src/render/roof-texture.js';
-import { createTowerMeshes, floorsFor, stackHeight, towerWidth, MAX_FLOORS, LIGHT_GAIN } from '../src/render/tower-mesh.js';
+import { createTowerMeshes, floorsFor, stackHeight, towerSizeBoost, towerWidth, MAX_FLOORS, LIGHT_GAIN } from '../src/render/tower-mesh.js';
 
 describe('floorsFor (covers R-SP03-R7)', () => {
   it('follows clamp(ceil(5 x count / cap), 1, 5) and spans 1-5 for caps 20/50/80', () => {
@@ -87,5 +87,14 @@ describe('towers.visualWidth contract (covers R-SP03-R7)', () => {
     expect(scene.children.some(c => c.children.some(m => m.name === 'tower-count'))).toBe(true);
     expect(r.summary.textContent).toContain('Garrison 30'); expect(r.summary.textContent).toContain('neutral');
     scope.dispose(); vi.unstubAllGlobals();
+  });
+});
+
+describe('towerSizeBoost (covers R-SP03-R7)', () => {
+  it('is 1 for wide shallow levels (L1) and grows with the framed height up to the cap', () => {
+    expect(towerSizeBoost([{ x: -48000, y: -6000 }, { x: 48000, y: 8000 }])).toBe(1);
+    expect(towerSizeBoost([{ x: 0, y: -35000 }, { x: 0, y: 35000 }])).toBeCloseTo(70 / 54);
+    expect(towerSizeBoost([{ x: 0, y: -90000 }, { x: 0, y: 90000 }])).toBe(1.45);
+    expect(towerSizeBoost([{ x: 0, y: 0 }])).toBe(1);
   });
 });

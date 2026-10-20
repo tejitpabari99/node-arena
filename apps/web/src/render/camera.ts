@@ -1,7 +1,7 @@
 import { Box3, Matrix4, PerspectiveCamera, Vector3, type Object3D } from 'three';
 import type { CompiledLevel, Manifest } from '@node-arena/content';
 import { createManifestResolver } from '../manifest/resolve.js';
-import { stackHeight, towerWidth } from './tower-mesh.js';
+import { stackHeight, towerSizeBoost, towerWidth } from './tower-mesh.js';
 
 /** Authored extents (milli-units) as a world-unit box centred on the origin, matching tower coordinates. */
 export function authoredBounds(level: Pick<CompiledLevel, 'bounds'>): Box3 {
@@ -12,12 +12,12 @@ export function authoredBounds(level: Pick<CompiledLevel, 'bounds'>): Box3 {
 /** The sole sim-to-presentation conversion: compiled coordinates/radii are milli-units.
  * Bounds = tower footprints + scaled model (roof) height only; label height is not part of the fit (labels are not 3D geometry). */
 export function levelVisualBounds(level: Pick<CompiledLevel, 'bounds' | 'towers'>, manifest: Manifest, models: ReadonlyMap<string, Object3D>): Box3 {
-  const bounds = new Box3(); const resolver = createManifestResolver(manifest);
+  const bounds = new Box3(); const resolver = createManifestResolver(manifest); const boost = towerSizeBoost(level.towers);
   for (const tower of level.towers) {
     const x = tower.x / 1000, z = tower.y / 1000, radius = tower.footprintRadius / 1000;
     const visual = resolver.visual(tower.visual, 'tower');
     if (visual.build === 'stacked') { // code-built stack: the visual width (not the footprint disc) and a 3-floor height frame the camera (5-floor stacks may rise past it; M15 min margin still holds)
-      const width = towerWidth(radius, visual.scale), half = width / 2;
+      const width = towerWidth(radius, visual.scale * boost), half = width / 2;
       bounds.expandByPoint(new Vector3(x - half, stackHeight(3, width), z - half)); bounds.expandByPoint(new Vector3(x + half, 0, z + half)); continue;
     }
     bounds.expandByPoint(new Vector3(x - radius, 0, z - radius));

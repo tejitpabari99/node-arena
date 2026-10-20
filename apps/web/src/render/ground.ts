@@ -4,7 +4,7 @@ import type { Disposables } from './disposables.js';
 import { mulberry32 } from './rng.js';
 
 /** Grass patch = level bounds + GRASS_PAD, fading to sand over EDGE_SOFT. */
-export const GRASS_PAD = 8, EDGE_SOFT = 6, CORNER_RADIUS = 8;
+export const GRASS_PAD = 8, EDGE_SOFT = 3.5, CORNER_RADIUS = 8;
 const FALLBACK = { grass: '#A3D419', grassAlt: '#9DCB10', sand: '#FFE1B3', rock: '#BC5439' };
 type Theme = Manifest['themes'][string];
 
@@ -31,7 +31,8 @@ export function createGround(options: { scene: Scene; scope: Disposables; theme:
     const x = pos.getX(i), y = pos.getY(i); // plane local x, y (y -> world -z after rotation)
     const qx = Math.abs(x) - (core.w / 2 - r), qy = Math.abs(y) - (core.h / 2 - r);
     const sd = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r;
-    const t = Math.min(1, Math.max(0, (sd + EDGE_SOFT / 2) / EDGE_SOFT)), w = t * t * (3 - 2 * t); // 0 inside, 1 sand
+    const wob = 1.6 * (Math.sin((x + center.x) * .31 + (y + center.z) * .17) + .6 * Math.sin((x + center.x) * .13 - (y + center.z) * .29 + 2)); // wavy rim (ref: crisp, hand-drawn-looking edge)
+    const t = Math.min(1, Math.max(0, (sd + wob + EDGE_SOFT / 2) / EDGE_SOFT)), w = t * t * (3 - 2 * t); // 0 inside, 1 sand
     const wx = x + center.x, wz = -y + center.z;
     const n = .5 + .55 * (Math.sin(wx * .11 + wz * .07) + Math.sin(wx * .045 - wz * .13 + 1.7) * .8 + Math.sin(wx * .23 + wz * .19) * .4), shade = 1 + .08 * Math.sin(wx * .19 - wz * .17 + 4);
     c.copy(grass).lerp(alt, Math.min(1, Math.max(0, n))).multiplyScalar(shade).lerp(sandColor, w);
