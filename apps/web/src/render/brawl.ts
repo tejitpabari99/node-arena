@@ -33,7 +33,7 @@ export const brawlSeed = (pairH: number, tick: number) => (pairH ^ Math.imul(tic
 /** Soft cumulus blob: fixed overlapping radial lobes (white, alpha falloff). */
 export function drawCloud(ctx: CanvasRenderingContext2D, size: number): void {
   ctx.clearRect(0, 0, size, size);
-  const lobes: readonly (readonly [number, number, number, number])[] = [[.5, .52, .34, 1], [.36, .58, .24, .85], [.64, .58, .25, .85], [.44, .4, .22, .8], [.6, .4, .2, .75]];
+  const lobes: readonly (readonly [number, number, number, number])[] = [[.5, .52, .34, 1], [.36, .58, 6 / 25, .85], [.64, .58, .25, .85], [.44, .4, .22, .8], [.6, .4, .2, .75]];
   for (const [x, y, r, a] of lobes) {
     const g = ctx.createRadialGradient(x * size, y * size, 0, x * size, y * size, r * size);
     g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(.78, `rgba(255,255,255,${a})`); g.addColorStop(.92, `rgba(235,235,245,${a * .9})`); g.addColorStop(1, 'rgba(235,235,245,0)');
