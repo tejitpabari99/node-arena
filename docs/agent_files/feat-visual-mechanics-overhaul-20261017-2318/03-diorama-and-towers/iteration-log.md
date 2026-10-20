@@ -75,3 +75,12 @@ drawCalls 38 (limit 100); jsMs p95 8.4-13.7 over 7 captures (7.3 once); fps 4.3-
 5. M13 jsMs p95 8-14 (SwiftShader noise); stress p95 ~4.3 same on main; final gate on real GPU.
 6. SP04: lanes thin dashed vs ref ribbons; troops small (M05/M06 fail, out of scope). HUD hint bar overlays bottom (SP05).
 Stop reason (T7): done-when partly met (L10/L18 >= 6 met, zero errors, perf sampled); L1 gated items not >= 8 (blind-held 6-7). Recommended status: Blocked-visual.
+
+### Task 7 continuation (iters 29-31, all reverted, not scored by blind: every one regressed a gated pixel metric, so no merged score could improve)
+| iter | change | result |
+|---|---|---|
+| 29 | camera margin 3 -> 1.5 (V01 framing: bigger towers, tighter margin) | l01 clean (M01 .046, M15 .076) but l10/l18 M15 min margin .022 (floor .02), M19 fails 5 rows, M20 l10 fails 4 rows, M16 l10cb. Reverted |
+| 30 | floorPitch .4+.46/F -> .4+.6/F (taller floors so Max-tower stripes survive M20) | M20 l10 passes and l18@1080 M19 passes, but l01 M11 c .477 > .45 (white body too large), l10/l18 M11 more fails, M16 l10cb 6 px. Reverted |
+| 31 | iter 30 + BAND_H .13 -> .17 (thicker team bands to rebalance white/team) | M11 l01 still fails (c .46), M20 l10 fails again, M19 l10cb fails. Reverted |
+Stuck analysis: V01/V06/M19/M20 trade off against each other at pixel level (towers are 35-80 px; every geometry/size change moves M19/M20/M11 by one-pixel knife edges on the 5-floor Max tower and lane chevrons). M19 regression from iter 28 (lane chevron speck above roof picked as topmost glyph) is NOT fixable via roof-decal offset/size: the speck is lane geometry visible between the octagon roof and the larger probe model rect, independent of the decal. Fixes need SP04 (lane ends/chevron phase) or SP01 (locator tighter than bbox). Cap not reached (iters 27-31 of 12) but no cheap lever left; further V06 idea not tried: per-floor body value gradient (needs instanceColor plumbing on body mesh).
+Final state = 44ff454 + log. Status: Blocked-visual. L1 merged unchanged: V01 6, V02 7, V03 7, V04 7, V05 7, V06 6, V07 7, V22 8.
