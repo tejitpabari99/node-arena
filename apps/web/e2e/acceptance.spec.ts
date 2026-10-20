@@ -72,7 +72,7 @@ test('20 authored levels, completion survives reload, retry/next and timeout hav
   expect(await page.evaluate(()=>window.__na!.view!.tick)).toBe(20);
 });
 test('capture, glyphs and clash use real event positions and current tower summary', async ({page}) => {
-  test.fixme(true, 'SP05 baseline refresh: capture.png snapshot: grass theme, steep camera, sand clear colour (SP03 T1)');
+  test.setTimeout(150000); // first frame after ~400 single-tick evaluates drains a SwiftShader backlog (~20 s); screenshot timeouts below allow for it
   await page.setViewportSize({width:960,height:600});
   await boot(page,'capture'); await load(page); await draw(page);
   let captured=false;
@@ -82,7 +82,7 @@ test('capture, glyphs and clash use real event positions and current tower summa
   expect(data.p.towers[1]!.color).toBe('2e8bff'); expect(data.p.towers[1]!.glyph).toBe('▲');
   await expect(page.locator('[data-tower-summary]')).toHaveText(new RegExp(`Tower t2(?:(?!Tower )[^])*?Garrison ${data.view.tower.col['garrison.count']![1]}\\b`));
   expect(data.p.fx.some(f=>Math.abs(f.position[0]!-40)<.01)).toBe(true);
-  await expect(page).toHaveScreenshot('capture.png',{maxDiffPixelRatio:.01});
+  await expect(page).toHaveScreenshot('capture.png',{maxDiffPixelRatio:.01,timeout:60000});
   await boot(page); await load(page,'sample'); await draw(page);
   await page.evaluate(()=>{window.__na!.submit({type:'DrawLine',player:'b1',from:'t2',to:'t1'});window.__na!.step();});
   let clash=false;
@@ -90,7 +90,7 @@ test('capture, glyphs and clash use real event positions and current tower summa
   expect(clash).toBe(true);
   const p=await page.evaluate(()=>window.__na!.presentation());
   expect(p.fx.some(f=>Math.abs(f.position[0]!)<1)).toBe(true);
-  await expect(page).toHaveScreenshot('clash.png',{maxDiffPixelRatio:.01});
+  await expect(page).toHaveScreenshot('clash.png',{maxDiffPixelRatio:.01,timeout:60000});
 });
 test('full runtime stress and twenty level-switch GPU/DOM baseline', async ({page}) => {
   test.setTimeout(120000);
@@ -123,7 +123,6 @@ test('full runtime stress and twenty level-switch GPU/DOM baseline', async ({pag
 });
 
 test('manifest GLB swap, failed-only asset Retry and invalid boot recovery', async ({page}) => {
-  test.fixme(true, 'SP05 baseline refresh: glb-fixture.png snapshot: grass theme, steep camera, sand clear colour (SP03 T1)');
   await page.setViewportSize({width:960,height:600});
   const { syntheticGlb } = await import('./fixtures/model');
   const requests: Record<string,number> = {};
@@ -131,7 +130,7 @@ test('manifest GLB swap, failed-only asset Retry and invalid boot recovery', asy
   await page.route('**/manifest.json',async route=>{
     const manifest=await (await route.fetch()).json();
     for(const v of Object.values<any>(manifest.visuals))v.model=v.kind==='tower'?'block':'unit';
-    manifest.visuals['tower.fixture']={...manifest.visuals['tower.standard'],scale:1.2,tint:'#00ff00'};
+    manifest.visuals['tower.fixture']={...manifest.visuals['tower.standard'],build:undefined,scale:1.2,tint:'#00ff00'};
     manifest.models.block={src:'models/fixture-tower.glb'};
     manifest.models.unit={src:'models/fixture-troop.glb'};
     await route.fulfill({json:manifest});
@@ -157,7 +156,6 @@ test('manifest GLB swap, failed-only asset Retry and invalid boot recovery', asy
   invalid=false;await page.getByRole('button',{name:'Retry',exact:true}).click();await expect(page.getByRole('button',{name:'Play',exact:true})).toBeVisible();
 });
 test('stable greybox menu, picker, game and colourblind software GL screenshots',async ({page})=>{
-  test.fixme(true, 'SP05 baseline refresh: greybox.png snapshot: grass theme, steep camera, sand clear colour (SP03 T1)');
   await page.setViewportSize({width:960,height:600});
   await boot(page,'normal');await expect(page).toHaveScreenshot('menu.png',{maxDiffPixelRatio:.01});
   await page.getByRole('button',{name:'Play',exact:true}).click();await expect(page).toHaveScreenshot('picker.png',{maxDiffPixelRatio:.01,fullPage:true});

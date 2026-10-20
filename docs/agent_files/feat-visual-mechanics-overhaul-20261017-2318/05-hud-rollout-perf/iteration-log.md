@@ -82,3 +82,17 @@ Outcome: Blocked-visual (>=8 only V09, V19, V22). Hand-offs for final-review: gr
 | 1 | 0.87 | 1195.5 | 1205.4 | 0.83 | 7.1 | 44 | 151796 | 53 / 3.6 |
 | 2 | 0.88 | 1192.7 | 1236.5 | 0.81 | 7.5 | 44 | 151796 | 53 / 4.6 |
 - Note: SwiftShader 1920x1080 is readback-bound (~1.2 s/frame), so fps/1% low meaningless here; app n (53) > capture n (27) because the driver's own rAF loop also feeds the snapshot.
+
+## Task 11 - Restore fixme specs + regenerate 7 acceptance baselines
+- Removed 3 `test.fixme(true,'SP05 baseline refresh: ...')` markers in e2e/acceptance.spec.ts (capture, glb-fixture, greybox); `rg "SP05 baseline refresh"` in apps/web/e2e: 0 hits (apps/web/test/visual-checklist.test.ts:25 is a CHECKLIST doc-string assertion, not a marker, left as is).
+- Spec fixes needed once restored: glb-fixture `tower.fixture` visual now sets `build:undefined` (inherits `build:'stacked'` from tower.standard, which ignores model scale; test intends the GLB model path, asserts modelScale 1.2); capture test `test.setTimeout(150000)` + `timeout:60000` on capture.png/clash.png (first frame after ~400 single-tick evaluates drains a SwiftShader backlog ~19 s; 5 s default timed out); e2e/scene.spec.ts med DPR 1.5 -> 1.25 (stale since T10).
+- Regenerated once with `playwright test acceptance --update-snapshots --workers=1`, maxDiffPixelRatio still .01, only `-chromium-linux` variants. Old copies viewed vs new (old|new composites); each: reason "reskin".
+  - capture.png: old dark HUD + grey slab + victory modal -> new blue pill HUD, sand/grass diorama, chunky VICTORY modal; no render bug.
+  - clash.png: old greybox towers, flat lane -> new stacked towers, two-colour lane, cream clash puff + split chevrons; no render bug.
+  - glb-fixture.png: old grey slab + green cone GLB fixture -> new diorama; green-tinted GLB fixture tower left, stacked towers elsewhere; no render bug.
+  - menu.png: old dark card -> new sand/grass bg, navy card, outlined title; card bottom (Settings/next button) is cut by the 960x600 viewport (page layout, observation only).
+  - picker.png: old 960x967 dark grid -> new 960x715 6-column cream tiles; reskin, no bug.
+  - greybox.png: old grey slab -> new diorama with props, stacked towers, hint toast; no bug.
+  - colorblind.png: as greybox, orange/blue colourblind palette in pill + towers; no bug.
+- e2e (preview) x2 plain: 21 passed, 23 skipped, 1 failed both runs = acceptance.spec.ts:95 stress p95 4.2-4.5 ms (<4 asserted; known SwiftShader flake, load avg ~3.8 from other sessions; passes intermittently, e.g. 1 of 5 alone). All 7 snapshot assertions pass on both runs.
+- Dev suite (`WEB_TEST_SERVER=dev`): 35 passed, 8 skipped, failures: :95 stress (same flake) and scene.spec.ts (stale 1.5 DPR, fixed -> see rerun).
