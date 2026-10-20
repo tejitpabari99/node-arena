@@ -3,7 +3,7 @@ import type { CompiledLevel, Manifest } from '@node-arena/content';
 import { createManifestResolver } from '../manifest/resolve.js';
 import { Disposables } from './disposables.js';
 import { cloneModel } from './model.js';
-import { fitCamera, levelVisualBounds } from './camera.js';
+import { cameraSettingsFor, fitCamera, levelVisualBounds } from './camera.js';
 import { createGround } from './ground.js';
 import { createProps, scatterProps } from './props.js';
 
@@ -70,7 +70,7 @@ export function createLevelScene(options: SceneOptions) {
     if (disposed) return;
     const width = Math.max(1, parent.clientWidth), height = Math.max(1, parent.clientHeight);
     renderer.setPixelRatio(qualitySettings(quality, window.devicePixelRatio).pixelRatio); renderer.setSize(width, height);
-    fitCamera(camera, bounds, manifest.camera, width / height);
+    fitCamera(camera, bounds, cameraSettingsFor(level.id, manifest.camera), width / height);
     if (scene.fog instanceof Fog && theme.fog) {
       const scale = Math.max(1, camera.position.distanceTo(fogCenter) / FOG_REFERENCE);
       scene.fog.near = theme.fog.near * scale; scene.fog.far = theme.fog.far * scale;
