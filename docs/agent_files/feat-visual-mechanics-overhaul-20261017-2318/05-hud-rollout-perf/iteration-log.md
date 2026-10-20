@@ -44,3 +44,19 @@ H01-H07 pass on l01, l01-tip, l10 both viewports. l18/l10cb H rows fail only bec
 | 1 | baseline `test:e2e` (prod) | 1 fail: acceptance.spec.ts:68 `.hud strong` removed; dev.spec/boot/input-palette/cache-regressions already match new aria-labels |
 | 2 | acceptance:68 -> `[data-hud="pill"] strong` toContainText 'Fixture 2'; slice.spec perf toggle -> pause > Settings > "Performance HUD" checkbox > Done > Resume; new e2e/hud.spec.ts (tip once on L1 + reload after dismiss, no tip on L2, meter role/aria-valuetext format sums 100, speed button, Esc/Pause) | prod: hud 4/4 pass, acceptance pass; dev suite 33 pass, 11 skipped (3 fixme SP05 baseline, 8 SLICE opt-in); SLICE=1 perf-HUD specs 2/2 pass |
 Flake: acceptance.spec.ts:95 stress p95 failed once on dev run, passed on prod runs/rerun (known SwiftShader flake). Picker at 1366x768: L20 tile bbox y 632-733 (< 768) visible, reachable; no CSS change. typecheck + lint pass.
+
+## Task 7 — L1 slice gate (visual; all scenes, 1920x1080 + 1366x768, `--lod high`)
+Iter 0 (3cbedf9): metrics fails: M09 l10/l10cb (.857/.872 > .85), M11 l10/l10cb/l18, M18 l18@1080 + clash@1080 (.205), M20 l18; M13 = T10. Blind (l01/l10): V01 5, V05 5-6, V06 5-6, V07 5-6, V13 5, V18 6, V23 6.
+| iter | change (owner) | result |
+|---|---|---|
+| 1 (877365b) | fix(SP03): ground GRASS_PAD 8 (kept), EDGE_SOFT 3.5->6, rocks 120->240 | M09 l10/l10cb pass (.82-.85), M18 l18/clash pass (<.2); class shares l01 grass .39 sand .31 rock .16 (ref tw01 .455/.18/.06) |
+| 2 (025f22d) | picker compact grid at max-height 820px (SP05 V21): 20th level + Back button were clipped at 1366x768 | all 21 cards + Back visible |
+| tried, reverted | tower scale .72->.86 / .79; camera margin 3->1.5/2.2/2.6; BAND_H .13->.11; GRASS_PAD 10; l10 tick 340-600 | scale: M01 l01 .051 > .0492, M20 l10 + M18 l18 fail; margin: M20 l10/l10cb Max-tower (3-4 white runs vs 5) fail, clash M18; BAND_H: l01 M11 c .459 > .45; tick: yellow tower b .754 persists |
+
+### Final metrics (committed state, 60 PNGs, check --strict)
+PASS at both viewports: M01-M10, M12, M14-M19 on all named scenes (M07/M08 also 1920x1200). FAIL: M11 l10@both (yellow tower b .754 > .72; neutral troop overlap sat .069-.074 > .05), M11 l18@both (5/14: green team hue 130 lies inside the SP01 tree-green ground mask H105-150, so green towers have 0 fg: a=null), M11 l10cb@both (cb orange #D55E00 H26 is 31 deg from red 357 > 25 tolerance, b .165-.175), M20 l18@both (same green-mask cause: 0w/0b tower). M13 jsMs 10.1 fail (T10). Evidence: metric mis-specification for green/colourblind hues (thresholds untouched; for final-review).
+
+### Final merged scores (min(self, blind); self <= blind, blind shown = upper bound; 7 cap seen on every SP03/SP04 item)
+l01: V01 5, V02 6, V03 6, V04 6, V05 5, V06 5, V07 5, V10 5, V11 7, V13 5, V18 6, V19 8, V22 8, V23 6. l10: V01 6, V05 6, V06 6, V08 5, V03 6, V04 7, V07 5, V10 6, V13 5, V19 8, V22 8, V23 6. l18: V01 6, V06 6, V08 6, V16 7, V22 8, V23 6, V24 7. l10cb: V09 8. clash: V14 7, V15 6, V16 7. cut: V17 5. buildout: V12 6. menu V20 7. picker V21 7.
+Blind-scorer rationale (repeated): tower ~3% frame height (metric M01 says 7.8% of height at l01), troops read as blobs, roof digits small at full frame, ribbons more opaque/chevrons vs ref dots, menu/picker lack character art (layout redesign out of scope), cut p3/p6 look the same, clash FX white puffs not team-coloured.
+Outcome: Blocked-visual (>=8 only V09, V19, V22). Hand-offs for final-review: green/cb M11/M20 metric mis-spec; yellow-tower roof dominance (3 floors); V13/V15/V17 need SP04 art (team-coloured confetti, retract staging); optional human-first meter order not done.
