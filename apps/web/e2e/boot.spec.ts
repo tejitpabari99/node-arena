@@ -20,7 +20,10 @@ test("menu loads authored content; real runtime renders and pauses without simul
   expect(canvasSize!.width).toBeGreaterThan(600);
   expect(canvasSize!.height).toBeGreaterThan(400);
   await expect(page.getByRole("timer")).toBeVisible();
-  await expect(page.locator("#arena [data-tower-index]")).toHaveCount(5);
+  await expect(page.locator("#arena [data-tower-summary]")).toHaveCount(1);
+  await expect(page.locator("#arena [data-tower-summary]")).toHaveText(/(Tower t\d[^]*){5}/);
+  expect(((await page.locator("#arena [data-tower-summary]").textContent()) ?? "").match(/Tower t\d/g)).toHaveLength(5);
+  await expect(page.locator("#arena [data-tower-index]")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("heading", { name: "Paused", exact: true }),

@@ -71,7 +71,7 @@ test('20 authored levels, completion survives reload, retry/next and timeout hav
   await expect(page.getByRole('heading',{name:'Time is up'})).toBeVisible();
   expect(await page.evaluate(()=>window.__na!.view!.tick)).toBe(20);
 });
-test('capture, glyphs and clash use real event positions and current labels', async ({page}) => {
+test('capture, glyphs and clash use real event positions and current tower summary', async ({page}) => {
   test.fixme(true, 'SP05 baseline refresh: capture.png snapshot: grass theme, steep camera, sand clear colour (SP03 T1)');
   await page.setViewportSize({width:960,height:600});
   await boot(page,'capture'); await load(page); await draw(page);
@@ -80,7 +80,7 @@ test('capture, glyphs and clash use real event positions and current labels', as
   expect(captured).toBe(true);
   const data=await page.evaluate(()=>({view:window.__na!.view!,p:window.__na!.presentation()}));
   expect(data.p.towers[1]!.color).toBe('2e8bff'); expect(data.p.towers[1]!.glyph).toBe('▲');
-  await expect(page.locator('[data-tower-index="1"] [data-component="garrison"]')).toContainText(String(data.view.tower.col['garrison.count']![1]));
+  await expect(page.locator('[data-tower-summary]')).toHaveText(new RegExp(`Tower t2(?:(?!Tower )[^])*?Garrison ${data.view.tower.col['garrison.count']![1]}\\b`));
   expect(data.p.fx.some(f=>Math.abs(f.position[0]!-40)<.01)).toBe(true);
   await expect(page).toHaveScreenshot('capture.png',{maxDiffPixelRatio:.01});
   await boot(page); await load(page,'sample'); await draw(page);
@@ -112,14 +112,14 @@ test('full runtime stress and twenty level-switch GPU/DOM baseline', async ({pag
     await load(page,`fixture-${i}`); await draw(page); await page.evaluate(()=>{window.__na!.step(319);window.__na!.submit({type:'CutLine',player:'p1',from:'t1',to:'t2'});window.__na!.step();});
     const memory=await page.evaluate(()=>window.__na!.memory());
     expect(await page.evaluate(()=>window.__lifetime())).toEqual(activeLifetime);
-    expect(memory.current).toEqual(baseline); expect(memory.labels).toBe(3); expect(memory.canvases).toBe(1);
+    expect(memory.current).toEqual(baseline); expect(memory.labels).toBe(0); expect(memory.summaries).toBe(1); expect(memory.canvases).toBe(1);
     expect(memory.retired).toEqual(memory.retired.map(()=>({geometries:0,textures:1,contextLost:true}))); 
   }
   await page.evaluate(()=>window.__na!.menu());
   const memory=await page.evaluate(()=>window.__na!.memory());
   expect(await page.evaluate(()=>window.__lifetime())).toEqual(idleLifetime);
   await test.info().attach('full-runtime-lifetime.json',{body:JSON.stringify({baseline,memory,idleLifetime,activeLifetime}),contentType:'application/json'});
-  expect(memory.labels).toBe(0); expect(memory.canvases).toBe(0); expect(memory.retired).toEqual(memory.retired.map(()=>({geometries:0,textures:1,contextLost:true}))); 
+  expect(memory.labels).toBe(0); expect(memory.summaries).toBe(0); expect(memory.canvases).toBe(0); expect(memory.retired).toEqual(memory.retired.map(()=>({geometries:0,textures:1,contextLost:true}))); 
 });
 
 test('manifest GLB swap, failed-only asset Retry and invalid boot recovery', async ({page}) => {

@@ -15,7 +15,7 @@ test('application restarts and twenty shared-source switches retain decoded CPU 
   await page.evaluate(async () => {
     const statePath = '/src/app/state.ts', runtimePath = '/src/app/runtime.ts', bootPath = '/src/app/boot.ts', fixturePath = '/src/test-harness/fixtures.ts', assetsPath = '/src/manifest/assets.ts';
     const { createAppController } = await import(statePath), { createBrowserRuntime } = await import(runtimePath), { contentFiles } = await import(bootPath), { fixtureFiles } = await import(fixturePath), { AssetManager } = await import(assetsPath);
-    const manifest = await (await fetch('/manifest.json')).json(); for (const v of Object.values<any>(manifest.visuals)) v.model = v.kind === 'tower' ? 'block' : 'unit'; manifest.models.block = manifest.models.unit = { src: 'models/cache.glb' }; for (const theme of Object.values<any>(manifest.themes)) theme.props = []; /* theme props load their own models; this test counts only the shared source */ for (const event of Object.values<any>(manifest.events)) if (event.sfx) event.sfx = 'audio/cache.wav'; manifest.events.Captured.sfx = 'audio/cache.wav';
+    const manifest = await (await fetch('/manifest.json')).json(); for (const v of Object.values<any>(manifest.visuals)) v.model = v.kind === 'tower' ? 'block' : 'unit'; manifest.models.block = manifest.models.unit = { src: 'models/cache.glb' }; for (const theme of Object.values<any>(manifest.themes)) theme.props = []; for (const key of Object.keys(manifest.models)) if (key.startsWith('prop.')) delete manifest.models[key]; /* theme props and scatter props (prop.*) load their own models; this test counts only the shared source */ for (const event of Object.values<any>(manifest.events)) if (event.sfx) event.sfx = 'audio/cache.wav'; manifest.events.Captured.sfx = 'audio/cache.wav';
     const parent = document.createElement('div'); parent.style.cssText = 'width:640px;height:360px'; document.body.replaceChildren(parent);
     const audioContext = new AudioContext(); let decodes = 0, manager: any; const retired: any[] = [];
     const app = createAppController({ files: fixtureFiles(contentFiles(), 'normal'), autoStart: false, loadManifest: async () => manifest,
@@ -48,7 +48,7 @@ test('application restarts and twenty shared-source switches retain decoded CPU 
     const before = state.disposals(), cached = manager.cachedSources;
     app.menu(); const retired = state.retired.map((renderer: any) => ({ ...renderer.info.memory, contextLost: renderer.getContext().isContextLost() }));
     app.dispose(); await state.audioContext.close();
-    return { baseline: state.baseline, current, retainedIdentity, decodes: state.decodes(), cached, after: manager.cachedSources, before, disposed: state.disposals(), sourceListeners, sourceGeometryCount: state.geometries.size, sourceTextureCount: state.textures.size, retired, labels: state.parent.querySelectorAll('[data-tower-index]').length, canvases: state.parent.querySelectorAll('canvas').length };
+    return { baseline: state.baseline, current, retainedIdentity, decodes: state.decodes(), cached, after: manager.cachedSources, before, disposed: state.disposals(), sourceListeners, sourceGeometryCount: state.geometries.size, sourceTextureCount: state.textures.size, retired, labels: state.parent.querySelectorAll('[data-tower-index]').length, summaries: state.parent.querySelectorAll('[data-tower-summary]').length, canvases: state.parent.querySelectorAll('canvas').length };
   });
   expect(models).toBe(1); expect(audio).toBe(1); expect(result.decodes).toBe(1); expect(result.retainedIdentity).toBe(true);
   expect(result.cached).toBe(2); expect(result.after).toBe(0); expect(result.before).toEqual({ geometryDisposals: 0, textureDisposals: 0 });
@@ -58,7 +58,7 @@ test('application restarts and twenty shared-source switches retain decoded CPU 
   expect(result.current.every((memory: unknown) => JSON.stringify(memory) === JSON.stringify(result.baseline))).toBe(true);
   // Three's internally owned fallback environment texture remains in retired info counters.
   expect(result.retired).toEqual(result.retired.map(() => ({ geometries: 0, textures: 1, contextLost: true })));
-  expect(result.labels).toBe(0); expect(result.canvases).toBe(0);
+  expect(result.labels).toBe(0); expect(result.summaries).toBe(0); expect(result.canvases).toBe(0);
   await test.info().attach('cache-retention-lifetime.json', { body: JSON.stringify({ ...result, requests: { models, audio } }), contentType: 'application/json' });
 });
 
@@ -99,6 +99,6 @@ test('production shell retains GLB and WAV across offline restart and shared-sou
   await page.evaluate(() => window.__na!.menu());
   const memory = await page.evaluate(() => window.__na!.memory());
   expect(memory.retired).toEqual(memory.retired.map(() => ({ geometries: 0, textures: 1, contextLost: true })));
-  expect(memory.labels).toBe(0); expect(memory.canvases).toBe(0);
+  expect(memory.labels).toBe(0); expect(memory.summaries).toBe(0); expect(memory.canvases).toBe(0);
   await test.info().attach('production-offline-cache.json', { body: JSON.stringify({ baseline, memory, requests: { models, audio }, decodes: 1 }), contentType: 'application/json' });
 });

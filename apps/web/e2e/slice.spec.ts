@@ -14,7 +14,6 @@ const OUT = path.resolve(process.env.SLICE_OUT ?? 'test-results/slice');
 const LEVELS_DIR = path.resolve(process.cwd(), '../../packages/content/data/levels');
 const LEVELS = ['01-first-steps', '10-two-foes', '18-free-for-all'] as const;
 const PALETTES = ['default', 'colorblind'] as const;
-const MIN_CHIP_PX = 14;
 const RUN_MS = Number(process.env.SLICE_RUN_MS ?? 4000);
 const PERF_MS = Number(process.env.SLICE_PERF_MS ?? 10000);
 
@@ -30,28 +29,22 @@ test.describe('slice verification (owner-run, SLICE=1)', () => {
     await page.evaluate(p => window.__na!.settings({ quality: 'high', reducedMotion: false, colorblind: p === 'colorblind' }), palette);
     await page.evaluate(id => window.__na!.load(id), level);
     await expect(page.locator('main')).toHaveAttribute('data-screen', 'playing');
-    await expect(page.locator('[data-tower-index]').first()).toBeVisible();
+    await expect(page.locator('[data-tower-summary]')).toHaveCount(1); await expect(page.locator('[data-tower-index]')).toHaveCount(0);
   }
 
-  for (const level of LEVELS) for (const palette of PALETTES) test(`${level} ${palette}: screenshot, label chips, seat distinctness`, async ({ page }) => {
+  for (const level of LEVELS) for (const palette of PALETTES) test(`${level} ${palette}: screenshot, roof-decal summary, seat distinctness`, async ({ page }) => {
     await open(page, level, palette);
     const seats = (JSON.parse(fs.readFileSync(path.join(LEVELS_DIR, `${level}.json`), 'utf8')).players as unknown[]).length;
-    await page.waitForTimeout(RUN_MS); // real-time run so troops/lines/labels are in a lived-in state
-    const chips = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('[data-tower-index]')].filter(e => e.style.display !== 'none').map(e => {
-      const box = e.getBoundingClientRect();
-      const rows = [...e.querySelectorAll<HTMLElement>('[data-component]')].map(r => ({ key: r.dataset.component!, text: r.textContent ?? '', fontPx: parseFloat(getComputedStyle(r).fontSize), height: r.getBoundingClientRect().height }));
-      return { index: e.dataset.towerIndex!, color: e.dataset.teamColor ?? '', marker: e.querySelector('[data-team-marker]')?.textContent ?? '', width: box.width, height: box.height, fontPx: parseFloat(getComputedStyle(e).fontSize), rows };
-    }));
+    await page.waitForTimeout(RUN_MS); // real-time run so troops/lines/roof decals are in a lived-in state
+    // Roof decals replace the DOM count chips: assert via the presentation probe (colour/glyph per tower) + the live-region summary.
+    const chips = await page.evaluate(() => window.__na!.presentation().towers.map((t, i) => ({ index: String(i), color: t.color, marker: String(t.glyph ?? '') })));
+    const summary = (await page.locator('[data-tower-summary]').textContent()) ?? '';
     const file = `${level}.${palette}`;
     await page.screenshot({ path: path.join(OUT, `${file}.png`) });
 
-    // Count-label chips: whole chip and its count text must be >= 14 px.
+    // Every tower is described in the hidden summary (roof decal text itself is canvas-drawn).
     expect(chips.length).toBeGreaterThan(0);
-    for (const chip of chips) {
-      expect.soft(chip.height, `chip ${chip.index} height`).toBeGreaterThanOrEqual(MIN_CHIP_PX);
-      expect.soft(chip.fontPx, `chip ${chip.index} font px`).toBeGreaterThanOrEqual(MIN_CHIP_PX);
-      for (const row of chip.rows) expect.soft(row.fontPx, `chip ${chip.index} ${row.key} font px`).toBeGreaterThanOrEqual(MIN_CHIP_PX);
-    }
+    expect.soft((summary.match(/Tower /g) ?? []).length, 'summary lists every tower').toBe(chips.length);
     // Seat distinctness: one colour <-> one marker; distinct colours have distinct markers; every seat is represented.
     const byColor = new Map<string, Set<string>>();
     for (const c of chips) { if (!byColor.has(c.color)) byColor.set(c.color, new Set()); byColor.get(c.color)!.add(c.marker); }
@@ -59,7 +52,7 @@ test.describe('slice verification (owner-run, SLICE=1)', () => {
     const markers = [...byColor.values()].map(s => [...s][0]);
     expect.soft(new Set(markers).size, 'markers distinct per colour').toBe(markers.length);
     expect.soft(byColor.size, `>= ${seats} distinct seat colours (neutral may add one)`).toBeGreaterThanOrEqual(seats);
-    const report = { level, palette, viewport: '1920x1080', seats, minChipHeight: Math.min(...chips.map(c => c.height)), minFontPx: Math.min(...chips.flatMap(c => [c.fontPx, ...c.rows.map(r => r.fontPx)])), colors: Object.fromEntries([...byColor].map(([k, v]) => [k, [...v][0]])), chips };
+    const report = { level, palette, viewport: '1920x1080', seats, summary, colors: Object.fromEntries([...byColor].map(([k, v]) => [k, [...v][0]])), chips };
     fs.writeFileSync(path.join(OUT, `${file}.labels.json`), JSON.stringify(report, null, 2));
     await test.info().attach(`${file}.labels.json`, { body: JSON.stringify(report), contentType: 'application/json' });
   });
