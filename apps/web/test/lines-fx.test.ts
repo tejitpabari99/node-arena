@@ -53,3 +53,12 @@ it('uses tower visual capture fallback, generic locators, and floored diagonal s
   const length = Math.floor(Math.hypot(10001 * 20, 12345 * 20)); expect(r.meshes[0]!.position.x).toBeCloseTo(10.001 * 100000 / length); expect(r.meshes[0]!.position.z).toBeCloseTo(12.345 * 100000 / length);
   expect(r.slots[1]!.effect).toBe('puff'); expect(r.meshes[2]!.position).toEqual(new Vector3(9, 1, 8)); f.scope.dispose();
 });
+it('lane renderOrder stays in [1,2) below every effect layer, newer over older, for any drawSeq', () => {
+  const lines = [{ channel: 1, from: 0, to: 1, owner: 0, drawSeq: 1 }, { channel: 5, from: 1, to: 2, owner: 0, drawSeq: 150 }, { channel: 2, from: 0, to: 2, owner: 0, drawSeq: 7 }];
+  const view = { towerStatic: [{ x: 0, y: 0, visual: 'tower.standard' }, { x: 10000, y: 0, visual: 'tower.small' }, { x: 5000, y: 8000, visual: 'tower.small' }], tower: { owner: new Int32Array([0, 0, 0]) }, players: [{ colorKey: 'player.1' }], lines } as unknown as SimView;
+  const scene = new Scene(), scope = new Disposables(), r = createLineRenderer({ view, manifest: structuredClone(manifestJSON) as Manifest, scene, scope });
+  r.update(1); const order = (pair: string) => r.meshes.find(m => m.userData.pair === pair)!.renderOrder;
+  const o1 = order('0-1'), o150 = order('1-2'), o7 = order('0-2');
+  for (const o of [o1, o7, o150]) { expect(o).toBeGreaterThanOrEqual(1); expect(o).toBeLessThan(2); }
+  expect(o150).toBeGreaterThan(o7); expect(o7).toBeGreaterThan(o1); scope.dispose();
+});

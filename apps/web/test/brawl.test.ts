@@ -78,4 +78,16 @@ describe('brawl renderer', () => {
     };
     const a = run(), b = run(); expect(a.length).toBeGreaterThan(100); expect(b).toEqual(a);
   });
+  it('ambient puffs move smoothly while intensity changes every frame on a long clock (no per-frame teleports)', () => {
+    const f = setup(); let t = 60; f.tick(t); for (let k = 0; k < 20; k++) { t += DT; f.r.consumeEvents([f.clash(Math.round(t * 20))]); f.tick(t); }
+    for (let k = 0; k < 200; k++) { t += DT; f.tick(t); } // bursts expired; clash EMA still decaying (intensity changes each frame)
+    const pos = () => { const m = f.r.meshes[1]!.instanceMatrix.array, a = (f.r.meshes[1]!.geometry.getAttribute('aAlpha') as { array: Float32Array }).array, out: { x: number; y: number; z: number; a: number }[] = []; for (let i = 0; i < f.r.puffCount; i++) out.push({ x: m[i * 16 + 12]!, y: m[i * 16 + 13]!, z: m[i * 16 + 14]!, a: a[i]! }); return out; };
+    let prev = pos(), checked = 0, last = -1;
+    for (let k = 0; k < 160; k++) {
+      t += DT; f.tick(t); const cur = pos(), ema = f.r.slots[0]!.ema; expect(ema).not.toBe(last); last = ema; expect(ema).toBeLessThan(1);
+      for (const p of cur) { /* puffs with alpha < .7 are just restarted (age < ~2 frames) and may appear anywhere */ if (p.a < .7) continue; let best = Infinity; for (const q of prev) best = Math.min(best, Math.hypot(p.x - q.x, p.y - q.y, p.z - q.z)); expect(best).toBeLessThan(.6); checked++; }
+      prev = cur;
+    }
+    expect(checked).toBeGreaterThan(20); f.scope.dispose();
+  });
 });

@@ -53,7 +53,7 @@ export function drawSwords(ctx: CanvasRenderingContext2D, size: number): void {
 
 interface Brawl {
   pair: string; pairH: number; active: boolean; vis: number; seed: number; x: number; z: number; dx: number; dz: number; lo: number; hi: number; laneWidth: number;
-  ema: number; pending: number; clashAt: number; cursor: number; burstBorn: Float64Array; burstSeed: Int32Array; burstX: Float64Array; burstZ: Float64Array; fighters: number; ambient: number; seen: boolean;
+  ema: number; pending: number; clashAt: number; cursor: number; burstBorn: Float64Array; burstSeed: Int32Array; burstX: Float64Array; burstZ: Float64Array; fighters: number; ambient: number; seen: boolean; /** Ambient puff cycle phase (cycles, accumulated dt / T). */ phase: number;
 }
 export interface BrawlRendererOptions {
   view: SimView; manifest: Manifest; scene: Scene; scope: Disposables;
@@ -78,7 +78,7 @@ export function createBrawlRenderer(options: BrawlRendererOptions) {
   paint();
   const slots: Brawl[] = [];
   for (let i = 0; i < BRAWLS; i++) slots.push({ pair: '', pairH: 0, active: false, vis: 0, seed: 0, x: 0, z: 0, dx: 1, dz: 0, lo: -1, hi: -1, laneWidth: 4, ema: 0, pending: 0, clashAt: -Infinity, cursor: 0,
-    burstBorn: new Float64Array(BURST_PUFFS).fill(-Infinity), burstSeed: new Int32Array(BURST_PUFFS), burstX: new Float64Array(BURST_PUFFS), burstZ: new Float64Array(BURST_PUFFS), fighters: 0, ambient: 0, seen: false });
+    burstBorn: new Float64Array(BURST_PUFFS).fill(-Infinity), burstSeed: new Int32Array(BURST_PUFFS), burstX: new Float64Array(BURST_PUFFS), burstZ: new Float64Array(BURST_PUFFS), fighters: 0, ambient: 0, seen: false, phase: 0 });
 
   // Fighters: low troop figure (unit height), one instanced mesh, instanceColor = team tint.
   const fighterGeometry = scope.add(buildLowTroopGeometry(new Box3(new Vector3(-.5, 0, -.5), new Vector3(.5, 1, .5))));
@@ -111,7 +111,7 @@ export function createBrawlRenderer(options: BrawlRendererOptions) {
     return undefined;
   }
   function burstAlive(s: Brawl) { for (let k = 0; k < BURST_PUFFS; k++) if (s.burstBorn[k]! > -Infinity) return true; return false; }
-  function reset(s: Brawl, pair: string) { s.pair = pair; s.pairH = pairHash(pair); s.active = false; s.vis = 0; s.ema = 0; s.pending = 0; s.clashAt = -Infinity; s.cursor = 0; s.seed = 0; s.burstBorn.fill(-Infinity); }
+  function reset(s: Brawl, pair: string) { s.pair = pair; s.pairH = pairHash(pair); s.active = false; s.vis = 0; s.ema = 0; s.pending = 0; s.clashAt = -Infinity; s.cursor = 0; s.seed = 0; s.burstBorn.fill(-Infinity); s.phase = hash01(s.pairH, 99); }
   function locate(s: Brawl, lane: Lane, split: number) {
     const a = view.towerStatic[lane.lo], b = view.towerStatic[lane.hi]; if (!a || !b) return;
     const ax = a.x / 1000, az = a.y / 1000, bx = b.x / 1000, bz = b.y / 1000, len = Math.hypot(bx - ax, bz - az) || 1;
@@ -185,11 +185,12 @@ export function createBrawlRenderer(options: BrawlRendererOptions) {
           scale.setScalar(H * vis); matrix.compose(position, quaternion, scale); fighters.setMatrixAt(f, matrix); fighters.setColorAt(f, tint); f++; s.fighters++;
         }
       }
-      // Ambient puffs: a stateless cycle per slot (rate 2-10/s), so the picture is a pure function of the render clock.
+      // Ambient puffs: per-slot accumulated phase (cycles); rate changes only change the speed, so puffs never teleport. dt = 0 (settle / first frame) leaves it untouched.
       const rate = puffRate(intensity), T = AMBIENT_PUFFS / rate, life = Math.min(PUFF_LIFE_S, T); s.ambient = 0;
+      if (dt > 0) s.phase += dt / T;
       for (let j = 0; j < AMBIENT_PUFFS; j++) {
-        const u = seconds + j * T / AMBIENT_PUFFS + hash01(s.pairH, 99) * T, cycle = Math.floor(u / T), age = u - cycle * T; if (age >= life) continue;
-        const start = Math.floor((seconds - age) * TICK_RATE), seed = brawlSeed(s.pairH, start) ^ Math.imul(j + 1, 0x27d4eb2f), t = age / life, ang = hash01(seed, 1) * TAU, rad = H * (.6 + hash01(seed, 2) * .9), po = view.tower.owner[hash01(seed, 7) < .5 ? s.lo : s.hi] ?? -1;
+        const u = s.phase + j / AMBIENT_PUFFS, cycle = Math.floor(u), age = (u - cycle) * T; if (age >= life) continue;
+        const seed = brawlSeed(s.pairH, cycle) ^ Math.imul(j + 1, 0x27d4eb2f), t = age / life, ang = hash01(seed, 1) * TAU, rad = H * (.6 + hash01(seed, 2) * .9), po = view.tower.owner[hash01(seed, 7) < .5 ? s.lo : s.hi] ?? -1;
         writePuff(p++, s.x + Math.cos(ang) * rad + s.dx * (reduced ? 0 : age * H * .2), H * (.35 + .5 * t) + hash01(seed, 3) * H * .25, s.z + Math.sin(ang) * rad, H * (.5 + .7 * t) * vis, Math.min(1, t * 8) * (1 - t * .5) * .95 * vis, po, hash01(seed, 8) < .5 ? .2 : 0); s.ambient++;
       }
       // Marker: billboard above the cluster; scale 0.8-1.2 by intensity.

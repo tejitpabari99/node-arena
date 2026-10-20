@@ -14,6 +14,8 @@ export interface TroopFronts { readonly frontProgress: ArrayLike<number>; readon
 export interface LineRendererOptions { view: SimView; manifest: Manifest; scene: Scene; scope: Disposables; /** Tower visual width in world units (SP03 `towers.visualWidth`). */ visualWidth?: (id: string) => number | undefined; palette?: keyof Manifest['palettes']; reducedMotion?: boolean }
 /** Half state: 0 absent, 1 drawn, 2 draining (cut but still carrying troops), 3 retracting (cut animation).
  * `buildAt`/`cutAt[side]` are render-clock start seconds: -1 none, NaN = starts at the next `update`. */
+/** Lane draw order: recency rank among live lanes mapped into [1, 2) so lanes stay below every effect layer (fx 2, preview/trail 3, puffs 4, marker 5) and newer never inverts under older. */
+export const laneOrder = (rank: number, count: number) => 1 + rank / Math.max(1, count);
 export interface Lane { readonly mesh: Mesh<BufferGeometry, ShaderMaterial>; readonly lo: number; readonly hi: number; readonly pair: string; readonly chan: readonly [number, number]; readonly drawn: [boolean, boolean]; readonly owner: [number, number]; readonly state: [number, number]; seq: number; buildAt: number; buildSrc: number; readonly cutAt: [number, number]; widthWorld: number; readonly length: number; /** Sim-unit lane length (progress units). */ readonly simLength: number; /** Smoothed split (fraction from lo; NaN = unset) and spring velocity. */ split: number; splitV: number; /** Last computed target. */ splitTarget: number }
 const LANE_Y = .04, PUFFS_PER_CUT = 4, easeOut = (t: number) => 1 - (1 - t) ** 2;
 /** One flat chevron ribbon per unordered tower pair (A = lower index). */
@@ -96,7 +98,8 @@ export function createLineRenderer(options: LineRendererOptions) {
       u.drainA!.value = a && lane.state[0] === 2 ? 1 : 0; u.drainB!.value = b && lane.state[1] === 2 ? 1 : 0;
       u.hoverA!.value = hover !== null && hover === lane.chan[0] && (hoverOwner === undefined || hoverOwner === lane.owner[0]) ? 1 : 0;
       u.hoverB!.value = hover !== null && hover === lane.chan[1] && (hoverOwner === undefined || hoverOwner === lane.owner[1]) ? 1 : 0;
-      lane.mesh.renderOrder = 1 + lane.seq % 100; u.alphaMul!.value = lane.seq === newest ? 1 : .82; // newer lane over older; older one slightly more see-through where lanes cross
+      let rank = 0; for (const o of lanes.values()) if (o.seq < lane.seq) rank++;
+      lane.mesh.renderOrder = laneOrder(rank, lanes.size); u.alphaMul!.value = lane.seq === newest ? 1 : .82; // newer lane over older; older one slightly more see-through where lanes cross
     }
     meshes.length = 0; for (const lane of lanes.values()) meshes.push(lane.mesh);
   }
