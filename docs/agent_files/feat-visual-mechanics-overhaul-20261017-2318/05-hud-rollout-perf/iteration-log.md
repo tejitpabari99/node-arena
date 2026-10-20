@@ -37,3 +37,10 @@ H01-H07 pass on l01, l01-tip, l10 both viewports. l18/l10cb H rows fail only bec
 | 6 | 6px white panel rim, eyebrow 18px/subtle 17px | blind menu 8, pause 8, results 8, picker 7 (self 8) | blind picker gap: tiny tile text, dark slab vs light ref |
 | 7 | tile order 34px stroked, labels 15px bold | picker 7 | |
 | 8 (final) | picker panel --c-blue-deep, white->sand tiles | blind picker 8 (diffs: no red/yellow segmented header, bg warm vs sky-blue, flat tiles w/o icons, thin rim, L20 clipped at 1366) ; menu 8/pause 8/results 8 (diffs: header box vs red ribbon+tails, flat navy vs inset rows, no orange footer/art, cream pills absent in ref) | V20 8, V21 8 merged min(self 8, blind). Tests: web unit 349/349, typecheck+lint+check:manifest pass, app-flow e2e (dev) pass, H01-H07 0 FAIL on l01/l01-tip/l10, App.tsx untouched |
+
+## Task 6 (HUD/menu e2e selector update; non-visual)
+| iter | change | result |
+|---|---|---|
+| 1 | baseline `test:e2e` (prod) | 1 fail: acceptance.spec.ts:68 `.hud strong` removed; dev.spec/boot/input-palette/cache-regressions already match new aria-labels |
+| 2 | acceptance:68 -> `[data-hud="pill"] strong` toContainText 'Fixture 2'; slice.spec perf toggle -> pause > Settings > "Performance HUD" checkbox > Done > Resume; new e2e/hud.spec.ts (tip once on L1 + reload after dismiss, no tip on L2, meter role/aria-valuetext format sums 100, speed button, Esc/Pause) | prod: hud 4/4 pass, acceptance pass; dev suite 33 pass, 11 skipped (3 fixme SP05 baseline, 8 SLICE opt-in); SLICE=1 perf-HUD specs 2/2 pass |
+Flake: acceptance.spec.ts:95 stress p95 failed once on dev run, passed on prod runs/rerun (known SwiftShader flake). Picker at 1366x768: L20 tile bbox y 632-733 (< 768) visible, reachable; no CSS change. typecheck + lint pass.

@@ -65,7 +65,7 @@ test('20 authored levels, completion survives reload, retry/next and timeout hav
   await expect(page.getByRole('button',{name:/20 Fixture 20.*Completed/})).toBeVisible();
   for(let i=1;i<=20;i++) { await page.evaluate(i=>window.__na!.load(`fixture-${i}`),i); await draw(page); await page.evaluate(()=>window.__na!.step(220)); await expect(page.getByRole('heading',{name:'Victory'})).toBeVisible(); }
   await page.evaluate(()=>window.__na!.load('fixture-1')); await draw(page); await page.evaluate(()=>window.__na!.step(220));
-  await page.getByRole('button',{name:'Next arena'}).click(); await expect(page.locator('.hud strong')).toHaveText('Fixture 2');
+  await page.getByRole('button',{name:'Next arena'}).click(); await expect(page.locator('[data-hud="pill"] strong')).toContainText('Fixture 2');
   await expect(page.locator('iframe,[class*="interstitial"],[class*="advert"],[data-ad],[class*="energy"],[class*="payment"]')).toHaveCount(0);
   await boot(page,'timeout'); await load(page); await page.evaluate(()=>window.__na!.step(100));
   await expect(page.getByRole('heading',{name:'Time is up'})).toBeVisible();
