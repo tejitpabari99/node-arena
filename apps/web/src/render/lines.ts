@@ -30,7 +30,12 @@ export function createLineRenderer(options: LineRendererOptions) {
     const w = options.visualWidth?.(id(i)), r = view.towerStatic[i]!.footprintRadius / 1000;
     return w !== undefined && Number.isFinite(w) && w > 0 ? w : Number.isFinite(r) && r > 0 ? 2 * r : 6;
   }
-  function laneWidth(a: number, b: number) { return LANE_WIDTH_FACTOR * (towerWidth(a) + towerWidth(b)) / 2; }
+  /** Rollout (SP05 T8): one ribbon width per level = factor x the median tower visual width (not the endpoint mean), so lane/tower stays in the M05 band on boards that mix small and large towers. */
+  let refWidth: number | undefined;
+  function laneWidth(_a: number, _b: number) {
+    if (refWidth === undefined) { const ws = Array.from({ length: n() }, (_, i) => towerWidth(i)).sort((x, y) => x - y); refWidth = ws.length ? ws[Math.floor(ws.length / 2)]! : 6; }
+    return LANE_WIDTH_FACTOR * refWidth;
+  }
   function writeGeometry(lane: Lane) {
     const a = view.towerStatic[lane.lo]!, b = view.towerStatic[lane.hi]!, ax = a.x / 1000, az = a.y / 1000, bx = b.x / 1000, bz = b.y / 1000;
     const len = Math.hypot(bx - ax, bz - az) || 1, half = lane.widthWorld / 2, nx = -(bz - az) / len * half, nz = (bx - ax) / len * half;
@@ -45,7 +50,7 @@ export function createLineRenderer(options: LineRendererOptions) {
     const material = createLaneMaterial(clock, motion); material.uniforms.team = material.uniforms.colA!;
     const mesh = new Mesh(geometry, material), nn = n(), pair = `${id(lo)}-${id(hi)}`;
     const a = view.towerStatic[lo]!, b = view.towerStatic[hi]!, length = Math.hypot(b.x - a.x, b.y - a.y) / 1000;
-    const lane: Lane = { mesh, lo, hi, pair, chan: [lo * nn + hi, hi * nn + lo], drawn: [false, false], owner: [-1, -1], state: [0, 0], seq: 0, buildAt: -1, buildSrc: 0, cutAt: [-1, -1], widthWorld: LANE_WIDTH_FACTOR * (towerWidth(lo) + towerWidth(hi)) / 2, length, simLength: Math.hypot(b.x - a.x, b.y - a.y) * TICK_RATE, split: NaN, splitV: 0, splitTarget: .5 };
+    const lane: Lane = { mesh, lo, hi, pair, chan: [lo * nn + hi, hi * nn + lo], drawn: [false, false], owner: [-1, -1], state: [0, 0], seq: 0, buildAt: -1, buildSrc: 0, cutAt: [-1, -1], widthWorld: laneWidth(lo, hi), length, simLength: Math.hypot(b.x - a.x, b.y - a.y) * TICK_RATE, split: NaN, splitV: 0, splitTarget: .5 };
     mesh.userData = { visualRole: 'lane', from: lo, to: hi, pair, widthWorld: lane.widthWorld, splitWorld: null };
     mesh.frustumCulled = false; options.scene.add(mesh); writeGeometry(lane); return lane;
   }
