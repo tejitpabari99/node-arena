@@ -17,6 +17,8 @@ export interface TroopRendererOptions {
   palette?: keyof Manifest['palettes'];
   /** 'auto' (default) picks high/low by live count + frame-time EMA; 'high'/'low' force one set (`?lod=` harness param). */
   lod?: TroopLodMode;
+  /** Multiplier on the troop visual scale (SP05 rollout, see `troopSizeFactor`); default 1. */
+  sizeFactor?: number;
   /** Overrides of the auto thresholds (SP05 perf ladder / quality tiers); defaults are the exported LOD_* constants. */
   lodThresholds?: Partial<LodThresholds>;
   /** Wall-clock source in milliseconds for the auto policy's frame-time EMA (the app passes its own clock; omitted = count-only policy). */
@@ -32,6 +34,13 @@ interface LodSet {
 interface Bucket extends LodSet { capacity: number; count: number; total: number; low: LodSet }
 function buffer(capacity: number): TroopBuf {
   return { channel: new Int32Array(capacity), seq: new Int32Array(capacity), owner: new Int32Array(capacity), kind: new Int32Array(capacity), progress: new Int32Array(capacity) };
+}
+/** Per-level troop size overrides keyed by level id (render params only; M06 troop height / tower width <= 0.60). */
+export const TROOP_SIZE_OVERRIDE: Readonly<Record<string, number>> = { '09-chain-link': 0.9 };
+/** Troop size factor for a level: shrinks troops on boards whose starting (owned) towers are small (median visual width < 4 u), times the per-level override. */
+export function troopSizeFactor(levelId: string, ownedTowerWidths: readonly number[]): number {
+  const w = [...ownedTowerWidths].filter(x => Number.isFinite(x) && x > 0).sort((a, b) => a - b), median = w.length ? w[Math.floor(w.length / 2)]! : 4;
+  return Math.min(1, median / 4) * (TROOP_SIZE_OVERRIDE[levelId] ?? 1);
 }
 /** Public view/readTroops boundary only. Channels remain renderable after their draw line is cut. */
 export function createTroopRenderer(options: TroopRendererOptions) {
@@ -71,7 +80,7 @@ export function createTroopRenderer(options: TroopRendererOptions) {
     for (const kind of view.kinds) {
       let owners = byVisual.get(kind.visual);
       if (!owners) {
-        const visual = resolver.visual(kind.visual, 'troop'), source = options.models.get(visual.modelKey);
+        const base = resolver.visual(kind.visual, 'troop'), visual = { ...base, scale: base.scale * (options.sizeFactor ?? 1) }, source = options.models.get(visual.modelKey);
         if (!source) throw new Error(`Missing loaded model: ${visual.modelKey}`);
         const merged = mergeModel(source, visual.teamMaterial, scope);
         // Fixed bound encloses model scale, offsets and procedural motion for every pose.

@@ -5,7 +5,7 @@ import type { LevelRuntime, RuntimeContext } from "./state";
 import { Disposables } from "../render/disposables";
 import { createLevelScene } from "../render/scene";
 import { createTowerRenderer } from "../render/towers";
-import { createTroopRenderer } from "../render/troops";
+import { createTroopRenderer, troopSizeFactor } from "../render/troops";
 import { parseLodMode } from "../render/troop-lod";
 import { createLineRenderer } from "../render/lines";
 import { createFxRenderer } from "../render/fx";
@@ -46,6 +46,7 @@ export function createBrowserRuntime(
       models: session.models,
       scene: scene.scene,
       scope,
+      sizeFactor: troopSizeFactor(level.id, level.towers.filter((t) => t.owner >= 0).map((t) => towers.visualWidth(t.id) ?? NaN)),
       reducedMotion: settings.reducedMotion,
       palette: settings.colorblind ? "colorblind" : "default",
       now: () => performance.now(),
