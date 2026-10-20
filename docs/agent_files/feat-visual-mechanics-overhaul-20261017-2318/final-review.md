@@ -207,7 +207,7 @@ R1 min camera margin / R2 void / R6 from `metrics.json` of this capture; M05/M06
 | L19 | 12 | lane/tower 0.218..0.309 | troop h 0.033 of vh, 0.43 of tower w | min digit 8 px >= 5 | none / none |
 | L20 | 15 | lane/tower 0.232..0.316 | troop h 0.034 of vh, 0.458 of tower w | min digit 7 px >= 5 | none / none |
 
-L1 has no lane/troops at tick 400 (M05/M06 n/a, expected). M19 flags at lvl-02/lvl-12 @1366 are detection noise (an extra detected slot dot), non-gated scenes. Empty sand bands on narrow boards (L10/L11/L17-L19) cannot be removed (camera is height-fitted, all towers must stay framed). Camera margins, lane-width/troop-size factors and roof-digit size are per-level render params (commits in Section 11). Contact sheets: Section 2.
+L1 has no lane/troops at tick 400 (M05/M06 n/a, expected). M19 flags at lvl-02/lvl-12 @1366 are detection noise (an extra detected slot dot), non-gated scenes. Empty sand bands on narrow boards (L10/L11/L17-L19) cannot be removed (camera is height-fitted, all towers must stay framed). Camera margins and lane-width/troop-size factors are per-level visual overrides in manifest `levelVisuals` (schema 1.2.0, review fix 306c217); roof digit is a single global 44 px (commits in Section 11). Contact sheets: Section 2.
 
 ## 8. Blocked-visual / blocked / Perf-open (every TASKS.md)
 Status counts come straight from the five TASKS.md tables. All were cap-bounded or hit the blind-scorer ceiling (7); no mechanics/threshold changes were made to force passes.
@@ -238,7 +238,7 @@ Also: SP03 code summary [03-diorama-and-towers/code-2026-10-20-0338.md](03-diora
 ## 9. Known gaps
 - Visual ceiling: blind scorer caps SP03/SP04/SP05 items at 6-7: tower ~3-4% of frame height (M01 passes at 4.35% vw / 7.8% of height but ref portrait shots frame 5.8-7%; landscape board shows 20 towers on one wide strip), troops read as small blobs at full frame, roof digits small at 1366, ribbons less translucent/chevrons vs ref dots, menu/picker lack character art (layout redesign out of scope), HUD pill carries timer + 1x button (PRD-mandated, absent in ref).
 - Brawl FX conflict (SP04): blind scorer wants red/blue confetti like towerwar_06; PRD/implementation uses cream puffs + crossed-swords marker.
-- Roof number 40 px on L1 vs 44 px elsewhere (T8 hack: 44 on L1 pushes M11 white-body share to .451 > .45).
+- Roof number: single global 44 px (review fix 306c217); l01 M11 now fails at 1920 (.454 vs .45). Per-level visual overrides now live in manifest `levelVisuals` (schema 1.2.0).
 - Metric mis-specification: M11/M20 green hue vs tree-green ground mask; l10cb orange tolerance 25 deg (see Section 4).
 - `acceptance.spec.ts:95` stress p95 < 4 ms: see result below; T12 median ~4.1 ms (branch, n=19) vs ~3.7 ms (main, n=14) on loaded SwiftShader, tail in scene.render, not HUD or LOD (experiments in iteration-log T12).
 - fps on real GPU unverified (Perf-open).
@@ -253,9 +253,11 @@ Also: SP03 code summary [03-diorama-and-towers/code-2026-10-20-0338.md](03-diora
 1. Approve (or reject) this review.
 2. Laptop fps spot-check: `pnpm --filter @node-arena/web dev`, open L18 with `?perf`, expect mean >= 58, 1% low >= 45; else apply perf-log next steps (auto-quality, lower high DPR cap, basic shadows on med).
 3. Decide on `acceptance.spec.ts:95` stress p95 < 4 ms (relax threshold or change CI host); it is a SwiftShader tail flake, also failing intermittently on main.
-4. Decide on Blocked-visual items: SP04 brawl style (team confetti vs cream puffs), roof-number 40 vs 44 px, whether to accept the 7 ceiling or fund art/layout work (character art, wider tower scale / camera).
+4. Decide on Blocked-visual items: SP04 brawl style (team confetti vs cream puffs), l01 M11 .454 vs .45 at 1920 (single 44 px roof number), whether to accept the 7 ceiling or fund art/layout work (character art, wider tower scale / camera).
 5. Decide on M11/M20 metric mis-specification for green + colourblind hues (ground-mask hue window, orange tolerance); thresholds were not edited by agents.
-6. Merge order: stacked PRs SP04 (`feat/sp04-lanes-troops-clash`) then SP05 (`feat/sp05-hud-rollout-perf`).
+6. Merge: one PR (head `feat/sp05-hud-rollout-perf`, contains SP04 commits); SP04 branch pushed for reference.
+
+Reviews: SP04 [04-lanes-troops-clash/review-2026-10-20-1112.md](04-lanes-troops-clash/review-2026-10-20-1112.md) + re-review PASS [review-2026-10-20-1127.md](04-lanes-troops-clash/review-2026-10-20-1127.md); SP05 [05-hud-rollout-perf/review-2026-10-20-1858.md](05-hud-rollout-perf/review-2026-10-20-1858.md) + re-review PASS [review-2026-10-20-1910.md](05-hud-rollout-perf/review-2026-10-20-1910.md).
 
 ## 11. Commits
 Merged to main (first-parent):
