@@ -117,10 +117,10 @@ export function buildVisualProbe(input: ProbeInput): VisualProbe {
     let modelPts = (parts.length ? parts : [root]).map(p => meshPoints(p, isCount));
     if (!modelPts.some(m => m.points.length) && visualWidthWorld !== null) {
       // Instanced path: no own geometry, derive the stack box from the root transform.
-      const base = root.getWorldPosition(new Vector3()), half = visualWidthWorld / 2;
-      const height = num(root.userData.stackHeight) ?? (floors ?? 1) * FLOOR_HEIGHT_WORLD + 0.5 * visualWidthWorld;
-      const world = new Box3(new Vector3(base.x - half, base.y, base.z - half), new Vector3(base.x + half, base.y + height, base.z + half));
-      modelPts = [{ points: boxCorners(world).map(point), world }];
+      // Local box (width x height x width above the root origin) through the root's full world matrix (a sheared root stays consistent with the render).
+      const half = visualWidthWorld / 2, height = num(root.userData.stackHeight) ?? (floors ?? 1) * FLOOR_HEIGHT_WORLD + 0.5 * visualWidthWorld;
+      const world = new Box3(), points = boxCorners(new Box3(new Vector3(-half, 0, -half), new Vector3(half, height, half))).map(c => { const w = c.applyMatrix4(root.matrixWorld); world.expandByPoint(w); return point(w); });
+      modelPts = [{ points, world }];
     }
     const modelWorld = modelPts.reduce((box, m) => box.union(m.world), new Box3());
     const model = rectOf(modelPts.flatMap(m => m.points)) ?? { x: 0, y: 0, w: 0, h: 0 };

@@ -19,9 +19,9 @@
     "prop.crate": {"src": "models/prop-crate.glb"}
   },
   "visuals": {
-    "tower.standard": {"kind": "tower", "model": "building.standard", "scale": 3.2, "label": {"height": 7.6}},
-    "tower.small": {"kind": "tower", "model": "building.small", "scale": 2.88, "label": {"height": 5.4}},
-    "tower.large": {"kind": "tower", "model": "building.large", "scale": 3.12, "label": {"height": 12}},
+    "tower.standard": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 7.6}},
+    "tower.small": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 5.4}},
+    "tower.large": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 12}},
     "troop.regular": {"kind": "troop", "model": "character.regular", "scale": 2.8, "teamMaterial": "Shirt", "anim": {"type": "bob", "hz": 2.2, "amp": 0.12, "sway": 6}}
   },
   "themes": {
