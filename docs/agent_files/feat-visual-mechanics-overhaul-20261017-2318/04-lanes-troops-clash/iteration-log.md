@@ -15,3 +15,6 @@ Notes (iter 0)
 - Other visual:check fails unrelated to SP04: M02, M09 (l10@1080), M11, M16/M19 (clash@1366), M18, M20.
 - visual:compose exits 1 when menu/picker/l10cb missing from metrics.json (not captured here); the six needed composites are still produced.
 - visual-out/ is gitignored; not committed.
+| 1 | 2026-10-20 | 3908977 | V10 7/5/5, V11 8/7/7, V16 8/7/7 | M05 PASS l01 0.262, clash 0.252..0.275 | blind: near-opaque saturated ribbon, bold chevrons, hard crossing seam | paler/translucent fill, smaller chevrons |
+| 2 | 2026-10-20 | ddbb869 | V10 7/6/6, V11 8/7/7, V16 8/7/7 | M05 PASS all scenes (l10 0.245..0.37, l18 0.246..0.346); M13 jsMs p95 10.4 (SwiftShader noise; base 7.7-15), drawCalls 37 | ribbon still denser than ref; chevrons bolder than CT; crossing seam | tint more/alpha .5 (tried, reverted) |
+| 3 | 2026-10-20 | reverted | V10 7/6/6, V11 7/6/6, V16 7/7/7 | same | no improvement (V11 down) -> reverted to iter 2 | stuck: hypotheses (a) blind compares to refs on saturation, lane over lime grass inherently teal/orange; try opaque pastel fill with alpha-independent colour (premultiplied tint) (b) chevron as soft pale triangle, not white stroke (c) crossing: draw lower-priority lane with lower alpha |
