@@ -22,7 +22,7 @@
     "tower.standard": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 7.6}},
     "tower.small": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 5.4}},
     "tower.large": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 12}},
-    "troop.regular": {"kind": "troop", "model": "character.regular", "scale": 5.6, "teamMaterial": "Shirt", "anim": {"type": "bob", "hz": 2.2, "amp": 0.12, "sway": 6}}
+    "troop.regular": {"kind": "troop", "model": "character.regular", "scale": 10.2, "teamMaterial": "Shirt", "anim": {"type": "bob", "hz": 2.2, "amp": 0.12, "sway": 6}}
   },
   "themes": {
     "grass": { "ground": "#A3D419", "sky": "#FFE1B3", "light": {"dir": [-1, 2.2, 1.2], "color": "#FFF0D6", "intensity": 2.8},
