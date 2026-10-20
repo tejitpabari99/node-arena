@@ -36,7 +36,7 @@ export function drawCloud(ctx: CanvasRenderingContext2D, size: number): void {
   const lobes: readonly (readonly [number, number, number, number])[] = [[.5, .52, .34, 1], [.36, .58, .24, .85], [.64, .58, .25, .85], [.44, .4, .22, .8], [.6, .4, .2, .75]];
   for (const [x, y, r, a] of lobes) {
     const g = ctx.createRadialGradient(x * size, y * size, 0, x * size, y * size, r * size);
-    g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(.55, `rgba(255,255,255,${a * .55})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+    g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(.78, `rgba(255,255,255,${a})`); g.addColorStop(.92, `rgba(235,235,245,${a * .9})`); g.addColorStop(1, 'rgba(235,235,245,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
   }
 }
@@ -166,7 +166,7 @@ export function createBrawlRenderer(options: BrawlRendererOptions) {
         const age = Math.max(0, seconds - born);
         if (age >= PUFF_LIFE_S) { s.burstBorn[k] = -Infinity; continue; }
         const seed = s.burstSeed[k]!, t = age / PUFF_LIFE_S, ang = (k / BURST_PUFFS + hash01(seed, 1) * .5) * TAU, speed = H * (.9 + hash01(seed, 2) * .9) * (reduced ? 0 : 1), po = s.lo >= 0 ? view.tower.owner[hash01(seed, 7) < .5 ? s.lo : s.hi] ?? -1 : -1;
-        writePuff(p++, s.burstX[k]! + Math.cos(ang) * speed * age + (hash01(seed, 5) - .5) * H * .3, H * (.22 + .5 * t) + hash01(seed, 3) * H * .12, s.burstZ[k]! + Math.sin(ang) * speed * age + (hash01(seed, 6) - .5) * H * .3, H * (.6 + .9 * t), Math.min(1, t * 10) * (1 - t * .6) * .8, po, .3);
+        writePuff(p++, s.burstX[k]! + Math.cos(ang) * speed * age + (hash01(seed, 5) - .5) * H * .3, H * (.22 + .5 * t) + hash01(seed, 3) * H * .12, s.burstZ[k]! + Math.sin(ang) * speed * age + (hash01(seed, 6) - .5) * H * .3, H * (.6 + .9 * t), Math.min(1, t * 10) * (1 - t * .6) * .95, po, .2);
       }
       if (s.vis <= 0) { s.fighters = s.ambient = 0; continue; }
       const intensity = intensityOf(s.ema), nF = fighterCount(intensity), vis = s.vis; s.fighters = 0;
@@ -190,7 +190,7 @@ export function createBrawlRenderer(options: BrawlRendererOptions) {
       for (let j = 0; j < AMBIENT_PUFFS; j++) {
         const u = seconds + j * T / AMBIENT_PUFFS + hash01(s.pairH, 99) * T, cycle = Math.floor(u / T), age = u - cycle * T; if (age >= life) continue;
         const start = Math.floor((seconds - age) * TICK_RATE), seed = brawlSeed(s.pairH, start) ^ Math.imul(j + 1, 0x27d4eb2f), t = age / life, ang = hash01(seed, 1) * TAU, rad = H * (.6 + hash01(seed, 2) * .9), po = view.tower.owner[hash01(seed, 7) < .5 ? s.lo : s.hi] ?? -1;
-        writePuff(p++, s.x + Math.cos(ang) * rad + s.dx * (reduced ? 0 : age * H * .2), H * (.35 + .5 * t) + hash01(seed, 3) * H * .25, s.z + Math.sin(ang) * rad, H * (.5 + .7 * t) * vis, Math.min(1, t * 8) * (1 - t * .5) * .75 * vis, po, hash01(seed, 8) < .5 ? .3 : 0); s.ambient++;
+        writePuff(p++, s.x + Math.cos(ang) * rad + s.dx * (reduced ? 0 : age * H * .2), H * (.35 + .5 * t) + hash01(seed, 3) * H * .25, s.z + Math.sin(ang) * rad, H * (.5 + .7 * t) * vis, Math.min(1, t * 8) * (1 - t * .5) * .95 * vis, po, hash01(seed, 8) < .5 ? .2 : 0); s.ambient++;
       }
       // Marker: billboard above the cluster; scale 0.8-1.2 by intensity.
       const ms = markerScale(intensity) * vis * H * .9;
