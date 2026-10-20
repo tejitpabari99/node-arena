@@ -79,7 +79,7 @@ export function createLevelScene(options: SceneOptions) {
   const applyQuality = () => {
     const settings = qualitySettings(quality, window.devicePixelRatio);
     renderer.shadowMap.enabled = settings.shadowSize > 0; renderer.shadowMap.type = PCFShadowMap;
-    light.castShadow = settings.shadowSize > 0; props?.setShadows(settings.shadowSize > 0);
+    light.castShadow = settings.shadowSize > 0; props?.setShadows(quality === 'high');
     light.shadow.map?.dispose(); light.shadow.map = null;
     light.shadow.mapPass?.dispose(); light.shadow.mapPass = null;
     light.shadow.mapSize.set(settings.shadowSize || 1, settings.shadowSize || 1); light.shadow.needsUpdate = true;
