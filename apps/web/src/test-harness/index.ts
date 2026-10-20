@@ -62,10 +62,10 @@ export function createTestHarness(files: ContentFileMap) {
             inputPreview: preview instanceof Mesh && preview.material instanceof MeshBasicMaterial
               ? { visible: preview.visible, color: preview.material.color.getHexString() } : null,
             lines: inspect().lines.meshes.map(mesh => ({ color: mesh.material.uniforms.team!.value.getHexString() as string })),
-            towers: inspect().towers.towers.map(t => ({ modelScale: t.model.scale.x, color: t.base.material.color.getHexString(), glyph: t.roofMarker.userData.glyph, label: t.label?.element.textContent })),
+            towers: inspect().towers.towers.map(t => ({ modelScale: t.model.scale.x, color: t.base.material.color.getHexString(), glyph: t.roofMarker.userData.glyph })),
             fx: inspect().fx.meshes.filter(m => m.visible).map(m => ({ position: m.position.toArray(), opacity: m.material.opacity })) };
         },
-        memory() { return { current: app.runtime ? { ...inspect().renderer.info.memory } : null, retired: retired.map(r => ({ ...r.info.memory, contextLost: r.getContext().isContextLost() })), labels: document.querySelectorAll('[data-tower-index]').length, canvases: document.querySelectorAll('#arena canvas').length }; },
+        memory() { return { current: app.runtime ? { ...inspect().renderer.info.memory } : null, retired: retired.map(r => ({ ...r.info.memory, contextLost: r.getContext().isContextLost() })), labels: document.querySelectorAll('[data-tower-index]').length, summaries: document.querySelectorAll('[data-tower-summary]').length, canvases: document.querySelectorAll('#arena canvas').length }; },
         async sample(count = 120) {
           const values: number[] = [], calls: number[] = [];
           for (let i = 0; i < 20; i++) render();

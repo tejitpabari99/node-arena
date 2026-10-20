@@ -1,5 +1,5 @@
 {
-  "botVersion": "1.6.0",
+  "botVersion": "1.6.1",
   "metadata": {
     "rulesVersion": "1.0.0",
     "schemaVersion": "1.0.0",
@@ -31,14 +31,14 @@
         ],
         "id": "random-6",
         "timeLimitSec": 18,
-        "visual": "city.day",
+        "visual": "grass",
         "bounds": {
           "w": 240000,
           "h": 160000
         },
         "globals": {
           "timeLimitSec": 300,
-          "theme": "city.day"
+          "theme": "grass"
         },
         "towers": [
           {
@@ -414,14 +414,14 @@
         ],
         "id": "random-0",
         "timeLimitSec": 12,
-        "visual": "city.day",
+        "visual": "grass",
         "bounds": {
           "w": 240000,
           "h": 160000
         },
         "globals": {
           "timeLimitSec": 300,
-          "theme": "city.day"
+          "theme": "grass"
         },
         "towers": [
           {
@@ -746,14 +746,14 @@
         ],
         "id": "random-3",
         "timeLimitSec": 15,
-        "visual": "city.day",
+        "visual": "grass",
         "bounds": {
           "w": 240000,
           "h": 160000
         },
         "globals": {
           "timeLimitSec": 300,
-          "theme": "city.day"
+          "theme": "grass"
         },
         "towers": [
           {

@@ -7,7 +7,7 @@ import { parseManifest } from '../src/manifest/load.js';
 import { createManifestResolver } from '../src/manifest/resolve.js';
 import { validateManifest } from '../src/manifest/validate.js';
 
-const THEMES = ['city.day', 'city.dusk', 'city.overcast', 'city.night'];
+const THEMES = ['grass'];
 const KEYS = ['neutral', 'player.1', 'player.2', 'player.3', 'player.4'];
 const raw = import.meta.glob<string>(['../../../packages/content/content.json', '../../../packages/content/data/**/*.json'], { eager: true, query: '?raw', import: 'default' });
 const files = Object.fromEntries(Object.entries(raw).map(([path, value]) => [path.replace('../../../packages/content/', ''), value]));
@@ -16,7 +16,7 @@ describe('palettes and team markers', () => {
   const m = parseManifest(shipped);
   it('has every key in both palettes with the PRD colours', () => {
     for (const palette of ['default', 'colorblind'] as const) expect(Object.keys(m.palettes[palette]).sort()).toEqual([...KEYS].sort());
-    expect(m.palettes.default).toMatchObject({ 'player.1': '#2E86FF', 'player.2': '#FF4D4D', 'player.3': '#FFC933', 'player.4': '#35C46B', neutral: '#A0A7B0' });
+    expect(m.palettes.default).toMatchObject({ 'player.1': '#2E8BFF', 'player.2': '#F0313F', 'player.3': '#FDC534', 'player.4': '#35B84A', neutral: '#8C8C8C' });
     expect(m.palettes.colorblind).toMatchObject({ 'player.1': '#0072B2', 'player.2': '#D55E00', 'player.3': '#F0E442', 'player.4': '#009E73', neutral: '#999999' });
   });
   it('gives each key a distinct marker glyph', () => {
@@ -25,25 +25,23 @@ describe('palettes and team markers', () => {
   });
 });
 
-describe('city themes', () => {
+describe('grass theme', () => {
   const m = parseManifest(shipped);
   const level = compileLevel(loadContent(files), 'sample');
-  it('defines four distinct themes that only reference existing models and share one model set', () => {
-    const sets = THEMES.map(key => {
-      const theme = m.themes[key]!; expect(theme, key).toBeDefined(); expect(theme.fog, key).toBeDefined();
-      const models = new Set((theme.props ?? []).map(p => p.model)); expect(models.size).toBeGreaterThan(0);
-      for (const model of models) expect(Object.hasOwn(m.models, model), `${key}:${model}`).toBe(true);
-      return [...models].sort().join();
-    });
-    expect(new Set(sets).size).toBe(1);
-    for (const field of ['ground', 'sky'] as const) expect(new Set(THEMES.map(k => m.themes[k]![field])).size).toBe(4);
-    expect(new Set(THEMES.map(k => m.themes[k]!.light.intensity)).size).toBe(4);
-    expect(new Set(THEMES.map(k => JSON.stringify(m.themes[k]!.fog))).size).toBe(4);
+  it('is the only shipped theme: Tower War palette tokens, sand clear colour, no fog, no road/light/cone props', () => {
+    expect(Object.keys(m.themes)).toEqual(['grass']);
+    const theme = m.themes.grass!;
+    expect(theme.ground).toBe('#A3D419'); expect(theme.sky).toBe('#FFE1B3'); expect(theme.fog).toBeUndefined();
+    expect(theme.palette).toMatchObject({ grass: '#A3D419', grassAlt: '#9DCB10', sand: '#FFE1B3', sandShade: '#FFCF8D', rock: '#BC5439', tree: '#028C1D', crate: '#FD8539' });
+    expect(theme.scatter).toEqual({ seed: 1, density: 34 });
+    expect(theme.props ?? []).toEqual([]);
+    expect(Object.keys(m.models).filter(key => key.startsWith('prop.')).sort()).toEqual(['prop.crate', 'prop.stump', 'prop.tree.pine', 'prop.tree.round']);
   });
-  it('keeps the default-theme fallback key defined', () => { expect(m.themes['city.day']).toBeDefined(); });
-  it.each(THEMES)('resolves %s with identical model assets', key => {
-    const assets = createManifestResolver(m).resolveLevelAssets({ ...level, visual: key });
-    expect([...assets.models].sort()).toEqual([...createManifestResolver(m).resolveLevelAssets({ ...level, visual: THEMES[0]! }).models].sort());
+  it('steep camera: pitch 65, fov 35', () => { expect(m.camera).toMatchObject({ pitchDeg: 65, fov: 35 }); });
+  it('keeps the default-theme fallback key defined', () => { expect(m.themes.grass).toBeDefined(); });
+  it('resolves the sample level assets', () => {
+    const assets = createManifestResolver(m).resolveLevelAssets({ ...level, visual: 'grass' });
+    expect([...assets.models].sort()).toEqual(['block', 'character.regular', 'prop.crate', 'prop.stump', 'prop.tree.pine', 'prop.tree.round']);
   });
 });
 

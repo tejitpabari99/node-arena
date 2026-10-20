@@ -25,7 +25,7 @@ test('shipped sample validates and compiles to usable integer simulation inputs'
   assert.deepEqual(validateContent(files), { errors: [], warnings: [] });
   const level = compileLevel(loadContent(files), 'sample');
   assert.equal(level.timeLimitSec, 300);
-  assert.equal(level.visual, 'city.day');
+  assert.equal(level.visual, 'grass');
   assert.deepEqual(level.bounds, { w: 120000, h: 80000 });
   assert.deepEqual(level.players.map(({ id, kind, team }) => ({ id, kind, team })), [
     { id: 'b1', kind: 'bot', team: 'b1' }, { id: 'p1', kind: 'human', team: 'p1' },

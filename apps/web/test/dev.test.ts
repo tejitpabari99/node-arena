@@ -3,7 +3,7 @@ import { tuningFields, editField, createPerfMetrics } from '../src/dev';
 import { contentFiles } from '../src/app/boot';
 import { createAppController } from '../src/app/state';
 import { create } from '@node-arena/sim';
-import { LABEL_FOREGROUND, LABEL_BACKGROUND } from '../src/render/labels';
+import { NUMBER_FILL, NUMBER_OUTLINE } from '../src/render/roof-texture';
 import { createSaveStore, defaultSave } from '../src/save';
 import { parseManifest } from '../src/manifest/load';
 import manifestJSON from './fixtures/greybox-manifest.json';
@@ -66,10 +66,10 @@ describe('schema tuning and telemetry', () => {
     expect(metrics.snapshot().simStepMs).toBe(1);
     expect(metrics.snapshot().troops).toBe(12);
   });
-  it('label chip foreground has WCAG contrast above 4.5', () => {
+  it('roof number fill vs outline has WCAG contrast above 4.5', () => {
     const linear=(v:number)=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4;
     const luminance=(rgb:number[])=>rgb.map(v=>linear(v/255)).reduce((n,v,i)=>n+v*[.2126,.7152,.0722][i]!,0);
     const rgb=(hex:string)=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
-    expect((luminance(rgb(LABEL_FOREGROUND))+.05)/(luminance(rgb(LABEL_BACKGROUND))+.05)).toBeGreaterThanOrEqual(4.5);
+    expect((luminance(rgb(NUMBER_FILL))+.05)/(luminance(rgb(NUMBER_OUTLINE))+.05)).toBeGreaterThanOrEqual(4.5);
   });
 });

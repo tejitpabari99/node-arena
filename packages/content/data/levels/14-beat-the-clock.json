@@ -5,7 +5,7 @@
   "name": "Beat the Clock",
   "order": 14,
   "band": 3,
-  "visual": "city.overcast",
+  "visual": "grass",
   "timeLimitSec": 180,
   "bounds": {
     "w": 120,

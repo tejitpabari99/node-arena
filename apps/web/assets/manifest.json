@@ -1,8 +1,8 @@
 {
   "$schema": "../../../packages/content/schemas/manifest.schema.json",
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "palettes": {
-    "default": {"neutral": "#A0A7B0", "player.1": "#2E86FF", "player.2": "#FF4D4D", "player.3": "#FFC933", "player.4": "#35C46B"},
+    "default": {"neutral": "#8C8C8C", "player.1": "#2E8BFF", "player.2": "#F0313F", "player.3": "#FDC534", "player.4": "#35B84A"},
     "colorblind": {"neutral": "#999999", "player.1": "#0072B2", "player.2": "#D55E00", "player.3": "#F0E442", "player.4": "#009E73"}
   },
   "teamMarkers": {"neutral": "○", "player.1": "▲", "player.2": "■", "player.3": "●", "player.4": "◆"},
@@ -13,73 +13,21 @@
     "building.standard": {"src": "models/tower-standard.glb"},
     "building.large": {"src": "models/tower-large.glb"},
     "character.regular": {"src": "models/troop-regular.glb"},
-    "prop.road": {"src": "models/prop-road.glb"},
-    "prop.light": {"src": "models/prop-light.glb"},
-    "prop.cone": {"src": "models/prop-cone.glb"}
+    "prop.tree.pine": {"src": "models/prop-tree-pine.glb"},
+    "prop.tree.round": {"src": "models/prop-tree-round.glb"},
+    "prop.stump": {"src": "models/prop-stump.glb"},
+    "prop.crate": {"src": "models/prop-crate.glb"}
   },
   "visuals": {
-    "tower.standard": {"kind": "tower", "model": "building.standard", "scale": 4, "label": {"height": 7.6}},
-    "tower.small": {"kind": "tower", "model": "building.small", "scale": 3.6, "label": {"height": 5.4}},
-    "tower.large": {"kind": "tower", "model": "building.large", "scale": 3.9, "label": {"height": 12}},
+    "tower.standard": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 7.6}},
+    "tower.small": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 5.4}},
+    "tower.large": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 12}},
     "troop.regular": {"kind": "troop", "model": "character.regular", "scale": 2.8, "teamMaterial": "Shirt", "anim": {"type": "bob", "hz": 2.2, "amp": 0.12, "sway": 6}}
   },
   "themes": {
-    "city.day": { "ground": "#DFE7DB", "sky": "#D9EAF4", "light": {"dir": [1, 2, 1], "color": "#FFFFFF", "intensity": 2}, "fog": {"color": "#D9EAF4", "near": 110, "far": 340},
-      "props": [
-        {"model": "prop.road", "pos": [10, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [30, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [50, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [70, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [90, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [110, 0, -8], "scale": 20},
-        {"model": "prop.light", "pos": [20, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.light", "pos": [60, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.light", "pos": [100, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.cone", "pos": [40, 0, -1], "scale": 12},
-        {"model": "prop.cone", "pos": [80, 0, -1], "scale": 12}
-      ] },
-    "city.dusk": { "ground": "#EBD9C2", "sky": "#F2B98A", "light": {"dir": [-2, 1, 1], "color": "#FFC48A", "intensity": 1.6}, "fog": {"color": "#F2B98A", "near": 100, "far": 310},
-      "props": [
-        {"model": "prop.road", "pos": [10, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [30, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [50, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [70, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [90, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [110, 0, -8], "scale": 20},
-        {"model": "prop.light", "pos": [20, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.light", "pos": [60, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.light", "pos": [100, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.cone", "pos": [40, 0, -1], "scale": 12},
-        {"model": "prop.cone", "pos": [80, 0, -1], "scale": 12}
-      ] },
-    "city.overcast": { "ground": "#C3CAC8", "sky": "#BFC6CC", "light": {"dir": [0.3, 2, 0.3], "color": "#E6EBEF", "intensity": 1.3}, "fog": {"color": "#BFC6CC", "near": 95, "far": 290},
-      "props": [
-        {"model": "prop.road", "pos": [10, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [30, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [50, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [70, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [90, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [110, 0, -8], "scale": 20},
-        {"model": "prop.light", "pos": [20, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.light", "pos": [60, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.light", "pos": [100, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.cone", "pos": [40, 0, -1], "scale": 12},
-        {"model": "prop.cone", "pos": [80, 0, -1], "scale": 12}
-      ] },
-    "city.night": { "ground": "#6B7C99", "sky": "#1D2740", "light": {"dir": [-1, 2, -1], "color": "#9DB4E8", "intensity": 1.1}, "fog": {"color": "#1D2740", "near": 100, "far": 320},
-      "props": [
-        {"model": "prop.road", "pos": [10, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [30, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [50, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [70, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [90, 0, -8], "scale": 20},
-        {"model": "prop.road", "pos": [110, 0, -8], "scale": 20},
-        {"model": "prop.light", "pos": [20, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.light", "pos": [60, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.light", "pos": [100, 0, -2], "scale": 6, "rotation": [0, 3.14159, 0]},
-        {"model": "prop.cone", "pos": [40, 0, -1], "scale": 12},
-        {"model": "prop.cone", "pos": [80, 0, -1], "scale": 12}
-      ] }
+    "grass": { "ground": "#A3D419", "sky": "#FFE1B3", "light": {"dir": [-1, 2.2, 1.2], "color": "#FFF0D6", "intensity": 2.8},
+      "palette": {"grass": "#A3D419", "grassAlt": "#9DCB10", "sand": "#FFE1B3", "sandShade": "#FFCF8D", "rock": "#BC5439", "tree": "#028C1D", "crate": "#FD8539"},
+      "scatter": {"seed": 1, "density": 34} }
   },
   "events": {
     "Captured": {"fx": "pulse", "sfx": "audio/capture.ogg"},
@@ -89,5 +37,5 @@
     "GameOver": {"sfx": "audio/gameover.ogg"},
     "Music": {"sfx": "audio/music-insistent.ogg"}
   },
-  "camera": {"pitchDeg": 55, "fov": 45, "margin": 12}
+  "camera": {"pitchDeg": 65, "fov": 35, "margin": 3}
 }

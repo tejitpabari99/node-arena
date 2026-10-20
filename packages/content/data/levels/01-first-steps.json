@@ -5,7 +5,7 @@
   "name": "First Steps",
   "order": 1,
   "band": 1,
-  "visual": "city.day",
+  "visual": "grass",
   "timeLimitSec": 180,
   "bounds": {
     "w": 120,

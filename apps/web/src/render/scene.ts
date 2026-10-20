@@ -1,10 +1,13 @@
-import { Box3, Color, DirectionalLight, Fog, Mesh, MeshStandardMaterial, PCFShadowMap, PerspectiveCamera, PlaneGeometry, Scene, Vector3, WebGLRenderer, type Object3D } from 'three';
+import { Box3, Color, DirectionalLight, Fog, HemisphereLight, Mesh, PCFShadowMap, PerspectiveCamera, Scene, Vector3, WebGLRenderer, type Object3D } from 'three';
 import type { CompiledLevel, Manifest } from '@node-arena/content';
 import { createManifestResolver } from '../manifest/resolve.js';
 import { Disposables } from './disposables.js';
 import { cloneModel } from './model.js';
-import { authoredBounds, fitCamera, levelVisualBounds } from './camera.js';
+import { fitCamera, levelVisualBounds } from './camera.js';
+import { createGround } from './ground.js';
+import { createProps, scatterProps } from './props.js';
 
+const HEMI_INTENSITY = 1;
 export type Quality = 'low' | 'med' | 'high';
 export function qualitySettings(quality: Quality, dpr: number) {
   return { pixelRatio: quality === 'low' ? 1 : quality === 'med' ? 1.5 : Math.min(dpr, 2),
@@ -29,13 +32,11 @@ export function createLevelScene(options: SceneOptions) {
   scene.background = new Color(theme.sky);
   if (theme.fog) scene.fog = new Fog(theme.fog.color, theme.fog.near, theme.fog.far);
   const bounds = levelVisualBounds(level, manifest, models);
-  // Ground follows authored extents as well as physical/footprint bounds; loaded extents are milli-units.
-  const groundBounds = bounds.clone().union(authoredBounds(level));
-  const groundSize = groundBounds.getSize(new Vector3()), groundCenter = groundBounds.getCenter(new Vector3());
-  const ground = new Mesh(new PlaneGeometry(Math.max(groundSize.x, .01), Math.max(groundSize.z, .01)), new MeshStandardMaterial({ color: theme.ground }));
-  ground.rotation.x = -Math.PI / 2; ground.position.set(groundCenter.x, 0, groundCenter.z); ground.receiveShadow = true;
-  ground.userData.visualRole = 'ground'; // probe tag only (test-harness visualProbe)
-  scene.add(ground); scope.object(ground);
+  const { ground } = createGround({ scene, scope, theme, bounds });
+  // Border dressing (seeded per level id); tower footprints from the compiled level (milli-units -> world).
+  const props = theme.scatter ? createProps({ scene, scope, theme, models, placements: scatterProps(level.id,
+    { minX: bounds.min.x, maxX: bounds.max.x, minZ: bounds.min.z, maxZ: bounds.max.z },
+    level.towers.map(t => ({ x: t.x / 1000, z: t.y / 1000, radius: t.footprintRadius / 1000 })), theme.scatter) }) : undefined;
   for (const prop of theme.props ?? []) {
     const model = models.get(prop.model); if (!model) throw new Error(`Missing loaded model: ${prop.model}`);
     const clone = cloneModel(model, scope); clone.position.fromArray(prop.pos); clone.scale.setScalar(prop.scale ?? 1);
@@ -49,6 +50,9 @@ export function createLevelScene(options: SceneOptions) {
   const radius = Math.max(size.length(), 1), direction = new Vector3().fromArray(theme.light.dir);
   // A zero authored vector has a deterministic overhead fallback.
   if (direction.lengthSq() === 0) direction.set(0, 1, 0);
+  // One warm key light plus a sky/sand hemisphere fill.
+  const fill = new HemisphereLight(theme.palette?.sand ?? theme.sky, theme.palette?.sandShade ?? theme.ground, HEMI_INTENSITY); scene.add(fill);
+  scope.defer(() => { fill.dispose(); fill.removeFromParent(); });
   light.position.copy(center).addScaledVector(direction.normalize(), radius * 2); light.target.position.copy(center);
   Object.assign(light.shadow.camera, { left: -radius, right: radius, top: radius, bottom: -radius, near: .01, far: radius * 4 });
   light.shadow.camera.updateProjectionMatrix(); scene.add(light, light.target);
@@ -75,7 +79,7 @@ export function createLevelScene(options: SceneOptions) {
   const applyQuality = () => {
     const settings = qualitySettings(quality, window.devicePixelRatio);
     renderer.shadowMap.enabled = settings.shadowSize > 0; renderer.shadowMap.type = PCFShadowMap;
-    light.castShadow = settings.shadowSize > 0;
+    light.castShadow = settings.shadowSize > 0; props?.setShadows(settings.shadowSize > 0);
     light.shadow.map?.dispose(); light.shadow.map = null;
     light.shadow.mapPass?.dispose(); light.shadow.mapPass = null;
     light.shadow.mapSize.set(settings.shadowSize || 1, settings.shadowSize || 1); light.shadow.needsUpdate = true;

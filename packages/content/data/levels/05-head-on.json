@@ -5,7 +5,7 @@
   "name": "Head On",
   "order": 5,
   "band": 1,
-  "visual": "city.day",
+  "visual": "grass",
   "timeLimitSec": 300,
   "bounds": {
     "w": 120,

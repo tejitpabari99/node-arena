@@ -40,7 +40,7 @@ async function commit(page: Page) {
 for (const colorblind of [false, true]) test(`saved ${colorblind ? 'colourblind' : 'default'} palette colors both valid preview and route`, async ({ page }) => {
   await boot(page, colorblind);
   await drag(page);
-  const color = colorblind ? '0072b2' : '2e86ff';
+  const color = colorblind ? '0072b2' : '2e8bff';
   await expect(page.locator('[data-input-reason]')).toBeHidden();
   await expectPreview(page, color);
   await commit(page);
@@ -68,7 +68,7 @@ test('pause settings update subsequent gestures and active preview without resta
   // Apply the same app settings path during a live gesture: it must recolor
   // immediately, retain the gesture, and enqueue exactly one eventual command.
   await page.evaluate(() => window.__na!.settings({ colorblind: false }));
-  await expectPreview(page, '2e86ff');
+  await expectPreview(page, '2e8bff');
   await page.evaluate(() => window.__na!.settings({ colorblind: true }));
   await expectPreview(page, '0072b2');
   expect(await page.evaluate(() => window.__na!.hash())).toBe(initial);

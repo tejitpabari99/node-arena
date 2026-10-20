@@ -23,7 +23,7 @@ describe('manifest pipeline', () => {
   it('schema validates greybox and resolves generic presentation keys', async () => {
     const m = parseManifest(greybox); const r = createManifestResolver(m);
     expect(r.visual('troop.regular').model).toMatchObject({ primitive: 'capsule' });
-    expect(r.theme('city.day').ground).toMatch(/^#/); expect(r.camera().fov).toBeGreaterThan(0);
+    expect(r.theme('grass').ground).toMatch(/^#/); expect(r.camera().fov).toBeGreaterThan(0);
     expect(r.color('player.1', 'colorblind')).toMatch(/^#/); expect(r.marker('player.1')).toBeTruthy();
     expect(r.event('Captured')?.fx).toBe('pulse'); expect(r.event('unknown')).toBeUndefined();
     await expect(validateManifest(m, { assetsDir: temp(), credits: '' })).resolves.toEqual(m);
@@ -102,7 +102,9 @@ describe('manifest pipeline', () => {
   });
   it('shipped manifest parses and maps tower/troop visuals to imported models', () => {
     const r = createManifestResolver(parseManifest(shipped));
-    for (const key of ['tower.small', 'tower.standard', 'tower.large', 'troop.regular']) expect(r.visual(key).model).toHaveProperty('src');
+    expect(r.visual('troop.regular').model).toHaveProperty('src');
+    // SP03 T4: towers are code-built stacked meshes (block placeholder model, no GLB).
+    for (const key of ['tower.small', 'tower.standard', 'tower.large']) expect(r.visual(key)).toMatchObject({ build: 'stacked', model: { primitive: 'box' } });
     expect(shipped.visuals['troop.regular']).toMatchObject({ teamMaterial: 'Shirt', anim: { type: 'bob' } });
   });
 });

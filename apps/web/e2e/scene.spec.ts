@@ -33,9 +33,17 @@ test('compiled level themes, real GL props, fixed fit through resize, live quali
     const parent = document.createElement('div'); parent.style.cssText = 'width:800px;height:600px'; document.body.appendChild(parent);
     let changes = 0; const scope = new Disposables(); const view = createLevelScene({ level, manifest, models: session.models, parent, scope, quality: 'low', onCanvasChange: () => changes++ });
     const originalScene = view.scene, originalCamera = view.camera, originalCanvas = view.canvas;
-    const themeState = { sky: `#${view.scene.background.getHexString()}`, ground: `#${view.ground.material.color.getHexString()}`, fog: `#${view.scene.fog.color.getHexString()}`,
+    const themeState = { sky: `#${view.scene.background.getHexString()}`, ground: String(view.ground.userData.grassColor).toLowerCase(), fog: `#${view.scene.fog.color.getHexString()}`,
       directionalLights: view.scene.children.filter((child: any) => child.isDirectionalLight).length, props: view.scene.children.filter((child: any) => child.type === 'Group').length,
-      groundWidth: view.ground.geometry.parameters.width, groundDepth: view.ground.geometry.parameters.height };
+      groundWidth: view.ground.geometry.parameters.width, groundDepth: view.ground.geometry.parameters.height,
+      boundsW: view.bounds.max.x - view.bounds.min.x, boundsD: view.bounds.max.z - view.bounds.min.z, playQuad: view.ground.userData.playQuad,
+      rocks: view.scene.children.filter((child: any) => child.isInstancedMesh && child.userData?.visualRole === 'ground').length,
+      untagged: view.scene.children.filter((child: any) => (child.isMesh || child.isInstancedMesh) && child.userData?.visualRole !== 'ground').length, groundY: view.ground.position.y };
+    // SP03 T1 steep camera: shipped pitch 65 / fov 35; at 800x600 the top-centre ray stays >= 40 deg below the horizon.
+    parent.style.width = '800px'; parent.style.height = '600px'; window.dispatchEvent(new Event('resize'));
+    const centre = view.bounds.getCenter(new Vector3()), pitchDeg = Math.asin(view.camera.position.clone().sub(centre).normalize().y) * 180 / Math.PI;
+    const topRay = new Vector3(0, 1, .5).unproject(view.camera).sub(view.camera.position).normalize(), topRayBelowHorizonDeg = -Math.asin(topRay.y) * 180 / Math.PI;
+    const cameraState = { pitchDeg, fov: view.camera.fov, topRayBelowHorizonDeg, manifestCamera: manifest.camera, sandPlanes: view.scene.children.filter((child: any) => child.userData?.visualRole === 'ground' && child.geometry?.type === 'PlaneGeometry').length };
     const fit: number[] = [];
     for (const [width, height] of [[800, 600], [180, 900], [1200, 200]]) {
       parent.style.width = `${width}px`; parent.style.height = `${height}px`; window.dispatchEvent(new Event('resize')); view.render();
@@ -51,11 +59,18 @@ test('compiled level themes, real GL props, fixed fit through resize, live quali
     const canvasReplaced = originalCanvas !== view.canvas && !originalCanvas.isConnected;
     view.dispose(); view.dispose(); session.dispose(); manager.dispose();
     const disposed = parent.children.length === 0; window.dispatchEvent(new Event('resize')); view.render(); parent.remove();
-    return { themeState, expectedTheme: theme, dimensions: { w: level.bounds.w / 1000, h: level.bounds.h / 1000 }, fit, qualities, changes, retained,
+    return { cameraState, themeState, expectedTheme: theme, dimensions: { w: level.bounds.w / 1000, h: level.bounds.h / 1000 }, fit, qualities, changes, retained,
       canvasReplaced, medHighSameCanvas, disposed, unchanged: JSON.stringify(level) === original };
   }, { fileMap, contentPath });
   expect(result.themeState).toMatchObject({ sky: result.expectedTheme.sky.toLowerCase(), ground: result.expectedTheme.ground.toLowerCase(), fog: '#123456', directionalLights: 1, props: 2 });
-  expect(result.themeState.groundWidth).toBeGreaterThanOrEqual(result.dimensions.w); expect(result.themeState.groundDepth).toBeGreaterThanOrEqual(result.dimensions.h);
+  // SP03 T2: grass patch = tower bounds + 2*8 pad (+ soft rim; view.bounds also holds props added later), top surface y = 0, rock ring tagged ground, probe playQuad supplied.
+  expect(result.themeState.groundWidth).toBeGreaterThan(16); expect(result.themeState.groundDepth).toBeGreaterThan(16);
+  expect(result.themeState.groundY).toBe(0); expect(result.themeState.rocks).toBeGreaterThanOrEqual(1); expect(result.themeState.untagged).toBe(0);
+  expect(result.themeState.playQuad).toHaveLength(4); expect(Math.abs(result.themeState.playQuad[1][0] - result.themeState.playQuad[0][0])).toBeCloseTo(result.themeState.groundWidth, 3);
+  expect(result.cameraState.manifestCamera).toMatchObject({ pitchDeg: 65, fov: 35 });
+  expect(result.cameraState.fov).toBe(35); expect(result.cameraState.pitchDeg).toBeCloseTo(65, 3);
+  expect(result.cameraState.topRayBelowHorizonDeg).toBeGreaterThanOrEqual(40);
+  expect(result.cameraState.sandPlanes).toBeGreaterThanOrEqual(2); // sand base + grass patch; no road slab
   expect(Math.max(...result.fit)).toBeLessThan(1);
   expect(result.qualities.map(q => [q.quality, q.ratio, q.shadows, q.size, q.antialias])).toEqual([
     ['low', 1, false, 1, false], ['med', 1.5, true, 1024, true], ['high', 1, true, 2048, true], ['low', 1, false, 1, false],

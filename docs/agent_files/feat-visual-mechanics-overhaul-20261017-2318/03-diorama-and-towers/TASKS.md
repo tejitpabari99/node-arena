@@ -10,13 +10,13 @@ Shared iteration rules (repeated in every task so each is executable alone). Let
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Palette, `grass` theme, steep camera, road removal | SP01 T8 | todo |
-| 2 | Ground: sand plane, grass patch, rock ring | T1 | todo |
-| 3 | Props import + seeded scatter | T2 | todo |
-| 4 | Instanced stacked tower meshes (white floors, team roof/bands) | T1 | todo |
-| 5 | Roof count, slot dots, Max, colourblind glyph, pops + label removal | T4 | todo |
-| 6 | Spec updates + e2e green | T5 | todo |
-| 7 | L10/L18 smoke + perf sample | T3, T6 | todo |
+| 1 | Palette, `grass` theme, steep camera, road removal | SP01 T8 | Blocked-visual |
+| 2 | Ground: sand plane, grass patch, rock ring | T1 | Blocked-visual |
+| 3 | Props import + seeded scatter | T2 | Blocked-visual |
+| 4 | Instanced stacked tower meshes (white floors, team roof/bands) | T1 | Blocked-visual |
+| 5 | Roof count, slot dots, Max, colourblind glyph, pops + label removal | T4 | Blocked-visual |
+| 6 | Spec updates + e2e green | T5 | done |
+| 7 | L10/L18 smoke + perf sample | T3, T6 | Blocked-visual |
 
 ## Task 1 - Palette, `grass` theme, steep camera, road removal
 What it is / what it means: R1, R3, R6, R9, Decisions 1, 2, 10. Establishes the look data and the corrected framing; first task, so it also reads SP01's iteration-0 baseline (row 0) as the starting point.

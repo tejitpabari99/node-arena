@@ -46,7 +46,7 @@ const table: [number, string[], number][] = [
   [12, ['opportunist-expert', 'turtle-expert'], 360],
   [14, ['rusher-expert', 'turtle-expert', 'economist-expert'], 360],
 ];
-const themes = ['city.day', 'city.dusk', 'city.overcast', 'city.night'];
+const themes = ['grass', 'grass', 'grass', 'grass'];
 
 test('campaign has exactly 20 levels, order == level number, 5 per band', () => {
   assert.equal(levels.length, 20);
