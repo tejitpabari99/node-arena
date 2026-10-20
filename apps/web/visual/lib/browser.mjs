@@ -20,8 +20,8 @@ export async function launch({ headed = false, gpu = false } = {}) {
 }
 
 /** Context per capture: DSF 1, fixed locale/timezone/colour scheme, reduced motion unless a frame needs motion. */
-export function newContext(browser, { width, height }, { reducedMotion = 'reduce' } = {}) {
-  return browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, reducedMotion, locale: 'en-US', timezoneId: 'UTC', colorScheme: 'light', hasTouch: false, isMobile: false });
+export function newContext(browser, { width, height }, { reducedMotion = 'reduce', deviceScaleFactor = 1 } = {}) {
+  return browser.newContext({ viewport: { width, height }, deviceScaleFactor, reducedMotion, locale: 'en-US', timezoneId: 'UTC', colorScheme: 'light', hasTouch: false, isMobile: false });
 }
 
 export function buildTest() {

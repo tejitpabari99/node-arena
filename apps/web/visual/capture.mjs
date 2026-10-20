@@ -93,18 +93,20 @@ async function magentaPass(page, file, settle) {
  * M13 perf (PRD: l18, 5 s real time, fresh page, no clock): sim stepped at 20 Hz from real time, one render per rAF.
  * fps/frame p95 from rAF intervals, jsMs = step + render CPU per frame, drawCalls = max renderer.info calls.
  */
-async function capturePerf(browser, config, scene, durationMs, warmupMs = 0) {
-  const context = await newContext(browser, { width: 1920, height: 1080 });
+async function capturePerf(browser, config, scene, durationMs, warmupMs = 0, proxy = {}) {
+  const { throttle = 1, dpr = 1, quality = null } = proxy;
+  const context = await newContext(browser, { width: 1920, height: 1080 }, { deviceScaleFactor: dpr });
   const page = await context.newPage();
   try {
+    if (throttle > 1) await (await context.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: throttle });
     await page.goto(`${BASE_URL}/?test=1`);
     await page.waitForFunction(() => window.__na?.screen === 'menu');
-    await page.evaluate(s => window.__na.settings(s), { ...config.settings, ...(scene.settings ?? {}) });
+    await page.evaluate(s => window.__na.settings(s), { ...config.settings, ...(scene.settings ?? {}), ...(quality ? { quality } : {}) });
     await page.evaluate(([id, s]) => window.__na.load(id, s), [scene.level, config.seed]);
     await page.waitForFunction(() => window.__na.screen === 'playing');
     const target = sceneFrames(scene)[0].tick ?? 0;
     await page.evaluate(([cmds, t]) => { for (const c of cmds) window.__na.submit(c); window.__na.step(t); }, [(scene.commands ?? []).filter(c => !c.tick).map(({ tick: _t, ...c }) => c), target]);
-    return await page.evaluate(async ([ms, warmup]) => {
+    return await page.evaluate(async ([ms, warmup, proxyThrottle, proxyDpr, proxyQuality]) => {
       const pct = (list, q) => { const s = [...list].sort((a, b) => a - b); return s.length ? s[Math.ceil(s.length * q) - 1] : null; };
       const mean = list => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);
       const frames = [], js = [], calls = [], tris = [], origin = performance.now();
@@ -126,12 +128,12 @@ async function capturePerf(browser, config, scene, durationMs, warmupMs = 0) {
       const sorted = [...frames].sort((a, b) => a - b), worst = sorted.slice(Math.max(0, sorted.length - Math.max(1, Math.ceil(sorted.length * 0.01))));
       const app = window.__na.perf()?.sample ?? null;
       return {
-        durationMs: r(elapsed), warmupMs: warmup, frames: frames.length, fps: r(frames.length / (elapsed / 1000)), frameMsP95: r(pct(frames, 0.95)), jsMsP95: r(pct(js, 0.95)), drawCalls: Math.max(0, ...calls), ticks, clock: 'real',
+        durationMs: r(elapsed), warmupMs: warmup, proxy: { throttle: proxyThrottle, dpr: proxyDpr, quality: proxyQuality }, frames: frames.length, fps: r(frames.length / (elapsed / 1000)), frameMsP95: r(pct(frames, 0.95)), jsMsP95: r(pct(js, 0.95)), drawCalls: Math.max(0, ...calls), ticks, clock: 'real',
         frameMsP99: r(pct(frames, 0.99)), fps1Low: worst.length ? r(1000 / mean(worst)) : null, jsMsMean: r(mean(js)), triangles: Math.max(0, ...tris),
         // Informational: the app's own createPerfMetrics sample (frames[] ring) over the same window; renderMs is scene.render() only (jsMs also includes sim catch-up).
         app: app && Object.fromEntries(Object.entries(app).map(([k, v]) => [k, r(v)])),
       };
-    }, [durationMs, warmupMs]);
+    }, [durationMs, warmupMs, throttle, dpr, quality ?? config.settings.quality]);
   } finally {
     await context.close();
   }
@@ -322,7 +324,7 @@ async function main() {
     const known = allScenes(config);
     for (const s of known) if (previous?.scenes?.[s.id]) scenes[s.id] = previous.scenes[s.id];
     const css = new Set(), faces = new Set(), written = [];
-    for (const { scene, viewport } of jobs) {
+    for (const { scene, viewport } of opts.perfOnly ? [] : jobs) {
       let job = await captureJob(browser, config, scene, viewport);
       if (scene.silentBots && job.result.botCommandsThroughLastFrame > 0) {
         if (!scene.fallback) throw new Error(`${scene.id} ${viewport}: bots emitted ${job.result.botCommandsThroughLastFrame} commands in the capture window`);
@@ -339,14 +341,15 @@ async function main() {
     }
     const perfJob = jobs.find(j => j.scene.id === PERF.scene && j.viewport === PERF.viewport);
     if (perfJob) {
-      const perf = await capturePerf(browser, config, perfJob.scene, opts.gpu ? PERF_GPU.durationMs : PERF.durationMs, opts.gpu ? PERF_GPU.warmupMs : PERF.warmupMs);
-      scenes[PERF.scene][PERF.viewport].perf = perf;
+      const perf = await capturePerf(browser, config, perfJob.scene, opts.gpu ? PERF_GPU.durationMs : PERF.durationMs, opts.gpu ? PERF_GPU.warmupMs : PERF.warmupMs, { throttle: opts.throttle, dpr: opts.dpr, quality: opts.perfQuality });
+      if (opts.perfOnly) fs.writeFileSync(path.join(OUT_DIR, 'perf.json'), `${JSON.stringify(perf, null, 2)}\n`);
+      else scenes[PERF.scene][PERF.viewport].perf = perf;
       log(`perf ${PERF.scene} ${PERF.viewport} (${perf.durationMs} ms real time): fps ${perf.fps}, frame p95 ${perf.frameMsP95} ms, jsMs p95 ${perf.jsMsP95}, drawCalls ${perf.drawCalls}`);
     }
     // Stable key order: scenes.json order, viewports in capture order.
     const ordered = {};
     for (const s of known) if (scenes[s.id]) ordered[s.id] = scenes[s.id];
-    fs.writeFileSync(metricsFile, `${JSON.stringify({ schema: 1, seed: config.seed, scenes: ordered }, null, 2)}\n`);
+    if (!opts.perfOnly) fs.writeFileSync(metricsFile, `${JSON.stringify({ schema: 1, seed: config.seed, scenes: ordered }, null, 2)}\n`);
 
     const glPage = await browser.newPage();
     const renderer = await glPage.evaluate(() => {

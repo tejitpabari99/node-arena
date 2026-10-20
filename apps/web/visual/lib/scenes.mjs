@@ -30,9 +30,9 @@ export function allScenes(config, dir = LEVELS_DIR) {
   return [...config.scenes, ...levelScenes(dir)];
 }
 
-/** `--scene id`, `--viewport WxH` (repeatable or comma list), `--headed`, `--gpu`, `--dev`, `--no-build`, `--all-levels`, `--lod low|high` (adds `?lod=` to the app URL; default auto). */
+/** `--scene id`, `--viewport WxH` (repeatable or comma list), `--headed`, `--gpu`, `--dev`, `--no-build`, `--all-levels`, `--throttle N` / `--dpr N` / `--perf-quality q` (perf sample only: CDP CPU slowdown, device scale factor, quality override; SP05 R7 proxy), `--perf-only` (skip screenshots, perf sample only), `--lod low|high` (adds `?lod=` to the app URL; default auto). */
 export function parseArgs(argv) {
-  const opts = { scenes: [], viewports: [], headed: false, gpu: false, dev: false, build: true, lod: null, allLevels: false };
+  const opts = { scenes: [], viewports: [], headed: false, gpu: false, dev: false, build: true, lod: null, allLevels: false, throttle: 1, dpr: 1, perfQuality: null, perfOnly: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const [flag, inline] = arg.includes('=') ? [arg.slice(0, arg.indexOf('=')), arg.slice(arg.indexOf('=') + 1)] : [arg, undefined];
@@ -45,6 +45,10 @@ export function parseArgs(argv) {
     else if (flag === '--no-build') opts.build = false;
     else if (flag === '--all-levels') opts.allLevels = true;
     else if (flag === '--lod') { opts.lod = value(); if (!['low', 'high'].includes(opts.lod)) throw new Error('--lod expects low|high'); }
+    else if (flag === '--throttle') { opts.throttle = Number(value()); if (!(opts.throttle >= 1)) throw new Error('--throttle expects a CPU slowdown factor >= 1'); }
+    else if (flag === '--dpr') { opts.dpr = Number(value()); if (!(opts.dpr >= 1)) throw new Error('--dpr expects a device scale factor >= 1'); }
+    else if (flag === '--perf-quality') { opts.perfQuality = value(); if (!['low', 'med', 'high'].includes(opts.perfQuality)) throw new Error('--perf-quality expects low|med|high'); }
+    else if (flag === '--perf-only') opts.perfOnly = true;
     else throw new Error(`unknown argument ${arg}`);
   }
   for (const v of opts.viewports) if (!VIEWPORTS.includes(v)) throw new Error(`unknown viewport ${v} (expected ${VIEWPORTS.join('|')})`);
