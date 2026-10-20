@@ -60,3 +60,8 @@ PASS at both viewports: M01-M10, M12, M14-M19 on all named scenes (M07/M08 also 
 l01: V01 5, V02 6, V03 6, V04 6, V05 5, V06 5, V07 5, V10 5, V11 7, V13 5, V18 6, V19 8, V22 8, V23 6. l10: V01 6, V05 6, V06 6, V08 5, V03 6, V04 7, V07 5, V10 6, V13 5, V19 8, V22 8, V23 6. l18: V01 6, V06 6, V08 6, V16 7, V22 8, V23 6, V24 7. l10cb: V09 8. clash: V14 7, V15 6, V16 7. cut: V17 5. buildout: V12 6. menu V20 7. picker V21 7.
 Blind-scorer rationale (repeated): tower ~3% frame height (metric M01 says 7.8% of height at l01), troops read as blobs, roof digits small at full frame, ribbons more opaque/chevrons vs ref dots, menu/picker lack character art (layout redesign out of scope), cut p3/p6 look the same, clash FX white puffs not team-coloured.
 Outcome: Blocked-visual (>=8 only V09, V19, V22). Hand-offs for final-review: green/cb M11/M20 metric mis-spec; yellow-tower roof dominance (3 floors); V13/V15/V17 need SP04 art (team-coloured confetti, retract staging); optional human-first meter order not done.
+
+## Task 8 — 20-level rollout sweep (details in rollout-log.md)
+| iter | change | result |
+|---|---|---|
+| 0 (1 sweep, no code change) | capture --all-levels --lod high; R1-R6 evaluated; added test/rollout-props.test.ts (R3, 21 tests) | R1/R2/R3/R6 pass 20/20; R4 blind 4-5 and R5 blind 6-7 => Blocked-visual; no render-param lever (all levels share theme grass, level JSON untouched); check:content --base main unchanged |
