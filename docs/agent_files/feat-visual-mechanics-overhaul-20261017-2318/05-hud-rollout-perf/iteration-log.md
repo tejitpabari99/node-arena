@@ -61,7 +61,13 @@ l01: V01 5, V02 6, V03 6, V04 6, V05 5, V06 5, V07 5, V10 5, V11 7, V13 5, V18 6
 Blind-scorer rationale (repeated): tower ~3% frame height (metric M01 says 7.8% of height at l01), troops read as blobs, roof digits small at full frame, ribbons more opaque/chevrons vs ref dots, menu/picker lack character art (layout redesign out of scope), cut p3/p6 look the same, clash FX white puffs not team-coloured.
 Outcome: Blocked-visual (>=8 only V09, V19, V22). Hand-offs for final-review: green/cb M11/M20 metric mis-spec; yellow-tower roof dominance (3 floors); V13/V15/V17 need SP04 art (team-coloured confetti, retract staging); optional human-first meter order not done.
 
-## Task 8 — 20-level rollout sweep (details in rollout-log.md)
+## Task 8 — 20-level rollout sweep (details + matrix in rollout-log.md)
 | iter | change | result |
 |---|---|---|
-| 0 (1 sweep, no code change) | capture --all-levels --lod high; R1-R6 evaluated; added test/rollout-props.test.ts (R3, 21 tests) | R1/R2/R3/R6 pass 20/20; R4 blind 4-5 and R5 blind 6-7 => Blocked-visual; no render-param lever (all levels share theme grass, level JSON untouched); check:content --base main unchanged |
+| 0 | baseline sweep; test/rollout-props.test.ts (R3) | R1/R2/R3/R6 pass 20/20; R4/R5 blind 4-5 / 6-7 |
+| 1 | roof number 44 px | M11 l01@1920 c .451 > .45 -> regression |
+| 2 | lane width = factor x median tower width | M05 all in band |
+| 3 | troop size factor | M06 L9/L12 pass |
+| 4 | per-level camera margin L5/L8/L9/L12 | M15 union <= .1 |
+| 5 | revert digit to 40 | l01 M11 passes |
+| 6 | roofNumberPx: 44 except L1; rollout-params.test.ts | std-tower digit 10-12 px; no new gated fails; blind final R4 5-6, R5 6-7 -> Blocked-visual |
