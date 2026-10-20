@@ -6,6 +6,7 @@ import { Disposables } from "../render/disposables";
 import { createLevelScene } from "../render/scene";
 import { createTowerRenderer } from "../render/towers";
 import { createTroopRenderer, troopSizeFactor } from "../render/troops";
+import { roofNumberPx } from "../render/roof-texture";
 import { parseLodMode } from "../render/troop-lod";
 import { createLineRenderer } from "../render/lines";
 import { createFxRenderer } from "../render/fx";
@@ -38,6 +39,7 @@ export function createBrowserRuntime(
       camera: scene.camera,
       parent,
       scope,
+      roofNumberPx: roofNumberPx(level.id),
       colorblind: settings.colorblind,
     });
     const troops = createTroopRenderer({

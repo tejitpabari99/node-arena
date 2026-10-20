@@ -20,6 +20,8 @@ export interface TowerPresentation {
   readonly stacked?: { width: number; index: number };
 }
 export interface TowerRendererOptions {
+  /** Roof number font size in atlas px (per level, see `roofNumberPx`); default NUMBER_PX. */
+  roofNumberPx?: number;
   view: SimView;
   manifest: Manifest;
   models: ReadonlyMap<string, Object3D>;
@@ -60,7 +62,7 @@ export function createTowerRenderer(options: TowerRendererOptions) {
     if (visual.build !== 'stacked') { stackedIndex.push(-1); continue; }
     stackedIndex.push(specs.length); specs.push({ id: options.view.ids.towers[i]!, x: tower.x / 1000, z: tower.y / 1000, width: towerWidth(tower.footprintRadius / 1000, visual.scale * boost) });
   }
-  const atlas: RoofAtlas | undefined = specs.length ? scope.add(createRoofAtlas(specs.length)) : undefined;
+  const atlas: RoofAtlas | undefined = specs.length ? scope.add(createRoofAtlas(specs.length, undefined, options.roofNumberPx)) : undefined;
   const meshes: TowerMeshes | undefined = specs.length ? createTowerMeshes(specs, atlas) : undefined;
   if (meshes) { options.scene.add(meshes.group); scope.defer(() => meshes.dispose()); }
   try {
