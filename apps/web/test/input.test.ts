@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { pointSegmentDistance, segmentDistance } from '../src/input/geometry.js';
+import { hoverRadius, pointSegmentDistance, segmentDistance, swipeRadius } from '../src/input/geometry.js';
 const p = (x: number, y: number) => ({ x, y });
 it('point distance handles endpoints and degenerate segments', () => {
   expect(pointSegmentDistance(p(4,3),p(0,0),p(10,0))).toBe(3);
@@ -20,4 +20,8 @@ it('screen tolerance remains CSS pixels regardless of coordinate scale', () => {
     expect(segmentDistance(p(0,7.99),p(100*scale,7.99),p(0,0),p(100*scale,0))).toBeLessThan(8);
     expect(segmentDistance(p(0,8.01),p(100*scale,8.01),p(0,0),p(100*scale,0))).toBeGreaterThan(8);
   }
+});
+it('hit radii scale with lane width: hover max(12, half+4), swipe max(8, half)', () => {
+  expect(hoverRadius(0)).toBe(12); expect(hoverRadius(8)).toBe(12); expect(hoverRadius(20)).toBe(24);
+  expect(swipeRadius(0)).toBe(8); expect(swipeRadius(5)).toBe(8); expect(swipeRadius(20)).toBe(20);
 });

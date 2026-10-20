@@ -97,3 +97,20 @@ test('12px right-click threshold, primary pointer cancellation and canvas replac
   await draw(page);expect((await info(page)).submissions).toHaveLength(3);expect((await info(page)).submissions.at(-1).cmd.type).toBe('DrawLine');await step(page);expect((await info(page)).lines).toHaveLength(1);
   await page.evaluate(()=>{const h=(window as any).inputHarness;h.input.dispose();});await draw(page);expect((await info(page)).submissions).toHaveLength(3);
 });
+
+test('shared lane: hover/cut only the human half; hit radius = max(12, halfLanePx+4); ghost preview is team coloured, red on reject',async ({page})=>{
+  await draw(page);await step(page,3);
+  await page.evaluate(()=>{const h=(window as any).inputHarness;h.driver.sim.step([{type:'DrawLine',player:'other',from:'t1',to:'t0'}]);h.lines.consumeEvents([{type:'LineDrawn'}]);});
+  const center=await page.evaluate(()=>(window as any).inputHarness.center());
+  await page.mouse.move(center.x,center.y);
+  const hover=await page.evaluate(()=>{const m=(window as any).inputHarness.lines.meshes[0].material.uniforms;return {a:m.hoverA.value,b:m.hoverB.value};});
+  expect(hover.a+hover.b).toBe(1); // exactly one half (the human's) is hovered although both channels share the lane
+  expect(await page.evaluate(()=>(window as any).inputHarness.lines.meshes)).toHaveLength(1);
+  const a=await point(page,0,0),b=await point(page,10,0);
+  await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);
+  const ghost=()=>page.evaluate(()=>{const m=(window as any).inputHarness.scene.children.find((n:any)=>n.userData.inputPreview);return {visible:m.visible,color:m.material.uniforms.colA.value.getHexString(),alpha:m.material.uniforms.alphaMul.value};});
+  expect((await ghost()).visible).toBe(true);expect((await ghost()).color).toBe('e3384f'); // t0->t1 already drawn: duplicate
+  const c=await point(page,5,10);await page.mouse.move(c.x,c.y);expect((await ghost()).color).toBe('e3384f'); // no-slot
+  const empty=await point(page,3,5);await page.mouse.move(empty.x,empty.y);expect((await ghost()).color).not.toBe('e3384f');
+  await page.mouse.up();
+});

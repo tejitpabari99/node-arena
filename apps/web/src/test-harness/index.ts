@@ -1,7 +1,7 @@
 import { loadContent, type ContentFileMap, type CompiledLevel } from '@node-arena/content';
 import { createReplayRecorder, playReplay, type Command, type ReplayRecorder, type SimEvent } from '@node-arena/sim';
 import { TICK_RATE } from '@node-arena/sim';
-import { Color, Mesh, MeshBasicMaterial, Vector3, type Scene, type WebGLRenderer } from 'three';
+import { Color, Mesh, ShaderMaterial, Vector3, type Scene, type WebGLRenderer } from 'three';
 import { buildVisualProbe, type HarnessRendererHooks } from './probe';
 import type { AppController } from '../app/state';
 import type { createTowerRenderer } from '../render/towers';
@@ -57,10 +57,10 @@ export function createTestHarness(files: ContentFileMap) {
           return { x: canvas.x + (p.x + 1) * canvas.width / 2, y: canvas.y + (1 - p.y) * canvas.height / 2 };
         },
         presentation() {
-          const preview = inspect().scene.children.find(node => node instanceof Mesh && node.renderOrder === 3);
+          const preview = inspect().scene.children.find(node => node instanceof Mesh && node.userData.inputPreview === true);
           return {
-            inputPreview: preview instanceof Mesh && preview.material instanceof MeshBasicMaterial
-              ? { visible: preview.visible, color: preview.material.color.getHexString() } : null,
+            inputPreview: preview instanceof Mesh && preview.material instanceof ShaderMaterial
+              ? { visible: preview.visible, color: (preview.material.uniforms.colA!.value as Color).getHexString() } : null,
             lines: inspect().lines.meshes.map(mesh => ({ color: mesh.material.uniforms.team!.value.getHexString() as string })),
             towers: inspect().towers.towers.map(t => ({ modelScale: t.model.scale.x, color: t.base.material.color.getHexString(), glyph: t.roofMarker.userData.glyph })),
             fx: inspect().fx.meshes.filter(m => m.visible).map(m => ({ position: m.position.toArray(), opacity: m.material.opacity })) };

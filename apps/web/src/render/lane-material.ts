@@ -8,7 +8,7 @@ export const LANE_BUILD_S = .35, LANE_FLASH_S = .08, LANE_RETRACT_S = .3;
 const vertexShader = 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
 const fragmentShader = `
 uniform float laneLen; uniform float laneW; uniform float split; uniform float buildT; uniform float fade;
-uniform float hoverA; uniform float hoverB; uniform float drainA; uniform float drainB; uniform float buildSrc; uniform float retractA; uniform float retractB; uniform float keepA; uniform float keepB; uniform float flashA; uniform float flashB; uniform float time; uniform float motion;
+uniform float hoverA; uniform float hoverB; uniform float drainA; uniform float drainB; uniform float buildSrc; uniform float retractA; uniform float retractB; uniform float keepA; uniform float keepB; uniform float flashA; uniform float flashB; uniform float time; uniform float motion; uniform float alphaMul;
 uniform vec3 colA; uniform vec3 colB; varying vec2 vUv;
 void main(){
   float x=vUv.x;
@@ -43,7 +43,7 @@ void main(){
   float lead=gone?0.:1.-smoothstep(0.,laneW*2.6,df);
   rgb=mix(rgb,vec3(1.),lead*.95); a=max(a,lead*.95);
   rgb=mix(rgb,vec3(1.),flash); a=max(a,flash*.95);
-  gl_FragColor=vec4(rgb,a);
+  gl_FragColor=vec4(rgb,a*alphaMul);
 }`;
 /** One material per lane (per-lane uniforms); `time`/`motion` are shared clock objects. */
 export function createLaneMaterial(clock: { value: number }, motion: { value: number }) {
@@ -51,7 +51,7 @@ export function createLaneMaterial(clock: { value: number }, motion: { value: nu
     side: DoubleSide, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
     uniforms: { laneLen: { value: 1 }, laneW: { value: 2 }, colA: { value: new Color() }, colB: { value: new Color() }, split: { value: .5 }, buildT: { value: 1 }, fade: { value: 1.5 },
       buildSrc: { value: 0 }, keepA: { value: 0 }, keepB: { value: 0 }, retractA: { value: 0 }, retractB: { value: 0 }, flashA: { value: 0 }, flashB: { value: 0 },
-      hoverA: { value: 0 }, hoverB: { value: 0 }, drainA: { value: 0 }, drainB: { value: 0 }, time: clock, motion },
+      hoverA: { value: 0 }, hoverB: { value: 0 }, drainA: { value: 0 }, drainB: { value: 0 }, time: clock, motion, alphaMul: { value: 1 } },
     vertexShader, fragmentShader,
   });
 }

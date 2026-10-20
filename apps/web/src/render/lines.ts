@@ -8,7 +8,7 @@ import { createPuffPool } from './puffs.js';
 import { splitTarget, stepSplit } from './lane-split.js';
 import { TICK_RATE } from '@node-arena/sim';
 export interface LineSegment { readonly channel: number; readonly owner: number; readonly from: number; readonly to: number; readonly start: Vector3; readonly end: Vector3 }
-export interface ProjectedLineSegment { readonly channel: number; readonly owner: number; readonly start: Vector2; readonly end: Vector2 }
+export interface ProjectedLineSegment { readonly channel: number; readonly owner: number; readonly start: Vector2; readonly end: Vector2; /** Half the lane width in CSS pixels at the lane midpoint (perpendicular to the centre line). */ readonly halfWidthPx: number }
 /** Read-only per-channel troop data filled by the troop renderer (`channel = from * n + to`, raw sim progress units). */
 export interface TroopFronts { readonly frontProgress: ArrayLike<number>; readonly channelCount: ArrayLike<number> }
 export interface LineRendererOptions { view: SimView; manifest: Manifest; scene: Scene; scope: Disposables; /** Tower visual width in world units (SP03 `towers.visualWidth`). */ visualWidth?: (id: string) => number | undefined; palette?: keyof Manifest['palettes']; reducedMotion?: boolean }
@@ -28,6 +28,7 @@ export function createLineRenderer(options: LineRendererOptions) {
     const w = options.visualWidth?.(id(i)), r = view.towerStatic[i]!.footprintRadius / 1000;
     return w !== undefined && Number.isFinite(w) && w > 0 ? w : Number.isFinite(r) && r > 0 ? 2 * r : 6;
   }
+  function laneWidth(a: number, b: number) { return LANE_WIDTH_FACTOR * (towerWidth(a) + towerWidth(b)) / 2; }
   function writeGeometry(lane: Lane) {
     const a = view.towerStatic[lane.lo]!, b = view.towerStatic[lane.hi]!, ax = a.x / 1000, az = a.y / 1000, bx = b.x / 1000, bz = b.y / 1000;
     const len = Math.hypot(bx - ax, bz - az) || 1, half = lane.widthWorld / 2, nx = -(bz - az) / len * half, nz = (bx - ax) / len * half;
@@ -126,10 +127,15 @@ export function createLineRenderer(options: LineRendererOptions) {
     setReducedMotion(value: boolean) { motion.value = value ? 0 : 1; reduced = value; if (value) settle(); },
     get puffs() { return puffs; },
     highlight, setHighlighted: highlight,
+    /** Lane ribbon width in world units for a tower pair (used by the draw preview). */
+    laneWidth,
     /** Caller may cache this until line changes or camera resize. Coordinates are CSS pixels. Both channels of a pair project onto the same centre line. */
     projectSegments(camera: Camera, viewportWidth: number, viewportHeight: number): ProjectedLineSegment[] {
-      return segments.map(segment => { const a = segment.start.clone().project(camera), b = segment.end.clone().project(camera); return { channel: segment.channel, owner: segment.owner,
-        start: new Vector2((a.x+1)*viewportWidth/2,(1-a.y)*viewportHeight/2), end: new Vector2((b.x+1)*viewportWidth/2,(1-b.y)*viewportHeight/2) }; });
+      const px = (p: Vector3) => new Vector2((p.x+1)*viewportWidth/2,(1-p.y)*viewportHeight/2), nn = n();
+      return segments.map(segment => { const a = segment.start.clone().project(camera), b = segment.end.clone().project(camera), lo = Math.min(segment.from, segment.to), hi = Math.max(segment.from, segment.to);
+        const half = (lanes.get(lo * nn + hi)?.widthWorld ?? laneWidth(lo, hi)) / 2, mid = segment.start.clone().add(segment.end).multiplyScalar(.5), dx = segment.end.x - segment.start.x, dz = segment.end.z - segment.start.z, len = Math.hypot(dx, dz) || 1;
+        const side = mid.clone().add(new Vector3(-dz / len * half, 0, dx / len * half)).project(camera), m = mid.clone().project(camera);
+        return { channel: segment.channel, owner: segment.owner, start: px(a), end: px(b), halfWidthPx: px(side).distanceTo(px(m)) }; });
     }, dispose,
   };
 }

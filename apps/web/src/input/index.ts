@@ -1,13 +1,15 @@
-import { BufferGeometry, Float32BufferAttribute, Mesh, MeshBasicMaterial, DoubleSide, Line, LineBasicMaterial, Plane, Raycaster, Vector2, Vector3, type Camera, type Scene } from 'three';
+import { BufferGeometry, Float32BufferAttribute, Mesh, Line, LineBasicMaterial, Plane, Raycaster, Vector2, Vector3, type Camera, type Scene } from 'three';
 import type { Manifest } from '@node-arena/content';
 import type { Command, Sim } from '@node-arena/sim';
 import { Disposables } from '../render/disposables.js';
 import type { LineSegment, ProjectedLineSegment } from '../render/lines.js';
-import { pointSegmentDistance, segmentDistance, type Point2 } from './geometry.js';
+import { createLaneMaterial, LANE_WIDTH_FACTOR } from '../render/lane-material.js';
+import { hoverRadius, pointSegmentDistance, segmentDistance, swipeRadius, type Point2 } from './geometry.js';
 
 export interface InputLines {
   readonly segments?: readonly LineSegment[];
   projectSegments?(camera: Camera, width: number, height: number): readonly ProjectedLineSegment[];
+  laneWidth?(a: number, b: number): number;
   setHighlighted?(channel: number | null, owner?: number): void;
 }
 export interface InputControllerOptions {
@@ -26,9 +28,10 @@ export function createInputController(options: InputControllerOptions) {
   let palette = options.palette ?? 'default';
   const previewGeometry = scope.add(new BufferGeometry());
   previewGeometry.setAttribute('position', new Float32BufferAttribute(new Float32Array(12),3));
-  previewGeometry.setIndex([0,1,2,2,1,3]);
-  const previewMaterial = scope.add(new MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .8, depthWrite: false, side: DoubleSide }));
-  const preview = new Mesh(previewGeometry,previewMaterial); preview.visible = false; preview.frustumCulled = false; preview.renderOrder = 3;
+  previewGeometry.setAttribute('uv',new Float32BufferAttribute([0,0,0,1,1,0,1,1],2)); previewGeometry.setIndex([0,1,2,2,1,3]);
+  // Ghost chevron ribbon: the lane shader, static (motion 0), translucent, one colour on the whole length.
+  const previewMaterial = scope.add(createLaneMaterial({ value: 0 },{ value: 0 })); previewMaterial.uniforms.alphaMul!.value = .6; previewMaterial.uniforms.split!.value = 1;
+  const preview = new Mesh(previewGeometry,previewMaterial); preview.visible = false; preview.frustumCulled = false; preview.renderOrder = 3; preview.userData.inputPreview = true;
   options.scene.add(preview); scope.defer(() => preview.removeFromParent());
   const trailGeometry = scope.add(new BufferGeometry());
   trailGeometry.setAttribute('position',new Float32BufferAttribute(new Float32Array(128*3),3)); trailGeometry.setDrawRange(0,0);
@@ -55,28 +58,17 @@ export function createInputController(options: InputControllerOptions) {
   }
   function towerPoint(index: number) { const tower = options.sim.view.towerStatic[index]!; return new Vector3(tower.x/1000,0,tower.y/1000); }
   function project(point: Vector3, width: number, height: number): Point2 { const p = point.clone().project(options.camera); return { x:(p.x+1)*width/2,y:(1-p.y)*height/2 }; }
-  function projectedLines() {
-    const box = canvas.getBoundingClientRect(), view = options.sim.view; options.camera.updateMatrixWorld();
-    const existing = options.lines?.projectSegments?.(options.camera,box.width,box.height);
-    if (existing) return existing;
-    return view.lines.map(line => {
-      let start = options.lines?.segments?.find(segment => segment.channel === line.channel && segment.owner === line.owner)?.start;
-      let end = options.lines?.segments?.find(segment => segment.channel === line.channel && segment.owner === line.owner)?.end;
-      if (!start || !end) {
-        start = towerPoint(line.from); end = towerPoint(line.to);
-        const dx=end.x-start.x,dz=end.z-start.z,len=Math.hypot(dx,dz);
-        // Match the default directed ribbon's left offset when no renderer is supplied.
-        if (len) { const offset = new Vector3(-dz/len*.24,.035,dx/len*.24); start.add(offset); end.add(offset); }
-      }
-      return { channel:line.channel,owner:line.owner,start:project(start,box.width,box.height),end:project(end,box.width,box.height) };
-    });
+  function projectedLines(): readonly { channel: number; owner: number; start: Point2; end: Point2; halfWidthPx: number }[] {
+    const box = canvas.getBoundingClientRect(); options.camera.updateMatrixWorld();
+    return options.lines?.projectSegments?.(options.camera,box.width,box.height) ?? options.sim.view.lines.map(line =>
+      ({ channel:line.channel,owner:line.owner,start:project(towerPoint(line.from),box.width,box.height),end:project(towerPoint(line.to),box.width,box.height),halfWidthPx:0 }));
   }
   function highlight(channel: number | null) { options.lines?.setHighlighted?.(channel, human()); }
   function nearestLine(point: Point2) {
-    let selected: number | null = null, best = 12;
+    let selected: number | null = null, best = Infinity;
     for (const line of projectedLines()) if (line.owner === human()) {
       const distance = pointSegmentDistance(point,line.start,line.end);
-      if (distance <= best) { best = distance; selected = line.channel; }
+      if (distance <= hoverRadius(line.halfWidthPx) && distance < best) { best = distance; selected = line.channel; }
     }
     return selected;
   }
@@ -87,7 +79,7 @@ export function createInputController(options: InputControllerOptions) {
   }
   function cut(channel: number) { const line = options.sim.view.lines.find(line => line.channel === channel && line.owner === human()); if (line) command('CutLine',line.from,line.to); }
   function stroke(a: Point2, b: Point2, active: Extract<Gesture,{kind:'cut'}>) {
-    for (const line of projectedLines()) if (line.owner === human() && !active.cut.has(line.channel) && segmentDistance(a,b,line.start,line.end) <= 8) {
+    for (const line of projectedLines()) if (line.owner === human() && !active.cut.has(line.channel) && segmentDistance(a,b,line.start,line.end) <= swipeRadius(line.halfWidthPx)) {
       active.cut.add(line.channel); cut(line.channel);
     }
   }
@@ -100,13 +92,15 @@ export function createInputController(options: InputControllerOptions) {
   function updatePreview(point: Point2, from: number) {
     const hit = world(point); if (!hit) { preview.visible = false; reason.style.display = 'none'; return; }
     const to = pick(hit), end = to === null ? hit : towerPoint(to), start = towerPoint(from), dx=end.x-start.x,dz=end.z-start.z,length=Math.hypot(dx,dz);
-    const nx=length ? -dz/length*.12 : 0,nz=length ? dx/length*.12 : 0;
+    const view = options.sim.view, lo = Math.min(from,to ?? from), hi = Math.max(from,to ?? from);
+    const width = to === null ? (options.lines?.laneWidth?.(from,from) ?? LANE_WIDTH_FACTOR*2*view.towerStatic[from]!.footprintRadius/1000) : (options.lines?.laneWidth?.(lo,hi) ?? LANE_WIDTH_FACTOR*(view.towerStatic[from]!.footprintRadius+view.towerStatic[to]!.footprintRadius)/1000);
+    const nx=length ? -dz/length*width/2 : 0,nz=length ? dx/length*width/2 : 0;
     const positions = previewGeometry.getAttribute('position');
     [[start.x-nx,start.z-nz],[start.x+nx,start.z+nz],[end.x-nx,end.z-nz],[end.x+nx,end.z+nz]].forEach(([x,z],i)=>positions.setXYZ(i,x!,.06,z!));
     positions.needsUpdate = true; preview.visible = true;
-    const view = options.sim.view;
+    const u = previewMaterial.uniforms; u.laneLen!.value = length || 1; u.laneW!.value = width; u.fade!.value = Math.max(.5,width*1.5);
     const rejection = to === null ? null : options.sim.canDraw(view.ids.players[human()]!,view.ids.towers[from]!,view.ids.towers[to]!);
-    previewMaterial.color.set(rejection ? '#e3384f' : options.manifest.palettes[palette][view.players[human()]!.colorKey]!);
+    const tint = rejection ? '#e3384f' : options.manifest.palettes[palette][view.players[human()]!.colorKey]!; (u.colA!.value as { set(v: string): void }).set(tint); (u.colB!.value as { set(v: string): void }).set(tint);
     reason.textContent = rejection ?? ''; reason.style.display = rejection ? 'block' : 'none';
     const box = canvas.getBoundingClientRect(); reason.style.left = `${box.left+point.x+14}px`; reason.style.top = `${box.top+point.y+14}px`;
   }

@@ -23,7 +23,7 @@ it('builds one pair ribbon lane for opposite lines, scrolls without rebuilding, 
   expect(r.meshes[0]).toBe(mesh); expect(u.time!.value).toBe(4); expect(dispose).not.toHaveBeenCalled();
   r.highlight(1, 0); expect(u.hoverA!.value).toBe(1); expect(u.hoverB!.value).toBe(0); r.highlight(1, 1); expect(u.hoverA!.value).toBe(0); r.highlight(null);
   const camera = new PerspectiveCamera(); camera.position.set(5, 20, 15); camera.lookAt(5, 0, 0); camera.updateMatrixWorld();
-  const projected = r.projectSegments(camera, 800, 600); expect(projected).toHaveLength(2); expect(projected[0]!.start.x).toBeCloseTo((r.segments[0]!.start.clone().project(camera).x + 1) * 400);
+  const projected = r.projectSegments(camera, 800, 600); expect(projected).toHaveLength(2); for (const seg of projected) expect(seg.halfWidthPx).toBeGreaterThan(0); expect(projected[0]!.start.x).toBeCloseTo((r.segments[0]!.start.clone().project(camera).x + 1) * 400);
   r.setPalette('colorblind'); expect(u.colA!.value.equals(new Color(f.manifest.palettes.colorblind['player.1']))).toBe(true); expect(u.team!.value).toBe(u.colA!.value);
   // Cut only B->A: the lane stays single-direction A->B; cut channel with troops keeps a draining half until empty.
   const lines = f.view.lines as unknown as { channel: number }[]; const kept = lines[0]!; lines.length = 0; lines.push(kept);
