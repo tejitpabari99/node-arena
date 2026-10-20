@@ -30,3 +30,6 @@ H01-H07 pass on l01, l01-tip, l10 both viewports. l18/l10cb H rows fail only bec
 | iter | change | self/blind (menu V20, picker V21, pause V20, results V20) | notes |
 |---|---|---|---|
 | 1 | :root tokens (--c-*), sand/grass gradient bg, navy rimmed 24px panels, blue primary / sand secondary chunky buttons, outlined headings, UI_TOKENS + ui-tokens.test.ts (all pairs >= 4.5:1, strict AA, no large-text allowance) | self 8/8/8/8; blind 7/7/7/7 | blind gaps: heading outline invisible on navy, sentence case, buttons thin/small, tiny body text. App.tsx untouched (selectors unchanged). Web unit 348/348, typecheck/lint pass |
+| 2 | uppercase 44px headings, 64px buttons, picker 150px tiles (1920 fits) | blind 7/7/7/6 | gaps: heading outline invisible, flat |
+| 3 | blue ribbon h2 (centered, white rim); HUD tip/round buttons reset to prior size (regression caught in l01-tip); H01-H07 l01/l01-tip/l10 all pass | blind 7/7/7/7 | gaps: outline, chunk |
+| 4 | ribbon --c-blue (dark outline now visible), 7-8px button drop shadows; large-text 3:1 test for heading on blue | pending | |

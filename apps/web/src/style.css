@@ -39,17 +39,19 @@ button {
   background: var(--c-sand);
   color: var(--c-ink);
   font-weight: 800;
-  font-size: 1.1em;
-  padding: 12px 18px;
+  font-size: 1.3em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 14px 20px;
   cursor: pointer;
-  min-height: 44px;
-  box-shadow: 0 4px 0 var(--c-sand-dark);
+  min-height: 64px;
+  box-shadow: 0 7px 0 var(--c-sand-dark);
 }
 button:hover {
   background: #fff1d6;
 }
 button:active {
-  transform: translateY(2px);
+  transform: translateY(5px);
   box-shadow: 0 2px 0 var(--c-sand-dark);
 }
 button:focus-visible,
@@ -67,8 +69,8 @@ button.primary {
   color: var(--c-white);
   border-color: var(--c-white);
   font-weight: 800;
-  font-size: 1.15em;
-  box-shadow: 0 5px 0 var(--c-blue-dark);
+  font-size: 1.5em;
+  box-shadow: 0 8px 0 var(--c-blue-dark);
 }
 button.primary:hover {
   background: var(--c-blue);
@@ -86,16 +88,19 @@ h1 {
   paint-order: stroke fill;
 }
 h2 {
-  font-size: 40px;
-  letter-spacing: 0.01em;
+  font-size: 44px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   line-height: 1.15;
   font-weight: 900;
   color: var(--c-white);
   -webkit-text-stroke: 0.2em var(--c-blue-dark);
   paint-order: stroke fill;
+  text-shadow: 0 4px 0 var(--c-blue);
 }
 p {
-  line-height: 1.6;
+  line-height: 1.5;
+  font-size: 1.15em;
   color: var(--c-white);
 }
 .brand {
@@ -122,10 +127,19 @@ p {
   background: var(--c-navy);
   border: 4px solid var(--c-white);
   border-radius: var(--radius-panel);
-  padding: 36px;
+  padding: 28px 36px;
   box-shadow: 0 8px 0 var(--c-blue-dark), 0 18px 40px #0004;
   position: relative;
   pointer-events: auto;
+}
+.panel h2 {
+  text-align: center;
+  background: var(--c-blue);
+  border: 4px solid var(--c-white);
+  border-radius: var(--radius-btn);
+  padding: 8px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 5px 0 var(--c-blue-dark);
 }
 .panel > button {
   display: block;
@@ -133,6 +147,7 @@ p {
   margin-top: 12px;
 }
 .eyebrow {
+  text-align: center;
   text-transform: uppercase;
   font-size: 14px;
   letter-spacing: 0.12em;
@@ -149,14 +164,18 @@ p {
 }
 .level-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 14px;
 }
 .level {
+  font-size: 1em;
+  text-transform: none;
+  min-height: 44px;
+  padding: 8px 14px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
+  gap: 4px;
   text-align: left;
 }
 .level-order {
@@ -315,7 +334,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .hud-meter.cb > span + span { border-left: 2px solid #fff; }
 .hud-round {
   position: absolute; top: 12px; width: 64px; height: 64px; min-height: 44px; padding: 0; border-radius: 50%;
-  background: #fff; color: #1b5bc0; border: 3px solid #1b5bc0; font-size: 26px; font-weight: 800;
+  background: #fff; color: #1b5bc0; border: 3px solid #1b5bc0; font-size: 26px; font-weight: 800; text-transform: none; letter-spacing: 0;
   box-shadow: 0 4px 0 #0d3a82, 0 6px 14px #0004; display: grid; place-items: center;
 }
 .hud-round:hover { background: #e6f1ff; }
@@ -331,6 +350,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
   box-shadow: 0 4px 0 #c99a55, 0 8px 18px #0004; transition: opacity 350ms ease; pointer-events: none;
 }
 .hud-tip p { margin: 0; flex: 1; color: #3b2a12; font-size: 0.72em; line-height: 1.35; font-weight: 700; }
-.hud-tip button { background: var(--hud-blue); color: #fff; border: 3px solid #fff; border-radius: 14px; padding: 6px 16px; min-height: 44px; font-weight: 800; }
+.hud-tip button { font-size: 1em; text-transform: none; letter-spacing: 0; box-shadow: none; background: var(--hud-blue); color: #fff; border: 3px solid #fff; border-radius: 14px; padding: 6px 16px; min-height: 44px; font-weight: 800; }
 .hud-tip.fading { opacity: 0; }
 .hud-tip.fading button { pointer-events: none; }

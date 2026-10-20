@@ -16,6 +16,10 @@ const pairs: Array<[string, string, string]> = [
 ];
 
 describe('UI palette contrast (R4)', () => {
+  // Panel h2 headings are 44px bold (WCAG large text): white fill on the --c-blue ribbon only needs 3:1 (dark outline adds edge contrast).
+  it('large heading white on blue ribbon >= 3:1 (large-text rule)', () => {
+    expect(contrastRatio(T.white, T.blue)).toBeGreaterThanOrEqual(3);
+  });
   for (const [name, fg, bg] of pairs) {
     it(`${name} >= 4.5:1`, () => {
       expect(contrastRatio(fg, bg)).toBeGreaterThanOrEqual(4.5);
