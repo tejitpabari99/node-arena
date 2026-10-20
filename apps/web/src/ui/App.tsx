@@ -5,6 +5,7 @@ import type { SaveSettings } from "../save";
 import { editField, downloadFiles, type PerfSnapshot } from "../dev";
 import { AssetError } from "../manifest/resolve";
 import { Credits } from "./Credits";
+import { Hud } from "./Hud";
 const outcomes = {
   won: "Victory",
   lost: "Defeat",
@@ -114,31 +115,7 @@ export function App({ app }: { app: AppController }) {
           <button onClick={() => app.dismissNotices()}>Dismiss</button>
         </aside>
       )}
-      {game && (
-        <div class="hud">
-          <strong>{current?.name}</strong>
-          <span role="timer" aria-label="Time remaining">
-            {Math.floor(state.remainingSeconds / 60)}:
-            {String(state.remainingSeconds % 60).padStart(2, "0")}
-          </span>
-          <button
-            disabled={state.screen !== "playing"}
-            onClick={() => app.setSpeed(state.speed === 1 ? 2 : 1)}
-            aria-label="Game speed"
-          >
-            {state.speed}×
-          </button>
-          <button
-            disabled={state.screen !== "playing"}
-            onClick={() => app.pause()}
-          >
-            Pause
-          </button>
-          <button aria-pressed={state.perf} onClick={() => app.togglePerf()}>
-            Performance
-          </button>
-        </div>
-      )}
+      {game && <Hud app={app} state={state} />}
       {state.perf && app.driver && <PerfHud app={app} />}
       {state.devEnabled && state.screen !== "boot" && <DevPanel app={app} />}
       {state.devTuned && <span class="tuned-badge" role="status">Tuned · completion disabled</span>}
@@ -197,12 +174,6 @@ export function App({ app }: { app: AppController }) {
           <p role="status">Preparing the arena…</p>
           <button onClick={() => app.menu()}>Back to menu</button>
         </section>
-      )}
-      {state.screen === "playing" && (
-        <p class="instructions">
-          Drag from your tower to connect · Swipe across a route or right-click
-          to cut · Esc to pause
-        </p>
       )}
       {state.screen === "paused" && (
         <section class="panel overlay">

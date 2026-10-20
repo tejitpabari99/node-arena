@@ -105,7 +105,7 @@ export function createAppController(options: AppOptions) {
     result: null,
     remainingSeconds: 0,
     speed: 1,
-    perf: false,
+    perf: typeof window !== "undefined" && new URLSearchParams(window.location.search).has("perf"),
     devEnabled: options.devEnabled ?? (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("dev") === "1"),
     devTuned: options.devTuned ?? false,
     devError: null,
