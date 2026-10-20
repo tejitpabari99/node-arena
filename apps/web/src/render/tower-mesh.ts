@@ -17,6 +17,8 @@ export const BODY_COLOR = '#E6E8EA', DETAIL_COLOR = '#1B2430', NEUTRAL_ROOF = '#
 export const LIGHT_GAIN = [1.3, 1.56, 2.15] as const;
 const lit = (c: Color, hex: string) => { c.set(hex); c.r *= LIGHT_GAIN[0]; c.g *= LIGHT_GAIN[1]; c.b *= LIGHT_GAIN[2]; return c; };
 /** Roof decal edge (w units): constant so the digit keeps one size relative to the tower whatever the floor count (content is centred; the margin is transparent). */
+/** Roof top-chamfer shade: darker than the top face like the refs' darker bevelled edge (a lighter bevel read as a stray slot dot to M19 on grey roofs). */
+export const ROOF_CHAMFER_SHADE = .62;
 export const DECAL_PLATE = .70;
 /** Decal centre sits slightly toward the back of the roof so number + dots stay in the upper roof (M19/M16 locators). */
 export const DECAL_SHIFT_Z = -.04;
@@ -55,15 +57,15 @@ function box(w: number, h: number, d: number, x: number, y: number, z: number, s
   const g = new BoxGeometry(w, h, d).translate(x, y, z); g.setAttribute('color', new BufferAttribute(new Float32Array(g.attributes.position!.count * 3).fill(shade), 3)); return finish(g);
 }
 /** Prism with chamfered bottom/top edges: halfWidth `a`, height `h`, chamfer `c`, top-edge shade `edge`. */
-function prism(a: number, h: number, c: number, edge: number): Profile {
-  return [[0, 0, 1], [a - c, 0, .82], [a, c, .95], [a, h - c, 1], [a - c, h, edge], [0, h, 1]];
+function prism(a: number, h: number, c: number, edge: number, chamfer = 1): Profile {
+  return [[0, 0, 1], [a - c, 0, .82], [a, c, .95], [a, h - c, chamfer], [a - c, h, edge], [0, h, 1]];
 }
 export interface TowerGeometries { plinth: BufferGeometry; trim: BufferGeometry; band: BufferGeometry; body: BufferGeometry; roof: BufferGeometry; dark: BufferGeometry }
 export function buildTowerGeometries(): TowerGeometries {
   const ring = lathe(prism(RING_A, RING_H, .015, .9)).translate(0, PLINTH_H, 0);
   const door = box(.26, .25, .05, 0, .125, PLINTH_A + .01), side = (sx: number) => box(.05, .2, .14, sx * (PLINTH_A + .025), .1, .02);
   const trim = mergeGeometries([ring, door, side(-1), side(1)])!;
-  const body = lathe(prism(1, 1, .04, .86)), band = lathe(prism(1, 1, .02, .9)), roof = lathe(prism(1, 1, .09, .72)), plinth = lathe(prism(1, 1, .05, .88));
+  const body = lathe(prism(1, 1, .04, .86)), band = lathe(prism(1, 1, .02, .9)), roof = lathe(prism(1, 1, .09, .72, ROOF_CHAMFER_SHADE)), plinth = lathe(prism(1, 1, .05, .88));
   return { plinth, trim, band, body, roof, dark: finish(new BoxGeometry(1, 1, 1)) };
 }
 
