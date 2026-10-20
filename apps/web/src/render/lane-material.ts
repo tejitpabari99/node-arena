@@ -2,7 +2,7 @@ import { Color, DoubleSide, ShaderMaterial } from 'three';
 /** Tower War style translucent team ribbon (dotted fill, darker edges) with City Takeover style white chevrons on top.
  * Lane space: uv.x runs 0..1 from the lower-index tower A to B, uv.y spans the width. `split` is the A/B colour boundary
  * (fraction of lane length); the A half scrolls chevrons A->B, the B half B->A. */
-export const LANE_WIDTH_FACTOR = .35, LANE_FILL_ALPHA = .5, LANE_TINT = .3, LANE_DRAIN_ALPHA = .4, LANE_CHEVRON_SPEED = 2.5, LANE_CHEVRON_PITCH = 1.0;
+export const LANE_WIDTH_FACTOR = .35, LANE_FILL_ALPHA = .58, LANE_TINT = .42, LANE_DRAIN_ALPHA = .4, LANE_CHEVRON_SPEED = 2.5, LANE_CHEVRON_PITCH = 1.0;
 const vertexShader = 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
 const fragmentShader = `
 uniform float laneLen; uniform float laneW; uniform float split; uniform float buildT; uniform float fade;
@@ -17,13 +17,14 @@ void main(){
   float q=dir*d-${LANE_CHEVRON_SPEED.toFixed(2)}*(1.+.6*hover)*time*motion+ac*laneW*.45;
   float ph=fract(q/(${LANE_CHEVRON_PITCH.toFixed(2)}*laneW));
   // Tower War: sparse team-coloured dots on a centre row, thin crisp darker edge, low-alpha fill.
-  vec2 f=vec2((fract(ph+.5)-.5)*${LANE_CHEVRON_PITCH.toFixed(2)}*laneW, c*laneW*.5);
+  float ph0=fract((q-ac*laneW*.45)/(${LANE_CHEVRON_PITCH.toFixed(2)}*laneW));
+  vec2 f=vec2((fract(ph0+.95)-.5)*${LANE_CHEVRON_PITCH.toFixed(2)}*laneW, c*laneW*.5);
   float dots=1.-smoothstep(.1*laneW,.15*laneW,length(f));
-  vec3 base=mix(mix(col,vec3(1.),${LANE_TINT.toFixed(2)}),col*.8,dots*.8);
-  float alpha=${LANE_FILL_ALPHA.toFixed(2)}+.3*dots;
+  vec3 base=mix(mix(col,vec3(1.),${LANE_TINT.toFixed(2)}),col,dots*.35);
+  float alpha=${LANE_FILL_ALPHA.toFixed(2)}+.2*dots;
   float edge=smoothstep(.86,.94,ac);
-  base=mix(base,col*.85,edge); base=mix(base,vec3(1.),hover*edge*.8);
-  alpha=mix(alpha,.9,edge);
+  base=mix(base,mix(col,vec3(0.),.1),edge); base=mix(base,vec3(1.),hover*edge*.8);
+  alpha=mix(alpha,.72,edge);
   alpha=mix(alpha,min(alpha,${LANE_DRAIN_ALPHA.toFixed(2)}),drain);
   float band=smoothstep(0.,.04,ph)*(1.-smoothstep(.1,.15,ph));
   float chev=band*(1.-smoothstep(.42,.52,ac))*smoothstep(0.,fade,d)*smoothstep(0.,fade,laneLen-d)*(1.-drain);
