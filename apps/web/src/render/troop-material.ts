@@ -40,9 +40,8 @@ vTroopTeamMask = ${masked ? 'teamMask' : '1.0'};
 `);
     shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 troopTeam;\nvarying float vTroopTeamMask;')
       .replace('#include <color_fragment>', `#include <color_fragment>
-// Mask-all tint: the whole figure takes the team colour; unmasked parts (head) keep texture shading but are 20% lighter.
-float troopLum = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
-vec3 troopUnmasked = min(troopTeam * 1.2, vec3(1.0)) * (0.45 + 1.1 * troopLum);
+// Team-masked parts take the full team colour; unmasked parts (skin, cloth) keep their own colour with a 15% team tint.
+vec3 troopUnmasked = diffuseColor.rgb * mix(vec3(1.0), troopTeam * 1.2, 0.15);
 diffuseColor.rgb *= mix(vec3(1.0), troopTeam, vTroopTeamMask);
 diffuseColor.rgb = mix(troopUnmasked, diffuseColor.rgb, vTroopTeamMask);`);
   };
