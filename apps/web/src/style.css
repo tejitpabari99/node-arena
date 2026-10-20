@@ -193,6 +193,15 @@ p {
   font-weight: 900;
   color: var(--c-ink);
 }
+@media (max-height: 820px) {
+  .picker { margin-top: 1vh; padding: 14px 24px; }
+  .picker h2 { margin-bottom: 12px; padding: 4px 16px; }
+  .picker .level-grid { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; }
+  .picker .level { padding: 4px 10px; gap: 2px; }
+  .picker .level-order { font-size: 26px; }
+  .picker .level span:last-child { font-size: 13px; }
+  .picker > button { margin-top: 8px; }
+}
 .setting {
   display: flex;
   align-items: center;
