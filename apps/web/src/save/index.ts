@@ -9,6 +9,8 @@ export interface SaveSettings {
   colorblind: boolean;
   quality: 'low' | 'med' | 'high';
   reducedMotion: boolean;
+  /** First-level tip dismissed. Optional in persisted v1 blobs; loads as false. */
+  tipSeen: boolean;
 }
 export interface SaveData {
   v: 1;
@@ -43,7 +45,7 @@ export function defaultSave(): SaveData {
   return {
     v: 1, completed: Object.create(null) as SaveData['completed'],
     settings: { musicVol: 0.7, sfxVol: 1, musicMute: false, sfxMute: false,
-      colorblind: false, quality: 'med', reducedMotion: typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches },
+      colorblind: false, quality: 'med', reducedMotion: typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches, tipSeen: false },
     lastLevel: null,
   };
 }
@@ -68,6 +70,7 @@ function settings(value: unknown, legacy = false): SaveSettings {
   const source = record(value);
   const keys = ['musicVol', 'sfxVol', 'musicMute', 'sfxMute', 'colorblind', 'quality'];
   if (!legacy) keys.push('reducedMotion');
+  if (Object.hasOwn(source, 'tipSeen')) keys.push('tipSeen'); // optional key: key-less blobs load as false, no v bump
   exact(source, keys);
   for (const key of ['musicVol', 'sfxVol']) {
     const volume = source[key];
@@ -75,11 +78,11 @@ function settings(value: unknown, legacy = false): SaveSettings {
       throw new Error('Volume must be finite and between 0 and 1');
     }
   }
-  for (const key of ['musicMute', 'sfxMute', 'colorblind', ...(!legacy ? ['reducedMotion'] : [])]) {
+  for (const key of ['musicMute', 'sfxMute', 'colorblind', ...(!legacy ? ['reducedMotion'] : []), ...(keys.includes('tipSeen') ? ['tipSeen'] : [])]) {
     if (typeof source[key] !== 'boolean') throw new Error('Invalid settings flag');
   }
   if (!['low', 'med', 'high'].includes(source.quality as string)) throw new Error('Invalid quality');
-  return { ...source, ...(legacy ? { reducedMotion: false } : {}) } as unknown as SaveSettings;
+  return { ...source, ...(legacy ? { reducedMotion: false } : {}), tipSeen: source.tipSeen ?? false } as unknown as SaveSettings;
 }
 function validateSave(value: unknown): SaveData {
   const source = record(value);

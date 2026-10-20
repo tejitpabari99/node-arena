@@ -8,6 +8,8 @@ class MemoryStorage implements SaveStorage {
   getItem(key: string) { return this.values.get(key) ?? null; }
   setItem(key: string, value: string) { this.values.set(key, value); }
 }
+/** Fixtures predate tipSeen; they load with the default false. */
+const v1Loaded = { ...v1, settings: { ...v1.settings, tipSeen: false } };
 const seeded = (value: unknown) => {
   const storage = new MemoryStorage();
   storage.setItem(SAVE_KEY, typeof value === 'string' ? value : JSON.stringify(value));
@@ -15,18 +17,30 @@ const seeded = (value: unknown) => {
 };
 
 describe('versioned saves', () => {
+  it('loads a key-less v1 blob with tipSeen === false', () => {
+    expect('tipSeen' in v1.settings).toBe(false);
+    expect(decodeSave(JSON.stringify(v1)).settings.tipSeen).toBe(false);
+    expect(createSaveStore({ storage: seeded(v1) }).snapshot().settings.tipSeen).toBe(false);
+  });
+  it('round-trips tipSeen true and rejects a non-boolean tipSeen', () => {
+    const storage = new MemoryStorage();
+    createSaveStore({ storage }).updateSettings({ tipSeen: true });
+    expect(JSON.parse(storage.getItem(SAVE_KEY)!).settings.tipSeen).toBe(true);
+    expect(createSaveStore({ storage }).snapshot().settings.tipSeen).toBe(true);
+    expect(() => decodeSave(JSON.stringify({ ...v1, settings: { ...v1.settings, tipSeen: 'yes' } }))).toThrow();
+  });
   it.each([v0, v1])('migrates fixture v$v without mutating input', (fixture) => {
     const before = JSON.stringify(fixture);
-    expect(decodeSave(JSON.stringify(fixture))).toEqual(v1);
+    expect(decodeSave(JSON.stringify(fixture))).toEqual(v1Loaded);
     expect(JSON.stringify(fixture)).toBe(before);
     expect(migrations).toHaveLength(1);
-    expect(migrations[0]!(v0)).toEqual(v1);
+    expect(migrations[0]!(v0)).toEqual(v1Loaded);
   });
   it('persists migration to current version and retains dates keyed by id', () => {
     const storage = seeded(v0);
     const store = createSaveStore({ storage });
-    expect(store.snapshot()).toEqual(v1);
-    expect(JSON.parse(storage.getItem(SAVE_KEY)!)).toEqual(v1);
+    expect(store.snapshot()).toEqual(v1Loaded);
+    expect(JSON.parse(storage.getItem(SAVE_KEY)!)).toEqual(v1Loaded);
     expect(store.consumeNotice()).toBeNull();
   });
   it.each(['{bad json', 'null', JSON.stringify({ ...v1, v: 2 }), JSON.stringify({ ...v1, v: -1 }), JSON.stringify({ ...v1, mystery: true }), JSON.stringify({ ...v1, completed: { a: { firstAt: 'bad date' } } })])('backs up invalid raw input %s, resets and consumes notice once', (raw) => {
