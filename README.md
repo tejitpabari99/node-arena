@@ -3,8 +3,8 @@
 Ad-free browser strategy game (persistent-route tower war) with solo campaign and private multiplayer with friends. Design in progress.
 
 ## Contents
-- `research/engine-research.md` — engine/stack comparison
-- `research/similar-games.md` — survey of existing similar games
+- `docs/research/initial_research/engine-research.md` — engine/stack comparison
+- `docs/research/initial_research/similar-games.md` — survey of existing similar games
 - `docs/agent_files/` — design docs (brainstorm, PRDs, tasks)
 
 - `packages/content/` — browser-safe content schemas and validation (TypeBox + Ajv); generated editor schemas, v1 data, sample level and content hash lock.

@@ -11,7 +11,7 @@ Build v1 of Node Arena: a laptop-browser, ad-free, low-poly 3D modern-city strat
 
 v1 = authoritative rules spec + deterministic rules engine + 20 selectable solo levels vs rule-based bots, run locally. Built on TypeScript + Three.js so the same rules engine powers multiplayer later.
 
-Why build: no existing game combines persistent routes, polished graphics, level select, friends multiplayer and no ads (see research/similar-games.md).
+Why build: no existing game combines persistent routes, polished graphics, level select, friends multiplayer and no ads (see docs/research/initial_research/similar-games.md).
 
 ## 2. Problem
 The user (and later 1-3 friends) wants to play a polished persistent-route tower-war game in a browser.

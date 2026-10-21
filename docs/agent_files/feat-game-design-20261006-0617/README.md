@@ -97,7 +97,7 @@ Folded this pass: SP05 asks accepted (SP01 hosts `small`/`large`, `extends` may 
 - [SP01 original review](01-rules-and-content-model/review-2026-10-08-0533.md) — historical NEEDS_CHANGES: fixed-point underflow.
 - [SP01 latest review](01-rules-and-content-model/review-2026-10-08-0539.md) — PASS across all three personas; original finding resolved.
 - [brainstorm.md](brainstorm.md)
-- Research (relative to repo root): `research/engine-research.md`, `research/similar-games.md`, `research/mechanics-research.md`, `research/gamedev-best-practices.md`
+- Research (relative to repo root): `docs/research/initial_research/engine-research.md`, `docs/research/initial_research/similar-games.md`, `docs/research/initial_research/mechanics-research.md`, `docs/research/initial_research/gamedev-best-practices.md`
 - PRDs: [01](01-rules-and-content-model/PRD.md), [02](02-sim-engine/PRD.md), [03](03-web-client/PRD.md), [04](04-bots-and-tools/PRD.md), [05](05-campaign-and-art/PRD.md)
 
 ## Next step
