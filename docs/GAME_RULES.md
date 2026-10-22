@@ -26,6 +26,86 @@ This is the mechanics contract for the Tower War (APK 1.29.3) port. It is a full
 
 **Versioning.** `RULES_VERSION` uses semver: major for a change to replay outcomes for existing content, minor for an additive rule or element, patch for a clarification. Replay compatibility requires an exact major.minor match; content identity and the replay header must also pass the content/replay validation contract. The content metadata mirrors this header. A mechanics change updates this document and its changelog, then tests (`covers R-…`), then code. A value change edits content and its content version/hash, not a rule. Tunable numbers live in content (`balance.json` and level data).
 
+### R-TCK-01
+
+The engine constant is `tickRate = 20` ticks per simulation second. A step advances one fixed tick and has no wall-clock dependency. Pause stops steps; normal and accelerated play change only how often the driver steps. A finished match accepts no further simulation changes.
+
+*Source:* 06 §1 F1.
+
+*Params:* None; `tickRate` is a rules constant recorded in replays.
+
+*Examples:* E-TICK.
+
+*Since:* 2.0.0.
+
+### R-TCK-02
+
+Authored fixed-point fields have at most three decimal places and compile at `numericScale = 1000`. Simulation state and arithmetic are integers only. Integer division floors for non-negative operands. Multiply before dividing, with an exact intermediate range-checked below 2^53. `isqrt` returns the greatest integer whose square does not exceed its input. No floating point, trigonometry or wall-clock value may influence outcomes.
+
+*Source:* `math.ts` (`isqrt`, Sfc32).
+
+*Params:* `numericScale` (rules constant), every fixed-point content value.
+
+*Examples:* E-TICK, E-SPAWN.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-TCK-02 (truncation wording).
+
+### R-TCK-03
+
+Iteration orders are explicit and are the only tie-breaks. Players iterate by ascending index; buildings by ascending dense index (stable id order); lines by source building index, then target building index; commands by player index, then submission order; troops in a line in FIFO order, each with a global sequence number `seq` assigned at departure in departure order. Named random streams are `stream(seed, purposeId, entityIdx)` derived from Sfc32 with the replay `seed`; the only sim stream is `fwd` (one stream per building, R-CAP-03). Bot streams `bot.*` are reserved for bots and live outside sim state. A bounded draw uses rejection sampling and is unbiased. Draws happen only in fixed phases (§4) in ascending index order, so a replay consumes identical draws.
+
+*Source:* 06 §1 F1.
+
+*Params:* Replay `seed`.
+
+*Examples:* E-ARRIVAL, E-OVERFLOW.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-TCK-03.
+
+### R-TCK-04
+
+Progress is measured in `numericScale × tickRate` units per world unit. Each tick a troop advances by `speedMilli`, the compiled form of its type's `speed`; speed is constant per troop type and never changes mid-flight in 2.0.0. Line length between centre positions with milli-unit differences `dx`, `dy` is `isqrt((dx × tickRate)² + (dy × tickRate)²)` progress units. A departing troop starts at progress 0 in its departure tick; afterwards progress is elapsed ticks times `speedMilli`. Movement is analytic (evaluated from departure tick) rather than stepped per troop.
+
+*Source:* v1 R-TCK-04; 03#4.5.
+
+*Params:* `units.*.speed` (compiled `speedMilli`), building `pos`.
+
+*Examples:* E-TICK.
+
+*Since:* 2.0.0.
+
+### R-TCK-05
+
+Each tick follows the nine-phase order in §4. Capture happens inline during the arrival that causes it. There is no slot-enforcement phase. A captured building produces nothing for its new owner until a later tick. Troops killed by a capture are removed immediately and their later arrivals in the same tick do not apply.
+
+*Source:* 03#5.3, 03#4.1.
+
+*Params:* None.
+
+*Examples:* E-ARRIVAL.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-TCK-05 (eight phases with slot enforcement).
+
+### R-TCK-06
+
+Timers count in milli-ticks and are translated from TW float timers as follows. Each eligible tick `timer += 1000`; the timer fires when `timer >= period(tick)`; on fire `timer -= period`, so the remainder carries; a timer fires at most once per tick; `period` is clamped to at least `1000`. `period` is recomputed every tick from current integer inputs using floor division, multiply before divide, with intermediates below 2^53. Because the timer is compared to the current period, a mid-interval change (a line added or removed, a level change) behaves as in TW (`timer >= SpawnWarriorTime`). Quantisation to tick edges delays an event by 25 ms on average and 50 ms at most and never accumulates (the remainder is carried to 1/1000 tick); independent timers resolve in the TCK-03 order instead of a float race.
+
+**Exemption (tower cooldown).** The tower cooldown (R-TWR-01, R-TWR-02) is not recomputed per tick. It is set once at the fire tick from the tower's current level, then counts down by `1000` per tick, floored at 0, and the tower is ready when it is `<= 0`. Level changes while cooling (growth, hit, capture) do not alter a running cooldown. Spawn and growth timers keep the per-tick recompute.
+
+*Source:* 06 §1 F7; 03#4.1 `UpdateSpawnTimer`; decomp `WaitForSeconds(curAttackDelay)`.
+
+*Params:* None (`1000` is `numericScale`).
+
+*Examples:* E-TIMER, E-TOWER.
+
+*Since:* 2.0.0.
+
 ## 2. Entities
 
 _Pending: later SP01 task._
@@ -60,7 +140,34 @@ Status: tombstone. v1 no-bank rule (capped towers stop generating without a line
 
 ## 4. Tick phase order
 
-_Pending: later SP01 task._
+R-TCK-05 fixes this order. Iteration and ties follow R-TCK-03 throughout. A reader derives, per phase, the rules that run and the order inside the phase from this table.
+
+| Phase | Name | Rules | Iteration and tie order | Required effect |
+|---|---|---|---|---|
+| 1 | Commands | R-LIN-01..05, R-ENT-04 | Player index, then submission order. | Canonicalize, validate and atomically apply `DrawLine` / `CutLine`. A rejected command changes nothing. |
+| 2 | Reserved (unused) | — | — | Slot kept so phase numbers stay stable (formerly booster strikes, deferred, §6). Nothing runs. |
+| 3 | Growth | R-GRW-01, R-GRW-02, R-TCK-06 | Buildings by ascending index. | Advance growth timers of owned buildings with zero lines; fire raises level by one up to `maxLevel`. |
+| 4 | Spawn / departures | R-SPN-01..03, R-TCK-06 | Buildings by index; within a building lines by target index. | Advance each line's spawn timer; fire departs one troop at progress 0 with the next `seq`, or skips under the alive cap. |
+| 5 | Movement | R-TCK-04 | None (analytic). | Evaluate every troop's progress for this tick; no state is mutated per troop. |
+| 6 | Contacts | R-CMB-01, R-CMB-04, R-CMB-05 | Head-on pass first, pairs by ascending ordered channel key; then crossing pass by ascending `(channelKeyA, channelKeyB)`, then `(seqA, seqB)`. | Resolve exchanges (R-CMB-05); dead troops are removed immediately; survivors may fight again in the same pass. |
+| 7 | Tower shots | R-TWR-01..04 | Towers by ascending building index, sequentially (a troop killed by an earlier tower cannot be shot again). | Decrement cooldowns, then each ready tower fires once (target tie: distance, owner index, troop `seq`). |
+| 8 | Arrivals + capture | R-CMB-02, R-CMB-03, R-CAP-01, R-CAP-03, R-CPT-01, R-CPT-02 | Arrivals ordered by overshoot descending, then channel order (source index, target index), then FIFO `seq`. Ownership is re-evaluated per arrival. | Apply reinforcement or damage; capture inline; forward overflow on the `fwd` stream; troops removed by a capture do not arrive. |
+| 9 | Win / loss / time | R-WIN-01..03 | Players by ascending index. | Evaluate outcome and the optional time limit; expose final state. Outcome is final. |
+
+Captured buildings neither grow nor spawn for the new owner before the next tick, because capture happens after phases 3–4. Level drops never cut lines (R-LIN-02).
+
+### 4.1 Commands
+
+The command set is closed and is extended only by union with a minor version bump.
+
+- `DrawLine{from, to}` — validated and applied by R-LIN-01, R-LIN-03.
+- `CutLine{from, to}` — R-LIN-05.
+
+Human players, scripted AI and bots submit the same commands, pass the same validation and get no privileges (R-ENT-04). Tower War AI never cuts; that is bot policy, not a rule. There is no booster command (§6).
+
+### 4.2 Hash surface
+
+The state hash covers, in index order: per building owner, level, growth timer, `ignoreForWin` and tower cooldown; per line owner, endpoints, draw sequence and spawn timer; per troop owner, source building, type, line, progress, hit points and `seq`; and the state of every sim random stream. Presentation-only state (bullet flight, art stage) is not hashed.
 
 ## 5. Worked examples and edge cases
 
