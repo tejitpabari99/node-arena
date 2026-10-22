@@ -13,11 +13,11 @@ export function themeFor(position: number, envShift: number = DEFAULT_ENV_SHIFT)
 
 export interface Feature { tw: string; count: number; /** house: warriorType values seen. */ warriorTypes?: number[] }
 
-const BUILDING_TOKEN: Record<string, string> = {
+export const BUILDING_TOKEN: Record<string, string> = {
   house: 'house', tower: 'tower', rocket_tower: 'rocket', selectable_fortess: 'selectable',
   capture_rocket_tower: 'capture-rocket', trolley: 'trolley', flag: 'flag', boss_tower: 'boss', resource: 'WOD',
 };
-const MAP_TOKEN: Record<keyof TwLevel['mapObjects'], string> = {
+export const MAP_TOKEN: Record<keyof TwLevel['mapObjects'], string> = {
   obstacles: 'OBS', riverObstacles: 'ROBS', mines: 'Mine', walls: 'Wall', sheep: 'Sheep', rivers: 'River', cargo: 'cargo', gates: 'Gate', railways: 'Railway',
 };
 
