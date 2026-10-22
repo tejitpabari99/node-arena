@@ -7,7 +7,7 @@ export const scenes = {
   'l21-snow': { load: () => import('./l21-snow.js'), ref: 'tw-yt/L21.jpg' },
   'unit-lineup': { load: () => import('./unit-lineup.js'), ref: 'tw-yt/d-battle-lanes.jpg' },
   'stage-ladder': { load: () => import('./stage-ladder.js'), ref: 'tw-yt/d-house-levels-11.jpg' },
-  'fx': { load: () => import('./stub.js'), ref: 'tw-yt/d-tower-firing.jpg' },
+  'fx': { load: () => import('./fx-scene.js'), ref: 'tw-yt/d-tower-firing.jpg' },
   'obstacles-green': { load: () => import('./obstacles-green.js') },
   'obstacles-snow': { load: () => import('./obstacles-snow.js') },
 };

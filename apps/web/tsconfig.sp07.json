@@ -12,6 +12,7 @@
     "src/manifest/model-ref.ts", "src/manifest/resolve.ts", "test/sp07/*.ts",
     "src/render/unit-anim.ts", "src/render/unit-renderer.ts",
     "src/render/building.ts", "src/render/building-label.ts",
-    "src/render/ground-renderer.ts", "src/render/element-renderer.ts", "src/render/lane-renderer.ts", "src/render/environment.ts"
+    "src/render/ground-renderer.ts", "src/render/element-renderer.ts", "src/render/lane-renderer.ts", "src/render/environment.ts",
+    "src/render/fx-pool.ts"
   ]
 }
