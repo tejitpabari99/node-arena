@@ -1,0 +1,618 @@
+{
+ "l4-green": {
+  "id": "levelview-1",
+  "theme": "green",
+  "bounds": {
+   "minX": -9000,
+   "maxX": 6000,
+   "minZ": -7000,
+   "maxZ": 8000
+  },
+  "players": [
+   {
+    "id": "p1",
+    "kind": "human",
+    "colorKey": "blue"
+   },
+   {
+    "id": "p2",
+    "kind": "ai",
+    "colorKey": "red"
+   }
+  ],
+  "buildings": [
+   {
+    "id": "b0",
+    "x": -6790,
+    "z": 100,
+    "owner": 0,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b1",
+    "x": 3700,
+    "z": -2560,
+    "owner": 1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b2",
+    "x": -700,
+    "z": -4950,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b3",
+    "x": -4660,
+    "z": 5010,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b4",
+    "x": 600,
+    "z": 2740,
+    "owner": -1,
+    "kind": "tower",
+    "visual": "building.tower"
+   }
+  ],
+  "elements": []
+ },
+ "l21-snow": {
+  "id": "levelview-19",
+  "theme": "snow",
+  "bounds": {
+   "minX": -10000,
+   "maxX": 10000,
+   "minZ": -7000,
+   "maxZ": 7000
+  },
+  "players": [
+   {
+    "id": "p1",
+    "kind": "human",
+    "colorKey": "blue"
+   },
+   {
+    "id": "p2",
+    "kind": "ai",
+    "colorKey": "green"
+   }
+  ],
+  "buildings": [
+   {
+    "id": "b1",
+    "x": -2930,
+    "z": -4620,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b2",
+    "x": 2750,
+    "z": -4450,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b3",
+    "x": -2760,
+    "z": 4590,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b4",
+    "x": 2770,
+    "z": 4620,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b7",
+    "x": -2960,
+    "z": -80,
+    "owner": -1,
+    "kind": "tower",
+    "visual": "building.tower"
+   },
+   {
+    "id": "b5",
+    "x": -7210,
+    "z": -4510,
+    "owner": 1,
+    "kind": "house",
+    "visual": "building.house-wt2"
+   },
+   {
+    "id": "b6",
+    "x": -7160,
+    "z": 4670,
+    "owner": 1,
+    "kind": "house",
+    "visual": "building.house-wt2"
+   },
+   {
+    "id": "b0",
+    "x": 7160,
+    "z": 380,
+    "owner": 0,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   }
+  ],
+  "elements": []
+ },
+ "obstacles-green": {
+  "id": "levelview-4",
+  "theme": "green",
+  "bounds": {
+   "minX": -10000,
+   "maxX": 8000,
+   "minZ": -8000,
+   "maxZ": 7000
+  },
+  "players": [
+   {
+    "id": "p1",
+    "kind": "human",
+    "colorKey": "blue"
+   },
+   {
+    "id": "p2",
+    "kind": "ai",
+    "colorKey": "red"
+   },
+   {
+    "id": "p3",
+    "kind": "ai",
+    "colorKey": "green"
+   }
+  ],
+  "buildings": [
+   {
+    "id": "b0",
+    "x": -7240,
+    "z": -120,
+    "owner": 0,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b1",
+    "x": 1940,
+    "z": 2690,
+    "owner": 1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b5",
+    "x": 1990,
+    "z": -3580,
+    "owner": 2,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b2",
+    "x": -1770,
+    "z": 4850,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b3",
+    "x": 5480,
+    "z": -260,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b4",
+    "x": -1820,
+    "z": -5060,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b6",
+    "x": -2010,
+    "z": -90,
+    "owner": -1,
+    "kind": "tower",
+    "visual": "building.tower"
+   }
+  ],
+  "elements": [
+   {
+    "id": "o0-0",
+    "x": -1930,
+    "z": -1720,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o0-1",
+    "x": -1930,
+    "z": -2270,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o0-2",
+    "x": -1930,
+    "z": -2870,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o0-3",
+    "x": -1810,
+    "z": -3680,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o0-6",
+    "x": -2110,
+    "z": -3800,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o0-7",
+    "x": -2020,
+    "z": -3430,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o1-0",
+    "x": -1930,
+    "z": 3130,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o1-1",
+    "x": -1930,
+    "z": 2580,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o1-2",
+    "x": -1930,
+    "z": 1980,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o1-4",
+    "x": -1930,
+    "z": 1130,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   }
+  ]
+ },
+ "obstacles-snow": {
+  "id": "levelview-20",
+  "theme": "snow",
+  "bounds": {
+   "minX": -10000,
+   "maxX": 11000,
+   "minZ": -7000,
+   "maxZ": 7000
+  },
+  "players": [
+   {
+    "id": "p1",
+    "kind": "human",
+    "colorKey": "blue"
+   },
+   {
+    "id": "p2",
+    "kind": "ai",
+    "colorKey": "red"
+   },
+   {
+    "id": "p3",
+    "kind": "ai",
+    "colorKey": "green"
+   }
+  ],
+  "buildings": [
+   {
+    "id": "b0",
+    "x": -7780,
+    "z": -2210,
+    "owner": 0,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b1",
+    "x": 380,
+    "z": -4580,
+    "owner": 1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b2",
+    "x": 7030,
+    "z": 4220,
+    "owner": 2,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b3",
+    "x": 460,
+    "z": 4070,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt2"
+   },
+   {
+    "id": "b4",
+    "x": -5160,
+    "z": -4880,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt2"
+   },
+   {
+    "id": "b5",
+    "x": -1580,
+    "z": -530,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b6",
+    "x": 3390,
+    "z": -180,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b7",
+    "x": -7880,
+    "z": 2520,
+    "owner": -1,
+    "kind": "tower",
+    "visual": "building.tower"
+   },
+   {
+    "id": "b8",
+    "x": 8720,
+    "z": -180,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b9",
+    "x": 6550,
+    "z": -4260,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt1"
+   },
+   {
+    "id": "b10",
+    "x": -4140,
+    "z": 3680,
+    "owner": -1,
+    "kind": "house",
+    "visual": "building.house-wt2"
+   }
+  ],
+  "elements": [
+   {
+    "id": "o0-2",
+    "x": 1830,
+    "z": 3180,
+    "yawMilliDeg": 135000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o0-3",
+    "x": 1340,
+    "z": 2520,
+    "yawMilliDeg": 135000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o0-4",
+    "x": 870,
+    "z": 2220,
+    "yawMilliDeg": 135000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o0-5",
+    "x": 390,
+    "z": 1740,
+    "yawMilliDeg": 135000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o0-6",
+    "x": 1040,
+    "z": 2650,
+    "yawMilliDeg": 135000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o0-7",
+    "x": 1370,
+    "z": 2840,
+    "yawMilliDeg": 135000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o1-0",
+    "x": 3620,
+    "z": -2940,
+    "yawMilliDeg": 110000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o1-1",
+    "x": 3430,
+    "z": -3460,
+    "yawMilliDeg": 110000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o1-2",
+    "x": 3230,
+    "z": -4020,
+    "yawMilliDeg": 110000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o1-3",
+    "x": 3060,
+    "z": -4820,
+    "yawMilliDeg": 110000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o1-4",
+    "x": 2770,
+    "z": -5290,
+    "yawMilliDeg": 110000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o1-5",
+    "x": 2530,
+    "z": -5930,
+    "yawMilliDeg": 110000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o1-6",
+    "x": 2740,
+    "z": -4830,
+    "yawMilliDeg": 110000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o1-7",
+    "x": 2950,
+    "z": -4520,
+    "yawMilliDeg": 110000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o2-0",
+    "x": -2970,
+    "z": 1280,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o2-1",
+    "x": -2970,
+    "z": 730,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o2-2",
+    "x": -2970,
+    "z": 130,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o2-3",
+    "x": -2850,
+    "z": -680,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o2-4",
+    "x": -2970,
+    "z": -1220,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o2-5",
+    "x": -2970,
+    "z": -1900,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "big"
+   },
+   {
+    "id": "o2-6",
+    "x": -3150,
+    "z": -800,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   },
+   {
+    "id": "o2-7",
+    "x": -3060,
+    "z": -430,
+    "yawMilliDeg": 90000,
+    "visual": "element.obstacle",
+    "variant": "small"
+   }
+  ]
+ }
+}
