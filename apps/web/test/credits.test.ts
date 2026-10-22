@@ -12,7 +12,7 @@ function walk(node: unknown, out: { text: string[]; hrefs: string[] }) {
 describe('credits screen', () => {
   it('parses CREDITS.md rows into grouped pack entries', () => {
     expect(credits.length).toBeGreaterThan(0);
-    expect(credits.find((c) => c.title.startsWith('City Kit Commercial'))).toMatchObject({ author: 'Kenney', licence: 'CC0 1.0', url: 'https://kenney.nl/assets/city-kit-commercial' });
+    expect(credits.find((c) => c.title.startsWith('Impact Sounds'))).toMatchObject({ author: 'Kenney', licence: 'CC0 1.0', url: 'https://kenney.nl/assets/impact-sounds' });
     expect(new Set(credits.map((c) => c.title)).size).toBe(credits.length);
   });
   it('renders title, author, licence and source link for every entry', () => {

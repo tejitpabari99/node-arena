@@ -66,21 +66,6 @@ All files in the table below are extracted from the Tower War 1.29.3 Android bui
 |---|---|---|---|---|---|---|
 | fonts/Coiny-Regular.ttf | Coiny Regular (level-number labels; the same font Tower War uses) | Marcelo Magalhaes | https://github.com/google/fonts/tree/main/ofl/coiny | SIL OFL 1.1 (`licenses/coiny-OFL.txt`) | 2026-10-22 | None |
 
-## Legacy model files (Kenney CC0, deleted by SP07 Task 11)
-
-Still on disk until the old renderer is removed; every file stays credited meanwhile. All CC0 1.0 (public domain dedication); licence re-verified on each pack page at download time.
-
-| File | Pack | Author | URL | Licence | Downloaded | Modifications |
-|---|---|---|---|---|---|---|
-| models/tower-small.glb | City Kit Commercial 2.1 (`building-d.glb`) | Kenney | https://kenney.nl/assets/city-kit-commercial | CC0 1.0 | 2026-10-09 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
-| models/tower-standard.glb | City Kit Commercial 2.1 (`building-g.glb`) | Kenney | https://kenney.nl/assets/city-kit-commercial | CC0 1.0 | 2026-10-09 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
-| models/tower-large.glb | City Kit Commercial 2.1 (`building-skyscraper-a.glb`) | Kenney | https://kenney.nl/assets/city-kit-commercial | CC0 1.0 | 2026-10-09 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
-| models/troop-regular.glb | Code-built chibi (team hat with brim, skin sphere head, white torso, team arms/legs; 232 tris, no rig, no texture) | Node Arena (original geometry) | n/a | n/a | 2026-10-20 | SP04 Task 6: replaces the Kenney Mini Characters `character-male-a` mesh (CC0, https://kenney.nl/assets/mini-characters) which read as a boxy head from the steep camera; `Shirt` material = team colour; skin/cloth keep own colour with 15% team tint in shader (refs show skin faces). Blocky Characters (Kenney, CC0, kenney.nl/assets/blocky-characters) was trialled in SP04 Task 6 but not shipped |
-| models/prop-tree-pine.glb | Nature Kit 2.1 (`tree_pineTallA.glb`) | Kenney | https://kenney.nl/assets/nature-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
-| models/prop-tree-round.glb | Nature Kit 2.1 (`tree_default.glb`) | Kenney | https://kenney.nl/assets/nature-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
-| models/prop-stump.glb | Nature Kit 2.1 (`stump_round.glb`) | Kenney | https://kenney.nl/assets/nature-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
-| models/prop-crate.glb | Survival Kit (`box.glb`) | Kenney | https://kenney.nl/assets/survival-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
-
 ## Audio (CC0)
 
 | File | Pack | Author | URL | Licence | Downloaded | Modifications |
@@ -94,11 +79,7 @@ Still on disk until the old renderer is removed; every file stays credited meanw
 
 ## Licence copies
 
-- `apps/web/assets/licenses/kenney-city-kit-commercial-LICENSE.txt`
 - `apps/web/assets/licenses/kenney-impact-sounds-LICENSE.txt`
 - `apps/web/assets/licenses/kenney-interface-sounds-LICENSE.txt`
-- `apps/web/assets/licenses/kenney-mini-characters-LICENSE.txt`
-- `apps/web/assets/licenses/kenney-nature-kit-LICENSE.txt`
-- `apps/web/assets/licenses/kenney-survival-kit-LICENSE.txt`
 - `apps/web/assets/licenses/kenney-ui-audio-LICENSE.txt`
 - `apps/web/assets/licenses/opengameart-insistent-LICENSE.txt` (note recording the asset-page CC0 statement; OpenGameArt ships no licence file)

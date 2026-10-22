@@ -14,6 +14,7 @@ export default {
     { find: /^three\/addons\//, replacement: `${three}/examples/jsm/` },
     { find: /^three$/, replacement: `${three}/build/three.module.js` },
     { find: /^@node-arena\/defs$/, replacement: path.resolve(here, '../../../packages/defs/src/index.ts') },
+    { find: /^@node-arena\/sim$/, replacement: path.resolve(here, '../../../packages/sim/src/index.ts') },
   ] },
   server: { fs: { allow: [path.resolve(here, '../../..')] } },
 };

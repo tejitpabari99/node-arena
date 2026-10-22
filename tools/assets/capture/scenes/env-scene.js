@@ -1,16 +1,16 @@
-// Shared by the env scenes (ground + obstacles + lanes for real compiled level data; buildings are simple placeholders until Task 7).
+// Shared by l4-green / l21-snow / obstacles-*: the end-to-end proof of createWorldRenderer (PRD R5). Real compiled level,
+// real packages/sim run for a few seconds (scripted DrawLine from every owned building to its nearest enemy), real events,
+// mirrored worldRoot owned here (SP08 will own it in the app), FOV 21 / 55 deg camera fitted to the level bounds.
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import manifest from '../../../../apps/web/assets/manifest.json';
 import levels from '../fixtures/levels.json';
-import { MaterialCache } from '../../../../apps/web/src/render/materials.ts';
-import { ModelCache } from '../../../../apps/web/src/render/gltf-cache.ts';
-import { createEnvironment } from '../../../../apps/web/src/render/environment.ts';
-import { createMirroredWorldRoot } from '../../validate/world-root.js';
+import { create, createTroopBuffer } from '../../../../packages/sim/src/index.ts';
+import { createWorldRenderer } from '../../../../apps/web/src/render/world.ts';
+import { createMirroredWorldRoot } from '../../../../apps/web/src/render/world-root.ts';
 
 const BASE = `${__WEB_ASSETS__}`;
 const M = 0.001;
+const TICK_MS = 50;
 
 /** Camera per PRD R5: FOV 21 / 55 deg pitch, fitted so level bounds + margin are inside the frame. Data frame -> world z is mirrored. */
 export function fitCamera(camera, bounds, margin, pitchDeg = 55) {
@@ -26,48 +26,48 @@ export function fitCamera(camera, bounds, margin, pitchDeg = 55) {
   camera.position.copy(center).addScaledVector(back, dist); camera.up.copy(up); camera.lookAt(center); camera.updateProjectionMatrix();
 }
 
-export async function envScene({ canvas, width, height }, key, { label, preview = false } = {}) {
-  const level = levels[key], theme = manifest.themes[level.theme];
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
-  renderer.setSize(width, height, false);
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(theme.sky);
-
-  const tl = new THREE.TextureLoader(), pending = [];
-  const materials = new MaterialCache(p => { let done; pending.push(new Promise((res, rej) => { done = [res, rej]; })); return tl.load(`${BASE}/${p}`, done[0], undefined, done[1]); });
-  const gl = new GLTFLoader(); gl.setMeshoptDecoder(MeshoptDecoder);
-  const models = new ModelCache(f => gl.loadAsync(`${BASE}/${f}`));
-  const env = createEnvironment(manifest, materials, models);
-  await env.setLevel({ bounds: level.bounds, elements: level.elements }, level.theme);
-  await Promise.all(pending);
-  const worldRoot = createMirroredWorldRoot(); worldRoot.add(env.root); scene.add(worldRoot);
-
-  // Placeholder buildings (Task 7 replaces): coloured disc + block by owner.
-  const colors = level.players.map(p => manifest.palettes[p.colorKey]);
-  const bs = level.buildings.map(b => ({ x: b.x, z: b.z, kind: b.kind, owner: b.owner }));
-  for (const b of bs) {
-    const c = b.owner >= 0 ? colors[b.owner] : manifest.palettes.gray;
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 1.2, 16), new THREE.MeshLambertMaterial({ color: c }));
-    m.position.set(b.x * M, 0.6, b.z * M); worldRoot.add(m);
-  }
-  // Lanes: each owned building draws one lane to its nearest building of another owner (scripted; real lines come from the sim view).
-  const lines = [];
-  bs.forEach((a, from) => {
+/** Scripted opening: each owned building draws one line to its nearest building of another owner (the sim rejects what it must). */
+function openingCommands(sim, level) {
+  const cmds = [];
+  level.buildings.forEach((a, from) => {
     if (a.owner < 0) return;
     let best = -1, bd = Infinity;
-    bs.forEach((b, to) => { if (to === from || b.owner === a.owner) return; const d = Math.hypot(a.x - b.x, a.z - b.z); if (d < bd) { bd = d; best = to; } });
-    if (best >= 0) lines.push({ channel: from * bs.length + best, from, to: best, owner: a.owner, length: bd, drawSeq: lines.length });
+    level.buildings.forEach((b, to) => { if (to === from || b.owner === a.owner) return; const d = Math.hypot(a.x - b.x, a.z - b.z); if (d < bd) { bd = d; best = to; } });
+    if (best >= 0 && sim.canDraw(a.owner, from, best) === null) cmds.push({ type: 'DrawLine', player: a.owner, from, to: best });
   });
-  const view = { lines, buildingStatic: bs, players: level.players };
-  env.update(view, 0); env.update(view, 350); // a non-zero scroll phase
+  return cmds;
+}
+
+export async function envScene({ canvas, width, height }, key, { label, preview = false, ticks = 260 } = {}) {
+  const level = levels[key];
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  renderer.setSize(width, height, false);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(manifest.themes[level.theme].sky);
+  const worldRoot = createMirroredWorldRoot(); scene.add(worldRoot);
+  const world = createWorldRenderer(scene, manifest, { worldRoot, baseURL: BASE });
+  await world.setLevel(level, level.theme);
+
+  const sim = create(level, 11), buf = createTroopBuffer(4096);
+  const cmds = openingCommands(sim, level);
+  world.update({ view: sim.view, troops: buf, n: 0, alpha: 0, towerRadiusMilli: sim.towerRadiusMilli }, [], 0);
+  let events = [], rows = 0;
+  for (let t = 0; t < ticks; t++) {
+    const ev = sim.step(t === 0 ? cmds : [], { events: true });
+    rows = sim.readTroops(buf);
+    world.update({ view: sim.view, troops: buf, n: rows, alpha: 0.5, towerRadiusMilli: sim.towerRadiusMilli }, ev, TICK_MS);
+    events = ev;
+  }
   if (preview) { // drag preview: from the human's first building toward a free point
-    const h = bs.find(b => b.owner === 0);
-    env.lanes.previewLane({ x: h.x * M, z: h.z * M }, { x: h.x * M + 4.5, z: h.z * M + 3 }, level.players[0].colorKey);
+    const h = level.buildings.find(b => b.owner === 0);
+    world.previewLane({ x: h.x * M, z: h.z * M }, { x: h.x * M + 4.5, z: h.z * M + 3 }, level.players[0].colorKey);
   }
 
   const camera = new THREE.PerspectiveCamera(21, width / height, 0.5, 400);
   fitCamera(camera, level.bounds, manifest.camera.margin);
-  renderer.render(scene, camera);
-  console.log(`${key}: obstacles small=${env.elements.counts.small} big=${env.elements.counts.big} draws=${env.elements.drawCalls} lanes=${env.lanes.stats.active} (pool ${env.lanes.stats.created}) ground half=${env.ground.plan.halfX.toFixed(1)}x${env.ground.plan.halfZ.toFixed(1)}`);
+  await new Promise(res => { let quiet = 0; const tick = () => { quiet = THREE.DefaultLoadingManager.isLoading ? 0 : quiet + 1; quiet > 20 ? res() : requestAnimationFrame(tick); }; tick(); });
+  world.update({ view: sim.view, troops: buf, n: rows, alpha: 0.5, towerRadiusMilli: sim.towerRadiusMilli }, [], 0);
+  for (let i = 0; i < 3; i++) renderer.render(scene, camera), await new Promise(r => requestAnimationFrame(r));
+  console.log(`${key}: buildings=${level.buildings.length} lines=${sim.view.lines.length} troops=${rows} picks=${world.pickMeshes.length} drawCalls=${renderer.info.render.calls} tris=${renderer.info.render.triangles}`);
   const el = document.createElement('div');
   el.textContent = label ?? key;
   el.style.cssText = 'position:fixed;left:16px;top:12px;font:16px monospace;color:#000;background:#fffa;padding:2px 6px';

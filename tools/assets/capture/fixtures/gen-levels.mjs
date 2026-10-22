@@ -1,4 +1,4 @@
-// Regenerates levels.json (compiled levels for capture scenes l4-green / l21-snow). Run after `pnpm build:prerequisites`:
+// Regenerates levels.json (full compiled levels for the capture scenes; they run packages/sim on them). Run after `pnpm build:prerequisites`:
 //   node tools/assets/capture/fixtures/gen-levels.mjs
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,7 +17,7 @@ const pick = { 'l4-green': 'levelview-1', 'l21-snow': 'levelview-19', 'obstacles
 const out = {};
 for (const [scene, id] of Object.entries(pick)) {
   const l = compiled[id];
-  out[scene] = { id: l.id, theme: l.theme, bounds: l.bounds, players: l.players, buildings: l.buildings.map(b => ({ id: b.id, x: b.x, z: b.z, owner: b.owner, kind: b.kind, visual: b.visual })), elements: l.elements.map(e => ({ id: e.id, x: e.x, z: e.z, yawMilliDeg: e.yawMilliDeg, visual: e.visual, variant: e.variant })) };
+  out[scene] = l; // full CompiledLevel: the capture scenes run the real sim on it
 }
 fs.writeFileSync(path.join(here, 'levels.json'), JSON.stringify(out, null, 1) + '\n');
 console.log('wrote levels.json', Object.keys(out));
