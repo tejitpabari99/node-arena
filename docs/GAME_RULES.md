@@ -108,11 +108,131 @@ Timers count in milli-ticks and are translated from TW float timers as follows. 
 
 ## 2. Entities
 
-_Pending: later SP01 task._
+### R-ENT-01
+
+A building has a stable id, position, owner (a player or neutral), level, kind (`house` or `tower`) and a derived stage. A house supplies lines, per-line spawning and growth; a tower supplies a shooter. Both are capturable. Obstacles are not buildings (R-OBS-02). Level, owner, kind and parameters come from the building's archetype and level data after inheritance; unknown kinds or unsupported values are content errors, never silently ignored.
+
+*Source:* 03#2, 03#5.5.
+
+*Params:* `buildings.*` (archetype), `maxLevel`, `stageThresholds`, initial level, `ignoreForWin`.
+
+*Examples:* E-SPAWN, E-STAGE.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-ENT-01 (tower with garrison and components).
+
+### R-ENT-02
+
+A troop has an owner, a source building and a type (`soldier` or `tank`), all fixed at departure, plus hit points and progress on a line. `hp`, `attack` and `defense` are flat per type and come from content, not from the owner. Visual identity never affects mechanics.
+
+*Source:* 03#2.3.
+
+*Params:* `units.*.hp`, `units.*.attack`, `units.*.defense`, `units.*.speed`.
+
+*Examples:* E-EXCHANGE, E-CAPTURE.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-ENT-02 (value-1 troops).
+
+### R-ENT-03
+
+A line has an owner, a source house, a target building, its own spawn timer (R-SPN-01) and a draw sequence. Troops on a line keep FIFO order. Cutting or replacing a line does not remove its in-flight troops. A line is identified by its ordered source/target pair.
+
+*Source:* v1 R-ENT-03; 03#3.4.
+
+*Params:* None.
+
+*Examples:* E-LINES.
+
+*Since:* 2.0.0.
+
+### R-ENT-04
+
+A player's identity is its team: each player id is its own team. Player kinds are human, ai and neutral. Every owner that is not the same owner is hostile, including AI against AI; a neutral building is hostile to every non-neutral troop. Human players, AI and bots submit identical commands, pass identical validation and receive no mechanical privileges.
+
+*Source:* 03#5.2.
+
+*Params:* Player `id`, `kind`; building `owner`.
+
+*Examples:* E-ARRIVAL.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-ENT-04 (team field).
 
 ## 3. Rules by area
 
-_Pending: later SP01 task._
+### R-SPN-01
+
+Every line of an owned (non-neutral) house has its own spawn timer, run under R-TCK-06. With `L` the house's current building level and `n` its current number of lines, the period is
+
+`K_m = 1000 + lineSpawnPenalty_m × (n − 1)`
+
+`period mt = idiv(K_m × 1_200_000, spawnSpeed_m × L + 60000)`
+
+Both `L` and `n` are read afresh every tick. `n` counts every drawn line, including surplus lines above the stage's slots (R-LIN-02).
+
+*Source:* 03#4.1 (`T = K·60/(ws·L + 60)`).
+
+*Params:* `spawnSpeed`, `lineSpawnPenalty`.
+
+*Examples:* E-SPAWN, E-TIMER.
+
+*Since:* 2.0.0.
+
+### R-SPN-02
+
+When a spawn timer fires, one troop of the house's `troopType` departs on that line at progress 0 with the next global `seq`. Spawning is free: the house's level does not change. If the number of live troops whose source is this house (troops on cut lines included) is at or above `aliveCap`, the spawn is skipped but the timer is still consumed.
+
+*Source:* 03#4.2, 03#4.4.
+
+*Params:* `balance.spawn.aliveCap`, `troopType`.
+
+*Examples:* E-SPAWN.
+
+*Since:* 2.0.0.
+
+### R-SPN-03
+
+A new line starts with its timer at 0, so its first troop departs after a full period. A line's timer ceases when the line is cut, replaced or cancelled. Neutral buildings never spawn.
+
+*Source:* 03#4.1.
+
+*Params:* None.
+
+*Examples:* E-TIMER.
+
+*Since:* 2.0.0.
+
+### R-GRW-01
+
+An owned (non-neutral) house with zero lines has a growth timer under R-TCK-06. With `k = idiv(L, 10) + 1` the period is
+
+`period mt = idiv((idiv(growthBase_m × 1000, isqrt(k × 1_000_000)) + 1000) × growTime_m, 50)`
+
+(`growthBase_m × 1000` is `900_000` at the TW default). When it fires the level becomes `min(L + 1, maxLevel)`. The timer advances only while the house has zero lines; it persists, unchanged, while any line exists (starting or stopping lines does not reset it) and resets on fire and on capture. Neutral buildings and towers do not grow.
+
+*Source:* 03#4.6; decomp `HouseGrowth` `StartGrowth` / `StopGrowth`, `House.OnGrow`.
+
+*Params:* `growTime`, `balance.growth.base`, `maxLevel`.
+
+*Examples:* E-GROWTH.
+
+*Since:* 2.0.0.
+
+### R-GRW-02
+
+`stage(L) = 1 + (number of entries of stageThresholds that are <= L)`. The stage function is the single source for line slots (R-LIN-02), tower radius (R-TWR-01) and art stage. Thresholds are inclusive.
+
+*Source:* 03#3.2; 06 D8 (thresholds are not serialized).
+
+*Params:* `stageThresholds`.
+
+*Examples:* E-STAGE.
+
+*Since:* 2.0.0.
 
 ### Retired ids
 
