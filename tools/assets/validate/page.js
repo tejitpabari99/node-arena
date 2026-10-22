@@ -32,6 +32,7 @@ window.renderShot = async o => {
     const t = await texLoader.loadAsync(o.tex);
     t.flipY = false; // glTF UV convention (v down), same as the GLB's embedded texture
     t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+    if (o.texRepeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...o.texRepeat); t.offset.set(...(o.texOffset ?? [0, 0])); } // env ground (extras.uvRepeat/uvOffset)
     model.traverse(n => { if (n.isMesh) { n.material = n.material.clone(); n.material.map = t; } });
   }
   if (o.clip) {
@@ -65,6 +66,7 @@ window.renderShot = async o => {
     const list = new Set(rootNode.userData.stageNodes[o.stageNodes]);
     model.traverse(n => { if (n.isMesh) n.visible = list.has(n.name); });
   }
+  if (o.only) model.traverse(n => { if (n.isMesh) n.visible = o.only.includes(n.name); }); // env preview: one obstacle variant
   if (o.showAll) model.traverse(n => { n.visible = true; });
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(bg);
@@ -103,7 +105,7 @@ window.renderShot = async o => {
   const box = new THREE.Box3().setFromObject(model);
   const ctr = box.getCenter(new THREE.Vector3());
   const rad = box.getSize(new THREE.Vector3()).length() / 2;
-  const cam = new THREE.PerspectiveCamera(fov, w / h, 0.01, 100);
+  const cam = new THREE.PerspectiveCamera(fov, w / h, 0.01, 1000);
   const dist = rad / Math.sin(THREE.MathUtils.degToRad(fov / 2)) * 1.05;
   const p = THREE.MathUtils.degToRad(pitch);
   // Camera stays fixed in world (outside the mirror), looking down -z... placed on +z side.

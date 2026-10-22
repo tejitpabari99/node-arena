@@ -222,6 +222,7 @@ test('inventory: exactly the PRD R1 outputs; models embed no texture; textures a
     ...['soldier', 'tank', 'barracks', 'factory', 'tower', 'projectile'].map((f) => `models/tw/${f}.glb`),
     ...teams4.flatMap((t) => [`textures/tw/soldier-${t}.png`, `textures/tw/tank-${t}.png`]),
     ...teams5.flatMap((t) => ['barracks', 'factory', 'tower', 'projectile'].map((f) => `textures/tw/${f}-${t}.png`)),
+    ...['green', 'snow'].flatMap((t) => [`models/tw/ground-${t}.glb`, `models/tw/obstacle-${t}.glb`, `textures/tw/ground-${t}.png`, `textures/tw/obstacle-${t}.png`]),
     ...['CFX3_T_HollowCircle', 'CFX_T_Star_Add', 'glow_2', 'smoke', 'Spark', 'lane-arrow', 'lane-waveArrow', 'lane-wave', 'lane-trail'].map((f) => `fx/${f}.png`),
   ].sort();
   assert.deepEqual([...r.files.keys()], want);
@@ -237,6 +238,54 @@ test('inventory: exactly the PRD R1 outputs; models embed no texture; textures a
   const sample = 'assets/defaultlocalgroup_scenes/Texture2D/1_DefaultBaseSkinTextureBlue_1167@sh.png';
   assert.equal(lock.inputs[sample], createHash('sha256').update(ex.read(sample)).digest('hex'));
   assert.equal(Buffer.compare(Buffer.from(r.files.get('textures/tw/soldier-blue.png')!), ex.read(sample)), 0, 'PNG bytes copied, not recompressed');
+});
+
+const triCount = (doc: Document): number => doc.getRoot().listMeshes().reduce((n, m) => n + m.listPrimitives().reduce((k, p) => k + p.getIndices()!.getCount() / 3, 0), 0);
+const meshTris = (doc: Document, node: string): number => doc.getRoot().listNodes().find((n) => n.getName() === node)!.getMesh()!.listPrimitives().reduce((k, p) => k + p.getIndices()!.getCount() / 3, 0);
+
+test('env: ground (500-tri budget, 200 tris) and obstacle (300-tri budget) GLBs per theme; textures resized to 256px', { skip: needExtract }, async () => {
+  const r = await imported();
+  const want = { green: { ground: 200, small: 40, big: 56 }, snow: { ground: 200, small: 66, big: 66 } } as const;
+  for (const theme of ['green', 'snow'] as const) {
+    const g = await read(r, `models/tw/ground-${theme}.glb`), o = await read(r, `models/tw/obstacle-${theme}.glb`);
+    assert.equal(triCount(g), want[theme].ground);
+    assert.ok(triCount(g) <= 500);
+    assert.equal(meshTris(o, 'small'), want[theme].small);
+    assert.equal(meshTris(o, 'big'), want[theme].big);
+    assert.ok(want[theme].small <= 300 && want[theme].big <= 300);
+    const ge = roots(g)[0]!.getExtras();
+    assert.deepEqual(ge['uvRepeat'], [3, 3]);
+    assert.deepEqual(ge['uvOffset'], [0, -0.05]);
+    assert.equal(ge['wrap'], 'repeat');
+    assert.equal(ge['texture'], `ground-${theme}.png`);
+    assert.ok(!JSON.stringify(ge['dropped']).includes('Ground'));
+    const gm = g.getRoot().listNodes().find((n) => n.getName() === 'ground')!;
+    assert.deepEqual(gm.getTranslation(), [0, 0, 0], 'placement is the renderer\'s job');
+    for (const tex of [`ground-${theme}`, `obstacle-${theme}`]) {
+      const png = r.files.get(`textures/tw/${tex}.png`)!;
+      const dv = new DataView(png.buffer, png.byteOffset, png.byteLength);
+      assert.deepEqual([dv.getUint32(16), dv.getUint32(20)], [256, 256], tex);
+    }
+  }
+  const ge = roots(await read(r, 'models/tw/ground-green.glb'))[0]!;
+  assert.deepEqual(ge.listChildren()[0]!.getScale().map(r5), [6, 1, 10]);
+  assert.deepEqual(roots(await read(r, 'models/tw/ground-snow.glb'))[0]!.listChildren()[0]!.getScale().map(r5), [18.8618, 1.2009, 15.7]);
+});
+
+test('env: Obstacle.prefab 8 children (index = level OCP/OCR/S index) match the frozen collider dump variants and scales', { skip: needExtract }, async () => {
+  const colliders = JSON.parse(readFileSync(new URL('../src/import-tw/prefab/colliders.json', import.meta.url), 'utf8')) as { obstacle: { children: { index: number; variant: string; localScale: number[] }[] } };
+  const r = await imported();
+  for (const theme of ['green', 'snow']) {
+    const kids = roots(await read(r, `models/tw/obstacle-${theme}.glb`))[0]!.getExtras()['children'] as { index: number; variant: string; scale: number[] }[];
+    assert.equal(kids.length, 8);
+    kids.forEach((k, i) => {
+      const c = colliders.obstacle.children[i]!;
+      assert.equal(k.index, c.index);
+      assert.equal(k.variant, c.variant);
+      c.localScale.forEach((v, j) => assert.ok(Math.abs(k.scale[j]! - v) < 1e-4, `${theme} child ${i} scale`));
+    });
+    assert.deepEqual(kids.map((k) => k.variant), ['big', 'small', 'big', 'small', 'big', 'big', 'small', 'small']);
+  }
 });
 
 test('determinism: two full runs are byte-identical', { skip: needExtract }, async () => {

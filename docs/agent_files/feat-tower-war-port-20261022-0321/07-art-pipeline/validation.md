@@ -96,3 +96,36 @@ The refs (L01/L19: sand border with red canyon rocks, crates, tyres, barrels, sa
 - The PRD says prototypes may need "UV flip, quaternion convert, node transforms"; the actual required fix is un-negating x (positions, normals, node translations), no quaternion conjugation, and restoring Unity index order. UV flip stays as in the prototype.
 - Winding and mirror: the as-seen winding check alone cannot detect the x-negation; hence P5/P6 (handedness) are part of the gate.
 - `pnpm assets:validate` exits 1 only if a RAW candidate fails an in-scope check; PROTO failures are reported findings, not failures.
+
+## Task 4 — env/obstacle mapping
+Code: `tools/src/assets-tw/env.ts` (`envJob`, appended to `JOBS`), preview `tools/assets/validate/env-preview.mjs` (`TW_EXTRACT=... node tools/assets/validate/env-preview.mjs`), tests in `tools/test/assets-tw.test.ts` (`env:` tests + inventory + determinism). Evidence: `BF/ref/proto-check/env-green-preview.png`, `env-snow-preview.png` (ground pitch 85/55 under the mirrored root, then small yaw 0/90/180, big yaw 0/90/180).
+
+### Outcome: MAPPED BY NAME (Addressables GUID unresolved), ground not simplified-away
+- `EnvironmentData.environmentPrefab` GUIDs (`6a009fe9...` green, `eac05a39...` snow) appear only in `raw/catalog_bin_strings.txt` as bare GUID strings adjacent to each other; `catalog.bin` is unparsed and no GUID -> key link is recoverable from the extract in reasonable effort. Time box hit, not pursued further.
+- Name mapping is corroborated by data: the only env-themed prefabs are `Environment military green for screen` and `env snow optimized for screen` (also `container_all.tsv` has `...for screen.fbx` for both); `Obstacle.prefab` children use exactly the mesh pids that `EnvironmentDataGreen.smallObstacleMesh/bigObstacleMesh` name (1959946065686190299 / 6488534389935003867); ground materials `MilitaryGround.mat` / `SnowGround.mat` `_MainTex` = `MilitaryGroundTexture` / `SnowGroundTexture` (asserted in the importer), `MilitaryEnvironment.mat` / `SnowEnvironment.mat` `_MainTex` = `MilitartEnvironmentTexture` / `SnowEnvironmentTexture`. Residual risk: the prefab's MeshRenderer -> material link is by name, not read.
+- Dressing dropped (budget): `top_part_2` (5,280 / 3,716 tris), `bottom_part_2` (4,182 / 1,782), `ice_cube` (66), green env duplicates of the obstacle meshes. The refs' canyon rocks/crates/tyres/sand border are this dressing and will not appear (visual gap for Task 12 to judge; ground sand/grass band texture is kept).
+
+### Assets (importer output, `pnpm assets:tw`)
+| File | Content | Tris | Bytes |
+|---|---|---|---|
+| `models/tw/ground-green.glb` | node `ground`: `Ground` plane 10x10 (y=0), node scale (6,1,10), translation 0 | 200 | 6,400 |
+| `models/tw/ground-snow.glb` | `snow_ground` plane 10x10, node scale (18.8618,1.2009,15.7) | 200 | 6,416 |
+| `models/tw/obstacle-green.glb` | nodes `small` = `green_obstacle_1`, `big` = `green_obstacle_2`, unit scale, base at y~0.08-0.10 | 40 / 56 | 6,256 |
+| `models/tw/obstacle-snow.glb` | nodes `small` and `big` both = `snow_obstacle` (shared mesh) | 66 / 66 | 4,508 |
+| `textures/tw/ground-{green,snow}.png` | 256x256 (source 1024x1024) | | 68 KB / 29 KB |
+| `textures/tw/obstacle-{green,snow}.png` | 256x256 atlas (source 1024x1024) | | 60 KB / 106 KB |
+Budgets: ground 200 <= 500, obstacles 40-66 <= 300, textures 256px. Source textures are 1024px: decision = downscale with sharp (lanczos3, PNG level 9; deterministic, `assets:tw:check` + two-run test), recorded here. Obstacle UV islands span only ~0.2x0.4 of the atlas, so each obstacle gets ~50x100 texels at 256px: acceptable at game camera distance (previews). Raise `ENV_TEXTURE_PX` if Task 12 compare shows blur. All meshes RAW (x un-negated, faces restored), UV v-flipped; no textures embedded in GLBs (resolved by name `ground-<theme>.png` / `obstacle-<theme>.png`, same convention as other families).
+
+### Ground contract for Task 9
+- Prefab facts: ground = flat 10x10 grid (-5..5, 200 tris, UV 0..1). Green prefab scale (6,1,10) = 60x100 world units, snow (18.86,1.2,15.7) = 189x157. Material `_MainTex` tiling (3,3), offset (0,-0.05) (GLB extras `uvRepeat`, `uvOffset`; sampler must be Repeat; glTF UV is v-down so mind the offset sign). Texture = horizontal grass/ice band with sand/white edges along v; at (3,3) the plane has 3 bands and the centre (level origin) is mid-grass.
+- The GLB node keeps the prefab scale but zero translation (prefab world pos in `ground` extras `prefabWorldPos`: green (0,0,0), snow (-2.23,0,1.55)). Fallback rule stands: the renderer sizes/tiles the plane to cover `view.bounds` + margin so rotated landscape bounds show no void (bounds are post-rotation; ground is RAW: apply the same (x,z)->(z,-x) quarter turn as the level import to the ground node before the single mirror, or tile independently of orientation). Renderer decides; assets don't change.
+- Lit by the game rig (ambient 0.896 + directional 0.2), Lambert, no tint.
+
+### Obstacle contract for Task 9 (level JSON -> what to place)
+- Level element: `{ id: 'o<cluster>-<k>', archetype: 'obstacle', pos, yawDeg, footprint: box w,d, variant: 'small'|'big' }` (`packages/content/data/elements/obstacle.json`, `variants: ['small','big']`). Importer (`import-tw/map-level.ts emitObstacles`): `k` = child index of `Obstacle.prefab` = position in `ObstacleContainer.allElements` = level JSON `OCP/OCR/S` index; variant taken from the frozen collider dump (`import-tw/prefab/colliders.json`), `S[k]` false = inactive child, not emitted (not rendered).
+- Renderer: choose node `small` or `big` from `elements[].variant`, rotate by `yawDeg`, scale by the prefab child scale for index `k` (GLB root extras `children[k].scale`, parse `k` from the id suffix after `-`), position `pos` (TW `OCP` already world and rotated; prefab `localPosition` is only the authoring layout, ignore). Both themes share the same 8 scales: big = children 0,2,4,5 (1.018/0.919/1.018, 1.194^3, 0.96/0.867/0.96, 1.082/0.977/1.082), small = 1,3,6,7 (0.855/0.772/0.855, 0.6^3 x3). Snow: `small` and `big` are the same ice-cube mesh (66 tris) differing only by scale. Theme = level `theme` ('green' positions 4-20, 'snow' 21-23; `ENV_SHIFT` unchanged).
+- Footprint (collision) is independent of art: it comes from the collider box x effective scale, not the mesh.
+
+### Open / notes
+- GUID -> prefab remains unproven (name mapping); if Addressables resolution ever shows `environmentPrefab` is a different prefab (e.g. `multi_stage_environment`), ground meshes (same `Ground` plane) are unaffected; only the dropped dressing would differ.
+- River obstacles (`ROBS`, `riverObstacleMaterial`), `multi_stage_environment`, other themes (lava, mine, jungle, darkmine) out of scope (only green + snow registered).

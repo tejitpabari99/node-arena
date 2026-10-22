@@ -1,12 +1,13 @@
 // Importer core (PRD 07 R3): extract -> {path: bytes} + lock. No writes here; cli.ts does fs. Deterministic: jobs run in a fixed
-// order, outputs are sorted by path, no timestamps. Task 4 appends environment/obstacle jobs to JOBS.
+// order, outputs are sorted by path, no timestamps. Task 4 added envJob.
 import { buildingsJob, projectileJob } from './buildings.js';
+import { envJob } from './env.js';
 import { Extract } from './extract.js';
 import { fxJob } from './fx.js';
 import type { Job, Output } from './output.js';
 import { unitsJob } from './units.js';
 
-export const JOBS: readonly Job[] = [unitsJob, buildingsJob, projectileJob, fxJob];
+export const JOBS: readonly Job[] = [unitsJob, buildingsJob, projectileJob, fxJob, envJob];
 
 export interface ImportResult {
   /** Path relative to apps/web/assets -> bytes, sorted by path. */
