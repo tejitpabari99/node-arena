@@ -7,6 +7,7 @@ import type { TwBuilding, TwLevel, TwPlayer } from './types.js';
 import { BUILDING_TOKEN, MAP_TOKEN, computeBlocked, themeFor, type GateOptions, type GateResult } from './gate.js';
 import { levelBounds, rotatePos, rotateYaw } from './rotate.js';
 import { PREFAB_DIR } from './parse-prefab.js';
+import { mergeBotScript } from './script.js';
 
 type Obj = Record<string, unknown>;
 
@@ -18,7 +19,7 @@ export type BuildingOrder = 'original-P' | 'human-first';
 export interface BotHookCtx { player: TwPlayer; seatId: string; buildingId: (twId: number) => string | null }
 export interface MapOptions extends GateOptions {
   buildingOrder?: BuildingOrder;
-  /** Task 5 hook: fills `bot.script`. Default: empty script. */
+  /** Fills `bot.script`. Default: `mergeBotScript` (AiDS/AiCWS/AiSC merged by I). */
   botScript?: (ctx: BotHookCtx) => unknown[];
   colliders?: Colliders;
 }
@@ -157,7 +158,9 @@ export function mapLevel(tw: TwLevel, position: number, catalog: Catalog, option
       if (ad === undefined) throw new MapError(`${tw.id}: AI player ${i} has no AD`);
       p['bot'] = {
         kind: 'tw', actionDelayMs: Math.round(ad * 1000), behavior: (pl.ai?.behavior ?? 0) === 0 ? 'full' : 'attackOnly',
-        script: options.botScript?.({ player: pl, seatId, buildingId: (n) => idOf.get(n) ?? null }) ?? [],
+        script: options.botScript
+          ? options.botScript({ player: pl, seatId, buildingId: (n) => idOf.get(n) ?? null })
+          : mergeBotScript(pl.ai, (n) => idOf.get(n) ?? null, `${tw.id}/${seatId}`),
       };
     }
     players.push(p);
@@ -186,7 +189,7 @@ export function mapLevel(tw: TwLevel, position: number, catalog: Catalog, option
   }).map((e) => e['id'] as string);
 
   // Reaction-delay bot params are not recorded (golden source.dropped is [cargo, sc]); the gate still reports them.
-  const dropped = new Set(gate.dropped.filter((t) => t !== 'MinRD' && t !== 'MaxRD'));
+  const dropped = new Set(gate.dropped.filter((t) => t !== 'MinRD' && t !== 'MaxRD').map((t) => (t === 'AiRM' ? 'ai-rail-move' : t)));
   if (tw.source.scriptedComponents && tw.source.scriptedComponents.length > 0) dropped.add('tutorial-script');
   const source: Obj = { game: 'tower-war', gameVersion: tw.source.gameVersion, asset: tw.source.asset, campaignPosition: position, dialect: tw.source.dialect === 'prefab-reconstructed' ? 'prefab' : tw.source.dialect };
   if (dropped.size > 0) source['dropped'] = [...dropped].sort();

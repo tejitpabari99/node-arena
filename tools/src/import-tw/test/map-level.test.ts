@@ -6,11 +6,12 @@ import { loadCatalog, loadLevel, BOUNDS_PAD, type Catalog, type ContentFiles } f
 import { loadFiles } from '../../files.js';
 import { MapError, assertUniqueIds, mapLevel, type LedgerRow } from '../map-level.js';
 import { serializeLevel } from '../serialize.js';
+import { ScriptError, mergeBotScript } from '../script.js';
 import { parseRawFromDir, parseRaw } from '../parse-raw.js';
 import { loadPrefabLevels } from '../parse-prefab.js';
 import { campaignRange, readCampaign } from '../campaign.js';
 import { twExtractRoot } from '../env.js';
-import type { TwLevel } from '../types.js';
+import type { TwLevel, TwPlayer } from '../types.js';
 import { FIXTURE_TEXTASSETS } from './helpers.js';
 
 const contentDir = resolve(import.meta.dirname, '../../../../packages/content');
@@ -120,4 +121,43 @@ test('conservation over positions 4-23 (TW_EXTRACT)', { skip }, () => {
   }
   assertUniqueIds(ids);
   console.log(`conservation 4-23: mapped=${mappedLevels} blocked=${blockedLevels}`);
+});
+
+test('script merge: 3_AB delay+line ordered by I; 8_ES nested steps; ids b<id>', () => {
+  const ais = (a: string): { bot: { script: unknown[] } }[] => (mapLevel(lv(a), 6, catalog).level!['players'] as { kind: string; bot: { script: unknown[] } }[]).filter((p) => p.kind === 'ai');
+  const ab = ais('LevelView 3_AB');
+  assert.deepEqual(ab[0]!.bot.script, [{ op: 'line', own: 'b1', target: 'b2', afterMs: 1500 }, { op: 'delay', ms: 10000 }]);
+  const es = ais('LevelView 8_ES');
+  assert.deepEqual(es[0]!.bot.script, [{ op: 'steps', root: { goal: 'line', own: 'b1', target: 'b2', delayMs: 5000, then: [{ goal: 'line', own: 'b2', target: 'b5', delayMs: 11000 }] } }]);
+});
+
+test('script merge: gap/duplicate = error; unresolved ref -> null; AiRM keeps index but emits no op', () => {
+  const idOf = (n: number): string | null => (n === 1 ? 'b1' : null);
+  const base = { steps: { delaySteps: [{ index: 0, delay: 1 }] } } as TwPlayer['ai'];
+  assert.throws(() => mergeBotScript({ steps: { delaySteps: [{ index: 1, delay: 1 }] } } as TwPlayer['ai'], idOf), ScriptError);
+  assert.throws(() => mergeBotScript({ steps: { delaySteps: [{ index: 0, delay: 1 }], createWaySteps: [{ index: 0, ownHouse: 1, targetHouse: 9, attackDelay: 1 }] } } as TwPlayer['ai'], idOf), /duplicate/);
+  assert.deepEqual(mergeBotScript({ steps: { ...base!.steps, createWaySteps: [{ index: 2, ownHouse: 1, targetHouse: 9, attackDelay: 0.5 }], railwayMoveSteps: [{ index: 1, targetPathPointIndex: 0, building: 1 }] } } as TwPlayer['ai'], idOf),
+    [{ op: 'delay', ms: 1000 }, { op: 'line', own: 'b1', target: null, afterMs: 500 }]);
+  assert.deepEqual(mergeBotScript(undefined, idOf), []);
+});
+
+test('scripted levels 4-23 (TW_EXTRACT): every bot ref resolves to a building or null; loadLevel accepts', { skip }, () => {
+  let scripted = 0, nulls = 0;
+  const per: string[] = [];
+  for (const e of campaignRange(readCampaign(root as string), 4, 23)) {
+    const tw = loadPrefabLevels().get(e.id) ?? parseRaw(root as string, e.id);
+    const m = mapLevel(tw, e.position, catalog);
+    if (!m.level) continue;
+    const L = m.level as { buildings: { id: string }[]; players: { bot?: { script: Record<string, unknown>[] } }[] };
+    const ids = new Set(L.buildings.map((b) => b.id));
+    let any = false;
+    const walk = (n: Record<string, unknown>): void => {
+      for (const k of ['own', 'target']) { const v = n[k]; if (v === null) nulls++; else if (v !== undefined) assert.ok(ids.has(v as string), `${e.id} ref ${String(v)}`); }
+      for (const c of (n['then'] as Record<string, unknown>[] | undefined) ?? []) walk(c);
+    };
+    for (const p of L.players) for (const op of p.bot?.script ?? []) { any = true; walk(op['root'] ? (op['root'] as Record<string, unknown>) : op); }
+    if (any) { scripted++; per.push(String(e.position)); }
+    loadLevel(catalog, serializeLevel(m.level));
+  }
+  console.log(`scripted levels=${scripted} (pos ${per.join(',')}) nullRefs=${nulls}`);
 });
