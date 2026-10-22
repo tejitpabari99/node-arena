@@ -1,18 +1,9 @@
 // R5: `JSON.stringify(obj, null, 2) + "\n"`, objects rebuilt in schema key order, arrays in authored order.
+import { KEY_ORDER } from '@node-arena/content';
+
 type Obj = Record<string, unknown>;
 
-const ORDER = {
-  level: ['$schema', 'schemaVersion', 'id', 'name', 'source', 'theme', 'bounds', 'objective', 'timeLimitSec', 'players', 'buildings', 'elements', 'requires'],
-  source: ['game', 'gameVersion', 'asset', 'campaignPosition', 'dialect', 'dropped'],
-  bounds: ['minX', 'maxX', 'minZ', 'maxZ'],
-  player: ['id', 'kind', 'colorKey', 'bot'],
-  bot: ['kind', 'actionDelayMs', 'behavior', 'script'],
-  building: ['id', 'archetype', 'pos', 'owner', 'level', 'ignoreForWin', 'params'],
-  element: ['id', 'archetype', 'pos', 'yawDeg', 'footprint', 'variant', 'params'],
-  pos: ['x', 'z'],
-  campaign: ['$schema', 'schemaVersion', 'id', 'entries'],
-  entry: ['level', 'position'],
-} as const;
+const ORDER = KEY_ORDER;
 
 /** Known keys first in schema order, unknown keys after in insertion order. */
 function ordered(o: unknown, order: readonly string[]): unknown {

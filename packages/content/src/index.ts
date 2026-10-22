@@ -3,6 +3,7 @@ export { FIXED_POINT_SCALE, ContentLoadError, convertFixedPoint, escapePointerSe
 export * from './schemas.js';
 export * from './manifest.schema.js';
 export * from './bounds.js';
+export * from './key-order.js';
 export * from './issues.js';
 export * from './catalog.js';
 export * from './level.js';
