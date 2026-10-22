@@ -38,7 +38,7 @@ Does not own: rule text (01; amendment requests below), schemas/loader (02), sim
 | Obstacle collider size | Per child `BoxCollider` on layer 10 with child local scale 0.6-1.19 (sample prefab); **box sizes not exported**; level data gives child positions + yaw only | `Obstacle` hierarchy, `prefab_parts_assets.json`, 02-levels 3.6 | **unknown** -> [OPEN] |
 | Tower order troops vs houses | `_canAttackTypes` pre-populated dictionary [98 Warrior, 10 Trolley, 0 House]; `AddTarget` uses `get_Item` (key must pre-exist) so iteration order is fixed config order; `Update` sorts each non-empty group by distance and stops at the first group that fires | `Tower/Update.c`, `DetectAndGroupedDamageableTrigger/AddTarget.c` | medium-high |
 | Troop filter | `minRadius` skip is centre distance `<= minRadius` (field +0x124 = 1.0); target must pass `CheckIfAvailableToDoDamage(owner)` = hp>0 and owner != tower owner | `Tower/TryAttackWarrior.c`, `WarriorBase/CheckIfAvailableToDoDamage.c` | high |
-| House filter | `Building.CheckIfAvailableToDoDamage`: not destroyed, **level >= 1**, owner != attacker. Only `House`/`TrolleyBuilding` class instances are shot (type-hierarchy test): **towers are not targets**. Neutral-owner skip lives in a lambda (`TryAttackSelectableHouses_b__32_x`) that is not decompiled | `Building/CheckIfAvailableToDoDamage.c`, `Tower/TryAttackSelectableHouses.c` | medium; neutral part unknown |
+| House filter | `Building.CheckIfAvailableToDoDamage`: not destroyed, **level >= 1**, owner != attacker. Only `House`/`TrolleyBuilding` class instances are shot (type-hierarchy test): **towers are not targets**. Neutral-owner skip lives in a lambda (`TryAttackSelectableHouses_b__32_x`) that is not decompiled; [RESOLVED: owner — towers hit neutral houses] | `Building/CheckIfAvailableToDoDamage.c`, `Tower/TryAttackSelectableHouses.c` | medium; neutral part settled by owner |
 | Neutral towers fire? | **No owner gate** found in `Update`/`TryAttackWarrior`/`OnLevelStateChanged` (owner type only toggles the radius indicator GameObject). Code reading says a neutral tower shoots every non-neutral troop. Contradicted SP01 "inert" (basis: tutorial text only); owner confirmed the code reading. L4 (`LevelView 1`) has a neutral level-5 tower | same files + `campaign_rows.json` | code 70%; owner confirmed fire -> [RESOLVED: owner — neutral towers fire] |
 | Cooldown | `_canAttack=false`, `WaitForSeconds(curAttackDelay)` then true; first ready = one delay after level start; `curAttackDelay` read at shot time; not reset by `SetNewOwner`/level change; ready tower with no target waits ready | `Tower/{Update,StartObserveEnemy,OnLevelStateChanged,CalculateAttackDelay,SetNewOwner}.c` | high |
 | Delay formula | `1.75*60/(2.0*L+60)` s, L=1 -> 1.69 s = 33,870 mt; SP01 TWR-01 integer form matches | `CalculateAttackDelay.c` | high |
@@ -66,9 +66,9 @@ Does not own: rule text (01; amendment requests below), schemas/loader (02), sim
 - Event (payload defined by 03's CUT in `defs` EVENTS, 04 only emits): `Clash{kind:'headon'|'crossing', a:{channel,seq,owner}, b:{channel,seq,owner}, x, z}` (milli). Deaths emit `TroopDied{channel,seq,owner,kind,cause:'clash'|'capture'|'tower',x,z}` via `killTroop`.
 
 **R4 Tower (TWR-01..04)** (`modules/shoots.ts`)
-- Params from `shoots` + `balance.stageThresholds`: radius by stage, delay by level (SP01 integer forms), `minRadius`, plus content flags `neutralFires` (default **true**, [RESOLVED: owner — neutral towers fire]), `troopPad` (default **350**, decomp-trusted: trigger reach = radius + troop body 0.35), `hitsNeutralHouses` (default false). All three are content flags (02 R3), flip = content version bump.
+- Params from `shoots` + `balance.stageThresholds`: radius by stage, delay by level (SP01 integer forms), `minRadius`, plus content flags `neutralFires` (default **true**, [RESOLVED: owner — neutral towers fire]), `troopPad` (default **350**, decomp-trusted: trigger reach = radius + troop body 0.35), `hitsNeutralHouses` (default **true**, [RESOLVED: owner — towers hit neutral houses]). All three are content flags (02 R3), flip = content version bump.
 - Cache per (tower, lane, stage): annulus intervals (`laneIntervals` with outer `radius+troopPad`, minus `minRadius` disc), `proj`, `perp^2`. Invalidated by stage change only (level crossing 10/30) and rebuilt from state on restore.
-- Phase 7 order = building idx. Cooldown column `shoots.cooldown` (mt, hashed): starts at `delayMt(L0)`; `-1000/tick` floor 0. Ready + (`neutralFires` (default true) or owner non-neutral): pick **nearest hostile troop** (min `d^2`, ties owner idx, then seq) among troops whose progress lies in an interval; else nearest hostile house with `level >= 1` (neutral only if `hitsNeutralHouses`; towers never targeted). Fire: set cooldown to `delayMt(L_now)`.
+- Phase 7 order = building idx. Cooldown column `shoots.cooldown` (mt, hashed): starts at `delayMt(L0)`; `-1000/tick` floor 0. Ready + (`neutralFires` (default true) or owner non-neutral): pick **nearest hostile troop** (min `d^2`, ties owner idx, then seq) among troops whose progress lies in an interval; else nearest hostile house with `level >= 1` (neutral houses included when `hitsNeutralHouses`, default true; towers never targeted). Fire: set cooldown to `delayMt(L_now)`.
 - Troop: `killTroop(channel,seq,'tower')` (any hp). House: `level = max(0, level-1)`, never captures; stage drop never auto-cuts (LIN-02). One shot per cooldown; ready tower with no target stays ready.
 - Cooldown, radius cache survive capture (03 leaves `shoots.cooldown` untouched on capture).
 - Event (shape fixed by 03's CUT): `TowerShot{tower, target:{kind:'troop'|'house', channel?, seq?, building?}, x, z}`; `x,z` = target position at fire tick (troop already removed). Bullet flight is render-only (07 uses `bulletSpeed`). `sim.towerRadiusMilli(view,i)` exported for 07's range ring (radius by stage; formula lives here).
@@ -105,14 +105,14 @@ Derived caches never enter the hash; state hashed = `shoots.cooldown` + troop co
 | 11 | Seam | Only shared `laneIntervals` primitive; `CrossingSource` dropped to FUTURES (S1) | Build `CrossingSource` now | Unbuilt and unspecified in TW behaviour; will not survive real wall/mine semantics |
 
 ## Manual steps
-- Owner (optional): neutral-tower firing is settled (fire). If a real-device TW is available, check whether a tower shoots neutral houses (`hitsNeutralHouses`, still [OPEN]).
+- None (neutral-tower firing and neutral-house targeting settled by owner).
 
 ## Risks
 | Risk | Mitigation |
 |---|---|
 | Obstacle sizes wrong (blocks too much/little) | values from 05's `colliders.json` dump; if dump fails, circle 450 + calibration vs ref screenshots (07/08), logged as deviation in LEVELS_GUIDE; overlap warning stays warning (02) |
 | Per-tick narrow phase misses 0.3 ms budget at stress | prefilter by window + FIFO range; Numbers-only per tick (BigInt only at `create`); bench scenario with 40 hostile crossing pairs |
-| Pad wrong changes level difficulty (neutral towers fire: owner-confirmed, L4 neutral level-5 tower shoots passers) | flags + goldens per setting; owner check on `troopPad`/neutral houses |
+| Pad wrong changes level difficulty (neutral towers fire: owner-confirmed, L4 neutral level-5 tower shoots passers) | flags + goldens per setting; owner check on `troopPad` |
 | Restore drift in derived caches | rebuild-from-`drawn` test (snapshot mid-fight == straight run hash) |
 | 03 seam drift (`exchange`, `killTroop` names) | listed as dependencies; acceptance tests import only those |
 
@@ -120,7 +120,7 @@ Derived caches never enter the hash; state hashed = `shoots.cooldown` + troop co
 - [RESOLVED: 05 Task 0 produces `colliders.json` (UnityPy dump of obstacle child `BoxCollider` size/center/scale/yaw + `Building` collider); 04 reads values from it. Fallback circle 450 + calibration if the dump fails within a day, recorded as deviation in LEVELS_GUIDE]
 - [RESOLVED: owner — neutral towers fire] Q1: decomp has no owner gate; owner confirmed. `neutralFires` default `true` (content flag; flip = content version bump). 01 TWR-04 carries the flag wording.
 - [RESOLVED: detection range = radius + troop body; `troopPad` default 350 (decomp-trusted), content flag; 01 TWR-02 carries it]
-- [OPEN] Tower vs neutral houses (lambda not decompiled); default no.
+- [RESOLVED: owner — towers hit neutral houses] Tower vs neutral houses: `hitsNeutralHouses` default true.
 - [RESOLVED: Building box size comes from 05 Task 0 `colliders.json` (Building collider); 1.5 is the placeholder until then]
 - [OPEN] Fidelity of endpoint contacts (attacker vs spawn at defender) and arrival at centre vs `Hit` box; shared with 03 arrival semantics.
 - [RESOLVED: troops before houses; basis fixed `_canAttackTypes` dictionary order]
@@ -133,6 +133,6 @@ Derived caches never enter the hash; state hashed = `shoots.cooldown` + troop co
 - `check:rules` green for CMB-04, TWR-01..04, OBS-01..02 (each has a non-skipped `covers` test).
 - OBS: 500-case fuzz vs an independent float OBB reference (tests only) agrees; tangent not blocked; endpoint building exempt, third tower/house blocks, obstacle at endpoint blocks; `explainDraw` point inside first blocker; `canDraw`==`null` iff DrawLine accepts.
 - CMB-04: scenarios - X-cross soldier/soldier (both die), tank vs soldier (hp 2->1), fast tank vs tank (closing > 0.7/tick, no tunnelling), near-parallel lanes at 0.5, same-owner no fight, three-lane ordering, cut/capture mid-fight, snapshot restore mid-fight. Brute-force per-tick oracle (all troop pairs, exact swept) matches on 50 seeds.
-- TWR: delay L=1/10/30/64 exact mt (33,870 at L=1); radius change at levels 10/30; minRadius; nearest + tie order; tank dies; middle-of-lane kill keeps FIFO/`alive`/conservation; house -1 floor 0 no capture, `level>=1` only; cooldown persists capture; ready-without-target; neutral tower shoots non-neutral troops by default (golden); flags both settings (`troopPad` 0/350, `neutralFires` true/false).
+- TWR: delay L=1/10/30/64 exact mt (33,870 at L=1); radius change at levels 10/30; minRadius; nearest + tie order; tank dies; middle-of-lane kill keeps FIFO/`alive`/conservation; house -1 floor 0 no capture, `level>=1` only; cooldown persists capture; ready-without-target; neutral tower shoots non-neutral troops by default (golden); flags both settings (`troopPad` 0/350, `neutralFires` true/false, `hitsNeutralHouses` true/false); default tower shoots a neutral house (golden).
 - Per-tick narrow phase uses Numbers only with debug assert < 2^53; BigInt oracle in tests agrees. Event on/off hash parity; events match 03's payload types (`Clash`, `TroopDied`, `TowerShot`) exactly; `sim:golden` regenerated incl. `scenarios-geometry.ts`; `bench:sim` within budgets with added crossing/tower scenario (720 troops, 40 hostile crossings, 3 towers).
 - No `Math.sqrt/round`/floats in `packages/sim/src` (lint determinism preset).

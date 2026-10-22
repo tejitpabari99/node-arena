@@ -67,16 +67,17 @@ Skins other than default; garage/skinned models; artillery unit; rocket/fortress
 - Death: sim removes unit instantly; renderer owns a ghost pool that plays Death on the `TroopDied{channel,seq,owner,kind,cause,x,z}` event (03 CUT payload), at its `x,z`, then recycles. Cap 64 ghosts. No sim coupling.
 - Interpolation: `readTroops` gives per-troop `speed` (progress/tick); render position = `progress + speed*alpha`, clamped to lane length (20 Hz -> 60 fps).
 - Capacity: each `InstancedMesh` capacity = houses x `aliveCap` for the level (grow-only, never shrinks); perf scene is **720 troops** (matches 03/09 budgets).
-- Colour space: textures `SRGBColorSpace`, `renderer.outputColorSpace = SRGB`; Mobile/Diffuse -> Lambert; light intensities tuned by screenshot compare, not assumed (Unity colour space is OPEN).
+- Colour space: textures `SRGBColorSpace`, `renderer.outputColorSpace = SRGB`; Mobile/Diffuse -> Lambert; light intensities tuned by screenshot compare, not assumed (Unity colour space is OPEN; verify against `BF/ref/tw-yt` frames in task 1).
 - Budgets as named classes in manifest: `unit` 1,100 tris/model, `building` 1,200, `obstacle` 300, `ground` 500; 256px textures (mip on, aniso 4). Frame target: 60 fps on integrated laptop GPU with 720 troops; measured in a perf scene.
 
 ### R5 Renderer seam with SP08
 07 exports `createWorldRenderer(scene, manifest)` returning `{ setLevel(levelDef, themeId), update(snapshot, events, dtMs), anchors, dispose() }`. 08 owns canvas, `WebGLRenderer`, camera (any `PerspectiveCamera`), HUD, input, resize. 07 exports `anchors.building(id) -> {pos, radius, labelPos}` and `pickMeshes` for hit-testing, and a `previewLane(from,to,team)` for the drag preview. 07 adds lights/ground/obstacles/lanes/units/buildings/FX to the passed scene and nothing else. Art must be tuned for FOV 21 / 55 deg pitch [verified: 05#6]; the 07 perf and ref scene uses that camera, rotated-map layout is 08's. FX are driven only by events defined in 03's CUT: `Clash{kind:'headon'|'crossing',a,b,x,z}`, `TroopDied{...,x,z}`, `TowerShot{tower,target,x,z}`; the range ring uses `sim.towerRadiusMilli(view,i)` (04). Labels/text sprites sit outside the mirrored `worldRoot` (08).
 
 ### R6 Reference images and compare loop
-- Seed `BF/ref/` by copying `docs/agent_files/feat-visual-mechanics-overhaul-20261017-2318/ref/towerwar_{01,02,03,06,07,09,10}.jpg` + `towerwar_yt*.jpg` (real TW App Store/YouTube shots) with an index `ref/README.md` mapping image -> level/env/feature. `citytakeover_*` not copied (other game).
+- **Primary refs (owner-supplied)**: frames extracted from the owner's YouTube walkthrough playlist of all levels (https://www.youtube.com/playlist?list=PL734Sy01N1F2H78gYnOZaczQXHAvJOsgE) in `BF/ref/tw-yt/`, indexed by `BF/ref/tw-yt/INDEX.md` (file -> level). Compare loop uses these. [RESOLVED: owner supplied video refs]
+- Secondary: seed `BF/ref/` by copying `docs/agent_files/feat-visual-mechanics-overhaul-20261017-2318/ref/towerwar_{01,02,03,06,07,09,10}.jpg` + `towerwar_yt*.jpg` (real TW App Store/YouTube shots) with an index `ref/README.md` mapping image -> level/env/feature. `citytakeover_*` not copied (other game).
 - Gap: refs are low-res and mostly not our 20 levels. Add synthetic references: "Unity-parity renders" of single assets (icon sprites, bbox, texture swatches) for asset checks only.
-- Loop: Playwright captures fixed scenes (L4 Green, L21 Snow, unit lineup, stage ladder, capture/shot FX) at 1600x900 -> `ref/out/`; agent compares side-by-side with named reference and iterates (AGENTS.md workflow). Owner-supplied real-device screenshots of levels 4-23 are a manual step that upgrades the loop (see Manual steps).
+- Loop: Playwright captures fixed scenes (L4 Green, L21 Snow, unit lineup, stage ladder, capture/shot FX) at 1600x900 -> `ref/out/`; agent compares side-by-side with named reference and iterates (AGENTS.md workflow). Compare against `BF/ref/tw-yt/` frames for the matching level (no owner screenshots needed).
 
 ### R7 Deletions
 `apps/web/src/render/{towers,tower-mesh,roof-texture,troops,troop-lod,troop-material,props,ground,lane-material,lane-split,lines,brawl,puffs,fx}.ts` (rewritten, not patched), `apps/web/assets/models/*` (8 Kenney/chibi GLBs), `apps/web/assets/licenses/kenney-*` and `opengameart` only if audio unused (audio stays: not in scope), CREDITS rows for models, `tools/assets/{import-art,build-troop-chibi}.mjs`, manifest `models`/`visuals`/`themes` old entries (and `levelVisuals`), `BUILTIN_FX` closed set in `manifest/resolve.ts`, `camera.ts`/`scene.ts` stay for 08 to rework. Deletion happens in the same commit as each replacement lands.
@@ -119,8 +120,8 @@ This table = 02 R7 (single contract). Stage thresholds 10/30 are content data (`
 | D10 | Prototypes | untrusted until R2 passes | trust | never rendered |
 
 ## Manual steps (owner)
-- Optional: supply 4-6 screenshots from the real game (levels 4, 8, 15, 21-23; snow) at phone portrait, to `BF/ref/real/`.
-- Confirm the commit of extracted art in the private repo is acceptable per file count/size (est. <3 MB).
+- None. [RESOLVED: owner supplied YouTube walkthrough refs, `BF/ref/tw-yt/`]
+- [RESOLVED: owner — repo stays private; committing extracted TW art is OK]
 
 ## Risks
 | Risk | Mitigation |
@@ -132,7 +133,7 @@ This table = 02 R7 (single contract). Stage thresholds 10/30 are content data (`
 | Instanced rigid parts desync at rest pose (seams) | validate Run frame 0 vs bind pose in R2 |
 | Gray/neutral unit texture absent (units never neutral) | not needed; lint rejects |
 | 720 troops x 9 parts perf on integrated GPU | perf scene gate; fallback atlas + merged LOD body for far units |
-| Private-repo art committed | licence block in CREDITS; repo stays private |
+| Private-repo art committed | licence block in CREDITS; repo stays private [RESOLVED: owner] |
 
 ## Open Questions
 - [OPEN] Is "default skin" = skin id 1 per type (John Doe, T-72)? Verify via `WarriorSkinSettings.defaultWarriorSkinsData` pids 2404/2394/2415 (MB, not hierarchy) in Task 1.
@@ -140,9 +141,9 @@ This table = 02 R7 (single contract). Stage thresholds 10/30 are content data (`
 - [RESOLVED: N1 env boundary: positions 4-20 green, 21-23 snow (`levelIndex = pos-1`); 05 `ENV_SHIFT` is the only knob]
 - [RESOLVED: B3 handedness: assets RAW, 08 owns the single mirror at `worldRoot`, per 02 Frame contract]
 - [OPEN] Which `Obstacle.prefab` children are small vs big and their local scale; `S[]` inactive flags (20% inactive) respected.
-- [OPEN] Unity colour space (gamma vs linear) for lighting parity.
-- [OPEN] Level-number font/outline and stage-transition ring colour; lane texture/material of `WayBaseStandard`.
-- [OPEN] Exact tank turret part (rotating vs static) in `1_BaseAttackSkin`.
+- [OPEN] Unity colour space (gamma vs linear) for lighting parity. Verify against `BF/ref/tw-yt` frames in task 1.
+- [OPEN] Level-number font/outline and stage-transition ring colour; lane texture/material of `WayBaseStandard`. Verify against `BF/ref/tw-yt` frames in task 1.
+- [OPEN] Exact tank turret part (rotating vs static) in `1_BaseAttackSkin`. Verify against `BF/ref/tw-yt` frames in task 1.
 - [DEFERRED] Other skins, artillery, rocket tower, river, walls, mines art.
 - [RESOLVED: JS port] importer language (D1).
 

@@ -125,7 +125,7 @@ main.tsx -> app/runtime (state machine boot|picker|playing|result|error)
 | D10 | UI sprite import | 08-owned script, separate from 07's | extend 07 importer | different owner/cadence; shares manifest merge |
 
 ## Manual steps (owner)
-- Final visual approval of HUD vs refs; optional real-device screenshots of HUD (unknown positions, see OPEN).
+- Final visual approval of HUD vs refs (`BF/ref/tw-yt/`). Real-device screenshots no longer needed [RESOLVED: owner supplied video refs].
 
 ## Risks
 | Risk | Mitigation |
@@ -137,10 +137,10 @@ main.tsx -> app/runtime (state machine boot|picker|playing|result|error)
 | Preact re-render cost | 10 Hz throttle, memoised segments |
 
 ## Open Questions
-- [OPEN] Ownership bar: building-level sum vs total troops incl. units; does neutral show?
+- [OPEN] Ownership bar: building-level sum vs total troops incl. units; does neutral show? Verify against `BF/ref/tw-yt` frames in task 1.
 - [RESOLVED: S4 picker shows 1..20 (`position - 3`); `position` stays in data; save keyed by `levelId`]
-- [OPEN] Exact HUD slot positions/sizes and which sprite per slot (positions in RectTransforms not exported).
-- [OPEN] TW UI font (not extracted); fallback = bundled OFL display font, self-hosted.
+- [OPEN] Exact HUD slot positions/sizes and which sprite per slot (positions in RectTransforms not exported). Verify against `BF/ref/tw-yt` frames in task 1.
+- [OPEN] TW UI font (not extracted); verify against `BF/ref/tw-yt` frames in task 1; fallback = bundled OFL display font, self-hosted.
 - [OPEN] Mouse drag delay value and eraser enter/exit UX after feel test.
 - [RESOLVED: `canDraw` returns `code|null` only; blocker point via `sim.explainDraw` (04)]
 - [RESOLVED: shapes per 03 R7; boosters (bomb/speed) out of scope — [RESOLVED: owner — boosters deferred], HUD has no booster buttons/ring/label]
@@ -159,7 +159,7 @@ main.tsx -> app/runtime (state machine boot|picker|playing|result|error)
 - HUD frame cost <1 ms median; no per-frame allocation in input/camera paths.
 - Grep finds no `strength`, `Settings`, `menu` screen, `tuningFields`, `spike` references; `pnpm lint typecheck test test:web:all` green.
 - `simHash`, goldens unchanged by any 08 change.
-- Screenshots (HUD + L4) in branch `ref/out/` compared against TW refs. Task 1 renders L4 under the mirrored `worldRoot` and compares against its ref (frame sanity: weapon hand, level layout not mirrored); labels sit outside the mirrored root and read correctly.
+- Screenshots (HUD + L4) in branch `ref/out/` compared against TW refs (`BF/ref/tw-yt/` frames, indexed by `BF/ref/tw-yt/INDEX.md`; visual compare loop). Task 1 renders L4 under the mirrored `worldRoot` and compares against its ref (frame sanity: weapon hand, level layout not mirrored); labels sit outside the mirrored root and read correctly.
 - Picker shows 1..20; save keyed by `levelId`.
 
 ## Tests

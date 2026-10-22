@@ -78,7 +78,7 @@ Module params and TW keys (long names from the tw-level-ext schema; 01 §7 / R10
 | `drawsLines` | none (slots = stage, 01 LIN-02) | - | - |
 | `spawns` | `troop` (unit id), `spawnSpeed 0.5`, `lineSpawnPenalty 0.3` | WT, ws, cwc | yes |
 | `grows` | `growTime` (1.7 WT1, 2.0 WT2) | gl | yes |
-| `shoots` | `attackDelay 2.0`, `attackRadius 1.6`, `speedUpByLevel 1.75`, `radiusUpByLevel 0.9`, `radiusUnit 2.4`, `minRadius 1.0`, `neutralFires true` (bool; [RESOLVED: owner Q1 - neutral towers fire]), `troopPad 0.35` (fx3 -> 350 milli; decomp-trusted reach), `hitsNeutralHouses false` (bool), `bulletSpeed 12` (`x-presentation`, not hashed) | ad, ar, supl, rupl, bs (flags have no TW key) | yes (rare ar 1.2-1.5) |
+| `shoots` | `attackDelay 2.0`, `attackRadius 1.6`, `speedUpByLevel 1.75`, `radiusUpByLevel 0.9`, `radiusUnit 2.4`, `minRadius 1.0`, `neutralFires true` (bool; [RESOLVED: owner Q1 - neutral towers fire]), `troopPad 0.35` (fx3 -> 350 milli; decomp-trusted reach), `hitsNeutralHouses true` (bool; [RESOLVED: owner — towers hit neutral houses]), `bulletSpeed 12` (`x-presentation`, not hashed) | ad, ar, supl, rupl, bs (flags have no TW key) | yes (rare ar 1.2-1.5) |
 | `blocksLines` | none (corridor = `laneHalfWidth`) | OBS | - |
 Start level and `cbi` are instance fields (`level`, `ignoreForWin`), not module params.
 
@@ -172,7 +172,7 @@ None.
 - [RESOLVED: `special` = archetype boolean; `house-wt2.special=true`, `house-wt1`/`tower` false; 06 reads `buildingStatic.special` only (N9)]
 - [RESOLVED: defined by 03 CUT] Final `EVENTS` list and complete payload types are written by 03 T1 (CUT) in `defs` EVENTS; 04 only emits.
 - [RESOLVED: 01 R10 lists the exact content keys (`maxLevel, spawnSpeed, lineSpawnPenalty, growTime, attackDelay, attackRadius, speedUpByLevel, radiusUpByLevel, radiusUnit, minRadius, neutralFires, troopPad, hitsNeutralHouses`); parity test diffs against them]
-- [OPEN] Owner accepts parked window at CUT (alternative: hold CUT until 06/08 are ready; costs a longer parallel stack).
+- [RESOLVED: owner accepts parked window; all gates green before merge]
 - [RESOLVED: `{x,z}`; 03 R7 (`view.buildings/buildingStatic{x,z}`) is the contract and 08 is rewritten to it]
 - [RESOLVED: owner Q2] Level 23 (`100_ES`) wall and `cargo` in all 20 levels are dropped (logged in `source.dropped`, flagged in LEVELS_GUIDE; wall revisit via 04 seam in FUTURES).
 - [RESOLVED: owner Q1] `shoots.neutralFires` ships **true** (neutral towers fire; content flag kept). [RESOLVED: owner Q3 - boosters deferred; see docs/FUTURES.md via SP09] No booster content, schema, `CompiledLevel.rules.boosters`, or booster commands/events.

@@ -147,8 +147,9 @@ Final acceptance flow (Phase C): `pnpm run ci` (22, 24) -> `campaign:verify` -> 
 ## Manual steps (owner)
 - Run `TW_EXTRACT=... pnpm check:import && pnpm assets:tw:check` locally before merge (CI cannot).
 - Play levels 1-20 (positions 4-23) in browser; fill the checklist in `BF/09-gates-tooling-docs/owner-pass.md` (mechanics feel, readability, level order/difficulty, results flow). Visual approval vs refs.
-- Accept the parked window at CUT [02 OPEN] and decide repo visibility vs TW art (see Risks).
-- Optional: real-device screenshots (07/08 OPEN).
+- [RESOLVED: owner accepts parked window; all gates green before merge]
+- [RESOLVED: owner — repo stays private; TW art committed]
+- Git LFS decision pending owner clarification.
 
 ## Risks
 | Risk | Mitigation |
@@ -159,12 +160,12 @@ Final acceptance flow (Phase C): `pnpm run ci` (22, 24) -> `campaign:verify` -> 
 | Proxy cannot win hard levels | any-of-3-`AD` rule, `tools/unsolved-by-proxy.json` warnings, owner pass; 06 spike first [06 OPEN 3] |
 | Cross-Node float/ordering drift | levels-lock + sim goldens already integer; matrix 22/24 |
 | 07 render specs have no host until 08 | 07 uses vitest + its capture script; Playwright render specs wait for 08 (agree in 07/08 tasks) |
-| TW art in repo vs future public release | CREDITS block + [OPEN] below; assets are not redistributable |
+| TW art in repo vs future public release | CREDITS block; repo private [RESOLVED: owner]; assets are not redistributable |
 | SP04 gate expectations | resolved: gate rows for CMB-04/TWR/OBS follow 04 (see Open Questions) |
 
 ## Open Questions
 - [OPEN] CI time budget and seeds for `validate:levels` (measure after SP06; default 4, fallback 2).
-- [OPEN] Repo stays private permanently? If it may go public, TW art must be excluded or replaced (owner decision; blocks nothing now).
+- [RESOLVED: owner — repo stays private; committing TW art is OK]
 - [RESOLVED: SP04 PRD exists; gates are `check:rules` tags CMB-04/TWR/OBS, `scenarios-geometry.ts` golden appended to 03's `run.ts` scenario array, bench scenario (720 troops, 40 hostile crossings, 3 towers)]
 - [OPEN] Does 07 need Git LFS for GLB/textures (size vs 16 MB-style limits)? Measure at 07 end.
 - [OPEN] Web bundle/size budget gate beyond per-model budgets (not specified by 07/08).
