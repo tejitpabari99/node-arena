@@ -1,76 +1,120 @@
 # Content authoring and change process
 
-[GAME_RULES.md](GAME_RULES.md) owns mechanics and stable `R-AREA-NN` rule IDs. JSON in `packages/content/` owns values, composition and level layouts. Rules cite parameter names; changing a supported rate, capacity, speed or tower position needs a data edit, not engine code. The simulation must implement only documented rules.
+[GAME_RULES.md](GAME_RULES.md) owns mechanics and stable `R-AREA-NN` rule IDs. JSON under `packages/content/data/` owns values, composition and level layouts. A new tower, level or unit that reuses existing behaviour is a data edit, not engine code. New behaviour is a module: rule text first, then a def, a sim binding and tests.
 
-## What to change
+Run all commands from the repository root. Shipped examples: tower `packages/content/data/buildings/tower.json`, house `packages/content/data/buildings/house-wt1.json`, unit `packages/content/data/units/soldier.json`, element `packages/content/data/elements/obstacle.json`, level `packages/content/data/levels/levelview-1.json`, campaign `packages/content/data/campaigns/common.json`, shared numbers `packages/content/data/balance.json`.
 
-Paths below are relative to `packages/content/`, except `docs/`, `apps/` and `packages/bots/` paths. Run commands from the repository root.
+## Where things live
 
-| Change | Edit | Version and generated files | Verification |
-|---|---|---|---|
-| Tune a rate, capacity, troop speed, position or starting garrison | Relevant `data/archetypes/`, `data/troops/` or `data/levels/` JSON; shared defaults in `data/balance.json` | Increase `content.json` → `contentVersion` when level simulation hashes change; run `pnpm content:lock` | Content validation/hash check and content tests; balance runner when SP04 supplies it |
-| Add an archetype, troop or level using supported behaviour | Entity JSON and references; an archetype variant can use `extends` | Increase `contentVersion`; regenerate the lock | Validation, inheritance/reference/compiler tests; inspect the resulting level |
-| Change rule semantics | `docs/GAME_RULES.md` text and changelog, rule tests, then simulation code | Update the rules header, exported `RULES_VERSION` in `src/versioning.ts` and `content.json.rulesVersion` together; increase `contentVersion` if level hashes move; regenerate the lock | Rule-ID tests and deliberately updated golden replays when their tooling exists, plus all available checks |
-| Add a component, troop kind with new behaviour, or widen a supported range | Schema contract, `src/component-registry.ts`, permanent rule IDs, simulation implementation and tests **together** | Additive rules normally increase rules minor; existing replay outcome changes require rules major. Change `schemaVersion` if the shape changes; increase `contentVersion` for changed level hashes; regenerate schemas and lock | All checks, including registry/simulation parity and rule coverage once SP02/SP04 implement them |
-| Change schema shape | TypeBox sources in `src/`, loaders/validators/compiler and affected data | Update exported `SCHEMA_VERSION` and each file's `schemaVersion`; regenerate committed `schemas/*.schema.json` with `pnpm content:schemas`; regenerate the lock | `pnpm check:schemas`, schema/loader/validator/compiler tests, build and lint |
-| Rename a level or reskin content | `name`, visual/theme/color keys; SP03's `apps/web/assets/manifest.json` for assets | Presentation alone does not require a simulation content bump; lock hashes should stay identical | Validate with the manifest supplied, then inspect presentation; check hashes |
-| Tune bot behaviour or difficulty | Content `src/bot-params.ts`, production `data/bots/` profiles, or `packages/bots/src/` algorithms | Increase `packages/bots/src/version.ts` → `BOT_VERSION` when resolved bot hashes or algorithms change; regenerate separate `botHash` entries with `pnpm content:lock`; rebuild bots and regenerate goldens with `pnpm bots:golden --update` | `check:content --base <revision>`, `validate:content --base <revision>`, bot tests and `bots:golden` |
+| Layer | Path | Role |
+|---|---|---|
+| defs (pure) | `packages/defs/src/index.ts`, `packages/defs/src/modules/`, `packages/defs/src/bot-kinds.ts`, `packages/defs/src/commands.ts`, `packages/defs/src/objectives.ts` | Registries: modules, bot kinds, commands, objectives, events, phases. One explicit list per registry. |
+| content | `packages/content/src/`, `packages/content/schemas/`, `packages/content/data/` | TypeBox schemas built from defs, loader/validator/compiler, hashing; generated JSON schemas; authored data. |
+| sim | `packages/sim/src/modules/index.ts` | `IMPLS` binds one implementation per defs module id. |
+| gates | `packages/content/hashes.lock.json`, `packages/content/content.json`, `packages/bots/src/version.ts` | Level `simHash` and bot hashes, `contentVersion`/`rulesVersion`, `BOT_VERSION`. |
 
-`contentVersion` is semver and must increase numerically relative to the baseline whenever the level hash map changes, including additions or removals. The gate does not prescribe which semver segment to use; select one appropriate to the release. `schemaVersion` identifies the file-format contract, not balance tuning.
+Dependency direction: defs <- content <- sim <- bots. A level declares `requires` (derived, see below); it is playable iff `requires` is a subset of the build's capabilities (`CAPABILITIES` in `packages/defs/src/index.ts`).
 
-`RULES_VERSION` means: **major** changes the replay outcome of existing content; **minor** adds a rule/component; **patch** clarifies text without changing behaviour. Replay compatibility requires an exact major.minor match. Never reuse a rule ID; retain removed rules as tombstones. The rules header is authoritative, and the current checker requires exact agreement between header, TypeScript export and content metadata. Include a changelog entry for each rules change.
+## Extension flows
+
+| Change | Authored files | Then run |
+|---|---|---|
+| New tower/house of an existing kind (numbers, modules) | 1 file: a building JSON in `packages/content/data/buildings/` | lock + version bump only once a level uses it |
+| New level | 2 files: level JSON in `packages/content/data/levels/` and an entry in `packages/content/data/campaigns/common.json` | `pnpm content:lock`, bump versions |
+| New unit with existing behaviour | 1 file: a unit JSON in `packages/content/data/units/`, referenced from a building's `spawns.troop` | `pnpm content:lock` |
+| New module (wall, mine, rocket tower) | rule text, def file, sim binding, building/element JSON, tests | `pnpm content:schemas`, `pnpm content:lock` |
+| New bot kind or command | def entry plus implementation | schema regen / type errors guide the rest |
+
+### Add a tower kind (1 file)
+
+Walkthrough, verified in a scratch copy. Copy `tower.json` to a new file `tower-x.json` in the same folder, set `"id": "tower-x"` (must equal the file name), change numbers (for example `shoots.attackDelay`). Nothing else is needed:
+
+- No schema regeneration: `building.schema.json` is built from the module registry, not from building ids. Run `pnpm check:schemas` to confirm.
+- While no level references `tower-x`, `pnpm check:content --base HEAD` and `pnpm validate:content --base HEAD` stay green: unused entities are excluded from `simHash`, so no lock change and no version bump.
+- Reference it from a level (`"archetype": "tower-x"` in a `buildings` entry). Now `simHash` moves: run `pnpm content:lock` and bump `contentVersion` (below). A new `visual` key also needs an entry in `apps/web/assets/manifest.json`; reusing `building.tower` needs none.
+
+The building `kind` is currently `house` or `tower`. A new kind value is a schema change in `packages/content/src/schemas.ts`, not a data edit. Behaviour comes only from the `modules` bag; params are strict (unknown keys fail) and fx3 numbers are authored in ordinary units.
+
+### Add a level (2 files)
+
+1. Create the level JSON in `packages/content/data/levels/`; `id` must equal the file name. Easiest start: copy `levelview-1.json`. Key order: `$schema, schemaVersion, id, name, source, theme, bounds, objective, timeLimitSec, players, buildings, elements, requires`.
+2. Add `{ "level": "<id>", "position": N }` to `entries` in `packages/content/data/campaigns/common.json`. A level absent from the campaign still validates; the entry is what makes it part of the campaign. An entry naming an unknown level is an error.
+3. `requires` is derived, not chosen: it must equal the sorted set of modules used by its archetypes/elements, `bot:<kind>` for each seat kind and `objective:<id>`. A wrong list fails with the exact expected set in the message, so paste it. Example for `levelview-1`: `bot:tw, drawsLines, grows, level, objective:captureAll, shoots, spawns`.
+4. Level rules enforced by the validator: exactly one human, first in `players[]`, and 1..`aiMax` AI seats (see `packages/defs/src/objectives.ts`); every AI seat has a `bot` block of a registered kind whose building references exist; building ids unique; positions inside `bounds` and not coincident; `level <= maxLevel`; at least one building without `ignoreForWin`; `theme` and player `colorKey` must exist in the manifest when one is supplied.
+5. Run `pnpm content:lock` (adds a `levels` entry and one `bots` entry per AI seat in `packages/content/hashes.lock.json`) and bump versions (below).
+
+Verified: adding a second level from a copy of `levelview-1` changes the lock for both `levels` and `bots`, so it needs a `contentVersion` bump **and** a `BOT_VERSION` bump.
+
+### Add a unit
+
+Create a JSON in `packages/content/data/units/` (see `soldier.json`: `speed`, `hp`, `attack`, `defense`, `visual`). Point a building's `spawns.troop` at its id; an unknown unit id there fails validation. A unit that nothing spawns does not move any hash. Unit-level modules are not supported: unit behaviour is flat data.
+
+### Add a module (new behaviour)
+
+Order matters; the compiler and `tsc` catch a missed step.
+
+1. Rules first, per [GAME_RULES.md](GAME_RULES.md): rule text with new `R-AREA-NN` ids, changelog entry, bump `RULES_VERSION` (see Versions).
+2. Def: create `packages/defs/src/modules/<id>.def.ts` with `defineModule({ id, appliesTo: 'building' | 'element', params, ruleIds, phases })` (model on `packages/defs/src/modules/spawns.def.ts`). Use `fx3()`, `count()` and `unitId()` from `packages/defs/src/params.ts`; keep `additionalProperties: false`.
+3. Register: import it and add one line to `MODULES` in `packages/defs/src/index.ts`. `ModuleId`, schema bags, `CAPABILITIES` and level `requires` follow automatically.
+4. Sim binding: create `packages/sim/src/modules/<id>.ts` exporting a `SimModule` (`state` columns, `phases`, `hooks`; see `packages/sim/src/types.ts`) and add it to `IMPLS` in `packages/sim/src/modules/index.ts`. `IMPLS` is `satisfies Record<ModuleId, SimModule>`: a missing or extra key is a compile error (`pnpm typecheck:sim`). Some existing bindings are stubs owned by later sub-projects (for example `packages/sim/src/modules/blocksLines.ts`).
+5. Data: add the module bag to a building or element JSON.
+6. Tests with titles containing `covers R-...` for every new rule id (`pnpm check:rules`).
+7. `pnpm content:schemas` (commit the regenerated files in `packages/content/schemas/`), then lock + bumps. Levels using the module now list it in `requires`.
+
+### Add a bot kind or command
+
+- Bot kind: add an entry to `BOT_KINDS` in `packages/defs/src/bot-kinds.ts` (`id`, `params` TypeBox schema with a `kind` literal, `buildingRefs(bot)` returning referenced building ids). The level schema's seat union and `requires` (`bot:<kind>`) derive from it. Implement the behaviour in `packages/bots/src/`, bump `BOT_VERSION` in `packages/bots/src/version.ts`, then `pnpm content:schemas` and `pnpm content:lock`.
+- Command: add an entry to `COMMANDS` in `packages/defs/src/commands.ts` (`payload` schema, `rejectReasons`, `ruleIds`). `CommandId`, `Command` and `RejectReason` types follow; handle it in the sim and add rule text first.
+
+Bots and web are partly parked while later sub-projects restore them (`scripts/ci.sh`, `PARKED` list); check there before assuming a bots or web gate runs.
+
+## Versions and hashes
+
+- `contentVersion` (`packages/content/content.json`): semver; must increase numerically relative to the baseline whenever any level `simHash` in the lock changes, including additions and removals. The gate does not prescribe the segment.
+- `simHash` covers canonical resolved simulation inputs (including overrides and inherited params). Names, presentation keys, bots, unused entities and schema metadata are excluded.
+- `BOT_VERSION` (`packages/bots/src/version.ts`): must strictly increase when the resolved bot hash map changes, **including adding or removing an AI seat via a new level**, even after regenerating the lock.
+- `RULES_VERSION`: major = replay outcomes of existing content change; minor = additive; patch = clarification. The `GAME_RULES.md` header, the export in `packages/content/src/versioning.ts` and `rulesVersion` in `content.json` must agree. Never reuse a rule ID; keep removed ones as tombstones.
+- `schemaVersion` (each file, exported `SCHEMA_VERSION`): bump when the file-format shape changes, not for balance tuning.
+- `pnpm content:lock` writes `packages/content/hashes.lock.json`; it never bumps versions. Commit data, versions, lock and regenerated schemas together.
+
+### Baseline (`VERSION_GUARD_BASE`)
+
+`check:content` and `validate:content` compare against a git baseline, never against the freshly regenerated lock. `scripts/ci.sh` picks the base in this order: `VERSION_GUARD_BASE`, then `CONTENT_BASE` (CI-supplied), then `git merge-base HEAD main` (or `origin/main`), then `HEAD^`. On a feature branch that means the whole branch is compared with where it left `main`, so one bump per branch covers all commits on it. With `CI_RELEASE=1` (merge to main) `VERSION_GUARD_BASE` is unset and the normal `HEAD`/`HEAD^` guard applies. Outside CI, `--base` defaults to `VERSION_GUARD_BASE`, else `HEAD` (good for uncommitted edits; after committing it compares the change with itself). An explicit base that is not a commit is an error.
+
+## Common changes
+
+| Change | Edit | Version and generated files |
+|---|---|---|
+| Tune a rate, speed, capacity or position | The relevant building/unit/level JSON or `packages/content/data/balance.json` | Bump `contentVersion`; `pnpm content:lock` |
+| Change rule semantics | `docs/GAME_RULES.md` text and changelog, then tests (`covers R-...`), then code | Bump `RULES_VERSION` in the header, `packages/content/src/versioning.ts` and `content.json`; bump `contentVersion` if hashes move; lock |
+| Change schema shape | TypeBox sources in `packages/content/src/` or defs | `SCHEMA_VERSION` and each file's `schemaVersion`; `pnpm content:schemas`; lock |
+| Rename a level or reskin | `name`, `visual`, `theme`, color keys; `apps/web/assets/manifest.json` for assets | Presentation is outside `simHash`; lock hashes stay identical |
+| Tune bot behaviour | Level `bot` blocks, or algorithms in `packages/bots/src/` | Bump `BOT_VERSION`; lock |
 
 ## Authoring contracts
 
-Use one entity per JSON file, with `$schema` pointing to its generated editor schema and `schemaVersion` matching the exported version. IDs use lowercase letters, digits and hyphens. Unknown fields, components, parameters and unresolved references fail validation rather than being ignored.
+One entity per JSON file; `$schema` points at the generated editor schema and `schemaVersion` matches the exported version. IDs are lowercase letters, digits and hyphens, and equal the file name. Unknown fields, modules, params and unresolved references fail validation.
 
-Author `fx3` fields in ordinary units with at most three decimal places. The loader scales only fields tagged `x-unit: fx3` by `FIXED_POINT_SCALE = 1000`: `speed: 3.001` becomes `speedMilli: 3001`, and `ratePerSec: 0.6` becomes loaded `ratePerSec: 600`. Positions, bounds, footprint radii and tagged bot parameters also become milli-units. Non-finite values, excess precision and scaled magnitudes beyond `2147483647` are errors. Coordinates are bounded by absolute `500` world units; troop speed must be positive and at most `100` world units/second.
+Author `fx3` fields in ordinary units with at most three decimals. The loader scales fields tagged `x-unit: fx3` by `FIXED_POINT_SCALE = 1000` (`speed: 5` loads as 5000). Counts (`level`, `maxLevel`, `hp`) stay integers; `timeLimitSec` is integer seconds or `null`. Non-finite values, excess precision and scaled magnitudes beyond `2147483647` are errors. Do not author milli-values or scale loaded data twice.
 
-Counts remain unscaled integers: `garrison`, `garrison.cap`, troop `value`, `extraSlotAbove` thresholds and `actionsPerDecision`. `timeLimitSec` remains integer seconds from 1 through 107374182 in balance defaults, levels and global overrides, so its 20 Hz tick duration fits positive int32; IDs and compiled indices do not scale. Bot `decisionIntervalSec` is tagged fx3, so it becomes milli-seconds; weights, bias and noise use their tagged scale too. Untagged numeric extension parameters must be integers; add an explicit schema tag before introducing a decimal parameter. Do not author milli-values or scale loaded data a second time.
+Coordinates: levels use world units with `x` and `z`; `bounds` must contain every building. Footprints are `box` (`w`, `d`) or `circle` (`radius`). Follow `levelview-1.json` for the coordinate frame until a dedicated levels guide exists (planned, not yet written).
 
-V1 supports `garrison`, `generates`, `drawsLines` and `capturable`, and troop `value: 1`. Slot thresholds must be strictly ascending. Starting garrison must fit resolved capacity. `obstacles` and `mapObjects` must be empty arrays. Tower footprints use their resolved authored radii: overlap fails, touching is allowed, and there is no configurable clearance margin. Each player needs a starting tower; levels need at least two owners. Shared teams are reserved for a later playable mode.
-
-An archetype may extend a base archetype at **one depth only**. Component parameter bags merge onto the base; arrays such as `extraSlotAbove` replace the entire array. Variants may change existing component parameters, `visual` and `footprintRadius`, but cannot add or remove components. Do not create chains or cycles. The supplied `small` and `large` values are placeholders; SP05 owns their tuning.
-
-Bot inheritance is different: every profile needs `kind`, and the parent reference is `params.extends`, never a top-level `extends`. A utility tier may patch only `params.skill`, with inherited personality parameters preserved; it cannot patch bias or weights, change kind or extend more than one depth. Idle profiles use empty `params`. The hosted utility payload is currently a closed placeholder (skill, attack bias and targetValue weight); SP04 owns full bot behaviour and production profiles. Levels cannot select tooling profiles `reference` or `human-proxy`.
-
-Campaign files belong in `data/levels/NN-*.json`; present orders start at 1, remain unique/contiguous and are capped at 20. Campaign authoring uses **no level overrides**: keep the required `overrides` object empty (`{}`), and introduce a named archetype variant instead. The override mechanism remains for dev-panel tuning and future custom games: it patches existing globals, troop parameters or archetype component parameters on isolated clones, never missing targets or new components. Resolved patches affect the level hash.
-
-The current pack contains `data/balance.json`, `data/troops/regular.json`, the three archetypes and `data/levels/sample.json`. The sample demonstrates a human, a bot and a neutral tower; its filename excludes it from campaign ordering. Its supporting idle profile is `data/examples/sample-bot.json`, outside SP04's production `data/bots/`. This sample proves content can validate and compile; it does not establish campaign AI or playability.
+Elements (such as `obstacle`) carry module bags and optional `variants` (`small`, `big`); a level element may name one variant.
 
 ## Load, validate and compile
 
-The browser-safe package API accepts a path-keyed `ContentFileMap` of JSON strings or objects. `validateContent(fileMap, { manifest }?)` returns located errors and warnings; supplying the complete hosted manifest also checks visual, theme and palette color keys. `loadContent(fileMap)` clones, validates and converts tagged units, and throws `ContentLoadError` with file/JSON-pointer diagnostics on errors. Full validation requires the referenced dataset. `{ partial: true }` is only for isolated editor/schema fixtures, not a production validation shortcut.
-
-`compileLevel(loadContent(fileMap), levelId)` produces the `CompiledLevel` simulation boundary. Towers and players sort lexically by ID; owners become player indices, or `-1` for neutral. Teams default to player IDs. `generates.troop` becomes a dense index into `kinds`, which contains only referenced troop kinds sorted by ID. Counts and durations retain their units; loaded coordinates, footprints, rates, speeds and bot fx3 parameters retain milli-units. Visual keys, bounds, resolved defaults and bot profiles pass through. Hashes are fully computed, not placeholders.
-
-Loading, validation, compilation and pure TypeScript hashing import no Node filesystem/path/crypto APIs. A Node adapter reads files; a web adapter supplies the same map (for example via Vite glob). Node-only scripts perform disk access and Git baseline checks. Generated schemas include the hosted bot and manifest contracts; edit TypeBox sources and regenerate instead of hand-editing generated JSON.
+The browser-safe package API takes a path-keyed file map of JSON strings or objects. `validateContent` returns located errors and warnings (supplying the hosted manifest also checks visual, theme and color keys); `loadContent` validates and converts tagged units, throwing with file/JSON-pointer diagnostics. `compileLevel(...)` produces the `CompiledLevel` simulation boundary (players and buildings sorted by id, owners as indices, `-1` neutral). Loading, validation, compilation and hashing use no Node APIs; Node-only scripts do disk and git access. Generated schemas come from the TypeBox sources: edit those and regenerate, never hand-edit `packages/content/schemas/`.
 
 ## Regenerate and verify
 
-After data edits and any required version bump:
-
 ```sh
-pnpm content:lock
-pnpm check:content --base HEAD
+pnpm content:schemas          # after schema, module or bot-kind changes
+pnpm content:lock             # after data edits and required bumps
 pnpm check:schemas
+pnpm check:content --base HEAD
+pnpm validate:content --base HEAD
 pnpm test
-pnpm build
-pnpm lint
+pnpm run ci                   # full gate chain
 ```
 
-After schema edits, run `pnpm content:schemas` before checking freshness. `content:lock` validates the pack and writes `packages/content/hashes.lock.json`; it does not bump versions. Commit metadata, data and regenerated artifacts together.
-
-For a branch or committed change, compare with a revision preceding the change:
-
-```sh
-pnpm check:content --base <revision>
-```
-
-Replace `<revision>` with the PR base or relevant pre-change commit. Omitting `--base` defaults to `HEAD`: useful for uncommitted edits, but after committing it compares the change with itself. CI fetches full history and supplies the PR base SHA or push-before SHA (falling back to the pre-content revision `656d0ca`). Missing baseline history is an error. The check compares against **both baseline metadata and baseline hashes**, so regenerating the lock cannot hide a missing version bump. It also rejects stale locks and rules-version disagreement. A baseline predating metadata allows the first dataset; removing an existing dataset does not qualify.
-
-Normal production commands need no `--allow-bootstrap`. That flag is only for tooling setup **before pack authoring**, with no metadata and at most troop fixtures; it produces/checks an empty lock and explicitly defers production validation. The current CI invocation retains the flag, but an authored dataset still undergoes full validation and baseline checks. Never use it to bypass a broken production pack.
-
-`simHash` covers canonical resolved simulation inputs, including relevant overrides and inherited parameters. Names, presentation keys, bots, unused entities and schema metadata are excluded. Each resolved bot profile has a separate `botHash`; lock generation includes all profiles, while a compiled level exposes hashes for its referenced profiles. Bot-only changes do not require a simulation content bump. Both `check:content` and `validate:content` compare the resolved bot hash map against the committed baseline and require a strictly increasing semver `BOT_VERSION` when it changes, including additions or removals and even after lock regeneration. Node adapters read `packages/bots/src/version.ts` as a single exported literal from the working tree and git history; they never evaluate historical code, and content runtime has no bots dependency. A revision before the first bot version can establish its initial baseline. Algorithm changes are checked separately by complete bot command-log/replay goldens: `bots:golden` compares current runs with committed bundles, and `bots:golden --update` requires a version increase over both the working and committed bundles (initial `1.0.0` bootstrap is allowed). Commit the bumped source version, lock and goldens together.
-
-Only the commands shown above are implemented in SP01. Balance runners, golden replay regeneration and rule-ID coverage checks (including planned `check:rules`) are follow-on SP02/SP04 tooling, not runnable SP01 scripts. Until they land, use the available content checks and record any validation that still depends on those sub-projects.
+For a committed change compare with a revision preceding it: `pnpm check:content --base <revision>`. The check rejects stale locks, missing version bumps and rules-version disagreement.
