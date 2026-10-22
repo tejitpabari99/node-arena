@@ -7,7 +7,7 @@ export interface BotContext {
 }
 
 export interface Bot {
-  readonly player: string;
+  readonly player: number;
   decide(ctx: BotContext, tick: number): Command[];
 }
 
@@ -28,9 +28,11 @@ export function guardBotContext(context: BotContext): BotContext {
   });
 }
 
+export { createSeatBot, type SeatState, type ScriptRunner } from './seat.js';
+export { decideDefault, noLineBetween, sortedTargets, targetKey, freeSources, MS_PER_TICK, type SeatRng } from './tw-ai.js';
 export { createBotDriver, type BotDriver } from './driver.js';
 export {
   runMatch, type MatchOptions, type MatchResult, type MatchOutcome, type MatchStats,
-  type MatchPlayerStats, type MatchTowerStats, type MatchController, type ScriptedController,
+  type MatchPlayerStats, type MatchBuildingStats, type MatchController, type ScriptedController,
 } from './harness.js';
 export { BOT_VERSION } from './version.js';

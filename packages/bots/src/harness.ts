@@ -1,14 +1,14 @@
 import type { CompiledLevel } from '@node-arena/content';
 import {
-  create, createReplayRecorder, type Command, type GameOver, type ReplayMetadata,
-  type ReplayRecord, type Sim,
+  create, createReplayRecorder, type Command, type ReplayMetadata,
+  type ReplayRecord, type Sim, type SimView,
 } from '@node-arena/sim';
-import { createProfileBot } from './driver.js';
 import { guardBotContext, type Bot } from './index.js';
+import { createSeatBot } from './seat.js';
 
 /** Ticks are the pre-step clock, as in ordinary replay command entries. */
 export interface ScriptedController {
-  readonly player: string;
+  readonly player: number;
   readonly commands: readonly { readonly tick: number; readonly cmd: Command }[];
 }
 export type MatchController = Bot | ScriptedController;
@@ -22,25 +22,20 @@ export interface MatchOptions {
   /** Authoritative content envelope versions; omitted/false disables recording. */
   record?: ReplayMetadata | false;
 }
-export type MatchOutcome = GameOver | { outcome: 'truncated'; winnerTeam: null };
+export type MatchOutcome = NonNullable<SimView['over']> | { outcome: 'truncated'; winner: null };
 export interface MatchPlayerStats {
   player: string;
-  team: string;
-  alive: number;
-  towers: number;
+  buildings: number;
+  /** Sum of owned buildings' garrison level. */
   garrison: number;
-  transit: number;
   lines: number;
-  generated: number;
-  overflowLost: number;
-  kills: number;
-  captures: number;
 }
-export interface MatchTowerStats {
-  tower: string;
+export interface MatchBuildingStats {
+  building: string;
   owner: string | null;
-  slots: number;
   lines: number;
+  freeSlots: number;
+  level: number;
   /** Final visible component columns, preserving loaded integer units. */
   col: Record<string, number>;
 }
@@ -50,7 +45,7 @@ export interface MatchStats {
   commandCount: number;
   timeLimitTicks: number;
   players: MatchPlayerStats[];
-  towers: MatchTowerStats[];
+  buildings: MatchBuildingStats[];
 }
 export interface MatchResult {
   outcome: MatchOutcome;
@@ -82,53 +77,47 @@ function scriptedBot(controller: ScriptedController): Bot {
 
 function controllersFor(options: MatchOptions): Bot[] {
   const { level, seed } = options;
-  const playerIds = new Set(level.players.map(player => player.id));
-  if (playerIds.size !== level.players.length) throw new RangeError('Duplicate level player IDs');
-  const overrides = new Map<string, Bot>();
+  const count = level.players.length;
+  const overrides = new Map<number, Bot>();
   for (const controller of options.controllers ?? []) {
-    if (!controller || !playerIds.has(controller.player)) throw new RangeError('Invalid controller player');
+    if (!controller || !Number.isInteger(controller.player) || controller.player < 0 || controller.player >= count) throw new RangeError('Invalid controller player');
     if (overrides.has(controller.player)) throw new RangeError('Duplicate controller player');
     if ('decide' in controller && typeof controller.decide === 'function') overrides.set(controller.player, controller);
     else if ('commands' in controller && Array.isArray(controller.commands)) overrides.set(controller.player, scriptedBot(controller));
     else throw new TypeError('Invalid match controller');
   }
   const occupied = new Set<number>();
-  const defaults = new Map<string, Bot>();
-  for (const { player: index, profile } of level.bots) {
-    const player = level.players[index];
-    if (!Number.isInteger(index) || !player || occupied.has(index)) throw new RangeError('Invalid or duplicate bot player index');
-    occupied.add(index);
-    if (!overrides.has(player.id)) defaults.set(player.id, createProfileBot(level, seed, player.id, profile));
+  const defaults = new Map<number, Bot>();
+  for (const { player, bot } of level.bots) {
+    if (!Number.isInteger(player) || player < 0 || player >= count || occupied.has(player)) throw new RangeError('Invalid or duplicate bot player index');
+    occupied.add(player);
+    if (!overrides.has(player)) defaults.set(player, createSeatBot(level, seed, player, bot));
   }
   // Dense player order makes the result independent of override array order.
-  return level.players.flatMap(player => {
-    const bot = overrides.get(player.id) ?? defaults.get(player.id);
+  return level.players.flatMap((_player, index) => {
+    const bot = overrides.get(index) ?? defaults.get(index);
     return bot ? [bot] : [];
   });
 }
 
-function statsFor(sim: Sim, commandCount: number): MatchStats {
+function statsFor(sim: Sim, rejected: number, commandCount: number): MatchStats {
   const view = sim.view;
-  const players: MatchPlayerStats[] = view.players.map((player, index) => ({
-    player: view.ids.players[index]!, team: player.team, alive: player.alive,
-    towers: 0, garrison: 0, transit: player.transit, lines: 0,
-    generated: player.stats.generated, overflowLost: player.stats.overflowLost,
-    kills: player.stats.kills, captures: player.stats.captures,
-  }));
-  const names = Object.keys(view.tower.col).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
-  const towers = view.ids.towers.map((tower, index) => {
-    const owner = view.tower.owner[index]!;
+  const players: MatchPlayerStats[] = view.ids.players.map(player => ({ player, buildings: 0, garrison: 0, lines: 0 }));
+  const names = Object.keys(view.buildings.col).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
+  const buildings = view.ids.buildings.map((building, index) => {
+    const owner = view.buildings.owner[index]!;
     const player = owner < 0 ? undefined : players[owner];
+    const level = view.buildings.level[index]!;
     if (player) {
-      player.towers++;
-      player.garrison += view.tower.col['garrison.count']?.[index] ?? 0;
-      player.lines += view.tower.lines[index]!;
+      player.buildings++;
+      player.garrison += level;
+      player.lines += view.buildings.lines[index]!;
     }
     const col: Record<string, number> = {};
-    for (const name of names) col[name] = view.tower.col[name]![index]!;
-    return { tower, owner: player?.player ?? null, slots: view.tower.slots[index]!, lines: view.tower.lines[index]!, col };
+    for (const name of names) col[name] = view.buildings.col[name]![index]!;
+    return { building, owner: player?.player ?? null, lines: view.buildings.lines[index]!, freeSlots: view.freeSlots(index), level, col };
   });
-  return { finalHash: sim.hash(), rejected: sim.rejected, commandCount, timeLimitTicks: view.timeLimitTicks, players, towers };
+  return { finalHash: sim.hash(), rejected, commandCount, timeLimitTicks: view.timeLimitTicks, players, buildings };
 }
 
 /** Pure synchronous headless match. No events or hidden state enter a controller. */
@@ -137,24 +126,27 @@ export function runMatch(options: MatchOptions): MatchResult {
   const controllers = controllersFor(options);
   const recorder = options.record ? createReplayRecorder(options.level, options.seed, options.record) : null;
   const sim: Sim = recorder ?? create(options.level, options.seed);
+  if (options.maxTicks === undefined && sim.view.timeLimitTicks === 0) throw new RangeError('maxTicks required for an untimed level');
   const maxTicks = options.maxTicks ?? sim.view.timeLimitTicks;
   let commandCount = 0;
-  while (!sim.view.over && sim.tick < maxTicks) {
+  let rejected = 0;
+  while (!sim.view.over && sim.view.tick < maxTicks) {
     const context = guardBotContext(sim);
     const commands: Command[] = [];
     for (const bot of controllers) {
-      const selected = bot.decide(context, sim.tick);
+      const selected = bot.decide(context, sim.view.tick);
       for (const command of selected) {
         if (command?.player !== bot.player) throw new RangeError('Bot command player does not match controller');
         commands.push(command);
       }
     }
     commandCount += commands.length;
-    sim.step(commands, { events: false });
-    if (sim.rejected !== 0) throw new Error(`Match rejected ${sim.rejected} command(s) at tick ${sim.tick}`);
+    // Rejections are only observable as events; the controllers never see them.
+    rejected += sim.step(commands, { events: true }).filter(event => event.type === 'CommandRejected').length;
+    if (rejected !== 0) throw new Error(`Match rejected ${rejected} command(s) at tick ${sim.view.tick}`);
   }
   return {
-    outcome: sim.view.over ? { ...sim.view.over } : { outcome: 'truncated', winnerTeam: null },
-    ticks: sim.tick, replay: recorder?.record() ?? null, stats: statsFor(sim, commandCount),
+    outcome: sim.view.over ? { ...sim.view.over } : { outcome: 'truncated', winner: null },
+    ticks: sim.view.tick, replay: recorder?.record() ?? null, stats: statsFor(sim, rejected, commandCount),
   };
 }

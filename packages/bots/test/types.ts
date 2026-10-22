@@ -6,10 +6,10 @@ declare const sim: Sim;
 declare const level: CompiledLevel;
 const ctx: BotContext = guardBotContext(sim);
 const view: SimView = ctx.view;
-const bot: Bot = { player: 'p0', decide(context, tick) {
+const bot: Bot = { player: 0, decide(context, tick) {
   const commands: Command[] = [];
-  if (context.view.tick === tick && !context.canDraw(this.player, 'a', 'b')) {
-    commands.push({ type: 'DrawLine', player: this.player, from: 'a', to: 'b' });
+  if (context.view.tick === tick && !context.canDraw(this.player, 0, 1)) {
+    commands.push({ type: 'DrawLine', player: this.player, from: 0, to: 1 });
   }
   return commands;
 } };
@@ -28,10 +28,10 @@ void document;
 void process;
 
 const match: MatchResult = runMatch({ level, seed: 42, controllers: [bot, {
-  player: 'p1', commands: [{ tick: 0, cmd: { type: 'DrawLine', player: 'p1', from: 'a', to: 'b' } }],
+  player: 1, commands: [{ tick: 0, cmd: { type: 'DrawLine', player: 1, from: 0, to: 1 } }],
 }], record: { rulesVersion: '1.0.0', schemaVersion: '1.0.0', contentVersion: '1.0.0' } });
 if (match.outcome.outcome === 'truncated') {
-  const winner: null = match.outcome.winnerTeam;
+  const winner: null = match.outcome.winner;
   void winner;
 }
 // @ts-expect-error Replay headers require explicit authoritative versions, not a boolean opt-in.
