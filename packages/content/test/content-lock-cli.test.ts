@@ -79,3 +79,18 @@ test('CLI refuses regenerated bot hashes without a committed BOT_VERSION bump', 
     result = cli(dir, '--check', '--base', 'HEAD'); assert.equal(result.status, 0, result.stderr);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('readBaseline passes --end-of-options before every caller-supplied revision', () => {
+  const source = readFileSync(script, 'utf8');
+  const calls = source.split('\n').filter((l) => /\bgit\('(rev-parse|ls-tree|show)'/.test(l) && /\bref\b/.test(l));
+  assert.equal(calls.length, 5);
+  for (const line of calls) assert.match(line, /'--end-of-options'/, line);
+});
+test('a dash-leading base revision is rejected, never parsed as a git option', () => {
+  const dir = workspace();
+  try {
+    writeFixture(dir); cli(dir); baseline(dir);
+    const result = cli(dir, '--check', '--base', '-q');
+    assert.notEqual(result.status, 0);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

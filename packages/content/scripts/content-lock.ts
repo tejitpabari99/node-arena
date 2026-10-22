@@ -36,19 +36,19 @@ function readBaseline(dir: string, ref: string): ContentBaseline | undefined {
   const prefix = relative(root, dir).replaceAll('\\', '/');
   const path = (name: string) => prefix ? `${prefix}/${name}` : name;
   // Verify the revision first; missing history must never silently bypass the gate.
-  git('rev-parse', '--verify', `${ref}^{commit}`);
-  const names = new Set(git('ls-tree', '--full-tree', '-r', '--name-only', ref, '--', path('content.json'), path('hashes.lock.json')).split('\n'));
+  git('rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`);
+  const names = new Set(git('ls-tree', '--full-tree', '-r', '--name-only', '--end-of-options', ref, '--', path('content.json'), path('hashes.lock.json')).split('\n'));
   if (!names.has(path('content.json'))) {
     if (names.has(path('hashes.lock.json'))) {
-      const lock = JSON.parse(git('show', `${ref}:${path('hashes.lock.json')}`)) as HashesLock;
+      const lock = JSON.parse(git('show', '--end-of-options', `${ref}:${path('hashes.lock.json')}`)) as HashesLock;
       if (canonicalJson(lock) !== canonicalJson({ levels: {}, bots: {} })) throw new Error('Baseline has hashes but no content.json');
     }
     return undefined; // Pre-content revision, including 656d0ca.
   }
   if (!names.has(path('hashes.lock.json'))) throw new Error('Baseline content.json exists but hashes.lock.json is missing');
-  const raw = git('show', `${ref}:${path('content.json')}`);
+  const raw = git('show', '--end-of-options', `${ref}:${path('content.json')}`);
   const metadata = readBaselineVersion(raw);
-  const hashes = JSON.parse(git('show', `${ref}:${path('hashes.lock.json')}`)) as HashesLock;
+  const hashes = JSON.parse(git('show', '--end-of-options', `${ref}:${path('hashes.lock.json')}`)) as HashesLock;
   return { metadata, hashes };
 }
 async function main() {
