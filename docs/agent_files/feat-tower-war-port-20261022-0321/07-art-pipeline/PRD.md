@@ -77,6 +77,7 @@ Skins other than default; garage/skinned models; artillery unit; rocket/fortress
 - **Primary refs (owner-supplied)**: frames extracted from the owner's YouTube walkthrough playlist of all levels (https://www.youtube.com/playlist?list=PL734Sy01N1F2H78gYnOZaczQXHAvJOsgE) in `BF/ref/tw-yt/`, indexed by `BF/ref/tw-yt/INDEX.md` (file -> level). Compare loop uses these. [RESOLVED: owner supplied video refs]
 - Secondary: seed `BF/ref/` by copying `docs/agent_files/feat-visual-mechanics-overhaul-20261017-2318/ref/towerwar_{01,02,03,06,07,09,10}.jpg` + `towerwar_yt*.jpg` (real TW App Store/YouTube shots) with an index `ref/README.md` mapping image -> level/env/feature. `citytakeover_*` not copied (other game).
 - Gap: refs are low-res and mostly not our 20 levels. Add synthetic references: "Unity-parity renders" of single assets (icon sprites, bbox, texture swatches) for asset checks only.
+- Visual refs (`BF/ref/tw-yt/INDEX.md`) are portrait (phone); our game is landscape. Match style/content (art, colours, building/unit looks, labels, HUD elements, effects), adapt layout/HUD placement to landscape (owner-approved).
 - Loop: Playwright captures fixed scenes (L4 Green, L21 Snow, unit lineup, stage ladder, capture/shot FX) at 1600x900 -> `ref/out/`; agent compares side-by-side with named reference and iterates (AGENTS.md workflow). Compare against `BF/ref/tw-yt/` frames for the matching level (no owner screenshots needed).
 
 ### R7 Deletions

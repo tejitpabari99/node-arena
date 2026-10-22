@@ -159,6 +159,7 @@ main.tsx -> app/runtime (state machine boot|picker|playing|result|error)
 - HUD frame cost <1 ms median; no per-frame allocation in input/camera paths.
 - Grep finds no `strength`, `Settings`, `menu` screen, `tuningFields`, `spike` references; `pnpm lint typecheck test test:web:all` green.
 - `simHash`, goldens unchanged by any 08 change.
+- Visual refs (`BF/ref/tw-yt/INDEX.md`) are portrait (phone); our game is landscape. Match style/content (art, colours, building/unit looks, labels, HUD elements, effects), adapt layout/HUD placement to landscape (owner-approved).
 - Screenshots (HUD + L4) in branch `ref/out/` compared against TW refs (`BF/ref/tw-yt/` frames, indexed by `BF/ref/tw-yt/INDEX.md`; visual compare loop). Task 1 renders L4 under the mirrored `worldRoot` and compares against its ref (frame sanity: weapon hand, level layout not mirrored); labels sit outside the mirrored root and read correctly.
 - Picker shows 1..20; save keyed by `levelId`.
 

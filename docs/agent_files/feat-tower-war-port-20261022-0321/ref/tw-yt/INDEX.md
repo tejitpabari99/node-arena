@@ -1,5 +1,7 @@
 # Tower War reference screenshots (owner Drive)
 
+**How to use:** refs are portrait (phone); our game is landscape (maps rotated 90 deg at import). Compare style/content (art, colours, building/unit looks, labels, HUD elements, effects), not screen layout. HUD and layout are adapted to landscape; owner explicitly allows adapting.
+
 Source: Drive folder https://drive.google.com/drive/folders/1aPnkalXZRfPd2Om1YfnyrQOufqIYVpyy (owner tejitpabari99@gmail.com), screenshots from walkthrough playlist https://www.youtube.com/playlist?list=PL734Sy01N1F2H78gYnOZaczQXHAvJOsgE. Originals ~465x1030 PNG; saved JPEG q85. Level number = number shown in the on-screen HUD (LEVEL N), observed.
 
 ## Files
@@ -27,6 +29,10 @@ Source: Drive folder https://drive.google.com/drive/folders/1aPnkalXZRfPd2Om1Yfn
 | L19.jpg | 19.png | 19 | IN-PLAY: numbers (gray 9/15/10/5, green 10, yellow 7, blue 25, factory 10, tower 5), lane line, bar |
 | L20.jpg | 20.png | 20 | IN-PLAY: 9-labels grid, 2 pagodas, blue 10 w/ selection ring, bar |
 | L21.jpg | 21.png | 21 | SNOW start (first snow level): ice floor, igloo, campfire; blue 10, 4 gray 10, 2 green factories, pagoda 5; in-play |
+| L22.jpg | 22.png | 22 | snow, in-play: green 10, 4 gray (5/10/5/10), red 10, 3 factories (up15), pagoda 5 w/ range circle, blue 20, 3 ice-block groups, igloo, campfire |
+| L23.jpg | 23.png | 23 | snow, walls tutorial ('Walls prevent pass, but they can be destroyed'): red 1, 2 gray 5, blue 5, wooden gate wall on blue->gray lane, ice blocks, white arrow, mascot |
+| L24.jpg | 24.png | 24 | snow, first wall level: red 5, 2 gray 5, pagoda 5 w/ range circle, blue 20, ice blocks + 2 wooden fences, pause icon centre |
+| L25.jpg | 25.png | 25 | snow, in-play: red 10, yellow 10, 4 gray 5, 2 pagodas 5 w/ ice blocks, centre factory (up15) behind wooden fence wall, blue 10 |
 | L26.jpg | 26.png | 26 | snow, in-play: ice-block wall obstacles around pagoda, gray 45/25/15, red factory, blue 10 |
 | L30.jpg | 30.png | 30 | snow, in-play: wooden fences + ice blocks, factories, pagodas, bar |
 | L31.jpg | 31.png | 31 | snow, in-play: 3 factories behind ice/wood walls |
@@ -50,13 +56,13 @@ Source: Drive folder https://drive.google.com/drive/folders/1aPnkalXZRfPd2Om1Yfn
 | d-hud-topbar-18.jpg | top bar.png | 18 | HUD: undo arrow left, pill bar blue|red|green segment w/ LEVEL N text centred, coin counter right (pre/post) |
 | d-victory.jpg | victory.png | ~? | VICTORY ribbon, mascot (blue helmet), NEW REGION 93%, +90 coins, confetti, map-progress overlay |
 
-Total: 43 images.
+Total: 47 images.
 
 ## Coverage vs requested set
-- Levels 4-23: present 4-21 (18 of 20). MISSING 22, 23. Extra: 1,2,3,26,30,31,35,40,41,46,50,51,56,60,61.
+- Levels 4-23: COMPLETE (4-23 all present). Also 24, 25 and extras 1,2,3,26,30,31,35,40,41,46,50,51,56,60,61.
 - Start-of-level full map: 4,5,6,8,9,10-18 are pre-start (PLAY button visible, no numbers). 7,19,20,21+ are already in-play (numbers shown, start of play). L1 tutorial text.
 - Detail present: house low/mid/high (d-house-levels-11: 5 and 30; mid 10-25 seen in L19/L21/L26), tank house, tower firing (+die), mid-battle (19, 35), line crossing fight (battle, clashing), HUD bar (top bar) + buttons (L50 booster; undo, gear, PLAY), victory, snow levels (21,26,30,31,35,40).
-- Detail MISSING: defeat screen; clear separate high-level (>=30) house close-up beyond red 30.
+- Detail MISSING: defeat screen (not available; owner confirmed, fine); clear separate high-level (>=30) house close-up beyond red 30.
 
 ## Observations (observed)
 - Camera: fixed top-down-ish 3/4 tilt (~55-60 deg), portrait phone ~465x1030, no rotation; buildings seen from front-above, play area centre, decorative scenery bands top and bottom.
@@ -76,6 +82,13 @@ Counted buildings (houses+towers+factories) per screenshot vs n_buildings:
 - MISMATCH: 20 (12 seen vs 8; also has 2 pagodas, tsv tower:0), 50 (8 vs 10), 51 (6 vs 11), 56 (7 vs 8), 60 (12 vs 6), 61 (8 vs 7).
 - TSV rows empty (no data): pos 1-3 (tutorials), 10 (LevelView 182_NB), 35 (LevelView 110_VL).
 - Conclusion: pos = in-game level holds for 4-9 and 12-46 (except 20); levels 10, 35 empty in tsv; for >=50 drifts/does not match (likely different ordering or different extract). Level 20 mismatch suggests campaign_order pos 20 is wrong/alternate variant.
+
+## Levels 22-25 check vs campaign_order.tsv (pos 22-25)
+- 22: 11 seen (green, red, blue, 4 gray, 3 factories, 1 pagoda) = tsv 11 (house10+tower1); 3 ice groups = OBS 3. MATCH.
+- 23: tsv row = prefab level 100_ES, no data (hasJson 0); screenshot shows 4 houses + wooden wall + ice blocks + walls tutorial text. We drop the wall for this level.
+- 24: 5 seen (red, 2 gray, pagoda, blue) = tsv 5 (house4+tower1); 2 fences = Wall 2; 1 ice group = OBS 1. MATCH. First wall level in our port.
+- 25: 10 seen (red, yellow, 4 gray, 2 pagodas, factory, blue) = tsv 10 (house8+tower2; factory counted as house); 2 ice groups = OBS 2. MATCH (Wall 5 plausible: fence segments around factory).
+- Conclusion: pos = in-game level holds for 22-25.
 
 ## Inferred
 - Factory ('up N') probably = production/level-up building; tank house produces tanks (needs confirmation).

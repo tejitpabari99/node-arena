@@ -38,6 +38,7 @@ Max 2 concurrent agents.
 - BOOSTERS deferred (FUTURES).
 - Their AI copied exactly; our bots deleted.
 - Landscape via importer-time rotation (x,z)->(z,-x), single mirror at worldRoot (Frame contract in 02).
+- Refs portrait; adapt to landscape (owner).
 - Neutral towers FIRE (`neutralFires=true`).
 - Unwinnable-by-proxy levels -> `tools/unsolved-by-proxy.json` allowlist + owner playtest.
 - Local only, no deploy.
