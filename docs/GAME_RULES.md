@@ -666,7 +666,7 @@ One row per content key: the key rules name, its Tower War source, the rule ids 
 | `troopPad` | troop body radius added to trigger reach (milli) | R-TWR-02 | 350 | yes |
 | `hitsNeutralHouses` | tower house-target filter | R-TWR-02 | true | yes |
 | `stageThresholds` | art/slot stages 10 / 30 (not serialized; 03#3.2) | R-GRW-02, R-LIN-02, R-TWR-01 | [10, 30] | |
-| `balance.spawn.aliveCap` | alive soldier cap per house (03#4.2) | R-SPN-02, R-CAP-03 | 30 | |
+| `balance.spawn.aliveCap` | alive soldier cap per house, integer 1..1000 (03#4.2) | R-SPN-02, R-CAP-03 | 30 | |
 | `balance.growth.base` | growth base constant 0.9 (03#4.6) | R-GRW-01 | 0.9 | |
 | `balance.contactDistance` | 2 × body sphere radius (03#14) | R-CMB-01, R-CMB-04 | 0.7 | |
 | `spawns.troop` | house archetype warrior type (unit id) | R-SPN-02 | soldier | |
