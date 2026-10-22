@@ -104,7 +104,7 @@ view: tick, over{outcome,winner}|null, timeLimitTicks, bounds{minX,maxX,minZ,max
   lines[{channel,from,to,owner,length,drawSeq}]  (refreshed per tick), freeSlots(b), units[{id,speed,hp,attack,defense,visual}]
 sim: step(cmds,{events}), canDraw, readTroops(buf{channel,seq,owner,kind,progress,hp,speed}), hash(), snapshot()   // speed = the constant unit speed in progress units/tick (from the unit table) so 07 interpolates `progress + speed*alpha` (clamped to lane length)
   (04 adds on `sim`: explainDraw, towerRadiusMilli(view,i))
-streams: createStreams(seed).fork(name:string, idx:number) -> {next, below(n), snapshot}   // exported for bots
+streams: createStreams(seed).fork(name:string, idx:number) -> {next, below(n), snapshot}   // exported for bots; 06 relies on exactly `streams.fork(name, index).below(n)`
 ```
 - Events (union in `defs` EVENTS; **03 T1 (CUT) writes the complete payload types**, 04 only emits; coordinates are milli ints): `LineDrawn{from,to,owner,drawSeq}`, `LineCut{from,to,reason: player|replaced|captured}`, `TroopSpawned{channel,seq,owner,kind,cause: timer|forward}`, `TroopArrived{channel,seq,owner,kind,effect: reinforce|overflow|hit}`, `BuildingCaptured{building,from,to,cause?}`, `MatchOver{outcome,winner}`, `CommandRejected{player,command,reason}`, and the three renderer-facing shapes below. Never alter state; `events:false` hash parity tested.
 ```
@@ -163,8 +163,8 @@ None.
 - [RESOLVED: 08 R3/R6/R7 are rewritten from this PRD's R7 verbatim (`view.buildings/buildingStatic{x,z}`; no booster API; `sim.explainDraw` from 04 replaces `blockPoint`)]
 - [RESOLVED: 02 R4 validator requires >= 1 non-ignored building]
 - [RESOLVED: owner Q3 - boosters deferred; see docs/FUTURES.md via SP09] No `UseBooster`, `canUseBooster`, `view.boosters`, `pendingStrikes`, `BoosterUsed`/`BombImpact`, seat booster state, `bomb` stream, booster goldens or per-troop speed column in SP03.
-- [OPEN] `fwd` draw semantics vs TW (`TrySpawnAdditionalWarrior` order of cap vs lane pick) unverifiable; behaviour-neutral in expectation.
-- [OPEN] `check:rules` stays red until SP04 tags CMB-04/TWR/OBS (accepted by 01); tower cooldown semantics (set at fire, 01 R3 exemption) are SP04's `shoots` module, `shoots.cooldown` column only allocated here.
+- [RESOLVED: accepted as designed; known-unverifiable, behaviour-neutral] `fwd` draw semantics vs TW (`TrySpawnAdditionalWarrior` order of cap vs lane pick) unverifiable; behaviour-neutral in expectation.
+- [RESOLVED: accepted (parked window)] `check:rules` stays red until SP04 tags CMB-04/TWR/OBS (accepted by 01); tower cooldown semantics (set at fire, 01 R3 exemption) are SP04's `shoots` module, `shoots.cooldown` column only allocated here.
 - [RESOLVED: no time limit by default; `timeLimitTicks=0`, tools/bots harness own step caps]
 - [DEFERRED] Double unit/shield/skin speed, attack/def columns, module versions in header, tombstone ring, event pooling.
 

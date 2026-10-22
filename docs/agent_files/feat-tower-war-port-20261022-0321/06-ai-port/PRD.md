@@ -132,12 +132,12 @@ None.
 - Without power scaling early levels may feel harder than TW; tuned only via level data.
 
 ## Open Questions
-1. [OPEN] Timer order in `DelayBehavior`/`CreateWayBehavior`/capture-poll first check: implementer reads `Game.Main.Player.{DelayBehavior,CreateWayBehavior}/UpdateBehavior.c` and `AiStepAction` first, pins tests to them.
+1. [RESOLVED: implementer reads decomp first, pins tests to it] Timer order in `DelayBehavior`/`CreateWayBehavior`/capture-poll first check: implementer reads `Game.Main.Player.{DelayBehavior,CreateWayBehavior}/UpdateBehavior.c` and `AiStepAction` first, pins tests to them.
 2. [RESOLVED: tower is a normal capturable target (`GetEnemiesHouses` = all non-own buildings, D8); `special=false` via `buildingStatic.special` set in 02 data]
 3. [RESOLVED: owner] Q4: proxy win rate on levels 4-23 is spiked first; rule = any win over `AD in {500,1000,2000}`; unsolved levels go to the `tools/unsolved-by-proxy.json` allowlist (warnings) and the owner playtest signs off.
-4. [OPEN] 03 exposes `streams.fork(name, index).below(n)`? Needed API name (unchanged by the critique).
+4. [RESOLVED: 03 exposes exactly `streams.fork(name, index).below(n)`] 03 exposes `streams.fork(name, index).below(n)`? Needed API name (unchanged by the critique).
 5. [RESOLVED: 05 keeps `BD` flatten order (per ORIGINAL `P` order), ids `b<twId>`; `special` comes from `buildingStatic.special` (02 archetype data, surfaced by 03 view)]
-6. [OPEN] Resource-pile targets dropped: shifts weakest-first order on 412 levels; accepted unless piles are ported.
+6. [RESOLVED: dropped, accepted; entry in docs/FUTURES.md] Resource-pile targets dropped: shifts weakest-first order on 412 levels; accepted unless piles are ported.
 7. [RESOLVED: owner — boosters deferred] (no booster commands in scope; FUTURES).
 8. [RESOLVED: inert] Reaction handler.
 9. [DEFERRED] Rocket/railway/trolley/resource/boss AI; `seatPower`; useless-attack. Log in `docs/FUTURES.md`.

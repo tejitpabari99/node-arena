@@ -49,34 +49,15 @@ Max 2 concurrent agents.
 ## Critique
 [critique-2026-10-22-0500.md](critique-2026-10-22-0500.md): 9 blocking / 10 non-blocking / 4 suggestions — all applied to PRDs.
 
-## Remaining [OPEN] items
-| PRD | Item |
-|---|---|
-| 01 | Blocking footprints (OBS-01): which collider `CheckBlock` tests for buildings; obstacle child sizes (proposal: `Building` 1.5 box) |
-| 02 | Footprint sizes from 05 Task 0 `colliders.json`; 04 writes values (single commit + content bump) |
-| 03 | `fwd` draw semantics vs TW (cap vs lane-pick order) unverifiable; behaviour-neutral |
-| 03 | `check:rules` red until SP04 tags CMB-04/TWR/OBS (accepted by 01); tower cooldown set at fire |
-| 04 | Obstacle collider size per child (not exported) |
-| 04 | Shooter detection range upper bound (trigger sphere reach; medium confidence) |
-| 04 | Endpoint-contact fidelity; arrival at centre vs `Hit` box (shared with 03) |
-| 05 | 02: optional `source`/`position` for hand-authored levels; `--fix-requires`; optional campaign `loop` |
-| 05 | Whether `source.dropped` needs counts (strings today) |
-| 06 | Timer order in Delay/CreateWay behaviors and capture-poll first check (read decomp first) |
-| 06 | 03 must expose `streams.fork(name, index).below(n)` (API name) |
-| 06 | Resource-pile targets dropped: shifts weakest-first order on 412 levels; accepted |
-| 07 | Default skin = skin id 1 per type? verify pids 2404/2394/2415 |
-| 07 | Env 0 prefab/mesh/material mapping (Addressables GUIDs, catalog.bin unparsed); time-boxed one task, fallback defined |
-| 07 | Which Obstacle.prefab children small/big, local scale, inactive flags |
-| 07 | Unity colour space (gamma vs linear) (verify vs `ref/tw-yt` in task 1) |
-| 07 | Level-number font/outline, stage-transition ring colour, WayBaseStandard lane texture (verify vs `ref/tw-yt` in task 1) |
-| 07 | Tank turret part rotating vs static in `1_BaseAttackSkin` (verify vs `ref/tw-yt` in task 1) |
-| 08 | Mouse drag delay (0.2 s touch; mouse instant) + eraser enter/exit UX after feel test |
-| 08 | Ownership bar: level sum vs troops incl. units; neutral shown? (verify vs `ref/tw-yt` in task 1) |
-| 08 | HUD slot positions/sizes and sprites (not exported) (verify vs `ref/tw-yt` in task 1) |
-| 08 | TW UI font (fallback: bundled OFL font) (verify vs `ref/tw-yt` in task 1) |
-| 08 | Keep `quality` setting (per 07 perf result) |
-| 09 | CI time budget and seeds for `validate:levels` (default 4, fallback 2) |
-| 09 | Web bundle/size budget gate beyond per-model budgets |
+## Resolved open items (2026-10-22)
+- 01/02/04: buildings block via `Building` 1.5 box; obstacle sizes from 05 Task 0 collider dump, 04 writes to content; fallback circle 450 + calibration.
+- 04: shooter reach = 2.4 x scale + 0.35, no upper bound; contacts/arrival at target `Hit` box (0.6), also attacker-vs-spawn (shared with 03).
+- 03: `fwd` draw order accepted (unverifiable, neutral); `check:rules` red until SP04 tags accepted.
+- 06: timer order pinned to decomp; `streams.fork(name, index).below(n)` exposed by 03; resource piles dropped (FUTURES).
+- 02/05: `source`/`position` optional now; `--fix-requires`, campaign `loop` deferred (FUTURES); `source.dropped` = strings.
+- 07: default skin verified (fallback id 1); Env 0 time-boxed; obstacle children from prefab dump; colour space/fonts/ring/lane/turret verified vs refs in task 1.
+- 08: ownership = building-level sum, no neutral; HUD/font from refs (fallback OFL); drag delay touch 0.2 s/mouse instant; `quality` dropped unless 07 perf needs.
+- 09: `validate:levels` 4 seeds (drop to 2 if over budget); bundle size gate deferred (FUTURES).
 
 ## Owner manual steps
 - 05: mirror check and theme boundary: verify against `BF/ref/tw-yt` frames (no owner screenshots needed).

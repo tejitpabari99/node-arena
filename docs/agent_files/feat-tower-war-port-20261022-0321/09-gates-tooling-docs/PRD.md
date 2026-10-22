@@ -164,11 +164,11 @@ Final acceptance flow (Phase C): `pnpm run ci` (22, 24) -> `campaign:verify` -> 
 | SP04 gate expectations | resolved: gate rows for CMB-04/TWR/OBS follow 04 (see Open Questions) |
 
 ## Open Questions
-- [OPEN] CI time budget and seeds for `validate:levels` (measure after SP06; default 4, fallback 2).
+- [RESOLVED: default 4 seeds, measure after SP06, drop to 2 if over CI budget] CI time budget and seeds for `validate:levels` (measure after SP06; default 4, fallback 2).
 - [RESOLVED: owner — repo stays private; committing TW art is OK]
 - [RESOLVED: SP04 PRD exists; gates are `check:rules` tags CMB-04/TWR/OBS, `scenarios-geometry.ts` golden appended to 03's `run.ts` scenario array, bench scenario (720 troops, 40 hostile crossings, 3 towers)]
 - [RESOLVED: owner — no LFS, plain git] TW art (~3 MB) and reference frames committed as plain git.
-- [OPEN] Web bundle/size budget gate beyond per-model budgets (not specified by 07/08).
+- [DEFERRED: docs/FUTURES.md] Web bundle/size budget gate beyond per-model budgets (not specified by 07/08).
 - [RESOLVED: S4 picker shows 1..20 (`position - 3`); saves keyed by `levelId`; `campaign:verify` names by `levelId`]
 - [RESOLVED: balance targets] report-only, delete targets.
 - [RESOLVED: owner] Q4: proxy cannot win some of the 20 levels -> allowlist `tools/unsolved-by-proxy.json` + owner manual pass (no hand-recorded replays).

@@ -61,12 +61,12 @@ Meta screens (shop, garage, quests, currencies), tutorials, emotes, level-start 
 | ResultPopup | Victory: Next level (if exists) / Replay / Levels; Defeat: Retry / Levels; timeout/draw as defeat wording | `view.over`, `view.winner` |
 | Level number on buildings | 07 world label, not HUD | - |
 - Sprites: `back_button`, `bar_back`, etc. from `_extract/assets/defaultlocalgroup_assets/Sprite`, copied by `tools/assets/ui-sprites.mjs` into `apps/web/assets/ui/` with a hash lock (same pattern as 07; manifest entries merged by 07's script). Exact sprite-to-slot mapping is picked in Task 1 against App Store refs.
-- **Ownership math** (pure fn `ui/ownership.ts`, no sim change, no `view.control`): per non-neutral player, `share = sum(building level) / sum over all non-neutral players`, integer permille, segments ordered by player index, last takes the remainder; units in flight not counted. [OPEN: confirm TW counts building levels, not unit totals]
+- **Ownership math** (pure fn `ui/ownership.ts`, no sim change, no `view.control`): per non-neutral player, `share = sum(building level) / sum over all non-neutral players`, integer permille, segments ordered by player index, last takes the remainder; units in flight not counted. [RESOLVED: building-level sum, neutral not shown; verify vs ref frames in task 1, adjust only if refs clearly contradict]
 - HUD re-renders at <=10 Hz from a tick subscriber; canvas frame loop never waits on Preact.
 
 ### R4 Picker and save
 - Picker: grid of 20 cards, **displayed 1..20 (`position - 3`)**; `position` stays in data and the save is keyed by `levelId` (S4), states locked / unlocked / completed; click starts level. Unlock = previous completed; level 1 always open. Last-played card focused. Mute toggle + credits link only.
-- Save `nodearena:save` v2: `{ v:2, completed: Record<levelId,{firstAt}>, lastLevel, settings:{musicVol,sfxVol,musicMute,sfxMute} }`. Same try/catch, backup key and notice behaviour as today. v1 blobs are discarded (no migration, per no-backcompat). `tipSeen`, `colorblind`, `quality`, `reducedMotion` removed unless 07 needs quality [OPEN].
+- Save `nodearena:save` v2: `{ v:2, completed: Record<levelId,{firstAt}>, lastLevel, settings:{musicVol,sfxVol,musicMute,sfxMute} }`. Same try/catch, backup key and notice behaviour as today. v1 blobs are discarded (no migration, per no-backcompat). `tipSeen`, `colorblind`, `quality`, `reducedMotion` removed unless 07 needs quality [RESOLVED: dropped unless 07 perf result shows need; decided at 08 implementation].
 - Result flow: win -> `recordResult`, unlock next, ResultPopup. Last level win -> "All levels complete" variant.
 
 ### R5 Game speed
@@ -78,7 +78,7 @@ Pointer Events on the canvas, `touch-action:none`, single active pointer.
 | Gesture | TW | Laptop mapping |
 |---|---|---|
 | Draw line | press own building, drag, release over target | same; hit radius from `anchors.building`; preview via 07 `previewLane`; drag starts after 1% screen-diagonal move |
-| Drag delay 0.2 s | `_delayBeforeDragChecking` | applies to `pointerType !== 'mouse'`; mouse starts instantly (else quick flicks are lost) [OPEN: confirm by feel] |
+| Drag delay 0.2 s | `_delayBeforeDragChecking` | applies to `pointerType !== 'mouse'`; mouse starts instantly (else quick flicks are lost) [RESOLVED: touch 0.2 s, mouse instant; retune in owner feel pass] |
 | Cut | swipe across own line | press on empty ground or right-button drag, stroke segment vs projected lane; each channel cut once per stroke (existing logic) |
 | Eraser | long press 0.7 s | hold 0.7 s on empty ground without moving: eraser mode (cursor + trail), movement cuts until release |
 | Cancel | focus loss | blur, `Esc`, popup open cancel any gesture |
@@ -137,14 +137,14 @@ main.tsx -> app/runtime (state machine boot|picker|playing|result|error)
 | Preact re-render cost | 10 Hz throttle, memoised segments |
 
 ## Open Questions
-- [OPEN] Ownership bar: building-level sum vs total troops incl. units; does neutral show? Verify against `BF/ref/tw-yt` frames in task 1.
+- [RESOLVED: building-level sum per non-neutral player, neutral not shown, units in flight not counted; verify vs ref frames in task 1] Ownership bar: building-level sum vs total troops incl. units; does neutral show? Verify against `BF/ref/tw-yt` frames in task 1.
 - [RESOLVED: S4 picker shows 1..20 (`position - 3`); `position` stays in data; save keyed by `levelId`]
-- [OPEN] Exact HUD slot positions/sizes and which sprite per slot (positions in RectTransforms not exported). Verify against `BF/ref/tw-yt` frames in task 1.
-- [OPEN] TW UI font (not extracted); verify against `BF/ref/tw-yt` frames in task 1; fallback = bundled OFL display font, self-hosted.
-- [OPEN] Mouse drag delay value and eraser enter/exit UX after feel test.
+- [RESOLVED: derive positions from ref frames, adapted to landscape, in task 1] Exact HUD slot positions/sizes and which sprite per slot (positions in RectTransforms not exported). Verify against `BF/ref/tw-yt` frames in task 1.
+- [RESOLVED: fallback bundled self-hosted OFL display font] TW UI font (not extracted); verify against `BF/ref/tw-yt` frames in task 1; fallback = bundled OFL display font, self-hosted.
+- [RESOLVED: touch 0.2 s, mouse instant; eraser UX as designed; retune during owner feel pass (owner step)] Mouse drag delay value and eraser enter/exit UX after feel test.
 - [RESOLVED: `canDraw` returns `code|null` only; blocker point via `sim.explainDraw` (04)]
 - [RESOLVED: shapes per 03 R7; boosters (bomb/speed) out of scope — [RESOLVED: owner — boosters deferred], HUD has no booster buttons/ring/label]
-- [OPEN] Keep `quality` setting for perf on weak GPUs (07 perf result).
+- [RESOLVED: drop unless 07 perf result shows need; decided at 08 implementation] Keep `quality` setting for perf on weak GPUs (07 perf result).
 - [DEFERRED] Emotes, level-start preview, touch layout, pause menu.
 - [RESOLVED: D1] rotation location.
 - [RESOLVED: B1 08 R3/R6/R7 rewritten from 03 R7; boosters removed]

@@ -137,14 +137,14 @@ This table = 02 R7 (single contract). Stage thresholds 10/30 are content data (`
 | Private-repo art committed | licence block in CREDITS; repo stays private [RESOLVED: owner] |
 
 ## Open Questions
-- [OPEN] Is "default skin" = skin id 1 per type (John Doe, T-72)? Verify via `WarriorSkinSettings.defaultWarriorSkinsData` pids 2404/2394/2415 (MB, not hierarchy) in Task 1.
-- [OPEN] Env 0 prefab/mesh/material mapping: `EnvironmentData.environmentPrefab` is an Addressables GUID (`6a009fe9...` Green, `eac05a39...` Snow); `catalog.bin` unparsed [verified: 01#9]. **Time-boxed to one task (S3).** Fallback (named ground mesh + `MilitaryGroundTexture`, scaled/tiled to `view.bounds` + margin so rotated landscape bounds never show void) is taken if the box expires; outcome recorded in `validation.md`.
+- [RESOLVED: verify in Task 1; fallback skin id 1 per type] Is "default skin" = skin id 1 per type (John Doe, T-72)? Verify via `WarriorSkinSettings.defaultWarriorSkinsData` pids 2404/2394/2415 (MB, not hierarchy) in Task 1.
+- [RESOLVED: time-boxed one task with the stated fallback] Env 0 prefab/mesh/material mapping: `EnvironmentData.environmentPrefab` is an Addressables GUID (`6a009fe9...` Green, `eac05a39...` Snow); `catalog.bin` unparsed [verified: 01#9]. **Time-boxed to one task (S3).** Fallback (named ground mesh + `MilitaryGroundTexture`, scaled/tiled to `view.bounds` + margin so rotated landscape bounds never show void) is taken if the box expires; outcome recorded in `validation.md`.
 - [RESOLVED: N1 env boundary: positions 4-20 green, 21-23 snow (`levelIndex = pos-1`); 05 `ENV_SHIFT` is the only knob]
 - [RESOLVED: B3 handedness: assets RAW, 08 owns the single mirror at `worldRoot`, per 02 Frame contract]
-- [OPEN] Which `Obstacle.prefab` children are small vs big and their local scale; `S[]` inactive flags (20% inactive) respected.
-- [OPEN] Unity colour space (gamma vs linear) for lighting parity. Verify against `BF/ref/tw-yt` frames in task 1.
-- [OPEN] Level-number font/outline and stage-transition ring colour; lane texture/material of `WayBaseStandard`. Verify against `BF/ref/tw-yt` frames in task 1.
-- [OPEN] Exact tank turret part (rotating vs static) in `1_BaseAttackSkin`. Verify against `BF/ref/tw-yt` frames in task 1.
+- [RESOLVED: read from prefab dump in a 07 task (same UnityPy dump as 05 Task 0); respect `S[]` inactive flags] Which `Obstacle.prefab` children are small vs big and their local scale; `S[]` inactive flags (20% inactive) respected.
+- [RESOLVED: verify vs BF/ref/tw-yt frames in task 1, pick closest match, record in validation.md] Unity colour space (gamma vs linear) for lighting parity. Verify against `BF/ref/tw-yt` frames in task 1.
+- [RESOLVED: verify vs BF/ref/tw-yt frames in task 1, pick closest match, record in validation.md] Level-number font/outline and stage-transition ring colour; lane texture/material of `WayBaseStandard`. Verify against `BF/ref/tw-yt` frames in task 1.
+- [RESOLVED: verify vs BF/ref/tw-yt frames in task 1, pick closest match, record in validation.md] Exact tank turret part (rotating vs static) in `1_BaseAttackSkin`. Verify against `BF/ref/tw-yt` frames in task 1.
 - [DEFERRED] Other skins, artillery, rocket tower, river, walls, mines art.
 - [RESOLVED: JS port] importer language (D1).
 

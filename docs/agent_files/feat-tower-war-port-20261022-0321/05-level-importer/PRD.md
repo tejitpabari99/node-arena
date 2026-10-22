@@ -153,7 +153,7 @@ Order of middle rows is a choice (06 §7.2 caveat). LEVELS_GUIDE §5 ships this 
 - Whoever lands levels runs `pnpm content:lock`, bumps `contentVersion` (CONTENT_GUIDE), updates the tracker snapshot (generated tracker is the post-20-levels follow-up).
 
 ## Docs: `docs/LEVELS_GUIDE.md` (outline, owned here)
-1. Pipeline map and what is committed vs local-only. 2. **Import more levels**: set `TW_EXTRACT`; `pnpm import:tw --range 24-43`; read blocked report; lock, bump, `check:import`, `validate:levels`. 3. **Add a feature to unlock levels**: pick next row by "Delta" in the tracker snapshot; define module/archetype (02 R9 "new behaviour" flow); add/fill `feature-map.json` row (`tw` field -> param mapping); re-run import. 4. **Hand-author an original level**: copy the golden, `id` prefix `na-`, omit `source`, set `theme`/`bounds`, owners, `bot` block, campaign entry; `requires` filled by tool [OPEN: needs 02 `validate:content --fix-requires`, optional `source`/`position`]. 5. Tracker (static snapshot + 20-level breakdown; also records deviations, e.g. collider fallback). 6. Fidelity ledger: dropped constructs per level, cargo, tutorial scripts. 7. Gotchas: rotation, human-not-first in `P`, `BD` order, inactive obstacle children, file-name hash suffix, long/v0 dialects.
+1. Pipeline map and what is committed vs local-only. 2. **Import more levels**: set `TW_EXTRACT`; `pnpm import:tw --range 24-43`; read blocked report; lock, bump, `check:import`, `validate:levels`. 3. **Add a feature to unlock levels**: pick next row by "Delta" in the tracker snapshot; define module/archetype (02 R9 "new behaviour" flow); add/fill `feature-map.json` row (`tw` field -> param mapping); re-run import. 4. **Hand-author an original level**: copy the golden, `id` prefix `na-`, omit `source`, set `theme`/`bounds`, owners, `bot` block, campaign entry; `requires` filled by tool [RESOLVED: `requires` filled manually until `--fix-requires` exists (DEFERRED, docs/FUTURES.md); LEVELS_GUIDE section 4 states this; optional `source`/`position` made available by 02]. 5. Tracker (static snapshot + 20-level breakdown; also records deviations, e.g. collider fallback). 6. Fidelity ledger: dropped constructs per level, cargo, tutorial scripts. 7. Gotchas: rotation, human-not-first in `P`, `BD` order, inactive obstacle children, file-name hash suffix, long/v0 dialects.
 
 ## Risks
 | Risk | Mitigation |
@@ -170,8 +170,8 @@ Order of middle rows is a choice (06 §7.2 caveat). LEVELS_GUIDE §5 ships this 
 - [RESOLVED: N3 golden `bounds`/serializer rule owned here (R3/R5), 02 imports the constant; B2 order sentence applied in 02 R4]
 - [RESOLVED: B7 obstacle `variant` and footprint sizes come from R0 `colliders.json` (fallback circle 450 + calibration); child index kept in id]
 - [RESOLVED: owner] Q2: drop wall in `100_ES` + cargo in all 20, logged in `source.dropped`.
-- [OPEN] 02: optional `source`/`position` for hand-authored levels; `--fix-requires`; optional campaign `loop`.
-- [OPEN] Whether `source.dropped` needs counts (strings today).
+- [RESOLVED: 02 makes `source`/`position` optional now; `--fix-requires` and campaign `loop` DEFERRED to docs/FUTURES.md] 02: optional `source`/`position` for hand-authored levels; `--fix-requires`; optional campaign `loop`.
+- [RESOLVED: string list, no counts] Whether `source.dropped` needs counts (strings today).
 - [DEFERRED] Levels 24+, long-dialect/v0, other families, packs, lazy loading beyond 02 R6.
 - [RESOLVED: D1] Importer input.
 

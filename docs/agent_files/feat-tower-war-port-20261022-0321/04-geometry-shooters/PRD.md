@@ -1,6 +1,6 @@
 ---
 status: draft
-summary: Geometry + shooters for the Tower War port - exact corridor blocking (obstacles, third buildings), swept lane-vs-lane crossing combat, the shooting tower (lane-space targeting, instakill, house hit), and one lane-interval primitive reused as the seam for walls/mines/rivers. Decomp-verified where cheap; unknowns left [OPEN].
+summary: Geometry + shooters for the Tower War port - exact corridor blocking (obstacles, third buildings), swept lane-vs-lane crossing combat, the shooting tower (lane-space targeting, instakill, house hit), and one lane-interval primitive reused as the seam for walls/mines/rivers. Decomp-verified where cheap; unknowns resolved by owner decisions.
 date: 2026-10-22
 ---
 # PRD: Geometry + shooters (SP04)
@@ -35,14 +35,14 @@ Does not own: rule text (01; amendment requests below), schemas/loader (02), sim
 | Building footprint size | `Building` box 1.5 x 1.5 (scale 1, no yaw in level data: buildings have no rotation key) -> AABB half 750 milli | prefab scales 1.0; 1.5 from 03#5.5 prefab data (BoxCollider sizes not re-exported here) | medium (size), high (identity) |
 | AI path agrees | `CheckCreateWayCondition`: `BoxCastAll(start WayPosition, halfExtents boxHalfSize 0.19/0.3/0.19, dir, mask building+obstacle)`; hit not on building layer -> false; building hit whose parent is neither start nor target -> false | `AiPlayerController/CheckCreateWayCondition.c` | high |
 | Corridor half-width | 0.19 (box 0.38 wide) | `boxHalfSize`; `PathPhysics._defaultSize (0.38,1,0.30)` | high |
-| Obstacle collider size | Per child `BoxCollider` on layer 10 with child local scale 0.6-1.19 (sample prefab); **box sizes not exported**; level data gives child positions + yaw only | `Obstacle` hierarchy, `prefab_parts_assets.json`, 02-levels 3.6 | **unknown** -> [OPEN] |
+| Obstacle collider size | Per child `BoxCollider` on layer 10 with child local scale 0.6-1.19 (sample prefab); **box sizes not exported**; level data gives child positions + yaw only | `Obstacle` hierarchy, `prefab_parts_assets.json`, 02-levels 3.6 | **unknown** -> [RESOLVED: sizes read from 05 Task 0 UnityPy collider dump (`tools/src/import-tw/prefab/colliders.json`); 04 writes values into content in a single commit + content bump; fallback if dump fails within a day = circle 450 + calibration vs refs, logged as known deviation in LEVELS_GUIDE; 02 overlap warning becomes error once sizes are written] |
 | Tower order troops vs houses | `_canAttackTypes` pre-populated dictionary [98 Warrior, 10 Trolley, 0 House]; `AddTarget` uses `get_Item` (key must pre-exist) so iteration order is fixed config order; `Update` sorts each non-empty group by distance and stops at the first group that fires | `Tower/Update.c`, `DetectAndGroupedDamageableTrigger/AddTarget.c` | medium-high |
 | Troop filter | `minRadius` skip is centre distance `<= minRadius` (field +0x124 = 1.0); target must pass `CheckIfAvailableToDoDamage(owner)` = hp>0 and owner != tower owner | `Tower/TryAttackWarrior.c`, `WarriorBase/CheckIfAvailableToDoDamage.c` | high |
 | House filter | `Building.CheckIfAvailableToDoDamage`: not destroyed, **level >= 1**, owner != attacker. Only `House`/`TrolleyBuilding` class instances are shot (type-hierarchy test): **towers are not targets**. Neutral-owner skip lives in a lambda (`TryAttackSelectableHouses_b__32_x`) that is not decompiled; [RESOLVED: owner — towers hit neutral houses] | `Building/CheckIfAvailableToDoDamage.c`, `Tower/TryAttackSelectableHouses.c` | medium; neutral part settled by owner |
 | Neutral towers fire? | **No owner gate** found in `Update`/`TryAttackWarrior`/`OnLevelStateChanged` (owner type only toggles the radius indicator GameObject). Code reading says a neutral tower shoots every non-neutral troop. Contradicted SP01 "inert" (basis: tutorial text only); owner confirmed the code reading. L4 (`LevelView 1`) has a neutral level-5 tower | same files + `campaign_rows.json` | code 70%; owner confirmed fire -> [RESOLVED: owner — neutral towers fire] |
 | Cooldown | `_canAttack=false`, `WaitForSeconds(curAttackDelay)` then true; first ready = one delay after level start; `curAttackDelay` read at shot time; not reset by `SetNewOwner`/level change; ready tower with no target waits ready | `Tower/{Update,StartObserveEnemy,OnLevelStateChanged,CalculateAttackDelay,SetNewOwner}.c` | high |
 | Delay formula | `1.75*60/(2.0*L+60)` s, L=1 -> 1.69 s = 33,870 mt; SP01 TWR-01 integer form matches | `CalculateAttackDelay.c` | high |
-| Detection range | Trigger sphere (`TowerRadius`, r=2.4 x scale) overlaps target colliders: effective reach = radius + body (troop sphere 0.35). No further upper-bound test | `TryAttackWarrior.c` (only lower bound), prefab | medium -> [OPEN] |
+| Detection range | Trigger sphere (`TowerRadius`, r=2.4 x scale) overlaps target colliders: effective reach = radius + body (troop sphere 0.35). No further upper-bound test | `TryAttackWarrior.c` (only lower bound), prefab | medium -> [RESOLVED: reach = 2.4 x scale trigger radius + troop body 0.35, no further upper bound] |
 | Unit-vs-unit contact | Body spheres r 0.35 each -> centre distance 0.7 = `balance.contactDistance` | 03#14 prefab | high |
 | Tower hits house | `TryDoDamageFromProjectile`: `level = max(0, level-1)`, never captures (03#5.3) | research | high |
 
@@ -94,7 +94,7 @@ Derived caches never enter the hash; state hashed = `shoots.cooldown` + troop co
 |---|---|---|---|---|
 | 1 | Blocking timing | Precompute pair matrix at `create` | Test per `canDraw` | Geometry is static; bots call `canDraw` often; exact BigInt cost is paid once |
 | 2 | Corridor shape | Exact oriented-rect vs AABB/circle SAT | Inflate-and-segment approximation | Must match BoxCast oracle; approximation over-blocks corners |
-| 3 | `canDraw` signature | Unchanged `code\|null`; add `explainDraw` | Return object, or `blockPoint` in `canDraw` | Bots/06 stay trivial; resolves 08 [OPEN] |
+| 3 | `canDraw` signature | Unchanged `code\|null`; add `explainDraw` | Return object, or `blockPoint` in `canDraw` | Bots/06 stay trivial; resolves 08 open item |
 | 4 | Crossing model | Quadratic interaction windows | Intersection point only | Intersection-only misses near-parallel lanes inside 0.7; same cost class |
 | 5 | Contact test | Exact swept-in-tick, BigInt narrow phase | Per-tick position check | Tank closing 0.75/tick > 0.7 tunnels (01 risk); matches oracle |
 | 6 | Crossing order | Pair `(keyA,keyB)`, then `(seqA,seqB)`; survivors continue | Contact-time sort inside tick | Total order, cheap; matches 01 CMB-04 |
@@ -122,7 +122,7 @@ Derived caches never enter the hash; state hashed = `shoots.cooldown` + troop co
 - [RESOLVED: detection range = radius + troop body; `troopPad` default 350 (decomp-trusted), content flag; 01 TWR-02 carries it]
 - [RESOLVED: owner — towers hit neutral houses] Tower vs neutral houses: `hitsNeutralHouses` default true.
 - [RESOLVED: Building box size comes from 05 Task 0 `colliders.json` (Building collider); 1.5 is the placeholder until then]
-- [OPEN] Fidelity of endpoint contacts (attacker vs spawn at defender) and arrival at centre vs `Hit` box; shared with 03 arrival semantics.
+- [RESOLVED: troop arrives/contacts when it touches the target's `Hit` box (0.6), not at centre; applies to attacker-vs-spawn contacts too; shared with 03 arrival semantics]
 - [RESOLVED: troops before houses; basis fixed `_canAttackTypes` dictionary order]
 - [RESOLVED: towers are not tower targets; basis House/Trolley class test (medium)]
 - [RESOLVED: Building box is the sole line-blocking collider; endpoints exempt, obstacles never exempt]
