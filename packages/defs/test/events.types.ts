@@ -1,5 +1,5 @@
 // Type test (checked by tsconfig.check.json via `pnpm typecheck:defs`): consumers may emit/read only R7 fields.
-import type { EventId, EventOf, SimEvent } from '../src/index.js';
+import type { CommandId, EventId, EventOf, RejectReason, SimEvent } from '../src/index.js';
 
 type Equal<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 const assertType = <_T extends true>(): void => {};
@@ -15,6 +15,8 @@ assertType<Equal<EventOf<'Clash'>['kind'], 'headon' | 'crossing'>>();
 assertType<Equal<EventOf<'Clash'>['a'], { channel: number; seq: number; owner: number }>>();
 assertType<Equal<EventOf<'TroopDied'>['cause'], 'clash' | 'capture' | 'tower'>>();
 assertType<Equal<EventOf<'TowerShot'>['target']['kind'], 'troop' | 'house'>>();
+assertType<Equal<EventOf<'CommandRejected'>['command'], CommandId>>();
+assertType<Equal<EventOf<'CommandRejected'>['reason'], RejectReason>>();
 assertType<Equal<SimEvent['type'], EventId>>();
 assertType<Equal<EventId, 'LineDrawn' | 'LineCut' | 'TroopSpawned' | 'TroopArrived' | 'BuildingCaptured' | 'MatchOver' | 'CommandRejected' | 'Clash' | 'TroopDied' | 'TowerShot'>>();
 

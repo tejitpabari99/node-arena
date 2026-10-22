@@ -118,3 +118,11 @@ test('binding map: missing module impl is a compile error (checked by tsc)', () 
 test('FX_KINDS equals the 07 art-pipeline contract values', () => {
   assert.deepEqual([...VISUAL.FX_KINDS], ['sprite-burst', 'ring', 'beam']);
 });
+
+test('CommandRejected payload only accepts COMMANDS ids and reject reasons', () => {
+  const ok = { player: 0, command: 'DrawLine', reason: 'no-slot' };
+  assert.equal(Value.Check(EVENTS.CommandRejected.payload, ok), true);
+  assert.equal(Value.Check(EVENTS.CommandRejected.payload, { ...ok, command: 'Nope' }), false);
+  assert.equal(Value.Check(EVENTS.CommandRejected.payload, { ...ok, reason: 'because' }), false);
+  for (const c of Object.values(COMMANDS)) for (const reason of c.rejectReasons) assert.equal(Value.Check(EVENTS.CommandRejected.payload, { player: 0, command: c.id, reason }), true, reason);
+});

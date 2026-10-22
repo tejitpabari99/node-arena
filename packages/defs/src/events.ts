@@ -1,9 +1,14 @@
 import Type, { type Static } from 'typebox';
+import { COMMANDS, type CommandId, type RejectReason } from './commands.js';
 
 const int = () => Type.Integer({ minimum: -2147483647, maximum: 2147483647 });
 const idx = () => Type.Integer({ minimum: 0, maximum: 2147483647 });
 /** Milli-int world coordinate. */
 const milli = int;
+
+/** Closed sets derived from COMMANDS (command ids; union of every command's reject reasons). */
+const commandId = () => Type.Unsafe<CommandId>(Type.Enum(Object.keys(COMMANDS)));
+const rejectReason = () => Type.Unsafe<RejectReason>(Type.Enum([...new Set(Object.values(COMMANDS).flatMap((c) => c.rejectReasons as readonly string[]))]));
 
 const ref = () => Type.Object({ channel: idx(), seq: idx(), owner: int() }, { additionalProperties: false });
 
@@ -18,7 +23,7 @@ export const EVENTS = {
   TroopArrived: { id: 'TroopArrived', payload: Type.Object({ channel: idx(), seq: idx(), owner: int(), kind: Type.String(), effect: Type.Union([Type.Literal('reinforce'), Type.Literal('overflow'), Type.Literal('hit')]) }, { additionalProperties: false }) },
   BuildingCaptured: { id: 'BuildingCaptured', payload: Type.Object({ building: idx(), from: int(), to: int(), cause: Type.Optional(Type.String()) }, { additionalProperties: false }) },
   MatchOver: { id: 'MatchOver', payload: Type.Object({ outcome: Type.Union([Type.Literal('won'), Type.Literal('lost'), Type.Literal('timeout')]), winner: Type.Union([idx(), Type.Null()]) }, { additionalProperties: false }) },
-  CommandRejected: { id: 'CommandRejected', payload: Type.Object({ player: idx(), command: Type.String(), reason: Type.String() }, { additionalProperties: false }) },
+  CommandRejected: { id: 'CommandRejected', payload: Type.Object({ player: idx(), command: commandId(), reason: rejectReason() }, { additionalProperties: false }) },
   Clash: { id: 'Clash', payload: Type.Object({ kind: Type.Union([Type.Literal('headon'), Type.Literal('crossing')]), a: ref(), b: ref(), x: milli(), z: milli() }, { additionalProperties: false }) },
   TroopDied: { id: 'TroopDied', payload: Type.Object({ channel: idx(), seq: idx(), owner: int(), kind: Type.String(), cause: Type.Union([Type.Literal('clash'), Type.Literal('capture'), Type.Literal('tower')]), x: milli(), z: milli() }, { additionalProperties: false }) },
   TowerShot: {
