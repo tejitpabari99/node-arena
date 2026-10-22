@@ -36,7 +36,6 @@
     "validate:levels": "tsx tools/src/cli.ts validate:levels",
     "bench:bots": "pnpm --filter @node-arena/bots bench",
     "bots:golden": "pnpm --filter @node-arena/bots golden",
-    "bots:churn": "pnpm --filter @node-arena/bots bots:churn",
     "balance": "tsx tools/src/cli.ts balance",
     "build:defs": "pnpm --filter @node-arena/defs build",
     "build:content": "pnpm --filter @node-arena/content build",

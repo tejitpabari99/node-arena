@@ -1,6 +1,6 @@
 import type { CompiledLevel } from '@node-arena/content';
 import type { Command, Sim, SimView } from '@node-arena/sim';
-import { guardBotContext, createBotDriver, createProfileBot, runMatch, type MatchResult, type BotDriver, type Bot, type BotContext } from '../src/index.js';
+import { guardBotContext, createBotDriver, runMatch, type MatchResult, type BotDriver, type Bot, type BotContext } from '../src/index.js';
 
 declare const sim: Sim;
 declare const level: CompiledLevel;
@@ -27,8 +27,7 @@ void document;
 // @ts-expect-error Node globals are unavailable in the core contract.
 void process;
 
-const proxy: Bot = createProfileBot(level, 42, 'p0', level.bots[0]!.profile);
-const match: MatchResult = runMatch({ level, seed: 42, controllers: [proxy, {
+const match: MatchResult = runMatch({ level, seed: 42, controllers: [bot, {
   player: 'p1', commands: [{ tick: 0, cmd: { type: 'DrawLine', player: 'p1', from: 'a', to: 'b' } }],
 }], record: { rulesVersion: '1.0.0', schemaVersion: '1.0.0', contentVersion: '1.0.0' } });
 if (match.outcome.outcome === 'truncated') {
