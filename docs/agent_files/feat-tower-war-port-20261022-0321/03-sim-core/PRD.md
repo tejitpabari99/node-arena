@@ -86,7 +86,7 @@ Closed union (types come from `defs` COMMANDS; 03 supplies reasons/semantics):
 
 ### R5 Timers (TCK-06 verbatim; SPN, GRW)
 Per eligible tick `timer += 1000`; if `timer >= period(now)` then `timer -= period`, act once. Pure fns in `timers.ts`: `spawnPeriodMt(L, n, ws_m, cwc_m)`, `growPeriodMt(L, gl_m, base)`, clamped `>= 1000`, all intermediates `< 2^53` (mulDiv).
-- Spawn eligible: line drawn, owner non-neutral. Fire -> troop of the house's type at progress 0 on that line, `alive++`, skipped (timer still consumed) if `alive >= aliveCap`. New line starts at timer 0.
+- Spawn eligible: line drawn, owner non-neutral. Fire -> troop of the house's type at progress 0 on that line, `alive++`, skipped (timer still consumed) if `alive >= aliveCap`. New line starts at timer 0 when drawn; the draw tick already accrues 1000 (phase 4 runs after phase 1 in the same tick).
 - Growth eligible: owner non-neutral, `lines == 0`, building has `grows`. Fire: `level = min(level+1, maxLevel)`. Not advanced while lines exist (kept), reset on fire/capture. At max level it still ticks (no effect; matches 01).
 - Mid-interval change (line add/remove) uses the new period against the carried timer (documented TW behaviour).
 

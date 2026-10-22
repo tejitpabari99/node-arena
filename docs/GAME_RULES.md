@@ -54,7 +54,7 @@ Authored fixed-point fields have at most three decimal places and compile at `nu
 
 ### R-TCK-03
 
-Iteration orders are explicit and are the only tie-breaks. Players iterate by ascending index; buildings by ascending dense index (stable id order); lines by source building index, then target building index; commands by player index, then submission order; troops in a line in FIFO order, each with a global sequence number `seq` assigned at departure in departure order. Named random streams are `stream(seed, purposeId, entityIdx)` derived from Sfc32 with the replay `seed`; the only sim stream is `fwd` (one stream per building, R-CAP-03). Bot streams `bot.*` are reserved for bots and live outside sim state. A bounded draw uses rejection sampling and is unbiased. Draws happen only in fixed phases (§4) in ascending index order, so a replay consumes identical draws.
+Iteration orders are explicit and are the only tie-breaks. A line's `channelKey` is `from × n + to` for building count `n` (the ordered pair, dense building indices); for a pair of opposite lines or any two lines in a contact, **A is the one with the lower `channelKey`**. Players iterate by ascending index; buildings by ascending dense index (stable id order); lines by source building index, then target building index; commands by player index, then submission order; troops in a line in FIFO order, each with a global sequence number `seq` assigned at departure in departure order. Named random streams are `stream(seed, purposeId, entityIdx)` derived from Sfc32 with the replay `seed`; the only sim stream is `fwd` (one stream per building, R-CAP-03). Bot streams `bot.*` are reserved for bots and live outside sim state. A bounded draw uses rejection sampling and is unbiased. Draws happen only in fixed phases (§4) in ascending index order, so a replay consumes identical draws.
 
 *Source:* 06 §1 F1.
 
@@ -96,7 +96,7 @@ Each tick follows the nine-phase order in §4. Capture happens inline during the
 
 Timers count in milli-ticks and are translated from TW float timers as follows. Each eligible tick `timer += 1000`; the timer fires when `timer >= period(tick)`; on fire `timer -= period`, so the remainder carries; a timer fires at most once per tick; `period` is clamped to at least `1000`. `period` is recomputed every tick from current integer inputs using floor division, multiply before divide, with intermediates below 2^53. Because the timer is compared to the current period, a mid-interval change (a line added or removed, a level change) behaves as in TW (`timer >= SpawnWarriorTime`). Quantisation to tick edges delays an event by 25 ms on average and 50 ms at most and never accumulates (the remainder is carried to 1/1000 tick); independent timers resolve in the TCK-03 order instead of a float race.
 
-**Exemption (tower cooldown).** The tower cooldown (R-TWR-01, R-TWR-02) is not recomputed per tick. It is set once at the fire tick from the tower's current level, then counts down by `1000` per tick, floored at 0, and the tower is ready when it is `<= 0`. Level changes while cooling (growth, hit, capture) do not alter a running cooldown. Spawn and growth timers keep the per-tick recompute.
+**Exemption (tower cooldown).** The tower cooldown (R-TWR-01, R-TWR-02) is not recomputed per tick. It is set once at match start to `delayMt(L0)` with `L0` the tower's starting level (TW: the first shot is ready one delay after level start), then set again at each fire tick from the tower's current level, and counts down by `1000` per tick, floored at 0, and the tower is ready when it is `<= 0`. Level changes while cooling (growth, hit, capture) do not alter a running cooldown. Spawn and growth timers keep the per-tick recompute.
 
 *Source:* 06 §1 F7; 03#4.1 `UpdateSpawnTimer`; decomp `WaitForSeconds(curAttackDelay)`.
 
@@ -188,7 +188,7 @@ When a spawn timer fires, one troop of the house's `troopType` departs on that l
 
 *Source:* 03#4.2, 03#4.4.
 
-*Params:* `balance.spawn.aliveCap`, `troopType`.
+*Params:* `balance.spawn.aliveCap`, `spawns.troop`.
 
 *Examples:* E-SPAWN.
 
@@ -196,7 +196,7 @@ When a spawn timer fires, one troop of the house's `troopType` departs on that l
 
 ### R-SPN-03
 
-A new line starts with its timer at 0, so its first troop departs after a full period. A line's timer ceases when the line is cut, replaced or cancelled. Neutral buildings never spawn.
+A new line starts with its timer at 0 when drawn. Phase 4 runs after phase 1 in the same tick, so the draw tick already accrues `1000`; the first troop departs on the first tick whose accrued total (counting the draw tick) reaches the period. A line's timer ceases when the line is cut, replaced or cancelled. Neutral buildings never spawn.
 
 *Source:* 03#4.1.
 
@@ -392,7 +392,7 @@ An exchange reads both troops' `attack` first and applies both simultaneously; a
 
 ### R-CPT-01
 
-Capture (R-CMB-03) changes the building's owner to the arriver's owner and sets its level to 0. The old owner's outgoing lines are cancelled. **Every troop whose source is this building dies, including troops on cut lines and in flight.** The growth timer resets, `ignoreForWin` is cleared, and the new owner's timers start from 0. Neutral owners cannot capture.
+Capture (R-CMB-03) changes the building's owner to the arriver's owner and sets its level to 0. The old owner's outgoing lines are cancelled. **Every troop whose source is this building dies, including troops on cut lines and in flight.** The growth timer resets and `ignoreForWin` is cleared. Spawn timers need no reset: the old lines are cancelled, so a new owner's lines start at timer 0 when drawn (R-SPN-03). A tower's cooldown is **unchanged** by capture (R-TWR-04). Neutral owners cannot capture.
 
 *Source:* 03#5.3; decomp `House.SetNewOwner`.
 
@@ -424,7 +424,7 @@ A tower's attack radius depends on its stage and its attack delay depends on its
 
 `delay mt = idiv(speedUpByLevel_m × 1_200_000, attackDelay_m × L + 60000)`
 
-`stage` is R-GRW-02 at the tower's current level. The delay is evaluated once, at fire time (R-TCK-06 exemption).
+`stage` is R-GRW-02 at the tower's current level. The delay is evaluated at match start (starting level) and then once per shot, at fire time (R-TCK-06 exemption).
 
 *Source:* 03#5.5; decomp `Tower` (`coefficientSpeedByLevelUp`, `coefficientRadiusByLevelUp`).
 
@@ -460,7 +460,7 @@ A shot at a troop kills it regardless of hit points. A shot at a house lowers it
 
 ### R-TWR-04
 
-A tower's cooldown timer persists through capture. A neutral tower fires at every non-neutral owner's troops when `neutralFires` is true (the decomp has no owner gate on firing); the flag exists so that a change of behaviour is a content flag plus a content-version bump, not a rule change.
+A tower's cooldown timer persists through capture (neither reset nor recomputed). A neutral tower fires at every non-neutral owner's troops when `neutralFires` is true (the decomp has no owner gate on firing); the flag exists so that a change of behaviour is a content flag plus a content-version bump, not a rule change.
 
 *Source:* 03#5.5; decomp `Update` / `TryAttackWarrior` / `OnLevelStateChanged` (owner type only toggles the radius indicator).
 
@@ -472,7 +472,7 @@ A tower's cooldown timer persists through capture. A neutral tower fires at ever
 
 ### R-OBS-01
 
-A `DrawLine` is blocked when the segment from source centre to target centre, thickened by `laneHalfWidth` on each side, intersects an obstacle footprint or the footprint of any building other than the two endpoints. Touching is not overlap: tangent contact does not block. An obstacle that overlaps the segment blocks even at an endpoint; the endpoint buildings' own footprints never block. Footprints are `circle` or `box` shapes in archetype data.
+A `DrawLine` is blocked when the segment from source centre to target centre, thickened by `laneHalfWidth` on each side and extended along its axis by `laneHalfWidth` at each end, intersects an obstacle footprint or the footprint of any building other than the two endpoints. Touching is not overlap: tangent contact does not block. An obstacle that overlaps the segment blocks even at an endpoint; the endpoint buildings' own footprints never block. Footprints are `circle` or `box` shapes in archetype data.
 
 *Source:* 03#3.2 `CheckBlock`; 03#14.
 
@@ -568,7 +568,7 @@ R-TCK-05 fixes this order. Iteration and ties follow R-TCK-03 throughout. A read
 |---|---|---|---|---|
 | 1 | Commands | R-LIN-01..05, R-ENT-04 | Player index, then submission order. | Canonicalize, validate and atomically apply `DrawLine` / `CutLine`. A rejected command changes nothing. |
 | 2 | Reserved (unused) | — | — | Slot kept so phase numbers stay stable (formerly booster strikes, deferred, §6). Nothing runs. |
-| 3 | Growth | R-GRW-01, R-GRW-02, R-TCK-06 | Buildings by ascending index. | Advance growth timers of owned buildings with zero lines; fire raises level by one up to `maxLevel`. |
+| 3 | Growth | R-GRW-01, R-GRW-02, R-TCK-06 | Buildings by ascending index. | Advance growth timers of owned houses (those with `grows`; towers never grow) with zero lines; fire raises level by one up to `maxLevel`. |
 | 4 | Spawn / departures | R-SPN-01..03, R-TCK-06 | Buildings by index; within a building lines by target index. | Advance each line's spawn timer; fire departs one troop at progress 0 with the next `seq`, or skips under the alive cap. |
 | 5 | Movement | R-TCK-04 | None (analytic). | Evaluate every troop's progress for this tick; no state is mutated per troop. |
 | 6 | Contacts | R-CMB-01, R-CMB-04, R-CMB-05 | Head-on pass first, pairs by ascending ordered channel key; then crossing pass by ascending `(channelKeyA, channelKeyB)`, then `(seqA, seqB)`. | Resolve exchanges (R-CMB-05); dead troops are removed immediately; survivors may fight again in the same pass. |
@@ -589,7 +589,7 @@ Human players, scripted AI and bots submit the same commands, pass the same vali
 
 ### 4.2 Hash surface
 
-The state hash covers, in index order: per building owner, level, growth timer, `ignoreForWin` and tower cooldown; per line owner, endpoints, draw sequence and spawn timer; per troop owner, source building, type, line, progress, hit points and `seq`; and the state of every sim random stream. Presentation-only state (bullet flight, art stage) is not hashed.
+The state hash covers, in index order: per building owner, level, growth timer, `ignoreForWin` and tower cooldown (initialised to `delayMt(L0)` at match start, R-TWR-01); per line owner, endpoints, draw sequence and spawn timer; per troop owner, source building, type, line, progress, hit points and `seq`; and the state of every sim random stream. Presentation-only state (bullet flight, art stage) is not hashed.
 
 ## 5. Worked examples and edge cases
 
@@ -597,7 +597,7 @@ Examples assume the stated Tower War default values (§7). They illustrate rules
 
 **E-TICK — fixed-point motion.** Soldier `speed = 5.0` gives `speedMilli = 5000`. A line of length 10 world units has `dx = 10000`, `dy = 0`, so length `= isqrt((10000 × 20)²) = 200000` progress units. The troop advances `5000` per tick and arrives after `200000 / 5000 = 40` ticks (0.25 world units per tick). Rounding: `idiv(7, 2) = 3`, `isqrt(15) = 3`. Pause leaves tick and progress unchanged; running faster changes real duration only.
 
-**E-TIMER — carried remainder and mid-interval change.** A house at `L = 10` with one line has period `18461` mt (E-SPAWN). Each eligible tick adds `1000`: at tick 19 the timer is `19000 >= 18461`, fires, leaves `539`; the next fire is at tick 37 (`539 + 18000 = 18539`, leaves `78`), then tick 56 (the timer is `18078 < 18461` at tick 55 and `19078` at tick 56, leaving `617`). If a second line is added when the timer reads `10000`, the period becomes `24000` at once and the timer keeps its `10000`; it must reach `24000` before firing.
+**E-TIMER — carried remainder and mid-interval change.** A house at `L = 10` with one line has period `18461` mt (E-SPAWN). Each eligible tick adds `1000`: counting the tick on which the line is drawn as tick 1 (it already accrues, R-SPN-03), at tick 19 the timer is `19000 >= 18461`, fires, leaves `539`; the next fire is at tick 37 (`539 + 18000 = 18539`, leaves `78`), then tick 56 (the timer is `18078 < 18461` at tick 55 and `19078` at tick 56, leaving `617`). If a second line is added when the timer reads `10000`, the period becomes `24000` at once and the timer keeps its `10000`; it must reach `24000` before firing.
 
 **E-SPAWN — per-line period (R-SPN-01).** `ws = 0.5` (`spawnSpeed_m = 500`), `cwc = 0.3` (`lineSpawnPenalty_m = 300`). Soldier house, `L = 10`, one line: `K_m = 1000`; `period = idiv(1000 × 1_200_000, 500 × 10 + 60000) = idiv(1_200_000_000, 65000) = 18461` mt (0.92 s). Two lines: `K_m = 1300`; `idiv(1_560_000_000, 65000) = 24000` mt (1.20 s). `L = 64`, three lines: `K_m = 1600`; `idiv(1_920_000_000, 500 × 64 + 60000 = 92000) = 20869` mt (1.04 s). With `aliveCap` live troops from the house a fire is skipped and the timer is still reduced by the period; spawning never changes the house's level.
 
@@ -607,7 +607,7 @@ Examples assume the stated Tower War default values (§7). They illustrate rules
 
 **E-LINES — validation, replacement and crossings.** `p1` owns houses `a` and `b`, `p2` owns house `c`. `a→a` is rejected; `a→b` twice is rejected on the duplicate; a draw from a tower is rejected. `a→b` while `b→a` (also `p1`) exists replaces `b→a`; its troops continue. `a→c` while `c→a` exists keeps both lines (head-on, E-HEADON). Cutting `a→b` stops departures; troops already in flight arrive. Line crossings alone do nothing.
 
-**E-BLOCK — lane thickening and tangent contact.** A line from `(0, 0)` to `(10, 0)` with `laneHalfWidth_m = 190`. A circle footprint at `(5, 1)` radius `0.81` (`810`): `810 + 190 = 1000` equals the centre offset (1.0), so contact is tangent and the draw is allowed. Radius `0.82` gives `1010 > 1000`: blocked. An obstacle covering the source centre blocks the draw; the source and target buildings' own footprints never do.
+**E-BLOCK — lane thickening and tangent contact.** A line from `(0, 0)` to `(10, 0)` with `laneHalfWidth_m = 190` (corridor from `x = −0.19` to `10.19`). A circle footprint at `(5, 1)` radius `0.81` (`810`): `810 + 190 = 1000` equals the centre offset (1.0), so contact is tangent and the draw is allowed. Radius `0.82` gives `1010 > 1000`: blocked. An obstacle covering the source centre blocks the draw; the source and target buildings' own footprints never do.
 
 **E-OVERFLOW — surplus forwarded.** `maxLevel = 64`. A friendly tank (`defense = 1`) arrives at a house with `L = 64`: `64 + 1 = 65`, level stays `64`, surplus 1 (at `L = 63` there is no surplus: `63 + 1 = 64`). The house has two outgoing lines: one `fwd` draw below 2 picks the line, and one new tank departs there at progress 0. With no outgoing line, or at `aliveCap`, the surplus is lost and no draw is made. The forwarded troop is free.
 
@@ -648,37 +648,37 @@ These are future elements, not active rules and not registry entries. They have 
 
 ## 7. Parameter glossary
 
-One row per content key: the key rules name, its Tower War source, the rule ids that use it and the Tower War default. Defaults are not rule text; content owns the values. The first thirteen rows are the keys that the content schemas must match exactly (SP02 parity test).
+One row per content key: the key rules name, its Tower War source, the rule ids that use it and the Tower War default. Defaults are not rule text; content owns the values. Rows marked `yes` in the **Parity** column are the thirteen keys that the content schemas must match exactly (SP02 parity test, by key name, not by position).
 
-| Content key | TW source | Rule ids | TW default |
-|---|---|---|---|
-| `maxLevel` | `ml` | R-CAP-01, R-GRW-01 | 64 |
-| `spawnSpeed` | `ws` | R-SPN-01 | 0.5 |
-| `lineSpawnPenalty` | `cwc` | R-SPN-01 | 0.3 |
-| `growTime` | `gl` | R-GRW-01 | 1.7 |
-| `attackDelay` | `ad` | R-TWR-01 | 2.0 |
-| `attackRadius` | `ar` | R-TWR-01 | 1.6 |
-| `speedUpByLevel` | `supl` | R-TWR-01 | 1.75 |
-| `radiusUpByLevel` | `rupl` | R-TWR-01 | 0.9 |
-| `radiusUnit` | tower radius unit (decomp) | R-TWR-01 | 2.4 |
-| `minRadius` | tower min radius (decomp) | R-TWR-02 | 1.0 |
-| `neutralFires` | tower owner gate (absent in decomp) | R-TWR-02, R-TWR-04 | true |
-| `troopPad` | troop body radius added to trigger reach (milli) | R-TWR-02 | 350 |
-| `hitsNeutralHouses` | tower house-target filter | R-TWR-02 | true |
-| `stageThresholds` | art/slot stages 10 / 30 (not serialized; 03#3.2) | R-GRW-02, R-LIN-02, R-TWR-01 | [10, 30] |
-| `balance.spawn.aliveCap` | alive soldier cap per house (03#4.2) | R-SPN-02, R-CAP-03 | 30 |
-| `balance.growth.base` | growth base constant 0.9 (03#4.6) | R-GRW-01 | 0.9 |
-| `balance.contactDistance` | 2 × body sphere radius (03#14) | R-CMB-01, R-CMB-04 | 0.7 |
-| `troopType` | house archetype warrior type | R-SPN-02 | soldier |
-| `units.*.hp` | flat unit hit points (03#2.3) | R-ENT-02, R-CMB-05 | soldier 1, tank 2 |
-| `units.*.attack` | flat unit damage | R-ENT-02, R-CMB-03, R-CMB-05 | soldier 1, tank 2 |
-| `units.*.defense` | flat unit level gain | R-ENT-02, R-CAP-01 | soldier 1, tank 1 |
-| `units.*.speed` | warrior speed (03#4.5) | R-TCK-04, R-ENT-02 | 5.0 |
-| `laneHalfWidth` | line half-width for blocking (03#3.2) | R-OBS-01 | 0.19 |
-| `ignoreForWin` | `cbi` (canBeIgnored) | R-WIN-01, R-WIN-02, R-CPT-01 | false |
-| `timeLimitSec` | none (TW has no limit) | R-WIN-03 | absent |
-| `numericScale` | rules constant | R-TCK-02 | 1000 |
-| `buildings.*` | house / tower archetype (`l` start level, `ml`) | R-ENT-01 | per level |
+| Content key | TW source | Rule ids | TW default | Parity |
+|---|---|---|---|---|
+| `maxLevel` | `ml` | R-CAP-01, R-GRW-01 | 64 | yes |
+| `spawnSpeed` | `ws` | R-SPN-01 | 0.5 | yes |
+| `lineSpawnPenalty` | `cwc` | R-SPN-01 | 0.3 | yes |
+| `growTime` | `gl` | R-GRW-01 | 1.7 | yes |
+| `attackDelay` | `ad` | R-TWR-01 | 2.0 | yes |
+| `attackRadius` | `ar` | R-TWR-01 | 1.6 | yes |
+| `speedUpByLevel` | `supl` | R-TWR-01 | 1.75 | yes |
+| `radiusUpByLevel` | `rupl` | R-TWR-01 | 0.9 | yes |
+| `radiusUnit` | tower radius unit (decomp) | R-TWR-01 | 2.4 | yes |
+| `minRadius` | tower min radius (decomp) | R-TWR-02 | 1.0 | yes |
+| `neutralFires` | tower owner gate (absent in decomp) | R-TWR-02, R-TWR-04 | true | yes |
+| `troopPad` | troop body radius added to trigger reach (milli) | R-TWR-02 | 350 | yes |
+| `hitsNeutralHouses` | tower house-target filter | R-TWR-02 | true | yes |
+| `stageThresholds` | art/slot stages 10 / 30 (not serialized; 03#3.2) | R-GRW-02, R-LIN-02, R-TWR-01 | [10, 30] | |
+| `balance.spawn.aliveCap` | alive soldier cap per house (03#4.2) | R-SPN-02, R-CAP-03 | 30 | |
+| `balance.growth.base` | growth base constant 0.9 (03#4.6) | R-GRW-01 | 0.9 | |
+| `balance.contactDistance` | 2 × body sphere radius (03#14) | R-CMB-01, R-CMB-04 | 0.7 | |
+| `spawns.troop` | house archetype warrior type (unit id) | R-SPN-02 | soldier | |
+| `units.*.hp` | flat unit hit points (03#2.3) | R-ENT-02, R-CMB-05 | soldier 1, tank 2 | |
+| `units.*.attack` | flat unit damage | R-ENT-02, R-CMB-03, R-CMB-05 | soldier 1, tank 2 | |
+| `units.*.defense` | flat unit level gain | R-ENT-02, R-CAP-01 | soldier 1, tank 1 | |
+| `units.*.speed` | warrior speed (03#4.5) | R-TCK-04, R-ENT-02 | 5.0 | |
+| `laneHalfWidth` | line half-width for blocking (03#3.2) | R-OBS-01 | 0.19 | |
+| `ignoreForWin` | `cbi` (canBeIgnored) | R-WIN-01, R-WIN-02, R-CPT-01 | false | |
+| `timeLimitSec` | none (TW has no limit) | R-WIN-03 | absent | |
+| `numericScale` | rules constant | R-TCK-02 | 1000 | |
+| `buildings.*` | house / tower archetype (`l` start level, `ml`) | R-ENT-01 | per level | |
 
 `sc` (TW spawn coefficient, speed booster only) and all other TW level keys not listed here are not consumed in 2.0.0 (R11 deferred boosters, §6). Bullet speed and other visuals are presentation only.
 
