@@ -4,7 +4,7 @@ const { spawnSync } = require('node:child_process');
 const path = require('node:path');
 
 // Catches a missing command, missing/stale baseline, or Node hash drift.
-test('sim:golden checks committed recorder-based golden replays', { skip: 'baseline re-authored by SP03 (parked)' }, () => {
+test('sim:golden checks committed recorder-based golden replays', () => {
   const result = spawnSync('pnpm', ['sim:golden'], { cwd: path.resolve(__dirname, '../../..'), encoding: 'utf8' });
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /golden replays verified/);
@@ -14,7 +14,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
 const { assertVersionBump, gitBaseline, updateFile } = require('../scripts/golden.cjs');
-// v1 baseline.json died at CUT; SP03 re-authors scenarios/baseline. The version-bump guard is tested on an inline fixture.
+// The version-bump guard is tested on an inline fixture, independent of the committed baseline.
 const baseline = {
   format: 1,
   metadata: { rulesVersion: '2.0.0', schemaVersion: '2.0.0', contentVersion: '2.0.0' },
@@ -72,6 +72,41 @@ test('git baseline prevents deletion/bootstrap bypass, and refused writes preser
     assert.deepEqual(JSON.parse(fs.readFileSync(file, 'utf8')), next);
     assert.throws(() => gitBaseline(root, 'no-such-ref', 'baseline.json'));
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+// Sim browser parity (restored from the CUT deletion; 02 review 2026-10-22 G): the same scenarios run in real
+// Chromium (Vite-built bundle, no Node globals) must equal the Node run and the committed baseline exactly.
+test('Node and Chromium golden hashes, full event logs and playback records agree exactly', { timeout: 120000 }, async () => {
+  require('tsx/cjs');
+  const { chromium } = await import('playwright');
+  const { build, preview } = await import('vite');
+  const { runGoldens } = require('./golden/run.ts');
+  const { allScenarios } = require('./golden/all.ts');
+  const baseline = JSON.parse(fs.readFileSync(path.join(__dirname, 'golden/baseline.json'), 'utf8'));
+  const metadata = JSON.parse(fs.readFileSync(path.join(__dirname, '../../content/content.json'), 'utf8'));
+  const browserRoot = path.join(__dirname, 'golden/browser');
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sim-golden-browser-'));
+  try {
+    await build({ configFile: false, root: browserRoot, logLevel: 'silent', build: { outDir, emptyOutDir: true } });
+    const server = await preview({ configFile: false, root: browserRoot, logLevel: 'silent', build: { outDir }, preview: { host: '127.0.0.1', port: 0 } });
+    try {
+      const browser = await chromium.launch({ headless: true });
+      try {
+        const page = await browser.newPage(), errors = [];
+        page.on('pageerror', error => errors.push(error.message));
+        page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+        assert.ok(server.resolvedUrls?.local[0]);
+        await page.goto(server.resolvedUrls.local[0]);
+        await page.waitForFunction(() => document.querySelector('#result')?.textContent, null, { timeout: 30000 });
+        assert.deepEqual(errors, []);
+        const actual = JSON.parse(await page.locator('#result').innerText());
+        assert.deepEqual(actual.nodeGlobals, ['undefined', 'undefined', 'undefined']);
+        assert.deepEqual(actual.results, runGoldens(metadata, allScenarios));
+        assert.deepEqual(actual.results.map(({ events, ...r }) => r), baseline.results);
+        assert.deepEqual(actual.played, baseline.results.map(r => ({ name: r.name, ok: true, finalHash: r.replay.finalHash })));
+      } finally { await browser.close(); }
+    } finally { await server.close(); }
+  } finally { fs.rmSync(outDir, { recursive: true, force: true }); }
 });
 
 test('VERSION_GUARD_BASE must be a valid commit (option-like refs are rejected)', () => {

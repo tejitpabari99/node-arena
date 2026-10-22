@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 require('tsx/cjs');
-const { scenarios } = require('../test/golden/scenarios.ts');
+const { allScenarios } = require('../test/golden/all.ts');
 const { runGoldens } = require('../test/golden/run.ts');
 const packageRoot = path.resolve(__dirname, '..');
 const repoRoot = path.resolve(packageRoot, '../..');
@@ -42,7 +42,7 @@ function gitBaseline(root, ref, file = relativeGolden) {
   }
 }
 function createBaseline(metadata) {
-  return { format: 1, metadata: versions(metadata), scenarios, results: runGoldens(metadata).map(({ events, ...result }) => result) };
+  return { format: 1, metadata: versions(metadata), scenarios: allScenarios, results: runGoldens(metadata, allScenarios).map(({ events, ...result }) => result) };
 }
 function updateFile(file, candidate, baselines) {
   for (const baseline of baselines) assertVersionBump(candidate, baseline);

@@ -1,7 +1,7 @@
 import type { SimEvent } from '@node-arena/defs';
 import { createReplayRecorder, playReplay, type ReplayMetadata, type ReplayRecord } from '../../src/index.js';
 import { WordHash } from '../../src/math.js';
-import { scenarios, type Scenario } from './scenarios.js';
+import type { Scenario } from './scenarios.js';
 export interface GoldenResult { name: string; replay: ReplayRecord; eventLogHash: string; events: SimEvent[] }
 export function eventLogHash(events: readonly SimEvent[]): string {
   const hash = new WordHash();
@@ -21,4 +21,5 @@ export function runScenario(scenario: Scenario, metadata: ReplayMetadata): Golde
   if (!played.ok) throw new Error(`Golden replay diverged: ${scenario.name} at ${played.divergingTick}`);
   return { name: scenario.name, replay, eventLogHash: eventLogHash(events), events };
 }
-export function runGoldens(metadata: ReplayMetadata): GoldenResult[] { return scenarios.map(s => runScenario(s, metadata)); }
+/** The runner takes the scenario list explicitly; `all.ts` is the single place that composes it. */
+export function runGoldens(metadata: ReplayMetadata, list: readonly Scenario[]): GoldenResult[] { return list.map(s => runScenario(s, metadata)); }

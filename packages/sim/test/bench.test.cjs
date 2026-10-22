@@ -16,3 +16,18 @@ test('performance budgets reject each breached metric and CI tolerates only 5x',
     assert.throws(() => bench.assertBudgets({ ...good, [metric]: NaN }), /budget/);
   }
 });
+
+test('stress fixture reaches and holds 720 live troops (24 houses x alive cap 30) with head-on lines', () => {
+  const stats = bench.runStress(1, 5);
+  assert.equal(stats.peakTroops, bench.STRESS_TROOPS);
+  assert.equal(bench.STRESS_TROOPS, 720);
+  const { level, commands } = bench.stressFixture(require('../test/golden/levels.ts'));
+  assert.equal(level.buildings.length, 24);
+  const lines = new Set(commands.map((c) => `${c.from}>${c.to}`));
+  assert.equal(lines.size, 72);
+  for (const c of commands) assert.ok(lines.has(`${c.to}>${c.from}`), 'every line has a hostile reverse line');
+});
+
+test('realistic fixture has 12 buildings', () => {
+  assert.equal(bench.realisticFixture(require('../test/golden/levels.ts')).level.buildings.length, 12);
+});

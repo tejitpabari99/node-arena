@@ -34,11 +34,9 @@ cd "$(dirname "$0")/.."
 # ---------------------------------------------------------------------------
 PARKED=(
   "check:rules:SP04"
-  "sim:golden:SP03"
   "replay:verify:SP03"
   "bots:golden:SP06"
   "validate:levels:SP06"
-  "test:sim:golden:SP03"
   "test:tools:replay:SP03"
   "test:tools:rules:SP04"
   "test:bots:golden:SP06"
@@ -49,7 +47,6 @@ PARKED=(
   "typecheck:web:SP08"
   "test:web:SP08"
   "check:manifest:SP07"
-  "bench:sim:SP03"
 )
 
 is_parked() { # prints owner and returns 0 when step $1 is parked
@@ -128,7 +125,8 @@ step validate:levels pnpm validate:levels --seeds 4 --base "$base"
 step replay:verify pnpm replay:verify golden
 step sim:golden pnpm sim:golden
 step bots:golden pnpm bots:golden
-step bench:sim pnpm bench:sim
+# PRD permits 5x the strict local budgets (0.3 / 1 / 0.5 ms) on shared CI runners.
+step bench:sim pnpm bench:sim --ci
 # PRD permits 5x the strict local 1 ms bot decision budget on shared CI runners.
 step bench:bots pnpm bench:bots --ci
 # Last step: lists the parked gates; fails on any only for release runs.
