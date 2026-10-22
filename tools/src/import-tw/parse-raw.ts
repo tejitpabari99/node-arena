@@ -111,7 +111,7 @@ function checkDialect(asset: string, d: Json): void {
 function buildingToExt(asset: string, b: Json, owner: number | null): TwBuilding {
   const bt = b['bt'];
   if (typeof bt !== 'number') fail(asset, `building id ${String(b['id'])}: missing numeric "bt"`);
-  const kind = BT_KIND[bt] ?? `bt${bt}`;
+  const kind = Object.hasOwn(BT_KIND, bt) ? BT_KIND[bt]! : `bt${bt}`;
   const used = new Set<string>(['key', 'bt']);
   const out: Record<string, unknown> = { owner, kind };
   for (const [sem, raw] of [['id', 'id'], ['style', 'lt'], ['pos', 'p']] as const) {
@@ -121,7 +121,7 @@ function buildingToExt(asset: string, b: Json, owner: number | null): TwBuilding
     }
   }
   const params: Record<string, unknown> = {};
-  for (const [sem, raw] of KIND_FIELDS[kind] ?? []) {
+  for (const [sem, raw] of (Object.hasOwn(KIND_FIELDS, kind) ? KIND_FIELDS[kind] : undefined) ?? []) {
     if (raw in b) {
       used.add(raw);
       params[sem] = VEC_FIELDS.has(sem) ? toVecAny(asset, `building.${raw}`, b[raw]) : b[raw];
@@ -169,7 +169,7 @@ export function rawToTwLevel(asset: string, doc: unknown): TwLevel {
   if (!isRecord(doc)) fail(asset, 'level JSON is not an object');
   checkDialect(asset, doc);
   const { family, number, author } = nameParts(asset);
-  const category = FAMILY_CATEGORY[family] ?? 'other';
+  const category = Object.hasOwn(FAMILY_CATEGORY, family) ? FAMILY_CATEGORY[family]! : 'other';
   if (category === 'boss') fail(asset, 'boss level (LevelViewBoss) is not supported: v1-short campaign levels only');
 
   const level: TwLevel = {

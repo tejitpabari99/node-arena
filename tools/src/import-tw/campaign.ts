@@ -43,3 +43,61 @@ export function campaignRange(entries: readonly CampaignEntry[], from: number, t
   if (out.length !== to - from + 1) throw new Error(`campaign range ${from}-${to}: list has only ${entries.length} entries`);
   return out;
 }
+
+// ---- committed campaign file (data/campaigns/common.json): merge, never rebuild --------------------------------
+
+/** A level whose id starts with this prefix is hand-authored: the importer never rewrites or removes its campaign entry. */
+export const HAND_AUTHORED_PREFIX = 'na-';
+export const isHandAuthored = (level: string): boolean => level.startsWith(HAND_AUTHORED_PREFIX);
+
+export interface CampaignFileEntry { level: string; position: number; [extra: string]: unknown }
+export interface CampaignDoc { entries: CampaignFileEntry[]; [extra: string]: unknown }
+
+/** Parse the committed common.json text (shape-checked; extra keys are preserved for the merge). */
+export function parseCampaignDoc(text: string, label = 'common.json'): CampaignDoc {
+  const doc: unknown = JSON.parse(text);
+  if (!isRecord(doc) || !Array.isArray(doc['entries'])) throw new Error(`${label}: "entries" array missing`);
+  const seen = new Set<number>();
+  doc['entries'].forEach((e: unknown, i) => {
+    if (!isRecord(e) || typeof e['level'] !== 'string' || !Number.isInteger(e['position'])) throw new Error(`${label}: entries[${i}] needs a string level and an integer position`);
+    if (seen.has(e['position'] as number)) throw new Error(`${label}: duplicate position ${String(e['position'])}`);
+    seen.add(e['position'] as number);
+  });
+  return doc as CampaignDoc;
+}
+
+export interface MergeRow { slug: string; position: number; importable: boolean }
+export interface MergeOptions {
+  skipBlocked: boolean;
+  /** The whole TW campaign (tutorials included): positions below the first playable level count as contiguous. */
+  campaign: readonly CampaignEntry[];
+}
+
+/**
+ * Merge importer output into the committed campaign by position (PRD 05 R5).
+ * - Entries the importer does not own (hand-authored `na-*`) are always kept; an importer row landing on one is an error.
+ * - Importer-owned entries at the positions processed this run are replaced; entries at other positions are kept.
+ * - Without `skipBlocked`, a blocked row, or a row that would leave a gap relative to the merged campaign, ends the run
+ *   (that row and the rest are not touched). With `skipBlocked` blocked rows are removed and later rows still apply.
+ */
+export function mergeCampaign(existing: readonly CampaignFileEntry[], rows: readonly MergeRow[], o: MergeOptions): CampaignFileEntry[] {
+  const byPos = new Map(existing.map((e) => [e.position, e] as const));
+  const firstPlayable = Math.min(...o.campaign.filter((c) => !c.isTutor).map((c) => c.position), Number.POSITIVE_INFINITY);
+  const sorted = [...rows].sort((a, b) => a.position - b.position);
+  for (const r of sorted) {
+    const held = byPos.get(r.position);
+    if (held && isHandAuthored(held.level)) {
+      if (r.importable) throw new Error(`campaign position ${r.position} is held by hand-authored ${JSON.stringify(held.level)}; importer will not overwrite it`);
+      continue;
+    }
+    if (!r.importable) {
+      if (!o.skipBlocked) break;
+      byPos.delete(r.position);
+      continue;
+    }
+    if (!o.skipBlocked && r.position > firstPlayable && !byPos.has(r.position - 1)) break;
+    const prev = held ?? { level: r.slug, position: r.position };
+    byPos.set(r.position, { ...prev, level: r.slug, position: r.position });
+  }
+  return [...byPos.values()].sort((a, b) => a.position - b.position);
+}
