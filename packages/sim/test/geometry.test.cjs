@@ -19,7 +19,7 @@ test('geometry intervals match independent exhaustive BigInt oracle, circles, bo
  for(let i=0;i<160;i++){
   const a={x:rand(41)-20,z:rand(41)-20},b={x:rand(41)-20,z:rand(41)-20},lane=g.makeLane(a,b);
   assert.equal(lane.length,Number(root(BigInt((b.x-a.x)*20)**2n+BigInt((b.z-a.z)*20)**2n)));
-  const shape=i%2?{shape:'circle',x:rand(31)-15,z:rand(31)-15,radius:rand(10)}:{shape:'box',x:rand(31)-15,z:rand(31)-15,w:rand(20)+1,d:rand(20)+1,yawMilliDeg:(rand(721)-360)*1000};
+  const shape=i%2?{shape:'circle',x:rand(31)-15,z:rand(31)-15,radius:rand(10)}:{shape:'box',x:rand(31)-15,z:rand(31)-15,w:rand(20)+1,d:rand(20)+1,yawMilliDeg:rand(720001)-360000};
   const pad=rand(5),strict=!!(i%3),expected=[];
   for(let p=0;p<=lane.length;p++)if(oracle(lane,shape,p,pad,strict))expected.push(p);
   const intervals=g.laneIntervals(lane,shape,pad,strict),actual=[];
@@ -40,7 +40,7 @@ test('tangency, inner strict radius, zero lanes and exact oriented corridor corn
  assert.equal(g.corridorOverlaps(diagonal,{shape:'box',x:0,z:1000,w:10,d:10}),false);
  assert.equal(g.corridorOverlaps(diagonal,{shape:'box',x:500,z:500,w:10,d:10,yawMilliDeg:45000}),true);
  assert.deepEqual(g.yawAxes(-90000),{cos:0,sin:1048576});
- assert.throws(()=>g.yawAxes(1),RangeError);
+ assert.throws(()=>g.yawAxes(0.5),RangeError);
 });
 test('Number rational distances and projections agree with BigInt at campaign limits',()=>{
  for(let i=0;i<3000;i++){
@@ -71,7 +71,7 @@ test('corridor SAT matches independent rational BigInt separating-axis oracle on
  }
  for(let i=0;i<300;i++){
   const lane=g.makeLane({x:rand(2001)-1000,z:rand(2001)-1000},{x:rand(2001)-1000,z:rand(2001)-1000});
-  const box={shape:'box',x:rand(2001)-1000,z:rand(2001)-1000,w:rand(800)+1,d:rand(800)+1,yawMilliDeg:(rand(721)-360)*1000};
+  const box={shape:'box',x:rand(2001)-1000,z:rand(2001)-1000,w:rand(800)+1,d:rand(800)+1,yawMilliDeg:rand(720001)-360000};
   const polys=vertices(lane,box),axes=polys.flatMap(poly=>poly.map((p,i)=>{const q=poly[(i+1)%4];return [q[1]-p[1],p[0]-q[0]];}));
   const expected=axes.every(([nx,nz])=>{
    const values=polys.map(poly=>poly.map(([x,z])=>x*nx+z*nz));
@@ -103,4 +103,32 @@ test('content yaw follows Unity +Y: non-square 30/150-degree boxes rotate +x tow
  assert.deepEqual(g.laneIntervals(point(100,58),{shape:'box',x:0,z:0,w:400,d:20,yawMilliDeg:30000}),[]);
  assert.deepEqual(g.laneIntervals(point(-100,-58),{shape:'box',x:0,z:0,w:400,d:20,yawMilliDeg:150000}),[[0,0]]);
  assert.deepEqual(g.laneIntervals(point(-100,58),{shape:'box',x:0,z:0,w:400,d:20,yawMilliDeg:150000}),[]);
+});
+test('all compiled campaign obstacle yaw values, including fractional authored angles, work in cold geometry',()=>{
+ const {dataFiles,content}=require('./fixtures.cjs'),compiled=content.loadContent(dataFiles()).compiled;
+ const seen=new Set();let obstacles=0;
+ for(const level of Object.values(compiled))for(const element of level.elements){
+  const shape={...element.footprint,x:element.x,z:element.z,yawMilliDeg:element.yawMilliDeg};
+  const lane=g.makeLane({x:element.x-1000,z:element.z-1000},{x:element.x+1000,z:element.z+1000});
+  assert.doesNotThrow(()=>g.laneIntervals(lane,shape,190));
+  assert.doesNotThrow(()=>g.corridorOverlaps(lane,shape));
+  seen.add(element.yawMilliDeg);obstacles++;
+ }
+ assert.ok(obstacles>0);assert.ok(seen.has(38780));assert.ok(seen.has(141220));
+ for(const yaw of [-360000,-141220,-38780,-1,0,1,38780,141220,359999,360000])assert.doesNotThrow(()=>g.yawAxes(yaw));
+});
+test('milli-degree Q20 axis error stays below one component unit across the complete accepted yaw domain',()=>{
+ for(let yaw=-360000;yaw<=360000;yaw++){
+  const {cos,sin}=g.yawAxes(yaw),radians=yaw*Math.PI/180000;
+  assert.ok(Math.abs(cos-Math.cos(radians)*g.AXIS_SCALE)<1,`cos ${yaw}`);
+  assert.ok(Math.abs(sin+Math.sin(radians)*g.AXIS_SCALE)<1,`sin ${yaw}`);
+ }
+});
+
+test('fractional signed 38.78/141.22 yaw retains Unity handedness for non-square boxes',()=>{
+ for(const [yaw,x,z] of [[38780,78,-63],[141220,-78,-63],[-38780,78,63],[-141220,-78,63]]){
+  const shape={shape:'box',x:0,z:0,w:400,d:20,yawMilliDeg:yaw};
+  assert.deepEqual(g.laneIntervals(g.makeLane({x,z},{x,z}),shape),[[0,0]]);
+  assert.deepEqual(g.laneIntervals(g.makeLane({x,z:-z},{x,z:-z}),shape),[]);
+ }
 });

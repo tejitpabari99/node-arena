@@ -1,8 +1,10 @@
 import { TICK_RATE, checked, compareRationalSquares, idiv, isqrt, mulDiv } from './math.js';
 
-/** Q20 nearest-integer sine for integer degrees 0..90. Generated offline;
- * no runtime floating trig. Axis component error <= 1/(2*Q20). */
-const SIN = [0,18300,36595,54878,73145,91389,109606,127789,145934,164033,182083,200078,218011,235878,253673,271391,289027,306574,324028,341383,358634,375776,392803,409711,426494,443147,459665,476044,492277,508360,524288,540057,555661,571095,586356,601438,616338,631049,645568,659890,674012,687928,701634,715127,728402,741455,754282,766880,779244,791370,803256,814897,826289,837430,848316,858943,869309,879410,889243,898805,908093,917105,925838,934288,942454,950333,957922,965219,972223,978930,985339,991448,997255,1002758,1007956,1012847,1017429,1021701,1025662,1029311,1032646,1035666,1038371,1040760,1042832,1044586,1046022,1047139,1047937,1048416,1048576] as const;
+/** 32 CORDIC rotation angles, atan(2^-i) in nearest nanodegrees.
+ * Offline constants; runtime uses only exact safe integers. Q40 vectors
+ * leave ample headroom before final Q20 rounding. */
+const CORDIC_ANGLES = [45000000000,26565051177,14036243468,7125016349,3576334375,1789910608,895173710,447614171,223810500,111905677,55952892,27976453,13988227,6994114,3497057,1748528,874264,437132,218566,109283,54642,27321,13660,6830,3415,1708,854,427,213,107,53,27] as const;
+const CORDIC_GAIN_Q40 = 667681663043;
 export const AXIS_SCALE = 1048576;
 export interface Point { x: number; z: number }
 /** World coordinates are milli; length and parameters are ENGINE progress
@@ -62,16 +64,35 @@ export function compareRadiusSq(distance: DistanceSq, radius: number): number {
   if (radius < 0) throw new RangeError('Negative radius');
   return compareDistanceSq(distance, { x: radius, z: 0, denominator: 1 });
 }
-/** Content stores degrees*1000, but only integer-degree yaw is accepted.
+/** Content yaw is an integer milli-degree (all fx3 values supported).
  * Positive yaw rotates local +x toward world -z (Unity/Three +Y).
- * Returned sin is the signed world-z component, not mathematical sin(yaw).
- * The represented box uses the exact rational axes (cos,sin)/Q20. */
+ * Returned sin is world-z component, not mathematical sin(yaw).
+ * CORDIC component error <1/Q20, including final rounding: residual angle
+ * <= 44 nanodegrees (<0.001 Q20 units), Q40 vector error <0.001 Q20 units,
+ * plus <=0.5 Q20 rounding. Cardinals are exact; represented axes are rational.
+ */
 export function yawAxes(yawMilliDeg: number): { cos: number; sin: number } {
   checked(yawMilliDeg);
-  if (yawMilliDeg % 1000 !== 0) throw new RangeError('Yaw must be an integer degree');
-  const degree = ((idiv(yawMilliDeg, 1000) % 360) + 360) % 360;
-  const sine = (d: number): number => d <= 90 ? SIN[d]! : d <= 180 ? SIN[180 - d]! : d <= 270 ? -SIN[d - 180]! : -SIN[360 - d]!;
-  return { cos: sine((degree + 90) % 360), sin: sine(degree) === 0 ? 0 : -sine(degree) };
+  const yaw = ((yawMilliDeg % 360000) + 360000) % 360000;
+  const quadrant = idiv(yaw, 90000), remainder = yaw % 90000;
+  let cos: number, sin: number;
+  if (remainder === 0) { cos = AXIS_SCALE; sin = 0; }
+  else {
+    let x = CORDIC_GAIN_Q40, y = 0, angle = remainder * 1000000, power = 1;
+    for (const delta of CORDIC_ANGLES) {
+      const direction = angle >= 0 ? 1 : -1;
+      const nextX = checked(x - direction * idiv(y, power));
+      y = checked(y + direction * idiv(x, power));
+      x = nextX; angle -= direction * delta; power *= 2;
+    }
+    cos = idiv(x + 524288, AXIS_SCALE);
+    sin = idiv(y + 524288, AXIS_SCALE);
+  }
+  const normalize = (n: number): number => n === 0 ? 0 : n;
+  if (quadrant === 0) return { cos, sin: normalize(-sin) };
+  if (quadrant === 1) return { cos: normalize(-sin), sin: -cos };
+  if (quadrant === 2) return { cos: -cos, sin };
+  return { cos: sin, sin: cos };
 }
 const abs = (n: bigint): bigint => n < 0n ? -n : n;
 function validateShape(shape: Shape, pad: number): void {
