@@ -1,0 +1,122 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "levelview-6",
+  "name": "LevelView 6",
+  "source": {
+    "game": "tower-war",
+    "gameVersion": "1.29.3",
+    "asset": "LevelView 6",
+    "campaignPosition": 9,
+    "dialect": "v1-short",
+    "dropped": [
+      "cargo",
+      "sc"
+    ]
+  },
+  "theme": "green",
+  "bounds": {
+    "minX": -7,
+    "maxX": 8,
+    "minZ": -6,
+    "maxZ": 7
+  },
+  "objective": "captureAll",
+  "timeLimitSec": null,
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "blue"
+    },
+    {
+      "id": "p2",
+      "kind": "ai",
+      "colorKey": "red",
+      "bot": {
+        "kind": "tw",
+        "actionDelayMs": 7000,
+        "behavior": "full",
+        "script": []
+      }
+    }
+  ],
+  "buildings": [
+    {
+      "id": "b0",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -3.58,
+        "z": -3.63
+      },
+      "owner": "p1",
+      "level": 15,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b3",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -4.3,
+        "z": 3.24
+      },
+      "owner": "p1",
+      "level": 10,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b1",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 4.95,
+        "z": -0.36
+      },
+      "owner": "p2",
+      "level": 25,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b2",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 0.78,
+        "z": 4.24
+      },
+      "owner": "p2",
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b4",
+      "archetype": "tower",
+      "pos": {
+        "x": 1.02,
+        "z": -3.95
+      },
+      "owner": null,
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b5",
+      "archetype": "tower",
+      "pos": {
+        "x": 5.18,
+        "z": 4.31
+      },
+      "owner": null,
+      "level": 5,
+      "ignoreForWin": false
+    }
+  ],
+  "elements": [],
+  "requires": [
+    "bot:tw",
+    "drawsLines",
+    "grows",
+    "level",
+    "objective:captureAll",
+    "shoots",
+    "spawns"
+  ]
+}

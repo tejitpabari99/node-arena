@@ -127,8 +127,11 @@ test('golden levelview-1: loads, compiles and hashes stably', () => {
 });
 
 test('golden levelview-1: campaign common.json entry resolves through loadContent', () => {
-  const loaded = content.loadContent({ ...catalogFiles(), 'data/levels/levelview-1.json': goldenText() });
-  assert.deepEqual(Object.keys(loaded.compiled), ['levelview-1']);
+  const levels: Record<string, string> = {};
+  for (const name of readdirSync(new URL('../data/levels/', import.meta.url))) levels[`data/levels/${name}`] = readFileSync(new URL(`../data/levels/${name}`, import.meta.url), 'utf8');
+  const loaded = content.loadContent({ ...catalogFiles(), ...levels, 'data/levels/levelview-1.json': goldenText() });
+  assert.ok('levelview-1' in loaded.compiled);
+  assert.deepEqual(Object.keys(loaded.compiled).sort(), Object.keys(levels).map((f) => f.slice('data/levels/'.length, -'.json'.length)).sort());
 });
 
 test('synthetic obstacle+tower: obstacle outside bounds validates and is only logged', () => {

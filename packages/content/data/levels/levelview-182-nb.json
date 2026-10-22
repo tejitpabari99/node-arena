@@ -1,0 +1,589 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "levelview-182-nb",
+  "name": "LevelView 182_NB",
+  "source": {
+    "game": "tower-war",
+    "gameVersion": "1.29.3",
+    "asset": "LevelView 182_NB",
+    "campaignPosition": 10,
+    "dialect": "prefab",
+    "dropped": [
+      "cargo",
+      "sc",
+      "tutorial-script"
+    ]
+  },
+  "theme": "green",
+  "bounds": {
+    "minX": -8,
+    "maxX": 8,
+    "minZ": -7,
+    "maxZ": 6
+  },
+  "objective": "captureAll",
+  "timeLimitSec": null,
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "blue"
+    },
+    {
+      "id": "p2",
+      "kind": "ai",
+      "colorKey": "yellow",
+      "bot": {
+        "kind": "tw",
+        "actionDelayMs": 8000,
+        "behavior": "full",
+        "script": [
+          {
+            "op": "line",
+            "own": "b3",
+            "target": "b2",
+            "afterMs": 6000
+          }
+        ]
+      }
+    }
+  ],
+  "buildings": [
+    {
+      "id": "b0",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 5.17,
+        "z": -4.08
+      },
+      "owner": "p1",
+      "level": 15,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b1",
+      "archetype": "house-wt2",
+      "pos": {
+        "x": -0.07,
+        "z": -0.17
+      },
+      "owner": null,
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b2",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -5.01,
+        "z": -3.08
+      },
+      "owner": null,
+      "level": 15,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b3",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -4.7,
+        "z": 3.75
+      },
+      "owner": "p2",
+      "level": 5,
+      "ignoreForWin": false
+    }
+  ],
+  "elements": [
+    {
+      "id": "o0-0",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 8.83,
+        "z": -3.39
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.713,
+        "d": 0.713
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o0-1",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 8.48,
+        "z": -3.81
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.427,
+        "d": 0.427
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o0-2",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 8.09,
+        "z": -4.27
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.692,
+        "d": 0.692
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o0-3",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 7.66,
+        "z": -4.97
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o0-4",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 7.22,
+        "z": -5.3
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.48,
+        "d": 0.48
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o0-5",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 6.79,
+        "z": -5.83
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.649,
+        "d": 0.649
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o0-6",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 7.36,
+        "z": -4.86
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o0-7",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 7.66,
+        "z": -4.64
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o1-0",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 6.81,
+        "z": 5.85
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.713,
+        "d": 0.713
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o1-1",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 7.16,
+        "z": 5.43
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.427,
+        "d": 0.427
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o1-2",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 7.55,
+        "z": 4.97
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.692,
+        "d": 0.692
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o1-3",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 8.16,
+        "z": 4.43
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o1-4",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 8.42,
+        "z": 3.94
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.48,
+        "d": 0.48
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o1-5",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 8.85,
+        "z": 3.41
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.649,
+        "d": 0.649
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o1-6",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 8.01,
+        "z": 4.14
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o1-7",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 7.84,
+        "z": 4.48
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o2-0",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -6.34,
+        "z": 5.67
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.713,
+        "d": 0.713
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o2-1",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -6.69,
+        "z": 5.25
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.427,
+        "d": 0.427
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o2-2",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -7.08,
+        "z": 4.79
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.692,
+        "d": 0.692
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o2-3",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -7.51,
+        "z": 4.09
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o2-4",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -7.95,
+        "z": 3.76
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.48,
+        "d": 0.48
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o2-5",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -8.38,
+        "z": 3.23
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.649,
+        "d": 0.649
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o2-6",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -7.81,
+        "z": 4.2
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o2-7",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -7.51,
+        "z": 4.42
+      },
+      "yawDeg": 130,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o3-0",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -8.27,
+        "z": -3.38
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.713,
+        "d": 0.713
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o3-1",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -7.92,
+        "z": -3.8
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.427,
+        "d": 0.427
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o3-2",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -7.53,
+        "z": -4.26
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.692,
+        "d": 0.692
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o3-3",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -6.92,
+        "z": -4.8
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o3-4",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -6.66,
+        "z": -5.29
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.48,
+        "d": 0.48
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o3-5",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -6.23,
+        "z": -5.82
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.649,
+        "d": 0.649
+      },
+      "variant": "big"
+    },
+    {
+      "id": "o3-6",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -7.07,
+        "z": -5.09
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    },
+    {
+      "id": "o3-7",
+      "archetype": "obstacle",
+      "pos": {
+        "x": -7.24,
+        "z": -4.75
+      },
+      "yawDeg": 50,
+      "footprint": {
+        "shape": "box",
+        "w": 0.3,
+        "d": 0.3
+      },
+      "variant": "small"
+    }
+  ],
+  "requires": [
+    "blocksLines",
+    "bot:tw",
+    "drawsLines",
+    "grows",
+    "level",
+    "objective:captureAll",
+    "spawns"
+  ]
+}

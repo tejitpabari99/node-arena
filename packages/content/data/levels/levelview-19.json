@@ -1,0 +1,176 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "levelview-19",
+  "name": "LevelView 19",
+  "source": {
+    "game": "tower-war",
+    "gameVersion": "1.29.3",
+    "asset": "LevelView 19",
+    "campaignPosition": 21,
+    "dialect": "v1-short",
+    "dropped": [
+      "cargo",
+      "sc"
+    ]
+  },
+  "theme": "snow",
+  "bounds": {
+    "minX": -10,
+    "maxX": 10,
+    "minZ": -7,
+    "maxZ": 7
+  },
+  "objective": "captureAll",
+  "timeLimitSec": null,
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "blue"
+    },
+    {
+      "id": "p2",
+      "kind": "ai",
+      "colorKey": "green",
+      "bot": {
+        "kind": "tw",
+        "actionDelayMs": 24000,
+        "behavior": "full",
+        "script": [
+          {
+            "op": "line",
+            "own": "b5",
+            "target": "b6",
+            "afterMs": 10000
+          }
+        ]
+      }
+    }
+  ],
+  "buildings": [
+    {
+      "id": "b1",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -2.93,
+        "z": -4.62
+      },
+      "owner": null,
+      "level": 10,
+      "ignoreForWin": false,
+      "params": {
+        "grows": {
+          "growTime": 2
+        }
+      }
+    },
+    {
+      "id": "b2",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 2.75,
+        "z": -4.45
+      },
+      "owner": null,
+      "level": 10,
+      "ignoreForWin": false,
+      "params": {
+        "grows": {
+          "growTime": 2
+        }
+      }
+    },
+    {
+      "id": "b3",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -2.76,
+        "z": 4.59
+      },
+      "owner": null,
+      "level": 10,
+      "ignoreForWin": false,
+      "params": {
+        "grows": {
+          "growTime": 2
+        }
+      }
+    },
+    {
+      "id": "b4",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 2.77,
+        "z": 4.62
+      },
+      "owner": null,
+      "level": 10,
+      "ignoreForWin": false,
+      "params": {
+        "grows": {
+          "growTime": 2
+        }
+      }
+    },
+    {
+      "id": "b7",
+      "archetype": "tower",
+      "pos": {
+        "x": -2.96,
+        "z": -0.08
+      },
+      "owner": null,
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b5",
+      "archetype": "house-wt2",
+      "pos": {
+        "x": -7.21,
+        "z": -4.51
+      },
+      "owner": "p2",
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b6",
+      "archetype": "house-wt2",
+      "pos": {
+        "x": -7.16,
+        "z": 4.67
+      },
+      "owner": "p2",
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b0",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 7.16,
+        "z": 0.38
+      },
+      "owner": "p1",
+      "level": 10,
+      "ignoreForWin": false,
+      "params": {
+        "grows": {
+          "growTime": 2
+        }
+      }
+    }
+  ],
+  "elements": [],
+  "requires": [
+    "bot:tw",
+    "drawsLines",
+    "grows",
+    "level",
+    "objective:captureAll",
+    "shoots",
+    "spawns"
+  ]
+}
