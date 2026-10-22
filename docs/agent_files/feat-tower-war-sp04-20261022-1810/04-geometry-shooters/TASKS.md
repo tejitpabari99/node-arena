@@ -1,6 +1,6 @@
 ---
-status: draft
-summary: SP04 tasks - geometry primitive, corridor blocking, swept crossing combat, shooting tower, content footprints, goldens/bench, un-park check:rules
+status: done
+summary: SP04 complete — Tasks 0–6 done; full CI, rules, replays and strict benchmarks pass
 date: 2026-10-22
 ---
 # Tasks: Geometry + shooters (SP04)
@@ -14,7 +14,7 @@ Source of truth: [PRD](PRD.md). Implements CMB-04, TWR-01..04, OBS-01..02 on 03'
 | 3 | Crossing windows + swept combat (CMB-04) | 1 | done |
 | 4 | Shooting tower (TWR) | 1, 0 | done |
 | 5 | Goldens, bench, restore/parity tests | 2, 3, 4 | done |
-| 6 | Un-park `check:rules`, final acceptance | 5 | in-progress |
+| 6 | Un-park `check:rules`, final acceptance | 5 | done |
 
 ## Task 0 — Seam check + content footprint values
 What it is / what it means: Confirm 03's exports and 02's schema match what 04 imports, then author footprint values (Decisions 10, R6).

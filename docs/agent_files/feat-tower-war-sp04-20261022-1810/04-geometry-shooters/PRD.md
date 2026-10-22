@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: Geometry + shooters for the Tower War port - exact corridor blocking (obstacles, third buildings), swept lane-vs-lane crossing combat, the shooting tower (lane-space targeting, instakill, house hit), and one lane-interval primitive reused as the seam for walls/mines/rivers. Decomp-verified where cheap; unknowns resolved by owner decisions.
 date: 2026-10-22
 ---
