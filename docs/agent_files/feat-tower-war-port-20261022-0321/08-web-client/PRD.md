@@ -58,7 +58,7 @@ Meta screens (shop, garage, quests, currencies), tutorials, emotes, level-start 
 | Back button (top-left) | opens RestartPopup; sim paused while open (driver `pause`) | - |
 | RestartPopup | "DO YOU WANT TO RESTART THE BATTLE?" Restart / Continue / Levels | - |
 | Ownership bar (top-centre) | up to 4 colour segments, widths = control share; animated 200 ms; level name under it | web-side `ui/ownership.ts` over `view.buildings` (D4; no `view.control`) |
-| ResultPopup | Victory: Next level (if exists) / Replay / Levels; Defeat: Retry / Levels; timeout/draw as defeat wording | `view.over`, `view.winner` |
+| ResultPopup | Victory: Next level (if exists) / Replay / Levels; Defeat: Retry / Levels; timeout/draw as defeat wording | `view.over.winner` |
 | Level number on buildings | 07 world label, not HUD | - |
 - Sprites: `back_button`, `bar_back`, etc. from `_extract/assets/defaultlocalgroup_assets/Sprite`, copied by `tools/assets/ui-sprites.mjs` into `apps/web/assets/ui/` with a hash lock (same pattern as 07; manifest entries merged by 07's script). Exact sprite-to-slot mapping is picked in Task 1 against App Store refs.
 - **Ownership math** (pure fn `ui/ownership.ts`, no sim change, no `view.control`): per non-neutral player, `share = sum(building level) / sum over all non-neutral players`, integer permille, segments ordered by player index, last takes the remainder; units in flight not counted. [RESOLVED: building-level sum, neutral not shown; verify vs ref frames in task 1, adjust only if refs clearly contradict]
@@ -89,16 +89,16 @@ Pointer Events on the canvas, `touch-action:none`, single active pointer.
 | Item | Shape |
 |---|---|
 | `sim.view.bounds` | `{minX,maxX,minZ,maxZ}` milli-units, post-rotation |
-| `view.buildingStatic[i]` | `{x,z,footprintRadius,kind,special,...}`; `kind` = `house|tower` (milli `x,z`; replaces `towerStatic{x,y}`) |
-| `view.buildings[i]` | `{owner,level,stage}`; owner `-1` neutral (replaces `view.towers`) |
+| `view.buildingStatic[i]` | `{x,z,footprint,kind,special,...}`; `footprint` = circle (radius) or box (size) shape; `kind` = `house|tower` (milli `x,z`; replaces `towerStatic{x,y}`) |
+| `view.buildings.owner[i]`, `.level[i]`, `.stage[i]` (also `maxLevel, lines, alive`) | column (`ReadColumn`) layout, not row objects; owner `-1` neutral (replaces `view.towers`) |
 | `view.players[i]` | `{kind:'human'|'ai', colorKey}` (exists) |
 | `view.lines` | `{channel,owner,from,to}` (exists) |
 | `Command` | `DrawLine` / `CutLine` only (no boosters) |
 | `sim.canDraw(player,from,to)` | `null | ReasonCode` (code, not prose); no `blockPoint` |
-| `sim.explainDraw(player,from,to)` | `{reason, point:{x,z}, ref} | null` (04) for the red preview |
-| `view.over`, `view.winner` | exists |
+| `sim.explainDraw(player,from,to)` | `{reason, point:{x,z}, ref}` or null (04; seam stub in 03) for the red preview |
+| `view.over` | `{outcome: won, lost or timeout; winner: number or null} or null`; winner is `view.over.winner` (no `view.winner`) |
 | events (payloads fixed by 03's CUT) | `BuildingCaptured`, `MatchOver`, `TroopDied`, `Clash`, `TowerShot` (for 07/audio) |
-No `view.control` (ownership bar is web-side, D4). 03 publishes these in the sim's exported types; 08 consumes them from `@node-arena/sim` only.
+No `view.control` (ownership bar is web-side, D4). [RESOLVED: review 2026-10-22 — 08 PRD matches the real read API: `view.over.winner`, column views, `footprint`, `update(frame, events, dtMs)`] 03 publishes these in the sim's exported types; 08 consumes them from `@node-arena/sim` only.
 
 ## Architecture
 ```
@@ -108,7 +108,7 @@ main.tsx -> app/runtime (state machine boot|picker|playing|result|error)
   canvas+camera (08) <-> input controller -> driver.submit(Command)
   Preact HUD <- tick subscriber (ownership) -> overlay flags (restart popup)
 ```
-08 creates `WebGLRenderer`, canvas, camera; passes scene to 07's `createWorldRenderer`; calls `update(snapshot, events, dt)` per frame; uses `anchors.building(id)` and `pickMeshes` for hit tests and HUD placement. There is no booster or targeting state. `worldRoot` (mirrored) is created here; 07 adds its content under it.
+08 creates `WebGLRenderer`, canvas, camera; passes scene to 07's `createWorldRenderer`; calls `update(frame, events, dtMs)` per frame, where `frame = {view, troops: TroopBuffer, n, alpha}` is built by 08 (`n = sim.readTroops(buf)`, `alpha` = fixed-step accumulator fraction; `sim.snapshot()` is persistence/debug only, never called per frame); uses `anchors.building(id)` and `pickMeshes` for hit tests and HUD placement. There is no booster or targeting state. `worldRoot` (mirrored) is created here; 07 adds its content under it.
 
 ## Decisions
 | # | Decision | Choice | Alternatives considered | Why |

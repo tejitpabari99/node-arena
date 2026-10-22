@@ -23,7 +23,7 @@ Ship Tower War's own meshes and per-team textures for the 20 levels (positions 4
 2. `pnpm assets:tw` reproduces them byte-identically from `TW_EXTRACT`.
 3. Renderers for unit / building / obstacle / ground / lane / FX that look like the reference shots under the SP08 camera.
 4. Fits the browser: <=60 draw calls for units, <=300k tris total, total new assets <=3 MB gzip.
-5. Art never touches `simHash` (render reads snapshots only).
+5. Art never touches `simHash` (render reads the sim's read views only).
 
 ## Non-Goals
 Skins other than default; garage/skinned models; artillery unit; rocket/fortress/boss/trolley/flag/cargo/river/mine/wall/sheep art; bomb/speed booster VFX and falling-bomb rendering ([RESOLVED: owner — boosters deferred], FUTURES); festival variants; sim/camera/HUD; particle-system fidelity (we approximate with sprites).
@@ -71,7 +71,7 @@ Skins other than default; garage/skinned models; artillery unit; rocket/fortress
 - Budgets as named classes in manifest: `unit` 1,100 tris/model, `building` 1,200, `obstacle` 300, `ground` 500; 256px textures (mip on, aniso 4). Frame target: 60 fps on integrated laptop GPU with 720 troops; measured in a perf scene.
 
 ### R5 Renderer seam with SP08
-07 exports `createWorldRenderer(scene, manifest)` returning `{ setLevel(levelDef, themeId), update(snapshot, events, dtMs), anchors, dispose() }`. 08 owns canvas, `WebGLRenderer`, camera (any `PerspectiveCamera`), HUD, input, resize. 07 exports `anchors.building(id) -> {pos, radius, labelPos}` and `pickMeshes` for hit-testing, and a `previewLane(from,to,team)` for the drag preview. 07 adds lights/ground/obstacles/lanes/units/buildings/FX to the passed scene and nothing else. Art must be tuned for FOV 21 / 55 deg pitch [verified: 05#6]; the 07 perf and ref scene uses that camera, rotated-map layout is 08's. FX are driven only by events defined in 03's CUT: `Clash{kind:'headon'|'crossing',a,b,x,z}`, `TroopDied{...,x,z}`, `TowerShot{tower,target,x,z}`; the range ring uses `sim.towerRadiusMilli(view,i)` (04). Labels/text sprites sit outside the mirrored `worldRoot` (08).
+07 exports `createWorldRenderer(scene, manifest)` returning `{ setLevel(levelDef, themeId), update(frame, events, dtMs), anchors, dispose() }`. 08 owns canvas, `WebGLRenderer`, camera (any `PerspectiveCamera`), HUD, input, resize. 07 exports `anchors.building(id) -> {pos, radius, labelPos}` and `pickMeshes` for hit-testing, and a `previewLane(from,to,team)` for the drag preview. 07 adds lights/ground/obstacles/lanes/units/buildings/FX to the passed scene and nothing else. Art must be tuned for FOV 21 / 55 deg pitch [verified: 05#6]; the 07 perf and ref scene uses that camera, rotated-map layout is 08's. FX are driven only by events defined in 03's CUT: `Clash{kind:'headon'|'crossing',a,b,x,z}`, `TroopDied{...,x,z}`, `TowerShot{tower,target,x,z}`; the range ring uses `sim.towerRadiusMilli(view,i)` (04). Labels/text sprites sit outside the mirrored `worldRoot` (08). `frame = {view: SimView, troops: TroopBuffer, n, alpha}` is built by 08 (`n` rows from `sim.readTroops`, `alpha` = interpolation fraction; draw `min(progress + speed*alpha, length)` using the `length` column); `sim.snapshot()` is persistence/debug only, never per frame. [RESOLVED: review 2026-10-22 — renderer takes `frame`, not a snapshot]
 
 ### R6 Reference images and compare loop
 - **Primary refs (owner-supplied)**: frames extracted from the owner's YouTube walkthrough playlist of all levels (https://www.youtube.com/playlist?list=PL734Sy01N1F2H78gYnOZaczQXHAvJOsgE) in `BF/ref/tw-yt/`, indexed by `BF/ref/tw-yt/INDEX.md` (file -> level). Compare loop uses these. [RESOLVED: owner supplied video refs]
@@ -89,7 +89,7 @@ TW_EXTRACT/{catalog,assets} --importer (tools/assets/tw)--> assets/models/tw/*.g
                                                           textures/tw/*.png, fx/*.png
                                                           manifest.tw.json -> manifest.json
 manifest -> resolve.ts (open kinds) -> render registry: unit | building | element | ground | lane | fx
-snapshot (from 03/08 adapter) -> world renderer -> three scene (instanced parts)
+frame {view, troops: TroopBuffer, n, alpha} (built by 08 from 03's read API) -> world renderer -> three scene (instanced parts)
 ```
 Registry: `registerRenderer(kind, factory)`; kinds `unit`, `building`, `element`, `ground`, `lane`, `fx`. `team.mode`: `textureSwap` only (the `tint` path is deleted).
 
