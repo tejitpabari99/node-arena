@@ -10,3 +10,6 @@ export { assertInvariants } from './invariants.js';
 export { hashState } from './hash.js';
 export { createState, channelKey, getChannel, liveChannels, spawnTroop, killTroop, troopPosition, laneLength, type KillCause } from './state.js';
 export type { Channel, Counters, Players, Buildings } from './types.js';
+export { canDraw, cutLine, runCommands } from './commands.js';
+export { crossingPass } from './contacts.js';
+export { firstDrawRejection, fireLineDrawn, fireLineCut, fireCapture } from './hooks.js';

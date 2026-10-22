@@ -1,5 +1,5 @@
 import { TICK_RATE } from './math.js';
-import { stageOf } from './state.js';
+import { liveChannels, stageOf } from './state.js';
 import type { CompiledLevel, SimState } from './types.js';
 
 export type ReadColumn = Omit<Readonly<Int32Array>, 'set' | 'fill' | 'copyWithin' | 'reverse' | 'sort' | 'subarray'> & { subarray(begin?: number, end?: number): ReadColumn };
@@ -21,7 +21,7 @@ export interface SimView {
     readonly initialOwner: number; readonly modules: readonly string[];
   }[];
   readonly elements: CompiledLevel['elements'];
-  /** Refreshed per tick; empty until lines land (03 Task 3). */
+  /** Drawn lines, refreshed per tick in ascending channel key. */
   lines: readonly { channel: number; from: number; to: number; owner: number; length: number; drawSeq: number }[];
   readonly units: readonly { readonly id: string; readonly speed: number; readonly hp: number; readonly attack: number; readonly defense: number; readonly visual: string }[];
   freeSlots(building: number): number;
@@ -50,5 +50,6 @@ export function createView(state: SimState): SimView {
 export function refreshView(view: SimView, state: SimState): void {
   view.tick = state.tick;
   view.over = state.over;
+  view.lines = liveChannels(state).filter((c) => c.drawn !== 0).map((c) => ({ channel: c.key, from: c.from, to: c.to, owner: state.buildings.owner[c.from]!, length: c.length, drawSeq: c.drawSeq }));
   for (let i = 0; i < state.buildings.n; i++) state.buildings.stage[i] = stageOf(state.level.rules.stageThresholds, state.buildings.level[i]!);
 }

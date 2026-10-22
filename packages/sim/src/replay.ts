@@ -85,6 +85,7 @@ export function createReplayRecorder(level: CompiledLevel, seed: number, metadat
   return {
     get view() { return sim.view; },
     hash: () => sim.hash(),
+    canDraw: (player, from, to) => sim.canDraw(player, from, to),
     step(cmds, options) {
       if (sim.view.over) return sim.step(cmds, options);
       if (!json(cmds)) invalid();
