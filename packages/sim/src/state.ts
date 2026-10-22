@@ -1,4 +1,4 @@
-import { MODULES, type ModuleId } from '@node-arena/defs';
+import type { ModuleId } from '@node-arena/defs';
 import { IMPLS, MODULE_ORDER } from './modules/index.js';
 import type { Buildings, CompiledLevel, SimState } from './types.js';
 
@@ -39,9 +39,4 @@ export function createState(level: CompiledLevel, seed: number): SimState {
   const state: SimState = { level, seed, tick: 0, over: null, drawSeq: 0, troopSeq: 0, rejected: 0, buildings, events: null };
   for (const id of MODULE_ORDER) IMPLS[id].init?.(state, carriers(level, id));
   return state;
-}
-
-/** Guards the defs/impl pairing at runtime too: every defs module has an impl with the same id. */
-export function assertBindings(): void {
-  for (const id of Object.keys(MODULES) as ModuleId[]) if (IMPLS[id].id !== id) throw new Error(`IMPLS.${id}.id mismatch`);
 }

@@ -49,3 +49,6 @@ export interface SimModule {
   readonly phases?: Partial<Record<Phase, PhaseFn>>;
   readonly hooks?: ModuleHooks;
 }
+
+/** A module impl bound to one defs id: `id` is the literal, so a mismatch is a compile error. */
+export type SimModuleFor<K extends ModuleId> = SimModule & { readonly id: K };

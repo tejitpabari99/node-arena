@@ -1,6 +1,6 @@
-import type { SimModule } from '../types.js';
+import type { SimModuleFor } from '../types.js';
 
 /** Stub (03 Task 1a); real logic lands in a later task. */
-export const spawns: SimModule = {
+export const spawns: SimModuleFor<'spawns'> = {
   id: 'spawns',
 };

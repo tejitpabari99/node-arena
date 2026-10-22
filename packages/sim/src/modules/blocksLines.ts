@@ -1,6 +1,6 @@
-import type { SimModule } from '../types.js';
+import type { SimModuleFor } from '../types.js';
 
 /** Stub; SP04 replaces this file. */
-export const blocksLines: SimModule = {
+export const blocksLines: SimModuleFor<'blocksLines'> = {
   id: 'blocksLines',
 };
