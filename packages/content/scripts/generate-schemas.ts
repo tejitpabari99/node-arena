@@ -1,8 +1,13 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { HostedSchemas } from '../src/index.js';
+import { HostedSchemas, next } from '../src/index.js';
 
-for (const [name, schema] of Object.entries(HostedSchemas)) {
-  const filename = `${name}.schema.json`;
+// v1 schemas live in schemas/, v2 (next/) schemas in schemas/next/.
+const targets = [
+  ...Object.entries(HostedSchemas).map(([name, schema]) => ({ dir: '', name, schema })),
+  ...Object.entries(next.NextSchemas).map(([name, schema]) => ({ dir: 'next/', name, schema })),
+];
+for (const { dir, name, schema } of targets) {
+  const filename = `${dir}${name}.schema.json`;
   const destination = new URL(`../schemas/${filename}`, import.meta.url);
   const generated = `${JSON.stringify(schema, null, 2)}\n`;
   if (process.argv.includes('--check')) {

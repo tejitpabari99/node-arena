@@ -17,3 +17,4 @@ export { compileLevel, type CompiledLevel, type CompiledTower, type CompiledPlay
 export { canonicalJson, sha256, hashBotProfile, hashCompiledLevel } from './hash.js';
 export { RULES_VERSION, generateHashes, checkContentVersion, checkRulesVersion, type ReplayHeader, type HashesLock, type ContentBaseline } from './versioning.js';
 export { isCredited } from './credits.js';
+export * as next from './next/index.js';

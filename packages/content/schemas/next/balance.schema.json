@@ -1,0 +1,80 @@
+{
+  "type": "object",
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "stageThresholds",
+    "spawn",
+    "growth",
+    "contactDistance",
+    "laneHalfWidth"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "2.0.0"
+    },
+    "stageThresholds": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "spawn": {
+      "type": "object",
+      "required": [
+        "aliveCap"
+      ],
+      "properties": {
+        "aliveCap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      },
+      "additionalProperties": false
+    },
+    "growth": {
+      "type": "object",
+      "required": [
+        "base"
+      ],
+      "properties": {
+        "base": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 500,
+          "exclusiveMinimum": 0,
+          "x-unit": "fx3"
+        }
+      },
+      "additionalProperties": false
+    },
+    "contactDistance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 500,
+      "exclusiveMinimum": 0,
+      "x-unit": "fx3"
+    },
+    "laneHalfWidth": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 500,
+      "exclusiveMinimum": 0,
+      "x-unit": "fx3"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://node-arena.local/schemas/next/balance.schema.json",
+  "title": "balance",
+  "additionalProperties": false
+}

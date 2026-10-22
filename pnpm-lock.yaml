@@ -69,6 +69,9 @@ importers:
 
   packages/content:
     dependencies:
+      '@node-arena/defs':
+        specifier: workspace:*
+        version: link:../defs
       ajv:
         specifier: 8.20.0
         version: 8.20.0
