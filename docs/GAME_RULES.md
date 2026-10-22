@@ -597,7 +597,24 @@ _Pending: later SP01 task._
 
 ## 6. Reserved modules — not implemented
 
-_Pending: later SP01 task._
+These are future elements, not active rules and not registry entries. They have no `R-` headings; a heading is an active rule. Level import and validation reject them until they ship (see the SP02 registry). **Shipping an element** means a new three-letter area, rule ids, a minor `RULES_VERSION` bump (2.x.0), a registry entry, schema support and tests together. Tuning values belong in content. Phase anchors are `preContact`, `postContact` or `postArrival` within the §4 phase that owns them.
+
+| Element | Intended behaviour | TW source | Hook points (validation / phase anchor / win / hash) |
+|---|---|---|---|
+| Walls | Static breakable barrier with hit points; troops that reach it damage it; blocks lines and movement as per level data. | 03#8.2 | Validation: footprint and hp; anchor `preContact`; not a win participant; hash hp. |
+| Mines | Static trap that kills troops that touch it; may be protected or removed by upgrades (meta, out of scope). | 03#8.3 | Validation: footprint; anchor `postContact`; not a win participant; hash triggered state. |
+| Rivers / bridges | Crossable region slowing or blocking troops; bridges allow passage. | 03#8.4 | Validation: geometry; anchor `preContact` (movement modifier); not a win participant; hash bridge state. |
+| Rockets (rocket tower, capture rocket tower) | Tower variants firing area damage or charged rockets along a drawn line. | 03#5.7, 03#5.8 | Validation: archetype; anchor `postContact`; capturable; hash charge/cooldown. |
+| Fortress | Non-selectable defensive building with turrets, or selectable fortress with turrets and lines. | 03#5.6 | Validation: turret layout; anchor with tower shots; capturable; hash cooldowns. |
+| Trolley | Single-line moving building that fills with own troops, then travels and kills what it meets. | 03#8.7 | Validation: line ready flag; anchor `preContact`; win rule per `ignoreForWin`; hash position and ready flag. |
+| Railway | Rail track with moving carriages carrying troops. | 03#8.8 | Validation: track geometry; anchor `preContact`; not a win participant; hash carriage positions. |
+| Cargo (parachute / drops) | Periodic reinforcement drops at a building. | 03#5.6.1 | Validation: drop timing; anchor `postArrival`; capturable host; hash drop timers. |
+| Flags | Level-only building: no lines, no combat; counts for ownership and the last-house rule. | 03#8.9 | Validation: no lines; anchor `postArrival`; participates in win unless `ignoreForWin`; hash owner and level. |
+| WT3 artillery troop | Ranged troop type that hits every target in range with an area blast. | 03#5.9 | Validation: unit type `artillery`; anchor `postContact`; not a win participant; hash hp and cooldown. |
+| Double unit | Chance-based extra troop on spawn (skin power). | 03#4.3 | Validation: chance value; anchor within spawn; none; hash an extra random stream. |
+| Shield | Chance-based absorb of one hit (skin power, `Resurrection` stat). | 03#5.4 | Validation: chance value; anchor within contact/arrival; none; hash shield flag and stream. |
+
+**Deferred boosters.** Bomb and speed boosters are deferred and are not part of 2.0.0: there are no booster rule ids, no `UseBooster` command, no `bomb` random stream, no booster content keys and no per-troop speed state; phase 2 is kept free for the strike phase. Facts kept for revival: the bomb aims 3 times by default (APK remote-config default; the code-embedded fallback is 1), human only, starts after a delay and has a cooldown, strikes AI and neutral buildings by level then index and sets their level to 0 without capture; the speed booster multiplies troop speed and spawn rate, is activate-only for the rest of the match and affects troops already in flight (`OnChangeSpeedUp`). Revival is a new area `BST`, a minor bump, a `UseBooster` command, a `bomb` stream, a strike phase in slot 2, a per-troop speed column with re-anchoring and a spawn-rate factor in R-SPN-01. See `docs/FUTURES.md`.
 
 ## 7. Parameter glossary
 
