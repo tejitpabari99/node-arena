@@ -1,8 +1,14 @@
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { canonicalJson, checkContentVersion, checkRulesVersion, generateHashes, loadContent, type Content, type ContentBaseline, type ContentFileMap, type HashesLock } from '@node-arena/content';
+import { canonicalJson, checkContentVersion, checkRulesVersion, generateHashes, loadContent, parseContentMeta, readBaselineVersion, type ContentBaseline, type ContentFiles, type HashesLock } from '@node-arena/content';
 import { checkBotVersion, readBotVersion } from '../../packages/content/scripts/bot-version.js';
 import { LocatedError, readJson, readText } from './files.js';
+/** Loaded `content.json` + `data/**` pair; `content.json` is metadata, never a catalog file. */
+export function splitFiles(files: ContentFiles): { meta: string | object; data: ContentFiles } {
+  const { 'content.json': meta, ...data } = files;
+  if (meta === undefined) throw new LocatedError('content.json', 'content.json missing');
+  return { meta, data };
+}
 // The baseline always refers to committed repository content, including when --dir supplies a fixture.
 export function readBaseline(root: string, ref: string): ContentBaseline | undefined {
   const git = (...args: string[]) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -15,12 +21,14 @@ export function readBaseline(root: string, ref: string): ContentBaseline | undef
       return undefined;
     }
     if (!names.has(`${prefix}hashes.lock.json`)) throw new Error('Baseline lock is missing');
-    const metadata = loadContent({ 'content.json': git('show', `${revision}:${prefix}content.json`) }, { partial: true })['content.json'] as Content;
+    const metadata = readBaselineVersion(git('show', `${revision}:${prefix}content.json`));
     return { metadata, hashes: JSON.parse(git('show', `${revision}:${prefix}hashes.lock.json`)) as HashesLock };
   } catch (error) { throw new LocatedError('content.json', `Invalid baseline ${ref}: ${(error as Error).message}`); }
 }
-export async function checkLock(files: ContentFileMap, dir: string, root: string, base: string): Promise<string> {
-  const loaded = loadContent(files); const metadata = loaded['content.json'] as Content;
+export async function checkLock(files: ContentFiles, dir: string, root: string, base: string): Promise<string> {
+  const { meta, data } = splitFiles(files);
+  const metadata = parseContentMeta(meta);
+  const loaded = loadContent(data);
   try { checkRulesVersion(await readText(resolve(root, 'docs/GAME_RULES.md')), metadata.rulesVersion); }
   catch (error) { throw new LocatedError('content.json', (error as Error).message, '/rulesVersion'); }
   const hashes = generateHashes(loaded);

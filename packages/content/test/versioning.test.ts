@@ -1,49 +1,61 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as content from '../src/index.js';
-import { hashFixture } from './hash-fixture.js';
+import { dataOnly, hashFixture } from './hash-fixture.js';
+
+const hashesOf = (files: Record<string, any>) => content.generateHashes(content.loadContent(dataOnly(files)));
 
 // A regenerated lock must not hide unversioned balance drift against the baseline.
 test('regenerating hashes still rejects a semantic edit without an increasing content version', () => {
-  assert.equal(typeof content.generateHashes, 'function');
   const files = hashFixture();
-  const baseline = { metadata: files['content.json'] as content.Content, hashes: content.generateHashes(content.loadContent(files)) };
+  const baseline = { metadata: { contentVersion: files['content.json'].contentVersion as string }, hashes: hashesOf(files) };
   const changed = structuredClone(files);
-  (changed['data/troops/regular.json'] as content.Troop).speed = 12;
-  const hashes = content.generateHashes(content.loadContent(changed));
-  const metadata = changed['content.json'] as content.Content;
+  changed['data/units/soldier.json'].speed = 7;
+  const hashes = hashesOf(changed);
+  const metadata = { contentVersion: changed['content.json'].contentVersion as string };
   assert.throws(() => content.checkContentVersion(metadata, hashes, baseline), /contentVersion/);
-  metadata.contentVersion = '0.9.9';
+  metadata.contentVersion = '1.9.9';
   assert.throws(() => content.checkContentVersion(metadata, hashes, baseline), /contentVersion/);
-  metadata.contentVersion = '1.0.1';
+  metadata.contentVersion = '2.0.1';
   assert.doesNotThrow(() => content.checkContentVersion(metadata, hashes, baseline));
 });
 
-test('bot-only edits have separate lock identity and defer BOT_VERSION enforcement to SP04', () => {
-  assert.equal(typeof content.generateHashes, 'function');
-  const files = hashFixture(); const hashes = content.generateHashes(content.loadContent(files));
-  const baseline = { metadata: files['content.json'] as content.Content, hashes };
-  (files['data/bots/base.json'] as content.BotProfile).params.bias!.attack = 2;
-  const changed = content.generateHashes(content.loadContent(files));
+test('lock shape: levels keyed by id, bots keyed by "<levelId>#<playerId>"', () => {
+  const hashes = hashesOf(hashFixture());
+  assert.ok('levelview-1' in hashes.levels);
+  assert.ok(Object.keys(hashes.bots).length > 0);
+  for (const key of Object.keys(hashes.bots)) assert.match(key, /^levelview-[a-z0-9-]+#[a-z0-9-]+$/);
+});
+
+test('bot-only edits have separate lock identity and do not require a content version bump', () => {
+  const files = hashFixture(); const hashes = hashesOf(files);
+  const baseline = { metadata: { contentVersion: '2.0.0' }, hashes };
+  const seat = files['data/levels/levelview-1.json'].players.find((p: any) => p.bot);
+  seat.bot.behavior = seat.bot.behavior === 'full' ? 'attackOnly' : 'full';
+  const changed = hashesOf(files);
   assert.deepEqual(changed.levels, hashes.levels);
   assert.notDeepEqual(changed.bots, hashes.bots);
-  assert.equal(Object.keys(changed.bots).length, 2, 'lock includes even unreferenced base profiles');
   assert.doesNotThrow(() => content.checkContentVersion(baseline.metadata, changed, baseline));
 });
 
-test('level removal and addition require version bump; first dataset can bootstrap', () => {
-  assert.equal(typeof content.checkContentVersion, 'function');
-  const files = hashFixture(); const metadata = files['content.json'] as content.Content;
-  const hashes = content.generateHashes(content.loadContent(files));
-  const baseline = { metadata, hashes };
-  assert.throws(() => content.checkContentVersion(metadata, { levels: {}, bots: hashes.bots }, baseline), /contentVersion/);
-  assert.doesNotThrow(() => content.checkContentVersion(metadata, hashes));
+test('level removal requires version bump; no baseline always passes', () => {
+  const hashes = hashesOf(hashFixture());
+  const baseline = { metadata: { contentVersion: '2.0.0' }, hashes };
+  assert.throws(() => content.checkContentVersion(baseline.metadata, { levels: {}, bots: hashes.bots }, baseline), /contentVersion/);
+  assert.doesNotThrow(() => content.checkContentVersion(baseline.metadata, hashes));
+});
+
+test('content.json is validated against the content schema; baselines only need contentVersion', () => {
+  assert.equal(content.parseContentMeta(hashFixture()['content.json']).contentVersion, '2.0.0');
+  assert.throws(() => content.parseContentMeta({ ...hashFixture()['content.json'], schemaVersion: '1.0.0' }), content.ContentLoadError);
+  assert.throws(() => content.parseContentMeta({ ...hashFixture()['content.json'], contentVersion: '2.0' }), content.ContentLoadError);
+  assert.deepEqual(content.readBaselineVersion('{"schemaVersion":"1.0.0","contentVersion":"1.1.6","x":1}'), { contentVersion: '1.1.6' });
+  assert.throws(() => content.readBaselineVersion('{}'), /contentVersion/);
 });
 
 test('rules header, exported constant and content metadata must agree', () => {
-  assert.equal(typeof content.checkRulesVersion, 'function');
-  assert.doesNotThrow(() => content.checkRulesVersion('RULES_VERSION: 1.0.0\n', '1.0.0'));
-  assert.throws(() => content.checkRulesVersion('RULES_VERSION: 2.0.0\n', '2.0.0'), /RULES_VERSION/);
-  assert.throws(() => content.checkRulesVersion('RULES_VERSION: 1.0.0\n', '1.0.1'), /rulesVersion/);
+  assert.doesNotThrow(() => content.checkRulesVersion('RULES_VERSION: 2.0.0\n', '2.0.0'));
+  assert.throws(() => content.checkRulesVersion('RULES_VERSION: 1.0.0\n', '1.0.0'), /RULES_VERSION/);
+  assert.throws(() => content.checkRulesVersion('RULES_VERSION: 2.0.0\n', '2.0.1'), /rulesVersion/);
   assert.throws(() => content.checkRulesVersion('no header', '1.0.0'), /RULES_VERSION/);
 });

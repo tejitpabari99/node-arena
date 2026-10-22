@@ -6,14 +6,15 @@
   "scripts": {
     "validate:content": "tsx src/cli.ts validate:content",
     "check:manifest": "tsx src/cli.ts check:manifest",
-    "test": "tsx --test test/*.test.ts",
+    "test": "tsx --test $(ls test/*.test.ts src/import-tw/test/*.test.ts | grep -v '/rules-repo\\.test\\.ts$' | grep -v '/replay-golden\\.test\\.ts$')",
+    "test:rules": "tsx --test test/rules-repo.test.ts",
+    "test:replay": "tsx --test test/replay-golden.test.ts",
     "build": "tsc -p tsconfig.json",
-    "lint": "eslint src test layout",
+    "lint": "eslint src test",
     "check:rules": "tsx src/cli.ts check:rules",
     "replay:verify": "tsx src/cli.ts replay:verify",
     "validate:levels": "tsx src/cli.ts validate:levels",
     "balance": "tsx src/cli.ts balance",
-    "layout": "tsx layout/cli.ts",
     "assets:import": "node assets/import-art.mjs"
   },
   "dependencies": {

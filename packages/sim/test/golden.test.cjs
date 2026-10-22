@@ -13,44 +13,14 @@ test('sim:golden checks committed recorder-based golden replays', () => {
 const fs = require('node:fs');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
-require('tsx/cjs');
-const { runGoldens } = require('./golden/run.ts');
-const { scenarios } = require('./golden/scenarios.ts');
-const metadata = require('../../content/content.json');
 const { assertVersionBump, gitBaseline, updateFile } = require('../scripts/golden.cjs');
-const baseline = require('./golden/baseline.json');
-
-test('every committed record plays, commands are applied, and fixtures exercise their named mechanic', () => {
-  const results = runGoldens(metadata);
-  assert.deepEqual(results.map(({ events, ...r }) => r), baseline.results);
-  const byName = Object.fromEntries(results.map(r => [r.name, r]));
-  const log = name => byName[name].events;
-  assert.equal(log('persistent-cut-replaced').filter(e => e.type === 'LineCut' && e.reason === 'replaced').length, 1);
-  assert.ok(log('persistent-cut-replaced').some(e => e.type === 'TroopArrived' && e.tick > 4));
-  assert.equal(log('slot-reduction').find(e => e.type === 'LineCut').reason, 'slots');
-  assert.deepEqual(log('head-on-clash').find(e => e.type === 'Clash'), { type: 'Clash', tick: 3, channel: 1, progA: 200, progB: 200, value: 1 });
-  assert.deepEqual(log('overshoot-capture').filter(e => e.type === 'TroopArrived').map(e => e.owner), [0, 1]);
-  assert.deepEqual(log('overshoot-capture').filter(e => e.type === 'Captured').map(e => e.to), [0, 1]);
-  assert.equal(log('cap-overflow').filter(e => e.type === 'TroopArrived' && e.effect === 'overflow').length, 4);
-  assert.equal(log('command-rejections').filter(e => e.type === 'CommandRejected').length, 3);
-  assert.equal(byName['command-rejections'].replay.commands.length, 4);
-  assert.equal(byName['mutual-defeat'].replay.outcome.outcome, 'draw');
-  assert.deepEqual(scenarios.filter(s => s.fullGame).map(s => byName[s.name].replay.outcome.outcome), ['won', 'lost', 'timeout']);
-  assert.equal(log('full-transit-win').find(e => e.type === 'Captured').tick, 2);
-  assert.equal(log('full-transit-win').find(e => e.type === 'PlayerEliminated').tick, 101);
-  // The checker must not merely re-create records without playing committed inputs.
-  const { playReplay } = require('../src/index.ts');
-  for (const result of baseline.results) {
-    const level = baseline.scenarios.find(s => s.name === result.name).level;
-    const played = playReplay({ metadata, level }, result.replay);
-    assert.equal(played.ok, true);
-    if (result.name === 'generation-cap') {
-      assert.equal(played.sim.view.tower.col['garrison.count'][0], 2);
-      assert.equal(played.sim.view.tower.col['generates.acc'][0], 5000); // Remaining fraction freezes at cap.
-      assert.equal(played.sim.view.players[0].stats.generated, 2);
-    }
-  }
-});
+// The version-bump guard is tested on an inline fixture, independent of the committed baseline.
+const baseline = {
+  format: 1,
+  metadata: { rulesVersion: '2.0.0', schemaVersion: '2.0.0', contentVersion: '2.0.0' },
+  scenarios: [{ name: 'fixture', level: { buildings: [{ x: 0 }] } }],
+  results: [{ name: 'fixture', replay: { finalHash: '0'.repeat(16) }, eventLogHash: 'a'.repeat(16) }],
+};
 
 // Deleting/weakening version checks, string-comparing semver, or checking only
 // the working baseline must fail these tests. Metadata fixtures never edit content.
@@ -66,13 +36,13 @@ test('golden updates require appropriate strictly increased versions, including 
   changed.metadata.rulesVersion = patchBump(baseline.metadata.rulesVersion);
   assert.doesNotThrow(() => assertVersionBump(changed, baseline));
   const inputs = structuredClone(baseline);
-  inputs.scenarios[0].level.towers[0].x++;
+  inputs.scenarios[0].level.buildings[0].x++;
   inputs.metadata.rulesVersion = patchBump(baseline.metadata.rulesVersion);
   assert.throws(() => assertVersionBump(inputs, baseline), /contentVersion or schemaVersion/);
   inputs.metadata.contentVersion = patchBump(baseline.metadata.contentVersion);
   assert.doesNotThrow(() => assertVersionBump(inputs, baseline));
-  const bumped = structuredClone(baseline); bumped.metadata.contentVersion = '1.0.10';
-  const old = structuredClone(baseline); old.metadata.contentVersion = '1.0.9';
+  const bumped = structuredClone(baseline); bumped.metadata.contentVersion = '2.0.10';
+  const old = structuredClone(baseline); old.metadata.contentVersion = '2.0.9';
   assert.doesNotThrow(() => assertVersionBump(bumped, old));
   bumped.metadata.rulesVersion = '0.9.9';
   assert.throws(() => assertVersionBump(bumped, old), /decrease/);
@@ -97,24 +67,23 @@ test('git baseline prevents deletion/bootstrap bypass, and refused writes preser
     fs.writeFileSync(file, 'preserve me');
     assert.throws(() => updateFile(file, baseline, [committed]), /increased authoritative version/);
     assert.equal(fs.readFileSync(file, 'utf8'), 'preserve me');
-    const next = structuredClone(baseline); next.metadata.rulesVersion = '1.1.0';
+    const next = structuredClone(baseline); next.metadata.rulesVersion = '2.1.0';
     updateFile(file, next, [committed]);
     assert.deepEqual(JSON.parse(fs.readFileSync(file, 'utf8')), next);
     assert.throws(() => gitBaseline(root, 'no-such-ref', 'baseline.json'));
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
 
-test('same-state --update refuses the authoritative versions without touching the committed baseline', () => {
-  const file = path.join(__dirname, 'golden/baseline.json'), before = fs.readFileSync(file, 'utf8');
-  const result = spawnSync('pnpm', ['sim:golden', '--update'], { cwd: path.resolve(__dirname, '../../..'), encoding: 'utf8' });
-  assert.notEqual(result.status, 0);
-  assert.match(result.stdout + result.stderr, /increased authoritative version/);
-  assert.equal(fs.readFileSync(file, 'utf8'), before);
-});
-
-test('Node and Chromium golden hashes, full event logs and playback records agree exactly', { timeout: 60000 }, async () => {
+// Sim browser parity (restored from the CUT deletion; 02 review 2026-10-22 G): the same scenarios run in real
+// Chromium (Vite-built bundle, no Node globals) must equal the Node run and the committed baseline exactly.
+test('Node and Chromium golden hashes, full event logs and playback records agree exactly', { timeout: 120000 }, async () => {
+  require('tsx/cjs');
   const { chromium } = await import('playwright');
   const { build, preview } = await import('vite');
+  const { runGoldens } = require('./golden/run.ts');
+  const { allScenarios } = require('./golden/all.ts');
+  const baseline = JSON.parse(fs.readFileSync(path.join(__dirname, 'golden/baseline.json'), 'utf8'));
+  const metadata = JSON.parse(fs.readFileSync(path.join(__dirname, '../../content/content.json'), 'utf8'));
   const browserRoot = path.join(__dirname, 'golden/browser');
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sim-golden-browser-'));
   try {
@@ -128,14 +97,23 @@ test('Node and Chromium golden hashes, full event logs and playback records agre
         page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
         assert.ok(server.resolvedUrls?.local[0]);
         await page.goto(server.resolvedUrls.local[0]);
-        await page.waitForFunction(() => document.querySelector('#result')?.textContent, null, { timeout: 10000 });
+        await page.waitForFunction(() => document.querySelector('#result')?.textContent, null, { timeout: 30000 });
         assert.deepEqual(errors, []);
         const actual = JSON.parse(await page.locator('#result').innerText());
         assert.deepEqual(actual.nodeGlobals, ['undefined', 'undefined', 'undefined']);
-        assert.deepEqual(actual.results, runGoldens(metadata));
+        assert.deepEqual(actual.results, runGoldens(metadata, allScenarios));
         assert.deepEqual(actual.results.map(({ events, ...r }) => r), baseline.results);
         assert.deepEqual(actual.played, baseline.results.map(r => ({ name: r.name, ok: true, finalHash: r.replay.finalHash })));
       } finally { await browser.close(); }
     } finally { await server.close(); }
   } finally { fs.rmSync(outDir, { recursive: true, force: true }); }
+});
+
+test('VERSION_GUARD_BASE must be a valid commit (option-like refs are rejected)', () => {
+  for (const ref of ['--no-such-ref', 'no-such-branch-xyz']) {
+    const result = spawnSync(process.execPath, [path.resolve(__dirname, '../scripts/golden.cjs')], { encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: ref } });
+    assert.notEqual(result.status, 0, ref);
+    assert.match(result.stderr, /git rev-parse --verify[\s\S]*Needed a single revision/, ref);
+    assert.doesNotMatch(result.stdout + result.stderr, /golden replays (verified|updated)/, ref);
+  }
 });

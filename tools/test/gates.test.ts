@@ -18,12 +18,16 @@ async function fixture(t: { after(fn: () => Promise<void>): void }) {
   await cp(join(root, 'packages/content'), dir, { recursive: true, filter: path => !/(node_modules|dist|test)/.test(path) });
   return dir;
 }
-test('repo content and manifest pass with JSON reports', () => {
-  for (const command of ['validate:content', 'check:manifest']) {
-    const result = run(command, '--base', 'HEAD');
-    assert.equal(result.status, 0, result.stdout);
-    assert.equal(result.report.ok, true);
-    assert.equal(result.report.command, command);
+test('repo content passes with a JSON report (check:manifest is parked until SP07 ships a v2 manifest)', () => {
+  const result = run('validate:content', '--base', process.env.VERSION_GUARD_BASE || 'HEAD');
+  assert.equal(result.status, 0, result.stdout);
+  assert.equal(result.report.ok, true);
+  assert.equal(result.report.command, 'validate:content');
+});
+test('parked level and balance gates refuse to run with their owner named', () => {
+  for (const command of ['validate:levels', 'balance']) {
+    const result = run(command);
+    assert.equal(result.status, 1); assert.match(result.report.errors[0].message, new RegExp(`${command} is parked until SP06`));
   }
 });
 test('stale sim and bot locks fail without modifying files', async t => {
@@ -40,51 +44,10 @@ test('stale sim and bot locks fail without modifying files', async t => {
     assert.equal(await readFile(path, 'utf8'), before);
   }
 });
-test('missing visual key fails with source and JSON pointer', async t => {
-  const dir = await fixture(t);
-  const path = join(dir, 'data/troops/regular.json');
-  const troop = JSON.parse(await readFile(path, 'utf8')); troop.visual = 'missing.visual';
-  await writeFile(path, JSON.stringify(troop));
-  const result = run('check:manifest', '--dir', dir);
-  assert.equal(result.status, 1);
-  assert.ok(result.report.errors.some((e: {file: string; pointer: string}) => e.file === 'data/troops/regular.json' && e.pointer === '/visual'));
-});
-test('manifest file and credits validation runs the Node adapter', async t => {
-  const dir = await fixture(t);
-  // Primitive-only fixture: the shipped manifest references real GLBs that this temp assets dir lacks.
-  const manifest = JSON.parse(await readFile(join(root, 'apps/web/test/fixtures/greybox-manifest.json'), 'utf8'));
-  manifest.visuals['tower.standard'].sfx = 'missing.wav';
-  const path = join(dir, 'manifest.json'); await writeFile(path, JSON.stringify(manifest));
-  let result = run('check:manifest', '--manifest', path, '--assets-dir', dir);
-  assert.equal(result.status, 1); assert.match(result.report.errors[0].message, /Missing.*asset/);
-  assert.equal(result.report.errors[0].file, path);
-  await writeFile(join(dir, 'missing.wav'), 'sound');
-  result = run('check:manifest', '--manifest', path, '--assets-dir', dir);
-  assert.equal(result.status, 1); assert.match(result.report.errors[0].message, /CREDITS/);
-  await writeFile(join(dir, 'CREDITS.md'), 'missing.wav');
-  result = run('check:manifest', '--manifest', path, '--assets-dir', dir, '--credits', join(dir, 'CREDITS.md'));
-  assert.equal(result.status, 0, result.stdout);
-});
-test('check:manifest flags shipped audio/model files on disk that lack a CREDITS row', async t => {
-  const dir = await fixture(t);
-  const manifest = JSON.parse(await readFile(join(root, 'apps/web/test/fixtures/greybox-manifest.json'), 'utf8'));
-  const path = join(dir, 'manifest.json'); await writeFile(path, JSON.stringify(manifest));
-  await mkdir(join(dir, 'audio'), { recursive: true }); await writeFile(join(dir, 'audio/orphan.ogg'), 'sound');
-  await writeFile(join(dir, 'CREDITS.md'), '| models/other.glb |');
-  let result = run('check:manifest', '--manifest', path, '--assets-dir', dir, '--credits', join(dir, 'CREDITS.md'));
-  assert.equal(result.status, 1); assert.match(result.report.errors[0].message, /audio\/orphan\.ogg.*CREDITS/);
-  await writeFile(join(dir, 'CREDITS.md'), '| audio/orphan.ogg |');
-  result = run('check:manifest', '--manifest', path, '--assets-dir', dir, '--credits', join(dir, 'CREDITS.md'));
-  assert.equal(result.status, 0, result.stdout);
-});
-test('shipped manifest passes check:manifest with its audio and docs/CREDITS.md', () => {
-  const result = run('check:manifest');
-  assert.equal(result.status, 0, result.stdout);
-});
 test('malformed content and invalid baseline emit JSON diagnostics and exit one', async t => {
-  const dir = await fixture(t); await writeFile(join(dir, 'data/troops/regular.json'), '{');
+  const dir = await fixture(t); await writeFile(join(dir, 'data/units/soldier.json'), '{');
   let result = run('validate:content', '--dir', dir);
-  assert.equal(result.status, 1); assert.equal(result.report.errors[0].file, 'data/troops/regular.json');
+  assert.equal(result.status, 1); assert.equal(result.report.errors[0].file, 'data/units/soldier.json');
   result = run('validate:content', '--base', 'invalid-ref-no-such');
   assert.equal(result.status, 1); assert.match(result.report.errors[0].message, /baseline/i);
 });
@@ -93,8 +56,14 @@ test('default human output reports a failed gate and rejects unknown options', (
   assert.equal(result.status, 1); assert.match(result.stdout, /FAIL/); assert.match(result.stdout, /Unknown option/);
 });
 test('regenerated sim lock still requires a contentVersion increase over explicit baseline', async t => {
-  const dir = await fixture(t);
-  const path = join(dir, 'data/troops/regular.json');
+  // Hermetic: fixture is the committed HEAD content, so it matches the --base HEAD baseline regardless of working-tree state.
+  const dir = await mkdtemp(join(tmpdir(), 'arena-tools-head-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const archive = spawnSync('git', ['archive', 'HEAD', 'packages/content', '--format=tar'], { cwd: root, maxBuffer: 1 << 28 });
+  assert.equal(archive.status, 0, String(archive.stderr));
+  const untar = spawnSync('tar', ['-x', '-C', dir, '--strip-components=2'], { input: archive.stdout });
+  assert.equal(untar.status, 0, String(untar.stderr));
+  const path = join(dir, 'data/units/soldier.json');
   const troop = JSON.parse(await readFile(path, 'utf8')); troop.speed += 1;
   await writeFile(path, JSON.stringify(troop));
   const regenerate = spawnSync(process.execPath, ['--import', 'tsx', 'packages/content/scripts/content-lock.ts', '--dir', dir], { cwd: root, encoding: 'utf8' });
@@ -109,7 +78,7 @@ test('regenerated sim lock still requires a contentVersion increase over explici
 });
 test('rulesVersion mismatch fails with metadata location', async t => {
   const dir = await fixture(t); const path = join(dir, 'content.json');
-  const metadata = JSON.parse(await readFile(path, 'utf8')); metadata.rulesVersion = '2.0.0';
+  const metadata = JSON.parse(await readFile(path, 'utf8')); metadata.rulesVersion = '1.0.0';
   await writeFile(path, JSON.stringify(metadata));
   const result = run('validate:content', '--dir', dir);
   assert.equal(result.status, 1); assert.equal(result.report.errors[0].pointer, '/rulesVersion');

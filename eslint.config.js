@@ -12,6 +12,12 @@ export default [
     hashFiles: ['packages/sim/src/hash.ts', 'packages/sim/src/hash/**/*.ts'],
   }),
   { files: ['packages/sim/src/**/*.ts'], rules: determinism.contentTypesOnly },
+  {
+    // Engine internals are for sim tests and SP04 seam work only; web/bots/tools use the public `@node-arena/sim`.
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.mjs', '**/*.cjs'],
+    ignores: ['packages/sim/**'],
+    rules: { 'no-restricted-imports': ['error', { patterns: [{ group: ['@node-arena/sim/internal', '@node-arena/sim/internal/*'], message: '@node-arena/sim/internal is for packages/sim only; use @node-arena/sim.' }] }] },
+  },
   { ignores: ['**/node_modules/**', '**/dist/**', '**/test-results/**', '**/playwright-report/**', '.worktrees/**'] },
   { files: ['**/*.ts', '**/*.tsx'], languageOptions: { parser: tseslint.parser } },
   {
@@ -26,7 +32,7 @@ export default [
     },
   },
   {
-    files: ['packages/content/src/**/*.ts'],
+    files: ['packages/content/src/**/*.ts', 'packages/defs/src/**/*.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: [{ group: nodeOnly, message: 'Content APIs must run in the browser; perform Node I/O in an external adapter.' }] }],
       'no-restricted-modules': ['error', { patterns: nodeOnly }],

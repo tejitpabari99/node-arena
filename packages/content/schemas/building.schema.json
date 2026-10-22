@@ -1,0 +1,265 @@
+{
+  "type": "object",
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "id",
+    "kind",
+    "visual",
+    "footprint",
+    "special",
+    "modules"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "2.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "kind": {
+      "anyOf": [
+        {
+          "type": "string",
+          "const": "house"
+        },
+        {
+          "type": "string",
+          "const": "tower"
+        }
+      ]
+    },
+    "visual": {
+      "type": "string",
+      "minLength": 1,
+      "x-presentation": true
+    },
+    "footprint": {
+      "type": "object",
+      "required": [
+        "shape"
+      ],
+      "properties": {
+        "shape": {
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "circle"
+            },
+            {
+              "type": "string",
+              "const": "box"
+            }
+          ]
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "exclusiveMinimum": 0,
+          "x-unit": "fx3"
+        },
+        "w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "exclusiveMinimum": 0,
+          "x-unit": "fx3"
+        },
+        "d": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "exclusiveMinimum": 0,
+          "x-unit": "fx3"
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "shape": {
+            "const": "circle"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "radius"
+        ],
+        "properties": {
+          "radius": {},
+          "w": false,
+          "d": false
+        }
+      },
+      "else": {
+        "required": [
+          "w",
+          "d"
+        ],
+        "properties": {
+          "w": {},
+          "d": {},
+          "radius": false
+        }
+      }
+    },
+    "special": {
+      "type": "boolean"
+    },
+    "modules": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "object",
+          "required": [
+            "maxLevel"
+          ],
+          "properties": {
+            "maxLevel": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          },
+          "additionalProperties": false
+        },
+        "drawsLines": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        },
+        "spawns": {
+          "type": "object",
+          "required": [
+            "troop",
+            "spawnSpeed",
+            "lineSpawnPenalty"
+          ],
+          "properties": {
+            "troop": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]*$"
+            },
+            "spawnSpeed": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "exclusiveMinimum": 0,
+              "x-unit": "fx3"
+            },
+            "lineSpawnPenalty": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "x-unit": "fx3"
+            }
+          },
+          "additionalProperties": false
+        },
+        "grows": {
+          "type": "object",
+          "required": [
+            "growTime"
+          ],
+          "properties": {
+            "growTime": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "exclusiveMinimum": 0,
+              "x-unit": "fx3"
+            }
+          },
+          "additionalProperties": false
+        },
+        "shoots": {
+          "type": "object",
+          "required": [
+            "attackDelay",
+            "attackRadius",
+            "speedUpByLevel",
+            "radiusUpByLevel",
+            "radiusUnit",
+            "minRadius",
+            "neutralFires",
+            "troopPad",
+            "hitsNeutralHouses",
+            "bulletSpeed"
+          ],
+          "properties": {
+            "attackDelay": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "exclusiveMinimum": 0,
+              "x-unit": "fx3"
+            },
+            "attackRadius": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "x-unit": "fx3"
+            },
+            "speedUpByLevel": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "x-unit": "fx3"
+            },
+            "radiusUpByLevel": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "x-unit": "fx3"
+            },
+            "radiusUnit": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "x-unit": "fx3"
+            },
+            "minRadius": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "x-unit": "fx3"
+            },
+            "neutralFires": {
+              "type": "boolean"
+            },
+            "troopPad": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "x-unit": "fx3"
+            },
+            "hitsNeutralHouses": {
+              "type": "boolean"
+            },
+            "bulletSpeed": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500,
+              "exclusiveMinimum": 0,
+              "x-presentation": true,
+              "x-unit": "fx3"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://node-arena.local/schemas/building.schema.json",
+  "title": "building",
+  "additionalProperties": false
+}

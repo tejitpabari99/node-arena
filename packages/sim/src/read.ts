@@ -1,99 +1,120 @@
-import type { Command, RejectReason, SimEvent, GameOver } from './commands.js';
-import type { SimState, Troop } from './state.js';
-import { sortedNames } from './registry.js';
+import { TICK_RATE } from './math.js';
+import { hashState } from './hash.js';
+import { freeSlots, liveChannels, progressOf } from './state.js';
+import type { CompiledLevel, SimState } from './types.js';
 
-/** A borrowed typed array: callers must not mutate its elements or backing buffer. */
 export type ReadColumn = Omit<Readonly<Int32Array>, 'set' | 'fill' | 'copyWithin' | 'reverse' | 'sort' | 'subarray'> & { subarray(begin?: number, end?: number): ReadColumn };
-export interface PlayerView {
-  readonly team: string; readonly kind: 'human' | 'bot'; readonly colorKey: string;
-  readonly alive: number; readonly transit: number;
-  readonly stats: { readonly generated: number; readonly overflowLost: number; readonly kills: number; readonly captures: number };
-}
-export interface LineView { readonly channel: number; readonly from: number; readonly to: number; readonly owner: number; readonly length: number; readonly drawSeq: number }
+
 export interface SimView {
-  readonly tick: number; readonly over: Readonly<GameOver> | null; readonly timeLimitTicks: number;
-  readonly ids: { readonly towers: readonly string[]; readonly players: readonly string[] };
-  readonly players: readonly PlayerView[];
-  readonly tower: { readonly owner: ReadColumn; readonly team: ReadColumn; readonly slots: ReadColumn; readonly lines: ReadColumn; readonly col: Readonly<Record<string, ReadColumn>> };
-  readonly towerStatic: readonly { readonly x: number; readonly y: number; readonly archetype: string; readonly visual: string; readonly footprintRadius: number; readonly components: readonly string[] }[];
-  readonly lines: readonly LineView[];
-  readonly kinds: readonly { readonly value: number; readonly speedPerTick: number; readonly visual: string }[];
-}
-export interface TroopBuf { channel: Int32Array; seq: Int32Array; owner: Int32Array; kind: Int32Array; progress: Int32Array }
-export interface Sim {
-  readonly tick: number; readonly view: SimView; readonly rejected: number;
-  step(commands: readonly Command[], options?: { events?: boolean }): readonly SimEvent[];
-  canDraw(player: string, from: string, to: string): RejectReason | null;
-  /** Returns total required count. Writes the first min(count, all column lengths) entries; suffix is unspecified. */
-  readTroops(out: TroopBuf): number;
-  hash(): string;
-  snapshot(): SimSnapshot;
-}
-export interface SimSnapshot {
-  tick: number; over: GameOver | null; timeLimitTicks: number; drawSeq: number; troopSeq: number; rejected: number;
-  prng: number[]; eliminated: number[]; ids: { towers: string[]; players: string[] };
-  players: { team: string; kind: 'human' | 'bot'; colorKey: string; alive: number; transit: number; stats: { generated: number; overflowLost: number; kills: number; captures: number } }[];
-  tower: { owner: number[]; team: number[]; slots: number[]; lines: number[]; col: Record<string, number[]> };
-  towerStatic: { x: number; y: number; archetype: string; visual: string; footprintRadius: number; components: string[] }[];
-  kinds: { id: string; value: number; speedPerTick: number; visual: string }[];
-  channels: { key: number; from: number; to: number; length: number; owner: number; drawn: number; drawSeq: number; troops: Troop[] }[];
+  tick: number;
+  over: { outcome: 'won' | 'lost' | 'timeout'; winner: number | null } | null;
+  readonly timeLimitTicks: number;
+  readonly bounds: CompiledLevel['bounds'];
+  readonly ids: { readonly buildings: readonly string[]; readonly players: readonly string[]; readonly elements: readonly string[] };
+  readonly players: readonly { readonly kind: 'human' | 'ai'; readonly colorKey: string }[];
+  readonly buildings: {
+    readonly owner: ReadColumn; readonly level: ReadColumn; readonly maxLevel: ReadColumn; readonly stage: ReadColumn;
+    readonly lines: ReadColumn; readonly alive: ReadColumn; readonly ignoreForWin: ReadColumn; readonly col: Readonly<Record<string, ReadColumn>>;
+  };
+  readonly buildingStatic: readonly {
+    readonly x: number; readonly z: number; readonly kind: 'house' | 'tower'; readonly archetype: string; readonly visual: string;
+    readonly footprint: CompiledLevel['buildings'][number]['footprint']; readonly special: boolean; readonly drawsLines: boolean;
+    readonly initialOwner: number; readonly modules: readonly string[];
+  }[];
+  readonly elements: CompiledLevel['elements'];
+  /** Drawn lines, refreshed per tick in ascending channel key. */
+  lines: readonly { channel: number; from: number; to: number; owner: number; length: number; drawSeq: number }[];
+  readonly units: readonly { readonly id: string; readonly speed: number; readonly hp: number; readonly attack: number; readonly defense: number; readonly visual: string }[];
+  freeSlots(building: number): number;
 }
 
 export function createView(state: SimState): SimView {
-  const players: PlayerView[] = state.ids.players.map((_, i) => ({
-    get team() { return state.teamIds[state.players.team[i]!]!; },
-    get kind() { return state.players.kind[i]!; }, get colorKey() { return state.players.colorKey[i]!; },
-    get alive() { return state.players.alive[i]!; }, get transit() { return state.players.transit[i]!; },
-    stats: { get generated() { return state.players.stats.generated[i]!; }, get overflowLost() { return state.players.stats.overflowLost[i]!; }, get kills() { return state.players.stats.kills[i]!; }, get captures() { return state.players.stats.captures[i]!; } },
-  }));
-  const lines: LineView[] = [];
-  return { get tick() { return state.tick; }, get over() { return state.over; }, timeLimitTicks: state.timeLimitTicks,
-    ids: state.ids, players, tower: state.tower, towerStatic: state.towerStatic, kinds: state.kinds,
-    lines,
+  const { level, buildings: b } = state;
+  return {
+    tick: 0, over: null,
+    timeLimitTicks: level.timeLimitSec === null ? 0 : level.timeLimitSec * TICK_RATE,
+    bounds: level.bounds,
+    ids: { buildings: level.buildings.map((x) => x.id), players: level.players.map((x) => x.id), elements: level.elements.map((x) => x.id) },
+    players: level.players.map((p) => ({ kind: p.kind, colorKey: p.colorKey })),
+    buildings: b,
+    buildingStatic: level.buildings.map((x) => ({
+      x: x.x, z: x.z, kind: x.kind, archetype: x.archetype, visual: x.visual, footprint: x.footprint,
+      special: x.special, drawsLines: x.modules['drawsLines'] !== undefined, initialOwner: x.owner, modules: Object.keys(x.modules).sort((p, q) => (p < q ? -1 : p > q ? 1 : 0)),
+    })),
+    elements: level.elements,
+    lines: [],
+    units: level.units.map((u) => ({ id: u.id, speed: u.speed, hp: u.hp, attack: u.attack, defense: u.defense, visual: u.visual })),
+    freeSlots: (i) => freeSlots(state, i),
   };
 }
 
-/** Refresh the stable line cache once per tick; it never enters the semantic hash. */
-export function refreshView(state: SimState): void {
-  const lines = state.view.lines as LineView[];
-  lines.length = 0;
-  for (const channel of state.channels) if (channel?.drawn) lines.push({ channel: channel.key, from: channel.from, to: channel.to, owner: channel.owner, length: channel.length, drawSeq: channel.drawSeq });
+export function refreshView(view: SimView, state: SimState): void {
+  view.tick = state.tick;
+  view.over = state.over;
+  view.lines = liveChannels(state).filter((c) => c.drawn !== 0).map((c) => ({ channel: c.key, from: c.from, to: c.to, owner: state.buildings.owner[c.from]!, length: c.length, drawSeq: c.drawSeq }));
 }
 
-/** No closures, troop objects or temporary arrays on this hot read path. */
-export function readTroops(state: SimState, out: TroopBuf): number {
-  const capacity = Math.min(out.channel.length, out.seq.length, out.owner.length, out.kind.length, out.progress.length);
-  let count = 0;
-  for (let key = 0; key < state.channels.length; key++) {
-    const channel = state.channels[key];
-    if (!channel) continue;
-    for (let i = 0; i < channel.troops.size; i++) {
-      if (count < capacity) {
-        const kind = channel.troops.read('kind', i);
-        out.channel[count] = key; out.seq[count] = channel.troops.read('seq', i);
-        out.owner[count] = channel.troops.read('owner', i); out.kind[count] = kind;
-        out.progress[count] = channel.troops.read('p0', i) + (state.tick - channel.troops.read('t0', i)) * state.kinds[kind]!.speedPerTick;
-      }
-      count++;
+/**
+ * Caller-owned troop columns; `readTroops` fills row 0.. up to the shortest column.
+ * `channel` is the channel key `from * n + to` (decode with `channelEnds(n, key)`, n = number of buildings).
+ * `kind` is the UNIT INDEX into `view.units` (events carry the unit id string instead).
+ * `length` is the lane length in progress units, so a renderer clamps `progress + speed*alpha` to it for troops on
+ * cut or replaced lines (the lane itself is no longer in `view.lines`).
+ */
+export interface TroopBuffer {
+  channel: Int32Array; seq: Int32Array; owner: Int32Array; kind: Int32Array; progress: Int32Array; hp: Int32Array; speed: Int32Array; laneLength: Int32Array;
+}
+
+export function createTroopBuffer(capacity: number): TroopBuffer {
+  const col = () => new Int32Array(capacity);
+  return { channel: col(), seq: col(), owner: col(), kind: col(), progress: col(), hp: col(), speed: col(), laneLength: col() };
+}
+
+/**
+ * Fill `buf` with every in-flight troop (live channels ascending key, FIFO front first). `progress` is at the
+ * current tick, clamped to the lane; `speed` is the constant unit speed in progress units/tick, so a renderer
+ * draws `min(progress + speed*alpha, lane length)`. Returns rows written (capped by the buffer size).
+ */
+export function readTroops(state: SimState, buf: TroopBuffer): number {
+  const cap = Math.min(buf.channel.length, buf.seq.length, buf.owner.length, buf.kind.length, buf.progress.length, buf.hp.length, buf.speed.length, buf.laneLength.length);
+  let n = 0;
+  for (const ch of liveChannels(state)) {
+    const r = ch.troops;
+    for (let i = 0; i < r.len && n < cap; i++, n++) {
+      const speed = state.level.units[r.kind[i]!]!.speed;
+      buf.channel[n] = ch.key; buf.seq[n] = r.seq[i]!; buf.owner[n] = r.owner[i]!; buf.kind[n] = r.kind[i]!; buf.hp[n] = r.hp[i]!;
+      buf.progress[n] = Math.min(progressOf(state, ch, i), ch.length);
+      buf.speed[n] = speed; buf.laneLength[n] = ch.length;
     }
   }
-  return count;
+  return n;
 }
 
-export function snapshot(state: SimState): SimSnapshot {
-  const col: Record<string, number[]> = Object.create(null) as Record<string, number[]>;
-  for (const name of sortedNames(state.tower.col)) col[name] = Array.from(state.tower.col[name]!);
-  const channels: SimSnapshot['channels'] = [];
-  for (const channel of state.channels) if (channel) {
-    const troops: Troop[] = [];
-    for (let i = 0; i < channel.troops.size; i++) troops.push({ p0: channel.troops.read('p0', i), t0: channel.troops.read('t0', i), owner: channel.troops.read('owner', i), kind: channel.troops.read('kind', i), seq: channel.troops.read('seq', i), value: channel.troops.read('value', i) });
-    channels.push({ key: channel.key, from: channel.from, to: channel.to, length: channel.length, owner: channel.owner, drawn: channel.drawn, drawSeq: channel.drawSeq, troops });
-  }
-  return { tick: state.tick, over: state.over ? { ...state.over } : null, timeLimitTicks: state.timeLimitTicks, drawSeq: state.drawSeq, troopSeq: state.troopSeq, rejected: state.rejected,
-    prng: state.prng.snapshot(), eliminated: Array.from(state.eliminated), ids: { towers: [...state.ids.towers], players: [...state.ids.players] },
-    players: state.view.players.map(player => ({ team: player.team, kind: player.kind, colorKey: player.colorKey, alive: player.alive, transit: player.transit, stats: { ...player.stats } })),
-    tower: { owner: Array.from(state.tower.owner), team: Array.from(state.tower.team), slots: Array.from(state.tower.slots), lines: Array.from(state.tower.lines), col },
-    towerStatic: state.towerStatic.map(tower => ({ ...tower, components: [...tower.components] })), kinds: state.kinds.map(kind => ({ ...kind })), channels,
+/** Serializable copy of the hashed state (plain JSON). `hash` equals `sim.hash()` at capture time. */
+export interface SimSnapshot {
+  tick: number; seed: number; hash: string;
+  over: { outcome: 'won' | 'lost' | 'timeout'; winner: number | null } | null;
+  drawSeq: number; troopSeq: number; rejected: number;
+  buildings: Record<'owner' | 'level' | 'maxLevel' | 'stage' | 'lines' | 'alive' | 'ignoreForWin', number[]>;
+  col: Record<string, number[]>;
+  channels: { key: number; drawn: number; drawSeq: number; timer: number; troops: Record<'p0' | 't0' | 'owner' | 'kind' | 'seq' | 'hp', number[]> }[];
+  fwd: [number, number, number, number][];
+}
+
+export function snapshotState(state: SimState): SimSnapshot {
+  const b = state.buildings, arr = (c: Int32Array, len = c.length): number[] => Array.from(c.subarray(0, len));
+  const col: Record<string, number[]> = {};
+  for (const name of Object.keys(b.col).sort((p, q) => (p < q ? -1 : p > q ? 1 : 0))) col[name] = arr(b.col[name]!);
+  return {
+    tick: state.tick, seed: state.seed, hash: hashState(state),
+    over: state.over ? { ...state.over } : null,
+    drawSeq: state.drawSeq, troopSeq: state.troopSeq, rejected: state.rejected,
+    buildings: { owner: arr(b.owner), level: arr(b.level), maxLevel: arr(b.maxLevel), stage: arr(b.stage), lines: arr(b.lines), alive: arr(b.alive), ignoreForWin: arr(b.ignoreForWin) },
+    col,
+    channels: liveChannels(state).map((ch) => {
+      const r = ch.troops;
+      return { key: ch.key, drawn: ch.drawn, drawSeq: ch.drawSeq, timer: ch.timer, troops: { p0: arr(r.p0, r.len), t0: arr(r.t0, r.len), owner: arr(r.owner, r.len), kind: arr(r.kind, r.len), seq: arr(r.seq, r.len), hp: arr(r.hp, r.len) } };
+    }),
+    fwd: state.fwd.map((s) => s.snapshot()),
   };
 }
-

@@ -1,5 +1,3 @@
-import type { CompiledLevel, ResolvedBotProfile } from './compile.js';
-
 /** Canonical JSON for resolved simulation values. No floating-point/undefined data. */
 export function canonicalJson(value: unknown): string {
   if (value === null || typeof value === 'boolean' || typeof value === 'string') return JSON.stringify(value);
@@ -48,19 +46,4 @@ export function sha256(text: string): string {
     [a,b,c,d,e,f,g,h].forEach((n, i) => { state[i] = (state[i]! + n) >>> 0; });
   }
   return state.map(n => n.toString(16).padStart(8, '0')).join('');
-}
-export const hashBotProfile = (profile: ResolvedBotProfile): string => sha256(canonicalJson({ id: profile.id, kind: profile.kind, params: profile.params }));
-
-/** Explicit boundary: schema metadata, inheritance, presentation and bots never enter.
- * Compiled arrays already have deterministic dense order. Resolved components replace
- * archetype provenance; globals omit the schema-tagged presentation theme.
- */
-export function hashCompiledLevel(level: Omit<CompiledLevel, 'simHash' | 'botHash'>): string {
-  return sha256(canonicalJson({
-    id: level.id, timeLimitSec: level.timeLimitSec, bounds: level.bounds,
-    globals: { timeLimitSec: level.globals.timeLimitSec },
-    players: level.players.map(player => ({ id: player.id, kind: player.kind, team: player.team })),
-    towers: level.towers.map(tower => ({ id: tower.id, x: tower.x, y: tower.y, owner: tower.owner, garrison: tower.garrison, footprintRadius: tower.footprintRadius, components: tower.components })),
-    kinds: level.kinds.map(kind => ({ id: kind.id, value: kind.value, speedMilli: kind.speedMilli })),
-  }));
 }

@@ -1,13 +1,9 @@
 // Node adapter: clocks and synthetic workload setup stay outside the pure sim core.
 const assert = require('node:assert/strict');
-const { performance } = require('node:perf_hooks');
-const os = require('node:os');
-require('tsx/cjs');
-const { create } = require('../src/index.ts');
-const { assertInvariants } = require('../src/tick.ts');
-const SEED = 0x5eed1234;
 const BUDGETS = { mean: 0.3, p99: 1, hash: 0.5, hashP99: 0.5 };
-const EMPTY = [];
+const STRESS_TROOPS = 720;
+// Lane length (world units) of the stress fixture: short enough that head-on fronts meet right after saturation.
+const STRESS_LANE = 100;
 
 function assertBudgets(metrics, ci = false) {
   for (const [metric, budget] of Object.entries(BUDGETS)) {
@@ -17,112 +13,123 @@ function assertBudgets(metrics, ci = false) {
   }
 }
 
-function createFixture() {
-  const level = {
-    id: 'sim-performance', componentNames: ['capturable', 'drawsLines', 'garrison', 'generates'],
-    timeLimitSec: 3600, visual: '', bots: [],
-    players: Array.from({ length: 4 }, (_, i) => ({ id: `p${i}`, team: `team${i}`, kind: i ? 'bot' : 'human', colorKey: '' })),
-    kinds: [{ id: 'regular', value: 1, speedMilli: 10000, visual: '' }],
-    towers: Array.from({ length: 30 }, (_, i) => ({
-      id: `t${String(i).padStart(2, '0')}`, x: i % 2 ? 35000 : -35000, y: Math.floor(i / 2) * 1000,
-      owner: i % 4, garrison: 50, archetype: '', visual: '', footprintRadius: 0,
-      components: { garrison: { cap: 50 }, generates: { troop: 0, ratePerSec: 20000 }, drawsLines: { extraSlotAbove: [10, 30] }, capturable: {} },
-    })),
-  };
-  const sim = create(level, SEED, { debug: false });
-  // Seed an already-running 70-tick pipeline. Older fronts precede younger ones.
-  // Real generation replaces one clashing front per channel on every later tick.
-  // Injected value belongs to initial accounting and transit, not generated stats.
-  for (let from = 0; from < 30; from++) {
-    const ch = sim.ensureChannel(from, from ^ 1);
-    for (let age = 69; age >= 0; age--) {
-      ch.troops.push({ p0: age * 10000, t0: 0, owner: from % 4, kind: 0, seq: ++sim.troopSeq, value: 1 });
-      sim.players.transit[from % 4]++;
-      sim.accounting.initial++;
+function load() {
+  require('tsx/cjs');
+  return { api: require('../src/internal.ts'), levels: require('../test/golden/levels.ts') };
+}
+const total = (view) => Array.from(view.buildings.alive).reduce((a, b) => a + b, 0);
+
+/**
+ * (a) Stress: 24 houses (L64, 3 lines each, STRESS_LANE-unit lanes), 4 blocks of K(3,3) between a human and an AI side,
+ * so every line has a hostile reverse line (head-on pairs). Each house saturates at the alive cap of 30: 24 x 30 = 720.
+ * Returns { level, commands } where commands are the tick-0 draws.
+ */
+function stressFixture(levels) {
+  const buildings = [], commands = [];
+  for (let block = 0; block < 4; block++) {
+    const z = block * 40, first = buildings.length;
+    for (let i = 0; i < 3; i++) buildings.push({ at: [0, z + i * 5], owner: 0, level: 64 });
+    for (let i = 0; i < 3; i++) buildings.push({ at: [STRESS_LANE, z + i * 5], owner: 1, level: 64 });
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+      commands.push({ type: 'DrawLine', player: 0, from: first + i, to: first + 3 + j });
+      commands.push({ type: 'DrawLine', player: 1, from: first + 3 + j, to: first + i });
     }
   }
-  const commands = level.towers.map((tower, i) => ({ type: 'DrawLine', player: `p${i % 4}`, from: tower.id, to: level.towers[i ^ 1].id }));
-  sim.step(commands, { events: false });
-  assert.equal(sim.rejected, 0);
-  assertWorkload(sim, 0);
-  assertInvariants(sim);
-  return sim;
+  return { level: levels.buildLevel('bench-stress', buildings), commands };
 }
 
-function assertWorkload(sim, previousTick) {
-  assert.ok(sim.tick === previousTick + 1 && sim.view.over === null && sim.over === null, 'benchmark must sample an active step');
-  assert.equal(sim.debug, false, 'benchmark requires debug off');
-  const troops = sim.channels.reduce((sum, channel) => sum + (channel?.troops.size ?? 0), 0);
-  assert.equal(sim.view.players.reduce((sum, player) => sum + player.transit, 0), troops, 'benchmark troop/transit recount mismatch');
-  assert.ok(troops >= 2000 && troops <= 2200, `benchmark troop workload escaped 2000-class range: ${troops}`);
-  assert.equal(sim.view.lines.length, 30, 'benchmark lost drawn lines');
-  return troops;
+/** (b) Realistic: 12 buildings, three houses per side plus six neutrals, two lines each, short lanes, captures happen. */
+function realisticFixture(levels) {
+  const spec = [
+    [0, 0, 0, 20], [0, 8, 0, 30], [0, 16, 0, 12], [30, 0, 1, 20], [30, 8, 1, 25], [30, 16, 1, 15],
+    [10, 0, null, 6], [10, 8, null, 4], [10, 16, null, 8], [20, 0, null, 5], [20, 8, null, 3], [20, 16, null, 7],
+  ];
+  const commands = [];
+  const lines = [[0, 6], [0, 7], [1, 7], [1, 8], [2, 8], [2, 9], [3, 9], [3, 10], [4, 10], [4, 11], [5, 11], [5, 8]];
+  for (const [from, to] of lines) commands.push({ type: 'DrawLine', player: from < 3 ? 0 : 1, from, to });
+  return { level: levels.buildLevel('bench-realistic', spec.map(([x, z, owner, level]) => ({ at: [x, z], owner, level }))), commands };
 }
 
-function summarize(times) {
-  const sorted = [...times].sort((a, b) => a - b);
-  return { mean: times.reduce((a, b) => a + b, 0) / times.length, p99: sorted[Math.ceil(sorted.length * 0.99) - 1] };
+const percentile = (sorted, p) => sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * p) - 1)];
+const now = () => Number(process.hrtime.bigint()) / 1e6;
+function summarize(steps, hashes) {
+  const a = [...steps].sort((x, y) => x - y), h = [...hashes].sort((x, y) => x - y);
+  const mean = (v) => v.reduce((s, x) => s + x, 0) / v.length;
+  return { mean: mean(steps), p99: percentile(a, 0.99), hash: mean(hashes), hashP99: percentile(h, 0.99), samples: steps.length };
 }
 
-function measure({ events = true, warmup = 3000, samples = 10000, stepsPerInterval = 1, hashSamples = 1000 } = {}) {
-  for (const value of [warmup, samples, stepsPerInterval, hashSamples]) assert.ok(Number.isInteger(value) && value > 0, 'positive measurement sizes required');
-  const sim = createFixture(), opts = { events };
-  for (let i = 0; i < warmup; i++) {
-    const tick = sim.tick; sim.step(EMPTY, opts); assertWorkload(sim, tick);
+/** Count Clash events over the same deterministic run (events on, untimed): ticks `from`..`to` after the draw tick. */
+function clashesBetween(api, level, commands, seed, from, to) {
+  const sim = api.create(level, seed);
+  let clashes = 0;
+  sim.step(commands, { events: true }); // the draw tick itself is outside the window
+  for (let t = 1; t <= to; t++) {
+    const ev = sim.step([], { events: true });
+    if (t >= from) clashes += ev.filter((e) => e.type === 'Clash').length;
   }
-  const generatedBefore = sim.accounting.generated, clashesBefore = sim.accounting.clashes;
-  const times = [], eventTypes = {};
-  let troopMin = Infinity, troopMax = 0, eventCount = 0;
-  const start = performance.now();
-  for (let interval = 0; interval < samples; interval++) for (let j = 0; j < stepsPerInterval; j++) {
-    const tick = sim.tick, before = performance.now();
-    const emitted = sim.step(EMPTY, opts);
-    times.push(performance.now() - before);
-    const troops = assertWorkload(sim, tick);
-    troopMin = Math.min(troopMin, troops); troopMax = Math.max(troopMax, troops);
-    eventCount += emitted.length;
-    if (!events) assert.equal(emitted.length, 0, 'events:false emitted events');
-    for (const event of emitted) eventTypes[event.type] = (eventTypes[event.type] ?? 0) + 1;
-  }
-  const workloadRuntimeMs = performance.now() - start;
-  assert.ok(sim.accounting.generated > generatedBefore && sim.accounting.clashes > clashesBefore, 'benchmark must generate and interact');
-  assert.equal(sim.rejected, 0);
-  assertInvariants(sim);
-  // Hash the actual final 2,100-troop state, after separate JIT warmup.
-  const finalHash = sim.hash();
-  for (let i = 0; i < 200; i++) assert.equal(sim.hash(), finalHash);
-  const hashTimes = [];
-  for (let i = 0; i < hashSamples; i++) {
-    const before = performance.now(); const hash = sim.hash();
-    hashTimes.push(performance.now() - before); assert.equal(hash, finalHash);
-  }
-  const step = summarize(times), hash = summarize(hashTimes);
-  return { events, seed: SEED, warmup, intervals: samples, stepsPerInterval, activeSamples: times.length,
-    tick: sim.tick, lineCount: sim.view.lines.length, troopMin, troopMax, hashTroops: troopMax,
-    seats: sim.view.players.map((player, owner) => ({ id: sim.ids.players[owner], kind: player.kind,
-      towers: [...sim.tower.owner].filter(value => value === owner).length,
-      lines: sim.view.lines.filter(line => line.owner === owner).length, transit: player.transit })),
-    mean: step.mean, p99: step.p99, hash: hash.mean, hashP99: hash.p99, hashSamples,
-    workloadRuntimeMs, eventCount, eventTypes, generated: sim.accounting.generated - generatedBefore,
-    clashes: sim.accounting.clashes - clashesBefore, finalHash, rejected: sim.rejected };
+  return clashes;
 }
 
-function main() {
-  const ci = process.argv.includes('--ci') || /^(1|true)$/i.test(process.env.CI ?? '');
-  const unknown = process.argv.slice(2).filter(arg => arg !== '--ci');
-  assert.equal(unknown.length, 0, `unknown benchmark arguments: ${unknown.join(', ')}`);
-  const baseline = measure();
-  const twiceVisible = measure({ stepsPerInterval: 2, samples: 5000 });
-  const twiceQuiet = measure({ events: false, stepsPerInterval: 2, samples: 5000 });
-  assert.equal(twiceVisible.finalHash, twiceQuiet.finalHash);
-  assert.equal(twiceVisible.rejected, twiceQuiet.rejected);
-  assert.equal(twiceQuiet.eventCount, 0);
-  console.log(JSON.stringify({ environment: { node: process.version, platform: process.platform, arch: process.arch,
-    cpu: os.cpus()[0]?.model, cpus: os.cpus().length }, mode: ci ? 'ci' : 'strict',
-    budgetsMs: Object.fromEntries(Object.entries(BUDGETS).map(([key, value]) => [key, value * (ci ? 5 : 1)])),
-    baseline, twiceVisible, twiceQuiet }, null, 2));
-  for (const result of [baseline, twiceVisible, twiceQuiet]) assertBudgets(result, ci);
-  console.log('PASS: active workload, event parity, and all performance budgets');
+/**
+ * Stress run: fresh sims warmed (untimed) until every house is saturated, then `window` ticks timed while head-on
+ * clashes resolve and the alive cap refills. Asserts 720 live troops were reached (peak) and reports the minimum alive count inside the timed window (clashes thin it), and that >= 1 clash fell inside the timed window.
+ */
+function runStress(trials = 20, window = 40) {
+  const { api, levels } = load();
+  const { level, commands } = stressFixture(levels);
+  const steps = [], hashes = [];
+  let peak = 0, clashes = 0, minTimed = Infinity;
+  for (let trial = -2; trial < trials; trial++) { // trials -2..-1 warm the JIT and are not sampled
+    const seed = 1000 + trial;
+    const sim = api.create(level, seed);
+    sim.step(commands, { events: false });
+    let guard = 0, ticks = 1;
+    while (total(sim.view) < STRESS_TROOPS) { sim.step([], { events: false }); ticks++; assert.ok(++guard < 400, 'stress never saturated'); }
+    peak = Math.max(peak, total(sim.view));
+    if (trial === 0) clashes = clashesBetween(api, level, commands, seed, ticks, ticks + window - 1);
+    for (let i = 0; i < window; i++) {
+      const t0 = now(); sim.step([], { events: false }); const t1 = now(); sim.hash(); const t2 = now();
+      if (trial >= 0) { steps.push(t1 - t0); hashes.push(t2 - t1); }
+      peak = Math.max(peak, total(sim.view));
+      if (trial >= 0) minTimed = Math.min(minTimed, total(sim.view));
+    }
+  }
+  assert.equal(peak, STRESS_TROOPS, `stress must reach ${STRESS_TROOPS} live troops (peak ${peak})`);
+  assert.ok(clashes >= 1, `stress must resolve >= 1 head-on clash inside the timed window (saw ${clashes})`);
+  return { ...summarize(steps, hashes), peakTroops: peak, minTimedTroops: minTimed, clashes };
 }
-module.exports = { assertBudgets, createFixture, assertWorkload, measure };
-if (require.main === module) main();
+
+function runRealistic(trials = 40, maxTicks = 1200) {
+  const { api, levels } = load();
+  const { level, commands } = realisticFixture(levels);
+  const steps = [], hashes = [];
+  let peak = 0;
+  for (let trial = -2; trial < trials; trial++) {
+    const sim = api.create(level, 5000 + trial);
+    sim.step(commands, { events: false });
+    for (let i = 0; i < maxTicks && !sim.view.over; i++) {
+      const t0 = now(); sim.step([], { events: false }); const t1 = now(); sim.hash(); const t2 = now();
+      if (trial >= 0) { steps.push(t1 - t0); hashes.push(t2 - t1); }
+      peak = Math.max(peak, total(sim.view));
+    }
+  }
+  return { ...summarize(steps, hashes), peakTroops: peak };
+}
+
+/** Bench scenarios, run in order and each held to the budgets. SP04 appends its geometry scenario here (`{ name, run }`). */
+const BENCH_SCENARIOS = [
+  { name: 'stress', run: () => runStress() },
+  { name: 'realistic', run: () => runRealistic() },
+];
+
+const fmt = (m) => `mean ${m.mean.toFixed(4)} ms, p99 ${m.p99.toFixed(4)} ms, hash mean ${m.hash.toFixed(4)} ms, hash p99 ${m.hashP99.toFixed(4)} ms (${m.samples} samples, peak ${m.peakTroops} troops${m.minTimedTroops === undefined ? '' : `, min ${m.minTimedTroops} in window`}${m.clashes === undefined ? '' : `, ${m.clashes} clashes in window`})`;
+function main(args = process.argv.slice(2)) {
+  const ci = args.includes('--ci');
+  const width = Math.max(...BENCH_SCENARIOS.map((x) => x.name.length));
+  const results = BENCH_SCENARIOS.map((x) => ({ name: x.name, metrics: x.run() }));
+  for (const { name, metrics } of results) process.stdout.write(`bench:sim ${name.padEnd(width)} ${fmt(metrics)}\n`);
+  for (const { metrics } of results) assertBudgets(metrics, ci);
+  process.stdout.write(`bench:sim within budget${ci ? ' (CI x5)' : ''}\n`);
+}
+module.exports = { assertBudgets, BENCH_SCENARIOS, STRESS_LANE, runStress, runRealistic, stressFixture, realisticFixture, STRESS_TROOPS };
+if (require.main === module) { try { main(); } catch (error) { process.stderr.write(`${error.message}\n`); process.exitCode = 1; } }

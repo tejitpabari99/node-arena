@@ -3,7 +3,11 @@
   "required": [
     "$schema",
     "schemaVersion",
-    "defaults"
+    "stageThresholds",
+    "spawn",
+    "growth",
+    "contactDistance",
+    "laneHalfWidth"
   ],
   "properties": {
     "$schema": {
@@ -12,27 +16,61 @@
     },
     "schemaVersion": {
       "type": "string",
-      "const": "1.0.0"
+      "const": "2.0.0"
     },
-    "defaults": {
+    "stageThresholds": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "spawn": {
       "type": "object",
       "required": [
-        "timeLimitSec",
-        "theme"
+        "aliveCap"
       ],
       "properties": {
-        "timeLimitSec": {
+        "aliveCap": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 107374182
-        },
-        "theme": {
-          "type": "string",
-          "minLength": 1,
-          "x-presentation": true
+          "maximum": 1000
         }
       },
       "additionalProperties": false
+    },
+    "growth": {
+      "type": "object",
+      "required": [
+        "base"
+      ],
+      "properties": {
+        "base": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 500,
+          "exclusiveMinimum": 0,
+          "x-unit": "fx3"
+        }
+      },
+      "additionalProperties": false
+    },
+    "contactDistance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 500,
+      "exclusiveMinimum": 0,
+      "x-unit": "fx3"
+    },
+    "laneHalfWidth": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 500,
+      "exclusiveMinimum": 0,
+      "x-unit": "fx3"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",

@@ -6,19 +6,27 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./internal": {
+      "types": "./dist/internal.d.ts",
+      "import": "./dist/internal.js",
+      "default": "./dist/internal.js"
     },
     "./eslint.determinism.cjs": "./eslint.determinism.cjs"
   },
   "scripts": {
-    "test": "node --test test/*.test.cjs",
+    "test": "node --test $(ls test/*.test.cjs | grep -v '/golden\\.test\\.cjs$')",
+    "test:golden": "node --test test/golden.test.cjs",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.golden.json",
     "lint": "eslint src",
     "sim:golden": "node scripts/golden.cjs",
     "bench:sim": "node scripts/bench.cjs"
   },
   "dependencies": {
-    "@node-arena/content": "workspace:*"
+    "@node-arena/content": "workspace:*",
+    "@node-arena/defs": "workspace:*"
   },
   "devDependencies": {
     "fast-check": "4.10.2",

@@ -1,32 +1,36 @@
 import assert from 'node:assert/strict';
+import { readFile, readdir } from 'node:fs/promises';
 import { test } from 'node:test';
 import { ESLint } from 'eslint';
 
 const eslint = new ESLint({ cwd: new URL('../../../', import.meta.url).pathname });
-for (const filename of ['loader.ts', 'validate.ts', 'compiler.ts', 'hash.ts', 'loadContent.ts', 'validateContent.ts', 'compileLevel.ts', 'hash/sha256.ts']) {
-  for (const specifier of ['fs', 'fs/promises', 'node:fs', 'node:fs/promises', 'path', 'node:path', 'crypto', 'node:crypto']) {
-    test(`${filename} rejects the Node import ${specifier}`, async () => {
-      const results = await eslint.lintText(`import forbidden from '${specifier}';`, {
-        filePath: `packages/content/src/${filename}`,
-      });
-      assert.equal(results[0]?.errorCount, 1);
-      assert.equal(results[0]?.messages[0]?.ruleId, 'no-restricted-imports');
-    });
-  }
-}
+const srcDir = new URL('../src/', import.meta.url);
+const restricted = new Set(['no-restricted-imports', 'no-restricted-modules', 'no-restricted-syntax']);
 
-test('a browser-safe validator may import Ajv', async () => {
-  const [result] = await eslint.lintText("import { Ajv } from 'ajv';", { filePath: 'packages/content/src/validate.ts' });
-  assert.equal(result?.errorCount, 0);
+test('every source file passes the browser-boundary lint rules', async () => {
+  const names = (await readdir(srcDir)).filter((n) => n.endsWith('.ts'));
+  for (const required of ['catalog.ts', 'level.ts', 'compile.ts', 'content.ts', 'issues.ts', 'bounds.ts']) assert.ok(names.includes(required), required);
+  for (const name of names) {
+    const [result] = await eslint.lintText(await readFile(new URL(name, srcDir), 'utf8'), { filePath: `packages/content/src/${name}` });
+    const hits = result!.messages.filter((m) => restricted.has(m.ruleId ?? ''));
+    assert.deepEqual(hits, [], name);
+  }
 });
 
-for (const source of [
-  "export { readFile } from 'node:fs';",
-  "const fs = await import('node:fs');",
-  "const crypto = require('node:crypto');",
-]) {
-  test(`the browser boundary also rejects ${source}`, async () => {
-    const [result] = await eslint.lintText(source, { filePath: 'packages/content/src/loader.ts' });
-    assert.equal(result?.errorCount, 1);
-  });
+test('no Node built-in is imported or required anywhere in src/', async () => {
+  for (const name of (await readdir(srcDir)).filter((n) => n.endsWith('.ts'))) {
+    const text = await readFile(new URL(name, srcDir), 'utf8');
+    assert.doesNotMatch(text, /from\s+['"](node:|fs|path|crypto|os|url|child_process)/, name);
+    assert.doesNotMatch(text, /require\(|process\.|Buffer\b|import\.meta\.glob|readFileSync/, name);
+  }
+});
+
+for (const filename of ['catalog.ts', 'level.ts', 'compile.ts', 'content.ts']) {
+  for (const specifier of ['node:fs', 'node:path', 'node:crypto', 'fs/promises']) {
+    test(`${filename} rejects the Node import ${specifier}`, async () => {
+      const [result] = await eslint.lintText(`import forbidden from '${specifier}';`, { filePath: `packages/content/src/${filename}` });
+      assert.equal(result?.errorCount, 1);
+      assert.equal(result?.messages[0]?.ruleId, 'no-restricted-imports');
+    });
+  }
 }

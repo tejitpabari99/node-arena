@@ -1,0 +1,87 @@
+{
+  "$schema": "../../schemas/campaign.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "common",
+  "entries": [
+    {
+      "level": "levelview-1",
+      "position": 4
+    },
+    {
+      "level": "levelview-2-ab",
+      "position": 5
+    },
+    {
+      "level": "levelview-3-ab",
+      "position": 6
+    },
+    {
+      "level": "levelview-4",
+      "position": 7
+    },
+    {
+      "level": "levelview-5",
+      "position": 8
+    },
+    {
+      "level": "levelview-6",
+      "position": 9
+    },
+    {
+      "level": "levelview-182-nb",
+      "position": 10
+    },
+    {
+      "level": "levelview-8-es",
+      "position": 11
+    },
+    {
+      "level": "levelview-10",
+      "position": 12
+    },
+    {
+      "level": "levelview-11",
+      "position": 13
+    },
+    {
+      "level": "levelview-12",
+      "position": 14
+    },
+    {
+      "level": "levelview-13",
+      "position": 15
+    },
+    {
+      "level": "levelview-14",
+      "position": 16
+    },
+    {
+      "level": "levelview-15",
+      "position": 17
+    },
+    {
+      "level": "levelview-16",
+      "position": 18
+    },
+    {
+      "level": "levelview-17",
+      "position": 19
+    },
+    {
+      "level": "levelview-49",
+      "position": 20
+    },
+    {
+      "level": "levelview-19",
+      "position": 21
+    },
+    {
+      "level": "levelview-20",
+      "position": 22
+    },
+    {
+      "level": "levelview-100-es",
+      "position": 23
+    }
+  ]
+}

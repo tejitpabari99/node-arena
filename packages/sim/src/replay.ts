@@ -1,10 +1,12 @@
-import type { CompiledLevel, Content, ReplayHeader } from '@node-arena/content';
-import { create } from './state.js';
+import type { CompiledLevel, ReplayHeader } from '@node-arena/content';
+import type { Command } from '@node-arena/defs';
+import { create, type Sim } from './sim.js';
 import { TICK_RATE } from './math.js';
-import type { Sim } from './read.js';
-import type { Command, GameOver } from './commands.js';
+import type { SimState } from './types.js';
 
-export type ReplayMetadata = Pick<Content, 'rulesVersion' | 'schemaVersion' | 'contentVersion'>;
+type GameOver = NonNullable<SimState['over']>;
+/** Authoritative versions from `content.json` (extra fields are ignored). */
+export interface ReplayMetadata { rulesVersion: string; schemaVersion: string; contentVersion: string }
 export type ReplayJson = null | boolean | number | string | ReplayJson[] | { [key: string]: ReplayJson };
 export interface ReplayRecord {
   header: ReplayHeader;
@@ -54,7 +56,7 @@ function json(value: unknown, ancestors = new Set<unknown>()): value is ReplayJs
 }
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
 function overValid(value: unknown): value is GameOver | null {
-  return value === null || (object(value) && ['won', 'lost', 'draw', 'timeout'].includes(value.outcome as string) && (value.winnerTeam === null || typeof value.winnerTeam === 'string'));
+  return value === null || (object(value) && ['won', 'lost', 'timeout'].includes(value.outcome as string) && (value.winner === null || (typeof value.winner === 'number' && Number.isInteger(value.winner) && value.winner >= 0)));
 }
 function validate(rec: unknown): asserts rec is ReplayRecord {
   if (!object(rec) || !headerValid(rec.header) || !tick(rec.finalTick) || !validHash(rec.finalHash) || !overValid(rec.outcome) || !Array.isArray(rec.commands) || !Array.isArray(rec.checkpoints)) invalid();
@@ -81,20 +83,24 @@ export function createReplayRecorder(level: CompiledLevel, seed: number, metadat
   const sim = create(level, seed);
   const commands: ReplayRecord['commands'] = [], checkpoints: ReplayRecord['checkpoints'] = [];
   return {
-    get tick() { return sim.tick; }, get view() { return sim.view; }, get rejected() { return sim.rejected; },
-    canDraw: (player, from, to) => sim.canDraw(player, from, to), readTroops: out => sim.readTroops(out),
-    hash: () => sim.hash(), snapshot: () => sim.snapshot(),
+    get view() { return sim.view; },
+    hash: () => sim.hash(),
+    canDraw: (player, from, to) => sim.canDraw(player, from, to),
+    explainDraw: (player, from, to) => sim.explainDraw(player, from, to),
+    towerRadiusMilli: (view, building) => sim.towerRadiusMilli(view, building),
+    readTroops: (buf) => sim.readTroops(buf),
+    snapshot: () => sim.snapshot(),
     step(cmds, options) {
       if (sim.view.over) return sim.step(cmds, options);
       if (!json(cmds)) invalid();
       const submitted = clone(cmds) as unknown as ReplayJson[];
-      for (const cmd of submitted) commands.push({ tick: sim.tick, cmd });
+      for (const cmd of submitted) commands.push({ tick: sim.view.tick, cmd });
       // A separate clone keeps emitted rejection payloads from mutating history.
       const events = sim.step(clone(submitted) as unknown as Command[], options);
-      if (sim.tick % TICK_RATE === 0) checkpoints.push({ tick: sim.tick, hash: sim.hash() });
+      if (sim.view.tick % TICK_RATE === 0) checkpoints.push({ tick: sim.view.tick, hash: sim.hash() });
       return events;
     },
-    record() { return clone({ header, commands, checkpoints, finalTick: sim.tick, finalHash: sim.hash(), outcome: sim.view.over }); },
+    record() { return clone({ header, commands, checkpoints, finalTick: sim.view.tick, finalHash: sim.hash(), outcome: sim.view.over }); },
   };
 }
 
@@ -109,19 +115,19 @@ export function playReplay(content: ReplaySource, rec: ReplayRecord): ReplayResu
   const level = content.level ?? content.resolveLevel(rec.header.levelId);
   if (level.id !== rec.header.levelId || level.simHash !== rec.header.simHash) invalid();
   const sim = create(level, rec.header.seed);
-  if (rec.finalTick > sim.view.timeLimitTicks) invalid();
+  if (sim.view.timeLimitTicks > 0 && rec.finalTick > sim.view.timeLimitTicks) invalid();
   let commandIndex = 0, checkpointIndex = 0;
-  while (sim.tick < rec.finalTick) {
-    if (sim.view.over) return { ok: false, sim, divergingTick: sim.tick };
+  while (sim.view.tick < rec.finalTick) {
+    if (sim.view.over) return { ok: false, sim, divergingTick: sim.view.tick };
     const cmds: Command[] = [];
-    while (commandIndex < rec.commands.length && rec.commands[commandIndex]!.tick === sim.tick) cmds.push(clone(rec.commands[commandIndex++]!.cmd) as unknown as Command);
+    while (commandIndex < rec.commands.length && rec.commands[commandIndex]!.tick === sim.view.tick) cmds.push(clone(rec.commands[commandIndex++]!.cmd) as unknown as Command);
     sim.step(cmds, { events: false });
     const checkpoint = rec.checkpoints[checkpointIndex];
-    if (checkpoint?.tick === sim.tick) {
-      if (sim.hash() !== checkpoint.hash) return { ok: false, sim, divergingTick: sim.tick };
+    if (checkpoint?.tick === sim.view.tick) {
+      if (sim.hash() !== checkpoint.hash) return { ok: false, sim, divergingTick: sim.view.tick };
       checkpointIndex++;
     }
   }
-  if (sim.hash() !== rec.finalHash || sim.view.over?.outcome !== rec.outcome?.outcome || sim.view.over?.winnerTeam !== rec.outcome?.winnerTeam) return { ok: false, sim, divergingTick: sim.tick };
+  if (sim.hash() !== rec.finalHash || sim.view.over?.outcome !== rec.outcome?.outcome || sim.view.over?.winner !== rec.outcome?.winner) return { ok: false, sim, divergingTick: sim.view.tick };
   return { ok: true, sim };
 }

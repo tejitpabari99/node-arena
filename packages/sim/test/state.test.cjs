@@ -1,109 +1,180 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 require('tsx/cjs');
-const sim = require('../src/index.ts');
-const content = require('../../content/src/component-registry.ts');
-function level() {
-  const components = { garrison: { cap: 50 }, generates: { troop: 0, ratePerSec: 1125 }, drawsLines: { extraSlotAbove: [10, 30] }, capturable: {} };
-  return { componentNames: Object.keys(content.COMPONENT_REGISTRY.components).sort(), id: 'test', timeLimitSec: 120, visual: 'city', bounds: { w: 100000, h: 100000 }, globals: { timeLimitSec: 300, theme: 'city' }, simHash: 'identity', botHash: {}, bots: [],
-    players: [{ id: 'a', team: 'same', kind: 'human', colorKey: 'red' }, { id: 'b', team: 'same', kind: 'bot', colorKey: 'blue' }, { id: 'c', team: 'other', kind: 'bot', colorKey: 'green' }],
-    towers: [{ id: 'a', archetype: 'small', x: 0, y: 0, owner: -1, garrison: 10, visual: 'neutral', footprintRadius: 2125, components: structuredClone(components) }, { id: 'b', archetype: 'small', x: 3000, y: 4000, owner: 1, garrison: 31, visual: 'tower', footprintRadius: 2125, components: structuredClone(components) }, { id: 'c', archetype: 'object', x: -500000, y: -500000, owner: 2, garrison: 0, visual: 'object', footprintRadius: 0, components: {} }],
-    kinds: [{ id: 'regular', value: 1, speedMilli: 3001, visual: 'soldier' }] };
-}
-test('create derives indexed integer columns, strict slot thresholds and visual metadata without touching bots', () => {
-  assert.equal(typeof sim.create, 'function');
-  const input = level();
-  Object.defineProperty(input, 'bots', { get() { throw new Error('bots must be ignored'); } });
-  const state = sim.create(input, 123);
-  assert.equal(state.tick, 0);
-  assert.equal(state.timeLimitTicks, 2400);
-  assert.deepEqual([...state.players.team], [0, 0, 1]);
-  assert.deepEqual([...state.players.alive], [0, 1, 1]);
-  assert.deepEqual([...state.players.transit], [0, 0, 0]);
-  assert.deepEqual([...state.tower.owner], [-1, 1, 2]);
-  assert.deepEqual([...state.tower.team], [-1, 0, 1]);
-  assert.deepEqual([...state.tower.slots], [1, 3, 0]);
-  assert.deepEqual([...state.tower.col['garrison.count']], [10, 31, 0]);
-  assert.deepEqual([...state.tower.col['garrison.cap']], [50, 50, 0]);
-  assert.deepEqual([...state.tower.col['generates.acc']], [0, 0, 0]);
-  assert.deepEqual([...state.tower.col['generates.ratePerSec']], [1125, 1125, 0]);
-  assert.deepEqual([...state.tower.col['generates.troop']], [0, 0, 0]);
-  state.towerParams[0].drawsLines.extraSlotAbove.push(99);
-  assert.deepEqual(input.towers[0].components.drawsLines.extraSlotAbove, [10, 30]);
-  assert.deepEqual([...state.componentTowers.get('garrison')], [0, 1]);
-  assert.equal(state.towerStatic[0].visual, 'neutral');
-  assert.deepEqual(state.towerStatic[0].components, ['capturable', 'drawsLines', 'garrison', 'generates']);
-  assert.deepEqual(state.kinds, [{ id: 'regular', value: 1, speedPerTick: 3001, visual: 'soldier' }]);
-  assert.deepEqual(state.ids, { players: ['a', 'b', 'c'], towers: ['a', 'b', 'c'] });
-  assert.equal(state.players.colorKey[1], 'blue');
-  assert.equal(state.visual, 'city');
-  assert.equal(state.lengths[1], 100000);
-  assert.equal(state.lengths[3], 100000);
-  assert.equal(state.lengths[2], 14142135);
-  assert.equal(state.channels.filter(Boolean).length, 0);
-  assert.deepEqual(state.prng.snapshot(), new sim.Sfc32(123).snapshot());
-  state.tower.col['garrison.count'][0] = 0;
-  assert.equal(input.towers[0].garrison, 10);
-});
-test('registry parity rejects missing, extra and unknown level components; fixture injection matches its own content', () => {
-  assert.equal(typeof sim.createComponentRegistry, 'function');
-  const registry = sim.createComponentRegistry();
-  assert.doesNotThrow(() => registry.assertParity(Object.keys(content.COMPONENT_REGISTRY.components)));
-  assert.throws(() => registry.assertParity([]), /parity/i);
-  registry.registerComponent({ name: 'shoots', state: { acc: 7 }, systems: { generation: { order: 1, run: () => {} } } });
-  assert.throws(() => sim.create(level(), 0, { registry }), /parity/i);
-  const fixtureContent = { ...content.COMPONENT_REGISTRY, components: { ...content.COMPONENT_REGISTRY.components, shoots: { params: {}, ruleIds: [] } } };
-  const fixture = level(); fixture.componentNames = Object.keys(fixtureContent.components); fixture.towers[1].components.shoots = {};
-  const state = sim.create(fixture, 0, { registry });
-  assert.deepEqual([...state.componentTowers.get('shoots')], [1]);
-  assert.deepEqual([...state.tower.col['shoots.acc']], [0, 7, 0]);
-  assert.equal(state.systems.generation.at(-1).component, 'shoots');
-  const bad = level(); bad.towers[0].components.unknown = {};
-  assert.throws(() => sim.create(bad, 0), /unknown component/i);
-  assert.throws(() => registry.registerComponent({ name: 'shoots', state: {} }), /duplicate/i);
-});
-test('lazy channels keep FIFO data through wrap, growth, partial front consumption and line cutting', () => {
-  assert.equal(typeof sim.create, 'function');
-  const state = sim.create(level(), 0);
-  const channel = state.ensureChannel(0, 1);
-  assert.equal(channel, state.ensureChannel(0, 1));
-  assert.equal(channel.key, 1);
-  assert.equal(channel.length, 100000);
-  const q = channel.troops;
-  for (let i = 0; i < 40; i++) q.push({ p0: i, t0: i, owner: 1, kind: 0, seq: i, value: 2 });
-  assert.equal(q.consumeFront(1), 1);
-  assert.equal(q.front().value, 1);
-  assert.equal(q.front().seq, 0);
-  assert.equal(q.consumeFront(8), 1);
-  for (let i = 1; i < 30; i++) { assert.equal(q.front().seq, i); q.shift(); }
-  for (let i = 40; i < 100; i++) q.push({ p0: i, t0: i, owner: 1, kind: 0, seq: i, value: 2 });
-  channel.drawn = 1; channel.drawn = 0;
-  assert.equal(q.size, 70);
-  for (let i = 30; i < 100; i++) { assert.deepEqual(q.front(), { p0: i, t0: i, owner: 1, kind: 0, seq: i, value: 2 }); q.shift(); }
-  assert.equal(q.front(), undefined);
-  assert.equal(q.consumeFront(1), 0);
-  assert.throws(() => state.ensureChannel(0, 0), /channel/i);
-  assert.throws(() => state.ensureChannel(-1, 0), /channel/i);
+const api = require('../src/internal.ts');
+const { compiledGolden } = require('./fixtures.cjs');
+
+const fresh = (seed = 7) => api.createState(compiledGolden(), seed);
+
+test('covers R-TCK-02: Sfc32.below is in range, unbiased-shaped and rejects bad n', () => {
+  const s = new api.Sfc32(5);
+  const counts = new Array(6).fill(0);
+  for (let i = 0; i < 6000; i++) { const v = s.below(6); assert.ok(v >= 0 && v < 6); counts[v]++; }
+  for (const c of counts) assert.ok(c > 800 && c < 1200, String(counts));
+  assert.equal(new api.Sfc32(5).below(1), 0);
+  for (const bad of [0, -1, 1.5, 4294967297, NaN]) assert.throws(() => s.below(bad), RangeError);
+  // Same seed, same sequence of below() draws.
+  const a = new api.Sfc32(9), b = new api.Sfc32(9);
+  for (let i = 0; i < 50; i++) assert.equal(a.below(7), b.below(7));
 });
 
-test('the shipped sample crosses the real content compiler boundary into create', () => {
-  const fs = require('node:fs');
-  const path = require('node:path');
-  const api = require('../../content/src/index.ts');
-  const root = path.resolve(__dirname, '../../content');
-  const files = { 'content.json': JSON.parse(fs.readFileSync(path.join(root, 'content.json'), 'utf8')) };
-  for (const entry of fs.readdirSync(path.join(root, 'data'), { recursive: true, withFileTypes: true })) {
-    if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
-    const file = path.join(entry.parentPath, entry.name);
-    files[path.relative(root, file)] = JSON.parse(fs.readFileSync(file, 'utf8'));
+test('fnv1a32 matches published vectors', () => {
+  assert.equal(api.fnv1a32(''), 0x811c9dc5);
+  assert.equal(api.fnv1a32('a'), 0xe40c292c);
+  assert.equal(api.fnv1a32('foobar'), 0xbf9cf968);
+});
+
+test('streams: entity-keyed, order-independent, purpose ids distinct for fwd and bot.tw', () => {
+  assert.notEqual(api.purposeId('fwd'), api.purposeId('bot.tw'));
+  const a = api.createStreams(11), b = api.createStreams(11);
+  const a0 = a.fork('fwd', 0), a1 = a.fork('fwd', 1);
+  const b1 = b.fork('fwd', 1), b0 = b.fork('fwd', 0); // forked in the opposite order
+  assert.deepEqual([a0.below(100), a0.below(100), a0.next()], [b0.below(100), b0.below(100), b0.next()]);
+  a0.next(); // draws on one entity do not shift another
+  assert.deepEqual(a1.snapshot(), b1.snapshot());
+  assert.notDeepEqual(api.createStreams(11).fork('fwd', 0).snapshot(), api.createStreams(11).fork('fwd', 1).snapshot());
+  assert.notDeepEqual(api.createStreams(11).fork('fwd', 0).snapshot(), api.createStreams(11).fork('bot.tw', 0).snapshot());
+  assert.notDeepEqual(api.createStreams(11).fork('fwd', 0).snapshot(), api.createStreams(12).fork('fwd', 0).snapshot());
+  assert.equal(api.createStreams(11).fork('fwd', 3).snapshot().length, 4);
+});
+
+test('state: fwd stream per building, shoots.cooldown zeroed, seat columns, no channels yet', () => {
+  const s = fresh();
+  assert.equal(s.fwd.length, s.buildings.n);
+  assert.ok(s.buildings.col['shoots.cooldown'].every((v) => v === 0));
+  assert.equal(s.buildings.col['shoots.cooldown'].length, s.buildings.n);
+  assert.deepEqual(Array.from(s.players.kind), s.level.players.map((p) => (p.kind === 'human' ? 0 : 1)));
+  assert.equal(s.channels.size, 0);
+  assert.deepEqual(s.counters, { spawned: 0, arrived: 0, died: 0, killed: 0 });
+  api.assertInvariants(s);
+});
+
+test('ring: push, FIFO order, removeAt shifts and zeroes tail, capacity, hp column', () => {
+  const r = new api.TroopRing(3);
+  r.push(10, 1, 0, 0, 100, 2); r.push(20, 2, 0, 0, 101, 1); r.push(30, 3, 0, 1, 102, 1);
+  assert.throws(() => r.push(0, 0, 0, 0, 0, 0), RangeError);
+  assert.equal(r.indexOfSeq(101), 1);
+  r.removeAt(0);
+  assert.equal(r.len, 2);
+  assert.deepEqual([r.seq[0], r.seq[1], r.seq[2]], [101, 102, 0]);
+  assert.deepEqual([r.p0[0], r.hp[0], r.kind[1], r.t0[2]], [20, 1, 1, 0]);
+  r.removeAt(1);
+  assert.deepEqual([r.len, r.seq[0], r.seq[1]], [1, 101, 0]);
+  assert.throws(() => r.removeAt(1), RangeError);
+  assert.throws(() => r.removeAt(-1), RangeError);
+  r.push(5, 5, 0, 0, 7, 1); // reuses vacated slot
+  assert.deepEqual([r.len, r.seq[1]], [2, 7]);
+  r.clear();
+  assert.equal(r.len, 0);
+});
+
+test('covers R-TCK-04: channel length is symmetric isqrt in progress units; key = from*n+to; lazy', () => {
+  const s = fresh();
+  const a = api.getChannel(s, 0, 1), b = api.getChannel(s, 1, 0);
+  assert.equal(a.key, 0 * s.buildings.n + 1);
+  assert.equal(b.key, 1 * s.buildings.n + 0);
+  assert.equal(a.length, b.length);
+  const p = s.level.buildings[0], q = s.level.buildings[1];
+  const dx = (p.x - q.x) * 20, dz = (p.z - q.z) * 20;
+  const len = Number(BigInt(Math.floor(Math.sqrt(dx * dx + dz * dz))));
+  assert.ok(a.length * a.length <= dx * dx + dz * dz && (a.length + 1) ** 2 > dx * dx + dz * dz);
+  assert.ok(Math.abs(a.length - len) <= 1);
+  assert.equal(api.getChannel(s, 0, 1), a);
+  assert.equal(s.channels.size, 2);
+  assert.equal(api.laneLength(s.level, 0, 0), 0);
+});
+
+test('hash ignores lazily created idle channels and is sensitive to channel/ring/stream/module state', () => {
+  const s = fresh(), h0 = api.hashState(s);
+  api.getChannel(s, 0, 1); api.getChannel(s, 2, 3);
+  assert.equal(api.hashState(s), h0, 'idle channel is not part of the hash');
+  const ch = api.getChannel(s, 0, 1);
+  const seen = new Set([h0]);
+  const mutate = (fn) => { fn(); const h = api.hashState(s); assert.ok(!seen.has(h), 'hash must change'); seen.add(h); };
+  mutate(() => { ch.drawn = 1; s.buildings.lines[0] = 1; });
+  mutate(() => { ch.drawSeq = 4; });
+  mutate(() => { ch.timer = 500; });
+  mutate(() => { api.spawnTroop(s, 0, 1, 0); });
+  mutate(() => { ch.troops.hp[0] = 5; });
+  mutate(() => { ch.troops.p0[0] = 9; });
+  mutate(() => { s.fwd[3].below(5); });
+  mutate(() => { s.buildings.col['shoots.cooldown'][2] = 1; });
+  mutate(() => { s.buildings.col['grows.timer'][1] = 300; });
+  mutate(() => { s.troopSeq += 1; });
+  mutate(() => { s.over = { outcome: 'won', winner: 0 }; });
+  assert.match(api.hashState(s), /^[0-9a-f]{16}$/);
+});
+
+test('covers R-TCK-03: liveChannels iterate by ascending channelKey; hash is independent of channel creation order and of the seed-less history', () => {
+  const a = fresh(), b = fresh();
+  for (const s of [a, b]) { s.buildings.lines[0] = 1; s.buildings.lines[1] = 1; }
+  api.getChannel(a, 0, 2).drawn = 1; api.getChannel(a, 1, 2).drawn = 1;
+  api.getChannel(b, 1, 2).drawn = 1; api.getChannel(b, 0, 2).drawn = 1;
+  assert.equal(api.hashState(a), api.hashState(b));
+  assert.deepEqual(api.liveChannels(b).map((c) => c.key), [0 * 5 + 2, 1 * 5 + 2]);
+  assert.notEqual(api.hashState(fresh(7)), api.hashState(fresh(8)), 'seed changes stream states');
+});
+
+test('killTroop is canonical removal: shifts ring, alive--, ledger, TroopDied event', () => {
+  const s = fresh();
+  s.tick = 3;
+  const ch = api.getChannel(s, 0, 1);
+  ch.drawn = 1; s.buildings.lines[0] = 1;
+  const seqs = [api.spawnTroop(s, 0, 1, 0), api.spawnTroop(s, 0, 1, 0), api.spawnTroop(s, 0, 1, 0)];
+  assert.deepEqual(seqs, [0, 1, 2]);
+  assert.equal(s.buildings.alive[0], 3);
+  api.assertInvariants(s);
+  s.events = [];
+  assert.equal(api.killTroop(s, ch.key, 1, 'clash'), true);
+  assert.equal(api.killTroop(s, ch.key, 1, 'clash'), false, 'already gone');
+  assert.equal(api.killTroop(s, 999, 0, 'clash'), false);
+  assert.equal(s.events.length, 1);
+  const ev = s.events[0];
+  assert.deepEqual([ev.type, ev.channel, ev.seq, ev.cause, ev.kind, ev.owner], ['TroopDied', ch.key, 1, 'clash', 'soldier', s.buildings.owner[0]]);
+  assert.equal(ev.x, s.level.buildings[0].x); assert.equal(ev.z, s.level.buildings[0].z);
+  assert.deepEqual([ch.troops.len, ch.troops.seq[0], ch.troops.seq[1]], [2, 0, 2]);
+  assert.equal(s.buildings.alive[0], 2);
+  s.events = null;
+  api.killTroop(s, ch.key, 0, 'capture'); // no event buffer: still removes
+  assert.deepEqual(s.counters, { spawned: 3, arrived: 0, died: 1, killed: 1 });
+  api.assertInvariants(s);
+});
+
+test('troopPosition interpolates along the lane and clamps at the target', () => {
+  const s = fresh(), ch = api.getChannel(s, 0, 1);
+  api.spawnTroop(s, 0, 1, 0);
+  const a = s.level.buildings[0], b = s.level.buildings[1];
+  s.tick = 0; assert.deepEqual(api.troopPosition(s, ch, 0), { x: a.x, z: a.z });
+  s.tick = 10000; assert.deepEqual(api.troopPosition(s, ch, 0), { x: b.x, z: b.z });
+});
+
+test('assertInvariants rejects each broken invariant', () => {
+  const breakers = {
+    'lines recount': (s) => { s.buildings.lines[0] = 2; },
+    'alive recount': (s) => { s.buildings.alive[0] = 1; },
+    'level range': (s) => { s.buildings.level[0] = s.buildings.maxLevel[0] + 1; },
+    'drawn from neutral': (s) => { const n = s.buildings.owner.indexOf(-1); s.buildings.owner[n] = -1; api.getChannel(s, n, 0).drawn = 1; s.buildings.lines[n] = 1; },
+    'conservation': (s) => { s.counters.spawned = 5; },
+    'int32': (s) => { s.buildings.col['grows.timer'] = new Float64Array(s.buildings.n).fill(0.5); },
+    'ring over cap': (s) => { const c = api.getChannel(s, 0, 1); c.troops.len = 31; },
+    'FIFO': (s) => { const c = api.getChannel(s, 0, 1); api.spawnTroop(s, 0, 1, 0); s.tick = 5; api.spawnTroop(s, 0, 1, 0); c.troops.t0[0] = 5; c.troops.t0[1] = 0; },
+    'mixed owners': (s) => { const c = api.getChannel(s, 0, 1); api.spawnTroop(s, 0, 1, 0); api.spawnTroop(s, 0, 1, 0); c.troops.owner[1] = 1; },
+  };
+  for (const [name, fn] of Object.entries(breakers)) {
+    const s = fresh();
+    if (name === 'ring over cap') { s.buildings.alive[0] = 0; }
+    fn(s);
+    assert.throws(() => api.assertInvariants(s), /invariant/, name);
   }
-  const compiled = api.compileLevel(api.loadContent(files), 'sample');
-  const state = sim.create(compiled, 0);
-  assert.deepEqual([...state.tower.owner], [1, 0, -1]);
-  assert.deepEqual([...state.tower.col['garrison.count']], [10, 10, 15]);
-  assert.equal(state.lengths[1], 1600000);
-  assert.equal(state.kinds[0].speedPerTick, 10000);
-  assert.equal(state.timeLimitTicks, 6000);
-  assert.equal(api.hashCompiledLevel({ ...compiled, componentNames: ['fixture'] }), compiled.simHash);
-  assert.throws(() => sim.create({ ...compiled, componentNames: ['garrison'] }, 0), /parity/i);
+});
+
+test('createState rejects hostile level numbers and unknown spawn troop ids at create', () => {
+  const bad = (edit, re) => { const l = compiledGolden(); edit(l); assert.throws(() => api.createState(l, 1), re); };
+  for (const field of ['attack', 'hp', 'speed']) {
+    for (const v of [0, -1, 1.5, NaN, Infinity, 2 ** 40]) bad((l) => { l.units[0][field] = v; }, new RegExp(`units\\[0\\]\\.${field}`));
+  }
+  for (const v of [0, -5, 1001, 1e9, 2.5, NaN]) bad((l) => { l.rules.aliveCap = v; }, /aliveCap/);
+  bad((l) => { const b = l.buildings.find((x) => x.modules.spawns); b.modules.spawns.troop = 'nope'; }, /unknown troop "nope"/);
+  const ok = compiledGolden(); ok.rules.aliveCap = 1000; assert.doesNotThrow(() => api.createState(ok, 1));
+  const one = compiledGolden(); one.rules.aliveCap = 1; assert.doesNotThrow(() => api.createState(one, 1));
 });

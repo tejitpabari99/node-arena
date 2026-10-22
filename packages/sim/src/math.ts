@@ -72,6 +72,16 @@ export function mixSeed(...parts: number[]): number {
   return (hash ^ (hash >>> 16)) >>> 0;
 }
 
+/** 32-bit FNV-1a over UTF-16 code units; stable purpose id for a stream name. */
+export function fnv1a32(text: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
 /** Integer-output sfc32. No normalization to a floating-point fraction. */
 export class Sfc32 {
   private a: number;
@@ -95,6 +105,15 @@ export class Sfc32 {
     this.b = (this.c + (this.c << 3)) >>> 0;
     this.c = (((this.c << 21) | (this.c >>> 11)) + result) >>> 0;
     return result >>> 0;
+  }
+
+  /** Unbiased integer in [0, n) by rejection; always consumes at least one word. */
+  below(n: number): number {
+    if (!Number.isInteger(n) || n < 1 || n > 4294967296) throw new RangeError('below(n) needs an integer in 1..2^32');
+    const limit = 4294967296 - (4294967296 % n);
+    let draw = this.next();
+    while (draw >= limit) draw = this.next();
+    return draw % n;
   }
 
   /** Fresh unsigned words, suitable for deterministic hashes and snapshots. */

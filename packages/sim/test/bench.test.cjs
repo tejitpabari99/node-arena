@@ -17,63 +17,24 @@ test('performance budgets reject each breached metric and CI tolerates only 5x',
   }
 });
 
-test('benchmark fixture sustains real 2000-class FIFO work with generation and clashes', () => {
-  assert.equal(typeof bench.createFixture, 'function');
-  require('tsx/cjs');
-  const { assertInvariants } = require('../src/tick.ts');
-  const s = bench.createFixture();
-  assert.equal(s.debug, false);
-  assert.equal(s.view.ids.towers.length, 30);
-  assert.deepEqual(s.view.players.map(p => p.kind), ['human', 'bot', 'bot', 'bot']);
-  const generated = s.accounting.generated, clashes = s.accounting.clashes;
-  for (let i = 0; i < 3000; i++) {
-    const before = s.tick;
-    s.step([], { events: false });
-    assert.equal(bench.assertWorkload(s, before), 2100);
-  }
-  assertInvariants(s);
-  assert.equal(s.view.lines.length, 30);
-  assert.ok(s.accounting.generated > generated);
-  assert.ok(s.accounting.clashes > clashes);
-  const original = s.step;
-  s.step = () => [];
-  const before = s.tick; s.step([]);
-  assert.throws(() => bench.assertWorkload(s, before), /active/);
-  s.step = original;
-  s.over = { outcome: 'timeout', winnerTeam: null };
-  assert.throws(() => bench.assertWorkload(s, s.tick - 1), /active/);
-  s.over = null;
-  s.players.transit[0] = 0;
-  assert.throws(() => bench.assertWorkload(s, s.tick - 1), /troop/);
+test('stress fixture reaches 720 live troops (24 houses x alive cap 30) and reports min alive in the timed window, with head-on lines', () => {
+  const stats = bench.runStress(1, 40);
+  assert.equal(stats.peakTroops, bench.STRESS_TROOPS);
+  assert.ok(Number.isInteger(stats.minTimedTroops) && stats.minTimedTroops > 0 && stats.minTimedTroops <= stats.peakTroops, `min alive in timed window reported (${stats.minTimedTroops})`);
+  assert.ok(stats.clashes >= 1, 'head-on clashes happen inside the timed window');
+  assert.equal(bench.STRESS_TROOPS, 720);
+  const { level, commands } = bench.stressFixture(require('../test/golden/levels.ts'));
+  assert.equal(level.buildings.length, 24);
+  const lines = new Set(commands.map((c) => `${c.from}>${c.to}`));
+  assert.equal(lines.size, 72);
+  for (const c of commands) assert.ok(lines.has(`${c.to}>${c.from}`), 'every line has a hostile reverse line');
 });
 
-test('2x event modes execute identical active workloads and quiet mode emits zero', () => {
-  assert.equal(typeof bench.measure, 'function');
-  const visible = bench.measure({ events: true, warmup: 50, samples: 100, stepsPerInterval: 2, hashSamples: 10 });
-  const quiet = bench.measure({ events: false, warmup: 50, samples: 100, stepsPerInterval: 2, hashSamples: 10 });
-  assert.equal(visible.finalHash, quiet.finalHash);
-  assert.equal(visible.rejected, 0);
-  assert.equal(quiet.rejected, visible.rejected);
-  assert.equal(visible.activeSamples, 200);
-  assert.equal(quiet.activeSamples, 200);
-  assert.equal(visible.troopMin, 2100);
-  assert.equal(quiet.troopMax, 2100);
-  assert.equal(quiet.eventCount, 0);
-  assert.equal(visible.eventTypes.TroopSpawned, 6000);
-  assert.equal(visible.eventTypes.Clash, 3000);
+test('realistic fixture has 12 buildings', () => {
+  assert.equal(bench.realisticFixture(require('../test/golden/levels.ts')).level.buildings.length, 12);
 });
 
-test('ring word streaming preserves logical FIFO words across wrap and growth', () => {
-  require('tsx/cjs');
-  const { TroopRing } = require('../src/state.ts');
-  const ring = new TroopRing();
-  assert.equal(typeof ring.writeWords, 'function');
-  const troops = Array.from({ length: 20 }, (_, i) => ({ p0: -i, t0: i, owner: i % 4, kind: i % 2, seq: i + 1, value: 1 }));
-  for (const troop of troops.slice(0, 8)) ring.push(troop);
-  for (let i = 0; i < 6; i++) ring.shift();
-  for (const troop of troops.slice(8)) ring.push(troop);
-  const words = []; ring.writeWords({ word(value) { words.push(value); } });
-  assert.deepEqual(words, troops.slice(6).flatMap(troop => [troop.p0, troop.t0, troop.owner, troop.kind, troop.seq, troop.value]));
-  assert.equal(ring.size, 14);
-  assert.deepEqual(ring.front(), troops[6]);
+test('BENCH_SCENARIOS is the append point for SP04: named scenarios with a run()', () => {
+  assert.deepEqual(bench.BENCH_SCENARIOS.map((x) => x.name), ['stress', 'realistic']);
+  for (const x of bench.BENCH_SCENARIOS) assert.equal(typeof x.run, 'function');
 });

@@ -1,6 +1,6 @@
 import { readFile, readdir, realpath } from 'node:fs/promises';
 import { resolve, relative, isAbsolute } from 'node:path';
-import type { ContentFileMap } from '@node-arena/content';
+import type { ContentFiles } from '@node-arena/content';
 export class LocatedError extends Error {
   constructor(public readonly file: string, message: string, public readonly pointer = '') { super(message); }
 }
@@ -13,8 +13,8 @@ export async function readJson(file: string, label = file): Promise<unknown> {
   try { return JSON.parse(text) as unknown; }
   catch (error) { throw new LocatedError(label, `Invalid JSON: ${(error as Error).message}`); }
 }
-export async function loadFiles(dir: string): Promise<ContentFileMap> {
-  const files: ContentFileMap = { 'content.json': await readText(resolve(dir, 'content.json'), 'content.json') };
+export async function loadFiles(dir: string): Promise<ContentFiles> {
+  const files: ContentFiles = { 'content.json': await readText(resolve(dir, 'content.json'), 'content.json') };
   const root = await realpath(dir);
   async function walk(prefix: string): Promise<void> {
     const directory = await realpath(resolve(dir, prefix));

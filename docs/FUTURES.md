@@ -8,3 +8,9 @@ Ideas deferred from current work. Not scheduled.
 - **Per-band themes:** assign a theme per difficulty band.
 - **New SFX** matching the Tower War style.
 - **Level layout/balance pass** after the new visuals settle.
+
+## From Tower War port PRD resolution (2026-10-22)
+- **Port TW resource piles (AI pile targets).** Dropped from 06; shifts weakest-first order on 412 levels.
+- **`validate:content --fix-requires`.** Auto-fill level `requires`; manual until then.
+- **Optional campaign `loop`.**
+- **Web bundle/size budget gate** beyond per-model budgets.

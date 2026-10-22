@@ -1,0 +1,111 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "levelview-1",
+  "name": "LevelView 1",
+  "source": {
+    "game": "tower-war",
+    "gameVersion": "1.29.3",
+    "asset": "LevelView 1",
+    "campaignPosition": 4,
+    "dialect": "v1-short",
+    "dropped": [
+      "cargo",
+      "sc"
+    ]
+  },
+  "theme": "green",
+  "bounds": {
+    "minX": -9,
+    "maxX": 6,
+    "minZ": -7,
+    "maxZ": 8
+  },
+  "objective": "captureAll",
+  "timeLimitSec": null,
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "blue"
+    },
+    {
+      "id": "p2",
+      "kind": "ai",
+      "colorKey": "red",
+      "bot": {
+        "kind": "tw",
+        "actionDelayMs": 12000,
+        "behavior": "full",
+        "script": []
+      }
+    }
+  ],
+  "buildings": [
+    {
+      "id": "b0",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -6.79,
+        "z": 0.1
+      },
+      "owner": "p1",
+      "level": 20,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b1",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 3.7,
+        "z": -2.56
+      },
+      "owner": "p2",
+      "level": 10,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b2",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -0.7,
+        "z": -4.95
+      },
+      "owner": null,
+      "level": 7,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b3",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -4.66,
+        "z": 5.01
+      },
+      "owner": null,
+      "level": 2,
+      "ignoreForWin": false
+    },
+    {
+      "id": "b4",
+      "archetype": "tower",
+      "pos": {
+        "x": 0.6,
+        "z": 2.74
+      },
+      "owner": null,
+      "level": 5,
+      "ignoreForWin": false
+    }
+  ],
+  "elements": [],
+  "requires": [
+    "bot:tw",
+    "drawsLines",
+    "grows",
+    "level",
+    "objective:captureAll",
+    "shoots",
+    "spawns"
+  ]
+}

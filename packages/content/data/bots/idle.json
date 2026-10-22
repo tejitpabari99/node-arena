@@ -1,7 +1,0 @@
-{
-  "$schema": "../../schemas/bot.schema.json",
-  "schemaVersion": "1.0.0",
-  "id": "idle",
-  "kind": "idle",
-  "params": {}
-}

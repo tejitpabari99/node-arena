@@ -60,13 +60,14 @@ const plugin = { rules: {
     },
   },
   'content-types-only': {
-    meta: { type: 'problem', schema: [], messages: { forbidden: 'Sim may import only relative modules and content types.' } },
+    meta: { type: 'problem', schema: [], messages: { forbidden: 'Sim may import only relative modules, @node-arena/defs and content types.' } },
     create(context) {
       function check(node) {
         const source = node.source?.value;
         if (typeof source !== 'string' || source.startsWith('./') || source.startsWith('../')) return;
         const typeOnly = node.importKind === 'type' || node.exportKind === 'type' ||
           (node.specifiers?.length > 0 && node.specifiers.every(specifier => specifier.importKind === 'type'));
+        if (source === '@node-arena/defs') return;
         if (source !== '@node-arena/content' || !typeOnly) context.report({ node, messageId: 'forbidden' });
       }
       return { ImportDeclaration: check, ExportNamedDeclaration: check, ExportAllDeclaration: check,

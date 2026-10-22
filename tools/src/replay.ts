@@ -1,10 +1,12 @@
 import { lstat } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { compileLevel, hashCompiledLevel, loadContent, type CompiledLevel, type LoadedContent } from '@node-arena/content';
+import { computeSimHash, loadContent, type CompiledLevel, type LoadedContent } from '@node-arena/content';
 import { playReplay, type ReplayMetadata, type ReplayRecord } from '@node-arena/sim';
 import { loadFiles, readJson, LocatedError } from './files.js';
+import { splitFiles } from './content.js';
 import { walkFiles } from './walk.js';
 import type { Diagnostic } from './output.js';
+
 
 function object(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -14,19 +16,26 @@ interface GoldenBundle {
   scenarios: { name: string; level: CompiledLevel }[];
   results: { name: string; replay: ReplayRecord }[];
 }
-/** Standalone records resolve only against authored content. Golden fixture levels
- * are read as JSON data, hashed again, and never import executable fixture/bot code. */
+/** Golden directories scanned by the `golden` alias. SP06 appends 'packages/bots/test/golden' once bots goldens are v2. */
+const GOLDEN_DIRS = ['packages/sim/test/golden'];
+/** Standalone records resolve only against authored content. Embedded golden-bundle levels are honoured only for
+ * the `golden` alias (repo-owned fixtures under GOLDEN_DIRS), read as JSON data, hashed again, never executed; a
+ * bundle passed as an arbitrary path is refused, so a crafted file cannot supply its own level. */
 export async function verifyReplays(target: string, contentDir: string, root: string): Promise<{ summary: string; errors: Diagnostic[] }> {
   const files = await loadFiles(contentDir);
   const metadata = JSON.parse(files['content.json'] as string) as ReplayMetadata;
   let loaded: LoadedContent | undefined;
-  const resolveLevel = (id: string) => compileLevel(loaded ??= loadContent(files), id);
+  const resolveLevel = (id: string): CompiledLevel => {
+    const level = (loaded ??= loadContent(splitFiles(files).data)).compiled[id];
+    if (!level) throw new Error(`Unknown level "${id}" in authoritative content`);
+    return level;
+  };
   const paths: string[] = [];
   if (target === 'golden') {
-    for (const directory of ['packages/sim/test/golden', 'packages/bots/test/golden']) {
+    for (const directory of GOLDEN_DIRS) {
       const path = resolve(root, directory);
       try { await lstat(path); }
-      catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT' && directory.includes('/bots/')) continue; throw new LocatedError(path, (error as Error).message); }
+      catch (error) { throw new LocatedError(path, (error as Error).message); }
       paths.push(...await walkFiles(path, file => file.endsWith('.json')));
     }
   } else paths.push(...await walkFiles(resolve(target), file => file.endsWith('.json')));
@@ -35,7 +44,7 @@ export async function verifyReplays(target: string, contentDir: string, root: st
   function play(rec: ReplayRecord, file: string, pointer: string, level?: CompiledLevel): void {
     total++;
     try {
-      if (level && hashCompiledLevel(level) !== level.simHash) throw new Error('Embedded compiled level hash is stale');
+      if (level && computeSimHash(level) !== level.simHash) throw new Error('Embedded compiled level simHash is stale (does not match computeSimHash)');
       const result = playReplay(level ? {metadata, level} : {metadata, resolveLevel}, rec);
       if (!result.ok) throw new Error(`Replay mismatch; first diverging tick: ${result.divergingTick}`);
       verified++;
@@ -46,6 +55,7 @@ export async function verifyReplays(target: string, contentDir: string, root: st
       const document = await readJson(file);
       if (object(document) && Object.hasOwn(document, 'header')) play(document as unknown as ReplayRecord, file, '');
       else if (object(document) && Array.isArray(document.results) && Array.isArray(document.scenarios)) {
+        if (target !== 'golden') throw new Error('Golden bundles carry embedded levels and are verified only through the `golden` alias; arbitrary files must be standalone replay records resolved from authored content');
         const bundle = document as unknown as GoldenBundle;
         if (!object(bundle.metadata) || ['rulesVersion', 'schemaVersion', 'contentVersion'].some(key => bundle.metadata[key as keyof ReplayMetadata] !== metadata[key as keyof ReplayMetadata])) throw new Error('Golden metadata differs from authoritative content metadata');
         if (!bundle.results.length) throw new Error('Golden bundle contains no replays');

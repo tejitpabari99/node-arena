@@ -1,3 +1,0 @@
-{"$schema": "../../schemas/bot.schema.json", "schemaVersion": "1.0.0", "id": "economist-easy", "kind": "utility",
-  "params": {"extends": "economist", "skill": {"decisionIntervalSec": 3.5, "noise": 0.35, "actionsPerDecision": 1}}
-}

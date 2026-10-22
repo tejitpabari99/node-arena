@@ -1,6 +1,6 @@
 import type { CompiledLevel } from '@node-arena/content';
-import { hashCompiledLevel } from '../../../content/src/hash.js';
-import type { Command } from '../../src/index.js';
+import type { Command } from '@node-arena/defs';
+import { buildLevel, type B } from './levels.js';
 
 export interface Scenario {
   name: string;
@@ -9,60 +9,89 @@ export interface Scenario {
   level: CompiledLevel;
   seed: number;
   ticks: number;
+  /** `tick` is the sim tick BEFORE the step (the recorder stamp); the command acts in effective tick `tick + 1`. */
   commands: { tick: number; cmd: Command }[];
 }
-type Tower = { owner: number; x: number; count?: number; rate?: number; cap?: number; troop?: number; slots?: number[] };
-function level(id: string, towers: Tower[], speeds = [100], limit = 10): CompiledLevel {
-  const compiled: Omit<CompiledLevel, 'simHash' | 'botHash'> = {
-    bounds: { w: 2000, h: 1000 }, globals: { timeLimitSec: limit, theme: '' },
-    id, componentNames: ['capturable', 'drawsLines', 'garrison', 'generates'],
-    timeLimitSec: limit, visual: '', bots: [],
-    players: [0, 1].map(i => ({ id: `p${i}`, team: `team${i}`, kind: i === 0 ? 'human' : 'bot', colorKey: `p${i}` })),
-    towers: towers.map((t, i) => ({ id: String.fromCharCode(97 + i), x: t.x, y: 0, owner: t.owner, garrison: t.count ?? 0,
-      archetype: 'golden', visual: '', footprintRadius: 0, components: {
-        garrison: { cap: t.cap ?? 50 }, generates: { troop: t.troop ?? 0, ratePerSec: t.rate ?? 0 },
-        drawsLines: { extraSlotAbove: t.slots ?? [] }, capturable: {},
-      } })),
-    kinds: speeds.map((speedMilli, i) => ({ id: `kind-${i}`, speedMilli, value: 1, visual: '' })),
-  };
-  return { ...compiled, simHash: hashCompiledLevel(compiled), botHash: {} };
+
+type Entry = Scenario['commands'][number];
+/** Commands are written by EFFECTIVE tick (the tick whose phase 1 applies them). */
+const draw = (eff: number, player: number, from: number, to: number): Entry => ({ tick: eff - 1, cmd: { type: 'DrawLine', player, from, to } });
+const cut = (eff: number, player: number, from: number, to: number): Entry => ({ tick: eff - 1, cmd: { type: 'CutLine', player, from, to } });
+const raw = (eff: number, cmd: unknown): Entry => ({ tick: eff - 1, cmd: cmd as Command });
+
+function scenario(name: string, purpose: string, level: CompiledLevel, ticks: number, commands: Entry[] = [], fullGame = false, seed = 20261022): Scenario {
+  return { name, purpose, fullGame, level, seed, ticks, commands };
 }
-const draw = (tick: number, player: string, from: string, to: string): Scenario['commands'][number] => ({ tick, cmd: { type: 'DrawLine', player, from, to } });
-const cut = (tick: number, player: string, from: string, to: string): Scenario['commands'][number] => ({ tick, cmd: { type: 'CutLine', player, from, to } });
-function scenario(name: string, purpose: string, compiled: CompiledLevel, ticks: number, commands: Scenario['commands'] = [], fullGame = false): Scenario {
-  return { name, purpose, level: compiled, seed: 4294967295, ticks, commands, fullGame };
+const house = (x: number, z: number, owner: B['owner'], level: number, more: Partial<B> = {}): B => ({ at: [x, z], owner, level, ...more });
+/** Never-touched hostile building so the match cannot end by accident. */
+const bystander = (x: number, z: number): B => house(x, z, 1, 1);
+
+// spawn-table: sources (L, lines) in rows 10 apart; targets 40 units east (lane 160 ticks, no arrivals in 100 ticks).
+const SPAWN_ROWS: [number, number][] = [[1, 1], [10, 1], [30, 1], [64, 1], [10, 2], [30, 2], [64, 2], [30, 3], [64, 3]];
+function spawnTable(): Scenario {
+  const buildings: B[] = [], commands: Entry[] = [];
+  const targets: number[][] = [];
+  SPAWN_ROWS.forEach(([level, lines], row) => {
+    buildings.push(house(0, row * 10, 0, level));
+    targets[row] = [];
+  });
+  SPAWN_ROWS.forEach(([, lines], row) => {
+    for (let k = 0; k < lines; k++) { targets[row]!.push(buildings.length); buildings.push(house(40, row * 10 + k * 2, null, 5)); }
+  });
+  buildings.push(bystander(0, -20));
+  SPAWN_ROWS.forEach((_, row) => { for (const to of targets[row]!) commands.push(draw(1, 0, row, to)); });
+  return scenario('spawn-table', 'Spawn period table: 1/2/3 lines x L=1/10/30/64; first departures at ceil(period/1000) ticks; E-SPAWN 18461/24000/20869 mt.',
+    buildLevel('golden-spawn-table', buildings), 100, commands);
 }
-/** SP02 owns these compiled test levels. No campaign content or bot policies. */
+
 export const scenarios: Scenario[] = [
-  scenario('generation-cap', 'Fractional generation fills the cap and stops without banking a burst.',
-    level('generation-cap', [{ owner: 0, x: 0, rate: 15000, cap: 2 }, { owner: 1, x: 1000 }]), 20),
-  scenario('persistent-cut-replaced', 'Persistent permission sends each tick; player cuts and friendly reverse replacement preserve in-flight troops.',
-    level('persistent-cut-replaced', [{ owner: 0, x: 0, rate: 20000 }, { owner: 0, x: 20, rate: 20000 }, { owner: 1, x: 1000 }]), 12,
-    [draw(0, 'p0', 'a', 'b'), draw(1, 'p0', 'b', 'a'), cut(3, 'p0', 'b', 'a'), draw(4, 'p0', 'a', 'c'), cut(7, 'p0', 'a', 'c')]),
-  scenario('slot-reduction', 'An incoming hit crosses the strict extra-slot threshold and cuts the newest outgoing line.',
-    level('slot-reduction', [{ owner: 0, x: 0, count: 11, rate: 20000, slots: [10] }, { owner: 1, x: 5, rate: 20000 }, { owner: -1, x: 1000 }, { owner: -1, x: 1500 }]), 3,
-    [draw(0, 'p0', 'a', 'c'), draw(0, 'p0', 'a', 'd'), draw(0, 'p1', 'b', 'a')]),
-  scenario('head-on-clash', 'Hostile generated FIFO fronts cancel at the equality boundary.',
-    level('head-on-clash', [{ owner: 0, x: 0, rate: 20000 }, { owner: 1, x: 20, rate: 20000 }]), 8,
-    [draw(0, 'p1', 'b', 'a'), draw(0, 'p0', 'a', 'b')]),
-  scenario('overshoot-capture', 'Larger overshoot beats channel order; later same-tick arrivals recapture the changed owner.',
-    level('overshoot-capture', [{ owner: 1, x: 0, rate: 20000 }, { owner: 0, x: 5, rate: 20000, troop: 1 }, { owner: -1, x: 10 }], [210, 200]), 2,
-    [draw(0, 'p1', 'a', 'c'), draw(0, 'p0', 'b', 'c')]),
-  scenario('cap-overflow', 'Friendly arrivals overflow a capped tower while a capped sender keeps generating on its line.',
-    level('cap-overflow', [{ owner: 0, x: 0, rate: 20000, count: 2, cap: 2 }, { owner: 0, x: 5, count: 2, cap: 2 }, { owner: 1, x: 1000 }]), 5,
-    [draw(0, 'p0', 'a', 'b')]),
-  scenario('command-rejections', 'Rejected duplicate, self and unknown submissions remain in the replay in submitted order.',
-    level('command-rejections', [{ owner: 0, x: 0 }, { owner: 1, x: 1000 }]), 21,
-    [draw(0, 'p0', 'a', 'b'), draw(0, 'p0', 'a', 'b'), draw(0, 'p0', 'a', 'a'), draw(0, 'missing', 'a', 'b')]),
-  scenario('mutual-defeat', 'Players with no towers or transit are eliminated together and the result is draw.',
-    level('mutual-defeat', [{ owner: -1, x: 0 }]), 1),
-  scenario('full-transit-win', 'Complete game: capture cuts enemy permission; last enemy troops keep that player alive until arrival, then human wins.',
-    level('full-transit-win', [{ owner: 0, x: 0, rate: 20000 }, { owner: 1, x: 5, rate: 20000 }, { owner: 0, x: 500, count: 5 }]), 200,
-    [draw(0, 'p0', 'a', 'b'), draw(0, 'p1', 'b', 'c')], true),
-  scenario('full-human-loss', 'Complete game: sustained enemy arrivals remove the last human tower and yield lost.',
-    level('full-human-loss', [{ owner: 0, x: 0, count: 3 }, { owner: 1, x: 5, rate: 20000 }]), 200,
-    [draw(0, 'p1', 'b', 'a')], true),
-  scenario('full-stalemate-timeout', 'Complete game: opposing persistent lines clash until the authoritative tick limit produces timeout.',
-    level('full-stalemate-timeout', [{ owner: 0, x: 0, count: 4, rate: 20000 }, { owner: 1, x: 20, count: 4, rate: 20000 }], [100], 3), 60,
-    [draw(0, 'p0', 'a', 'b'), draw(0, 'p1', 'b', 'a')], true),
+  spawnTable(),
+  scenario('growth', 'Growth timers: L=1 fires at 64600 mt (tick 65), L=63 fires at 45560 mt (tick 46); no line, no growth debt.',
+    buildLevel('golden-growth', [house(0, 0, 0, 1), house(0, 10, 0, 63), house(40, 0, null, 5), bystander(40, 20)]), 70),
+  scenario('capture-exact-no-flip', 'One soldier on a level-1 neutral: level hits 0 but ownership does not flip (exact L).',
+    buildLevel('golden-capture-exact', [house(0, 0, 0, 64), house(5, 0, null, 1), bystander(40, 20)]), 50,
+    [draw(1, 0, 0, 1), cut(15, 0, 0, 1)]),
+  scenario('capture-flip-overshoot', 'L+1 soldiers flip a level-1 neutral; the flipped building starts at level 0 (overshoot discarded).',
+    buildLevel('golden-capture-flip', [house(0, 0, 0, 64), house(5, 0, null, 1), bystander(40, 20)]), 60,
+    [draw(1, 0, 0, 1), cut(28, 0, 0, 1)]),
+  scenario('capture-kills-troops', 'Capture kills every troop sourced at the captured building: on its drawn line and on a line it cut earlier.',
+    buildLevel('golden-capture-kills', [house(0, 0, 0, 64), house(10, 0, 1, 1), house(10, 40, null, 5), house(30, 0, null, 5)]), 72,
+    [draw(1, 0, 0, 1), draw(1, 1, 1, 2), cut(25, 1, 1, 2), draw(26, 1, 1, 3), cut(28, 0, 0, 1)]),
+  scenario('exchange-soldier-vs-tank', 'Head-on exchange: soldier dies, tank hp 2 -> 1; the damaged tank trades with the next soldier.',
+    buildLevel('golden-exchange-st', [house(0, 0, 0, 64), house(10, 0, 1, 64, { tank: true })]), 70,
+    [draw(1, 0, 0, 1), draw(1, 1, 1, 0)]),
+  scenario('exchange-tank-vs-tank', 'Head-on tank vs tank (attack 2, hp 2): both die in one round.',
+    buildLevel('golden-exchange-tt', [house(0, 0, 0, 64, { tank: true }), house(10, 0, 1, 64, { tank: true })]), 50,
+    [draw(1, 0, 0, 1), draw(1, 1, 1, 0)]),
+  scenario('reverse-replace', 'Drawing the reverse of an own line replaces it (cut reason replaced); in-flight troops keep flying.',
+    buildLevel('golden-reverse-replace', [house(0, 0, 0, 20), house(10, 0, 0, 20), bystander(40, 20)]), 80,
+    [draw(1, 0, 0, 1), draw(20, 0, 1, 0)]),
+  scenario('no-auto-cut-level-drop', 'A hit drops stage 2 -> 1: both lines stay (free < 0), a new draw is rejected no-slot.',
+    buildLevel('golden-no-auto-cut', [house(0, 0, 0, 10), house(5, 0, 1, 64), house(0, 40, null, 5), house(10, 40, null, 5), house(20, 40, null, 5)]), 60,
+    [draw(1, 0, 0, 2), draw(1, 0, 0, 3), draw(1, 1, 1, 0), draw(40, 0, 0, 4)]),
+  scenario('overflow-forward', 'Friendly arrival above max level: forwarded on a seeded drawn line (cause forward); no line = surplus lost.',
+    buildLevel('golden-overflow-forward', [house(0, 0, 0, 64), house(5, 0, 0, 64), house(5, 10, 0, 64), house(5, 40, null, 5), house(15, 40, null, 5), house(25, 40, null, 5), bystander(60, 20)]), 120,
+    [draw(1, 0, 0, 1), draw(1, 0, 0, 2), draw(1, 0, 1, 3), draw(1, 0, 1, 4), draw(1, 0, 1, 5)], false, 777),
+  scenario('alive-cap-skip', 'Alive cap 30: a due spawn is skipped (timer still consumed) once 30 troops are alive.',
+    buildLevel('golden-alive-cap', [house(0, 0, 0, 64), house(120, 0, null, 5), house(120, 3, null, 5), house(120, 6, null, 5), bystander(0, 40)]), 300,
+    [draw(1, 0, 0, 1), draw(1, 0, 0, 2), draw(1, 0, 0, 3)]),
+  scenario('win-ignored-flip', 'Win when the human owns every non-ignored building; ignored buildings flip to the winner.',
+    buildLevel('golden-win', [house(0, 0, 0, 64), house(5, 0, null, 1), house(0, 20, null, 3, { ignore: true }), house(30, 20, 1, 5, { ignore: true })]), 60,
+    [draw(1, 0, 0, 1), cut(28, 0, 0, 1)], true),
+  scenario('loss', 'Loss when the human owns no non-ignored building (an ignored one does not save it); winner null.',
+    buildLevel('golden-loss', [house(0, 0, 0, 1), house(5, 0, 1, 64), house(0, 20, 0, 3, { ignore: true })]), 60,
+    [draw(1, 1, 1, 0), cut(28, 1, 1, 0)], true),
+  scenario('timeout', 'Time limit 3 s = 60 ticks with no decisive result: timeout, winner null.',
+    buildLevel('golden-timeout', [house(0, 0, 0, 20), house(40, 0, 1, 20), house(20, 20, null, 5)], { timeLimitSec: 3 }), 100,
+    [draw(1, 0, 0, 2)], true),
+  scenario('rejections', 'Every draw/cut reject reason reachable in SP03: self, duplicate, no-slot, not-owner, unknown-id, malformed, not-drawer, no-line.',
+    buildLevel('golden-rejections', [
+      house(0, 0, 0, 1), house(30, 0, null, 5), house(30, 10, null, 5), house(60, 0, 1, 10), house(100, 100, 0, 3, { arch: 'tower' }), house(60, 30, null, 5),
+    ]), 10, [
+      draw(1, 0, 0, 0), draw(1, 0, 0, 1), draw(1, 0, 0, 1), draw(1, 0, 0, 2), draw(1, 0, 3, 5), draw(1, 0, 0, 99),
+      raw(1, { type: 'DrawLine', player: 0, from: 0 }), raw(1, { type: 'Bogus' }), draw(1, 0, 4, 1),
+      draw(2, 1, 3, 5), draw(2, 0, 0, 1),
+      cut(3, 0, 3, 5), cut(3, 0, 0, 2), cut(3, 0, 0, 99), cut(3, 0, 0, 1),
+      draw(4, 0, 0, 2),
+    ]),
 ];
