@@ -21,9 +21,10 @@ const manifestFile = 'apps/web/assets/manifest.json';
 let format: 'md' | 'json' = args[args.indexOf('--format') + 1] === 'json' ? 'json' : 'md';
 async function main(): Promise<void> {
   if (command in PARKED_COMMANDS) throw new LocatedError('arguments', `${command} is parked until ${PARKED_COMMANDS[command]} (implementation in tools/src/_parked)`);
-  if (!['validate:content', 'check:manifest', 'check:rules'].includes(command)) throw new LocatedError('arguments', 'Expected validate:content, check:manifest or check:rules');
+  if (!['validate:content', 'check:manifest', 'check:rules', 'replay:verify'].includes(command)) throw new LocatedError('arguments', 'Expected validate:content, check:manifest, check:rules or replay:verify');
+  const target = command === 'replay:verify' && args[0] && !args[0].startsWith('--') ? args.shift() : undefined;
   const opts: Record<string,string> = {};
-  const supported = command === 'check:rules' ? ['--rules', '--packages-dir', '--format'] : ['--dir', '--base', '--format', '--manifest', '--assets-dir', '--credits'];
+  const supported = command === 'check:rules' ? ['--rules', '--packages-dir', '--format'] : command === 'replay:verify' ? ['--dir', '--format'] : ['--dir', '--base', '--format', '--manifest', '--assets-dir', '--credits'];
   for (let i = 0; i < args.length; i += 2) {
     const key = args[i]!; const value = args[i + 1];
     if (!supported.includes(key)) throw new LocatedError('arguments', `Unknown option ${key}`);
@@ -36,6 +37,12 @@ async function main(): Promise<void> {
   const dir = resolve(opts['--dir'] ?? resolve(root, 'packages/content'));
   if (command === 'check:rules') {
     const result = await checkRules(resolve(opts['--rules'] ?? resolve(root, 'docs/GAME_RULES.md')), resolve(opts['--packages-dir'] ?? resolve(root, 'packages')));
+    report.summary = result.summary; report.errors.push(...result.errors); report.ok = result.errors.length === 0; return;
+  }
+  if (command === 'replay:verify') {
+    if (!target) throw new LocatedError('arguments', 'replay:verify requires a file, directory or golden');
+    const { verifyReplays } = await import('./replay.js');
+    const result = await verifyReplays(target, dir, root);
     report.summary = result.summary; report.errors.push(...result.errors); report.ok = result.errors.length === 0; return;
   }
   const files = await loadFiles(dir);

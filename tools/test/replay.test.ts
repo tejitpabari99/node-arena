@@ -4,11 +4,12 @@ import { spawnSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, writeFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { compileLevel, loadContent } from '@node-arena/content';
-import { createReplayRecorder } from '../../../packages/sim/src/index.js';
-import { loadFiles } from '../../src/files.js';
+import { loadContent } from '@node-arena/content';
+import { createReplayRecorder } from '../../packages/sim/src/index.js';
+import { loadFiles } from '../src/files.js';
+import { splitFiles } from '../src/content.js';
 
-const root = resolve(import.meta.dirname, '../../..');
+const root = resolve(import.meta.dirname, '../..');
 function run(command: string, ...args: string[]) {
   const result = spawnSync(process.execPath, ['--import', 'tsx', 'tools/src/cli.ts', command, ...args], { cwd: root, encoding: 'utf8' });
   return { status: result.status, stdout: result.stdout, report: args.includes('json') ? JSON.parse(result.stdout) : undefined };
@@ -20,8 +21,8 @@ async function directory(t: { after(fn: () => Promise<void>): void }) {
 }
 async function replayFixture(t: { after(fn: () => Promise<void>): void }) {
   const dir = await directory(t);
-  const files = await loadFiles(join(root, 'packages/content')); const loaded = loadContent(files);
-  const level = compileLevel(loaded, 'sample');
+  const files = await loadFiles(join(root, 'packages/content')); const loaded = loadContent(splitFiles(files).data);
+  const level = loaded.compiled['levelview-1']!;
   const metadata = JSON.parse(files['content.json'] as string);
   const recorder = createReplayRecorder(level, 1, metadata);
   for (let tick = 0; tick < 40; tick++) recorder.step([]);

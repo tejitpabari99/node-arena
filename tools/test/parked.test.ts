@@ -55,5 +55,6 @@ test('PARKED_COMMANDS owners agree with ci.sh PARKED entries; the real repo list
     const gate = entries.find(e => e.gate === command);
     if (gate) assert.equal(gate.owner, owner, command);
   }
-  assert.ok(parkedArtifacts(root).some(a => a.startsWith('cli command replay:verify')));
+  assert.ok(parkedArtifacts(root).some(a => a.startsWith('cli command validate:levels')));
+  assert.ok(!parkedArtifacts(root).some(a => a.includes('replay')), 'replay is un-parked');
 });
