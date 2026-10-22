@@ -13,7 +13,7 @@ const fixture = () => ({
     obstacle: { kind: 'element', model: { parts: 'models/tw/rock.glb', budget: 'obstacle' }, scale: 1 },
   },
   themes: { green: { ground: { mesh: 'g.glb', texture: 'g.png' }, obstacle: { small: 'rs', big: 'rb', texture: 'o.png' }, light: { dir: [1, -2, 1], color: '#ffffff', intensity: 1 }, sky: '#88aaff', fx: ['puff'] } },
-  fx: { puff: { texture: 'puff.png', kind: 'burst', params: { count: 8 } } },
+  fx: { puff: { texture: 'puff.png', kind: 'sprite-burst', params: { count: 8 } } },
   events: { TroopDied: { fx: 'puff', sfx: 'pop' } },
   camera: { pitchDeg: 60, fov: 40, margin: 1 },
 });
@@ -73,7 +73,8 @@ test('row: themes shape {ground,obstacle,light,fog?,sky,fx?}; levelVisuals/color
 
 test('row: fx registry {texture,kind in FX_KINDS,params}; events known and map to fx ids', () => {
   assert.equal(ok(mutate((m) => { m.fx.puff.kind = 'nope'; })), false);
-  for (const k of ['sprite', 'ring', 'burst', 'trail']) assert.equal(ok(mutate((m) => { m.fx.puff.kind = k; })), true, k);
+  for (const k of ['sprite', 'burst', 'trail']) assert.equal(ok(mutate((m) => { m.fx.puff.kind = k; })), false, `old kind ${k} rejected`);
+  for (const k of ['sprite-burst', 'ring', 'beam']) assert.equal(ok(mutate((m) => { m.fx.puff.kind = k; })), true, k);
   assert.match(content.crossCheckManifest(mutate((m) => { m.events.Bogus = {}; }), catalog()).join(), /Bogus/);
   assert.match(content.crossCheckManifest(mutate((m) => { m.events.TroopDied.fx = 'missing'; }), catalog()).join(), /missing/);
   assert.match(content.crossCheckManifest(mutate((m) => { m.themes.green.fx = ['gone']; }), catalog()).join(), /gone/);

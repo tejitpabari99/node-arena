@@ -114,3 +114,7 @@ test('binding map: missing module impl is a compile error (checked by tsc)', () 
   void missing; void stray;
   assert.equal(Object.keys(full).length, Object.keys(MODULES).length);
 });
+
+test('FX_KINDS equals the 07 art-pipeline contract values', () => {
+  assert.deepEqual([...VISUAL.FX_KINDS], ['sprite-burst', 'ring', 'beam']);
+});

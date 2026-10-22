@@ -436,7 +436,7 @@
               "anyOf": [
                 {
                   "type": "string",
-                  "const": "sprite"
+                  "const": "sprite-burst"
                 },
                 {
                   "type": "string",
@@ -444,11 +444,7 @@
                 },
                 {
                   "type": "string",
-                  "const": "burst"
-                },
-                {
-                  "type": "string",
-                  "const": "trail"
+                  "const": "beam"
                 }
               ]
             },
