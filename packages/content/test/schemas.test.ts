@@ -41,7 +41,7 @@ test('shipped values: balance thresholds 10/30, no boosters; unit and building f
   const [wt1, wt2, tower, obstacle] = await Promise.all(['house-wt1', 'house-wt2', 'tower'].map((n) => readJson(`data/buildings/${n}.json`)).concat(readJson('data/elements/obstacle.json')));
   assert.deepEqual([wt1!.special, wt2!.special, tower!.special], [false, true, false]);
   assert.deepEqual([wt1!.modules.grows.growTime, wt2!.modules.grows.growTime], [1.7, 2]);
-  assert.deepEqual(obstacle!.footprint, { shape: 'circle', radius: 0.45 });
+  assert.deepEqual(obstacle!.footprint, { shape: 'box', w: 0.713, d: 0.713 });
 });
 
 test('Type.Partial instance overrides scale like archetype values (fx3 never under a combinator)', async () => {

@@ -1,13 +1,49 @@
 import type { SimEvent } from '@node-arena/defs';
+import { activeCrossings, createCrossingScratch, fillCrossingScratch, prepareCrossingRow, sweepPrepared, sweepsMayTouch, type CrossingScratch } from './crossings.js';
 import { cutLine } from './commands.js';
 import { fireCapture } from './hooks.js';
 import { TICK_RATE, idiv } from './math.js';
 import { killTroop, liveChannels, progressOf, setLevel, spawnTroop, troopPosition } from './state.js';
 import type { Channel, SimState } from './types.js';
 
-/** SP04 seam (CMB-04 lane crossings, phase 6 after head-on). Stub: no-op. */
-export function crossingPass(_state: SimState): void {
-  // SP04 replaces this body.
+// Derived scratch never enters snapshots/hashes. Its rows are private to this
+// state and contact phase; retired channels release their bounded row pools.
+const crossingScratch = new WeakMap<SimState, Map<number,CrossingScratch>>();
+/** R-CMB-04: deterministic pair/sequence order, after head-on. */
+export function crossingPass(state: SimState): void {
+  let scratch = crossingScratch.get(state);
+  if (!scratch) { scratch = new Map(); crossingScratch.set(state,scratch); }
+  for (const [key] of scratch) {
+    const ch=state.channels.get(key);
+    if (!ch || (!ch.drawn && !ch.troops.len)) scratch.delete(key);
+  }
+  for (const ch of liveChannels(state)) {
+    if (!ch.troops.len) continue;
+    let entry=scratch.get(ch.key);
+    if (!entry) { entry=createCrossingScratch();scratch.set(ch.key,entry); }
+    fillCrossingScratch(state,ch,entry);
+  }
+  for (const pair of activeCrossings(state)) {
+    const A = state.channels.get(pair.a)!, B = state.channels.get(pair.b)!;
+    if (!A.troops.len || !B.troops.len) continue;
+    const boundA = scratch.get(A.key)!, boundB = scratch.get(B.key)!;
+    if (boundA.owner !== undefined && boundA.owner === boundB.owner) continue;
+    if (boundA.end < pair.windowA[0] || boundA.start > pair.windowA[1] || boundB.end < pair.windowB[0] || boundB.start > pair.windowB[1]) continue;
+    for (const rowA of boundA.rows) {
+      if (rowA.end < pair.windowA[0] || rowA.start > pair.windowA[1]) continue;
+      for (const rowB of boundB.rows) {
+        if (rowB.end < pair.windowB[0] || rowB.start > pair.windowB[1]) continue;
+        if (rowA.owner === rowB.owner) continue;
+        const sweepA = prepareCrossingRow(rowA,pair.laneA), sweepB = prepareCrossingRow(rowB,pair.laneB);
+        if (!sweepsMayTouch(sweepA,sweepB,state.level.rules.contactDistance)) continue;
+        const seqA = rowA.seq, seqB = rowB.seq;
+        const ia = A.troops.indexOfSeq(seqA), ib = B.troops.indexOfSeq(seqB);
+        if (ia < 0) break;
+        if (ib < 0 || A.troops.owner[ia] === B.troops.owner[ib]) continue;
+        if (sweepPrepared(state, pair, sweepA, sweepB)) exchange(state, A.key, seqA, B.key, seqB, 'crossing');
+      }
+    }
+  }
 }
 
 export interface ExchangeResult { readonly aAlive: boolean; readonly bAlive: boolean }

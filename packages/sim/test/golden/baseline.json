@@ -3,7 +3,7 @@
   "metadata": {
     "rulesVersion": "2.0.0",
     "schemaVersion": "2.0.0",
-    "contentVersion": "2.0.0"
+    "contentVersion": "2.0.1"
   },
   "scenarios": [
     {
@@ -1861,7 +1861,7 @@
           }
         },
         {
-          "tick": 25,
+          "tick": 29,
           "cmd": {
             "type": "DrawLine",
             "player": 1,
@@ -4298,6 +4298,943 @@
           }
         }
       ]
+    },
+    {
+      "name": "geometry-neutral-troop",
+      "purpose": "Default neutral tower shoots non-neutral passing troops.",
+      "fullGame": false,
+      "level": {
+        "id": "golden-neutral-troop",
+        "objective": "captureAll",
+        "timeLimitSec": null,
+        "bounds": {
+          "minX": -15000,
+          "maxX": 15000,
+          "minZ": -5000,
+          "maxZ": 7000
+        },
+        "theme": "green",
+        "rules": {
+          "timeLimitSec": null,
+          "stageThresholds": [
+            10,
+            30
+          ],
+          "aliveCap": 30,
+          "growth": {
+            "base": 900
+          },
+          "contactDistance": 700,
+          "laneHalfWidth": 190
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "blue"
+          },
+          {
+            "id": "p2",
+            "kind": "ai",
+            "colorKey": "red"
+          }
+        ],
+        "units": [
+          {
+            "id": "soldier",
+            "visual": "unit.soldier",
+            "speed": 5000,
+            "hp": 1,
+            "attack": 1,
+            "defense": 1
+          }
+        ],
+        "buildings": [
+          {
+            "id": "b0",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": -10000,
+            "z": 2000,
+            "owner": 0,
+            "level": 64,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b1",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 10000,
+            "z": 2000,
+            "owner": 1,
+            "level": 64,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b2",
+            "archetype": "tower",
+            "kind": "tower",
+            "x": 0,
+            "z": 0,
+            "owner": -1,
+            "level": 30,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.tower",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "shoots": {
+                "attackDelay": 2000,
+                "attackRadius": 1600,
+                "speedUpByLevel": 1750,
+                "radiusUpByLevel": 900,
+                "radiusUnit": 2400,
+                "minRadius": 1000,
+                "neutralFires": true,
+                "troopPad": 350,
+                "hitsNeutralHouses": true,
+                "bulletSpeed": 12000
+              }
+            }
+          }
+        ],
+        "elements": [],
+        "bots": [
+          {
+            "player": 1,
+            "bot": {
+              "kind": "tw",
+              "actionDelayMs": 12000,
+              "behavior": "full",
+              "script": []
+            }
+          }
+        ],
+        "requires": [
+          "bot:tw",
+          "drawsLines",
+          "grows",
+          "level",
+          "objective:captureAll",
+          "shoots",
+          "spawns"
+        ],
+        "simHash": "735f4de6bfb5e66807d7ae01d764257b4f9a4dc678201cd72a68dd0310c6ecfd",
+        "botHash": {
+          "golden-neutral-troop#p2": "41ec0c84848f91710e86398060217a385e5a19931e1a5860b8a8886095926626"
+        }
+      },
+      "seed": 17,
+      "ticks": 100,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 0,
+            "from": 0,
+            "to": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "geometry-neutral-house",
+      "purpose": "Default owned tower hits a neutral house, floors at zero without capture.",
+      "fullGame": false,
+      "level": {
+        "id": "golden-neutral-house",
+        "objective": "captureAll",
+        "timeLimitSec": null,
+        "bounds": {
+          "minX": -5000,
+          "maxX": 25000,
+          "minZ": -5000,
+          "maxZ": 25000
+        },
+        "theme": "green",
+        "rules": {
+          "timeLimitSec": null,
+          "stageThresholds": [
+            10,
+            30
+          ],
+          "aliveCap": 30,
+          "growth": {
+            "base": 900
+          },
+          "contactDistance": 700,
+          "laneHalfWidth": 190
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "blue"
+          },
+          {
+            "id": "p2",
+            "kind": "ai",
+            "colorKey": "red"
+          }
+        ],
+        "units": [
+          {
+            "id": "soldier",
+            "visual": "unit.soldier",
+            "speed": 5000,
+            "hp": 1,
+            "attack": 1,
+            "defense": 1
+          }
+        ],
+        "buildings": [
+          {
+            "id": "b0",
+            "archetype": "tower",
+            "kind": "tower",
+            "x": 0,
+            "z": 0,
+            "owner": 0,
+            "level": 1,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.tower",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "shoots": {
+                "attackDelay": 2000,
+                "attackRadius": 1600,
+                "speedUpByLevel": 1750,
+                "radiusUpByLevel": 900,
+                "radiusUnit": 2400,
+                "minRadius": 1000,
+                "neutralFires": true,
+                "troopPad": 350,
+                "hitsNeutralHouses": true,
+                "bulletSpeed": 12000
+              }
+            }
+          },
+          {
+            "id": "b1",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 3000,
+            "z": 0,
+            "owner": -1,
+            "level": 2,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b2",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 20000,
+            "z": 20000,
+            "owner": 1,
+            "level": 1,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          }
+        ],
+        "elements": [],
+        "bots": [
+          {
+            "player": 1,
+            "bot": {
+              "kind": "tw",
+              "actionDelayMs": 12000,
+              "behavior": "full",
+              "script": []
+            }
+          }
+        ],
+        "requires": [
+          "bot:tw",
+          "drawsLines",
+          "grows",
+          "level",
+          "objective:captureAll",
+          "shoots",
+          "spawns"
+        ],
+        "simHash": "b894e43411f4d6c6dece2434001101ee3859b2f2e1e470cf96ef8093332fe4ac",
+        "botHash": {
+          "golden-neutral-house#p2": "9043f8a21126ac73adf7cf4497e121dcd6b51f15693e6cfe52588d0691b47df0"
+        }
+      },
+      "seed": 17,
+      "ticks": 100,
+      "commands": []
+    },
+    {
+      "name": "geometry-crossing-cut",
+      "purpose": "Crossing combat and neutral shooter; cut in-flight line, redraw rebuilds active caches.",
+      "fullGame": false,
+      "level": {
+        "id": "golden-geometry-crossing",
+        "objective": "captureAll",
+        "timeLimitSec": null,
+        "bounds": {
+          "minX": -15000,
+          "maxX": 15000,
+          "minZ": -15000,
+          "maxZ": 15000
+        },
+        "theme": "green",
+        "rules": {
+          "timeLimitSec": null,
+          "stageThresholds": [
+            10,
+            30
+          ],
+          "aliveCap": 30,
+          "growth": {
+            "base": 900
+          },
+          "contactDistance": 700,
+          "laneHalfWidth": 190
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "blue"
+          },
+          {
+            "id": "p2",
+            "kind": "ai",
+            "colorKey": "red"
+          }
+        ],
+        "units": [
+          {
+            "id": "soldier",
+            "visual": "unit.soldier",
+            "speed": 5000,
+            "hp": 1,
+            "attack": 1,
+            "defense": 1
+          }
+        ],
+        "buildings": [
+          {
+            "id": "b0",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": -10000,
+            "z": 0,
+            "owner": 0,
+            "level": 64,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b1",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 0,
+            "z": -10000,
+            "owner": 1,
+            "level": 64,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b2",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 10000,
+            "z": 0,
+            "owner": -1,
+            "level": 20,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b3",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 0,
+            "z": 10000,
+            "owner": -1,
+            "level": 20,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b4",
+            "archetype": "tower",
+            "kind": "tower",
+            "x": 3000,
+            "z": 3000,
+            "owner": -1,
+            "level": 30,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.tower",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "shoots": {
+                "attackDelay": 2000,
+                "attackRadius": 1600,
+                "speedUpByLevel": 1750,
+                "radiusUpByLevel": 900,
+                "radiusUnit": 2400,
+                "minRadius": 1000,
+                "neutralFires": true,
+                "troopPad": 350,
+                "hitsNeutralHouses": true,
+                "bulletSpeed": 12000
+              }
+            }
+          }
+        ],
+        "elements": [],
+        "bots": [
+          {
+            "player": 1,
+            "bot": {
+              "kind": "tw",
+              "actionDelayMs": 12000,
+              "behavior": "full",
+              "script": []
+            }
+          }
+        ],
+        "requires": [
+          "bot:tw",
+          "drawsLines",
+          "grows",
+          "level",
+          "objective:captureAll",
+          "shoots",
+          "spawns"
+        ],
+        "simHash": "7952f206aa2f67fabbabdb789514151b164661803e9b183e0620150405445aa1",
+        "botHash": {
+          "golden-geometry-crossing#p2": "d90499a774e21275d7daf11ea065d2f72df49b39d084119d42fa6245dc110af0"
+        }
+      },
+      "seed": 77,
+      "ticks": 140,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 0,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 1,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "tick": 65,
+          "cmd": {
+            "type": "CutLine",
+            "player": 0,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "tick": 90,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 0,
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "name": "geometry-obstacle-building",
+      "purpose": "Rotated obstacle and third house/tower block; endpoint houses exempt on legal route.",
+      "fullGame": false,
+      "level": {
+        "id": "golden-geometry-obstacle",
+        "objective": "captureAll",
+        "timeLimitSec": null,
+        "bounds": {
+          "minX": -5000,
+          "maxX": 15000,
+          "minZ": -5000,
+          "maxZ": 15000
+        },
+        "theme": "green",
+        "rules": {
+          "timeLimitSec": null,
+          "stageThresholds": [
+            10,
+            30
+          ],
+          "aliveCap": 30,
+          "growth": {
+            "base": 900
+          },
+          "contactDistance": 700,
+          "laneHalfWidth": 190
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "blue"
+          },
+          {
+            "id": "p2",
+            "kind": "ai",
+            "colorKey": "red"
+          }
+        ],
+        "units": [
+          {
+            "id": "soldier",
+            "visual": "unit.soldier",
+            "speed": 5000,
+            "hp": 1,
+            "attack": 1,
+            "defense": 1
+          }
+        ],
+        "buildings": [
+          {
+            "id": "b0",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 0,
+            "z": 0,
+            "owner": 0,
+            "level": 64,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b1",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 10000,
+            "z": 0,
+            "owner": 1,
+            "level": 64,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b2",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 0,
+            "z": 10000,
+            "owner": -1,
+            "level": 20,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b3",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 5000,
+            "z": 5000,
+            "owner": -1,
+            "level": 20,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b4",
+            "archetype": "tower",
+            "kind": "tower",
+            "x": 10000,
+            "z": 10000,
+            "owner": -1,
+            "level": 20,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.tower",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "shoots": {
+                "attackDelay": 2000,
+                "attackRadius": 1600,
+                "speedUpByLevel": 1750,
+                "radiusUpByLevel": 900,
+                "radiusUnit": 2400,
+                "minRadius": 1000,
+                "neutralFires": true,
+                "troopPad": 350,
+                "hitsNeutralHouses": true,
+                "bulletSpeed": 12000
+              }
+            }
+          }
+        ],
+        "elements": [
+          {
+            "id": "rock",
+            "archetype": "obstacle",
+            "x": 5000,
+            "z": 0,
+            "yawMilliDeg": 45000,
+            "footprint": {
+              "shape": "box",
+              "w": 1000,
+              "d": 2000
+            },
+            "visual": "rock",
+            "modules": {
+              "blocksLines": {}
+            }
+          }
+        ],
+        "bots": [
+          {
+            "player": 1,
+            "bot": {
+              "kind": "tw",
+              "actionDelayMs": 12000,
+              "behavior": "full",
+              "script": []
+            }
+          }
+        ],
+        "requires": [
+          "bot:tw",
+          "drawsLines",
+          "grows",
+          "level",
+          "objective:captureAll",
+          "shoots",
+          "spawns"
+        ],
+        "simHash": "787870e2df67baed42dfb6fe9a5a1001c9690006e86b3bd70e8fef3995887ba8",
+        "botHash": {
+          "golden-geometry-obstacle#p2": "514a3813605851b9cc9ed7b1d167d664d699311df1d8c658c4e9c0d156359f6b"
+        }
+      },
+      "seed": 17,
+      "ticks": 80,
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 0,
+            "from": 0,
+            "to": 1
+          }
+        },
+        {
+          "tick": 1,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 0,
+            "from": 0,
+            "to": 4
+          }
+        },
+        {
+          "tick": 2,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 0,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "tick": 3,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 0,
+            "from": 2,
+            "to": 4
+          }
+        }
+      ]
     }
   ],
   "results": [
@@ -4307,7 +5244,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-spawn-table",
           "simHash": "853ace707a7a24b2b2d00d84fcd58110b947d8593d7ead9e6daba5a448271ec2",
           "seed": 20261022
@@ -4484,7 +5421,7 @@
         "finalHash": "67bc4457606b47eb",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "426e8b34ad4333d4"
     },
     {
       "name": "growth",
@@ -4492,7 +5429,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-growth",
           "simHash": "1f9509d0c52456bef6fbb3c62ca11aeba7af7913b95158af6698c00cc0e3501d",
           "seed": 20261022
@@ -4524,7 +5461,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-capture-exact",
           "simHash": "3a3de830a982e8fcbcdc6e8e576881fe661392036c91fec7fff1e90799b47446",
           "seed": 20261022
@@ -4563,7 +5500,7 @@
         "finalHash": "2ad93acd53dcc74e",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "252d86a0dbd29a0f"
     },
     {
       "name": "capture-flip-overshoot",
@@ -4571,7 +5508,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-capture-flip",
           "simHash": "7d26b4cb906f69db4b3a8032e840a765fbfc13b4d3f3cdabb7fa1006c8fa446f",
           "seed": 20261022
@@ -4614,7 +5551,7 @@
         "finalHash": "0cb6eec6c6abd9c2",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "0091fd78d3b661b8"
     },
     {
       "name": "capture-kills-troops",
@@ -4622,7 +5559,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-capture-kills",
           "simHash": "ed103cc2d608d8fa9d9fd0e4405f2a11dfefc9acd11d85f0f8eee5d42d717e49",
           "seed": 20261022
@@ -4656,21 +5593,21 @@
             }
           },
           {
-            "tick": 25,
-            "cmd": {
-              "type": "DrawLine",
-              "player": 1,
-              "from": 1,
-              "to": 3
-            }
-          },
-          {
             "tick": 27,
             "cmd": {
               "type": "CutLine",
               "player": 0,
               "from": 0,
               "to": 1
+            }
+          },
+          {
+            "tick": 29,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 1,
+              "from": 1,
+              "to": 3
             }
           }
         ],
@@ -4681,18 +5618,18 @@
           },
           {
             "tick": 40,
-            "hash": "450b4bd9e3e8f495"
+            "hash": "25212845380e03f6"
           },
           {
             "tick": 60,
-            "hash": "616954cf033b0b2f"
+            "hash": "a3b413836cf479dc"
           }
         ],
         "finalTick": 72,
-        "finalHash": "f7e2a80a969f7ae8",
+        "finalHash": "3a7b8419be76ebe2",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "78f6d11a1cba406b"
     },
     {
       "name": "exchange-soldier-vs-tank",
@@ -4700,7 +5637,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-exchange-st",
           "simHash": "04d18a747ad2518c90c70c9adbc8e175ce7f4feede6e9163493d77ecbe7fcfae",
           "seed": 20261022
@@ -4743,7 +5680,7 @@
         "finalHash": "6384b56d3760ad67",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "4f98aae324c58295"
     },
     {
       "name": "exchange-tank-vs-tank",
@@ -4751,7 +5688,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-exchange-tt",
           "simHash": "96eaf7ea14507ba2a9002331fb02703f9272740820d00e2ce840f3b2aa4818ac",
           "seed": 20261022
@@ -4790,7 +5727,7 @@
         "finalHash": "cf241c12ddaeb4eb",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "474fa7c7c906c12a"
     },
     {
       "name": "reverse-replace",
@@ -4798,7 +5735,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-reverse-replace",
           "simHash": "d5f5a03703639a5d46434e505e736940e5f615abb49b4c3612596a12273bf0bc",
           "seed": 20261022
@@ -4845,7 +5782,7 @@
         "finalHash": "0bccfe2597f859aa",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "7ee82cfa00e2e3df"
     },
     {
       "name": "no-auto-cut-level-drop",
@@ -4853,7 +5790,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-no-auto-cut",
           "simHash": "581ff0de2b09c27d49e41b5db360b6b5ddad2ecb0747ff9cde711093f145a56e",
           "seed": 20261022
@@ -4914,7 +5851,7 @@
         "finalHash": "01fd9da53c3e0b08",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "77583d199084416b"
     },
     {
       "name": "overflow-forward",
@@ -4922,7 +5859,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-overflow-forward",
           "simHash": "6e21c91e4ed9c29bf7b76d07f72716e447543a7038e5d7412a957d87213c3477",
           "seed": 777
@@ -4977,34 +5914,34 @@
         "checkpoints": [
           {
             "tick": 20,
-            "hash": "09b0b645006e0048"
+            "hash": "99cd06d676ac5d5b"
           },
           {
             "tick": 40,
-            "hash": "cb48601aa466ef8f"
+            "hash": "5d949af846ffae25"
           },
           {
             "tick": 60,
-            "hash": "d4f94e9220db00c3"
+            "hash": "6a825ca79b69ab7f"
           },
           {
             "tick": 80,
-            "hash": "9852c492f6f6a48c"
+            "hash": "94057367b6a1a666"
           },
           {
             "tick": 100,
-            "hash": "c8eb15bea11b0b1e"
+            "hash": "c3361eb081bf2b7d"
           },
           {
             "tick": 120,
-            "hash": "b5ce4d882d1d3b5e"
+            "hash": "3a3b27ce7a250b47"
           }
         ],
         "finalTick": 120,
-        "finalHash": "b5ce4d882d1d3b5e",
+        "finalHash": "3a3b27ce7a250b47",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "4dfc301d30fa24f1"
     },
     {
       "name": "alive-cap-skip",
@@ -5012,7 +5949,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-alive-cap",
           "simHash": "976ac8d0d6f91dd379c7f5fd86e432d0669196b24a5202a25a06b59fb9895088",
           "seed": 20261022
@@ -5112,7 +6049,7 @@
         "finalHash": "e6aeb8f7ac8d08d7",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "365e41963fbf3021"
     },
     {
       "name": "win-ignored-flip",
@@ -5120,7 +6057,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-win",
           "simHash": "9f4f42fd305c45377b62fd71f15e5062c7de17cf0f3c57586d9beb7962e08de0",
           "seed": 20261022
@@ -5162,7 +6099,7 @@
           "winner": 0
         }
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "eb4a9d387603513a"
     },
     {
       "name": "loss",
@@ -5170,7 +6107,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-loss",
           "simHash": "81a5c51e79dc4eb5244b95c4b8e9a826ab781cca62e746566ee3a61e9e949709",
           "seed": 20261022
@@ -5212,7 +6149,7 @@
           "winner": null
         }
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "216e1ad25ac21d54"
     },
     {
       "name": "timeout",
@@ -5220,7 +6157,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-timeout",
           "simHash": "3e3d769ced8e921134f66087b6f54957ad0a105c6f712ff261b3eb25358c955c",
           "seed": 20261022
@@ -5257,7 +6194,7 @@
           "winner": null
         }
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "73d2d3f9e906d697"
     },
     {
       "name": "rejections",
@@ -5265,7 +6202,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.0",
+          "contentVersion": "2.0.1",
           "levelId": "golden-rejections",
           "simHash": "357ebe335a0229eadd201217f148c76e9f5fb40e4c8d851fb6d1dbdd02f4603b",
           "seed": 20261022
@@ -5414,10 +6351,258 @@
         ],
         "checkpoints": [],
         "finalTick": 10,
-        "finalHash": "01f0e80affcce3cb",
+        "finalHash": "3ac87b9a7c114766",
         "outcome": null
       },
-      "eventLogHash": "34b26174a02e571a"
+      "eventLogHash": "5a00ea2542394b0d"
+    },
+    {
+      "name": "geometry-neutral-troop",
+      "replay": {
+        "header": {
+          "rulesVersion": "2.0.0",
+          "schemaVersion": "2.0.0",
+          "contentVersion": "2.0.1",
+          "levelId": "golden-neutral-troop",
+          "simHash": "735f4de6bfb5e66807d7ae01d764257b4f9a4dc678201cd72a68dd0310c6ecfd",
+          "seed": 17
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 1
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "77f06dca2a85162d"
+          },
+          {
+            "tick": 40,
+            "hash": "72b8f83e01466799"
+          },
+          {
+            "tick": 60,
+            "hash": "f4adb50ebd04b30a"
+          },
+          {
+            "tick": 80,
+            "hash": "37be14788820ed55"
+          },
+          {
+            "tick": 100,
+            "hash": "4e40e73d6fa77871"
+          }
+        ],
+        "finalTick": 100,
+        "finalHash": "4e40e73d6fa77871",
+        "outcome": null
+      },
+      "eventLogHash": "c216b0f687e342cd"
+    },
+    {
+      "name": "geometry-neutral-house",
+      "replay": {
+        "header": {
+          "rulesVersion": "2.0.0",
+          "schemaVersion": "2.0.0",
+          "contentVersion": "2.0.1",
+          "levelId": "golden-neutral-house",
+          "simHash": "b894e43411f4d6c6dece2434001101ee3859b2f2e1e470cf96ef8093332fe4ac",
+          "seed": 17
+        },
+        "commands": [],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "5eeb1a46ed92f4a2"
+          },
+          {
+            "tick": 40,
+            "hash": "92455508eefcf83c"
+          },
+          {
+            "tick": 60,
+            "hash": "eb86dafa8840eca6"
+          },
+          {
+            "tick": 80,
+            "hash": "48612b888c36400b"
+          },
+          {
+            "tick": 100,
+            "hash": "b207edd4f820c1f7"
+          }
+        ],
+        "finalTick": 100,
+        "finalHash": "b207edd4f820c1f7",
+        "outcome": null
+      },
+      "eventLogHash": "add891490558552b"
+    },
+    {
+      "name": "geometry-crossing-cut",
+      "replay": {
+        "header": {
+          "rulesVersion": "2.0.0",
+          "schemaVersion": "2.0.0",
+          "contentVersion": "2.0.1",
+          "levelId": "golden-geometry-crossing",
+          "simHash": "7952f206aa2f67fabbabdb789514151b164661803e9b183e0620150405445aa1",
+          "seed": 77
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 2
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 1,
+              "from": 1,
+              "to": 3
+            }
+          },
+          {
+            "tick": 65,
+            "cmd": {
+              "type": "CutLine",
+              "player": 0,
+              "from": 0,
+              "to": 2
+            }
+          },
+          {
+            "tick": 90,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 2
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "71b0327ed52e48dc"
+          },
+          {
+            "tick": 40,
+            "hash": "a634985f2c9b33b9"
+          },
+          {
+            "tick": 60,
+            "hash": "c4dc4a3e04754d37"
+          },
+          {
+            "tick": 80,
+            "hash": "c41837b576362fbb"
+          },
+          {
+            "tick": 100,
+            "hash": "aedae8f7b8be82a2"
+          },
+          {
+            "tick": 120,
+            "hash": "add5b6b2ac5b7c62"
+          },
+          {
+            "tick": 140,
+            "hash": "72ef82ef0d4a1e9e"
+          }
+        ],
+        "finalTick": 140,
+        "finalHash": "72ef82ef0d4a1e9e",
+        "outcome": null
+      },
+      "eventLogHash": "57d3db3569ade439"
+    },
+    {
+      "name": "geometry-obstacle-building",
+      "replay": {
+        "header": {
+          "rulesVersion": "2.0.0",
+          "schemaVersion": "2.0.0",
+          "contentVersion": "2.0.1",
+          "levelId": "golden-geometry-obstacle",
+          "simHash": "787870e2df67baed42dfb6fe9a5a1001c9690006e86b3bd70e8fef3995887ba8",
+          "seed": 17
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 1
+            }
+          },
+          {
+            "tick": 1,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 4
+            }
+          },
+          {
+            "tick": 2,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 2
+            }
+          },
+          {
+            "tick": 3,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 2,
+              "to": 4
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "7eecc0a7270cd0e3"
+          },
+          {
+            "tick": 40,
+            "hash": "4a353e2224a25578"
+          },
+          {
+            "tick": 60,
+            "hash": "322d39878ebc9474"
+          },
+          {
+            "tick": 80,
+            "hash": "20dd917fed154611"
+          }
+        ],
+        "finalTick": 80,
+        "finalHash": "20dd917fed154611",
+        "outcome": null
+      },
+      "eventLogHash": "ce6c6a710be49b25"
     }
   ]
 }

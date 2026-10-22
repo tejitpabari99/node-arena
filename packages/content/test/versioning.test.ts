@@ -8,6 +8,7 @@ const hashesOf = (files: Record<string, any>) => content.generateHashes(content.
 // A regenerated lock must not hide unversioned balance drift against the baseline.
 test('regenerating hashes still rejects a semantic edit without an increasing content version', () => {
   const files = hashFixture();
+  files['content.json'].contentVersion = '2.0.0';
   const baseline = { metadata: { contentVersion: files['content.json'].contentVersion as string }, hashes: hashesOf(files) };
   const changed = structuredClone(files);
   changed['data/units/soldier.json'].speed = 7;
@@ -46,7 +47,7 @@ test('level removal requires version bump; no baseline always passes', () => {
 });
 
 test('content.json is validated against the content schema; baselines only need contentVersion', () => {
-  assert.equal(content.parseContentMeta(hashFixture()['content.json']).contentVersion, '2.0.0');
+  assert.equal(content.parseContentMeta({ ...hashFixture()['content.json'], contentVersion: '2.0.0' }).contentVersion, '2.0.0');
   assert.throws(() => content.parseContentMeta({ ...hashFixture()['content.json'], schemaVersion: '1.0.0' }), content.ContentLoadError);
   assert.throws(() => content.parseContentMeta({ ...hashFixture()['content.json'], contentVersion: '2.0' }), content.ContentLoadError);
   assert.deepEqual(content.readBaselineVersion('{"schemaVersion":"1.0.0","contentVersion":"1.1.6","x":1}'), { contentVersion: '1.1.6' });

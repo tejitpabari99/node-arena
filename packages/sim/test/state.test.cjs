@@ -38,10 +38,10 @@ test('streams: entity-keyed, order-independent, purpose ids distinct for fwd and
   assert.equal(api.createStreams(11).fork('fwd', 3).snapshot().length, 4);
 });
 
-test('state: fwd stream per building, shoots.cooldown zeroed, seat columns, no channels yet', () => {
+test('state: fwd stream per building, initial tower cooldown, seat columns, no channels yet', () => {
   const s = fresh();
   assert.equal(s.fwd.length, s.buildings.n);
-  assert.ok(s.buildings.col['shoots.cooldown'].every((v) => v === 0));
+  assert.deepEqual(Array.from(s.buildings.col['shoots.cooldown']), [0, 0, 0, 0, 30000]);
   assert.equal(s.buildings.col['shoots.cooldown'].length, s.buildings.n);
   assert.deepEqual(Array.from(s.players.kind), s.level.players.map((p) => (p.kind === 'human' ? 0 : 1)));
   assert.equal(s.channels.size, 0);

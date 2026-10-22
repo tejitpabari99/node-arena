@@ -13,9 +13,17 @@ function assertBudgets(metrics, ci = false) {
   }
 }
 
+let loaded;
 function load() {
+  if (loaded) return loaded;
+  // Measure the shipped native ESM core. Load it before the fixture's TS hook,
+  // which would otherwise transpile live imports through CJS export getters.
+  const api = require('../dist/internal.js');
+  assert.equal(api[Symbol.toStringTag], 'Module', 'benchmark core must be native ESM');
+  assert.equal(typeof Object.getOwnPropertyDescriptor(api, 'create').value, 'function');
   require('tsx/cjs');
-  return { api: require('../src/internal.ts'), levels: require('../test/golden/levels.ts') };
+  loaded = { api, levels: require('../test/golden/levels.ts') };
+  return loaded;
 }
 const total = (view) => Array.from(view.buildings.alive).reduce((a, b) => a + b, 0);
 
@@ -48,6 +56,60 @@ function realisticFixture(levels) {
   const lines = [[0, 6], [0, 7], [1, 7], [1, 8], [2, 8], [2, 9], [3, 9], [3, 10], [4, 10], [4, 11], [5, 11], [5, 8]];
   for (const [from, to] of lines) commands.push({ type: 'DrawLine', player: from < 3 ? 0 : 1, from, to });
   return { level: levels.buildLevel('bench-realistic', spec.map(([x, z, owner, level]) => ({ at: [x, z], owner, level }))), commands };
+}
+
+/** 24 long crossing lanes, 12 per hostile owner, and three neutral towers in reach.
+ * Shared remote targets keep cold all-possible-lane compilation bounded; each source
+ * still independently reaches its 30-troop cap before the first crossing contact. */
+function geometryFixture(levels) {
+  const buildings = [], commands = [];
+  for (let i=0;i<12;i++) buildings.push({at:[-150,i*2-11],owner:0,level:64});
+  for (let i=0;i<12;i++) buildings.push({at:[i*2-11,-150],owner:1,level:64});
+  buildings.push({at:[150,0],owner:null,level:64},{at:[0,150],owner:null,level:64});
+  for (const at of [[-15,8],[-15,-8],[-8,-15]]) buildings.push({at,owner:null,level:30,arch:'tower'});
+  for(let i=0;i<24;i++) commands.push({type:'DrawLine',player:i<12?0:1,from:i,to:i<12?24:25});
+  return {level:levels.buildLevel('bench-geometry',buildings),commands};
+}
+function runGeometry(trials=4, window=360) {
+  const {api,levels}=load(), {level,commands}=geometryFixture(levels);
+  const steps=[],hashes=[];
+  let peak=0,minTimed=Infinity,hostileCrossings=0,crossingClashes=0,towerShots=0;
+  const firing=new Set();
+  // Validate active cache against actual hostile occupied channels, not authored count.
+  const probe=api.createState(level,7000);
+  api.runCommands(probe,commands);
+  for(let i=0;i<24;i++) api.spawnTroop(probe,i,i<12?24:25,0);
+  api.assertInvariants(probe);
+  hostileCrossings=api.activeCrossings(probe).filter(p=> {
+    const a=probe.channels.get(p.a),b=probe.channels.get(p.b);
+    return a.troops.len && b.troops.len && a.troops.owner[0]!==b.troops.owner[0];
+  }).length;
+  for(let trial=-2;trial<=trials;trial++) {
+    const sim=api.create(level,7000+trial);
+    const validate=trial===0;
+    const collect=events=> { for(const e of events) {
+      if(e.type==='Clash'&&e.kind==='crossing') crossingClashes++;
+      if(e.type==='TowerShot') {towerShots++;firing.add(e.tower);}
+    }};
+    const first=sim.step(commands,{events:validate});
+    if(validate) assert.equal(first.filter(e=>e.type==='LineDrawn').length,24,'all crossing lanes must be legal');
+    let warm=0;
+    while(total(sim.view)<720) {
+      sim.step([],{events:validate});
+      peak=Math.max(peak,total(sim.view));
+      assert.ok(++warm<600,'geometry never reached 720 live troops');
+    }
+    peak=Math.max(peak,total(sim.view));
+    for(let i=0;i<window;i++) {
+      if(validate) { collect(sim.step([],{events:true})); continue; }
+      const t0=now();sim.step([],{events:false});const t1=now();sim.hash();const t2=now();
+      if(trial>=0){steps.push(t1-t0);hashes.push(t2-t1);minTimed=Math.min(minTimed,total(sim.view));}
+    }
+  }
+  assert.equal(peak,720);assert.ok(hostileCrossings>=40);
+  assert.ok(crossingClashes>0,'geometry must actually resolve crossing clashes');
+  assert.equal(firing.size,3,`all three towers must actually shoot (saw ${[...firing]})`);
+  return {...summarize(steps,hashes),peakTroops:peak,minTimedTroops:minTimed,hostileCrossings,crossingClashes,towerShots,firingTowers:firing.size};
 }
 
 const percentile = (sorted, p) => sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * p) - 1)];
@@ -116,13 +178,14 @@ function runRealistic(trials = 40, maxTicks = 1200) {
   return { ...summarize(steps, hashes), peakTroops: peak };
 }
 
-/** Bench scenarios, run in order and each held to the budgets. SP04 appends its geometry scenario here (`{ name, run }`). */
+/** Each scenario independently meets the unchanged strict budgets. */
 const BENCH_SCENARIOS = [
   { name: 'stress', run: () => runStress() },
   { name: 'realistic', run: () => runRealistic() },
+  { name: 'geometry', run: () => runGeometry() },
 ];
 
-const fmt = (m) => `mean ${m.mean.toFixed(4)} ms, p99 ${m.p99.toFixed(4)} ms, hash mean ${m.hash.toFixed(4)} ms, hash p99 ${m.hashP99.toFixed(4)} ms (${m.samples} samples, peak ${m.peakTroops} troops${m.minTimedTroops === undefined ? '' : `, min ${m.minTimedTroops} in window`}${m.clashes === undefined ? '' : `, ${m.clashes} clashes in window`})`;
+const fmt = (m) => `mean ${m.mean.toFixed(4)} ms, p99 ${m.p99.toFixed(4)} ms, hash mean ${m.hash.toFixed(4)} ms, hash p99 ${m.hashP99.toFixed(4)} ms (${m.samples} samples, peak ${m.peakTroops} troops${m.minTimedTroops === undefined ? '' : `, min ${m.minTimedTroops} in window`}${m.clashes === undefined ? '' : `, ${m.clashes} clashes in window`}${m.hostileCrossings === undefined ? '' : `, ${m.hostileCrossings} hostile active crossings, ${m.crossingClashes} crossing clashes, ${m.towerShots} shots from ${m.firingTowers} towers`})`;
 function main(args = process.argv.slice(2)) {
   const ci = args.includes('--ci');
   const width = Math.max(...BENCH_SCENARIOS.map((x) => x.name.length));
@@ -131,5 +194,5 @@ function main(args = process.argv.slice(2)) {
   for (const { metrics } of results) assertBudgets(metrics, ci);
   process.stdout.write(`bench:sim within budget${ci ? ' (CI x5)' : ''}\n`);
 }
-module.exports = { assertBudgets, BENCH_SCENARIOS, STRESS_LANE, runStress, runRealistic, stressFixture, realisticFixture, STRESS_TROOPS };
+module.exports = { assertBudgets, BENCH_SCENARIOS, STRESS_LANE, runStress, runRealistic, runGeometry, geometryFixture, stressFixture, realisticFixture, STRESS_TROOPS };
 if (require.main === module) { try { main(); } catch (error) { process.stderr.write(`${error.message}\n`); process.exitCode = 1; } }

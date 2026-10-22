@@ -165,3 +165,79 @@ export class WordHash {
     return (hash ^ (hash >>> 16)) >>> 0;
   }
 }
+
+/** Assert every Number geometry intermediate stays exactly representable. */
+export function checked(value: number): number { safeInteger(value); return value; }
+
+// Base 2^22 limbs keep every multiply-plus-carry below 2^45. These are
+// Numbers, including during ticks; arbitrary input magnitudes are never rounded.
+const LIMB = 4194304;
+function limbs(value: number): number[] {
+  safeInteger(value);
+  let n = Math.abs(value);
+  const out: number[] = [];
+  do { out.push(n % LIMB); n = idiv(n, LIMB); } while (n);
+  return out;
+}
+function limbMul(a: number[], b: number[]): number[] {
+  const out = Array<number>(a.length + b.length).fill(0);
+  for (let i = 0; i < a.length; i++) {
+    let carry = 0;
+    for (let j = 0; j < b.length; j++) {
+      const k = i + j, v = checked(out[k]! + a[i]! * b[j]! + carry);
+      out[k] = v % LIMB; carry = idiv(v, LIMB);
+    }
+    out[i + b.length] = carry;
+  }
+  return out;
+}
+function limbAdd(a: number[], b: number[]): number[] {
+  const out: number[] = [];
+  let carry = 0;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const v = checked((a[i] ?? 0) + (b[i] ?? 0) + carry);
+    out.push(v % LIMB); carry = idiv(v, LIMB);
+  }
+  if (carry) out.push(carry);
+  return out;
+}
+/** Exact sign of (ax²+az²)*bd² - (bx²+bz²)*ad²; Numbers only.
+ * Every argument may span the full safe-integer range; no large product is
+ * materialized as a Number. Useful for rational lane-space distance ordering.
+ */
+export function compareRationalSquares(ax: number, az: number, ad: number, bx: number, bz: number, bd: number): number {
+  if (ad <= 0 || bd <= 0) throw new RangeError('Positive distance denominator required');
+  const square = (v: number): number[] => { const l = limbs(v); return limbMul(l, l); };
+  const a = limbMul(limbAdd(square(ax), square(az)), square(bd));
+  const b = limbMul(limbAdd(square(bx), square(bz)), square(ad));
+  for (let i = Math.max(a.length, b.length) - 1; i >= 0; i--) {
+    if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) < (b[i] ?? 0) ? -1 : 1;
+  }
+  return 0;
+}
+
+/** Exact sign of sum(left products) - sum(right products), Number-only.
+ * A term is a list of safe-integer factors, e.g. [[a,b],[c,c]] means a*b+c².
+ * Signed factors supported; empty sum=0, empty product=1. Expand polynomial
+ * comparisons into factored terms rather than forming unsafe products first.
+ * Suitable for swept-quadratic discriminants; does not choose contact rules.
+ */
+export function compareSumProducts(left: readonly (readonly number[])[], right: readonly (readonly number[])[]): number {
+  let positive: number[] = [0], negative: number[] = [0];
+  for (const [terms, side] of [[left, 1], [right, -1]] as const) {
+    for (const term of terms) {
+      let product = [1], sign: number = side;
+      for (const factor of term) {
+        safeInteger(factor);
+        if (factor < 0) sign = -sign;
+        product = limbMul(product, limbs(factor));
+      }
+      if (sign > 0) positive = limbAdd(positive, product);
+      else negative = limbAdd(negative, product);
+    }
+  }
+  for (let i = Math.max(positive.length, negative.length) - 1; i >= 0; i--) {
+    if ((positive[i] ?? 0) !== (negative[i] ?? 0)) return (positive[i] ?? 0) < (negative[i] ?? 0) ? -1 : 1;
+  }
+  return 0;
+}

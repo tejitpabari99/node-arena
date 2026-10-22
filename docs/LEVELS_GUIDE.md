@@ -113,6 +113,8 @@ Totals: 13 obstacle levels (5, 6, 7, 10, 11, 12, 13, 16, 17, 19, 20, 22, 23), 10
 - **cargo** dropped in all 20 (owner decision).
 - **wall** dropped in `levelview-100-es` (position 23) only, via `onlyLevels` in `feature-map.json` (recorded token `wall`). Other wall levels (24, 25, ...) stay blocked.
 - **tutorial scripts** (`BaseTutorial`, `TutorLevelBase`) on the two prefab levels (`levelview-182-nb` pos 10, `levelview-100-es` pos 23) are not data: `tutorial-script` in `source.dropped`.
+- **Building collider yaw deviation.** Buildings use the rules-contract AABB, 1.5 × 1.5 (half-size 750 milli); the dumped `Building` trigger has local yaw ≈15°. That prefab yaw is intentionally not applied: buildings have no authored rotation, and GAME_RULES E-TOWER fixes the axis-aligned reach example.
+- **Obstacle archetype default.** Hand-authored obstacles without an instance footprint use child 0's dumped box, rounded to 0.713 × 0.713. Imported children retain their own rounded boxes and world `yawDeg`; no importer regeneration is needed.
 - **collider fallback: not used.** The real collider dump `tools/src/import-tw/prefab/colliders.json` exists; obstacle footprints are one box + yaw per child.
 - `sc` (building param) dropped everywhere; `AiRM` (AI rail moves) dropped if present and recorded as `ai-rail-move`. `MinRD` / `MaxRD` are AI reaction delays: dropped and **not recorded** (`record: false`).
 

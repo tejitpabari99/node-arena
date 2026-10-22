@@ -32,10 +32,8 @@ cd "$(dirname "$0")/.."
 #   the live packages (defs, content, sim, tools) while bots/web are parked.
 # ---------------------------------------------------------------------------
 PARKED=(
-  "check:rules:SP04"
   "bots:golden:SP06"
   "validate:levels:SP06"
-  "test:tools:rules:SP04"
   "test:bots:golden:SP06"
   "build:bots:SP06"
   "typecheck:bots:SP06"

@@ -1,4 +1,7 @@
+// Direct adapter tests require fresh dist: pnpm build:prerequisites first.
 const assert = require('node:assert/strict');
+// Native API must load before fixture registration installs the TS/CJS hook.
+const native = require('../dist/internal.js');
 const { test } = require('node:test');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -35,6 +38,37 @@ test('realistic fixture has 12 buildings', () => {
 });
 
 test('BENCH_SCENARIOS is the append point for SP04: named scenarios with a run()', () => {
-  assert.deepEqual(bench.BENCH_SCENARIOS.map((x) => x.name), ['stress', 'realistic']);
+  assert.deepEqual(bench.BENCH_SCENARIOS.map((x) => x.name), ['stress', 'realistic', 'geometry']);
   for (const x of bench.BENCH_SCENARIOS) assert.equal(typeof x.run, 'function');
+});
+
+ test('geometry workload reaches 720 troops, >=40 hostile active crossings and three firing towers', () => {
+  const stats = bench.runGeometry(1, 360);
+  assert.equal(stats.peakTroops, 720);
+  assert.ok(stats.minTimedTroops > 0);
+  assert.ok(stats.hostileCrossings >= 40);
+  assert.ok(stats.crossingClashes > 0);
+  assert.equal(stats.firingTowers, 3);
+  assert.ok(stats.towerShots >= 3);
+ });
+
+test('shipped native ESM core matches every golden replay and event log', () => {
+  assert.equal(native[Symbol.toStringTag], 'Module');
+  assert.equal(typeof Object.getOwnPropertyDescriptor(native, 'create').value, 'function');
+  require('tsx/cjs');
+  const { allScenarios } = require('./golden/all.ts');
+  const { eventLogHash, runScenario } = require('./golden/run.ts');
+  const baseline = require('./golden/baseline.json');
+  for (const scenario of allScenarios) {
+    const recorder = native.createReplayRecorder(scenario.level, scenario.seed, baseline.metadata), events=[];
+    for(let i=0;i<scenario.ticks&&!recorder.view.over;i++) {
+      events.push(...recorder.step(scenario.commands.filter(c=>c.tick===recorder.view.tick).map(c=>c.cmd), {events:true}));
+    }
+    const expected=baseline.results.find(result=>result.name===scenario.name);
+    assert.deepEqual(recorder.record(), expected.replay, scenario.name);
+    assert.equal(eventLogHash(events), expected.eventLogHash, scenario.name);
+    const source=runScenario(scenario,baseline.metadata);
+    assert.deepEqual(events,source.events,scenario.name);
+    assert.equal(native.playReplay({metadata:baseline.metadata,level:scenario.level},recorder.record()).ok,true);
+  }
 });

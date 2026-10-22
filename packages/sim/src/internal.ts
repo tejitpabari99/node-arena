@@ -13,3 +13,8 @@ export { canDraw, cutLine, runCommands } from './commands.js';
 export { crossingPass, exchange, headOnPass, contactsPass, arrivalPass, type ExchangeResult } from './contacts.js';
 export { firstDrawRejection, fireLineDrawn, fireLineCut, fireCapture } from './hooks.js';
 export { step } from './tick.js';
+
+export * from './geometry.js';
+export { checked, compareSumProducts, compareRationalSquares } from './math.js';
+
+export { activeCrossings, sweepCrossed, crossingCandidates } from './crossings.js';
