@@ -1,11 +1,13 @@
 import { Mesh, MeshBasicMaterial, RingGeometry, SphereGeometry, CircleGeometry, DoubleSide, Vector3, type BufferGeometry, type Scene } from 'three';
 import { isqrt, TICK_RATE, type SimEvent, type SimView } from '@node-arena/sim';
 import type { Manifest } from '@node-arena/content';
-import { createManifestResolver, ManifestError, BUILTIN_FX } from '../manifest/resolve.js';
+import { createManifestResolver, ManifestError } from '../manifest/resolve.js';
 import { Disposables } from './disposables.js';
 /** Clash burst reads as dust/impact, not a team colour (SP04 Req 7). */
 export const CLASH_CREAM = '#fff4d6';
-type Effect = typeof BUILTIN_FX[number];
+/** Legacy renderer's local effect set (replaced by the registry-driven fx renderer in Task 10). */
+const LEGACY_FX = Object.freeze(['pulse', 'puff', 'spark'] as const);
+type Effect = typeof LEGACY_FX[number];
 /** Return the colour owner, or undefined to skip events with no meaningful position. Target is borrowed. */
 export type EventLocator = (event: SimEvent, view: SimView, target: Vector3) => number | undefined;
 export interface FxRendererOptions { view: SimView; manifest: Manifest; scene: Scene; scope: Disposables; capacity?: number; reducedMotion?: boolean; palette?: keyof Manifest['palettes']; eventLocators?: Partial<Record<SimEvent['type'], EventLocator>> }
@@ -56,7 +58,7 @@ export function createFxRenderer(options: FxRendererOptions) {
       const mapping=resolver.event(event.type);
       const fx=mapping?.fx ?? (event.type==='Captured' ? resolver.visual(view.towerStatic[event.tower]!.visual,'tower').fx : undefined);
       if(!fx) continue;
-      if(!(BUILTIN_FX as readonly string[]).includes(fx)) throw new ManifestError('key',event.type,`Unresolved fx ${fx}`);
+      if(!(LEGACY_FX as readonly string[]).includes(fx)) throw new ManifestError('key',event.type,`Unresolved fx ${fx}`);
       const owner=locators[event.type]?.(event,view,position); if(owner===undefined) continue;
       let slot: Slot | undefined;
       for(let i=0;i<slots.length;i++) { const candidate=slots[(cursor+i)%slots.length]!; if(!candidate.active){slot=candidate;cursor=(cursor+i+1)%slots.length;break;} }
