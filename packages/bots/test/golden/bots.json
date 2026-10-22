@@ -1,0 +1,2681 @@
+{
+  "botVersion": "2.0.0",
+  "metadata": {
+    "rulesVersion": "2.0.0",
+    "schemaVersion": "2.0.0",
+    "contentVersion": "2.0.1"
+  },
+  "botHash": {
+    "pos4-levelview-1-seed-1": {
+      "levelview-1#p2": "cf6f32bbe314326acbdfee7de0d17855e776f701669c644980ee7416ccba6aaa"
+    },
+    "pos6-levelview-3-ab-seed-2": {
+      "levelview-3-ab#p2": "7973e5b1c14e25c787ff6ed67da0324c877509360ab48410dc739b16b4eaea2a",
+      "levelview-3-ab#p3": "a74faea3556cb0c7a2ddca3b6491cd0266049688a14a09f4267c8038fe6a5611",
+      "levelview-3-ab#p4": "acbb9e30b7b40e87c6083312f4f207f4f7a38e0f29b98b86ce4be16ea2eb67f3"
+    },
+    "pos11-levelview-8-es-seed-3": {
+      "levelview-8-es#p2": "b6d9e05a1ec6a55d89dd495a7d7643c7a461fbd76e33b537fe8f9a7c31a5d374"
+    }
+  },
+  "scenarios": [
+    {
+      "name": "pos4-levelview-1-seed-1",
+      "level": {
+        "id": "levelview-1",
+        "objective": "captureAll",
+        "timeLimitSec": null,
+        "bounds": {
+          "minX": -9000,
+          "maxX": 6000,
+          "minZ": -7000,
+          "maxZ": 8000
+        },
+        "theme": "green",
+        "rules": {
+          "timeLimitSec": null,
+          "stageThresholds": [
+            10,
+            30
+          ],
+          "aliveCap": 30,
+          "growth": {
+            "base": 900
+          },
+          "contactDistance": 700,
+          "laneHalfWidth": 190
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "blue"
+          },
+          {
+            "id": "p2",
+            "kind": "ai",
+            "colorKey": "red"
+          }
+        ],
+        "units": [
+          {
+            "id": "soldier",
+            "visual": "unit.soldier",
+            "speed": 5000,
+            "hp": 1,
+            "attack": 1,
+            "defense": 1
+          }
+        ],
+        "buildings": [
+          {
+            "id": "b0",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": -6790,
+            "z": 100,
+            "owner": 0,
+            "level": 20,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b1",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 3700,
+            "z": -2560,
+            "owner": 1,
+            "level": 10,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b2",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": -700,
+            "z": -4950,
+            "owner": -1,
+            "level": 7,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b3",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": -4660,
+            "z": 5010,
+            "owner": -1,
+            "level": 2,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b4",
+            "archetype": "tower",
+            "kind": "tower",
+            "x": 600,
+            "z": 2740,
+            "owner": -1,
+            "level": 5,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.tower",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "shoots": {
+                "attackDelay": 2000,
+                "attackRadius": 1600,
+                "speedUpByLevel": 1750,
+                "radiusUpByLevel": 900,
+                "radiusUnit": 2400,
+                "minRadius": 1000,
+                "neutralFires": true,
+                "troopPad": 350,
+                "hitsNeutralHouses": true,
+                "bulletSpeed": 12000
+              }
+            }
+          }
+        ],
+        "elements": [],
+        "bots": [
+          {
+            "player": 1,
+            "bot": {
+              "kind": "tw",
+              "actionDelayMs": 12000,
+              "behavior": "full",
+              "script": []
+            }
+          }
+        ],
+        "requires": [
+          "bot:tw",
+          "drawsLines",
+          "grows",
+          "level",
+          "objective:captureAll",
+          "shoots",
+          "spawns"
+        ],
+        "simHash": "cf956da3615b9e6f3f4dc6fba7d2de81146aa5331f18c85467df2a0c1bdc1b2a",
+        "botHash": {
+          "levelview-1#p2": "cf6f32bbe314326acbdfee7de0d17855e776f701669c644980ee7416ccba6aaa"
+        }
+      },
+      "seed": 1,
+      "position": 4,
+      "humanSeat": 0,
+      "humanActionDelayMs": 1000,
+      "maxTicks": 20000
+    },
+    {
+      "name": "pos6-levelview-3-ab-seed-2",
+      "level": {
+        "id": "levelview-3-ab",
+        "objective": "captureAll",
+        "timeLimitSec": null,
+        "bounds": {
+          "minX": -10000,
+          "maxX": 8000,
+          "minZ": -7000,
+          "maxZ": 8000
+        },
+        "theme": "green",
+        "rules": {
+          "timeLimitSec": null,
+          "stageThresholds": [
+            10,
+            30
+          ],
+          "aliveCap": 30,
+          "growth": {
+            "base": 900
+          },
+          "contactDistance": 700,
+          "laneHalfWidth": 190
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "blue"
+          },
+          {
+            "id": "p2",
+            "kind": "ai",
+            "colorKey": "red"
+          },
+          {
+            "id": "p3",
+            "kind": "ai",
+            "colorKey": "green"
+          },
+          {
+            "id": "p4",
+            "kind": "ai",
+            "colorKey": "yellow"
+          }
+        ],
+        "units": [
+          {
+            "id": "soldier",
+            "visual": "unit.soldier",
+            "speed": 5000,
+            "hp": 1,
+            "attack": 1,
+            "defense": 1
+          }
+        ],
+        "buildings": [
+          {
+            "id": "b0",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": -4520,
+            "z": -3390,
+            "owner": 0,
+            "level": 25,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 35
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b1",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 5680,
+            "z": -80,
+            "owner": 1,
+            "level": 5,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 35
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b6",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 5560,
+            "z": 4420,
+            "owner": 2,
+            "level": 5,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 35
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b5",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 5860,
+            "z": -4960,
+            "owner": 3,
+            "level": 5,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 35
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b2",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 710,
+            "z": 100,
+            "owner": -1,
+            "level": 3,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 35
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b3",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": -7090,
+            "z": 570,
+            "owner": -1,
+            "level": 1,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 35
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b4",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": -4100,
+            "z": 3560,
+            "owner": -1,
+            "level": 1,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 35
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b7",
+            "archetype": "tower",
+            "kind": "tower",
+            "x": -60,
+            "z": 5410,
+            "owner": -1,
+            "level": 3,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.tower",
+            "modules": {
+              "level": {
+                "maxLevel": 35
+              },
+              "shoots": {
+                "attackDelay": 2000,
+                "attackRadius": 1600,
+                "speedUpByLevel": 1750,
+                "radiusUpByLevel": 900,
+                "radiusUnit": 2400,
+                "minRadius": 1000,
+                "neutralFires": true,
+                "troopPad": 350,
+                "hitsNeutralHouses": true,
+                "bulletSpeed": 12000
+              }
+            }
+          }
+        ],
+        "elements": [
+          {
+            "id": "o0-0",
+            "archetype": "obstacle",
+            "x": -2560,
+            "z": -4110,
+            "yawMilliDeg": 270000,
+            "footprint": {
+              "shape": "box",
+              "w": 713,
+              "d": 713
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-1",
+            "archetype": "obstacle",
+            "x": -2560,
+            "z": -3560,
+            "yawMilliDeg": 270000,
+            "footprint": {
+              "shape": "box",
+              "w": 427,
+              "d": 427
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-2",
+            "archetype": "obstacle",
+            "x": -2560,
+            "z": -2960,
+            "yawMilliDeg": 270000,
+            "footprint": {
+              "shape": "box",
+              "w": 692,
+              "d": 692
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-3",
+            "archetype": "obstacle",
+            "x": -2680,
+            "z": -2150,
+            "yawMilliDeg": 270000,
+            "footprint": {
+              "shape": "box",
+              "w": 300,
+              "d": 300
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-4",
+            "archetype": "obstacle",
+            "x": -2560,
+            "z": -1610,
+            "yawMilliDeg": 270000,
+            "footprint": {
+              "shape": "box",
+              "w": 480,
+              "d": 480
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-5",
+            "archetype": "obstacle",
+            "x": -2560,
+            "z": -930,
+            "yawMilliDeg": 270000,
+            "footprint": {
+              "shape": "box",
+              "w": 649,
+              "d": 649
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-6",
+            "archetype": "obstacle",
+            "x": -2380,
+            "z": -2030,
+            "yawMilliDeg": 270000,
+            "footprint": {
+              "shape": "box",
+              "w": 300,
+              "d": 300
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-7",
+            "archetype": "obstacle",
+            "x": -2470,
+            "z": -2400,
+            "yawMilliDeg": 270000,
+            "footprint": {
+              "shape": "box",
+              "w": 300,
+              "d": 300
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          }
+        ],
+        "bots": [
+          {
+            "player": 1,
+            "bot": {
+              "kind": "tw",
+              "actionDelayMs": 5000,
+              "behavior": "full",
+              "script": [
+                {
+                  "op": "line",
+                  "own": "b1",
+                  "target": "b2",
+                  "afterMs": 1500
+                },
+                {
+                  "op": "delay",
+                  "ms": 10000
+                }
+              ]
+            }
+          },
+          {
+            "player": 2,
+            "bot": {
+              "kind": "tw",
+              "actionDelayMs": 5000,
+              "behavior": "full",
+              "script": [
+                {
+                  "op": "line",
+                  "own": "b6",
+                  "target": "b2",
+                  "afterMs": 2000
+                },
+                {
+                  "op": "delay",
+                  "ms": 12000
+                }
+              ]
+            }
+          },
+          {
+            "player": 3,
+            "bot": {
+              "kind": "tw",
+              "actionDelayMs": 5000,
+              "behavior": "full",
+              "script": [
+                {
+                  "op": "line",
+                  "own": "b5",
+                  "target": "b2",
+                  "afterMs": 1700
+                },
+                {
+                  "op": "delay",
+                  "ms": 11000
+                }
+              ]
+            }
+          }
+        ],
+        "requires": [
+          "blocksLines",
+          "bot:tw",
+          "drawsLines",
+          "grows",
+          "level",
+          "objective:captureAll",
+          "shoots",
+          "spawns"
+        ],
+        "simHash": "94b3d932be89238122c6d2123d517488b7d6094fb3d6a2269abea83f53c855b5",
+        "botHash": {
+          "levelview-3-ab#p2": "7973e5b1c14e25c787ff6ed67da0324c877509360ab48410dc739b16b4eaea2a",
+          "levelview-3-ab#p3": "a74faea3556cb0c7a2ddca3b6491cd0266049688a14a09f4267c8038fe6a5611",
+          "levelview-3-ab#p4": "acbb9e30b7b40e87c6083312f4f207f4f7a38e0f29b98b86ce4be16ea2eb67f3"
+        }
+      },
+      "seed": 2,
+      "position": 6,
+      "humanSeat": 0,
+      "humanActionDelayMs": 1000,
+      "maxTicks": 20000
+    },
+    {
+      "name": "pos11-levelview-8-es-seed-3",
+      "level": {
+        "id": "levelview-8-es",
+        "objective": "captureAll",
+        "timeLimitSec": null,
+        "bounds": {
+          "minX": -9000,
+          "maxX": 10000,
+          "minZ": -7000,
+          "maxZ": 7000
+        },
+        "theme": "green",
+        "rules": {
+          "timeLimitSec": null,
+          "stageThresholds": [
+            10,
+            30
+          ],
+          "aliveCap": 30,
+          "growth": {
+            "base": 900
+          },
+          "contactDistance": 700,
+          "laneHalfWidth": 190
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "blue"
+          },
+          {
+            "id": "p2",
+            "kind": "ai",
+            "colorKey": "red"
+          }
+        ],
+        "units": [
+          {
+            "id": "soldier",
+            "visual": "unit.soldier",
+            "speed": 5000,
+            "hp": 1,
+            "attack": 1,
+            "defense": 1
+          }
+        ],
+        "buildings": [
+          {
+            "id": "b0",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": -6250,
+            "z": -70,
+            "owner": 0,
+            "level": 5,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 2000
+              }
+            }
+          },
+          {
+            "id": "b1",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": -5800,
+            "z": 4440,
+            "owner": 1,
+            "level": 5,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b2",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 930,
+            "z": 1900,
+            "owner": 1,
+            "level": 15,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b3",
+            "archetype": "house-wt2",
+            "kind": "house",
+            "x": -3090,
+            "z": -4750,
+            "owner": -1,
+            "level": 5,
+            "ignoreForWin": false,
+            "special": true,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt2",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 2000
+              }
+            }
+          },
+          {
+            "id": "b4",
+            "archetype": "house-wt2",
+            "kind": "house",
+            "x": 2240,
+            "z": -4250,
+            "owner": -1,
+            "level": 8,
+            "ignoreForWin": false,
+            "special": true,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt2",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 2000
+              }
+            }
+          },
+          {
+            "id": "b5",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 7090,
+            "z": 3390,
+            "owner": -1,
+            "level": 15,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          }
+        ],
+        "elements": [
+          {
+            "id": "o0-0",
+            "archetype": "obstacle",
+            "x": -3370,
+            "z": 490,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 713,
+              "d": 713
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-1",
+            "archetype": "obstacle",
+            "x": -3590,
+            "z": 1170,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 427,
+              "d": 427
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-2",
+            "archetype": "obstacle",
+            "x": -4190,
+            "z": 1900,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 692,
+              "d": 692
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-3",
+            "archetype": "obstacle",
+            "x": -5220,
+            "z": 2050,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 300,
+              "d": 300
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-4",
+            "archetype": "obstacle",
+            "x": -5870,
+            "z": 2170,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 480,
+              "d": 480
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-5",
+            "archetype": "obstacle",
+            "x": -6550,
+            "z": 2170,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 649,
+              "d": 649
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-6",
+            "archetype": "obstacle",
+            "x": -5080,
+            "z": 2350,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 300,
+              "d": 300
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o0-7",
+            "archetype": "obstacle",
+            "x": -4690,
+            "z": 2260,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 300,
+              "d": 300
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o1-0",
+            "archetype": "obstacle",
+            "x": -5610,
+            "z": 2710,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 713,
+              "d": 713
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o1-1",
+            "archetype": "obstacle",
+            "x": -4830,
+            "z": 2700,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 427,
+              "d": 427
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o1-2",
+            "archetype": "obstacle",
+            "x": -2870,
+            "z": 1020,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 692,
+              "d": 692
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o1-3",
+            "archetype": "obstacle",
+            "x": -7120,
+            "z": 2550,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 300,
+              "d": 300
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o1-4",
+            "archetype": "obstacle",
+            "x": -4790,
+            "z": 1590,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 480,
+              "d": 480
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o1-5",
+            "archetype": "obstacle",
+            "x": -3350,
+            "z": 1670,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 649,
+              "d": 649
+            },
+            "visual": "element.obstacle",
+            "variant": "big",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o1-6",
+            "archetype": "obstacle",
+            "x": -6980,
+            "z": 2850,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 300,
+              "d": 300
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          },
+          {
+            "id": "o1-7",
+            "archetype": "obstacle",
+            "x": -6590,
+            "z": 2760,
+            "yawMilliDeg": 180000,
+            "footprint": {
+              "shape": "box",
+              "w": 300,
+              "d": 300
+            },
+            "visual": "element.obstacle",
+            "variant": "small",
+            "modules": {
+              "blocksLines": {}
+            }
+          }
+        ],
+        "bots": [
+          {
+            "player": 1,
+            "bot": {
+              "kind": "tw",
+              "actionDelayMs": 30000,
+              "behavior": "full",
+              "script": [
+                {
+                  "op": "steps",
+                  "root": {
+                    "goal": "line",
+                    "own": "b1",
+                    "target": "b2",
+                    "delayMs": 5000,
+                    "then": [
+                      {
+                        "goal": "line",
+                        "own": "b2",
+                        "target": "b5",
+                        "delayMs": 11000
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "requires": [
+          "blocksLines",
+          "bot:tw",
+          "drawsLines",
+          "grows",
+          "level",
+          "objective:captureAll",
+          "spawns"
+        ],
+        "simHash": "9eff75f967dcf6d214869ee2e3d01577cc6083f900643c3d9e1c4822205d6708",
+        "botHash": {
+          "levelview-8-es#p2": "b6d9e05a1ec6a55d89dd495a7d7643c7a461fbd76e33b537fe8f9a7c31a5d374"
+        }
+      },
+      "seed": 3,
+      "position": 11,
+      "humanSeat": 0,
+      "humanActionDelayMs": 1000,
+      "maxTicks": 20000
+    }
+  ],
+  "results": [
+    {
+      "name": "pos4-levelview-1-seed-1",
+      "replay": {
+        "header": {
+          "rulesVersion": "2.0.0",
+          "schemaVersion": "2.0.0",
+          "contentVersion": "2.0.1",
+          "levelId": "levelview-1",
+          "simHash": "cf956da3615b9e6f3f4dc6fba7d2de81146aa5331f18c85467df2a0c1bdc1b2a",
+          "seed": 1
+        },
+        "commands": [
+          {
+            "tick": 20,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 3
+            }
+          },
+          {
+            "tick": 41,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 4
+            }
+          },
+          {
+            "tick": 104,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 3,
+              "to": 4
+            }
+          },
+          {
+            "tick": 240,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 1,
+              "from": 1,
+              "to": 4
+            }
+          },
+          {
+            "tick": 335,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 3,
+              "to": 2
+            }
+          },
+          {
+            "tick": 481,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 1,
+              "from": 1,
+              "to": 2
+            }
+          },
+          {
+            "tick": 545,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 2,
+              "to": 4
+            }
+          },
+          {
+            "tick": 566,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 2,
+              "to": 4
+            }
+          },
+          {
+            "tick": 587,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 2,
+              "to": 4
+            }
+          },
+          {
+            "tick": 650,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 2,
+              "to": 4
+            }
+          },
+          {
+            "tick": 776,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 3,
+              "to": 1
+            }
+          },
+          {
+            "tick": 923,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 2,
+              "to": 0
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "ea8a73a8d47bbe31"
+          },
+          {
+            "tick": 40,
+            "hash": "99a6e92c110c1a22"
+          },
+          {
+            "tick": 60,
+            "hash": "b059d11f36be2c4d"
+          },
+          {
+            "tick": 80,
+            "hash": "18ab7e3904e4b4b8"
+          },
+          {
+            "tick": 100,
+            "hash": "ffcaec64e12b84f7"
+          },
+          {
+            "tick": 120,
+            "hash": "fb8dfe3210c3c03d"
+          },
+          {
+            "tick": 140,
+            "hash": "9a1d8044e397fe28"
+          },
+          {
+            "tick": 160,
+            "hash": "8041c9908055f42b"
+          },
+          {
+            "tick": 180,
+            "hash": "4824cdad13ee513b"
+          },
+          {
+            "tick": 200,
+            "hash": "366606905956df7b"
+          },
+          {
+            "tick": 220,
+            "hash": "6a2280b706f19237"
+          },
+          {
+            "tick": 240,
+            "hash": "7697435476652282"
+          },
+          {
+            "tick": 260,
+            "hash": "54c7d8b90e6c31c7"
+          },
+          {
+            "tick": 280,
+            "hash": "4c824c55ea78aaff"
+          },
+          {
+            "tick": 300,
+            "hash": "02d37fe845559bde"
+          },
+          {
+            "tick": 320,
+            "hash": "557c55d80f04701b"
+          },
+          {
+            "tick": 340,
+            "hash": "8efc2461065c6087"
+          },
+          {
+            "tick": 360,
+            "hash": "d0447c254e50f127"
+          },
+          {
+            "tick": 380,
+            "hash": "fb74eb986b68c55d"
+          },
+          {
+            "tick": 400,
+            "hash": "71fce060074c3565"
+          },
+          {
+            "tick": 420,
+            "hash": "84703406119440e0"
+          },
+          {
+            "tick": 440,
+            "hash": "d22aa04013c4fe58"
+          },
+          {
+            "tick": 460,
+            "hash": "bc249797242a23dd"
+          },
+          {
+            "tick": 480,
+            "hash": "bea4b7bf8fb0b0e9"
+          },
+          {
+            "tick": 500,
+            "hash": "a7017b2778afbfba"
+          },
+          {
+            "tick": 520,
+            "hash": "e14f87e1819316bc"
+          },
+          {
+            "tick": 540,
+            "hash": "47280e2ede062859"
+          },
+          {
+            "tick": 560,
+            "hash": "1f1c2dc1550a3b7c"
+          },
+          {
+            "tick": 580,
+            "hash": "2004414746a4ce34"
+          },
+          {
+            "tick": 600,
+            "hash": "265c45b8ddd150e2"
+          },
+          {
+            "tick": 620,
+            "hash": "7ce58b51e7c6928d"
+          },
+          {
+            "tick": 640,
+            "hash": "5dfed3ec2eaa0b27"
+          },
+          {
+            "tick": 660,
+            "hash": "cde560fa2c33f186"
+          },
+          {
+            "tick": 680,
+            "hash": "dc625167c34a7e58"
+          },
+          {
+            "tick": 700,
+            "hash": "ff0d39f421920055"
+          },
+          {
+            "tick": 720,
+            "hash": "1ab7375e41b1e14b"
+          },
+          {
+            "tick": 740,
+            "hash": "ae0ec9d2007b41f5"
+          },
+          {
+            "tick": 760,
+            "hash": "d9dd3389adf7c9fe"
+          },
+          {
+            "tick": 780,
+            "hash": "278bf0908de74226"
+          },
+          {
+            "tick": 800,
+            "hash": "fabfcaf374259e0a"
+          },
+          {
+            "tick": 820,
+            "hash": "7cd8c2778e1434b7"
+          },
+          {
+            "tick": 840,
+            "hash": "471d6d5ea7d35777"
+          },
+          {
+            "tick": 860,
+            "hash": "1e778ef10388921d"
+          },
+          {
+            "tick": 880,
+            "hash": "dedda9acf4187812"
+          },
+          {
+            "tick": 900,
+            "hash": "44f82d41fdb10b97"
+          },
+          {
+            "tick": 920,
+            "hash": "740c7eceda52f1a3"
+          },
+          {
+            "tick": 940,
+            "hash": "eb830859db1191ff"
+          },
+          {
+            "tick": 960,
+            "hash": "ffa32c30c88289fc"
+          },
+          {
+            "tick": 980,
+            "hash": "2e7a771839147fc4"
+          },
+          {
+            "tick": 1000,
+            "hash": "9767c6cb063a0b1d"
+          },
+          {
+            "tick": 1020,
+            "hash": "a774acecf2bb8f35"
+          },
+          {
+            "tick": 1040,
+            "hash": "f8e23ae91b059f15"
+          },
+          {
+            "tick": 1060,
+            "hash": "6fc9fc9031baa640"
+          },
+          {
+            "tick": 1080,
+            "hash": "23bc171c33e68f6a"
+          },
+          {
+            "tick": 1100,
+            "hash": "07e79561cdbcac15"
+          },
+          {
+            "tick": 1120,
+            "hash": "eeaada706f67ed06"
+          },
+          {
+            "tick": 1140,
+            "hash": "b84f9e06e2160f3c"
+          }
+        ],
+        "finalTick": 1140,
+        "finalHash": "b84f9e06e2160f3c",
+        "outcome": {
+          "outcome": "won",
+          "winner": 0
+        }
+      },
+      "commandCount": 12,
+      "outcome": {
+        "outcome": "won",
+        "winner": 0
+      },
+      "ticks": 1140,
+      "finalHash": "b84f9e06e2160f3c"
+    },
+    {
+      "name": "pos6-levelview-3-ab-seed-2",
+      "replay": {
+        "header": {
+          "rulesVersion": "2.0.0",
+          "schemaVersion": "2.0.0",
+          "contentVersion": "2.0.1",
+          "levelId": "levelview-3-ab",
+          "simHash": "94b3d932be89238122c6d2123d517488b7d6094fb3d6a2269abea83f53c855b5",
+          "seed": 2
+        },
+        "commands": [
+          {
+            "tick": 20,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 5
+            }
+          },
+          {
+            "tick": 30,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 1,
+              "from": 1,
+              "to": 4
+            }
+          },
+          {
+            "tick": 34,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 3,
+              "from": 3,
+              "to": 4
+            }
+          },
+          {
+            "tick": 40,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 2,
+              "from": 2,
+              "to": 4
+            }
+          },
+          {
+            "tick": 41,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 6
+            }
+          },
+          {
+            "tick": 83,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 5,
+              "to": 4
+            }
+          },
+          {
+            "tick": 125,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 6,
+              "to": 4
+            }
+          },
+          {
+            "tick": 230,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 7
+            }
+          },
+          {
+            "tick": 272,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 7
+            }
+          },
+          {
+            "tick": 293,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 7
+            }
+          },
+          {
+            "tick": 314,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 5,
+              "to": 2
+            }
+          },
+          {
+            "tick": 398,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 6,
+              "to": 7
+            }
+          },
+          {
+            "tick": 419,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 7
+            }
+          },
+          {
+            "tick": 440,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 7
+            }
+          },
+          {
+            "tick": 461,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 7
+            }
+          },
+          {
+            "tick": 545,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 7
+            }
+          },
+          {
+            "tick": 587,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 7
+            }
+          },
+          {
+            "tick": 734,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 5,
+              "to": 6
+            }
+          },
+          {
+            "tick": 797,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 2,
+              "to": 1
+            }
+          },
+          {
+            "tick": 818,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 6,
+              "to": 1
+            }
+          },
+          {
+            "tick": 923,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 2
+            }
+          },
+          {
+            "tick": 944,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 1,
+              "to": 3
+            }
+          },
+          {
+            "tick": 1007,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 2,
+              "to": 7
+            }
+          },
+          {
+            "tick": 1049,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 1
+            }
+          },
+          {
+            "tick": 1070,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 1,
+              "to": 7
+            }
+          },
+          {
+            "tick": 1175,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 2,
+              "to": 6
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "3629f3c872685bd1"
+          },
+          {
+            "tick": 40,
+            "hash": "5131131264677108"
+          },
+          {
+            "tick": 60,
+            "hash": "6c3fbd2f688e8978"
+          },
+          {
+            "tick": 80,
+            "hash": "7b05ab44813ea146"
+          },
+          {
+            "tick": 100,
+            "hash": "cf5d3640335d9dcd"
+          },
+          {
+            "tick": 120,
+            "hash": "b9da16f4553e65b9"
+          },
+          {
+            "tick": 140,
+            "hash": "f8cd537834fee5e8"
+          },
+          {
+            "tick": 160,
+            "hash": "a8613ea8cbe02e7b"
+          },
+          {
+            "tick": 180,
+            "hash": "1e59d5e6966ca7e4"
+          },
+          {
+            "tick": 200,
+            "hash": "0d0941c4579dd20e"
+          },
+          {
+            "tick": 220,
+            "hash": "1a3c0e31ea7d68a1"
+          },
+          {
+            "tick": 240,
+            "hash": "2699ed2c0cc88fa5"
+          },
+          {
+            "tick": 260,
+            "hash": "8fd24db66e5d9317"
+          },
+          {
+            "tick": 280,
+            "hash": "6a783c9c1a8253c1"
+          },
+          {
+            "tick": 300,
+            "hash": "aa1260d69d73795a"
+          },
+          {
+            "tick": 320,
+            "hash": "2d1c5cbc0694e7c6"
+          },
+          {
+            "tick": 340,
+            "hash": "45c863a777d9ae5e"
+          },
+          {
+            "tick": 360,
+            "hash": "8dc7f069ca38c633"
+          },
+          {
+            "tick": 380,
+            "hash": "667c144d3988dc2d"
+          },
+          {
+            "tick": 400,
+            "hash": "b460091422d77d39"
+          },
+          {
+            "tick": 420,
+            "hash": "ea9bafac96d3bf4f"
+          },
+          {
+            "tick": 440,
+            "hash": "0292d0d17d7d649d"
+          },
+          {
+            "tick": 460,
+            "hash": "688976c30feba941"
+          },
+          {
+            "tick": 480,
+            "hash": "398c7b88899cca85"
+          },
+          {
+            "tick": 500,
+            "hash": "fbab40c8bdd08068"
+          },
+          {
+            "tick": 520,
+            "hash": "07dbdb8f426c2581"
+          },
+          {
+            "tick": 540,
+            "hash": "970a48357da7b35c"
+          },
+          {
+            "tick": 560,
+            "hash": "5e52a97dda074e07"
+          },
+          {
+            "tick": 580,
+            "hash": "0d32ca589aae4ca8"
+          },
+          {
+            "tick": 600,
+            "hash": "067c67d6120dd44b"
+          },
+          {
+            "tick": 620,
+            "hash": "48cf5650ad77027a"
+          },
+          {
+            "tick": 640,
+            "hash": "d01a08e7fcbf1aec"
+          },
+          {
+            "tick": 660,
+            "hash": "c9e5cee5352f4f60"
+          },
+          {
+            "tick": 680,
+            "hash": "27050a5c02d7c5ea"
+          },
+          {
+            "tick": 700,
+            "hash": "694d95ad454bb941"
+          },
+          {
+            "tick": 720,
+            "hash": "81c61a065b75a18b"
+          },
+          {
+            "tick": 740,
+            "hash": "06d51c15eb387ca4"
+          },
+          {
+            "tick": 760,
+            "hash": "ce13520a21ee1961"
+          },
+          {
+            "tick": 780,
+            "hash": "ad32eef9427dbb8d"
+          },
+          {
+            "tick": 800,
+            "hash": "10588ec088228c4b"
+          },
+          {
+            "tick": 820,
+            "hash": "47868a49a8998601"
+          },
+          {
+            "tick": 840,
+            "hash": "e9531ea798241e01"
+          },
+          {
+            "tick": 860,
+            "hash": "8fe8e0afc70502da"
+          },
+          {
+            "tick": 880,
+            "hash": "c788bfe2ade65e79"
+          },
+          {
+            "tick": 900,
+            "hash": "49a5546cc48d1186"
+          },
+          {
+            "tick": 920,
+            "hash": "c724add83d2fcc8a"
+          },
+          {
+            "tick": 940,
+            "hash": "e10e58db49c74068"
+          },
+          {
+            "tick": 960,
+            "hash": "0c421f161b50327e"
+          },
+          {
+            "tick": 980,
+            "hash": "f120fd9ceb5fc44f"
+          },
+          {
+            "tick": 1000,
+            "hash": "529d42d07e72015b"
+          },
+          {
+            "tick": 1020,
+            "hash": "6da3acb224b12600"
+          },
+          {
+            "tick": 1040,
+            "hash": "a49edca9533a3d34"
+          },
+          {
+            "tick": 1060,
+            "hash": "fa6a3a6943ea0417"
+          },
+          {
+            "tick": 1080,
+            "hash": "a427015a8a75efbe"
+          },
+          {
+            "tick": 1100,
+            "hash": "2edf272ce47c1c3c"
+          },
+          {
+            "tick": 1120,
+            "hash": "9e1c2fcb87867f5e"
+          },
+          {
+            "tick": 1140,
+            "hash": "47bf93e838bdc567"
+          },
+          {
+            "tick": 1160,
+            "hash": "0f85028311ddac53"
+          },
+          {
+            "tick": 1180,
+            "hash": "aaed8553ec66efc4"
+          }
+        ],
+        "finalTick": 1188,
+        "finalHash": "a177b3552c794abf",
+        "outcome": {
+          "outcome": "won",
+          "winner": 0
+        }
+      },
+      "commandCount": 26,
+      "outcome": {
+        "outcome": "won",
+        "winner": 0
+      },
+      "ticks": 1188,
+      "finalHash": "a177b3552c794abf"
+    },
+    {
+      "name": "pos11-levelview-8-es-seed-3",
+      "replay": {
+        "header": {
+          "rulesVersion": "2.0.0",
+          "schemaVersion": "2.0.0",
+          "contentVersion": "2.0.1",
+          "levelId": "levelview-8-es",
+          "simHash": "9eff75f967dcf6d214869ee2e3d01577cc6083f900643c3d9e1c4822205d6708",
+          "seed": 3
+        },
+        "commands": [
+          {
+            "tick": 20,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 3
+            }
+          },
+          {
+            "tick": 100,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 1,
+              "from": 1,
+              "to": 2
+            }
+          },
+          {
+            "tick": 167,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 3,
+              "to": 4
+            }
+          },
+          {
+            "tick": 320,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 1,
+              "from": 2,
+              "to": 5
+            }
+          },
+          {
+            "tick": 356,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 3,
+              "to": 5
+            }
+          },
+          {
+            "tick": 377,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 5
+            }
+          },
+          {
+            "tick": 587,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 5,
+              "to": 1
+            }
+          },
+          {
+            "tick": 608,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 2
+            }
+          },
+          {
+            "tick": 755,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 3,
+              "to": 2
+            }
+          },
+          {
+            "tick": 1070,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 4,
+              "to": 0
+            }
+          },
+          {
+            "tick": 1511,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 1,
+              "to": 2
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "9e5ab5d73da27307"
+          },
+          {
+            "tick": 40,
+            "hash": "e5f4a4ec8f8dae43"
+          },
+          {
+            "tick": 60,
+            "hash": "15f22f77b9fd779e"
+          },
+          {
+            "tick": 80,
+            "hash": "ac859edb0470dd1b"
+          },
+          {
+            "tick": 100,
+            "hash": "7294830f23ebf0b8"
+          },
+          {
+            "tick": 120,
+            "hash": "5cb8d12d655439d8"
+          },
+          {
+            "tick": 140,
+            "hash": "a12b951f498e77a2"
+          },
+          {
+            "tick": 160,
+            "hash": "f41a192b0d786048"
+          },
+          {
+            "tick": 180,
+            "hash": "fc5287b4d06c206e"
+          },
+          {
+            "tick": 200,
+            "hash": "0e17b19482cea68e"
+          },
+          {
+            "tick": 220,
+            "hash": "c19f51533de266fe"
+          },
+          {
+            "tick": 240,
+            "hash": "9c141cc9e3fef335"
+          },
+          {
+            "tick": 260,
+            "hash": "a45387ab24ac0d74"
+          },
+          {
+            "tick": 280,
+            "hash": "827e1be0c7c13a32"
+          },
+          {
+            "tick": 300,
+            "hash": "1935e4100a4fbd9d"
+          },
+          {
+            "tick": 320,
+            "hash": "57582c2ed4821960"
+          },
+          {
+            "tick": 340,
+            "hash": "dae66a065c3d167b"
+          },
+          {
+            "tick": 360,
+            "hash": "dbc240c1cf07b9ac"
+          },
+          {
+            "tick": 380,
+            "hash": "44c3fd111acfa610"
+          },
+          {
+            "tick": 400,
+            "hash": "04939bb0796a17fd"
+          },
+          {
+            "tick": 420,
+            "hash": "e677907491546560"
+          },
+          {
+            "tick": 440,
+            "hash": "7de022944c6aa51f"
+          },
+          {
+            "tick": 460,
+            "hash": "716ccf5f51e6f58a"
+          },
+          {
+            "tick": 480,
+            "hash": "163cf9a28b0b8011"
+          },
+          {
+            "tick": 500,
+            "hash": "17e281785d48f104"
+          },
+          {
+            "tick": 520,
+            "hash": "750031e364013385"
+          },
+          {
+            "tick": 540,
+            "hash": "5bc34716adde6724"
+          },
+          {
+            "tick": 560,
+            "hash": "1a6308d55f5dd184"
+          },
+          {
+            "tick": 580,
+            "hash": "e9a064bdbedc3908"
+          },
+          {
+            "tick": 600,
+            "hash": "d9126bcd1f9c083f"
+          },
+          {
+            "tick": 620,
+            "hash": "9e3968172ae107ab"
+          },
+          {
+            "tick": 640,
+            "hash": "fcce3dba4e9c98af"
+          },
+          {
+            "tick": 660,
+            "hash": "88a4c5b369de9378"
+          },
+          {
+            "tick": 680,
+            "hash": "0a2083315996dbfa"
+          },
+          {
+            "tick": 700,
+            "hash": "c138043097ce4ff4"
+          },
+          {
+            "tick": 720,
+            "hash": "24f04e79df371a76"
+          },
+          {
+            "tick": 740,
+            "hash": "9e25eb3c118309b1"
+          },
+          {
+            "tick": 760,
+            "hash": "4c6f3ac981198b77"
+          },
+          {
+            "tick": 780,
+            "hash": "d346f894be75cf32"
+          },
+          {
+            "tick": 800,
+            "hash": "21a0714b48c12c27"
+          },
+          {
+            "tick": 820,
+            "hash": "a8fd2810b739792a"
+          },
+          {
+            "tick": 840,
+            "hash": "7c09cb983a0d6652"
+          },
+          {
+            "tick": 860,
+            "hash": "ed54f0d2001bd7d5"
+          },
+          {
+            "tick": 880,
+            "hash": "8ba87222855b448c"
+          },
+          {
+            "tick": 900,
+            "hash": "382da68618002dd4"
+          },
+          {
+            "tick": 920,
+            "hash": "110eca89c5faa3b6"
+          },
+          {
+            "tick": 940,
+            "hash": "3bfb26818cdb61ea"
+          },
+          {
+            "tick": 960,
+            "hash": "90f68717c6b47c3e"
+          },
+          {
+            "tick": 980,
+            "hash": "bc02b4346600ab0e"
+          },
+          {
+            "tick": 1000,
+            "hash": "fb0da190a9af7cf4"
+          },
+          {
+            "tick": 1020,
+            "hash": "7b32419604edb5ee"
+          },
+          {
+            "tick": 1040,
+            "hash": "ecc41ae0cf077121"
+          },
+          {
+            "tick": 1060,
+            "hash": "b61851d2c89a45e1"
+          },
+          {
+            "tick": 1080,
+            "hash": "363be35506510686"
+          },
+          {
+            "tick": 1100,
+            "hash": "fe424a60bcd9363d"
+          },
+          {
+            "tick": 1120,
+            "hash": "bd4b2b991fc5bf6d"
+          },
+          {
+            "tick": 1140,
+            "hash": "d49713e7cd85abed"
+          },
+          {
+            "tick": 1160,
+            "hash": "a3b10a4dfe97b16d"
+          },
+          {
+            "tick": 1180,
+            "hash": "1b94186e1a4384b8"
+          },
+          {
+            "tick": 1200,
+            "hash": "23fb2bfaa7719525"
+          },
+          {
+            "tick": 1220,
+            "hash": "062d393bcc53b657"
+          },
+          {
+            "tick": 1240,
+            "hash": "0fe05a9776594340"
+          },
+          {
+            "tick": 1260,
+            "hash": "1315cd2ba400ca64"
+          },
+          {
+            "tick": 1280,
+            "hash": "eb5c633334623bb4"
+          },
+          {
+            "tick": 1300,
+            "hash": "784ba3f44c66d867"
+          },
+          {
+            "tick": 1320,
+            "hash": "447591173821ae41"
+          },
+          {
+            "tick": 1340,
+            "hash": "25567e22048e4f37"
+          },
+          {
+            "tick": 1360,
+            "hash": "18032bedc51ca93d"
+          },
+          {
+            "tick": 1380,
+            "hash": "43971940b2c4ddc5"
+          },
+          {
+            "tick": 1400,
+            "hash": "1d2741c54a2c15b9"
+          },
+          {
+            "tick": 1420,
+            "hash": "9b365fc691ee2472"
+          },
+          {
+            "tick": 1440,
+            "hash": "899e1c6cf2fc25d7"
+          },
+          {
+            "tick": 1460,
+            "hash": "835fd1ef016a5946"
+          },
+          {
+            "tick": 1480,
+            "hash": "5f5017e9abb247f0"
+          },
+          {
+            "tick": 1500,
+            "hash": "22c4c11b22b1b0c6"
+          },
+          {
+            "tick": 1520,
+            "hash": "e1915bedacbf4c17"
+          },
+          {
+            "tick": 1540,
+            "hash": "94fb89e64b49a6d0"
+          },
+          {
+            "tick": 1560,
+            "hash": "41bb77a2eedf34d7"
+          },
+          {
+            "tick": 1580,
+            "hash": "53ddb919e68378cc"
+          },
+          {
+            "tick": 1600,
+            "hash": "c7ea8017de506ab4"
+          },
+          {
+            "tick": 1620,
+            "hash": "b127b57b6d49e9f0"
+          },
+          {
+            "tick": 1640,
+            "hash": "6f954d28f2dd6de8"
+          }
+        ],
+        "finalTick": 1650,
+        "finalHash": "2f7784a1be280310",
+        "outcome": {
+          "outcome": "won",
+          "winner": 0
+        }
+      },
+      "commandCount": 11,
+      "outcome": {
+        "outcome": "won",
+        "winner": 0
+      },
+      "ticks": 1650,
+      "finalHash": "2f7784a1be280310"
+    }
+  ]
+}

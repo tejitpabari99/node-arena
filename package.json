@@ -12,6 +12,7 @@
     "test:content": "pnpm --filter @node-arena/content test",
     "test:sim": "pnpm --filter @node-arena/sim test",
     "test:bots": "pnpm --filter @node-arena/bots test",
+    "test:bots:golden": "pnpm --filter @node-arena/bots test:golden",
     "test:tools": "pnpm --filter @node-arena/tools test",
     "test:web": "pnpm --filter @node-arena/web test",
     "build": "pnpm --filter @node-arena/defs --filter @node-arena/content --filter @node-arena/sim --filter @node-arena/tools build",
