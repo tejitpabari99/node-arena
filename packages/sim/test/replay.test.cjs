@@ -85,3 +85,43 @@ test('resolveLevel source resolves by header level id; an untimed level imposes 
   assert.equal(level().timeLimitSec, null);
   assert.equal(api.playReplay({ metadata, resolveLevel: (id) => { assert.equal(id, 'levelview-1'); return level(); } }, rec).ok, true);
 });
+
+test('v1 replays are rejected: 1.x rulesVersion, v1 outcome shape (winnerTeam/draw), v1 header fields', () => {
+  const rec = recorded();
+  const v1 = structuredClone(rec); v1.header.rulesVersion = '1.0.0';
+  assert.throws(() => api.playReplay(source(), v1), /replay/i);
+  const winnerTeam = structuredClone(rec); winnerTeam.outcome = { outcome: 'won', winnerTeam: 0 };
+  assert.throws(() => api.playReplay(source(), winnerTeam), /replay/i);
+  const draw = structuredClone(rec); draw.outcome = { outcome: 'draw', winner: null };
+  assert.throws(() => api.playReplay(source(), draw), /replay/i);
+  const v1hash = structuredClone(rec); v1hash.header.simHash = 'a'.repeat(32);
+  assert.throws(() => api.playReplay(source(), v1hash), /replay/i);
+  assert.equal(rec.header.rulesVersion, metadata.rulesVersion);
+  assert.equal(metadata.rulesVersion.split('.')[0], '2');
+});
+
+test('a finite time limit bounds finalTick; limit 0 (null) imposes none; outcome carries winner', () => {
+  const rec = recorded(45);
+  const timed = level(); timed.timeLimitSec = 1; // 20 ticks
+  assert.throws(() => api.playReplay({ metadata, level: timed }, rec), /replay/i);
+  const shorter = recorded(20);
+  assert.equal(api.playReplay({ metadata, level: timed }, shorter).ok, true);
+  const long = recorded(300);
+  assert.equal(api.playReplay(source(), long).ok, true);
+  assert.equal(api.createReplayRecorder(level(), 1, metadata).view.timeLimitTicks, 0);
+  assert.ok(!('winnerTeam' in (rec.outcome ?? {})));
+});
+
+test('hash round-trips through playReplay and includes seed-dependent stream states', () => {
+  const lvl = level();
+  const sim = api.createReplayRecorder(lvl, 5, metadata);
+  for (let i = 0; i < 65; i++) sim.step([]);
+  const rec = sim.record();
+  assert.deepEqual(rec.checkpoints.map((c) => c.tick), [20, 40, 60]);
+  const result = api.playReplay({ metadata, level: lvl }, JSONCLONE(rec));
+  assert.equal(result.ok, true);
+  assert.equal(result.sim.hash(), sim.hash());
+  const other = api.createReplayRecorder(lvl, 6, metadata);
+  for (let i = 0; i < 65; i++) other.step([]);
+  assert.notEqual(other.hash(), sim.hash(), 'seed-dependent stream states are hashed');
+});

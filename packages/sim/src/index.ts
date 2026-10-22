@@ -1,6 +1,12 @@
-export { TICK_RATE, idiv, mulDiv, isqrt, Sfc32, mixSeed } from './math.js';
+export { TICK_RATE, idiv, mulDiv, isqrt, Sfc32, mixSeed, fnv1a32 } from './math.js';
 export { create, type Sim } from './sim.js';
 export { IMPLS } from './modules/index.js';
 export { createReplayRecorder, playReplay, type ReplayMetadata, type ReplayJson, type ReplayRecord, type ReplaySource, type ReplayRecorder, type ReplayResult } from './replay.js';
 export type { SimModule, SimState } from './types.js';
 export type { SimView } from './read.js';
+export { createStreams, purposeId, type Stream, type Streams } from './streams.js';
+export { TroopRing } from './ring.js';
+export { assertInvariants } from './invariants.js';
+export { hashState } from './hash.js';
+export { createState, channelKey, getChannel, liveChannels, spawnTroop, killTroop, troopPosition, laneLength, type KillCause } from './state.js';
+export type { Channel, Counters, Players, Buildings } from './types.js';

@@ -1,4 +1,6 @@
 import type { CompiledLevel as ContentCompiledLevel } from '@node-arena/content';
+import type { TroopRing } from './ring.js';
+import type { Stream } from './streams.js';
 import type { ModuleId, Phase, RejectReason, SimEvent } from '@node-arena/defs';
 
 export type CompiledLevel = ContentCompiledLevel;
@@ -18,6 +20,27 @@ export interface Buildings {
   readonly col: Record<string, Int32Array>;
 }
 
+/** Seat columns (int32). `kind`: 0 human, 1 ai. colorKey is view-only and lives in the level. */
+export interface Players { readonly n: number; readonly kind: Int32Array }
+
+/** Ordered pair `from -> to`, key `from*n+to`, created lazily. Owner is derived (`owner[from]`). */
+export interface Channel {
+  readonly key: number;
+  readonly from: number;
+  readonly to: number;
+  /** 1 while the line exists. */
+  drawn: number;
+  drawSeq: number;
+  /** Spawn timer in milli-ticks; reset on draw, zeroed with the line. */
+  timer: number;
+  /** Symmetric lane length in progress units (numericScale x tickRate per world unit); static, not hashed. */
+  readonly length: number;
+  readonly troops: TroopRing;
+}
+
+/** Conservation ledger: spawned = alive + arrived + died (clash) + killed (capture/tower). Diagnostic, not hashed. */
+export interface Counters { spawned: number; arrived: number; died: number; killed: number }
+
 export interface SimState {
   readonly level: CompiledLevel;
   readonly seed: number;
@@ -27,6 +50,12 @@ export interface SimState {
   troopSeq: number;
   rejected: number;
   readonly buildings: Buildings;
+  readonly players: Players;
+  /** Lazy channels by key; hashed in ascending key order, only while live (drawn or holding troops). */
+  readonly channels: Map<number, Channel>;
+  /** Eager per-building surplus-forward streams (`fwd`, idx = building). */
+  readonly fwd: readonly Stream[];
+  readonly counters: Counters;
   /** Present only while a step runs with `{ events: true }`; events never alter state. */
   events: SimEvent[] | null;
 }
