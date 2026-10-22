@@ -14,10 +14,10 @@ Source of truth: [PRD.md](PRD.md). Order follows the PRD: validation (R2) gates 
 | 3 | JS importer + lock + check | 2 | done |
 | 4 | Environment/obstacle mapping (time-boxed) | 3, 05#0 | done |
 | 5 | Manifest fragment, budgets, CREDITS | 3, 02#schema | done |
-| 6 | Renderer registry + manifest resolve rewrite | 5 | in-progress |
-| 7 | Building + tower renderer (stages, labels) | 6 | todo |
-| 8 | Unit renderer (instancing, baked anim, ghosts) | 6, 03#CUT events | todo |
-| 9 | Ground, obstacle, lane renderers | 4, 6 | todo |
+| 6 | Renderer registry + manifest resolve rewrite | 5 | done |
+| 7 | Building + tower renderer (stages, labels) | 6 | done |
+| 8 | Unit renderer (instancing, baked anim, ghosts) | 6, 03#CUT events | done |
+| 9 | Ground, obstacle, lane renderers | 4, 6 | in-progress |
 | 10 | FX sprite pool | 6, 04#radius | todo |
 | 11 | `createWorldRenderer` seam + legacy deletion | 7, 8, 9, 10 | todo |
 | 12 | Compare loop, perf scene, acceptance | 11 | todo |
