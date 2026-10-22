@@ -1,0 +1,521 @@
+{
+  "type": "object",
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "palettes",
+    "visuals",
+    "themes",
+    "fx",
+    "events",
+    "camera"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "2.0.0"
+    },
+    "palettes": {
+      "type": "object",
+      "required": [
+        "blue",
+        "green",
+        "red",
+        "yellow",
+        "gray"
+      ],
+      "properties": {
+        "blue": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "green": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "red": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "yellow": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "gray": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "visuals": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "required": [
+            "kind",
+            "model",
+            "scale"
+          ],
+          "properties": {
+            "kind": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": "unit"
+                },
+                {
+                  "type": "string",
+                  "const": "building"
+                },
+                {
+                  "type": "string",
+                  "const": "element"
+                },
+                {
+                  "type": "string",
+                  "const": "ground"
+                },
+                {
+                  "type": "string",
+                  "const": "lane"
+                },
+                {
+                  "type": "string",
+                  "const": "fx"
+                }
+              ]
+            },
+            "model": {
+              "type": "object",
+              "required": [
+                "parts",
+                "budget"
+              ],
+              "properties": {
+                "parts": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "budget": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "unit"
+                    },
+                    {
+                      "type": "string",
+                      "const": "building"
+                    },
+                    {
+                      "type": "string",
+                      "const": "obstacle"
+                    },
+                    {
+                      "type": "string",
+                      "const": "ground"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            "stages": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "mesh"
+                    ],
+                    "properties": {
+                      "mesh": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "enable"
+                    ],
+                    "properties": {
+                      "enable": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "minItems": 1
+            },
+            "team": {
+              "type": "object",
+              "required": [
+                "mode",
+                "textures"
+              ],
+              "properties": {
+                "mode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "textureSwap"
+                    }
+                  ]
+                },
+                "textures": {
+                  "type": "object",
+                  "required": [
+                    "blue",
+                    "green",
+                    "red",
+                    "yellow",
+                    "gray"
+                  ],
+                  "properties": {
+                    "blue": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "green": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "red": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "yellow": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "gray": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "anim": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "const": "none"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "mode",
+                    "clips"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "const": "node-tracks"
+                    },
+                    "clips": {
+                      "type": "object",
+                      "required": [
+                        "run",
+                        "death"
+                      ],
+                      "properties": {
+                        "run": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "death": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "scale": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "yOffset": {
+              "type": "number"
+            },
+            "label": {
+              "type": "object",
+              "required": [
+                "height"
+              ],
+              "properties": {
+                "height": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
+            },
+            "sfx": {
+              "type": "string",
+              "minLength": 1
+            },
+            "fx": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "themes": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "required": [
+            "ground",
+            "obstacle",
+            "light",
+            "sky"
+          ],
+          "properties": {
+            "ground": {
+              "type": "object",
+              "required": [
+                "mesh",
+                "texture"
+              ],
+              "properties": {
+                "mesh": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "texture": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "obstacle": {
+              "type": "object",
+              "required": [
+                "small",
+                "big",
+                "texture"
+              ],
+              "properties": {
+                "small": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "big": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "texture": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "light": {
+              "type": "object",
+              "required": [
+                "dir",
+                "color",
+                "intensity"
+              ],
+              "properties": {
+                "dir": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "color": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "intensity": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
+            },
+            "fog": {
+              "type": "object",
+              "required": [
+                "color",
+                "near",
+                "far"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "near": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "far": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "additionalProperties": false
+            },
+            "sky": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "fx": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "fx": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "required": [
+            "texture",
+            "kind",
+            "params"
+          ],
+          "properties": {
+            "texture": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": "sprite"
+                },
+                {
+                  "type": "string",
+                  "const": "ring"
+                },
+                {
+                  "type": "string",
+                  "const": "burst"
+                },
+                {
+                  "type": "string",
+                  "const": "trail"
+                }
+              ]
+            },
+            "params": {
+              "type": "object",
+              "patternProperties": {
+                "^.*$": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "events": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "properties": {
+            "sfx": {
+              "type": "string",
+              "minLength": 1
+            },
+            "fx": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "camera": {
+      "type": "object",
+      "required": [
+        "pitchDeg",
+        "fov",
+        "margin"
+      ],
+      "properties": {
+        "pitchDeg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 90
+        },
+        "fov": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 180
+        },
+        "margin": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://node-arena.local/schemas/next/manifest.schema.json",
+  "title": "manifest",
+  "x-presentation": true
+}
