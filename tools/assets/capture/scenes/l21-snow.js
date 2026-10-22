@@ -1,0 +1,1 @@
+export default ctx => import('./env-scene.js').then(m => m.envScene(ctx, 'l21-snow', { label: 'l21-snow: ground + lanes + drag preview (blue, from the blue building); placeholder buildings', preview: true }));
