@@ -31,13 +31,15 @@ function baseline(dir: string) {
 test('CLI writes lock, detects stale output and rejects regenerated unversioned changes against git baseline', () => {
   const dir = workspace();
   try {
-    writeFixture(dir);
+    const files = hashFixture();
+    files['content.json'].contentVersion = '2.0.0';
+    writeFixture(dir, files);
     let result = cli(dir); assert.equal(result.status, 0, result.stderr);
     const lock = JSON.parse(readFileSync(join(dir, 'packages/content/hashes.lock.json'), 'utf8'));
     assert.match(lock.levels['levelview-1'], /^[a-f0-9]{64}$/); assert.match(Object.keys(lock.bots)[0]!, /^levelview-1#/); assert.match(Object.values(lock.bots)[0] as string, /^[a-f0-9]{64}$/);
     baseline(dir);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.equal(result.status, 0, result.stderr);
-    const files = hashFixture(); files['data/units/soldier.json'].speed = 7; writeFixture(dir, files);
+    files['data/units/soldier.json'].speed = 7; writeFixture(dir, files);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.notEqual(result.status, 0); assert.match(result.stderr, /stale/);
     result = cli(dir); assert.equal(result.status, 0, result.stderr);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.notEqual(result.status, 0); assert.match(result.stderr, /contentVersion/);

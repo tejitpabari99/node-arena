@@ -3,7 +3,7 @@
   "schemaVersion": "2.0.0",
   "id": "obstacle",
   "visual": "element.obstacle",
-  "footprint": { "shape": "circle", "radius": 0.45 },
+  "footprint": { "shape": "box", "w": 0.713, "d": 0.713 },
   "modules": { "blocksLines": {} },
   "variants": ["small", "big"]
 }
