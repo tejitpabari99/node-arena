@@ -26,7 +26,7 @@ export default [
     },
   },
   {
-    files: ['packages/content/src/**/*.ts'],
+    files: ['packages/content/src/**/*.ts', 'packages/defs/src/**/*.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: [{ group: nodeOnly, message: 'Content APIs must run in the browser; perform Node I/O in an external adapter.' }] }],
       'no-restricted-modules': ['error', { patterns: nodeOnly }],
