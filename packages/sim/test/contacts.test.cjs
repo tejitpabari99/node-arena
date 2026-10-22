@@ -97,6 +97,19 @@ test('covers R-CMB-01: after an exchange new fronts are retested; troops behind 
   api.assertInvariants(s);
 });
 
+test('covers R-CMB-01: a surviving head-on pair fights max 2 rounds per tick and re-tests next tick (hp 3, attack 1)', () => {
+  const s = mk((l) => { l.units[0].hp = 3; l.units[0].attack = 1; });
+  const thr = len(s, 0, 1) - 700 * 20;
+  put(s, 0, 1, 0, thr / 2 | 0); put(s, 1, 0, 0, thr / 2 | 0);
+  step(s, [], true);
+  const A = api.getChannel(s, 0, 1), B = api.getChannel(s, 1, 0);
+  assert.deepEqual([A.troops.len, B.troops.len, A.troops.hp[0], B.troops.hp[0]], [1, 1, 1, 1], 'tick 1: exactly 2 rounds, both survive at hp 1');
+  const ev = step(s, [], true);
+  assert.equal(ev.filter((e) => e.type === 'Clash').length, 1, 'tick 2: survivors re-test');
+  assert.equal(A.troops.len + B.troops.len, 0, 'tick 2: round 1 kills both');
+  api.assertInvariants(s);
+});
+
 test('covers R-CMB-01: same-owner opposing fronts (replaced line) do not fight; tick wiring runs head-on in phase 6', () => {
   const s = mk();
   const L = len(s, 0, 1);

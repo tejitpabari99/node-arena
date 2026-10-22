@@ -52,7 +52,7 @@ export function exchange(state: SimState, chA: number, seqA: number, chB: number
   return { aAlive, bAlive };
 }
 
-/** R3 phase 6, first half: head-on pairs by ascending (from < to), fronts re-tested while a pair qualifies. */
+/** R3 phase 6, first half: head-on pairs by ascending (from < to); new fronts are re-tested while a pair qualifies, a surviving pair waits for the next tick. */
 export function headOnPass(state: SimState): void {
   const contact = state.level.rules.contactDistance * TICK_RATE;
   for (const A of liveChannels(state)) {
@@ -62,7 +62,8 @@ export function headOnPass(state: SimState): void {
     while (A.troops.len > 0 && B.troops.len > 0) {
       if (A.troops.owner[0] === B.troops.owner[0]) break;
       if (progressOf(state, A, 0) + progressOf(state, B, 0) < A.length - contact) break;
-      exchange(state, A.key, A.troops.seq[0]!, B.key, B.troops.seq[0]!, 'headon');
+      const r = exchange(state, A.key, A.troops.seq[0]!, B.key, B.troops.seq[0]!, 'headon');
+      if (r.aAlive && r.bAlive) break; // max 2 rounds per pair per tick (R-CMB-05); survivors re-test next tick
     }
   }
 }

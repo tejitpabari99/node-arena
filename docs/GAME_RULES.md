@@ -328,7 +328,7 @@ Surplus from R-CAP-01 re-enters play as **one** new troop of the arriving type, 
 
 ### R-CMB-01
 
-Two hostile troops on opposite lines of the same building pair (head-on) fight when their fronts are within `contactDistance`: for the front-most troop of each line, the exchange fires when `progA + progB >= length − contactDistance_m × tickRate`. The exchange is resolved by R-CMB-05; afterwards the new fronts are tested again, repeating while a new pair qualifies. Only fronts fight; troops behind them wait.
+Two hostile troops on opposite lines of the same building pair (head-on) fight when their fronts are within `contactDistance`: for the front-most troop of each line, the exchange fires when `progA + progB >= length − contactDistance_m × tickRate`. The exchange is resolved by R-CMB-05; afterwards the new fronts are tested again, repeating while a new pair qualifies. A pair whose troops both survive the exchange (at most 2 rounds per R-CMB-05) is not fought again in the same tick; the survivors are re-tested on the next tick. Only fronts fight; troops behind them wait.
 
 *Source:* v1 R-CMB-01; 03#5.2.
 
