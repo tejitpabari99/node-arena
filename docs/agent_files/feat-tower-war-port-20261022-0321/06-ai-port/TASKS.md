@@ -14,9 +14,9 @@ Source of truth: [PRD.md](PRD.md). One bot kind `tw`, literal 20 Hz port of `Def
 | 3 | Script interpreter | 2 | done |
 | 4 | Driver + `HUMAN_PROXY` export | 2, 3, 05#4 | done |
 | 5 | Unit + integration tests, lint test | 2, 3, 4 | done |
-| 6 | Goldens, bench, replay verify | 4, 5 | in-progress |
+| 6 | Goldens, bench, replay verify | 4, 5 | done |
 | 7 | Proxy solvability spike (levels 4-23) | 4, 05#4 | done |
-| 8 | Un-park bots gates and rewire tooling (with 09) | 6, 7 | todo |
+| 8 | Un-park bots gates and rewire tooling (with 09) | 6, 7 | in-progress |
 
 ## Task 0 — Decomp timer-order pin
 What it is / what it means: Open Q1 resolved: implementer reads decomp first and pins tests to it. No ground truth otherwise (Risks).
