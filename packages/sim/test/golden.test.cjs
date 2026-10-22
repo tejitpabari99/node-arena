@@ -106,10 +106,11 @@ test('git baseline prevents deletion/bootstrap bypass, and refused writes preser
 
 test('same-state --update refuses the authoritative versions without touching the committed baseline', () => {
   const file = path.join(__dirname, 'golden/baseline.json'), before = fs.readFileSync(file, 'utf8');
-  const result = spawnSync('pnpm', ['sim:golden', '--update'], { cwd: path.resolve(__dirname, '../../..'), encoding: 'utf8' });
+  let result;
+  try { result = spawnSync('pnpm', ['sim:golden', '--update'], { cwd: path.resolve(__dirname, '../../..'), encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: '' } }); }
+  finally { if (fs.readFileSync(file, 'utf8') !== before) { fs.writeFileSync(file, before); assert.fail('--update rewrote the committed baseline (restored)'); } }
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /increased authoritative version/);
-  assert.equal(fs.readFileSync(file, 'utf8'), before);
 });
 
 test('Node and Chromium golden hashes, full event logs and playback records agree exactly', { timeout: 60000 }, async () => {
@@ -144,5 +145,7 @@ test('VERSION_GUARD_BASE must be a valid commit (option-like refs are rejected)'
   for (const ref of ['--no-such-ref', 'no-such-branch-xyz']) {
     const result = spawnSync(process.execPath, [path.resolve(__dirname, '../scripts/golden.cjs')], { encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: ref } });
     assert.notEqual(result.status, 0, ref);
+    assert.match(result.stderr, /git rev-parse --verify[\s\S]*Needed a single revision/, ref);
+    assert.doesNotMatch(result.stdout + result.stderr, /golden replays (verified|updated)/, ref);
   }
 });

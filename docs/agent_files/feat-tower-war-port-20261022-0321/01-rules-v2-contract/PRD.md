@@ -50,7 +50,7 @@ v1 rules are a different game: round-robin shared generation, strict slots with 
 | ENT-03 | kept+ | Line: owner, src->dst, own spawn timer, draw seq; troops FIFO survive cut | v1 | - |
 | ENT-04 | kept | Player id=team; human/ai/neutral; same commands, no privileges; every non-self owner hostile (AI vs AI too) | 03#5.2 | - |
 | SPN-01 | new | Each owned house line has a timer; period `mt = K_m*1_200_000 / (ws_m*L + 60000)` (floor) with `K_m = 1000 + cwc_m*(n-1)`, `L`=building level, `n`=lines | 03#4.1 | `spawnSpeed`, `lineSpawnPenalty` |
-| SPN-02 | new | Fire -> one troop of the house's type departs on that line at progress 0; **free** (level unchanged); skipped (timer still consumed) when live troops from this building >= `aliveCap` | 03#4.2,4.4 | `balance.spawn.aliveCap`=30, `troopType` |
+| SPN-02 | new | Fire -> one troop of the house's type departs on that line at progress 0; **free** (level unchanged); skipped (timer still consumed) when live troops from this building >= `aliveCap` | 03#4.2,4.4 | `balance.spawn.aliveCap`=30, `spawns.troop` |
 | SPN-03 | new | New line: timer 0 (first troop after a full period). Timer dies with the line. Neutral buildings never spawn | 03#4.1 | - |
 | GRW-01 | new | Owned (non-neutral) building with **zero lines**: growth timer; period `mt = idiv((idiv(900_000, isqrt(k*1_000_000)) + 1000) * gl_m, 50)`, `k=idiv(L,10)+1`; fire -> `L=min(L+1,maxLevel)`. Timer persists while lines exist (not reset on start/stop), resets on fire and on capture | 03#4.6, decomp HouseGrowth Start/StopGrowth | `growTime`, `balance.growth.base`=0.9, `maxLevel` |
 | GRW-02 | new | Stage function from level and `stageThresholds`; used by slots, tower radius, art | 03#3.2 | `stageThresholds` |

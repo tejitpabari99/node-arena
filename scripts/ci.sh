@@ -11,14 +11,14 @@ cd "$(dirname "$0")/.."
 # Keep this array on its own lines; tools/src/parked.ts parses it.
 #
 # Initial SP01 park list (SP01 applies it in its first commit):
-#   "check:rules:SP04" "sim:golden:SP03" "replay:verify:SP03"
+#   "check:rules:SP04" "sim:golden:SP03" "replay:verify:SP06"
 #   "bots:golden:SP06" "validate:levels:SP06"
 #   plus the failing test files split out of the live suites (never whole suites):
-#   "test:sim:golden:SP03" "test:tools:replay:SP03" "test:tools:rules:SP04"
+#   "test:sim:golden:SP03" "test:tools:replay:SP06" "test:tools:rules:SP04"
 #   "test:bots:golden:SP06"
 # CUT additions (SP02 CUT / SP03 T1 applies them on top of the SP01 list):
 #   "typecheck:bots:SP06" "typecheck:web:SP08" "test:web:SP08"
-#   "build:bots:SP06" "build:web:SP08" "tools:levels:SP06" "tools:balance:SP06"
+#   "build:bots:SP06" "test:bots:SP06" "build:web:SP08" "tools:levels:SP06" "tools:balance:SP06"
 #   "tools:replay:SP03" "check:manifest:SP07" "balance:SP06" "bench:sim:SP03"
 #   "bench:bots:SP06" "test:web:e2e:SP08"
 # (final owners follow the PRD red-window table; step names tools:* / balance /
@@ -27,11 +27,11 @@ cd "$(dirname "$0")/.."
 PARKED=(
   "check:rules:SP04"
   "sim:golden:SP03"
-  "replay:verify:SP03"
+  "replay:verify:SP06"
   "bots:golden:SP06"
   "validate:levels:SP06"
   "test:sim:golden:SP03"
-  "test:tools:replay:SP03"
+  "test:tools:replay:SP06"
   "test:tools:rules:SP04"
   "test:bots:golden:SP06"
 )

@@ -52,12 +52,12 @@ function main(args = process.argv.slice(2)) {
   if (args.some(a => a !== '--update')) throw new Error('Usage: pnpm sim:golden [--update]');
   const file = path.join(repoRoot, relativeGolden);
   const metadata = JSON.parse(fs.readFileSync(path.resolve(packageRoot, '../content/content.json'), 'utf8'));
+  const guardBase = process.env.VERSION_GUARD_BASE || '';
+  const committed = gitBaseline(repoRoot, guardBase || 'HEAD'); // validate the ref before the expensive candidate build
   const candidate = createBaseline(metadata);
   const existing = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
   // VERSION_GUARD_BASE (branch merge-base) overrides the HEAD / HEAD^ comparison refs; unset = unchanged.
-  const guardBase = process.env.VERSION_GUARD_BASE || '';
   if (guardBase) process.stdout.write(`version guard base: ${guardBase}\n`);
-  const committed = gitBaseline(repoRoot, guardBase || 'HEAD');
   if (args.includes('--update')) {
     // With VERSION_GUARD_BASE set only the golden at that base constrains the bump (absent there = no constraint);
     // the working-tree file is ignored so repeated regenerations on a branch need no per-run version churn.

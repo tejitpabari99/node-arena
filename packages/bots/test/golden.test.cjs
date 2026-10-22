@@ -24,10 +24,10 @@ test('golden comparison catches a command mutation and same-version updates refu
   const dir = mkdtempSync(join(tmpdir(), 'bots-golden-'));
   try {
     const file = join(dir, 'bundle.json'); writeFileSync(file, JSON.stringify(bundle));
-    const result = spawnSync(process.execPath, [join(__dirname, '../scripts/golden.mjs'), '--update', '--file', file], { encoding: 'utf8' });
+    const result = spawnSync(process.execPath, [join(__dirname, '../scripts/golden.mjs'), '--update', '--file', file], { encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: '' } });
     assert.notEqual(result.status, 0); assert.match(result.stderr, /increase/);
     writeFileSync(file, JSON.stringify(changed));
-    const mutation = spawnSync(process.execPath, [join(__dirname, '../scripts/golden.mjs'), '--file', file], { encoding: 'utf8' });
+    const mutation = spawnSync(process.execPath, [join(__dirname, '../scripts/golden.mjs'), '--file', file], { encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: '' } });
     assert.notEqual(mutation.status, 0); assert.match(mutation.stderr, /golden.*differ/i);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
