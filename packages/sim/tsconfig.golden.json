@@ -8,5 +8,5 @@
     "types": [],
     "resolveJsonModule": true
   },
-  "include": ["test/golden/**/*.ts"]
+  "include": ["test/golden/**/*.ts", "test/types/**/*.ts"]
 }

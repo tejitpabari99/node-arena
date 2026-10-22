@@ -45,6 +45,10 @@ test('hash paths cannot stringify JSON', async () => {
 test('integer math, explicit sort, strings and content type imports remain valid', async () => {
   assert.deepEqual(await lint('import type { CompiledLevel } from "@node-arena/content"; export type Level = CompiledLevel; const n = 1000; const name = "1.5"; [2, 1].sort((a, b) => a - b);'), []);
 });
+test('defs value imports are allowed; other packages and content values are not', async () => {
+  assert.deepEqual(await lint('import { PHASES } from "@node-arena/defs"; export const p = PHASES;'), []);
+  assert.ok((await lint('import { PHASES } from "@node-arena/other"; export const p = PHASES;')).length > 0);
+});
 test('bots can import the preset with their own src/math.ts exception', async () => {
   const botsDir = path.resolve(simDir, '../bots');
   assert.ok((await lint('Math.random();', 'src/strategy.ts', botsDir)).length > 0);

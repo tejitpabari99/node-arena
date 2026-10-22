@@ -19,7 +19,8 @@
     "bench:sim": "node scripts/bench.cjs"
   },
   "dependencies": {
-    "@node-arena/content": "workspace:*"
+    "@node-arena/content": "workspace:*",
+    "@node-arena/defs": "workspace:*"
   },
   "devDependencies": {
     "fast-check": "4.10.2",

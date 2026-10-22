@@ -34,7 +34,7 @@ export { defineModule, type ModuleDef } from './modules/define.js';
 export { fx3, count, unitId, noParams } from './params.js';
 export { PHASES, type Phase } from './phases.js';
 export { COMMANDS, type CommandId, type CommandOf, type Command, type RejectReason } from './commands.js';
-export { EVENTS, type EventId, type EventOf, type SimEvent } from './events.js';
+export { EVENTS, type EventId, type EventOf, type EventPayload, type SimEvent } from './events.js';
 export { OBJECTIVES, type ObjectiveId } from './objectives.js';
 export { BOT_KINDS, TwBotParams, type BotKindId, type TwBot } from './bot-kinds.js';
 export { VISUAL, RENDER_KINDS, ANIM_MODES, TEAM_MODES, FX_KINDS, BUDGET_CLASSES, type RenderKind, type AnimMode, type TeamMode, type FxKind, type BudgetClass } from './visual.js';

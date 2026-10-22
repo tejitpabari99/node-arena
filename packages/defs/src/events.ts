@@ -8,8 +8,8 @@ const milli = int;
 const ref = () => Type.Object({ channel: idx(), seq: idx(), owner: int() }, { additionalProperties: false });
 
 /**
- * Initial list from 03 PRD R7; 03 T1 finalizes payloads. Events never alter state.
- * Coordinates are milli ints.
+ * Complete payload types of 03 PRD R7 (final; 04 and 07 only emit/consume). Events never alter state.
+ * Coordinates (`x`, `z`) are milli ints. Strict objects: an undeclared field is a type error (see test/events.types.ts).
  */
 export const EVENTS = {
   LineDrawn: { id: 'LineDrawn', payload: Type.Object({ from: idx(), to: idx(), owner: int(), drawSeq: idx() }, { additionalProperties: false }) },
@@ -34,4 +34,6 @@ export const EVENTS = {
 
 export type EventId = keyof typeof EVENTS;
 export type EventOf<K extends EventId> = { type: K } & Static<(typeof EVENTS)[K]['payload']>;
+/** Payload without the `type` tag. */
+export type EventPayload<K extends EventId> = Static<(typeof EVENTS)[K]['payload']>;
 export type SimEvent = { [K in EventId]: EventOf<K> }[EventId];

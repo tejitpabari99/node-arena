@@ -97,6 +97,9 @@ importers:
       '@node-arena/content':
         specifier: workspace:*
         version: link:../content
+      '@node-arena/defs':
+        specifier: workspace:*
+        version: link:../defs
     devDependencies:
       fast-check:
         specifier: 4.10.2
