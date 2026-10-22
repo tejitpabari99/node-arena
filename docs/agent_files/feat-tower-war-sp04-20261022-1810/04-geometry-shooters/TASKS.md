@@ -13,8 +13,8 @@ Source of truth: [PRD](PRD.md). Implements CMB-04, TWR-01..04, OBS-01..02 on 03'
 | 2 | Corridor blocking + `explainDraw` (OBS) | 1, 0 | done |
 | 3 | Crossing windows + swept combat (CMB-04) | 1 | done |
 | 4 | Shooting tower (TWR) | 1, 0 | done |
-| 5 | Goldens, bench, restore/parity tests | 2, 3, 4 | in-progress |
-| 6 | Un-park `check:rules`, final acceptance | 5 | todo |
+| 5 | Goldens, bench, restore/parity tests | 2, 3, 4 | done |
+| 6 | Un-park `check:rules`, final acceptance | 5 | in-progress |
 
 ## Task 0 — Seam check + content footprint values
 What it is / what it means: Confirm 03's exports and 02's schema match what 04 imports, then author footprint values (Decisions 10, R6).
