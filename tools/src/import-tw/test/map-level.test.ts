@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { loadCatalog, loadLevel, BOUNDS_PAD, type Catalog, type ContentFiles } from '@node-arena/content';
 import { loadFiles } from '../../files.js';
-import { MapError, assertUniqueIds, mapLevel, type LedgerRow } from '../map-level.js';
+import { ELEMENT_EMITTERS, MapError, assertLedger, assertUniqueIds, loadColliders, mapLevel, type LedgerRow } from '../map-level.js';
+import { loadFeatureMap, parseFeatureMap } from '../feature-map.js';
 import { serializeLevel } from '../serialize.js';
 import { ScriptError, mergeBotScript } from '../script.js';
 import { parseRawFromDir, parseRaw } from '../parse-raw.js';
@@ -60,6 +61,11 @@ test('order rule: human-first flag only reorders buildings; default keeps P orde
   assert.ok(a.level && b.level);
   const ids = (x: typeof a): string[] => (x.level!['buildings'] as { id: string }[]).map((e) => e.id);
   assert.deepEqual([...ids(a)].sort(), [...ids(b)].sort());
+  // default = TW BD flatten order per original P order (actual order, not sorted)
+  assert.deepEqual(ids(a), tw.buildings.map((x) => `b${x.id}`));
+  // human-first: a stable sort by seat rank, so the human's buildings (seat p1) come first and owners never decrease
+  const rank = (x: typeof a): number[] => (x.level!['buildings'] as { owner: string | null }[]).map((e) => (e.owner === null ? 99 : Number(e.owner.slice(1))));
+  assert.deepEqual(rank(b), [...rank(b)].sort((x, y) => x - y));
 });
 
 test('obstacles: active children only, ids o<cluster>-<child>, box + variant; inactive logged not dropped', () => {
@@ -160,4 +166,63 @@ test('scripted levels 4-23 (TW_EXTRACT): every bot ref resolves to a building or
     loadLevel(catalog, serializeLevel(m.level));
   }
   console.log(`scripted levels=${scripted} (pos ${per.join(',')}) nullRefs=${nulls}`);
+});
+
+test('ledger comes from the output: AI list rows exist and a mapper that loses an entry fails', () => {
+  const m = mapLevel(lv('LevelView 3_AB'), 5, catalog);
+  sumOk(m.ledger);
+  const ai = m.ledger.filter((r) => r.list.startsWith('ai:'));
+  assert.ok(ai.length > 0 && ai.every((r) => r.mapped === r.total), JSON.stringify(ai));
+  const bld = m.ledger.filter((r) => r.list.startsWith('buildings:'));
+  assert.equal(bld.reduce((n, r) => n + r.mapped, 0), (m.level!['buildings'] as unknown[]).length);
+  // an OBS emitter that silently loses a child
+  const lossy = { OBS: (ctx: Parameters<typeof ELEMENT_EMITTERS['OBS']>[0]) => { const r = ELEMENT_EMITTERS['OBS']!(ctx); r.elements.pop(); return r; } };
+  assert.throws(() => mapLevel(lv('LevelView 3_AB'), 5, catalog, { elementEmitters: lossy }), /ledger does not conserve: OBS:children/);
+  assert.throws(() => assertLedger([{ list: 'x', total: 3, mapped: 2, dropped: 0, blocked: 0, inactive: 0 }]), MapError);
+});
+
+test('AI list rows: each op is counted from the emitted script; AiRM is dropped', () => {
+  const tw = lv('LevelView 3_AB');
+  const m = mapLevel(tw, 5, catalog);
+  const script = (m.level!['players'] as { bot?: { script: { op: string }[] } }[]).flatMap((p) => p.bot?.script ?? []);
+  assert.equal(m.ledger.find((r) => r.list === 'ai:AiDS')?.mapped ?? 0, script.filter((o) => o.op === 'delay').length);
+  assert.equal(m.ledger.find((r) => r.list === 'ai:AiCWS')?.mapped ?? 0, script.filter((o) => o.op === 'line').length);
+  // the AiRM entry takes the next free step index (gaps in the merged script are errors)
+  const last = (p: TwPlayer): number => Math.max(-1, ...Object.values(p.ai?.steps ?? {}).flatMap((l) => (l ?? []).map((e: { index: number }) => e.index)));
+  const aiIdx = tw.players.findIndex((p) => p.type === 'ai');
+  const ai = tw.players[aiIdx]!;
+  const rm = { index: last(ai) + 1, targetPathPointIndex: 0, building: 0 };
+  const tw2: TwLevel = { ...tw, players: tw.players.map((p, i) => (i === aiIdx ? { ...p, ai: { ...p.ai!, steps: { ...p.ai!.steps, railwayMoveSteps: [rm] } } } : p)) };
+  const m2 = mapLevel(tw2, 5, catalog);
+  const row = m2.ledger.find((r) => r.list === 'ai:AiRM')!;
+  assert.deepEqual([row.total, row.mapped, row.dropped], [1, 0, 1]);
+  assert.ok(m2.level!['source'] && (m2.level!['source'] as { dropped: string[] }).dropped.includes('ai-rail-move'));
+});
+
+test('emitter registry: a map row with an archetype but no emitter is a MapError (Mine -> obstacle)', () => {
+  const fm = parseFeatureMap({ rows: loadFeatureMap().rows.map((r) => (r.tw === 'Mine' ? { ...r, archetype: 'obstacle' } : r)) });
+  const tw = lv('LevelView 1');
+  tw.mapObjects.mines = [{ pos: [0, 0, 0], rot: [0, 0, 0], active: true }];
+  assert.throws(() => mapLevel(tw, 4, catalog, { featureMap: fm }), /Mine maps to an archetype but has no element emitter/);
+  // a building row likewise (rocket -> tower)
+  const fm2 = parseFeatureMap({ rows: loadFeatureMap().rows.map((r) => (r.tw === 'rocket' ? { ...r, archetype: 'tower' } : r)) });
+  const tw2 = lv('LevelView 1');
+  tw2.buildings = [...tw2.buildings, { owner: null, kind: 'rocket_tower', id: 98, pos: [0, 0, 0], key: 'x' }];
+  assert.throws(() => mapLevel(tw2, 4, catalog, { featureMap: fm2 }), /rocket maps to an archetype but has no building emitter/);
+});
+
+test('obstacle yaw = rotate(OCR.Y) only: collider yaw is not added', () => {
+  const tw = lv('LevelView 3_AB');
+  tw.mapObjects.obstacles[0]!.childRot[0] = [0, 30, 0];
+  const colliders = JSON.parse(JSON.stringify(loadColliders())) as ReturnType<typeof loadColliders>;
+  colliders.obstacle.children[0]!.yawDeg = 45;
+  const m = mapLevel(tw, 5, catalog, { colliders });
+  const o = (m.level!['elements'] as { id: string; yawDeg: number }[]).find((e) => e.id === 'o0-0')!;
+  assert.equal(o.yawDeg, 120);
+});
+
+test('inactive obstacle children are reported by id', () => {
+  const tw = lv('LevelView 3_AB');
+  tw.mapObjects.obstacles[0]!.active = tw.mapObjects.obstacles[0]!.active.map((_, i) => i !== 1);
+  assert.deepEqual(mapLevel(tw, 5, catalog).inactiveIds, ['o0-1']);
 });

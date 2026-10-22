@@ -12,7 +12,11 @@ export interface FeatureRow {
   /** map rows: catalog archetype id; null = none exists yet (can only block). */
   archetype?: string | null;
   /** map rows whose archetype depends on a building param (house -> warriorType). */
-  archetypeBy?: { param: string; map: Record<string, string> };
+  archetypeBy?: { param: string; map: Record<string, string>; /** key used when the param is absent on the building. */ default?: string };
+  /** drop rows: token recorded in `source.dropped` (default = `tw`). */
+  token?: string;
+  /** drop rows: false = dropped without being recorded in `source.dropped` (e.g. reaction delays). Default true. */
+  record?: boolean;
   /** drop rows: drop applies only to these level ids; any other level blocks. */
   onlyLevels?: string[];
 }
@@ -47,7 +51,20 @@ export function parseFeatureMap(doc: unknown): FeatureMap {
     const by = r['archetypeBy'];
     if (by !== undefined) {
       if (!isObj(by) || typeof by['param'] !== 'string' || !isObj(by['map'])) throw new FeatureMapError(`feature-map: ${tw}: bad archetypeBy`);
+      if (by['default'] !== undefined && typeof by['default'] !== 'string') throw new FeatureMapError(`feature-map: ${tw}: bad archetypeBy.default`);
       row.archetypeBy = { param: by['param'], map: by['map'] as Record<string, string> };
+      if (typeof by['default'] === 'string') row.archetypeBy.default = by['default'];
+    }
+    for (const f of ['token', 'record'] as const) {
+      if (r[f] === undefined) continue;
+      if (row.action !== 'drop') throw new FeatureMapError(`feature-map: ${tw}: ${f} is only valid on drop rows`);
+      if (f === 'token') {
+        if (typeof r[f] !== 'string' || r[f] === '') throw new FeatureMapError(`feature-map: ${tw}: bad token`);
+        row.token = r[f];
+      } else {
+        if (typeof r[f] !== 'boolean') throw new FeatureMapError(`feature-map: ${tw}: bad record`);
+        row.record = r[f];
+      }
     }
     const only = r['onlyLevels'];
     if (only !== undefined) {
@@ -60,6 +77,31 @@ export function parseFeatureMap(doc: unknown): FeatureMap {
     byTw.set(tw, row);
   }
   return { rows, byTw };
+}
+
+/** Token recorded in `source.dropped` for a drop row; null = not recorded. */
+export function recordedToken(row: FeatureRow): string | null {
+  return row.record === false ? null : (row.token ?? row.tw);
+}
+
+/** The archetypeBy key for a building's params (String of the param, else the row default), or undefined for plain rows. */
+export function archetypeKey(row: FeatureRow, params: Record<string, unknown> | undefined): string | undefined {
+  const by = row.archetypeBy;
+  if (!by) return undefined;
+  const v = params?.[by.param];
+  return v === undefined ? by.default : String(v);
+}
+
+/**
+ * The single archetype resolver (gate and mapper both call it): the catalog archetype id for a map row, or null when
+ * the row has none (null archetype, or no archetypeBy entry for `key`). `key` = archetypeKey(row, params).
+ */
+export function resolveArchetype(row: FeatureRow, key?: string): string | null {
+  if (row.action !== 'map') return null;
+  if (row.archetypeBy) {
+    return key !== undefined && Object.hasOwn(row.archetypeBy.map, key) ? (row.archetypeBy.map[key] ?? null) : null;
+  }
+  return row.archetype ?? null;
 }
 
 let cached: FeatureMap | undefined;

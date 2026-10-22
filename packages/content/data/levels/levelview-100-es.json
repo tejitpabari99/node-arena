@@ -10,10 +10,10 @@
     "campaignPosition": 23,
     "dialect": "prefab",
     "dropped": [
-      "Wall",
       "cargo",
       "sc",
-      "tutorial-script"
+      "tutorial-script",
+      "wall"
     ]
   },
   "theme": "snow",

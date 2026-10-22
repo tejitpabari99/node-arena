@@ -1,7 +1,7 @@
 {
-  "$comment": "Dropped-construct policy (PRD 05 R2). Every TW construct the importer can see must have a row; an unlisted construct is a parse error (no silent loss). action: map = converted to `archetype` (string, or `archetypeBy` keyed by a building param; null = no archetype exists yet so it can only block), drop = omitted and recorded in source.dropped under the `tw` token, block = level is not importable. `onlyLevels` (drop rows only): the drop applies to exactly those level ids; any other level carrying the construct is blocked. wall is dropped for levelview-100-es only (owner Q2, the 20 shipped levels); a wall anywhere else (e.g. levelview-101-es) blocks.",
+  "$comment": "Dropped-construct policy (PRD 05 R2). Every TW construct the importer can see must have a row; an unlisted construct is a parse error (no silent loss). action: map = converted to `archetype` (string, or `archetypeBy` keyed by a building param with an optional `default` key; null = no archetype exists yet so it can only block; a non-null archetype also needs an emitter in map-level.ts, else MapError), drop = omitted and recorded in source.dropped under `token` (default: the `tw` name; `record: false` = omitted without recording, e.g. MinRD/MaxRD reaction delays), block = level is not importable. `onlyLevels` (drop rows only): the drop applies to exactly those level ids; any other level carrying the construct is blocked. wall (recorded token `wall`) is dropped for levelview-100-es only (owner Q2, the 20 shipped levels); a wall anywhere else (e.g. levelview-101-es) blocks.",
   "rows": [
-    { "tw": "house", "action": "map", "kind": "building", "archetypeBy": { "param": "warriorType", "map": { "1": "house-wt1", "2": "house-wt2", "3": "house-wt3" } } },
+    { "tw": "house", "action": "map", "kind": "building", "archetypeBy": { "param": "warriorType", "map": { "1": "house-wt1", "2": "house-wt2", "3": "house-wt3" }, "default": "1" } },
     { "tw": "tower", "action": "map", "kind": "building", "archetype": "tower" },
     { "tw": "rocket", "action": "map", "kind": "building", "archetype": null },
     { "tw": "selectable", "action": "map", "kind": "building", "archetype": null },
@@ -9,10 +9,12 @@
     { "tw": "trolley", "action": "map", "kind": "building", "archetype": null },
     { "tw": "flag", "action": "map", "kind": "building", "archetype": null },
     { "tw": "boss", "action": "block", "kind": "building", "archetype": null },
+    { "tw": "fortess", "action": "block", "kind": "building", "archetype": null },
+    { "tw": "speed_tower", "action": "block", "kind": "building", "archetype": null },
     { "tw": "OBS", "action": "map", "kind": "element", "archetype": "obstacle" },
     { "tw": "ROBS", "action": "map", "kind": "element", "archetype": null },
     { "tw": "Mine", "action": "map", "kind": "element", "archetype": null },
-    { "tw": "Wall", "action": "drop", "kind": "element", "onlyLevels": ["levelview-100-es"] },
+    { "tw": "Wall", "action": "drop", "kind": "element", "token": "wall", "onlyLevels": ["levelview-100-es"] },
     { "tw": "Sheep", "action": "map", "kind": "element", "archetype": null },
     { "tw": "River", "action": "map", "kind": "element", "archetype": null },
     { "tw": "Gate", "action": "map", "kind": "element", "archetype": null },
@@ -20,8 +22,8 @@
     { "tw": "WOD", "action": "map", "kind": "element", "archetype": null },
     { "tw": "cargo", "action": "drop", "kind": "element" },
     { "tw": "sc", "action": "drop", "kind": "param" },
-    { "tw": "AiRM", "action": "drop", "kind": "bot" },
-    { "tw": "MinRD", "action": "drop", "kind": "bot" },
-    { "tw": "MaxRD", "action": "drop", "kind": "bot" }
+    { "tw": "AiRM", "action": "drop", "kind": "bot", "token": "ai-rail-move" },
+    { "tw": "MinRD", "action": "drop", "kind": "bot", "record": false },
+    { "tw": "MaxRD", "action": "drop", "kind": "bot", "record": false }
   ]
 }

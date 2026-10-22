@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
 import { loadCatalog, type Catalog, type ContentFiles } from '@node-arena/content';
 import { loadFiles } from '../../files.js';
-import { FeatureMapError, loadFeatureMap, parseFeatureMap } from '../feature-map.js';
-import { computeBlocked, featuresOf, importable, themeFor } from '../gate.js';
+import { FeatureMapError, loadFeatureMap, parseFeatureMap, recordedToken, resolveArchetype, archetypeKey } from '../feature-map.js';
+import { REGISTERED_THEMES_PRE_SP07, computeBlocked, featuresOf, importable, themeFor } from '../gate.js';
 import { parseRawFromDir } from '../parse-raw.js';
 import type { TwLevel, TwWall } from '../types.js';
 import { FIXTURE_TEXTASSETS } from './helpers.js';
@@ -36,12 +36,18 @@ test('catalog without tower blocks levelview-1 with a reason; importable() filte
   assert.deepEqual(importable([r]), []);
 });
 
-test('unregistered theme blocks (catalog.themes), default ENV list registers positions 4-23', () => {
+test('theme gate: explicit registered set; pre-SP07 constant is green+snow; catalog.themes is ignored', () => {
   const l = lv('LevelView 1');
+  assert.deepEqual([...REGISTERED_THEMES_PRE_SP07], ['green', 'snow']);
   assert.deepEqual(computeBlocked(l, 21, catalogOf()).blocked, []);
-  const c = { ...catalogOf(), themes: ['green'] };
-  assert.equal(computeBlocked(l, 4, c).blocked.length, 0);
-  assert.match(computeBlocked(l, 21, c).blocked[0]!.reason, /theme snow not registered/);
+  // a level whose position needs lava is blocked by default (no silent fallback to the full cycle)
+  assert.equal(themeFor(41), 'lava');
+  assert.match(computeBlocked(l, 41, catalogOf()).blocked[0]!.reason, /theme lava not registered/);
+  // an explicit set (manifest themes) wins
+  assert.deepEqual(computeBlocked(l, 41, catalogOf(), { themes: ['green', 'snow', 'lava'] }).blocked, []);
+  assert.match(computeBlocked(l, 21, catalogOf(), { themes: ['green'] }).blocked[0]!.reason, /theme snow not registered/);
+  // the catalog's own themes no longer widen/narrow the gate
+  assert.deepEqual(computeBlocked(l, 21, { ...catalogOf(), themes: ['green'] }).blocked, []);
   assert.equal(themeFor(20), 'green');
   assert.equal(themeFor(21), 'snow');
   assert.equal(themeFor(20, 1), 'snow');
@@ -53,7 +59,8 @@ test('wall: dropped only for levelview-100-es, blocked for any other level', () 
   const es101: TwLevel = { ...es100, id: 'levelview-101-es' };
   const r100 = computeBlocked(es100, 10, catalogOf());
   assert.deepEqual(r100.blocked, []);
-  assert.ok(r100.dropped.includes('Wall'));
+  assert.ok(r100.dropped.includes('wall'), 'recorded token is lowercase wall');
+  assert.ok(r100.droppedTw.includes('Wall'));
   const r101 = computeBlocked(es101, 24, catalogOf());
   assert.equal(r101.blocked[0]?.tw, 'Wall');
   assert.match(r101.blocked[0]!.reason, /levelview-100-es/);
@@ -69,9 +76,24 @@ test('null-archetype and block rows block; house WT3 blocks as absent', () => {
   assert.equal(computeBlocked({ ...base, category: 'boss' }, 4, catalogOf()).blocked[0]?.tw, 'boss');
 });
 
+test('fortess / speed_tower have block rows; AiRM records ai-rail-move, MinRD/MaxRD are not recorded', () => {
+  const base = lv('LevelView 1');
+  for (const kind of ['fortess', 'speed_tower']) {
+    const l: TwLevel = { ...base, buildings: [...base.buildings, { owner: null, kind, id: 98, pos: [0, 0, 0], key: 'x' }] };
+    assert.match(computeBlocked(l, 4, catalogOf()).blocked[0]!.reason, /not importable/, kind);
+  }
+  const fm = loadFeatureMap();
+  assert.equal(recordedToken(fm.byTw.get('AiRM')!), 'ai-rail-move');
+  assert.equal(recordedToken(fm.byTw.get('MinRD')!), null);
+  assert.equal(recordedToken(fm.byTw.get('MaxRD')!), null);
+  assert.equal(recordedToken(fm.byTw.get('Wall')!), 'wall');
+  assert.equal(recordedToken(fm.byTw.get('cargo')!), 'cargo');
+  assert.throws(() => parseFeatureMap({ rows: [{ tw: 'a', action: 'map', kind: 'bot', archetype: null, record: false }] }), /only valid on drop/);
+});
+
 test('unlisted construct is a parse error (level kind and map row)', () => {
   const base = lv('LevelView 1');
-  const odd: TwLevel = { ...base, buildings: [...base.buildings, { owner: null, kind: 'speed_tower', id: 98, pos: [0, 0, 0], key: 'x' }] };
+  const odd: TwLevel = { ...base, buildings: [...base.buildings, { owner: null, kind: 'bt99', id: 98, pos: [0, 0, 0], key: 'x' }] };
   assert.throws(() => computeBlocked(odd, 4, catalogOf()), FeatureMapError);
   const fm = parseFeatureMap({ rows: loadFeatureMap().rows.filter((r) => r.tw !== 'tower') });
   assert.throws(() => computeBlocked(base, 4, catalogOf(), { featureMap: fm }), /unlisted TW construct "tower"/);
@@ -91,4 +113,16 @@ test('every fixture level has only listed features', () => {
   for (const a of ['LevelView 1', 'LevelView 3_AB', 'LevelView 8_ES']) {
     for (const f of featuresOf(lv(a))) assert.ok(loadFeatureMap().byTw.has(f.tw), `${a}: ${f.tw}`);
   }
+});
+
+test('single resolver: house archetype by warriorType (default key), plain rows, null rows', () => {
+  const fm = loadFeatureMap();
+  const house = fm.byTw.get('house')!;
+  assert.equal(resolveArchetype(house, archetypeKey(house, { warriorType: 2 })), 'house-wt2');
+  assert.equal(resolveArchetype(house, archetypeKey(house, {})), 'house-wt1');
+  assert.equal(resolveArchetype(house, archetypeKey(house, { warriorType: 9 })), null);
+  assert.equal(resolveArchetype(house, '__proto__'), null);
+  assert.equal(resolveArchetype(fm.byTw.get('tower')!), 'tower');
+  assert.equal(resolveArchetype(fm.byTw.get('Mine')!), null);
+  assert.equal(resolveArchetype(fm.byTw.get('cargo')!), null);
 });
