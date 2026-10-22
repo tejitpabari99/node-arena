@@ -9,8 +9,8 @@ interface Child {
   box: { size: Vec3; center: Vec3 };
   footprint: { w: number; d: number };
 }
-interface Node { name: string; layerName: string; colliders: { type: string; size?: Vec3; radius?: number; isTrigger: boolean }[] }
-const doc = JSON.parse(readFileSync(resolve(import.meta.dirname, '../src/import-tw/prefab/colliders.json'), 'utf8')) as {
+interface Node { name: string; layerName: string; localYawDeg?: number; colliders: { type: string; size?: Vec3; center?: Vec3; radius?: number; isTrigger: boolean }[] }
+const doc = JSON.parse(readFileSync(resolve(import.meta.dirname, '../prefab/colliders.json'), 'utf8')) as {
   frozen: boolean;
   obstacle: { children: Child[] };
   building: { collider: Node };
@@ -29,6 +29,9 @@ test('colliders.json: every obstacle child has box size + yaw + variant', () => 
     assert.ok(c.box.size.every(n => Number.isFinite(n) && n > 0), `size ${c.name}`);
     assert.ok(Number.isFinite(c.yawDeg), `yaw ${c.name}`);
     assert.ok(c.footprint.w > 0 && c.footprint.d > 0);
+    // the importer places a child at its OCP position: the collider box must be centred on it in x/z
+    assert.equal(c.box.center[0], 0, `center.x ${c.name}`);
+    assert.equal(c.box.center[2], 0, `center.z ${c.name}`);
     assert.ok(c.variant === 'small' || c.variant === 'big', `variant ${c.name}`);
   });
   assert.equal(kids.filter(c => c.variant === 'small').length, 4);
@@ -40,6 +43,9 @@ test('colliders.json: building box, tower trigger, layer matrix', () => {
   assert.ok(b);
   assert.equal(b.type, 'BoxCollider');
   assert.deepEqual(b.size, [1.5, 1, 1.5]);
+  // the Building box is a trigger and sits ~15 degrees off the house axes in the prefab (04 decides AABB vs yawed box)
+  assert.equal(b.isTrigger, true);
+  assert.ok(Math.abs((doc.building.collider.localYawDeg ?? 0) - 15) < 0.01, `localYawDeg ${String(doc.building.collider.localYawDeg)}`);
   const tr = doc.tower.colliderNodes.find(n => n.name === 'TowerRadius');
   assert.ok(tr && tr.colliders[0]?.type === 'SphereCollider' && tr.colliders[0].isTrigger);
   assert.ok(Math.abs((tr.colliders[0].radius ?? 0) - 2.4) < 1e-6);
