@@ -1,0 +1,2448 @@
+{
+ "schema": "tw-colliders/1",
+ "frozen": true,
+ "units": "Unity world units (float32 as dumped); yaw deg about +Y",
+ "source": {
+  "bundle": "defaultlocalgroup_assets_all_cb16a4f1857519c9c09b930305d4f18b.bundle",
+  "dataUnity3d": "bin/Data/data.unity3d (TagManager, PhysicsManager)",
+  "unity": "6000.0.82f1",
+  "script": "tools/src/import-tw/prefab/dump_colliders.py"
+ },
+ "obstacle": {
+  "prefab": "Assets/Addressables/Prefabs/Game/Obstacle.prefab",
+  "rootLayer": 10,
+  "indexBasis": "index = position in ObstacleContainer.allElements = level JSON OCP/OCR/S index",
+  "children": [
+   {
+    "index": 0,
+    "name": "tree_big",
+    "path": "Obstacle/Military/tree_big",
+    "variant": "big",
+    "variantBasis": "GO of child MeshFilter listed in ObstacleContainer.bigObstacles / smallObstacles",
+    "layer": 10,
+    "layerName": "Obstacle",
+    "localPosition": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "localScale": [
+     1.0181465148925781,
+     0.9194881319999695,
+     1.0181465148925781
+    ],
+    "yawDeg": 0.0,
+    "effectiveScale": [
+     1.0181465148925781,
+     0.9194881319999695,
+     1.0181465148925781
+    ],
+    "box": {
+     "size": [
+      0.699999988079071,
+      0.699999988079071,
+      0.699999988079071
+     ],
+     "center": [
+      0.0,
+      0.3499999940395355,
+      0.0
+     ],
+     "isTrigger": false
+    },
+    "footprint": {
+     "w": 0.7127025482875524,
+     "d": 0.7127025482875524,
+     "formula": "size.x*effScale.x, size.z*effScale.z (child local frame; rotate by yawDeg)"
+    }
+   },
+   {
+    "index": 1,
+    "name": "tree_big (1)",
+    "path": "Obstacle/Military/tree_big (1)",
+    "variant": "small",
+    "variantBasis": "GO of child MeshFilter listed in ObstacleContainer.bigObstacles / smallObstacles",
+    "layer": 10,
+    "layerName": "Obstacle",
+    "localPosition": [
+     0.550000011920929,
+     0.0,
+     0.0
+    ],
+    "localScale": [
+     0.8549610376358032,
+     0.7721152901649475,
+     0.8549610376358032
+    ],
+    "yawDeg": 0.0,
+    "effectiveScale": [
+     0.8549610376358032,
+     0.7721152901649475,
+     0.8549610376358032
+    ],
+    "box": {
+     "size": [
+      0.5,
+      0.699999988079071,
+      0.5
+     ],
+     "center": [
+      0.0,
+      0.3499999940395355,
+      0.0
+     ],
+     "isTrigger": false
+    },
+    "footprint": {
+     "w": 0.4274805188179016,
+     "d": 0.4274805188179016,
+     "formula": "size.x*effScale.x, size.z*effScale.z (child local frame; rotate by yawDeg)"
+    }
+   },
+   {
+    "index": 2,
+    "name": "tree_big (2)",
+    "path": "Obstacle/Military/tree_big (2)",
+    "variant": "big",
+    "variantBasis": "GO of child MeshFilter listed in ObstacleContainer.bigObstacles / smallObstacles",
+    "layer": 10,
+    "layerName": "Obstacle",
+    "localPosition": [
+     1.1510000228881836,
+     0.0,
+     0.0
+    ],
+    "localScale": [
+     1.1935497522354126,
+     1.1935498714447021,
+     1.1935497522354126
+    ],
+    "yawDeg": 0.0,
+    "effectiveScale": [
+     1.1935497522354126,
+     1.1935498714447021,
+     1.1935497522354126
+    ],
+    "box": {
+     "size": [
+      0.5799999833106995,
+      0.699999988079071,
+      0.5799999833106995
+     ],
+     "center": [
+      0.0,
+      0.3499999940395355,
+      0.0
+     ],
+     "isTrigger": false
+    },
+    "footprint": {
+     "w": 0.6922588363770288,
+     "d": 0.6922588363770288,
+     "formula": "size.x*effScale.x, size.z*effScale.z (child local frame; rotate by yawDeg)"
+    }
+   },
+   {
+    "index": 3,
+    "name": "tree_big (3)",
+    "path": "Obstacle/Military/tree_big (3)",
+    "variant": "small",
+    "variantBasis": "GO of child MeshFilter listed in ObstacleContainer.bigObstacles / smallObstacles",
+    "layer": 10,
+    "layerName": "Obstacle",
+    "localPosition": [
+     1.9579999446868896,
+     0.0,
+     0.12200000137090683
+    ],
+    "localScale": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "yawDeg": 0.0,
+    "effectiveScale": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "box": {
+     "size": [
+      0.5,
+      0.699999988079071,
+      0.5
+     ],
+     "center": [
+      0.0,
+      0.3499999940395355,
+      0.0
+     ],
+     "isTrigger": false
+    },
+    "footprint": {
+     "w": 0.30000001192092896,
+     "d": 0.30000001192092896,
+     "formula": "size.x*effScale.x, size.z*effScale.z (child local frame; rotate by yawDeg)"
+    }
+   },
+   {
+    "index": 4,
+    "name": "tree_big (4)",
+    "path": "Obstacle/Military/tree_big (4)",
+    "variant": "big",
+    "variantBasis": "GO of child MeshFilter listed in ObstacleContainer.bigObstacles / smallObstacles",
+    "layer": 10,
+    "layerName": "Obstacle",
+    "localPosition": [
+     2.496999979019165,
+     0.0,
+     0.0
+    ],
+    "localScale": [
+     0.9598173499107361,
+     0.8668110370635986,
+     0.9598173499107361
+    ],
+    "yawDeg": 0.0,
+    "effectiveScale": [
+     0.9598173499107361,
+     0.8668110370635986,
+     0.9598173499107361
+    ],
+    "box": {
+     "size": [
+      0.5,
+      0.699999988079071,
+      0.5
+     ],
+     "center": [
+      0.0,
+      0.3499999940395355,
+      0.0
+     ],
+     "isTrigger": false
+    },
+    "footprint": {
+     "w": 0.47990867495536804,
+     "d": 0.47990867495536804,
+     "formula": "size.x*effScale.x, size.z*effScale.z (child local frame; rotate by yawDeg)"
+    }
+   },
+   {
+    "index": 5,
+    "name": "tree_big (5)",
+    "path": "Obstacle/Military/tree_big (5)",
+    "variant": "big",
+    "variantBasis": "GO of child MeshFilter listed in ObstacleContainer.bigObstacles / smallObstacles",
+    "layer": 10,
+    "layerName": "Obstacle",
+    "localPosition": [
+     3.180000066757202,
+     0.0,
+     0.0
+    ],
+    "localScale": [
+     1.0816346406936646,
+     0.9768243432044983,
+     1.0816346406936646
+    ],
+    "yawDeg": 0.0,
+    "effectiveScale": [
+     1.0816346406936646,
+     0.9768243432044983,
+     1.0816346406936646
+    ],
+    "box": {
+     "size": [
+      0.6000000238418579,
+      0.699999988079071,
+      0.6000000238418579
+     ],
+     "center": [
+      0.0,
+      0.3499999940395355,
+      0.0
+     ],
+     "isTrigger": false
+    },
+    "footprint": {
+     "w": 0.6489808102043781,
+     "d": 0.6489808102043781,
+     "formula": "size.x*effScale.x, size.z*effScale.z (child local frame; rotate by yawDeg)"
+    }
+   },
+   {
+    "index": 6,
+    "name": "tree_big (6)",
+    "path": "Obstacle/Military/tree_big (6)",
+    "variant": "small",
+    "variantBasis": "GO of child MeshFilter listed in ObstacleContainer.bigObstacles / smallObstacles",
+    "layer": 10,
+    "layerName": "Obstacle",
+    "localPosition": [
+     2.0769999027252197,
+     0.0,
+     -0.1809999942779541
+    ],
+    "localScale": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "yawDeg": 0.0,
+    "effectiveScale": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "box": {
+     "size": [
+      0.5,
+      0.699999988079071,
+      0.5
+     ],
+     "center": [
+      0.0,
+      0.3499999940395355,
+      0.0
+     ],
+     "isTrigger": false
+    },
+    "footprint": {
+     "w": 0.30000001192092896,
+     "d": 0.30000001192092896,
+     "formula": "size.x*effScale.x, size.z*effScale.z (child local frame; rotate by yawDeg)"
+    }
+   },
+   {
+    "index": 7,
+    "name": "tree_big (7)",
+    "path": "Obstacle/Military/tree_big (7)",
+    "variant": "small",
+    "variantBasis": "GO of child MeshFilter listed in ObstacleContainer.bigObstacles / smallObstacles",
+    "layer": 10,
+    "layerName": "Obstacle",
+    "localPosition": [
+     1.7120000123977661,
+     0.0,
+     -0.09099999815225601
+    ],
+    "localScale": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "yawDeg": 0.0,
+    "effectiveScale": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "box": {
+     "size": [
+      0.5,
+      0.699999988079071,
+      0.5
+     ],
+     "center": [
+      0.0,
+      0.3499999940395355,
+      0.0
+     ],
+     "isTrigger": false
+    },
+    "footprint": {
+     "w": 0.30000001192092896,
+     "d": 0.30000001192092896,
+     "formula": "size.x*effScale.x, size.z*effScale.z (child local frame; rotate by yawDeg)"
+    }
+   }
+  ]
+ },
+ "building": {
+  "prefab": "Assets/Addressables/Prefabs/Houses/House (None).prefab",
+  "collider": {
+   "path": "House_Default (None)/Physics/Building",
+   "name": "Building",
+   "layer": 19,
+   "layerName": "Building",
+   "localScale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "localPosition": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "localYawDeg": 14.999996006614516,
+   "effectiveScaleFromRoot": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "colliders": [
+    {
+     "type": "BoxCollider",
+     "isTrigger": true,
+     "enabled": true,
+     "size": [
+      1.5,
+      1.0,
+      1.5
+     ],
+     "center": [
+      0.0,
+      0.5,
+      0.0
+     ]
+    }
+   ]
+  }
+ },
+ "tower": {
+  "prefab": "Assets/Addressables/Prefabs/Houses/Tower.prefab",
+  "colliderNodes": [
+   {
+    "path": "Tower/TowerHouse/Physics/Hit",
+    "name": "Hit",
+    "layer": 18,
+    "layerName": "Hitting",
+    "localScale": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "localPosition": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "localYawDeg": 58.999997045177395,
+    "effectiveScaleFromRoot": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "colliders": [
+     {
+      "type": "BoxCollider",
+      "isTrigger": true,
+      "enabled": true,
+      "size": [
+       0.6000000238418579,
+       1.0,
+       0.6000000238418579
+      ],
+      "center": [
+       0.0,
+       0.5,
+       0.0
+      ]
+     }
+    ]
+   },
+   {
+    "path": "Tower/TowerHouse/Physics/Selecable",
+    "name": "Selecable",
+    "layer": 6,
+    "layerName": "Selectable",
+    "localScale": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "localPosition": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "localYawDeg": 0.0,
+    "effectiveScaleFromRoot": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "colliders": [
+     {
+      "type": "BoxCollider",
+      "isTrigger": true,
+      "enabled": true,
+      "size": [
+       2.5,
+       1.0,
+       2.5
+      ],
+      "center": [
+       0.0,
+       0.5,
+       0.0
+      ]
+     }
+    ]
+   },
+   {
+    "path": "Tower/TowerHouse/Physics/Building",
+    "name": "Building",
+    "layer": 19,
+    "layerName": "Building",
+    "localScale": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "localPosition": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "localYawDeg": 58.999997045177395,
+    "effectiveScaleFromRoot": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "colliders": [
+     {
+      "type": "BoxCollider",
+      "isTrigger": true,
+      "enabled": true,
+      "size": [
+       1.5,
+       1.0,
+       1.5
+      ],
+      "center": [
+       0.0,
+       0.5,
+       0.0
+      ]
+     }
+    ]
+   },
+   {
+    "path": "Tower/TowerRadius",
+    "name": "TowerRadius",
+    "layer": 14,
+    "layerName": "Aiming",
+    "localScale": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "localPosition": [
+     0.0,
+     0.009999999776482582,
+     0.0
+    ],
+    "localYawDeg": 180.0,
+    "effectiveScaleFromRoot": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "colliders": [
+     {
+      "type": "SphereCollider",
+      "isTrigger": true,
+      "enabled": true,
+      "radius": 2.4000000953674316,
+      "center": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "house": {
+  "prefab": "Assets/Addressables/Prefabs/Houses/House (None).prefab",
+  "colliderNodes": [
+   {
+    "path": "House_Default (None)/Physics/Hit",
+    "name": "Hit",
+    "layer": 18,
+    "layerName": "Hitting",
+    "localScale": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "localPosition": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "localYawDeg": 14.999996006614516,
+    "effectiveScaleFromRoot": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "colliders": [
+     {
+      "type": "BoxCollider",
+      "isTrigger": true,
+      "enabled": true,
+      "size": [
+       0.6000000238418579,
+       1.0,
+       0.6000000238418579
+      ],
+      "center": [
+       0.0,
+       0.5,
+       0.0
+      ]
+     }
+    ]
+   },
+   {
+    "path": "House_Default (None)/Physics/Selecable",
+    "name": "Selecable",
+    "layer": 6,
+    "layerName": "Selectable",
+    "localScale": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "localPosition": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "localYawDeg": 0.0,
+    "effectiveScaleFromRoot": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "colliders": [
+     {
+      "type": "BoxCollider",
+      "isTrigger": true,
+      "enabled": true,
+      "size": [
+       2.5,
+       1.0,
+       2.5
+      ],
+      "center": [
+       0.0,
+       0.5,
+       0.0
+      ]
+     }
+    ]
+   },
+   {
+    "path": "House_Default (None)/Physics/Building",
+    "name": "Building",
+    "layer": 19,
+    "layerName": "Building",
+    "localScale": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "localPosition": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "localYawDeg": 14.999996006614516,
+    "effectiveScaleFromRoot": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "colliders": [
+     {
+      "type": "BoxCollider",
+      "isTrigger": true,
+      "enabled": true,
+      "size": [
+       1.5,
+       1.0,
+       1.5
+      ],
+      "center": [
+       0.0,
+       0.5,
+       0.0
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "buildings": {
+  "Tower": {
+   "prefab": "Assets/Addressables/Prefabs/Houses/Tower.prefab",
+   "colliderNodes": [
+    {
+     "path": "Tower/TowerHouse/Physics/Hit",
+     "name": "Hit",
+     "layer": 18,
+     "layerName": "Hitting",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 58.999997045177395,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        0.6000000238418579,
+        1.0,
+        0.6000000238418579
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "Tower/TowerHouse/Physics/Selecable",
+     "name": "Selecable",
+     "layer": 6,
+     "layerName": "Selectable",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        2.5,
+        1.0,
+        2.5
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "Tower/TowerHouse/Physics/Building",
+     "name": "Building",
+     "layer": 19,
+     "layerName": "Building",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 58.999997045177395,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        1.5,
+        1.0,
+        1.5
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "Tower/TowerRadius",
+     "name": "TowerRadius",
+     "layer": 14,
+     "layerName": "Aiming",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.009999999776482582,
+      0.0
+     ],
+     "localYawDeg": 180.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "SphereCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "radius": 2.4000000953674316,
+       "center": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "House": {
+   "prefab": "Assets/Addressables/Prefabs/Houses/House (None).prefab",
+   "colliderNodes": [
+    {
+     "path": "House_Default (None)/Physics/Hit",
+     "name": "Hit",
+     "layer": 18,
+     "layerName": "Hitting",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 14.999996006614516,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        0.6000000238418579,
+        1.0,
+        0.6000000238418579
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "House_Default (None)/Physics/Selecable",
+     "name": "Selecable",
+     "layer": 6,
+     "layerName": "Selectable",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        2.5,
+        1.0,
+        2.5
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "House_Default (None)/Physics/Building",
+     "name": "Building",
+     "layer": 19,
+     "layerName": "Building",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 14.999996006614516,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        1.5,
+        1.0,
+        1.5
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "HouseArtillery": {
+   "prefab": "Assets/Addressables/Prefabs/Houses/HouseArtillery (None).prefab",
+   "colliderNodes": [
+    {
+     "path": "House_Artillery (None)/Physics/Hit",
+     "name": "Hit",
+     "layer": 18,
+     "layerName": "Hitting",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      -0.11100000143051147,
+      0.0,
+      -0.0729999989271164
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.2000000476837158,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        0.6000000238418579,
+        1.0,
+        0.6000000238418579
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "House_Artillery (None)/Physics/Selecable",
+     "name": "Selecable",
+     "layer": 6,
+     "layerName": "Selectable",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.2000000476837158,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        2.5,
+        1.0,
+        2.5
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "House_Artillery (None)/Physics/Building",
+     "name": "Building",
+     "layer": 19,
+     "layerName": "Building",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      -0.1080000028014183,
+      0.0,
+      -0.1289999932050705
+     ],
+     "localYawDeg": 39.99999515810578,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.2000000476837158,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        1.566096544265747,
+        1.0,
+        1.5175683498382568
+       ],
+       "center": [
+        -0.06526315212249756,
+        0.5,
+        0.03932321071624756
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "HouseAttack": {
+   "prefab": "Assets/Addressables/Prefabs/Houses/House_Attack (None).prefab",
+   "colliderNodes": [
+    {
+     "path": "House_Attack (None)/Physics/Hit",
+     "name": "Hit",
+     "layer": 18,
+     "layerName": "Hitting",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.2000000476837158,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        0.6000000238418579,
+        1.0,
+        0.6000000238418579
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "House_Attack (None)/Physics/Selecable",
+     "name": "Selecable",
+     "layer": 6,
+     "layerName": "Selectable",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.2000000476837158,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        2.5,
+        1.0,
+        2.5
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "House_Attack (None)/Physics/Building",
+     "name": "Building",
+     "layer": 19,
+     "layerName": "Building",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 39.99999515810578,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.2000000476837158,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        1.4657092094421387,
+        1.0,
+        1.2782258987426758
+       ],
+       "center": [
+        0.01714521273970604,
+        0.5,
+        -0.0803486704826355
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "SelectableFortess": {
+   "prefab": "Assets/Addressables/Prefabs/Houses/Fortess/SelectableFortess (None).prefab",
+   "colliderNodes": [
+    {
+     "path": "SelectableFortess (None)/Physics/Hit",
+     "name": "Hit",
+     "layer": 18,
+     "layerName": "Hitting",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        3.299999952316284,
+        1.0,
+        3.299999952316284
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/Physics/Selecable",
+     "name": "Selecable",
+     "layer": 6,
+     "layerName": "Selectable",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        4.0,
+        1.0,
+        4.0
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/Physics/Building",
+     "name": "Building",
+     "layer": 19,
+     "layerName": "Building",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        4.699999809265137,
+        1.0,
+        4.699999809265137
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/Physics/SmallHit",
+     "name": "SmallHit",
+     "layer": 18,
+     "layerName": "Hitting",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        0.30000001192092896,
+        1.0,
+        0.30000001192092896
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/FortessArt/tower1/FortessGun 1",
+     "name": "FortessGun 1",
+     "layer": 14,
+     "layerName": "Aiming",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.571223258972168,
+      1.3049999475479126,
+      0.01473588589578867
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "SphereCollider",
+       "isTrigger": false,
+       "enabled": true,
+       "radius": 0.5,
+       "center": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "type": "CapsuleCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "radius": 3.0,
+       "height": 8.0,
+       "direction": 1,
+       "center": [
+        0.0,
+        2.75,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/FortessArt/tower1/FortessGun 2",
+     "name": "FortessGun 2",
+     "layer": 14,
+     "layerName": "Aiming",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      -0.015759432688355446,
+      1.3049999475479126,
+      0.5886286497116089
+     ],
+     "localYawDeg": 180.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "SphereCollider",
+       "isTrigger": false,
+       "enabled": true,
+       "radius": 0.5,
+       "center": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "type": "CapsuleCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "radius": 3.0,
+       "height": 8.0,
+       "direction": 1,
+       "center": [
+        0.0,
+        2.75,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/FortessArt/tower2/FortessGun 1",
+     "name": "FortessGun 1",
+     "layer": 14,
+     "layerName": "Aiming",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.571223258972168,
+      1.3049999475479126,
+      0.01473588589578867
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "SphereCollider",
+       "isTrigger": false,
+       "enabled": true,
+       "radius": 0.5,
+       "center": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "type": "CapsuleCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "radius": 3.0,
+       "height": 8.0,
+       "direction": 1,
+       "center": [
+        0.0,
+        2.75,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/FortessArt/tower2/FortessGun 2",
+     "name": "FortessGun 2",
+     "layer": 14,
+     "layerName": "Aiming",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      -0.015759432688355446,
+      1.3049999475479126,
+      0.5886286497116089
+     ],
+     "localYawDeg": 180.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "SphereCollider",
+       "isTrigger": false,
+       "enabled": true,
+       "radius": 0.5,
+       "center": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "type": "CapsuleCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "radius": 3.0,
+       "height": 8.0,
+       "direction": 1,
+       "center": [
+        0.0,
+        2.75,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/FortessArt/tower3/FortessGun 2 ",
+     "name": "FortessGun 2 ",
+     "layer": 14,
+     "layerName": "Aiming",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      -0.015759432688355446,
+      1.3049999475479126,
+      0.5886286497116089
+     ],
+     "localYawDeg": 180.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "SphereCollider",
+       "isTrigger": false,
+       "enabled": true,
+       "radius": 0.5,
+       "center": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "type": "CapsuleCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "radius": 3.0,
+       "height": 8.0,
+       "direction": 1,
+       "center": [
+        0.0,
+        2.75,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/FortessArt/tower3/FortessGun 1",
+     "name": "FortessGun 1",
+     "layer": 14,
+     "layerName": "Aiming",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.571223258972168,
+      1.3049999475479126,
+      0.01473588589578867
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "SphereCollider",
+       "isTrigger": false,
+       "enabled": true,
+       "radius": 0.5,
+       "center": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "type": "CapsuleCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "radius": 3.0,
+       "height": 8.0,
+       "direction": 1,
+       "center": [
+        0.0,
+        2.75,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/FortessArt/tower4/FortessGun 1 ",
+     "name": "FortessGun 1 ",
+     "layer": 14,
+     "layerName": "Aiming",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.571223258972168,
+      1.3049999475479126,
+      0.01473588589578867
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "SphereCollider",
+       "isTrigger": false,
+       "enabled": true,
+       "radius": 0.5,
+       "center": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "type": "CapsuleCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "radius": 3.0,
+       "height": 8.0,
+       "direction": 1,
+       "center": [
+        0.0,
+        2.75,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "SelectableFortess (None)/FortessArt/tower4/FortessGun 2",
+     "name": "FortessGun 2",
+     "layer": 14,
+     "layerName": "Aiming",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      -0.015759432688355446,
+      1.3049999475479126,
+      0.5886286497116089
+     ],
+     "localYawDeg": 180.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "SphereCollider",
+       "isTrigger": false,
+       "enabled": true,
+       "radius": 0.5,
+       "center": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "type": "CapsuleCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "radius": 3.0,
+       "height": 8.0,
+       "direction": 1,
+       "center": [
+        0.0,
+        2.75,
+        0.0
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "CaptureRocketTower": {
+   "prefab": "Assets/Addressables/Prefabs/Houses/CaptureRocketTower.prefab",
+   "colliderNodes": [
+    {
+     "path": "CaptureRocketTower/Physics/Hit",
+     "name": "Hit",
+     "layer": 18,
+     "layerName": "Hitting",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 58.999997045177395,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        0.6000000238418579,
+        1.0,
+        0.6000000238418579
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "CaptureRocketTower/Physics/Selecable",
+     "name": "Selecable",
+     "layer": 6,
+     "layerName": "Selectable",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        2.5,
+        1.0,
+        2.5
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "CaptureRocketTower/Physics/Building",
+     "name": "Building",
+     "layer": 19,
+     "layerName": "Building",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        2.080929756164551,
+        1.0,
+        2.080930233001709
+       ],
+       "center": [
+        0.005715489387512207,
+        0.5,
+        -0.006963967811316252
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "BossTower": {
+   "prefab": "Assets/Addressables/Prefabs/Houses/BossTower.prefab",
+   "colliderNodes": [
+    {
+     "path": "BossTower/Physics/Hit",
+     "name": "Hit",
+     "layer": 18,
+     "layerName": "Hitting",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        0.6000000238418579,
+        1.0,
+        0.6000000238418579
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "BossTower/Physics/Selecable",
+     "name": "Selecable",
+     "layer": 6,
+     "layerName": "Selectable",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        2.5,
+        1.0,
+        2.5
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "BossTower/Physics/Building",
+     "name": "Building",
+     "layer": 19,
+     "layerName": "Building",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        1.5,
+        1.0,
+        1.5
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "Trolley": {
+   "prefab": "Assets/Addressables/Prefabs/Houses/Trolley.prefab",
+   "colliderNodes": [
+    {
+     "path": "Trolley/Physics/Hit",
+     "name": "Hit",
+     "layer": 18,
+     "layerName": "Hitting",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        0.6000000238418579,
+        1.0,
+        0.6000000238418579
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "Trolley/Physics/Selecable",
+     "name": "Selecable",
+     "layer": 6,
+     "layerName": "Selectable",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        2.5,
+        1.0,
+        2.5
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "Trolley/Physics/Building",
+     "name": "Building",
+     "layer": 19,
+     "layerName": "Building",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        1.309999942779541,
+        1.0,
+        1.309999942779541
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "path": "Trolley/Physics/AimingCollider",
+     "name": "AimingCollider",
+     "layer": 14,
+     "layerName": "Aiming",
+     "localScale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "localPosition": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "localYawDeg": 0.0,
+     "effectiveScaleFromRoot": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "colliders": [
+      {
+       "type": "BoxCollider",
+       "isTrigger": true,
+       "enabled": true,
+       "size": [
+        0.47999998927116394,
+        1.0,
+        0.8399999737739563
+       ],
+       "center": [
+        0.0,
+        0.5,
+        0.0
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "towerTriggerVsHouseColliders": {
+  "towerTriggerNode": "Tower/TowerRadius",
+  "towerTriggerLayer": "Aiming",
+  "byHouseCollider": {
+   "Hit": {
+    "layerName": "Hitting",
+    "matrixCollides": false
+   },
+   "Selecable": {
+    "layerName": "Selectable",
+    "matrixCollides": false
+   },
+   "Building": {
+    "layerName": "Building",
+    "matrixCollides": true
+   }
+  }
+ },
+ "layerMatrix": {
+  "layers": {
+   "0": "Default",
+   "1": "TransparentFX",
+   "2": "Ignore Raycast",
+   "4": "Water",
+   "5": "UI",
+   "6": "Selectable",
+   "7": "Warrior",
+   "8": "Way",
+   "9": "Eraser",
+   "10": "Obstacle",
+   "11": "JellyParts",
+   "12": "JellyCenter",
+   "13": "Ground",
+   "14": "Aiming",
+   "15": "Bullet",
+   "16": "GameItem",
+   "17": "WayImpact",
+   "18": "Hitting",
+   "19": "Building",
+   "20": "Railway"
+  },
+  "raw": [
+   4292870151,
+   4292870151,
+   4292870151,
+   4294443296,
+   4292870400,
+   4292870152,
+   4292870208,
+   4293247104,
+   4293395992,
+   4292870400,
+   4292870400,
+   4292880384,
+   4292878336,
+   4292941824,
+   4293394560,
+   4293132416,
+   4293468288,
+   4292870144,
+   4293165184,
+   4292952328,
+   4292870152,
+   4294967295,
+   4294967295,
+   4294967295,
+   4294967295,
+   4294967295,
+   4294967295,
+   4294967295,
+   4294967295,
+   4294967295,
+   4294967295,
+   4294967295
+  ],
+  "rawBasis": "m_LayerCollisionMatrix[a] bit b = layers a,b collide (symmetric; asymmetric pairs listed)",
+  "asymmetricPairs": [],
+  "collides": {
+   "Default|Default": true,
+   "Default|TransparentFX": true,
+   "Default|Ignore Raycast": true,
+   "Default|Water": false,
+   "Default|UI": false,
+   "Default|Selectable": false,
+   "Default|Warrior": false,
+   "Default|Way": false,
+   "Default|Eraser": false,
+   "Default|Obstacle": false,
+   "Default|JellyParts": false,
+   "Default|JellyCenter": false,
+   "Default|Ground": false,
+   "Default|Aiming": false,
+   "Default|Bullet": false,
+   "Default|GameItem": false,
+   "Default|WayImpact": false,
+   "Default|Hitting": false,
+   "Default|Building": false,
+   "Default|Railway": false,
+   "TransparentFX|TransparentFX": true,
+   "TransparentFX|Ignore Raycast": true,
+   "TransparentFX|Water": false,
+   "TransparentFX|UI": false,
+   "TransparentFX|Selectable": false,
+   "TransparentFX|Warrior": false,
+   "TransparentFX|Way": false,
+   "TransparentFX|Eraser": false,
+   "TransparentFX|Obstacle": false,
+   "TransparentFX|JellyParts": false,
+   "TransparentFX|JellyCenter": false,
+   "TransparentFX|Ground": false,
+   "TransparentFX|Aiming": false,
+   "TransparentFX|Bullet": false,
+   "TransparentFX|GameItem": false,
+   "TransparentFX|WayImpact": false,
+   "TransparentFX|Hitting": false,
+   "TransparentFX|Building": false,
+   "TransparentFX|Railway": false,
+   "Ignore Raycast|Ignore Raycast": true,
+   "Ignore Raycast|Water": false,
+   "Ignore Raycast|UI": false,
+   "Ignore Raycast|Selectable": false,
+   "Ignore Raycast|Warrior": false,
+   "Ignore Raycast|Way": false,
+   "Ignore Raycast|Eraser": false,
+   "Ignore Raycast|Obstacle": false,
+   "Ignore Raycast|JellyParts": false,
+   "Ignore Raycast|JellyCenter": false,
+   "Ignore Raycast|Ground": false,
+   "Ignore Raycast|Aiming": false,
+   "Ignore Raycast|Bullet": false,
+   "Ignore Raycast|GameItem": false,
+   "Ignore Raycast|WayImpact": false,
+   "Ignore Raycast|Hitting": false,
+   "Ignore Raycast|Building": false,
+   "Ignore Raycast|Railway": false,
+   "Water|Water": false,
+   "Water|UI": false,
+   "Water|Selectable": false,
+   "Water|Warrior": false,
+   "Water|Way": true,
+   "Water|Eraser": false,
+   "Water|Obstacle": false,
+   "Water|JellyParts": false,
+   "Water|JellyCenter": false,
+   "Water|Ground": false,
+   "Water|Aiming": false,
+   "Water|Bullet": false,
+   "Water|GameItem": false,
+   "Water|WayImpact": false,
+   "Water|Hitting": false,
+   "Water|Building": false,
+   "Water|Railway": false,
+   "UI|UI": false,
+   "UI|Selectable": false,
+   "UI|Warrior": false,
+   "UI|Way": false,
+   "UI|Eraser": false,
+   "UI|Obstacle": false,
+   "UI|JellyParts": false,
+   "UI|JellyCenter": false,
+   "UI|Ground": false,
+   "UI|Aiming": false,
+   "UI|Bullet": false,
+   "UI|GameItem": false,
+   "UI|WayImpact": false,
+   "UI|Hitting": false,
+   "UI|Building": false,
+   "UI|Railway": false,
+   "Selectable|Selectable": true,
+   "Selectable|Warrior": false,
+   "Selectable|Way": false,
+   "Selectable|Eraser": false,
+   "Selectable|Obstacle": false,
+   "Selectable|JellyParts": false,
+   "Selectable|JellyCenter": false,
+   "Selectable|Ground": false,
+   "Selectable|Aiming": false,
+   "Selectable|Bullet": false,
+   "Selectable|GameItem": false,
+   "Selectable|WayImpact": false,
+   "Selectable|Hitting": false,
+   "Selectable|Building": false,
+   "Selectable|Railway": false,
+   "Warrior|Warrior": true,
+   "Warrior|Way": false,
+   "Warrior|Eraser": false,
+   "Warrior|Obstacle": false,
+   "Warrior|JellyParts": false,
+   "Warrior|JellyCenter": false,
+   "Warrior|Ground": false,
+   "Warrior|Aiming": true,
+   "Warrior|Bullet": true,
+   "Warrior|GameItem": true,
+   "Warrior|WayImpact": false,
+   "Warrior|Hitting": true,
+   "Warrior|Building": false,
+   "Warrior|Railway": false,
+   "Way|Way": false,
+   "Way|Eraser": true,
+   "Way|Obstacle": true,
+   "Way|JellyParts": false,
+   "Way|JellyCenter": false,
+   "Way|Ground": false,
+   "Way|Aiming": false,
+   "Way|Bullet": false,
+   "Way|GameItem": false,
+   "Way|WayImpact": false,
+   "Way|Hitting": false,
+   "Way|Building": true,
+   "Way|Railway": false,
+   "Eraser|Eraser": false,
+   "Eraser|Obstacle": false,
+   "Eraser|JellyParts": false,
+   "Eraser|JellyCenter": false,
+   "Eraser|Ground": false,
+   "Eraser|Aiming": false,
+   "Eraser|Bullet": false,
+   "Eraser|GameItem": false,
+   "Eraser|WayImpact": false,
+   "Eraser|Hitting": false,
+   "Eraser|Building": false,
+   "Eraser|Railway": false,
+   "Obstacle|Obstacle": false,
+   "Obstacle|JellyParts": false,
+   "Obstacle|JellyCenter": false,
+   "Obstacle|Ground": false,
+   "Obstacle|Aiming": false,
+   "Obstacle|Bullet": false,
+   "Obstacle|GameItem": false,
+   "Obstacle|WayImpact": false,
+   "Obstacle|Hitting": false,
+   "Obstacle|Building": false,
+   "Obstacle|Railway": false,
+   "JellyParts|JellyParts": true,
+   "JellyParts|JellyCenter": false,
+   "JellyParts|Ground": true,
+   "JellyParts|Aiming": false,
+   "JellyParts|Bullet": false,
+   "JellyParts|GameItem": false,
+   "JellyParts|WayImpact": false,
+   "JellyParts|Hitting": false,
+   "JellyParts|Building": false,
+   "JellyParts|Railway": false,
+   "JellyCenter|JellyCenter": false,
+   "JellyCenter|Ground": true,
+   "JellyCenter|Aiming": false,
+   "JellyCenter|Bullet": false,
+   "JellyCenter|GameItem": false,
+   "JellyCenter|WayImpact": false,
+   "JellyCenter|Hitting": false,
+   "JellyCenter|Building": false,
+   "JellyCenter|Railway": false,
+   "Ground|Ground": false,
+   "Ground|Aiming": false,
+   "Ground|Bullet": false,
+   "Ground|GameItem": true,
+   "Ground|WayImpact": false,
+   "Ground|Hitting": false,
+   "Ground|Building": false,
+   "Ground|Railway": false,
+   "Aiming|Aiming": false,
+   "Aiming|Bullet": false,
+   "Aiming|GameItem": false,
+   "Aiming|WayImpact": false,
+   "Aiming|Hitting": false,
+   "Aiming|Building": true,
+   "Aiming|Railway": false,
+   "Bullet|Bullet": false,
+   "Bullet|GameItem": false,
+   "Bullet|WayImpact": false,
+   "Bullet|Hitting": true,
+   "Bullet|Building": false,
+   "Bullet|Railway": false,
+   "GameItem|GameItem": true,
+   "GameItem|WayImpact": false,
+   "GameItem|Hitting": false,
+   "GameItem|Building": true,
+   "GameItem|Railway": false,
+   "WayImpact|WayImpact": false,
+   "WayImpact|Hitting": false,
+   "WayImpact|Building": false,
+   "WayImpact|Railway": false,
+   "Hitting|Hitting": true,
+   "Hitting|Building": false,
+   "Hitting|Railway": false,
+   "Building|Building": false,
+   "Building|Railway": false,
+   "Railway|Railway": false
+  }
+ }
+}
