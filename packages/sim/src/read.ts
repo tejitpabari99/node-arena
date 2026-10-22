@@ -37,7 +37,7 @@ export function createView(state: SimState): SimView {
     players: level.players.map((p) => ({ kind: p.kind, colorKey: p.colorKey })),
     buildings: b,
     buildingStatic: level.buildings.map((x) => ({
-      x: x.x, z: x.z, kind: x.modules['shoots'] ? 'tower' : 'house', archetype: x.archetype, visual: x.visual, footprint: x.footprint,
+      x: x.x, z: x.z, kind: x.kind, archetype: x.archetype, visual: x.visual, footprint: x.footprint,
       special: x.special, drawsLines: x.modules['drawsLines'] !== undefined, initialOwner: x.owner, modules: Object.keys(x.modules).sort((p, q) => (p < q ? -1 : p > q ? 1 : 0)),
     })),
     elements: level.elements,

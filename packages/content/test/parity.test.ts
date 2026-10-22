@@ -88,7 +88,7 @@ const syntheticText = () => readFileSync(url('./fixtures/obstacle-tower.json'), 
 const catalog = () => content.loadCatalog(catalogFiles());
 
 // Pinned: moving these means the golden or sim-affecting compile semantics changed.
-const PINNED_GOLDEN_SIM = 'f785555d1908dc2babffe94554d73c820870e10e586e583fa25fe6c9fbb5906a';
+const PINNED_GOLDEN_SIM = '3f8a403997aab39f0b8721d43ef30001bcfd2877fcde1646dfa0f3bb8e89b20d';
 const PINNED_GOLDEN_BOT = 'cf6f32bbe314326acbdfee7de0d17855e776f701669c644980ee7416ccba6aaa';
 
 test('golden levelview-1: serialization is JSON.stringify(...,null,2)+"\\n" in 05 R5 key order', () => {

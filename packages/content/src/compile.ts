@@ -16,7 +16,7 @@ export interface CompiledRules {
 export interface CompiledPlayer { id: string; kind: 'human' | 'ai'; colorKey: string }
 export interface CompiledUnit { id: string; visual: string; speed: number; hp: number; attack: number; defense: number }
 export interface CompiledBuilding {
-  id: string; archetype: string; x: number; z: number;
+  id: string; archetype: string; /** From the archetype `kind`. */ kind: 'house' | 'tower'; x: number; z: number;
   /** Dense player index, -1 = neutral. */
   owner: number;
   level: number; ignoreForWin: boolean; special: boolean;
@@ -93,7 +93,7 @@ export function compileLevel(catalog: Catalog, level: NextLevel): CompiledLevel 
     const troop = modules.spawns?.troop;
     if (typeof troop === 'string') unitIds.add(troop);
     return {
-      id: b.id, archetype: b.archetype, x: b.pos.x, z: b.pos.z,
+      id: b.id, archetype: b.archetype, kind: arch.kind, x: b.pos.x, z: b.pos.z,
       owner: b.owner === null ? -1 : must(playerIndex.get(b.owner), `unknown owner ${b.owner}`),
       level: b.level, ignoreForWin: b.ignoreForWin, special: arch.special,
       footprint: footprint(arch.footprint), visual: arch.visual, modules,

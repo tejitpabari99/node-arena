@@ -21,6 +21,14 @@ test('create on compiled levelview-1 exposes the view skeleton', async () => {
   assert.deepEqual(Object.keys(IMPLS).sort(), ['blocksLines', 'drawsLines', 'grows', 'level', 'shoots', 'spawns']);
 });
 
+test('buildingStatic.kind comes from the compiled archetype kind, not module inference', async () => {
+  const level = structuredClone(await golden());
+  assert.deepEqual(create(level, 7).view.buildingStatic.map((b) => b.kind), level.buildings.map((b) => b.kind));
+  const plain = level.buildings.findIndex((b) => b.modules.shoots === undefined);
+  level.buildings[plain].kind = 'tower';
+  assert.equal(create(level, 7).view.buildingStatic[plain].kind, 'tower');
+});
+
 test('step advances tick; events:false and events:true return arrays and hash identically', async () => {
   const level = await golden();
   const a = create(level, 7), b = create(level, 7);

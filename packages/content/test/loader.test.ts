@@ -70,6 +70,7 @@ test('compiled level: R5 shape, milli-ints, -1 neutral owner, referenced units s
   assert.equal(c.buildings[0]!.modules.level!.maxLevel, 64);
   assert.deepEqual(c.buildings[0]!.footprint, { shape: 'box', w: 1500, d: 1500 });
   assert.equal(c.buildings[2]!.ignoreForWin, true);
+  assert.deepEqual(c.buildings.map((b) => b.kind), ['house', 'house', 'tower'], 'archetype kind carried');
   assert.deepEqual(c.elements[0], { id: 'e0', archetype: 'obstacle', x: 1000, z: 2000, yawMilliDeg: 30000, footprint: { shape: 'circle', radius: 450 }, visual: 'element.obstacle', variant: 'big', modules: { blocksLines: {} } });
   assert.deepEqual(c.bots.map((b) => b.player), [1]);
   assert.deepEqual(c.requires, level().requires);
@@ -256,5 +257,5 @@ test('real data files load as a catalog', async () => {
 });
 
 // Pinned: moving these means simulation-affecting compile semantics changed.
-const PINNED_SIM = '3ef0e05c020642aa75d6dcb52a5718c8d16836891c6a522897f196f941e12740';
+const PINNED_SIM = 'f0792197c6e98c3181b5c3282525f0e8ed1db22bbdfbf99a05e41f4a55889cd5';
 const PINNED_BOT = 'a378728773bfbf5f6493cc6ddb6acc37ada5c58f04878b2dcb2d75fa8beca554';
