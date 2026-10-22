@@ -34,8 +34,8 @@ function assertVersionBump(candidate, baseline) {
 }
 function gitBaseline(root, ref, file = relativeGolden) {
   // Invalid/missing refs are errors; only an absent file in a valid commit is bootstrap.
-  execFileSync('git', ['cat-file', '-e', `${ref}^{commit}`], { cwd: root, stdio: 'pipe' });
-  try { return JSON.parse(execFileSync('git', ['show', `${ref}:${file}`], { cwd: root, encoding: 'utf8', stdio: 'pipe' })); }
+  const revision = execFileSync('git', ['rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`], { cwd: root, encoding: 'utf8', stdio: 'pipe' }).trim();
+  try { return JSON.parse(execFileSync('git', ['show', `${revision}:${file}`], { cwd: root, encoding: 'utf8', stdio: 'pipe' })); }
   catch (error) {
     if (String(error.stderr).includes('does not exist in') || String(error.stderr).includes('exists on disk, but not in')) return null;
     throw error;
@@ -59,7 +59,9 @@ function main(args = process.argv.slice(2)) {
   if (guardBase) process.stdout.write(`version guard base: ${guardBase}\n`);
   const committed = gitBaseline(repoRoot, guardBase || 'HEAD');
   if (args.includes('--update')) {
-    updateFile(file, candidate, [existing, committed]);
+    // With VERSION_GUARD_BASE set only the golden at that base constrains the bump (absent there = no constraint);
+    // the working-tree file is ignored so repeated regenerations on a branch need no per-run version churn.
+    updateFile(file, candidate, guardBase ? [committed] : [existing, committed]);
     process.stdout.write(`${candidate.results.length} golden replays updated\n`);
   } else {
     if (!existing || JSON.stringify(existing) !== JSON.stringify(candidate)) throw new Error('Golden replay baseline differs; version-bump then run pnpm sim:golden --update');

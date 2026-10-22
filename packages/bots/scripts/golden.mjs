@@ -41,12 +41,14 @@ export async function buildBundle() {
 export function verifyBundle(expected, actual) {
   assert.equal(canonicalJson(actual), canonicalJson(expected), 'Bot golden outputs differ; investigate, then increase BOT_VERSION and run bots:golden --update');
 }
-function committedVersion(file) {
+export function committedVersion(file, guardBase = process.env.VERSION_GUARD_BASE || '') {
   // Also guards deletion/replacement of the working fixture. Missing HEAD file is bootstrap.
   const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: fileURLToPath(new URL('../../..', import.meta.url)), encoding: 'utf8' }).trim();
   // VERSION_GUARD_BASE (branch merge-base) overrides HEAD; unset = unchanged.
-  const ref = process.env.VERSION_GUARD_BASE || 'HEAD';
-  console.log(`version guard base: ${ref}`);
+  const ref = guardBase
+    ? execFileSync('git', ['-C', root, 'rev-parse', '--verify', '--end-of-options', `${guardBase}^{commit}`], { encoding: 'utf8' }).trim()
+    : 'HEAD';
+  console.log(`version guard base: ${guardBase || 'HEAD'}`);
   const path = relative(root, file).replaceAll('\\', '/');
   if (path.startsWith('../')) return undefined;
   const names = execFileSync('git', ['-C', root, 'ls-tree', '-r', '--name-only', ref, '--', path], { encoding: 'utf8' }).trim();
@@ -65,8 +67,13 @@ async function main() {
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   if (update) {
     const committed = committedVersion(file);
-    assertUpdate(previous?.botVersion ?? committed, BOT_VERSION);
-    if (committed !== undefined) assertUpdate(committed, BOT_VERSION);
+    if (process.env.VERSION_GUARD_BASE) {
+      // Branch mode: only the golden at the guard base constrains the version (absent there = no constraint).
+      if (committed !== undefined) assertUpdate(committed, BOT_VERSION);
+    } else {
+      assertUpdate(previous?.botVersion ?? committed, BOT_VERSION);
+      if (committed !== undefined) assertUpdate(committed, BOT_VERSION);
+    }
   } else assert.ok(previous, 'Missing bot goldens; run bots:golden --update for the initial 1.0.0 baseline');
   const bundle = await buildBundle();
   if (update) await writeFile(file, `${JSON.stringify(bundle, null, 2)}\n`);

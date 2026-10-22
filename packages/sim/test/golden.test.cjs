@@ -139,3 +139,10 @@ test('Node and Chromium golden hashes, full event logs and playback records agre
     } finally { await server.close(); }
   } finally { fs.rmSync(outDir, { recursive: true, force: true }); }
 });
+
+test('VERSION_GUARD_BASE must be a valid commit (option-like refs are rejected)', () => {
+  for (const ref of ['--no-such-ref', 'no-such-branch-xyz']) {
+    const result = spawnSync(process.execPath, [path.resolve(__dirname, '../scripts/golden.cjs')], { encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: ref } });
+    assert.notEqual(result.status, 0, ref);
+  }
+});
