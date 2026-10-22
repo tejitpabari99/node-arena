@@ -1,0 +1,4281 @@
+{
+  "rulesOfJudgement": "as the game sees it: under the mirrored worldRoot (scale.z=-1), FrontSide",
+  "assets": {
+    "soldier-default": {
+      "proto": {
+        "file": "glb_proto/1_MilitaryDefaultWarriorSkinData.glb",
+        "anims": [
+          "1_Run",
+          "1_Death",
+          "1_ParachuteFly"
+        ],
+        "parts": [
+          {
+            "name": "body",
+            "active": true,
+            "tris": 96,
+            "volAuthored": 0.012,
+            "volSeen": 0.012383,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.206,
+                0.015
+              ],
+              "max": [
+                0.765,
+                0.985
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              28,
+              25,
+              44,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.014,
+              0.483,
+              -0.067
+            ],
+            "sizeSeen": [
+              0.319,
+              0.391,
+              0.228
+            ]
+          },
+          {
+            "name": "belt",
+            "active": true,
+            "tris": 72,
+            "volAuthored": 0.004,
+            "volSeen": 0.003707,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.003,
+                0.009
+              ],
+              "max": [
+                0.203,
+                0.956
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              127,
+              52,
+              21,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.007,
+              0.383,
+              -0.049
+            ],
+            "sizeSeen": [
+              0.349,
+              0.161,
+              0.248
+            ]
+          },
+          {
+            "name": "colar",
+            "active": true,
+            "tris": 38,
+            "volAuthored": 0.003,
+            "volSeen": 0.003064,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.006,
+                0.359
+              ],
+              "max": [
+                0.779,
+                0.892
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              50,
+              47,
+              68,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.039,
+              0.591,
+              -0.126
+            ],
+            "sizeSeen": [
+              0.189,
+              0.16,
+              0.15
+            ]
+          },
+          {
+            "name": "gun5",
+            "active": true,
+            "tris": 174,
+            "volAuthored": 0.003,
+            "volSeen": 0.002863,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.019,
+                0.029
+              ],
+              "max": [
+                0.938,
+                0.996
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              58,
+              60,
+              66,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.012,
+              0.602,
+              -0.003
+            ],
+            "sizeSeen": [
+              0.528,
+              0.602,
+              0.27
+            ]
+          },
+          {
+            "name": "hand_left",
+            "active": true,
+            "tris": 124,
+            "volAuthored": 0.002,
+            "volSeen": 0.002095,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.265,
+                0.035
+              ],
+              "max": [
+                0.867,
+                0.73
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              174,
+              142,
+              131,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.117,
+              0.54,
+              -0.263
+            ],
+            "sizeSeen": [
+              0.131,
+              0.177,
+              0.368
+            ]
+          },
+          {
+            "name": "hand_right",
+            "active": true,
+            "tris": 124,
+            "volAuthored": 0.002,
+            "volSeen": 0.0021000000000000003,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.063,
+                0.041
+              ],
+              "max": [
+                0.826,
+                0.983
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              219,
+              176,
+              153,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.192,
+              0.491,
+              0.033
+            ],
+            "sizeSeen": [
+              0.117,
+              0.229,
+              0.349
+            ]
+          },
+          {
+            "name": "head_2",
+            "active": true,
+            "tris": 128,
+            "volAuthored": 0.033,
+            "volSeen": 0.032729999999999995,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.137,
+                0.003
+              ],
+              "max": [
+                0.983,
+                0.997
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              189,
+              131,
+              100,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.081,
+              0.823,
+              -0.175
+            ],
+            "sizeSeen": [
+              0.428,
+              0.4,
+              0.471
+            ]
+          },
+          {
+            "name": "leg_left",
+            "active": true,
+            "tris": 140,
+            "volAuthored": 0.004,
+            "volSeen": 0.004064,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.034,
+                0.217
+              ],
+              "max": [
+                0.925,
+                0.635
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              31,
+              23,
+              34,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.081,
+              0.266,
+              0.15
+            ],
+            "sizeSeen": [
+              0.162,
+              0.251,
+              0.338
+            ]
+          },
+          {
+            "name": "leg_right",
+            "active": true,
+            "tris": 140,
+            "volAuthored": 0.004,
+            "volSeen": 0.0039889999999999995,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.068,
+                0.038
+              ],
+              "max": [
+                0.934,
+                0.96
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              20,
+              18,
+              36,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.073,
+              0.279,
+              -0.174
+            ],
+            "sizeSeen": [
+              0.162,
+              0.204,
+              0.355
+            ]
+          }
+        ],
+        "embeddedTexture": true,
+        "totalActiveTris": 1036,
+        "bboxSeen": [
+          0.572,
+          0.883,
+          0.766
+        ],
+        "checks": {
+          "winding": {
+            "pass": true,
+            "failing": []
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          },
+          "handedness": {
+            "pass": false,
+            "rightMinusLeftAlongRight": -0.293,
+            "note": "hand_right must lie on the character right (facing = model +z, mirrored root)"
+          },
+          "muzzleSideBind": 1,
+          "weaponSide": {
+            "pass": false,
+            "muzzleSide": 1,
+            "note": "icon 1_Base: grip hand = character right, muzzle toward character left (-1). Far end from hand_right grip, bind pose; corroborates handedness"
+          },
+          "muzzleSideRunFrame0": 1,
+          "runFrame0": {
+            "pass": true,
+            "tolerance": "max node pos delta <= 0.01, max angle <= 2 deg",
+            "durationSec": 0.567,
+            "clip": "1_Run",
+            "channels": 26,
+            "animatedNodes": 11,
+            "maxPosDelta": 0,
+            "maxAngleDeg": 0.531,
+            "worstNode": "body",
+            "staticMeshParts": [],
+            "bboxBindSeen": [
+              0.572,
+              0.883,
+              0.766
+            ],
+            "bboxRun0Seen": [
+              0.572,
+              0.883,
+              0.766
+            ]
+          }
+        }
+      },
+      "rawCandidate": {
+        "file": "proto-check-raw/soldier-default.glb",
+        "anims": [
+          "1_Run",
+          "1_Death",
+          "1_ParachuteFly"
+        ],
+        "parts": [
+          {
+            "name": "body",
+            "active": true,
+            "tris": 96,
+            "volAuthored": 0.012,
+            "volSeen": 0.012383,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.206,
+                0.015
+              ],
+              "max": [
+                0.765,
+                0.985
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              28,
+              25,
+              44,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.014,
+              0.483,
+              -0.067
+            ],
+            "sizeSeen": [
+              0.319,
+              0.391,
+              0.228
+            ]
+          },
+          {
+            "name": "belt",
+            "active": true,
+            "tris": 72,
+            "volAuthored": 0.004,
+            "volSeen": 0.003707,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.003,
+                0.009
+              ],
+              "max": [
+                0.203,
+                0.956
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              127,
+              52,
+              21,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.007,
+              0.383,
+              -0.049
+            ],
+            "sizeSeen": [
+              0.349,
+              0.161,
+              0.248
+            ]
+          },
+          {
+            "name": "colar",
+            "active": true,
+            "tris": 38,
+            "volAuthored": 0.003,
+            "volSeen": 0.003064,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.006,
+                0.359
+              ],
+              "max": [
+                0.779,
+                0.892
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              50,
+              47,
+              68,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.039,
+              0.591,
+              -0.126
+            ],
+            "sizeSeen": [
+              0.189,
+              0.16,
+              0.15
+            ]
+          },
+          {
+            "name": "gun5",
+            "active": true,
+            "tris": 174,
+            "volAuthored": 0.003,
+            "volSeen": 0.002863,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.019,
+                0.029
+              ],
+              "max": [
+                0.938,
+                0.996
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              58,
+              60,
+              66,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.012,
+              0.602,
+              -0.003
+            ],
+            "sizeSeen": [
+              0.528,
+              0.602,
+              0.27
+            ]
+          },
+          {
+            "name": "hand_left",
+            "active": true,
+            "tris": 124,
+            "volAuthored": 0.002,
+            "volSeen": 0.002095,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.265,
+                0.035
+              ],
+              "max": [
+                0.867,
+                0.73
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              174,
+              142,
+              131,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.117,
+              0.54,
+              -0.263
+            ],
+            "sizeSeen": [
+              0.131,
+              0.177,
+              0.368
+            ]
+          },
+          {
+            "name": "hand_right",
+            "active": true,
+            "tris": 124,
+            "volAuthored": 0.002,
+            "volSeen": 0.0021000000000000003,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.063,
+                0.041
+              ],
+              "max": [
+                0.826,
+                0.983
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              219,
+              176,
+              153,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.192,
+              0.491,
+              0.033
+            ],
+            "sizeSeen": [
+              0.117,
+              0.229,
+              0.349
+            ]
+          },
+          {
+            "name": "head_2",
+            "active": true,
+            "tris": 128,
+            "volAuthored": 0.033,
+            "volSeen": 0.032729999999999995,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.137,
+                0.003
+              ],
+              "max": [
+                0.983,
+                0.997
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              189,
+              131,
+              100,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.081,
+              0.823,
+              -0.175
+            ],
+            "sizeSeen": [
+              0.428,
+              0.4,
+              0.471
+            ]
+          },
+          {
+            "name": "leg_left",
+            "active": true,
+            "tris": 140,
+            "volAuthored": 0.004,
+            "volSeen": 0.004064,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.034,
+                0.217
+              ],
+              "max": [
+                0.925,
+                0.635
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              31,
+              23,
+              34,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.081,
+              0.266,
+              0.15
+            ],
+            "sizeSeen": [
+              0.162,
+              0.251,
+              0.338
+            ]
+          },
+          {
+            "name": "leg_right",
+            "active": true,
+            "tris": 140,
+            "volAuthored": 0.004,
+            "volSeen": 0.0039889999999999995,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.068,
+                0.038
+              ],
+              "max": [
+                0.934,
+                0.96
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              20,
+              18,
+              36,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.073,
+              0.279,
+              -0.174
+            ],
+            "sizeSeen": [
+              0.162,
+              0.204,
+              0.355
+            ]
+          }
+        ],
+        "embeddedTexture": true,
+        "totalActiveTris": 1036,
+        "bboxSeen": [
+          0.572,
+          0.883,
+          0.766
+        ],
+        "checks": {
+          "winding": {
+            "pass": true,
+            "failing": []
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          },
+          "handedness": {
+            "pass": true,
+            "rightMinusLeftAlongRight": 0.293,
+            "note": "hand_right must lie on the character right (facing = model +z, mirrored root)"
+          },
+          "muzzleSideBind": -1,
+          "weaponSide": {
+            "pass": true,
+            "muzzleSide": -1,
+            "note": "icon 1_Base: grip hand = character right, muzzle toward character left (-1). Far end from hand_right grip, bind pose; corroborates handedness"
+          },
+          "muzzleSideRunFrame0": -1,
+          "runFrame0": {
+            "pass": true,
+            "tolerance": "max node pos delta <= 0.01, max angle <= 2 deg",
+            "durationSec": 0.567,
+            "clip": "1_Run",
+            "channels": 26,
+            "animatedNodes": 11,
+            "maxPosDelta": 0,
+            "maxAngleDeg": 0.531,
+            "worstNode": "body",
+            "staticMeshParts": [],
+            "bboxBindSeen": [
+              0.572,
+              0.883,
+              0.766
+            ],
+            "bboxRun0Seen": [
+              0.572,
+              0.883,
+              0.766
+            ]
+          }
+        }
+      },
+      "calibration": false
+    },
+    "tank-default": {
+      "proto": {
+        "file": "glb_proto/1_MilitaryAttackWarriorSkinData.glb",
+        "anims": [],
+        "parts": [
+          {
+            "name": "base",
+            "active": true,
+            "tris": 120,
+            "volAuthored": 0.282,
+            "volSeen": 0.281823,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.147,
+                0.043
+              ],
+              "max": [
+                0.975,
+                0.907
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              0,
+              101,
+              188,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.001,
+              0.499,
+              0.327
+            ],
+            "sizeSeen": [
+              0.713,
+              0.565,
+              1.111
+            ]
+          },
+          {
+            "name": "gun",
+            "active": true,
+            "tris": 112,
+            "volAuthored": 0.017,
+            "volSeen": 0.017149,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.191,
+                0.006
+              ],
+              "max": [
+                0.973,
+                0.972
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              76,
+              82,
+              84,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.814,
+              -0.332
+            ],
+            "sizeSeen": [
+              0.235,
+              0.564,
+              0.759
+            ]
+          },
+          {
+            "name": "track",
+            "active": true,
+            "tris": 80,
+            "volAuthored": 0.005,
+            "volSeen": 0.005417,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.006,
+                0.055
+              ],
+              "max": [
+                0.922,
+                0.994
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              81,
+              76,
+              95,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.003,
+              0.263,
+              0.325
+            ],
+            "sizeSeen": [
+              0.863,
+              0.351,
+              0.886
+            ]
+          },
+          {
+            "name": "wheels",
+            "active": true,
+            "tris": 96,
+            "volAuthored": 0.082,
+            "volSeen": 0.08218,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.042,
+                0.019
+              ],
+              "max": [
+                0.976,
+                0.984
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              53,
+              60,
+              72,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.001,
+              0.265,
+              0.322
+            ],
+            "sizeSeen": [
+              0.942,
+              0.268,
+              0.784
+            ]
+          }
+        ],
+        "embeddedTexture": true,
+        "totalActiveTris": 408,
+        "bboxSeen": [
+          0.942,
+          1.009,
+          1.594
+        ],
+        "checks": {
+          "winding": {
+            "pass": true,
+            "failing": []
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          },
+          "bbox": {
+            "pass": true,
+            "measured": [
+              0.942,
+              1.009,
+              1.594
+            ],
+            "expected": [
+              0.94,
+              1,
+              1.6
+            ]
+          }
+        }
+      },
+      "rawCandidate": {
+        "file": "proto-check-raw/tank-default.glb",
+        "anims": [],
+        "parts": [
+          {
+            "name": "base",
+            "active": true,
+            "tris": 120,
+            "volAuthored": 0.282,
+            "volSeen": 0.281823,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.147,
+                0.043
+              ],
+              "max": [
+                0.975,
+                0.907
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              0,
+              101,
+              188,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.001,
+              0.499,
+              0.327
+            ],
+            "sizeSeen": [
+              0.713,
+              0.565,
+              1.111
+            ]
+          },
+          {
+            "name": "gun",
+            "active": true,
+            "tris": 112,
+            "volAuthored": 0.017,
+            "volSeen": 0.017149,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.191,
+                0.006
+              ],
+              "max": [
+                0.973,
+                0.972
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              76,
+              82,
+              84,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.814,
+              -0.332
+            ],
+            "sizeSeen": [
+              0.235,
+              0.564,
+              0.759
+            ]
+          },
+          {
+            "name": "track",
+            "active": true,
+            "tris": 80,
+            "volAuthored": 0.005,
+            "volSeen": 0.005417,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.006,
+                0.055
+              ],
+              "max": [
+                0.922,
+                0.994
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              81,
+              76,
+              95,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.003,
+              0.263,
+              0.325
+            ],
+            "sizeSeen": [
+              0.863,
+              0.351,
+              0.886
+            ]
+          },
+          {
+            "name": "wheels",
+            "active": true,
+            "tris": 96,
+            "volAuthored": 0.082,
+            "volSeen": 0.08218,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.042,
+                0.019
+              ],
+              "max": [
+                0.976,
+                0.984
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              53,
+              60,
+              72,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.001,
+              0.265,
+              0.322
+            ],
+            "sizeSeen": [
+              0.942,
+              0.268,
+              0.784
+            ]
+          }
+        ],
+        "embeddedTexture": true,
+        "totalActiveTris": 408,
+        "bboxSeen": [
+          0.942,
+          1.009,
+          1.594
+        ],
+        "checks": {
+          "winding": {
+            "pass": true,
+            "failing": []
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          },
+          "bbox": {
+            "pass": true,
+            "measured": [
+              0.942,
+              1.009,
+              1.594
+            ],
+            "expected": [
+              0.94,
+              1,
+              1.6
+            ]
+          }
+        }
+      },
+      "calibration": false
+    },
+    "barracks-wt1": {
+      "proto": {
+        "file": "glb_proto_buildings/House_Default__None_.glb",
+        "anims": [],
+        "parts": [
+          {
+            "name": "Art",
+            "active": true,
+            "tris": 310,
+            "volAuthored": 3.545,
+            "volSeen": 3.5448020000000002,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.063,
+                0.006
+              ],
+              "max": [
+                0.979,
+                0.988
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              191,
+              190,
+              193,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.937,
+              0
+            ],
+            "sizeSeen": [
+              1.81,
+              1.874,
+              1.81
+            ]
+          },
+          {
+            "name": "stageMesh_0",
+            "active": true,
+            "tris": 310,
+            "volAuthored": 3.545,
+            "volSeen": 3.5448020000000002,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.063,
+                0.006
+              ],
+              "max": [
+                0.979,
+                0.988
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              191,
+              190,
+              193,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.937,
+              0
+            ],
+            "sizeSeen": [
+              1.81,
+              1.874,
+              1.81
+            ]
+          },
+          {
+            "name": "stageMesh_1",
+            "active": false,
+            "tris": 470,
+            "volAuthored": 4.441,
+            "volSeen": 4.4405600000000005,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.005,
+                0.005
+              ],
+              "max": [
+                0.995,
+                0.988
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              134,
+              129,
+              148,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              1.319,
+              0
+            ],
+            "sizeSeen": [
+              1.81,
+              2.639,
+              1.81
+            ]
+          },
+          {
+            "name": "stageMesh_2",
+            "active": false,
+            "tris": 630,
+            "volAuthored": 5.336,
+            "volSeen": 5.335908000000001,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.023,
+                0.006
+              ],
+              "max": [
+                0.994,
+                0.981
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              177,
+              177,
+              184,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              1.702,
+              0
+            ],
+            "sizeSeen": [
+              1.81,
+              3.404,
+              1.81
+            ]
+          }
+        ],
+        "embeddedTexture": true,
+        "totalActiveTris": 620,
+        "bboxSeen": [
+          1.81,
+          1.874,
+          1.81
+        ],
+        "checks": {
+          "winding": {
+            "pass": true,
+            "failing": []
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          }
+        },
+        "stages": [
+          {
+            "node": "stageMesh_0",
+            "tris": 310,
+            "size": [
+              1.81,
+              1.874,
+              1.81
+            ]
+          },
+          {
+            "node": "stageMesh_1",
+            "tris": 470,
+            "size": [
+              1.81,
+              2.639,
+              1.81
+            ]
+          },
+          {
+            "node": "stageMesh_2",
+            "tris": 630,
+            "size": [
+              1.81,
+              3.404,
+              1.81
+            ]
+          }
+        ]
+      },
+      "rawCandidate": {
+        "file": "proto-check-raw/barracks-wt1.glb",
+        "anims": [],
+        "parts": [
+          {
+            "name": "Art",
+            "active": true,
+            "tris": 310,
+            "volAuthored": 3.545,
+            "volSeen": 3.5448020000000002,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.063,
+                0.006
+              ],
+              "max": [
+                0.979,
+                0.988
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              191,
+              190,
+              193,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.937,
+              0
+            ],
+            "sizeSeen": [
+              1.81,
+              1.874,
+              1.81
+            ]
+          },
+          {
+            "name": "stageMesh_0",
+            "active": true,
+            "tris": 310,
+            "volAuthored": 3.545,
+            "volSeen": 3.5448020000000002,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.063,
+                0.006
+              ],
+              "max": [
+                0.979,
+                0.988
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              191,
+              190,
+              193,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.937,
+              0
+            ],
+            "sizeSeen": [
+              1.81,
+              1.874,
+              1.81
+            ]
+          },
+          {
+            "name": "stageMesh_1",
+            "active": false,
+            "tris": 470,
+            "volAuthored": 4.441,
+            "volSeen": 4.4405600000000005,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.005,
+                0.005
+              ],
+              "max": [
+                0.995,
+                0.988
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              134,
+              129,
+              148,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              1.319,
+              0
+            ],
+            "sizeSeen": [
+              1.81,
+              2.639,
+              1.81
+            ]
+          },
+          {
+            "name": "stageMesh_2",
+            "active": false,
+            "tris": 630,
+            "volAuthored": 5.336,
+            "volSeen": 5.335908000000001,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.023,
+                0.006
+              ],
+              "max": [
+                0.994,
+                0.981
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              177,
+              177,
+              184,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              1.702,
+              0
+            ],
+            "sizeSeen": [
+              1.81,
+              3.404,
+              1.81
+            ]
+          }
+        ],
+        "embeddedTexture": true,
+        "totalActiveTris": 620,
+        "bboxSeen": [
+          1.81,
+          1.874,
+          1.81
+        ],
+        "checks": {
+          "winding": {
+            "pass": true,
+            "failing": []
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          }
+        },
+        "stages": [
+          {
+            "node": "stageMesh_0",
+            "tris": 310,
+            "size": [
+              1.81,
+              1.874,
+              1.81
+            ]
+          },
+          {
+            "node": "stageMesh_1",
+            "tris": 470,
+            "size": [
+              1.81,
+              2.639,
+              1.81
+            ]
+          },
+          {
+            "node": "stageMesh_2",
+            "tris": 630,
+            "size": [
+              1.81,
+              3.404,
+              1.81
+            ]
+          }
+        ]
+      },
+      "calibration": false
+    },
+    "factory-wt2": {
+      "proto": {
+        "file": "glb_proto_buildings/House_Attack__None_.glb",
+        "anims": [],
+        "parts": [
+          {
+            "name": "factory_base",
+            "active": true,
+            "tris": 200,
+            "volAuthored": 3.277,
+            "volSeen": 3.2771529999999998,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.996,
+                0.976
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              98,
+              93,
+              98,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.05,
+              0.862,
+              0.063
+            ],
+            "sizeSeen": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          },
+          {
+            "name": "main_pipe1",
+            "active": true,
+            "tris": 60,
+            "volAuthored": 0.251,
+            "volSeen": 0.251194,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.085,
+                0.332
+              ],
+              "max": [
+                0.525,
+                0.692
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              49,
+              54,
+              70,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.102,
+              1.3,
+              -0.827
+            ],
+            "sizeSeen": [
+              0.436,
+              2.642,
+              0.424
+            ]
+          },
+          {
+            "name": "main_pipe2",
+            "active": true,
+            "tris": 60,
+            "volAuthored": 0.251,
+            "volSeen": 0.251194,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.011,
+                0.11
+              ],
+              "max": [
+                0.972,
+                0.47
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              50,
+              55,
+              70,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.175,
+              1.3,
+              -0.595
+            ],
+            "sizeSeen": [
+              0.436,
+              2.642,
+              0.424
+            ]
+          },
+          {
+            "name": "main_pipe3",
+            "active": true,
+            "tris": 60,
+            "volAuthored": 0.251,
+            "volSeen": 0.251194,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.044,
+                0.425
+              ],
+              "max": [
+                0.757,
+                0.785
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              50,
+              50,
+              70,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.451,
+              1.3,
+              -0.363
+            ],
+            "sizeSeen": [
+              0.436,
+              2.642,
+              0.424
+            ]
+          },
+          {
+            "name": "SecondLevelSmallPipe",
+            "active": false,
+            "tris": 128,
+            "volAuthored": 0.032,
+            "volSeen": 0.032229999999999995,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.201,
+                0.332
+              ],
+              "max": [
+                0.96,
+                0.971
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              33,
+              28,
+              46,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.479,
+              1.067,
+              0.076
+            ],
+            "sizeSeen": [
+              0.372,
+              0.423,
+              0.258
+            ]
+          },
+          {
+            "name": "SecondLevelSmallPipe",
+            "active": false,
+            "tris": 128,
+            "volAuthored": 0.039,
+            "volSeen": 0.038674999999999994,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.069,
+                0.196
+              ],
+              "max": [
+                0.97,
+                0.953
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              33,
+              25,
+              46,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.103,
+              1.281,
+              0.565
+            ],
+            "sizeSeen": [
+              0.397,
+              0.507,
+              0.383
+            ]
+          },
+          {
+            "name": "ThirdLevelSmallPipe",
+            "active": true,
+            "tris": 128,
+            "volAuthored": 0.032,
+            "volSeen": 0.032225000000000004,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.201,
+                0.332
+              ],
+              "max": [
+                0.96,
+                0.971
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              33,
+              28,
+              46,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.479,
+              1.067,
+              0.129
+            ],
+            "sizeSeen": [
+              0.372,
+              0.423,
+              0.258
+            ]
+          },
+          {
+            "name": "ThirdLevelSmallPipe",
+            "active": true,
+            "tris": 128,
+            "volAuthored": 0.032,
+            "volSeen": 0.032228,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.069,
+                0.196
+              ],
+              "max": [
+                0.97,
+                0.953
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              33,
+              25,
+              46,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.479,
+              1.067,
+              -0.145
+            ],
+            "sizeSeen": [
+              0.372,
+              0.423,
+              0.258
+            ]
+          },
+          {
+            "name": "ThirdLevelSmallPipe",
+            "active": true,
+            "tris": 128,
+            "volAuthored": 0.039,
+            "volSeen": 0.038672,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.069,
+                0.196
+              ],
+              "max": [
+                0.97,
+                0.953
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              33,
+              25,
+              46,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.075,
+              1.281,
+              0.598
+            ],
+            "sizeSeen": [
+              0.397,
+              0.507,
+              0.383
+            ]
+          },
+          {
+            "name": "windows_",
+            "active": false,
+            "tris": 52,
+            "volAuthored": 0.016,
+            "volSeen": 0.016486999999999998,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.033,
+                0.119
+              ],
+              "max": [
+                0.553,
+                0.858
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              135,
+              132,
+              146,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.16,
+              1.463,
+              0.333
+            ],
+            "sizeSeen": [
+              0.514,
+              0.194,
+              0.593
+            ]
+          },
+          {
+            "name": "stageMesh_0",
+            "active": true,
+            "tris": 200,
+            "volAuthored": 3.255,
+            "volSeen": 3.255083,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.996,
+                0.976
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              98,
+              93,
+              98,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.862,
+              0
+            ],
+            "sizeSeen": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          },
+          {
+            "name": "stageMesh_1",
+            "active": false,
+            "tris": 200,
+            "volAuthored": 3.255,
+            "volSeen": 3.255083,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.996,
+                0.976
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              98,
+              93,
+              98,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.862,
+              0
+            ],
+            "sizeSeen": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          },
+          {
+            "name": "stageMesh_2",
+            "active": false,
+            "tris": 200,
+            "volAuthored": 3.255,
+            "volSeen": 3.255083,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.996,
+                0.976
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              98,
+              93,
+              98,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.862,
+              0
+            ],
+            "sizeSeen": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          }
+        ],
+        "embeddedTexture": true,
+        "totalActiveTris": 964,
+        "bboxSeen": [
+          2.243,
+          2.642,
+          2.234
+        ],
+        "checks": {
+          "winding": {
+            "pass": true,
+            "failing": []
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          }
+        },
+        "stages": [
+          {
+            "node": "stageMesh_0",
+            "tris": 200,
+            "size": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          },
+          {
+            "node": "stageMesh_1",
+            "tris": 200,
+            "size": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          },
+          {
+            "node": "stageMesh_2",
+            "tris": 200,
+            "size": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          }
+        ]
+      },
+      "rawCandidate": {
+        "file": "proto-check-raw/factory-wt2.glb",
+        "anims": [],
+        "parts": [
+          {
+            "name": "factory_base",
+            "active": true,
+            "tris": 200,
+            "volAuthored": 3.277,
+            "volSeen": 3.2771529999999998,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.996,
+                0.976
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              98,
+              93,
+              98,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.05,
+              0.862,
+              0.063
+            ],
+            "sizeSeen": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          },
+          {
+            "name": "main_pipe1",
+            "active": true,
+            "tris": 60,
+            "volAuthored": 0.251,
+            "volSeen": 0.251194,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.085,
+                0.332
+              ],
+              "max": [
+                0.525,
+                0.692
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              49,
+              54,
+              70,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.102,
+              1.3,
+              -0.827
+            ],
+            "sizeSeen": [
+              0.436,
+              2.642,
+              0.424
+            ]
+          },
+          {
+            "name": "main_pipe2",
+            "active": true,
+            "tris": 60,
+            "volAuthored": 0.251,
+            "volSeen": 0.251194,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.011,
+                0.11
+              ],
+              "max": [
+                0.972,
+                0.47
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              50,
+              55,
+              70,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.175,
+              1.3,
+              -0.595
+            ],
+            "sizeSeen": [
+              0.436,
+              2.642,
+              0.424
+            ]
+          },
+          {
+            "name": "main_pipe3",
+            "active": true,
+            "tris": 60,
+            "volAuthored": 0.251,
+            "volSeen": 0.251194,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.044,
+                0.425
+              ],
+              "max": [
+                0.757,
+                0.785
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              50,
+              50,
+              70,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.451,
+              1.3,
+              -0.363
+            ],
+            "sizeSeen": [
+              0.436,
+              2.642,
+              0.424
+            ]
+          },
+          {
+            "name": "SecondLevelSmallPipe",
+            "active": false,
+            "tris": 128,
+            "volAuthored": 0.032,
+            "volSeen": 0.032229999999999995,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.201,
+                0.332
+              ],
+              "max": [
+                0.96,
+                0.971
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              33,
+              28,
+              46,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.479,
+              1.067,
+              0.076
+            ],
+            "sizeSeen": [
+              0.372,
+              0.423,
+              0.258
+            ]
+          },
+          {
+            "name": "SecondLevelSmallPipe",
+            "active": false,
+            "tris": 128,
+            "volAuthored": 0.039,
+            "volSeen": 0.038674999999999994,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.069,
+                0.196
+              ],
+              "max": [
+                0.97,
+                0.953
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              33,
+              25,
+              46,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.103,
+              1.281,
+              0.565
+            ],
+            "sizeSeen": [
+              0.397,
+              0.507,
+              0.383
+            ]
+          },
+          {
+            "name": "ThirdLevelSmallPipe",
+            "active": true,
+            "tris": 128,
+            "volAuthored": 0.032,
+            "volSeen": 0.032225000000000004,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.201,
+                0.332
+              ],
+              "max": [
+                0.96,
+                0.971
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              33,
+              28,
+              46,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.479,
+              1.067,
+              0.129
+            ],
+            "sizeSeen": [
+              0.372,
+              0.423,
+              0.258
+            ]
+          },
+          {
+            "name": "ThirdLevelSmallPipe",
+            "active": true,
+            "tris": 128,
+            "volAuthored": 0.032,
+            "volSeen": 0.032228,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.069,
+                0.196
+              ],
+              "max": [
+                0.97,
+                0.953
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              33,
+              25,
+              46,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.479,
+              1.067,
+              -0.145
+            ],
+            "sizeSeen": [
+              0.372,
+              0.423,
+              0.258
+            ]
+          },
+          {
+            "name": "ThirdLevelSmallPipe",
+            "active": true,
+            "tris": 128,
+            "volAuthored": 0.039,
+            "volSeen": 0.038672,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.069,
+                0.196
+              ],
+              "max": [
+                0.97,
+                0.953
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              33,
+              25,
+              46,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.075,
+              1.281,
+              0.598
+            ],
+            "sizeSeen": [
+              0.397,
+              0.507,
+              0.383
+            ]
+          },
+          {
+            "name": "windows_",
+            "active": false,
+            "tris": 52,
+            "volAuthored": 0.016,
+            "volSeen": 0.016486999999999998,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.033,
+                0.119
+              ],
+              "max": [
+                0.553,
+                0.858
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              135,
+              132,
+              146,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.16,
+              1.463,
+              0.333
+            ],
+            "sizeSeen": [
+              0.514,
+              0.194,
+              0.593
+            ]
+          },
+          {
+            "name": "stageMesh_0",
+            "active": true,
+            "tris": 200,
+            "volAuthored": 3.255,
+            "volSeen": 3.255083,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.996,
+                0.976
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              98,
+              93,
+              98,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.862,
+              0
+            ],
+            "sizeSeen": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          },
+          {
+            "name": "stageMesh_1",
+            "active": false,
+            "tris": 200,
+            "volAuthored": 3.255,
+            "volSeen": 3.255083,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.996,
+                0.976
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              98,
+              93,
+              98,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.862,
+              0
+            ],
+            "sizeSeen": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          },
+          {
+            "name": "stageMesh_2",
+            "active": false,
+            "tris": 200,
+            "volAuthored": 3.255,
+            "volSeen": 3.255083,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.996,
+                0.976
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              98,
+              93,
+              98,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0,
+              0.862,
+              0
+            ],
+            "sizeSeen": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          }
+        ],
+        "embeddedTexture": true,
+        "totalActiveTris": 964,
+        "bboxSeen": [
+          2.243,
+          2.642,
+          2.234
+        ],
+        "checks": {
+          "winding": {
+            "pass": true,
+            "failing": []
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          }
+        },
+        "stages": [
+          {
+            "node": "stageMesh_0",
+            "tris": 200,
+            "size": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          },
+          {
+            "node": "stageMesh_1",
+            "tris": 200,
+            "size": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          },
+          {
+            "node": "stageMesh_2",
+            "tris": 200,
+            "size": [
+              2.192,
+              1.724,
+              2.171
+            ]
+          }
+        ]
+      },
+      "calibration": false
+    },
+    "watch-tower": {
+      "proto": {
+        "file": "glb_proto_buildings/Tower.glb",
+        "anims": [],
+        "parts": [
+          {
+            "name": "Art",
+            "active": true,
+            "tris": 118,
+            "volAuthored": 2.13,
+            "volSeen": 2.129975,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.993,
+                0.917
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              115,
+              111,
+              116,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              4.3,
+              1.302,
+              0.57
+            ],
+            "sizeSeen": [
+              1.839,
+              2.604,
+              1.839
+            ]
+          },
+          {
+            "name": "stageMesh_0",
+            "active": true,
+            "tris": 118,
+            "volAuthored": 2.13,
+            "volSeen": 2.129975,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.993,
+                0.917
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              115,
+              111,
+              116,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              4.3,
+              1.302,
+              0.57
+            ],
+            "sizeSeen": [
+              1.839,
+              2.604,
+              1.839
+            ]
+          },
+          {
+            "name": "stageMesh_1",
+            "active": false,
+            "tris": 168,
+            "volAuthored": 3.84,
+            "volSeen": 3.839832,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.024,
+                0.042
+              ],
+              "max": [
+                0.996,
+                0.96
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              173,
+              169,
+              184,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              4.3,
+              1.683,
+              0.57
+            ],
+            "sizeSeen": [
+              1.999,
+              3.365,
+              1.999
+            ]
+          },
+          {
+            "name": "stageMesh_2",
+            "active": false,
+            "tris": 182,
+            "volAuthored": 6.319,
+            "volSeen": 6.319319,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.045,
+                0.011
+              ],
+              "max": [
+                0.968,
+                0.953
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              72,
+              72,
+              87,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              4.3,
+              2.202,
+              0.57
+            ],
+            "sizeSeen": [
+              2.141,
+              4.403,
+              2.141
+            ]
+          }
+        ],
+        "embeddedTexture": false,
+        "totalActiveTris": 236,
+        "bboxSeen": [
+          1.839,
+          2.604,
+          1.839
+        ],
+        "checks": {
+          "winding": {
+            "pass": true,
+            "failing": []
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          }
+        },
+        "stages": [
+          {
+            "node": "stageMesh_0",
+            "tris": 118,
+            "size": [
+              1.839,
+              2.604,
+              1.839
+            ]
+          },
+          {
+            "node": "stageMesh_1",
+            "tris": 168,
+            "size": [
+              1.999,
+              3.365,
+              1.999
+            ]
+          },
+          {
+            "node": "stageMesh_2",
+            "tris": 182,
+            "size": [
+              2.141,
+              4.403,
+              2.141
+            ]
+          }
+        ]
+      },
+      "rawCandidate": {
+        "file": "proto-check-raw/watch-tower.glb",
+        "anims": [],
+        "parts": [
+          {
+            "name": "Art",
+            "active": true,
+            "tris": 118,
+            "volAuthored": 2.13,
+            "volSeen": 2.129975,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.993,
+                0.917
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              115,
+              111,
+              116,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -4.3,
+              1.302,
+              0.57
+            ],
+            "sizeSeen": [
+              1.839,
+              2.604,
+              1.839
+            ]
+          },
+          {
+            "name": "stageMesh_0",
+            "active": true,
+            "tris": 118,
+            "volAuthored": 2.13,
+            "volSeen": 2.129975,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.004,
+                0.004
+              ],
+              "max": [
+                0.993,
+                0.917
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              115,
+              111,
+              116,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -4.3,
+              1.302,
+              0.57
+            ],
+            "sizeSeen": [
+              1.839,
+              2.604,
+              1.839
+            ]
+          },
+          {
+            "name": "stageMesh_1",
+            "active": false,
+            "tris": 168,
+            "volAuthored": 3.84,
+            "volSeen": 3.839832,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.024,
+                0.042
+              ],
+              "max": [
+                0.996,
+                0.96
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              173,
+              169,
+              184,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -4.3,
+              1.683,
+              0.57
+            ],
+            "sizeSeen": [
+              1.999,
+              3.365,
+              1.999
+            ]
+          },
+          {
+            "name": "stageMesh_2",
+            "active": false,
+            "tris": 182,
+            "volAuthored": 6.319,
+            "volSeen": 6.319319,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.045,
+                0.011
+              ],
+              "max": [
+                0.968,
+                0.953
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              72,
+              72,
+              87,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -4.3,
+              2.202,
+              0.57
+            ],
+            "sizeSeen": [
+              2.141,
+              4.403,
+              2.141
+            ]
+          }
+        ],
+        "embeddedTexture": false,
+        "totalActiveTris": 236,
+        "bboxSeen": [
+          1.839,
+          2.604,
+          1.839
+        ],
+        "checks": {
+          "winding": {
+            "pass": true,
+            "failing": []
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          }
+        },
+        "stages": [
+          {
+            "node": "stageMesh_0",
+            "tris": 118,
+            "size": [
+              1.839,
+              2.604,
+              1.839
+            ]
+          },
+          {
+            "node": "stageMesh_1",
+            "tris": 168,
+            "size": [
+              1.999,
+              3.365,
+              1.999
+            ]
+          },
+          {
+            "node": "stageMesh_2",
+            "tris": 182,
+            "size": [
+              2.141,
+              4.403,
+              2.141
+            ]
+          }
+        ]
+      },
+      "calibration": false
+    },
+    "calibration-cowboy": {
+      "proto": {
+        "file": "glb_proto/10_CowboyDefaultWarriorSkinDara.glb",
+        "anims": [
+          "10_Death",
+          "10_Run",
+          "10_ParachuteFly"
+        ],
+        "parts": [
+          {
+            "name": "body",
+            "active": true,
+            "tris": 64,
+            "volAuthored": 0.004,
+            "volSeen": 0.0044139999999999995,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.043,
+                0.029
+              ],
+              "max": [
+                0.997,
+                0.997
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              160,
+              159,
+              162,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.014,
+              0.486,
+              -0.061
+            ],
+            "sizeSeen": [
+              0.315,
+              0.408,
+              0.242
+            ]
+          },
+          {
+            "name": "belt",
+            "active": true,
+            "tris": 72,
+            "volAuthored": 0.004,
+            "volSeen": 0.003908,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.013,
+                0.196
+              ],
+              "max": [
+                0.281,
+                0.819
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              71,
+              19,
+              6,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.007,
+              0.383,
+              -0.051
+            ],
+            "sizeSeen": [
+              0.349,
+              0.167,
+              0.262
+            ]
+          },
+          {
+            "name": "belt_part",
+            "active": true,
+            "tris": 36,
+            "volAuthored": 0,
+            "volSeen": 0.000149,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.205,
+                0.03
+              ],
+              "max": [
+                0.761,
+                0.915
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              196,
+              124,
+              0,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.011,
+              0.334,
+              -0.171
+            ],
+            "sizeSeen": [
+              0.115,
+              0.092,
+              0.05
+            ]
+          },
+          {
+            "name": "collar",
+            "active": true,
+            "tris": 20,
+            "volAuthored": 0.003,
+            "volSeen": 0.002911,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.422,
+                0.029
+              ],
+              "max": [
+                0.961,
+                0.555
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              162,
+              156,
+              156,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.042,
+              0.618,
+              -0.162
+            ],
+            "sizeSeen": [
+              0.215,
+              0.142,
+              0.108
+            ]
+          },
+          {
+            "name": "hand_left",
+            "active": true,
+            "tris": 124,
+            "volAuthored": 0.002,
+            "volSeen": 0.002095,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.052,
+                0.022
+              ],
+              "max": [
+                0.841,
+                0.963
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              213,
+              169,
+              127,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.117,
+              0.54,
+              -0.263
+            ],
+            "sizeSeen": [
+              0.131,
+              0.177,
+              0.368
+            ]
+          },
+          {
+            "name": "hand_right",
+            "active": true,
+            "tris": 124,
+            "volAuthored": 0.002,
+            "volSeen": 0.002089,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.069,
+                0.063
+              ],
+              "max": [
+                0.787,
+                0.918
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              169,
+              120,
+              96,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.189,
+              0.492,
+              0.024
+            ],
+            "sizeSeen": [
+              0.123,
+              0.227,
+              0.331
+            ]
+          },
+          {
+            "name": "cowboy_weapon",
+            "active": true,
+            "tris": 134,
+            "volAuthored": 0.001,
+            "volSeen": 0.001244,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.032,
+                0.032
+              ],
+              "max": [
+                0.756,
+                0.93
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              68,
+              51,
+              85,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.121,
+              0.373,
+              0.137
+            ],
+            "sizeSeen": [
+              0.159,
+              0.27,
+              0.162
+            ]
+          },
+          {
+            "name": "head_2",
+            "active": true,
+            "tris": 100,
+            "volAuthored": -0.01,
+            "volSeen": -0.009968,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.157,
+                0.197
+              ],
+              "max": [
+                0.696,
+                0.848
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              171,
+              119,
+              92,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.101,
+              0.78,
+              -0.165
+            ],
+            "sizeSeen": [
+              0.376,
+              0.296,
+              0.346
+            ]
+          },
+          {
+            "name": "glasses",
+            "active": true,
+            "tris": 122,
+            "volAuthored": 0.002,
+            "volSeen": 0.001943,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.032,
+                0.061
+              ],
+              "max": [
+                0.996,
+                0.9
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              221,
+              162,
+              25,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.097,
+              0.777,
+              -0.211
+            ],
+            "sizeSeen": [
+              0.401,
+              0.233,
+              0.288
+            ]
+          },
+          {
+            "name": "hat",
+            "active": true,
+            "tris": 64,
+            "volAuthored": 0.038,
+            "volSeen": 0.037756,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.003,
+                0.003
+              ],
+              "max": [
+                0.937,
+                0.981
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              84,
+              134,
+              224,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.122,
+              0.915,
+              -0.202
+            ],
+            "sizeSeen": [
+              0.464,
+              0.247,
+              0.512
+            ]
+          },
+          {
+            "name": "holster",
+            "active": true,
+            "tris": 36,
+            "volAuthored": 0.001,
+            "volSeen": 0.0009310000000000001,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.049,
+                0.025
+              ],
+              "max": [
+                0.657,
+                0.956
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              109,
+              58,
+              38,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.197,
+              0.333,
+              -0.046
+            ],
+            "sizeSeen": [
+              0.074,
+              0.194,
+              0.174
+            ]
+          },
+          {
+            "name": "jacket",
+            "active": true,
+            "tris": 106,
+            "volAuthored": 0.015,
+            "volSeen": 0.015026999999999999,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.117,
+                0.003
+              ],
+              "max": [
+                0.81,
+                0.972
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              148,
+              81,
+              53,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.023,
+              0.523,
+              -0.076
+            ],
+            "sizeSeen": [
+              0.314,
+              0.324,
+              0.259
+            ]
+          },
+          {
+            "name": "leg_left",
+            "active": true,
+            "tris": 140,
+            "volAuthored": 0.004,
+            "volSeen": 0.004064,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.046,
+                0.22
+              ],
+              "max": [
+                0.854,
+                0.731
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              59,
+              16,
+              9,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.081,
+              0.266,
+              0.15
+            ],
+            "sizeSeen": [
+              0.162,
+              0.251,
+              0.338
+            ]
+          },
+          {
+            "name": "leg_right",
+            "active": true,
+            "tris": 140,
+            "volAuthored": 0.004,
+            "volSeen": 0.0039889999999999995,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.285,
+                0.066
+              ],
+              "max": [
+                0.974,
+                0.799
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              54,
+              11,
+              3,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.073,
+              0.279,
+              -0.174
+            ],
+            "sizeSeen": [
+              0.162,
+              0.204,
+              0.355
+            ]
+          }
+        ],
+        "embeddedTexture": true,
+        "totalActiveTris": 1282,
+        "bboxSeen": [
+          0.536,
+          0.898,
+          0.777
+        ],
+        "checks": {
+          "winding": {
+            "pass": false,
+            "failing": [
+              "head_2"
+            ]
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          },
+          "bbox": {
+            "pass": true,
+            "measured": [
+              0.536,
+              0.898,
+              0.777
+            ],
+            "expected": [
+              0.6,
+              0.9,
+              0.85
+            ]
+          },
+          "handedness": {
+            "pass": false,
+            "rightMinusLeftAlongRight": -0.293,
+            "note": "hand_right must lie on the character right (facing = model +z, mirrored root)"
+          },
+          "muzzleSideBind": -1,
+          "rightPart": {
+            "part": "holster",
+            "pass": false,
+            "note": "asymmetric prop expected on the character right (cowboy holster)"
+          },
+          "muzzleSideRunFrame0": -1,
+          "runFrame0": {
+            "pass": true,
+            "tolerance": "max node pos delta <= 0.01, max angle <= 2 deg",
+            "durationSec": 0.533,
+            "clip": "10_Run",
+            "channels": 41,
+            "animatedNodes": 16,
+            "maxPosDelta": 0,
+            "maxAngleDeg": 1.113,
+            "worstNode": "head_2",
+            "staticMeshParts": [],
+            "bboxBindSeen": [
+              0.536,
+              0.898,
+              0.777
+            ],
+            "bboxRun0Seen": [
+              0.536,
+              0.898,
+              0.777
+            ]
+          }
+        }
+      },
+      "rawCandidate": {
+        "file": "proto-check-raw/calibration-cowboy.glb",
+        "anims": [
+          "10_Death",
+          "10_Run",
+          "10_ParachuteFly"
+        ],
+        "parts": [
+          {
+            "name": "body",
+            "active": true,
+            "tris": 64,
+            "volAuthored": 0.004,
+            "volSeen": 0.0044139999999999995,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.043,
+                0.029
+              ],
+              "max": [
+                0.997,
+                0.997
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              160,
+              159,
+              162,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.014,
+              0.486,
+              -0.061
+            ],
+            "sizeSeen": [
+              0.315,
+              0.408,
+              0.242
+            ]
+          },
+          {
+            "name": "belt",
+            "active": true,
+            "tris": 72,
+            "volAuthored": 0.004,
+            "volSeen": 0.003908,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.013,
+                0.196
+              ],
+              "max": [
+                0.281,
+                0.819
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              71,
+              19,
+              6,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.007,
+              0.383,
+              -0.051
+            ],
+            "sizeSeen": [
+              0.349,
+              0.167,
+              0.262
+            ]
+          },
+          {
+            "name": "belt_part",
+            "active": true,
+            "tris": 36,
+            "volAuthored": 0,
+            "volSeen": 0.000149,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.205,
+                0.03
+              ],
+              "max": [
+                0.761,
+                0.915
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              196,
+              124,
+              0,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.011,
+              0.334,
+              -0.171
+            ],
+            "sizeSeen": [
+              0.115,
+              0.092,
+              0.05
+            ]
+          },
+          {
+            "name": "collar",
+            "active": true,
+            "tris": 20,
+            "volAuthored": 0.003,
+            "volSeen": 0.002911,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.422,
+                0.029
+              ],
+              "max": [
+                0.961,
+                0.555
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              162,
+              156,
+              156,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.042,
+              0.618,
+              -0.162
+            ],
+            "sizeSeen": [
+              0.215,
+              0.142,
+              0.108
+            ]
+          },
+          {
+            "name": "hand_left",
+            "active": true,
+            "tris": 124,
+            "volAuthored": 0.002,
+            "volSeen": 0.002095,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.052,
+                0.022
+              ],
+              "max": [
+                0.841,
+                0.963
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              213,
+              169,
+              127,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.117,
+              0.54,
+              -0.263
+            ],
+            "sizeSeen": [
+              0.131,
+              0.177,
+              0.368
+            ]
+          },
+          {
+            "name": "hand_right",
+            "active": true,
+            "tris": 124,
+            "volAuthored": 0.002,
+            "volSeen": 0.002089,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.069,
+                0.063
+              ],
+              "max": [
+                0.787,
+                0.918
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              169,
+              120,
+              96,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.189,
+              0.492,
+              0.024
+            ],
+            "sizeSeen": [
+              0.123,
+              0.227,
+              0.331
+            ]
+          },
+          {
+            "name": "cowboy_weapon",
+            "active": true,
+            "tris": 134,
+            "volAuthored": 0.001,
+            "volSeen": 0.001244,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.032,
+                0.032
+              ],
+              "max": [
+                0.756,
+                0.93
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              68,
+              51,
+              85,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.121,
+              0.373,
+              0.137
+            ],
+            "sizeSeen": [
+              0.159,
+              0.27,
+              0.162
+            ]
+          },
+          {
+            "name": "head_2",
+            "active": true,
+            "tris": 100,
+            "volAuthored": -0.01,
+            "volSeen": -0.009968,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.157,
+                0.197
+              ],
+              "max": [
+                0.696,
+                0.848
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              171,
+              119,
+              92,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.101,
+              0.78,
+              -0.165
+            ],
+            "sizeSeen": [
+              0.376,
+              0.296,
+              0.346
+            ]
+          },
+          {
+            "name": "glasses",
+            "active": true,
+            "tris": 122,
+            "volAuthored": 0.002,
+            "volSeen": 0.001943,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.032,
+                0.061
+              ],
+              "max": [
+                0.996,
+                0.9
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              221,
+              162,
+              25,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.097,
+              0.777,
+              -0.211
+            ],
+            "sizeSeen": [
+              0.401,
+              0.233,
+              0.288
+            ]
+          },
+          {
+            "name": "hat",
+            "active": true,
+            "tris": 64,
+            "volAuthored": 0.038,
+            "volSeen": 0.037756,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.003,
+                0.003
+              ],
+              "max": [
+                0.937,
+                0.981
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              84,
+              134,
+              224,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.122,
+              0.915,
+              -0.202
+            ],
+            "sizeSeen": [
+              0.464,
+              0.247,
+              0.512
+            ]
+          },
+          {
+            "name": "holster",
+            "active": true,
+            "tris": 36,
+            "volAuthored": 0.001,
+            "volSeen": 0.0009310000000000001,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.049,
+                0.025
+              ],
+              "max": [
+                0.657,
+                0.956
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              109,
+              58,
+              38,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.197,
+              0.333,
+              -0.046
+            ],
+            "sizeSeen": [
+              0.074,
+              0.194,
+              0.174
+            ]
+          },
+          {
+            "name": "jacket",
+            "active": true,
+            "tris": 106,
+            "volAuthored": 0.015,
+            "volSeen": 0.015026999999999999,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.117,
+                0.003
+              ],
+              "max": [
+                0.81,
+                0.972
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              148,
+              81,
+              53,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.023,
+              0.523,
+              -0.076
+            ],
+            "sizeSeen": [
+              0.314,
+              0.324,
+              0.259
+            ]
+          },
+          {
+            "name": "leg_left",
+            "active": true,
+            "tris": 140,
+            "volAuthored": 0.004,
+            "volSeen": 0.004064,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.046,
+                0.22
+              ],
+              "max": [
+                0.854,
+                0.731
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              59,
+              16,
+              9,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              -0.081,
+              0.266,
+              0.15
+            ],
+            "sizeSeen": [
+              0.162,
+              0.251,
+              0.338
+            ]
+          },
+          {
+            "name": "leg_right",
+            "active": true,
+            "tris": 140,
+            "volAuthored": 0.004,
+            "volSeen": 0.0039889999999999995,
+            "normalAgree": 1,
+            "uv": {
+              "min": [
+                0.285,
+                0.066
+              ],
+              "max": [
+                0.974,
+                0.799
+              ],
+              "inRange": true,
+              "outOfRange": 0
+            },
+            "texel": [
+              54,
+              11,
+              3,
+              255
+            ],
+            "texelOpaque": true,
+            "centerSeen": [
+              0.073,
+              0.279,
+              -0.174
+            ],
+            "sizeSeen": [
+              0.162,
+              0.204,
+              0.355
+            ]
+          }
+        ],
+        "embeddedTexture": true,
+        "totalActiveTris": 1282,
+        "bboxSeen": [
+          0.536,
+          0.898,
+          0.777
+        ],
+        "checks": {
+          "winding": {
+            "pass": false,
+            "failing": [
+              "head_2"
+            ]
+          },
+          "uvRange": {
+            "pass": true,
+            "failing": []
+          },
+          "centroidTexel": {
+            "pass": true,
+            "failing": []
+          },
+          "bbox": {
+            "pass": true,
+            "measured": [
+              0.536,
+              0.898,
+              0.777
+            ],
+            "expected": [
+              0.6,
+              0.9,
+              0.85
+            ]
+          },
+          "handedness": {
+            "pass": true,
+            "rightMinusLeftAlongRight": 0.293,
+            "note": "hand_right must lie on the character right (facing = model +z, mirrored root)"
+          },
+          "muzzleSideBind": 1,
+          "rightPart": {
+            "part": "holster",
+            "pass": true,
+            "note": "asymmetric prop expected on the character right (cowboy holster)"
+          },
+          "muzzleSideRunFrame0": 1,
+          "runFrame0": {
+            "pass": true,
+            "tolerance": "max node pos delta <= 0.01, max angle <= 2 deg",
+            "durationSec": 0.533,
+            "clip": "10_Run",
+            "channels": 41,
+            "animatedNodes": 16,
+            "maxPosDelta": 0,
+            "maxAngleDeg": 1.113,
+            "worstNode": "head_2",
+            "staticMeshParts": [],
+            "bboxBindSeen": [
+              0.536,
+              0.898,
+              0.777
+            ],
+            "bboxRun0Seen": [
+              0.536,
+              0.898,
+              0.777
+            ]
+          }
+        }
+      },
+      "calibration": true
+    }
+  }
+}
