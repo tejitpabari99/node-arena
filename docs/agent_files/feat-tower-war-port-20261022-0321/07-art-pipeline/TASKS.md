@@ -17,8 +17,8 @@ Source of truth: [PRD.md](PRD.md). Order follows the PRD: validation (R2) gates 
 | 6 | Renderer registry + manifest resolve rewrite | 5 | done |
 | 7 | Building + tower renderer (stages, labels) | 6 | done |
 | 8 | Unit renderer (instancing, baked anim, ghosts) | 6, 03#CUT events | done |
-| 9 | Ground, obstacle, lane renderers | 4, 6 | in-progress |
-| 10 | FX sprite pool | 6, 04#radius | todo |
+| 9 | Ground, obstacle, lane renderers | 4, 6 | done |
+| 10 | FX sprite pool | 6, 04#radius | in-progress |
 | 11 | `createWorldRenderer` seam + legacy deletion | 7, 8, 9, 10 | todo |
 | 12 | Compare loop, perf scene, acceptance | 11 | todo |
 
