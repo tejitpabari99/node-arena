@@ -593,7 +593,37 @@ The state hash covers, in index order: per building owner, level, growth timer, 
 
 ## 5. Worked examples and edge cases
 
-_Pending: later SP01 task._
+Examples assume the stated Tower War default values (§7). They illustrate rules; changing content changes the numbers, not the mechanics. Every arithmetic result below is reproducible by hand from the formula in the cited rule.
+
+**E-TICK — fixed-point motion.** Soldier `speed = 5.0` gives `speedMilli = 5000`. A line of length 10 world units has `dx = 10000`, `dy = 0`, so length `= isqrt((10000 × 20)²) = 200000` progress units. The troop advances `5000` per tick and arrives after `200000 / 5000 = 40` ticks (0.25 world units per tick). Rounding: `idiv(7, 2) = 3`, `isqrt(15) = 3`. Pause leaves tick and progress unchanged; running faster changes real duration only.
+
+**E-TIMER — carried remainder and mid-interval change.** A house at `L = 10` with one line has period `18461` mt (E-SPAWN). Each eligible tick adds `1000`: at tick 19 the timer is `19000 >= 18461`, fires, leaves `539`; the next fire is at tick 37 (`539 + 18000 = 18539`, leaves `78`), then tick 56 (the timer is `18078 < 18461` at tick 55 and `19078` at tick 56, leaving `617`). If a second line is added when the timer reads `10000`, the period becomes `24000` at once and the timer keeps its `10000`; it must reach `24000` before firing.
+
+**E-SPAWN — per-line period (R-SPN-01).** `ws = 0.5` (`spawnSpeed_m = 500`), `cwc = 0.3` (`lineSpawnPenalty_m = 300`). Soldier house, `L = 10`, one line: `K_m = 1000`; `period = idiv(1000 × 1_200_000, 500 × 10 + 60000) = idiv(1_200_000_000, 65000) = 18461` mt (0.92 s). Two lines: `K_m = 1300`; `idiv(1_560_000_000, 65000) = 24000` mt (1.20 s). `L = 64`, three lines: `K_m = 1600`; `idiv(1_920_000_000, 500 × 64 + 60000 = 92000) = 20869` mt (1.04 s). With `aliveCap` live troops from the house a fire is skipped and the timer is still reduced by the period; spawning never changes the house's level.
+
+**E-GROWTH — zero-line growth (R-GRW-01).** `gl = 1.7` (`growTime_m = 1700`), `growthBase_m × 1000 = 900_000`. `L = 0`: `k = 1`, `isqrt(1_000_000) = 1000`, `idiv(900_000, 1000) = 900`, `(900 + 1000) × 1700 = 3_230_000`, `idiv(3_230_000, 50) = 64600` mt (3.23 s). `L = 60`: `k = 7`, `isqrt(7_000_000) = 2645`, `idiv(900_000, 2645) = 340`, `(340 + 1000) × 1700 = 2_278_000`, `idiv(2_278_000, 50) = 45560` mt (2.28 s). A house with a line does not advance the timer; its value is kept for when all lines are cut.
+
+**E-STAGE — stage function and surplus lines.** With `stageThresholds = [10, 30]` levels 9, 10, 29, 30 have stages 1, 2, 2, 3 and slots 1, 2, 2, 3. A house at level 30 with three lines hit to level 29 keeps all three lines: `slots = 2`, `free = −1`; a new draw is rejected until a line is cut, and spawn periods still use `n = 3`.
+
+**E-LINES — validation, replacement and crossings.** `p1` owns houses `a` and `b`, `p2` owns house `c`. `a→a` is rejected; `a→b` twice is rejected on the duplicate; a draw from a tower is rejected. `a→b` while `b→a` (also `p1`) exists replaces `b→a`; its troops continue. `a→c` while `c→a` exists keeps both lines (head-on, E-HEADON). Cutting `a→b` stops departures; troops already in flight arrive. Line crossings alone do nothing.
+
+**E-BLOCK — lane thickening and tangent contact.** A line from `(0, 0)` to `(10, 0)` with `laneHalfWidth_m = 190`. A circle footprint at `(5, 1)` radius `0.81` (`810`): `810 + 190 = 1000` equals the centre offset (1.0), so contact is tangent and the draw is allowed. Radius `0.82` gives `1010 > 1000`: blocked. An obstacle covering the source centre blocks the draw; the source and target buildings' own footprints never do.
+
+**E-OVERFLOW — surplus forwarded.** `maxLevel = 64`. A friendly tank (`defense = 2`) arrives at a house with `L = 63`: `63 + 2 = 65`, level becomes `64`, surplus 1. The house has two outgoing lines: one `fwd` draw below 2 picks the line, and one new tank departs there at progress 0. With no outgoing line, or at `aliveCap`, the surplus is lost and no draw is made. The forwarded troop is free.
+
+**E-CAPTURE — damage must exceed level; overshoot discarded.** Soldier `attack = 1`. Hostile soldier arrives at level 3: `n = 2`, owner keeps the house. At level 1: `n = 0`, level 0, **not** captured. At level 0: `n = −1 < 0`, captured; the new level is 0 (overshoot is not kept). On capture, every troop whose source is the captured house dies, including troops on its cut lines.
+
+**E-EXCHANGE — attack, not hit points.** Soldier (`hp 1, attack 1`) against tank (`hp 2, attack 1`): both read attack first; the soldier takes 1 and dies, the tank goes `2 → 1`. Soldier against soldier: both die in round 1. Tank against tank: round 1 leaves both at 1, round 2 kills both.
+
+**E-HEADON — fronts meet.** Opposing hostile soldiers on a line of 200000 progress units depart on the same tick. Contact is `700 × 20 = 14000` progress units, so the exchange fires when `progA + progB >= 186000`. The sum is `180000` after 18 ticks and `190000` after 19, so they fight on tick 19 (each at 95000, 4.75 world units). Closing speed is 0.5 world units per tick, below `contactDistance`, so a threshold test cannot skip the meeting. Cutting a line does not protect its troops.
+
+**E-CROSSING — swept crossing.** Two hostile soldiers on perpendicular lines are each 0.6 world units before the crossing point and move 0.25 per tick. Separation is `0.6 × √2 ≈ 0.85 > 0.7` at tick start and `0.35 × √2 ≈ 0.49` at tick end; the distance passes `0.7` during the tick, so the contact is detected in that tick and resolved by R-CMB-05. Order among several contacts is `(channelKeyA, channelKeyB)`, then `(seqA, seqB)`.
+
+**E-ARRIVAL — re-evaluation after inline capture.** `p2` owns house `B` at level 0, with a `p2` troop `T` in flight from `B`. Three arrivals this tick: `p1` soldier (overshoot 9), `p1` soldier (overshoot 6), `p2` soldier (overshoot 2). Order is overshoot descending. First: `n = −1`, `B` is captured by `p1`, level 0, `p2`'s lines from `B` are cancelled and `T` dies. Second: friendly, level `0 + 1 = 1`. Third: hostile `p2`, `n = 1 − 1 = 0`, level 0, not captured. Equal overshoot falls back to line order, then FIFO `seq`. Incoming lines persist.
+
+**E-TOWER — radius, delay, targeting.** `ar = 1.6`, `rupl = 0.9`, `radiusUnit = 2.4` (`1600`, `900`, `2400` milli): stage 1 `idiv(1600 × 2400, 1000) = 3840`, stage 2 `idiv(2500 × 2400, 1000) = 6000`, stage 3 `idiv(3400 × 2400, 1000) = 8160` (3.84, 6.0, 8.16 world units). With `supl = 1.75` (1750) and `ad = 2.0` (2000): `L = 1`: `idiv(1750 × 1_200_000, 2000 × 1 + 60000) = idiv(2_100_000_000, 62000) = 33870` mt (1.69 s); `L = 64`: `idiv(2_100_000_000, 188000) = 11170` mt (0.56 s). After a shot at `L = 1` the cooldown is `33870`, falls `1000` per tick and is `<= 0` after 34 ticks; at `L = 64` it takes 12 ticks. Leveling up mid-cooldown changes nothing. A stage-1 tower reaches `3840 + troopPad` (4.19 world units): a hostile troop at 1.0 world unit is ignored (`minRadius < dist` is strict); one at 3.0 is shot dead. If no troop is in range it hits the nearest hostile house, lowering it by 1 (never capturing); other towers are never shot.
+
+**E-OUTCOME — win, loss, timeout.** The human owns every non-ignored building: the match is won in phase 9 and ignored buildings flip to the human. Troops in transit do not matter. If the human owns none, the match is lost; there is no draw. With `timeLimitSec` unset a match never times out; when set, `tick >= timeLimitSec × 20` is a timeout loss, even on a tick where the human would otherwise win.
 
 ## 6. Reserved modules — not implemented
 
@@ -654,5 +684,33 @@ One row per content key: the key rules name, its Tower War source, the rule ids 
 
 ## 8. Changelog
 
-_Pending: later SP01 task._
+| RULES_VERSION | Date | Change |
+|---|---|---|
+| 2.0.0 | 2026-10-22 | Full rewrite as the Tower War (APK 1.29.3) rules contract, replacing v1. **Replay outcomes change**: v1 replays and goldens are invalid and must be regenerated. Per-line spawn timers, zero-line growth, stage-based slots with no auto-cut, tank/soldier hp and attack, capture by damage greater than level with overshoot discarded and the source building's troops killed, overflow forwarded, crossing combat, shooting towers, lane blocking by obstacles, optional time limit; draw outcome and 300 s default limit removed; integer milli-tick timers. **Retired ids:** GEN-01, GEN-02, SND-01, SND-02, CAP-02 (tombstones). Rewritten ids keep their numbers (`Since: 2.0.0`); new areas SPN, GRW, TWR, OBS. Boosters deferred (§6). |
+| 1.0.0 | 2026-10-08 | Initial mechanics contract (generation/sending, strict slots with auto-cut, no-bank capacity, front-only head-on combat, leftover capture, elimination outcomes). Superseded. |
 
+### 8.1 Contradiction settlements
+
+Research documents and earlier drafts disagreed in six places. Settlements follow the decomp.
+
+| # | Question | Settlement | Rule | Evidence |
+|---|---|---|---|---|
+| 1 | Surplus lines when building level drops (v1 auto-cut; 06 D12) | Kept; no auto-cut | R-LIN-02 | decomp `SetAvailableWays`/`CalculateFreeWays`; 03#3.1 |
+| 2 | Do troops of a captured building survive? (v1 yes) | No: all troops with that source die | R-CPT-01 | decomp `SetNewOwner`; 03#5.3 |
+| 3 | Overshoot damage on capture (v1 leftover became garrison) | Discarded; damage must exceed level | R-CMB-03 | decomp `Building.TryDoDamageFrom`; 03#5.3, 03#14 |
+| 4 | Overflow beyond `maxLevel` (v1 lost) | Forwarded as one troop on a random outgoing line | R-CAP-03 | decomp `House.AddLevel`, `TrySpawnAdditionalWarrior`; 03#5.3 |
+| 5 | Tower scaling | Radius by stage, delay by level | R-TWR-01 | decomp `Tower`; 03#5.5 |
+| 6 | Do neutral towers fire? (SP01 draft: inert) | Yes (`neutralFires = true`); flag kept | R-TWR-04 | decomp has no owner gate; level 4 neutral tower; 03#5.5 |
+
+Booster aim count (1 versus 3, 03#8.10 against 05#4.6) is not settled here because boosters are deferred (§6).
+
+### 8.2 Test-tag ownership
+
+`pnpm check:rules` requires, for every active id, a non-skipped test title containing `covers R-X-NN` under `packages/**/*.{test,spec}.*` (`apps/web` and `tools/test` are not scanned); unknown ids in titles are errors; tombstoned ids stay known. It is red from the 2.0.0 commit until the owners below add their tags.
+
+| Area | Tests written by |
+|---|---|
+| TCK, ENT, SPN, GRW, LIN, CAP, CMB-01/02/03/05, CPT, WIN | SP03 (`packages/sim/test`) |
+| CMB-04, TWR, OBS | SP04 |
+| Content validation of rule params | SP02 (`packages/content/test`) |
+| Stale v1 `covers` tags (sim step/rules/economy tests, content components, tools/test, apps/web) | Deleted by the SP that deletes that file; SP09 verifies none remain |
