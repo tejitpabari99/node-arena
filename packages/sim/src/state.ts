@@ -1,6 +1,6 @@
 import type { ModuleId } from '@node-arena/defs';
 import type { SimEvent } from '@node-arena/defs';
-import { TICK_RATE, isqrt, mulDiv } from './math.js';
+import { TICK_RATE, idiv, isqrt, mulDiv } from './math.js';
 import { TroopRing } from './ring.js';
 import { createStreams } from './streams.js';
 import { IMPLS, MODULE_ORDER } from './modules/index.js';
@@ -96,6 +96,12 @@ export function createState(level: CompiledLevel, seed: number): SimState {
 }
 
 export function channelKey(state: SimState, from: number, to: number): number { return from * state.buildings.n + to; }
+
+/** Inverse of `channelKey` for `n` buildings: `from = floor(key / n)`, `to = key % n`. Renderers decode `TroopBuffer.channel` with it. */
+export function channelEnds(n: number, key: number): { from: number; to: number } {
+  const from = idiv(key, n);
+  return { from, to: key - from * n };
+}
 
 /** Lane length in progress units, symmetric in (a, b): isqrt((dx*tickRate)^2 + (dz*tickRate)^2) (R-TCK-04). */
 export function laneLength(level: CompiledLevel, a: number, b: number): number {

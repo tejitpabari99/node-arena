@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 require('tsx/cjs');
-const sim = require('../src/index.ts');
+const sim = require('../src/internal.ts');
 const { WordHash } = require('../src/math.ts');
 const { compiledGolden } = require('./fixtures.cjs');
 

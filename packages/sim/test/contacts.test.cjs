@@ -1,8 +1,9 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 require('tsx/cjs');
-const api = require('../src/index.ts');
-const { step } = require('../src/tick.ts');
+const api = require('../src/internal.ts');
+const { step } = api;
+
 const { compiledGolden } = require('./fixtures.cjs');
 
 const TANK = { id: 'tank', visual: 'unit.tank', speed: 5000, hp: 2, attack: 2, defense: 1 };
@@ -243,7 +244,7 @@ test('covers R-CAP-01, R-CAP-03: E-OVERFLOW L=63 +1 no surplus; L=64 surplus for
   // surplus with two lines: draw consumed, one new tank
   s = run(64, 2);
   const ref = mk(); // replicate stream state
-  const expectK = (() => { const f = require('../src/index.ts').createStreams(3).fork('fwd', 0); return f.below(2); })();
+  const expectK = (() => { const f = require('../src/internal.ts').createStreams(3).fork('fwd', 0); return f.below(2); })();
   api.arrivalPass(s);
   void ref;
   const ev = types(s, 'TroopArrived')[0];

@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 require('tsx/cjs');
-const math = require('../src/index.ts');
+const math = require('../src/internal.ts');
 
 // Independent arbitrary-precision Newton oracle, never using the sim helpers.
 function root(n) {

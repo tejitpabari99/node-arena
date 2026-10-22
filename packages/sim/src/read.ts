@@ -54,14 +54,20 @@ export function refreshView(view: SimView, state: SimState): void {
   view.lines = liveChannels(state).filter((c) => c.drawn !== 0).map((c) => ({ channel: c.key, from: c.from, to: c.to, owner: state.buildings.owner[c.from]!, length: c.length, drawSeq: c.drawSeq }));
 }
 
-/** Caller-owned troop columns; `readTroops` fills row 0.. up to the shortest column. */
+/**
+ * Caller-owned troop columns; `readTroops` fills row 0.. up to the shortest column.
+ * `channel` is the channel key `from * n + to` (decode with `channelEnds(n, key)`, n = number of buildings).
+ * `kind` is the UNIT INDEX into `view.units` (events carry the unit id string instead).
+ * `length` is the lane length in progress units, so a renderer clamps `progress + speed*alpha` to it for troops on
+ * cut or replaced lines (the lane itself is no longer in `view.lines`).
+ */
 export interface TroopBuffer {
-  channel: Int32Array; seq: Int32Array; owner: Int32Array; kind: Int32Array; progress: Int32Array; hp: Int32Array; speed: Int32Array;
+  channel: Int32Array; seq: Int32Array; owner: Int32Array; kind: Int32Array; progress: Int32Array; hp: Int32Array; speed: Int32Array; length: Int32Array;
 }
 
 export function createTroopBuffer(capacity: number): TroopBuffer {
   const col = () => new Int32Array(capacity);
-  return { channel: col(), seq: col(), owner: col(), kind: col(), progress: col(), hp: col(), speed: col() };
+  return { channel: col(), seq: col(), owner: col(), kind: col(), progress: col(), hp: col(), speed: col(), length: col() };
 }
 
 /**
@@ -70,7 +76,7 @@ export function createTroopBuffer(capacity: number): TroopBuffer {
  * draws `min(progress + speed*alpha, lane length)`. Returns rows written (capped by the buffer size).
  */
 export function readTroops(state: SimState, buf: TroopBuffer): number {
-  const cap = Math.min(buf.channel.length, buf.seq.length, buf.owner.length, buf.kind.length, buf.progress.length, buf.hp.length, buf.speed.length);
+  const cap = Math.min(buf.channel.length, buf.seq.length, buf.owner.length, buf.kind.length, buf.progress.length, buf.hp.length, buf.speed.length, buf.length.length);
   let n = 0;
   for (const ch of liveChannels(state)) {
     const r = ch.troops;
@@ -78,7 +84,7 @@ export function readTroops(state: SimState, buf: TroopBuffer): number {
       const speed = state.level.units[r.kind[i]!]!.speed;
       buf.channel[n] = ch.key; buf.seq[n] = r.seq[i]!; buf.owner[n] = r.owner[i]!; buf.kind[n] = r.kind[i]!; buf.hp[n] = r.hp[i]!;
       buf.progress[n] = Math.min(progressOf(state, ch, i), ch.length);
-      buf.speed[n] = speed;
+      buf.speed[n] = speed; buf.length[n] = ch.length;
     }
   }
   return n;

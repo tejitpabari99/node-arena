@@ -1,8 +1,9 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 require('tsx/cjs');
-const api = require('../src/index.ts');
-const { step } = require('../src/tick.ts');
+const api = require('../src/internal.ts');
+const { step } = api;
+
 const { compiledGolden } = require('./fixtures.cjs');
 
 // levelview-1: b0 human(p0), b1 ai(p1), rest neutral (-1).
@@ -148,6 +149,37 @@ test('R7 readTroops: columns, constant speed, progress at tick, capped by buffer
   const a = sim.readTroops(buf);
   sim.step([]);
   assert.ok(a === n);
+});
+
+test('R7 readTroops: length column = lane length (kept after the line is cut); channelEnds decodes channel keys; kind is a unit index', () => {
+  const l = compiledGolden();
+  const sim = api.create(l, 9);
+  sim.step([{ type: 'DrawLine', player: 0, from: 0, to: 2 }]);
+  for (let i = 0; i < 60; i++) sim.step([]);
+  sim.step([{ type: 'CutLine', player: 0, from: 0, to: 2 }]);
+  assert.equal(sim.view.lines.length, 0, 'lane no longer in view.lines');
+  const buf = api.createTroopBuffer(64);
+  const n = sim.readTroops(buf);
+  assert.ok(n > 0);
+  const N = sim.view.buildings.owner.length;
+  for (let i = 0; i < n; i++) {
+    const { from, to } = api.channelEnds(N, buf.channel[i]);
+    assert.deepEqual([from, to], [0, 2]);
+    assert.equal(buf.channel[i], from * N + to);
+    assert.equal(buf.length[i], api.laneLength(l, from, to));
+    assert.ok(buf.progress[i] <= buf.length[i]);
+    assert.equal(sim.view.units[buf.kind[i]].id, l.units[buf.kind[i]].id);
+  }
+  assert.equal(sim.readTroops({ ...api.createTroopBuffer(8), length: new Int32Array(2) }), 2, 'capped by the shortest column incl. length');
+});
+
+test('Sim seams: explainDraw / towerRadiusMilli exist (SP04 fills); explainDraw never throws and is null until then', () => {
+  const sim = api.create(compiledGolden(), 9);
+  assert.equal(sim.explainDraw(0, 0, 2), null);
+  assert.equal(sim.explainDraw('x', {}, NaN), null);
+  assert.equal(typeof sim.towerRadiusMilli(sim.view, 0), 'number');
+  const rec = api.createReplayRecorder(compiledGolden(), 9, require('./fixtures.cjs').metadata);
+  assert.equal(typeof rec.explainDraw, 'function');
 });
 
 test('R7 snapshot: plain JSON, hash matches sim.hash(), round-trips; recorder forwards read API', () => {

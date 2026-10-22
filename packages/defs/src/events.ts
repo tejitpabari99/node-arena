@@ -19,6 +19,7 @@ const ref = () => Type.Object({ channel: idx(), seq: idx(), owner: int() }, { ad
 export const EVENTS = {
   LineDrawn: { id: 'LineDrawn', payload: Type.Object({ from: idx(), to: idx(), owner: int(), drawSeq: idx() }, { additionalProperties: false }) },
   LineCut: { id: 'LineCut', payload: Type.Object({ from: idx(), to: idx(), reason: Type.Union([Type.Literal('player'), Type.Literal('replaced'), Type.Literal('captured')]) }, { additionalProperties: false }) },
+  // Troop/event `kind` here is the unit id STRING (e.g. 'soldier'); `TroopBuffer.kind` from sim `readTroops` is the unit INDEX into `view.units`.
   TroopSpawned: { id: 'TroopSpawned', payload: Type.Object({ channel: idx(), seq: idx(), owner: int(), kind: Type.String(), cause: Type.Union([Type.Literal('timer'), Type.Literal('forward')]) }, { additionalProperties: false }) },
   TroopArrived: { id: 'TroopArrived', payload: Type.Object({ channel: idx(), seq: idx(), owner: int(), kind: Type.String(), effect: Type.Union([Type.Literal('reinforce'), Type.Literal('overflow'), Type.Literal('hit')]) }, { additionalProperties: false }) },
   BuildingCaptured: { id: 'BuildingCaptured', payload: Type.Object({ building: idx(), from: int(), to: int(), cause: Type.Optional(Type.String()) }, { additionalProperties: false }) },

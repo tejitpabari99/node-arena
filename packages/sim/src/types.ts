@@ -85,3 +85,6 @@ export interface SimModule {
 
 /** A module impl bound to one defs id: `id` is the literal, so a mismatch is a compile error. */
 export type SimModuleFor<K extends ModuleId> = SimModule & { readonly id: K };
+
+/** Why a draw is blocked and where (SP04 fills; web preview). `ref` = id of the blocking obstacle/building. */
+export interface DrawExplanation { readonly reason: RejectReason; readonly point: { readonly x: number; readonly z: number }; readonly ref: string }

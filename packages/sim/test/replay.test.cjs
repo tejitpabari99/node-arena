@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 require('tsx/cjs');
-const api = require('../src/index.ts');
+const api = require('../src/internal.ts');
 const { metadata, compiledGolden } = require('./fixtures.cjs');
 
 const level = () => compiledGolden();

@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 require('tsx/cjs');
-const api = require('../src/index.ts');
+const api = require('../src/internal.ts');
 const { compiledGolden } = require('./fixtures.cjs');
 
 const fresh = (seed = 7) => api.createState(compiledGolden(), seed);

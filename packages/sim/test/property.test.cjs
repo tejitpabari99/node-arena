@@ -2,8 +2,9 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const fc = require('fast-check');
 require('tsx/cjs');
-const api = require('../src/index.ts');
-const { step } = require('../src/tick.ts');
+const api = require('../src/internal.ts');
+const { step } = api;
+
 const { compiledGolden } = require('./fixtures.cjs');
 
 const TANK = { id: 'tank', visual: 'unit.tank', speed: 5000, hp: 2, attack: 2, defense: 1 };

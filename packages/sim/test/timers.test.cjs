@@ -1,8 +1,9 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 require('tsx/cjs');
-const api = require('../src/index.ts');
-const { step } = require('../src/tick.ts');
+const api = require('../src/internal.ts');
+const { step } = api;
+
 const { compiledGolden } = require('./fixtures.cjs');
 
 const draw = (player, from, to) => ({ type: 'DrawLine', player, from, to });

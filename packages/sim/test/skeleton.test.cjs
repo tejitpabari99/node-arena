@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { test } = require('node:test');
 require('tsx/cjs');
-const { create, IMPLS } = require('../src/index.ts');
+const { create, IMPLS } = require('../src/internal.ts');
 const { compiledGolden: golden } = require('./fixtures.cjs');
 
 test('create on compiled levelview-1 exposes the view skeleton', async () => {

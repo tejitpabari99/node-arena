@@ -2,8 +2,9 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const fc = require('fast-check');
 require('tsx/cjs');
-const api = require('../src/index.ts');
-const { step } = require('../src/tick.ts');
+const api = require('../src/internal.ts');
+const { step } = api;
+
 const { compiledGolden } = require('./fixtures.cjs');
 
 // ---- independent BigInt oracles (written from the rule text, not from timers.ts) ----

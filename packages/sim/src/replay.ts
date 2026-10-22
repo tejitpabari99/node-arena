@@ -86,6 +86,8 @@ export function createReplayRecorder(level: CompiledLevel, seed: number, metadat
     get view() { return sim.view; },
     hash: () => sim.hash(),
     canDraw: (player, from, to) => sim.canDraw(player, from, to),
+    explainDraw: (player, from, to) => sim.explainDraw(player, from, to),
+    towerRadiusMilli: (view, building) => sim.towerRadiusMilli(view, building),
     readTroops: (buf) => sim.readTroops(buf),
     snapshot: () => sim.snapshot(),
     step(cmds, options) {

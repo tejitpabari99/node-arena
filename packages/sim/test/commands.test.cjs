@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 require('tsx/cjs');
-const api = require('../src/index.ts');
+const api = require('../src/internal.ts');
 const { compiledGolden } = require('./fixtures.cjs');
 
 // levelview-1: b0 human L20 (2 slots), b1 ai L10 (2 slots), b2/b3 neutral houses, b4 neutral tower.
