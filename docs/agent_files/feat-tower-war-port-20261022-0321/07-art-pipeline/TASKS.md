@@ -9,7 +9,7 @@ Source of truth: [PRD.md](PRD.md). Order follows the PRD: validation (R2) gates 
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Seed refs + capture/compare harness | none | todo |
+| 1 | Seed refs + capture/compare harness | none | in-progress |
 | 2 | Prototype validation gate (R2) | 1 | todo |
 | 3 | JS importer + lock + check | 2 | todo |
 | 4 | Environment/obstacle mapping (time-boxed) | 3, 05#0 | todo |
