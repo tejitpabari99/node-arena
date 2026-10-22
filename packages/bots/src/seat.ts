@@ -1,6 +1,7 @@
 import { createStreams, type Command } from '@node-arena/sim';
 import type { CompiledLevel, SeatBot } from '@node-arena/content';
 import type { Bot, BotContext } from './index.js';
+import { createScriptRunner } from './script.js';
 import { decideDefault, type DefaultState, type SeatRng } from './tw-ai.js';
 
 export interface SeatState extends DefaultState {
@@ -19,12 +20,13 @@ export function createSeatBot(
   _level: CompiledLevel, matchSeed: number, seatIndex: number, params: SeatBot, script?: ScriptRunner,
 ): Bot {
   const rng = createStreams(matchSeed).fork('bot.tw', seatIndex);
-  const state: SeatState = { timer: 0, scriptDone: script === undefined };
+  const runner = script ?? (params.script && params.script.length > 0 ? createScriptRunner(params.script) : undefined);
+  const state: SeatState = { timer: 0, scriptDone: runner === undefined };
   return {
     player: seatIndex,
     decide(ctx, tick) {
       if (!state.scriptDone) {
-        const out = script!(ctx, tick, seatIndex, rng);
+        const out = runner!(ctx, tick, seatIndex, rng);
         if (out) return out;
         state.scriptDone = true;
         state.timer = 0;

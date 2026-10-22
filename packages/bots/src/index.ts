@@ -29,6 +29,7 @@ export function guardBotContext(context: BotContext): BotContext {
 }
 
 export { createSeatBot, type SeatState, type ScriptRunner } from './seat.js';
+export { createScriptRunner } from './script.js';
 export { decideDefault, noLineBetween, sortedTargets, targetKey, freeSources, MS_PER_TICK, type SeatRng } from './tw-ai.js';
 export { createBotDriver, type BotDriver } from './driver.js';
 export {
