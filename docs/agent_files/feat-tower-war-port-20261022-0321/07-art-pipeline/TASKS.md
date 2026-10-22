@@ -74,13 +74,15 @@ Done when: capture, tower-shot, death FX visible in captures and pool never grow
 
 ## Task 11 — `createWorldRenderer` seam + legacy deletion (R5, R7)
 What it is / what it means: The single API SP08 consumes.
-What changes at a high level: Export `createWorldRenderer(scene, manifest)` returning `setLevel(levelDef, themeId)`, `update(snapshot, events, dtMs)`, `anchors`, `dispose()`; adds only lights/ground/obstacles/lanes/units/buildings/FX to the passed scene; any `PerspectiveCamera`; tuned for FOV 21 / 55 deg. Remove the 8 Kenney/chibi GLBs and their licence rows (keep audio), leaving `camera.ts`/`scene.ts` for 08. Confirm no file in the R7 list remains.
+What changes at a high level: Export `createWorldRenderer(scene, manifest)` returning `setLevel(levelDef, themeId)`, `update(frame, events, dtMs)`, `anchors`, `dispose()`; adds only lights/ground/obstacles/lanes/units/buildings/FX to the passed scene; any `PerspectiveCamera`; tuned for FOV 21 / 55 deg. Remove the 8 Kenney/chibi GLBs and their licence rows (keep audio), leaving `camera.ts`/`scene.ts` for 08. Confirm no file in the R7 list remains.
 Done when: grep for `kenney`, `tower-mesh`, `BUILTIN_FX` is empty; render unit tests pass; `sim:golden`, `replay:verify golden` and `simHash` unchanged.
 
 ## Task 12 — Compare loop, perf scene, acceptance
 What it is / what it means: Evidence that goals 3 and 4 are met.
 What changes at a high level: Run the capture loop for L4 and a Snow level, compare against named `ref/tw-yt` frames, iterate on lights/colour, store diffs in `ref/out/` with notes. Perf scene: 720 animated troops + 20 buildings under the SP08-style camera; record draw calls (<=60 units), tris (<=300k), 60 fps target and total gzip assets (<=3 MB). Un-park confirmation of `check:manifest` and `assets:tw:check` in the gate chain with 09.
 Done when: captures and perf numbers recorded; all PRD acceptance criteria checked.
+
+Also (05 review 2026-10-22): wire importer theme registration from manifest v2 `themes` and remove `REGISTERED_THEMES_PRE_SP07` in the importer.
 
 ## Owner steps
 - Before merge (shared with 09): run `TW_EXTRACT=... pnpm assets:tw:check` locally; CI skips it.

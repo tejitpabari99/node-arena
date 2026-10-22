@@ -8,16 +8,16 @@ Source of truth: [PRD.md](PRD.md). Doc-only sub-project: full rewrite of `docs/G
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Doc skeleton, header, terms, id policy | 09#0 | todo |
-| 2 | Tick/determinism rules, phase table, commands, hash surface | 1 | todo |
-| 3 | Entity, spawn, growth rules | 2 | todo |
-| 4 | Line, capture, win rules | 3 | todo |
-| 5 | Combat, tower, obstacle rules | 4 | todo |
-| 6 | Reserved-module table and deferred boosters | 5 | todo |
-| 7 | Param glossary (section 7) | 5 | todo |
-| 8 | Worked examples, contradiction table, changelog | 6, 7 | todo |
-| 9 | Bump version strings to 2.0.0 | 1, 09#0 | todo |
-| 10 | Verify against check:rules and acceptance list | 8, 9 | todo |
+| 1 | Doc skeleton, header, terms, id policy | 09#0 | done |
+| 2 | Tick/determinism rules, phase table, commands, hash surface | 1 | done |
+| 3 | Entity, spawn, growth rules | 2 | done |
+| 4 | Line, capture, win rules | 3 | done |
+| 5 | Combat, tower, obstacle rules | 4 | done |
+| 6 | Reserved-module table and deferred boosters | 5 | done |
+| 7 | Param glossary (section 7) | 5 | done |
+| 8 | Worked examples, contradiction table, changelog | 6, 7 | done |
+| 9 | Bump version strings to 2.0.0 | 1, 09#0 | done |
+| 10 | Verify against check:rules and acceptance list | 8, 9 | done |
 
 ## Task 1 — Doc skeleton, header, terms, id policy
 What it is / what it means: Replace v1 `GAME_RULES.md` with the v2 shape so `tools/src/rules.ts` parses it unchanged (PRD R1, R2, Decisions 1, 4).

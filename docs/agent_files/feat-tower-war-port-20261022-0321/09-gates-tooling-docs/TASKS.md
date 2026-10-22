@@ -8,9 +8,9 @@ Source of truth: docs/agent_files/feat-tower-war-port-20261022-0321/09-gates-too
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 0 | Phase A: parked-step CI runner, per-package scripts, VERSION_GUARD_BASE, check:parked | none (runs before SP01) | in-progress |
+| 0 | Phase A: parked-step CI runner, per-package scripts, VERSION_GUARD_BASE, check:parked | none (runs before SP01) | done |
 | 1 | Delete v1 tools-owned tooling (layout, v1 solutions, balance-targets) | 0, 02 CUT / 03#1 | todo |
-| 2 | Adapt replay.ts to v2 header; restore tools:replay | 0, 03 | todo |
+| 2 | Adapt replay.ts to v2 header; restore tools:replay | 0, 03 | done |
 | 3 | Rewrite validate:levels + levels-lock + unsolved-by-proxy | 0, 03, 05, 06 (R6 follow-up) | todo |
 | 4 | Rewrite balance (report-only) | 3, 06 | todo |
 | 5 | Delete bots:churn, visual harness, slice:verify | 06, 08 | todo |

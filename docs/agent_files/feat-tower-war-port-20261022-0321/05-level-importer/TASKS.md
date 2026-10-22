@@ -8,15 +8,15 @@ Source of truth: [PRD](PRD.md). Deterministic TS importer from `TW_EXTRACT` (plu
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 0 | Colliders dump (frozen `colliders.json`) | none | todo |
-| 1 | Parsers: raw TextAsset, prefab ext, campaign order, fixtures | none | todo |
-| 2 | Rotation, bounds, serializer + golden byte test | 02#3, 1 | todo |
-| 3 | `feature-map.json` + gating | 02#3, 1 | todo |
-| 4 | Level mapper (players, buildings, params, obstacles) | 0, 2, 3 | todo |
-| 5 | Bot script merge | 4 | todo |
-| 6 | CLI, root scripts, `check:import`, determinism | 4, 5 | todo |
-| 7 | Import the 20 levels + `common.json` | 6, 02#3 | todo |
-| 8 | `docs/LEVELS_GUIDE.md` | 7 | todo |
+| 0 | Colliders dump (frozen `colliders.json`) | none | done |
+| 1 | Parsers: raw TextAsset, prefab ext, campaign order, fixtures | none | done |
+| 2 | Rotation, bounds, serializer + golden byte test | 02#3, 1 | done |
+| 3 | `feature-map.json` + gating | 02#3, 1 | done |
+| 4 | Level mapper (players, buildings, params, obstacles) | 0, 2, 3 | done |
+| 5 | Bot script merge | 4 | done |
+| 6 | CLI, root scripts, `check:import`, determinism | 4, 5 | done |
+| 7 | Import the 20 levels + `common.json` | 6, 02#3 | done |
+| 8 | `docs/LEVELS_GUIDE.md` | 7 | done |
 
 ## Task 0 — Colliders dump
 What it is / what it means: R0, B7. Obstacle and building footprints become data, not guesses; 04 reads this file (04 depends on this task) for content values.

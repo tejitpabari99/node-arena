@@ -8,14 +8,14 @@ Source of truth: docs/agent_files/feat-tower-war-port-20261022-0321/03-sim-core/
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Skeleton on CompiledLevel + CUT (shared with 02#4) + event payload types | 01, 02#3 | todo |
-| 2 | Core state: ring, streams, hash v2, replay v2 | 1 | todo |
-| 3 | Commands, validation, line modules, seam hooks | 2 | todo |
-| 4 | Timers: spawn and growth | 2, 3 | todo |
-| 5 | Contacts, arrival, capture, forward | 4 | todo |
-| 6 | Win, read API, event emission | 5 | todo |
-| 7 | Oracle, property and determinism suites | 6 | todo |
-| 8 | Goldens, bench, un-park gates | 6, 7 | todo |
+| 1 | Skeleton on CompiledLevel + CUT (shared with 02#4) + event payload types | 01, 02#3 | done |
+| 2 | Core state: ring, streams, hash v2, replay v2 | 1 | done |
+| 3 | Commands, validation, line modules, seam hooks | 2 | done |
+| 4 | Timers: spawn and growth | 2, 3 | done |
+| 5 | Contacts, arrival, capture, forward | 4 | done |
+| 6 | Win, read API, event emission | 5 | done |
+| 7 | Oracle, property and determinism suites | 6 | done |
+| 8 | Goldens, bench, un-park gates | 6, 7 | done |
 
 ## Task 1 — Skeleton on CompiledLevel + CUT
 What it is / what it means: The new engine compiles against `CompiledLevel` and the `Record<ModuleId, SimModule>` binding; this is the same commit as 02 step 4 (R1, Architecture, Decision 1).
@@ -54,7 +54,7 @@ Done when: every SP03-owned R-id has a non-skipped `covers` test and no stale v1
 
 ## Task 8 — Goldens, bench, un-park gates
 What it is / what it means: Regenerated 2.0.0 baselines and perf proof, then closing this SP's red window (R8, 09 red-window plan "SP03 done").
-What changes at a high level: Rewrite `scenarios.ts` (spawn table, growth 64600/45560 mt, capture, kill-on-capture, exchanges, replace, overflow forward, cap skip, win/loss/timeout, rejections) via `compileLevel` inline JSON; runner takes a scenario-list array; regenerate baseline with `VERSION_GUARD_BASE` set to the merge-base; rewrite bench (720-troop stress and 12-building realistic) at budgets 0.3/1/0.5 ms. Delete this SP's PARKED entries: `sim:golden`, `bench:sim`, `replay:verify` (09 adapts `tools/src/replay.ts` in the same window).
+What changes at a high level: Rewrite `scenarios.ts` (spawn table, growth 64600/45560 mt, capture, kill-on-capture, exchanges, replace, overflow forward, cap skip, win/loss/timeout, rejections) via `compileLevel` inline JSON; runner takes a scenario-list array; regenerate baseline with `VERSION_GUARD_BASE` set to the merge-base; rewrite bench (720-troop stress and 12-building realistic) at budgets 0.3/1/0.5 ms. Restore the sim browser-parity golden (Chromium run of the same scenarios, deleted at CUT; 02 review 2026-10-22 G). Delete this SP's PARKED entries: `sim:golden`, `bench:sim`, `replay:verify`, `test:sim:golden`, `test:tools:replay` (09 adapts `tools/src/replay.ts` in the same window, sim goldens only until SP06).
 Done when: `pnpm sim:golden`, `bench:sim`, `replay:verify` green in `pnpm run ci`; `check:parked` lists none of these.
 
 ## Owner steps

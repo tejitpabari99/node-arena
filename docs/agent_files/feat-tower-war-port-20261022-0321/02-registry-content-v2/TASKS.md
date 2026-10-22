@@ -8,14 +8,14 @@ Source of truth: [PRD](PRD.md). Tasks 1-5 are additive (migration steps 1-3) and
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | `packages/defs` registry | 09#0, 01 | todo |
-| 2 | Content v2 schemas + data (`next/`) | 1 | todo |
-| 3 | Loader, compiler, hash, validator (`next/`) | 2 | todo |
-| 4 | Manifest v2 schema + cross-checks | 2 | todo |
-| 5 | Parity tests + golden/synthetic fixtures | 1, 3, 4, 01 | todo |
-| 6 | CUT: delete old content, promote `next/`, 2.0.0 | 5, 03#1 | todo |
-| 7 | CONTENT_GUIDE rewrite | 6 | todo |
-| 8 | Post-05 format-fit review + lock regen | 6, 05 | todo |
+| 1 | `packages/defs` registry | 09#0, 01 | done |
+| 2 | Content v2 schemas + data (`next/`) | 1 | done |
+| 3 | Loader, compiler, hash, validator (`next/`) | 2 | done |
+| 4 | Manifest v2 schema + cross-checks | 2 | done |
+| 5 | Parity tests + golden/synthetic fixtures | 1, 3, 4, 01 | done |
+| 6 | CUT: delete old content, promote `next/`, 2.0.0 | 5, 03#1 | done |
+| 7 | CONTENT_GUIDE rewrite | 6 | done |
+| 8 | Post-05 format-fit review + lock regen | 6, 05 | done |
 
 ## Task 1 — `packages/defs` registry
 What it is / what it means: one pure, browser-safe TypeBox package holding one explicit list per concept, so content, sim, bots, web and tools read a single definition (PRD R2, Decisions 1, 2, 9).

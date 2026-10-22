@@ -61,7 +61,7 @@ Done when: probes drive a level from URL; no UI path reaches `setSpeed`; `simHas
 
 ## Task 9 — E2E rewrite and legacy purge
 What it is / what it means: Replace web specs and verify the old shell is gone (Tests, Goal 4).
-What changes at a high level: Rewrite `app-flow`, `boot`, `hud`, `input`, `input-gestures`, `slice`, `acceptance`; delete `dev` and any render spec referencing removed UI (07's remain). Cover draw, blocked draw, cut, eraser, restart popup, win->next, defeat->retry via command-log assertions, 20 levels at five window sizes, ownership vs unit tests.
+What changes at a high level: Rewrite `app-flow`, `boot`, `hud`, `input`, `input-gestures`, `slice`, `acceptance`; delete `dev` and any render spec referencing removed UI (07's remain). Cover draw, blocked draw, cut, eraser, restart popup, win->next, defeat->retry via command-log assertions, 20 levels at five window sizes, ownership vs unit tests. Re-add the content hash browser-parity check (deleted at CUT; 02 review 2026-10-22 G).
 Done when: web e2e green; grep finds no `strength`, Settings, menu screen, `tuningFields`, `spike`.
 
 ## Task 10 — Visual pass, perf, gate un-park
