@@ -2,17 +2,12 @@ import type { SimEvent } from '@node-arena/defs';
 import { cutLine } from './commands.js';
 import { fireCapture } from './hooks.js';
 import { TICK_RATE, idiv } from './math.js';
-import { killTroop, liveChannels, spawnTroop, stageOf, troopPosition } from './state.js';
+import { killTroop, liveChannels, progressOf, setLevel, spawnTroop, troopPosition } from './state.js';
 import type { Channel, SimState } from './types.js';
 
 /** SP04 seam (CMB-04 lane crossings, phase 6 after head-on). Stub: no-op. */
 export function crossingPass(_state: SimState): void {
   // SP04 replaces this body.
-}
-
-/** Unclamped progress of ring row `i` at the current tick (arrival overshoot = progress - length). */
-export function progressOf(state: SimState, ch: Channel, i: number): number {
-  return ch.troops.p0[i]! + (state.tick - ch.troops.t0[i]!) * state.level.units[ch.troops.kind[i]!]!.speed;
 }
 
 export interface ExchangeResult { readonly aAlive: boolean; readonly bAlive: boolean }
@@ -82,8 +77,7 @@ function emit(state: SimState, ev: SimEvent): void { state.events?.push(ev); }
 function capture(state: SimState, x: number, newOwner: number): void {
   const b = state.buildings, n = b.n, old = b.owner[x]!;
   b.owner[x] = newOwner;
-  b.level[x] = 0;
-  b.stage[x] = stageOf(state.level.rules.stageThresholds, 0);
+  setLevel(state, x, 0);
   b.ignoreForWin[x] = 0;
   emit(state, { type: 'BuildingCaptured', building: x, from: old, to: newOwner });
   for (let to = 0; to < n; to++) cutLine(state, x, to, 'captured');
@@ -132,15 +126,14 @@ export function arrivalPass(state: SimState): void {
     const base = { channel: ch.key, seq, owner, kind: unit.id };
     if (b.owner[to] === owner) {
       const sum = b.level[to]! + unit.defense, surplus = sum - b.maxLevel[to]!;
-      b.level[to] = Math.min(sum, b.maxLevel[to]!);
-      b.stage[to] = stageOf(state.level.rules.stageThresholds, b.level[to]!);
+      setLevel(state, to, Math.min(sum, b.maxLevel[to]!));
       emit(state, { type: 'TroopArrived', ...base, effect: surplus > 0 ? 'overflow' : 'reinforce' });
       if (surplus > 0) forwardSurplus(state, to, kind);
     } else {
       const rest = b.level[to]! - unit.attack;
       emit(state, { type: 'TroopArrived', ...base, effect: 'hit' });
       if (rest < 0) capture(state, to, owner);
-      else { b.level[to] = rest; b.stage[to] = stageOf(state.level.rules.stageThresholds, rest); }
+      else setLevel(state, to, rest);
     }
   }
 }

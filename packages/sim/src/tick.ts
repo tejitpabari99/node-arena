@@ -3,7 +3,6 @@ import type { Command, SimEvent } from '@node-arena/defs';
 import { runCommands } from './commands.js';
 import { arrivalPass, contactsPass } from './contacts.js';
 import { IMPLS, MODULE_ORDER } from './modules/index.js';
-import { carriers } from './state.js';
 import { winPass } from './win.js';
 import type { SimState } from './types.js';
 
@@ -26,7 +25,7 @@ export function step(state: SimState, commands: readonly unknown[], events: bool
     if (phase === 'arrivals') arrivalPass(state);
     for (const id of MODULE_ORDER) {
       const fn = IMPLS[id].phases?.[phase];
-      if (fn) fn(state, carriers(state.level, id));
+      if (fn) fn(state, state.carriers[id]);
     }
     if (phase === 'outcome') winPass(state); // phase 9, after every module phase
   }

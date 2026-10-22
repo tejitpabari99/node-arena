@@ -1,6 +1,6 @@
 import { TICK_RATE } from './math.js';
 import { hashState } from './hash.js';
-import { liveChannels, stageOf } from './state.js';
+import { freeSlots, liveChannels, progressOf } from './state.js';
 import type { CompiledLevel, SimState } from './types.js';
 
 export type ReadColumn = Omit<Readonly<Int32Array>, 'set' | 'fill' | 'copyWithin' | 'reverse' | 'sort' | 'subarray'> & { subarray(begin?: number, end?: number): ReadColumn };
@@ -44,7 +44,7 @@ export function createView(state: SimState): SimView {
     elements: level.elements,
     lines: [],
     units: level.units.map((u) => ({ id: u.id, speed: u.speed, hp: u.hp, attack: u.attack, defense: u.defense, visual: u.visual })),
-    freeSlots: (i) => (state.level.buildings[i]!.modules['drawsLines'] !== undefined ? b.stage[i]! : 0) - b.lines[i]!,
+    freeSlots: (i) => freeSlots(state, i),
   };
 }
 
@@ -52,7 +52,6 @@ export function refreshView(view: SimView, state: SimState): void {
   view.tick = state.tick;
   view.over = state.over;
   view.lines = liveChannels(state).filter((c) => c.drawn !== 0).map((c) => ({ channel: c.key, from: c.from, to: c.to, owner: state.buildings.owner[c.from]!, length: c.length, drawSeq: c.drawSeq }));
-  for (let i = 0; i < state.buildings.n; i++) state.buildings.stage[i] = stageOf(state.level.rules.stageThresholds, state.buildings.level[i]!);
 }
 
 /** Caller-owned troop columns; `readTroops` fills row 0.. up to the shortest column. */
@@ -78,7 +77,7 @@ export function readTroops(state: SimState, buf: TroopBuffer): number {
     for (let i = 0; i < r.len && n < cap; i++, n++) {
       const speed = state.level.units[r.kind[i]!]!.speed;
       buf.channel[n] = ch.key; buf.seq[n] = r.seq[i]!; buf.owner[n] = r.owner[i]!; buf.kind[n] = r.kind[i]!; buf.hp[n] = r.hp[i]!;
-      buf.progress[n] = Math.min(r.p0[i]! + (state.tick - r.t0[i]!) * speed, ch.length);
+      buf.progress[n] = Math.min(progressOf(state, ch, i), ch.length);
       buf.speed[n] = speed;
     }
   }

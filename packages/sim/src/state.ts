@@ -6,6 +6,8 @@ import { createStreams } from './streams.js';
 import { IMPLS, MODULE_ORDER } from './modules/index.js';
 import type { Buildings, Channel, CompiledLevel, SimState } from './types.js';
 
+const MAX_ALIVE_CAP = 1000;
+
 /** stage(L) = 1 + number of thresholds <= L (R-GRW-02). */
 export function stageOf(thresholds: readonly number[], level: number): number {
   let stage = 1;
@@ -20,7 +22,47 @@ export function carriers(level: CompiledLevel, id: ModuleId): Int32Array {
   return Int32Array.from(out);
 }
 
+const isPositiveInt32 = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 2147483647;
+
+/** Boundary validation of an untrusted compiled level (replay bundles): throws a clear error, never allocates from bad numbers. */
+function validateLevel(level: CompiledLevel): Int32Array {
+  const cap = level.rules.aliveCap;
+  if (!Number.isInteger(cap) || cap < 1 || cap > MAX_ALIVE_CAP) throw new Error(`invalid level: rules.aliveCap ${String(cap)} not an integer in [1, ${MAX_ALIVE_CAP}]`);
+  level.units.forEach((u, i) => {
+    for (const field of ['attack', 'hp', 'speed'] as const) {
+      if (!isPositiveInt32(u[field])) throw new Error(`invalid level: units[${i}].${field} ${String(u[field])} not an integer >= 1`);
+    }
+  });
+  const unitOf = new Int32Array(level.buildings.length).fill(-1);
+  level.buildings.forEach((b, i) => {
+    const params = b.modules['spawns'] as { troop: string } | undefined;
+    if (!params) return;
+    const kind = level.units.findIndex((u) => u.id === params.troop);
+    if (kind < 0) throw new Error(`invalid level: building ${b.id} spawns unknown troop "${params.troop}"`);
+    unitOf[i] = kind;
+  });
+  return unitOf;
+}
+
+/** Single writer of a building's level + derived stage (R-GRW-02). */
+export function setLevel(state: SimState, i: number, level: number): void {
+  state.buildings.level[i] = level;
+  state.buildings.stage[i] = stageOf(state.level.rules.stageThresholds, level);
+}
+
+/** Unclamped progress of ring row `i` at the current tick (arrival overshoot = progress - length). The one progress formula. */
+export function progressOf(state: SimState, ch: Channel, i: number): number {
+  return ch.troops.p0[i]! + (state.tick - ch.troops.t0[i]!) * state.level.units[ch.troops.kind[i]!]!.speed;
+}
+
+/** Free line slots of `building`: stage when it carries drawsLines, else 0, minus lines drawn. Single source for commands and the read view. */
+export function freeSlots(state: SimState, building: number): number {
+  const b = state.buildings;
+  return (state.level.buildings[building]!.modules['drawsLines'] !== undefined ? b.stage[building]! : 0) - b.lines[building]!;
+}
+
 export function createState(level: CompiledLevel, seed: number): SimState {
+  const unitOf = validateLevel(level);
   const n = level.buildings.length;
   const col: Record<string, Int32Array> = {};
   for (const id of MODULE_ORDER) {
@@ -43,11 +85,13 @@ export function createState(level: CompiledLevel, seed: number): SimState {
   const streams = createStreams(seed);
   const players = { n: level.players.length, kind: Int32Array.from(level.players, (p) => (p.kind === 'human' ? 0 : 1)) };
   const fwd = Array.from({ length: n }, (_, i) => streams.fork('fwd', i));
+  const carrierMap = {} as Record<ModuleId, Int32Array>;
+  for (const id of MODULE_ORDER) carrierMap[id] = carriers(level, id);
   const state: SimState = {
-    level, seed, tick: 0, over: null, drawSeq: 0, troopSeq: 0, rejected: 0, buildings, players,
+    level, seed, unitOf, carriers: carrierMap, tick: 0, over: null, drawSeq: 0, troopSeq: 0, rejected: 0, buildings, players,
     channels: new Map(), fwd, counters: { spawned: 0, arrived: 0, died: 0, killed: 0 }, events: null,
   };
-  for (const id of MODULE_ORDER) IMPLS[id].init?.(state, carriers(level, id));
+  for (const id of MODULE_ORDER) IMPLS[id].init?.(state, carrierMap[id]);
   return state;
 }
 
@@ -93,9 +137,7 @@ export function spawnTroop(state: SimState, from: number, to: number, kind: numb
 /** Milli-unit world position of ring row `i` at the current tick (progress clamped to the lane). */
 export function troopPosition(state: SimState, ch: Channel, i: number): { x: number; z: number } {
   const a = state.level.buildings[ch.from]!, b = state.level.buildings[ch.to]!;
-  const unit = state.level.units[ch.troops.kind[i]!]!;
-  let progress = ch.troops.p0[i]! + (state.tick - ch.troops.t0[i]!) * unit.speed;
-  if (progress > ch.length) progress = ch.length;
+  const progress = Math.min(progressOf(state, ch, i), ch.length);
   if (ch.length === 0) return { x: a.x, z: a.z };
   return { x: a.x + mulDiv(b.x - a.x, progress, ch.length), z: a.z + mulDiv(b.z - a.z, progress, ch.length) };
 }

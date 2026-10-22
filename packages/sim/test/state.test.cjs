@@ -167,3 +167,14 @@ test('assertInvariants rejects each broken invariant', () => {
     assert.throws(() => api.assertInvariants(s), /invariant/, name);
   }
 });
+
+test('createState rejects hostile level numbers and unknown spawn troop ids at create', () => {
+  const bad = (edit, re) => { const l = compiledGolden(); edit(l); assert.throws(() => api.createState(l, 1), re); };
+  for (const field of ['attack', 'hp', 'speed']) {
+    for (const v of [0, -1, 1.5, NaN, Infinity, 2 ** 40]) bad((l) => { l.units[0][field] = v; }, new RegExp(`units\\[0\\]\\.${field}`));
+  }
+  for (const v of [0, -5, 1001, 1e9, 2.5, NaN]) bad((l) => { l.rules.aliveCap = v; }, /aliveCap/);
+  bad((l) => { const b = l.buildings.find((x) => x.modules.spawns); b.modules.spawns.troop = 'nope'; }, /unknown troop "nope"/);
+  const ok = compiledGolden(); ok.rules.aliveCap = 1000; assert.doesNotThrow(() => api.createState(ok, 1));
+  const one = compiledGolden(); one.rules.aliveCap = 1; assert.doesNotThrow(() => api.createState(one, 1));
+});

@@ -9,9 +9,9 @@ export { createStreams, purposeId, type Stream, type Streams } from './streams.j
 export { TroopRing } from './ring.js';
 export { assertInvariants } from './invariants.js';
 export { hashState } from './hash.js';
-export { createState, channelKey, getChannel, liveChannels, spawnTroop, killTroop, troopPosition, laneLength, type KillCause } from './state.js';
+export { createState, channelKey, getChannel, liveChannels, spawnTroop, killTroop, troopPosition, laneLength, progressOf, setLevel, freeSlots, type KillCause } from './state.js';
 export type { Channel, Counters, Players, Buildings } from './types.js';
 export { canDraw, cutLine, runCommands } from './commands.js';
-export { crossingPass, exchange, headOnPass, contactsPass, arrivalPass, progressOf, type ExchangeResult } from './contacts.js';
+export { crossingPass, exchange, headOnPass, contactsPass, arrivalPass, type ExchangeResult } from './contacts.js';
 export { firstDrawRejection, fireLineDrawn, fireLineCut, fireCapture } from './hooks.js';
 export { spawnPeriodMt, growPeriodMt, TICK_MT } from './timers.js';

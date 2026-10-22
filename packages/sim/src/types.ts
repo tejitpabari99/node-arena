@@ -44,6 +44,10 @@ export interface Counters { spawned: number; arrived: number; died: number; kill
 export interface SimState {
   readonly level: CompiledLevel;
   readonly seed: number;
+  /** Per building: index of the unit its `spawns` module produces, else -1 (resolved and validated at create). */
+  readonly unitOf: Int32Array;
+  /** Per module id: indexes of buildings carrying it (static; computed once at create). */
+  readonly carriers: Readonly<Record<ModuleId, Int32Array>>;
   tick: number;
   over: { outcome: Outcome; winner: number | null } | null;
   drawSeq: number;

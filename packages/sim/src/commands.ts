@@ -1,7 +1,7 @@
 import { COMMANDS } from '@node-arena/defs';
 import type { Command, CommandId, RejectReason, SimEvent } from '@node-arena/defs';
 import { fireLineCut, fireLineDrawn, firstDrawRejection } from './hooks.js';
-import { getChannel } from './state.js';
+import { freeSlots, getChannel } from './state.js';
 import type { LineCutReason, SimState } from './types.js';
 
 const MAX_INDEX = 2147483647;
@@ -41,7 +41,7 @@ function checkDraw(state: SimState, c: Parsed): RejectReason | null {
   if (c.from === c.to) return 'self';
   if (state.level.buildings[c.from]!.modules['drawsLines'] === undefined) return 'not-drawer';
   if (getChannelIfAny(state, c.from, c.to)?.drawn) return 'duplicate';
-  if (b.stage[c.from]! - b.lines[c.from]! <= 0) return 'no-slot';
+  if (freeSlots(state, c.from) <= 0) return 'no-slot';
   return firstDrawRejection(state, c.from, c.to);
 }
 

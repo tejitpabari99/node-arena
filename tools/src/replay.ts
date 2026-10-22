@@ -18,8 +18,9 @@ interface GoldenBundle {
 }
 /** Golden directories scanned by the `golden` alias. SP06 appends 'packages/bots/test/golden' once bots goldens are v2. */
 const GOLDEN_DIRS = ['packages/sim/test/golden'];
-/** Standalone records resolve only against authored content. Golden fixture levels
- * are read as JSON data, hashed again, and never import executable fixture/bot code. */
+/** Standalone records resolve only against authored content. Embedded golden-bundle levels are honoured only for
+ * the `golden` alias (repo-owned fixtures under GOLDEN_DIRS), read as JSON data, hashed again, never executed; a
+ * bundle passed as an arbitrary path is refused, so a crafted file cannot supply its own level. */
 export async function verifyReplays(target: string, contentDir: string, root: string): Promise<{ summary: string; errors: Diagnostic[] }> {
   const files = await loadFiles(contentDir);
   const metadata = JSON.parse(files['content.json'] as string) as ReplayMetadata;
@@ -54,6 +55,7 @@ export async function verifyReplays(target: string, contentDir: string, root: st
       const document = await readJson(file);
       if (object(document) && Object.hasOwn(document, 'header')) play(document as unknown as ReplayRecord, file, '');
       else if (object(document) && Array.isArray(document.results) && Array.isArray(document.scenarios)) {
+        if (target !== 'golden') throw new Error('Golden bundles carry embedded levels and are verified only through the `golden` alias; arbitrary files must be standalone replay records resolved from authored content');
         const bundle = document as unknown as GoldenBundle;
         if (!object(bundle.metadata) || ['rulesVersion', 'schemaVersion', 'contentVersion'].some(key => bundle.metadata[key as keyof ReplayMetadata] !== metadata[key as keyof ReplayMetadata])) throw new Error('Golden metadata differs from authoritative content metadata');
         if (!bundle.results.length) throw new Error('Golden bundle contains no replays');

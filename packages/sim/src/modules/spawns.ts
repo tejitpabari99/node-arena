@@ -11,7 +11,7 @@ export const spawns: SimModuleFor<'spawns'> = {
       for (const from of carriers) {
         if (b.owner[from]! < 0) continue;
         const params = state.level.buildings[from]!.modules['spawns'] as { troop: string; spawnSpeed: number; lineSpawnPenalty: number };
-        const kind = state.level.units.findIndex((u) => u.id === params.troop);
+        const kind = state.unitOf[from]!;
         for (let to = 0; to < b.n; to++) {
           const ch = state.channels.get(channelKey(state, from, to));
           if (!ch || !ch.drawn) continue;

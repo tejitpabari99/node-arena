@@ -1,4 +1,4 @@
-import { liveChannels } from './state.js';
+import { liveChannels, progressOf } from './state.js';
 import type { SimState } from './types.js';
 
 function fail(message: string): never { throw new Error(`invariant: ${message}`); }
@@ -26,7 +26,7 @@ export function assertInvariants(state: SimState): void {
       if (r.owner[i] !== r.owner[0]) fail(`channel ${ch.key} mixed owners`);
       for (const col of [r.p0, r.t0, r.owner, r.kind, r.seq, r.hp]) if (!isInt32(col[i]!)) fail(`channel ${ch.key} ring not int32`);
       if (r.hp[i]! <= 0) fail(`channel ${ch.key} row ${i} hp <= 0`);
-      const progress = r.p0[i]! + (state.tick - r.t0[i]!) * state.level.units[r.kind[i]!]!.speed;
+      const progress = progressOf(state, ch, i);
       if (progress > previous) fail(`channel ${ch.key} FIFO not monotone at row ${i}`);
       previous = progress;
     }
