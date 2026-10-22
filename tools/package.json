@@ -6,7 +6,9 @@
   "scripts": {
     "validate:content": "tsx src/cli.ts validate:content",
     "check:manifest": "tsx src/cli.ts check:manifest",
-    "test": "tsx --test test/*.test.ts",
+    "test": "tsx --test $(ls test/*.test.ts | grep -v -E '/(rules-repo|replay-golden)\\.test\\.ts$')",
+    "test:rules": "tsx --test test/rules-repo.test.ts",
+    "test:replay": "tsx --test test/replay-golden.test.ts",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint src test layout",
     "check:rules": "tsx src/cli.ts check:rules",

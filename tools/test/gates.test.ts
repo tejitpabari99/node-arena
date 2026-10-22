@@ -109,7 +109,7 @@ test('regenerated sim lock still requires a contentVersion increase over explici
 });
 test('rulesVersion mismatch fails with metadata location', async t => {
   const dir = await fixture(t); const path = join(dir, 'content.json');
-  const metadata = JSON.parse(await readFile(path, 'utf8')); metadata.rulesVersion = '2.0.0';
+  const metadata = JSON.parse(await readFile(path, 'utf8')); metadata.rulesVersion = '1.0.0';
   await writeFile(path, JSON.stringify(metadata));
   const result = run('validate:content', '--dir', dir);
   assert.equal(result.status, 1); assert.equal(result.report.errors[0].pointer, '/rulesVersion');

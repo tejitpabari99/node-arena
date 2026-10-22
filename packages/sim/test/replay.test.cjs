@@ -56,7 +56,7 @@ test('completed games round-trip and postgame calls neither record commands nor 
 });
 test('header versions, identity, seed format and malformed records are refused', () => {
   const rec = recorded();
-  for (const [key, value] of [['rulesVersion', '2.0.0'], ['schemaVersion', '2.0.0'], ['contentVersion', '2.0.0'], ['levelId', 'other'], ['simHash', 'b'.repeat(64)], ['seed', -1], ['seed', 4294967296], ['seed', 1.5], ['seed', '77']]) {
+  for (const [key, value] of [['rulesVersion', '3.0.0'], ['schemaVersion', '2.0.0'], ['contentVersion', '2.0.0'], ['levelId', 'other'], ['simHash', 'b'.repeat(64)], ['seed', -1], ['seed', 4294967296], ['seed', 1.5], ['seed', '77']]) {
     const tampered = structuredClone(rec); tampered.header[key] = value;
     assert.throws(() => api.playReplay(source(), tampered), /replay/i, key);
   }

@@ -14,7 +14,8 @@
     }
   },
   "scripts": {
-    "test": "node --test test/*.test.cjs",
+    "test": "node --test $(ls test/*.test.cjs | grep -v '/golden\\.test\\.cjs$')",
+    "test:golden": "node --test test/golden.test.cjs",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.check.json",
     "lint": "eslint src",
     "bench": "node scripts/bench.mjs",

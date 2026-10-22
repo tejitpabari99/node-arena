@@ -11,7 +11,8 @@
     "./eslint.determinism.cjs": "./eslint.determinism.cjs"
   },
   "scripts": {
-    "test": "node --test test/*.test.cjs",
+    "test": "node --test $(ls test/*.test.cjs | grep -v '/golden\\.test\\.cjs$')",
+    "test:golden": "node --test test/golden.test.cjs",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.golden.json",
     "lint": "eslint src",
     "sim:golden": "node scripts/golden.cjs",

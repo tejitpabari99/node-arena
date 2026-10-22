@@ -13,8 +13,11 @@ cd "$(dirname "$0")/.."
 # Initial SP01 park list (SP01 applies it in its first commit):
 #   "check:rules:SP04" "sim:golden:SP03" "replay:verify:SP03"
 #   "bots:golden:SP06" "validate:levels:SP06"
+#   plus the failing test files split out of the live suites (never whole suites):
+#   "test:sim:golden:SP03" "test:tools:replay:SP03" "test:tools:rules:SP04"
+#   "test:bots:golden:SP06"
 # CUT additions (SP02 CUT / SP03 T1 applies them on top of the SP01 list):
-#   "typecheck:bots:SP06" "typecheck:web:SP08" "test:bots:SP06" "test:web:SP08"
+#   "typecheck:bots:SP06" "typecheck:web:SP08" "test:web:SP08"
 #   "build:bots:SP06" "build:web:SP08" "tools:levels:SP06" "tools:balance:SP06"
 #   "tools:replay:SP03" "check:manifest:SP07" "balance:SP06" "bench:sim:SP03"
 #   "bench:bots:SP06" "test:web:e2e:SP08"
@@ -27,9 +30,10 @@ PARKED=(
   "replay:verify:SP03"
   "bots:golden:SP06"
   "validate:levels:SP06"
-  "test:sim:SP03"
-  "test:bots:SP06"
-  "test:tools:SP04"
+  "test:sim:golden:SP03"
+  "test:tools:replay:SP03"
+  "test:tools:rules:SP04"
+  "test:bots:golden:SP06"
 )
 
 is_parked() { # prints owner and returns 0 when step $1 is parked
@@ -51,6 +55,14 @@ step() { # step <name> <command...>
 # whole branch > HEAD^ (initial commit: HEAD). CI_RELEASE=1 (merge to main) runs with
 # VERSION_GUARD_BASE unset so scripts use their normal HEAD / HEAD^ guard.
 cb="${CONTENT_BASE:-}"; [[ "$cb" =~ ^0+$ ]] && cb=""
+# An explicitly set base must resolve to a commit; only the automatic merge-base path may fall back.
+for var in VERSION_GUARD_BASE CONTENT_BASE; do
+  val="${!var:-}"
+  [[ "$var" == CONTENT_BASE ]] && val="$cb"
+  if [[ -n "$val" ]] && ! git rev-parse --verify --end-of-options "${val}^{commit}" >/dev/null 2>&1; then
+    echo "ci: $var='$val' is not a valid commit" >&2; exit 1
+  fi
+done
 if [[ "${CI_RELEASE:-}" == "1" ]]; then
   unset VERSION_GUARD_BASE
   base="${cb:-HEAD^}"
@@ -62,7 +74,7 @@ else
   [[ -z "$base" ]] && base=HEAD^
   export VERSION_GUARD_BASE="$base"
 fi
-if ! git rev-parse --verify "${base}^{commit}" >/dev/null 2>&1; then
+if ! git rev-parse --verify --end-of-options "${base}^{commit}" >/dev/null 2>&1; then
   # An initial commit establishes the first content/version baseline.
   base=HEAD
   [[ -n "${VERSION_GUARD_BASE:-}" ]] && export VERSION_GUARD_BASE="$base"
@@ -81,8 +93,12 @@ step typecheck:tools pnpm typecheck:tools
 step typecheck:web pnpm typecheck:web
 step test:content pnpm test:content
 step test:sim pnpm test:sim
+step test:sim:golden pnpm --filter @node-arena/sim test:golden
 step test:bots pnpm test:bots
+step test:bots:golden pnpm --filter @node-arena/bots test:golden
 step test:tools pnpm test:tools
+step test:tools:replay pnpm --filter @node-arena/tools test:replay
+step test:tools:rules pnpm --filter @node-arena/tools test:rules
 step test:web pnpm test:web
 step check:schemas pnpm check:schemas
 step check:content pnpm check:content --base "$base"
