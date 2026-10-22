@@ -234,6 +234,166 @@ An owned (non-neutral) house with zero lines has a growth timer under R-TCK-06. 
 
 *Since:* 2.0.0.
 
+### R-LIN-01
+
+`DrawLine{from, to}` is valid if and only if: the caller owns the source; the source is a house; the target exists and is not the source; no line from source to target already exists; a free slot exists (after a same-owner reverse-line replacement, R-LIN-03); and the line is not blocked (R-OBS-01). A rejected command changes nothing.
+
+*Source:* 03#3.2.
+
+*Params:* None.
+
+*Examples:* E-LINES, E-BLOCK.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-LIN-01 (tower sources, slot auto-cut).
+
+### R-LIN-02
+
+A house has `slots = stage(L)` line slots. There is **no auto-cut**: when the level drops (hit, tower shot) a house keeps every drawn line even if `lines > slots`. `free = slots − lines` may be negative; a draw needs `free > 0`. The spawn penalty (R-SPN-01) uses the actual line count.
+
+*Source:* decomp `SetAvailableWays` → `SetAvailableWaysCount` only sets a reactive property; `CalculateFreeWays = avail − count`; no cutter found (03#3.1).
+
+*Params:* `stageThresholds`.
+
+*Examples:* E-STAGE.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-LIN-02 / v1 slot enforcement (end-of-tick auto-cut of newest lines).
+
+### R-LIN-03
+
+Drawing a line that is the reverse of an existing line of the **same owner** replaces that reverse line: the old line is removed, its troops stay in flight, and the new line starts a fresh timer (R-SPN-03). A reverse line of a **hostile** owner coexists with the new line and creates head-on combat (R-CMB-01).
+
+*Source:* 03#3.2.
+
+*Params:* None.
+
+*Examples:* E-LINES, E-HEADON.
+
+*Since:* 2.0.0.
+
+### R-LIN-04
+
+Lines are straight, centre to centre, free to draw and have no length cap. Line crossings alone do nothing; combat between crossing lines is governed by R-CMB-04 and blocking by R-OBS-01.
+
+*Source:* 03#3.3.
+
+*Params:* None.
+
+*Examples:* E-LINES.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-LIN-04 (crossings had no effect).
+
+### R-LIN-05
+
+`CutLine{from, to}` by the line's owner removes the line: its spawn timer ceases and no further troops depart. Troops already in flight on the line continue to their target.
+
+*Source:* 03#3.4 (`DestroyWayFrom` stops the spawn timer only).
+
+*Params:* None.
+
+*Examples:* E-LINES.
+
+*Since:* 2.0.0.
+
+### R-CAP-01
+
+A building's level is an integer in `[0, maxLevel]`. A friendly arrival raises the level to `min(L + defense, maxLevel)`, where `defense` is the arriving troop type's `defense`. Any amount above `maxLevel` is surplus handled by R-CAP-03.
+
+*Source:* 03#5.3 (`House.AddLevel`).
+
+*Params:* `maxLevel`, `units.*.defense`.
+
+*Examples:* E-OVERFLOW.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-CAP-01.
+
+### R-CAP-03
+
+Surplus from R-CAP-01 re-enters play as **one** new troop of the arriving type, departing at progress 0 on a line chosen uniformly at random among the building's outgoing lines (one bounded draw on that building's `fwd` stream). If the building has no outgoing line, or the alive cap (R-SPN-02) is reached, the surplus is lost and no draw is consumed. The forwarded troop is free (level unchanged) and takes the next `seq`.
+
+*Source:* decomp `House.AddLevel`, `TrySpawnAdditionalWarrior`.
+
+*Params:* `balance.spawn.aliveCap`.
+
+*Examples:* E-OVERFLOW.
+
+*Since:* 2.0.0.
+
+### R-CPT-01
+
+Capture (R-CMB-03) changes the building's owner to the arriver's owner and sets its level to 0. The old owner's outgoing lines are cancelled. **Every troop whose source is this building dies, including troops on cut lines and in flight.** The growth timer resets, `ignoreForWin` is cleared, and the new owner's timers start from 0. Neutral owners cannot capture.
+
+*Source:* 03#5.3; decomp `House.SetNewOwner`.
+
+*Params:* None.
+
+*Examples:* E-CAPTURE, E-ARRIVAL.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-CPT-01 (leftover value became garrison); v1 R-CPT-02 (in-flight troops survived capture).
+
+### R-CPT-02
+
+Capture keeps incoming lines. Troops of other buildings are unaffected. Every later arrival re-evaluates attack or reinforcement against the current owner.
+
+*Source:* v1 R-CPT-02.
+
+*Params:* None.
+
+*Examples:* E-ARRIVAL.
+
+*Since:* 2.0.0.
+
+### R-WIN-01
+
+The human wins when every building with `ignoreForWin = false` (neutral buildings included) is owned by the human. The remaining ignored buildings then flip to the human.
+
+*Source:* 03#7.2.
+
+*Params:* `ignoreForWin` (TW `cbi`).
+
+*Examples:* E-OUTCOME.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-WIN-01 (elimination by towers and troops in transit).
+
+### R-WIN-02
+
+The human loses when they own no building with `ignoreForWin = false`. Troops in transit do not count. There is no draw outcome. A win marks the campaign level completed; loss and timeout do not.
+
+*Source:* 03#7.2.
+
+*Params:* `ignoreForWin`.
+
+*Examples:* E-OUTCOME.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-WIN-02 (mutual-defeat `draw`).
+
+### R-WIN-03
+
+A level may set `timeLimitSec`; when absent there is no limit (no campaign level sets one). At phase 9, `tick >= timeLimitSec × tickRate` ends the match as a timeout loss and takes precedence over a win in that tick. Harness step caps are not outcomes. Once recorded, an outcome is final.
+
+*Source:* v1 R-WIN-03; 03#7.2.
+
+*Params:* `timeLimitSec` (optional).
+
+*Examples:* E-OUTCOME.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-WIN-03 (300 s default limit).
+
 ### Retired ids
 
 These ids are tombstones. They stay known so stale references are caught, are never reused, and are not active rules.
