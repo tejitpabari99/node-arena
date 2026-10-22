@@ -618,7 +618,39 @@ These are future elements, not active rules and not registry entries. They have 
 
 ## 7. Parameter glossary
 
-_Pending: later SP01 task._
+One row per content key: the key rules name, its Tower War source, the rule ids that use it and the Tower War default. Defaults are not rule text; content owns the values. The first thirteen rows are the keys that the content schemas must match exactly (SP02 parity test).
+
+| Content key | TW source | Rule ids | TW default |
+|---|---|---|---|
+| `maxLevel` | `ml` | R-CAP-01, R-GRW-01 | 64 |
+| `spawnSpeed` | `ws` | R-SPN-01 | 0.5 |
+| `lineSpawnPenalty` | `cwc` | R-SPN-01 | 0.3 |
+| `growTime` | `gl` | R-GRW-01 | 1.7 |
+| `attackDelay` | `ad` | R-TWR-01 | 2.0 |
+| `attackRadius` | `ar` | R-TWR-01 | 1.6 |
+| `speedUpByLevel` | `supl` | R-TWR-01 | 1.75 |
+| `radiusUpByLevel` | `rupl` | R-TWR-01 | 0.9 |
+| `radiusUnit` | tower radius unit (decomp) | R-TWR-01 | 2.4 |
+| `minRadius` | tower min radius (decomp) | R-TWR-02 | 1.0 |
+| `neutralFires` | tower owner gate (absent in decomp) | R-TWR-02, R-TWR-04 | true |
+| `troopPad` | troop body radius added to trigger reach (milli) | R-TWR-02 | 350 |
+| `hitsNeutralHouses` | tower house-target filter | R-TWR-02 | true |
+| `stageThresholds` | art/slot stages 10 / 30 (not serialized; 03#3.2) | R-GRW-02, R-LIN-02, R-TWR-01 | [10, 30] |
+| `balance.spawn.aliveCap` | alive soldier cap per house (03#4.2) | R-SPN-02, R-CAP-03 | 30 |
+| `balance.growth.base` | growth base constant 0.9 (03#4.6) | R-GRW-01 | 0.9 |
+| `balance.contactDistance` | 2 × body sphere radius (03#14) | R-CMB-01, R-CMB-04 | 0.7 |
+| `troopType` | house archetype warrior type | R-SPN-02 | soldier |
+| `units.*.hp` | flat unit hit points (03#2.3) | R-ENT-02, R-CMB-05 | soldier 1, tank 2 |
+| `units.*.attack` | flat unit damage | R-ENT-02, R-CMB-03, R-CMB-05 | soldier 1, tank 1 |
+| `units.*.defense` | flat unit level gain | R-ENT-02, R-CAP-01 | soldier 1, tank 2 |
+| `units.*.speed` | warrior speed (03#4.5) | R-TCK-04, R-ENT-02 | 5.0 |
+| `laneHalfWidth` | line half-width for blocking (03#3.2) | R-OBS-01 | 0.19 |
+| `ignoreForWin` | `cbi` (canBeIgnored) | R-WIN-01, R-WIN-02, R-CPT-01 | false |
+| `timeLimitSec` | none (TW has no limit) | R-WIN-03 | absent |
+| `numericScale` | rules constant | R-TCK-02 | 1000 |
+| `buildings.*` | house / tower archetype (`l` start level, `ml`) | R-ENT-01 | per level |
+
+`sc` (TW spawn coefficient, speed booster only) and all other TW level keys not listed here are not consumed in 2.0.0 (R11 deferred boosters, §6). Bullet speed and other visuals are presentation only.
 
 ## 8. Changelog
 
