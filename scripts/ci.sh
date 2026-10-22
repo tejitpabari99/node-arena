@@ -22,6 +22,14 @@ cd "$(dirname "$0")/.."
 #  test:web:e2e become ci steps when their SP adds them.)
 # ---------------------------------------------------------------------------
 PARKED=(
+  "check:rules:SP04"
+  "sim:golden:SP03"
+  "replay:verify:SP03"
+  "bots:golden:SP06"
+  "validate:levels:SP06"
+  "test:sim:SP03"
+  "test:bots:SP06"
+  "test:tools:SP04"
 )
 
 is_parked() { # prints owner and returns 0 when step $1 is parked

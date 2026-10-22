@@ -2,7 +2,7 @@ import type { ContentFileMap } from '../src/index.js';
 const envelope = (name: string) => ({ $schema: `${name}.schema.json`, schemaVersion: '1.0.0' });
 export function hashFixture(): ContentFileMap {
   return {
-    'content.json': { ...envelope('content'), contentVersion: '1.0.0', rulesVersion: '1.0.0' },
+    'content.json': { ...envelope('content'), contentVersion: '1.0.0', rulesVersion: '2.0.0' },
     'data/balance.json': { ...envelope('balance'), defaults: { timeLimitSec: 300, theme: 'city' } },
     'data/troops/regular.json': { ...envelope('troop'), id: 'regular', value: 1, speed: 10.125, visual: 'soldier' },
     'data/troops/unused.json': { ...envelope('troop'), id: 'unused', value: 1, speed: 5, visual: 'unused' },

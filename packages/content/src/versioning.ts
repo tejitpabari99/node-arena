@@ -4,7 +4,7 @@ import { compileLevel } from './compile.js';
 import { canonicalJson, hashBotProfile } from './hash.js';
 import { resolveProfiles } from './resolve-profiles.js';
 
-export const RULES_VERSION = '1.0.0';
+export const RULES_VERSION = '2.0.0';
 export interface ReplayHeader {
   rulesVersion: string;
   schemaVersion: string;
