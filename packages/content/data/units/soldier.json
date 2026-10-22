@@ -1,0 +1,10 @@
+{
+  "$schema": "../../schemas/unit.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "soldier",
+  "visual": "unit.soldier",
+  "speed": 5,
+  "hp": 1,
+  "attack": 1,
+  "defense": 1
+}

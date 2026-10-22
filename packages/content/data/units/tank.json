@@ -1,0 +1,10 @@
+{
+  "$schema": "../../schemas/unit.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "tank",
+  "visual": "unit.tank",
+  "speed": 5,
+  "hp": 2,
+  "attack": 2,
+  "defense": 1
+}

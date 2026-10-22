@@ -1,3 +1,0 @@
-{"$schema": "../../schemas/bot.schema.json", "schemaVersion": "1.0.0", "id": "rusher-normal", "kind": "utility",
-  "params": {"extends": "rusher", "skill": {"decisionIntervalSec": 2.2, "noise": 0.2, "actionsPerDecision": 1}}
-}

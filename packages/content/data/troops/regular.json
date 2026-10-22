@@ -1,8 +1,0 @@
-{
-  "$schema": "../../schemas/troop.schema.json",
-  "schemaVersion": "1.0.0",
-  "id": "regular",
-  "visual": "troop.regular",
-  "value": 1,
-  "speed": 10
-}

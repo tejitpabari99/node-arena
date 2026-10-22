@@ -1,51 +1,8 @@
 {
   "levels": {
-    "01-first-steps": "df50fd60157195955e6ede8bd314ae10ad03efcb89156b202cb63619448c4546",
-    "02-neutral-ground": "ba6c9594bb54d2218f0fc8d516bc51f9227dd290ea6767e4d43cb664c4faa765",
-    "03-full-tank": "d2df582c144c499d11c67f2b02077ff3f0af9859f2d12680abff3b9f67f9837d",
-    "04-two-streams": "7bddef0390582e1cdfef11e564326b8f44c79bf46d8371c0fb5135aa5627ecb0",
-    "05-head-on": "eb9af6fadf5c7f159b01c578700be7ec5cd5c93a23404ca05ef3a8f4eba7ffe3",
-    "06-snip": "168be6bc4474762972bc8cdbef7864e3ed8dcc1610ca1ebe0b1a6ec6d06f8d4d",
-    "07-skyscraper": "3e9f3dd7da7b5c5417fce529ffc0f62e57b13a247eb5dd42feb8804b8b4b7da9",
-    "08-fork": "ab85d4a6b70a2c47c3ee6f0b92f2f34f275fd60cd2da110b803ed604505f0d04",
-    "09-chain-link": "fa908049d03fefda40e0fa2f8ddbf9c5acc3e18af8b4cfe069a17e55dad9281f",
-    "10-two-foes": "88ab8d29e12ba566be754d8b42e8cddf97003390a05386a9c0901b37f6e961e6",
-    "11-triple-threat": "20cd6668f370692f40869325ea736ee8713f6bc08ea9859920ef046d8dd2dfb9",
-    "12-underdog": "4f1f40f198a19c1cbdb0f73dbdd19e5e147e333181c1aedbe55e46a94b2ff991",
-    "13-crossfire": "2dc1b3ab3eaeadaf787fdd6916c751b571e198d25ad2838a83eb48552ffc933c",
-    "14-beat-the-clock": "fe3b92cfd713031937c0dacf906b63425d3696d8011866e7d7e3dc620f44df87",
-    "15-hub": "e1a882fd03358f4ea5326ac843ad1532dd70a393d76e63185cbc60a6b48301fd",
-    "16-fortress": "fde701beea60d1fbfefe7ce4cd4c5ec6f42f732c5828d905cf0b962e254cbebd",
-    "17-pincer": "6d6eda5927b15ab9841a9ce9c009d318d9a37f6b02a4c3535ff79de7d441553b",
-    "18-free-for-all": "7effaf121b8d8fa0a1a03df91c34d1b6e4f421f579eff3251811a6a068aa39b5",
-    "19-siege": "a7a7015392ab3aff844ecb0e833327416925cf2771790cf3ae735acd822ed26a",
-    "20-finale": "1eda045ab6319217a48e09618aaf55b7709f2bfb564dd8864740468a8d4e4094",
-    "sample": "7815eec4dd6087dd6001e2e2e0491c4af7a14b7e05d894e3c6741a8efbdcbf79"
+    "levelview-1": "f785555d1908dc2babffe94554d73c820870e10e586e583fa25fe6c9fbb5906a"
   },
   "bots": {
-    "economist": "b5e4aea89b4ae42221b323df442d071392babdf6ad44c5f6d67e5e7af6fc154b",
-    "economist-easy": "0f465a4c4fe7faa3f4e997f188c98046813b706cc620a28dc03765a6e89829e6",
-    "economist-expert": "5c67380a7683e51c57853d4b06d7922ed455c9858254aa9b1bc2dc96cc72698a",
-    "economist-hard": "6cafbfd087dbd0f90dac4db5f01bfd801338eceec0b2d883b64c5134d771c28b",
-    "economist-normal": "fb570aeea618d01ccc98285e1534f6831639de78a352e66f78e1117e0247683f",
-    "human-proxy": "759c054e22c31ba665b31f7ff2209851569b83089286f0271372fc3147d4e122",
-    "idle": "cfbed433d24e4bc79fbfeea8b4c3586e0a90a5a17a5350b589be2b368bd626a7",
-    "opportunist": "fd6ba4c931c9da78b98cefbcd7ff977fcf329c774685976a774d8ec51e15cc96",
-    "opportunist-easy": "c6fa00e71ec5f959e3b4240e2b22834f29f8735ceb9074a3bb3d5ddb6e036f95",
-    "opportunist-expert": "aa8f0693f5a23dbd972e1a4918b25d146f6b83ae65425de212f128d46819bf9c",
-    "opportunist-hard": "3c4367bdd4fcc0fdeccfa76df131ea0f9d35b12fed8c311b1de532bccdd3faa6",
-    "opportunist-normal": "7e921561f4e32a24893ef25757ff67deba0ede3e3617531a2c7dd5dc3a25a8fc",
-    "reference": "38193e5591ca6fdb76d563db0bdb26b33c0bc5dfc3fda1d31d4734402bbf759b",
-    "rusher": "0202d422f56d98a6c9a26df40d5a2a203f02677fde86befb5725207abde66b14",
-    "rusher-easy": "4fb76eb0dbe84f0dfa31415dcad1e6889234efe3e70be0c60d625c98a99c0713",
-    "rusher-expert": "10d2a92f1d8d82c0ca67f4d34e46f4db1f48118bc9afeadd5bdb3af9616929bb",
-    "rusher-hard": "977fb30a52f21cf6c9a4c57fd69c2825549bd4c5a0dcf70866153dab72a59c53",
-    "rusher-normal": "6ecfeb3ca64bace28393a0eed91a5aaf9d061d51e3dec9efca37897a1175d844",
-    "sample-bot": "5d97b466044f0cb4e28ba3c24fffb6ab0a05c182d6aea2ccc5d0714d9cc42d5c",
-    "turtle": "29c6f00bf71e2ec0a84aabc7ff2e125fb41476e773763e0620a7c098a1d21d3a",
-    "turtle-easy": "d443e8b77cd682dae0eed44db6e5d0ff00de3187c52387e364315f4206c81c44",
-    "turtle-expert": "57e8d5bb1dc5da591d30d01794cad37ee494369c25b6c5eef7d148e0ecd28a4d",
-    "turtle-hard": "ff6301f44e67104762ccb5043132f56d102efc26ca5b4b97cb61fc99c295e7f4",
-    "turtle-normal": "349c47fefc43702feea7ab552dc94587a74405de88df4459a8e6f0abf671f71e"
+    "levelview-1#p2": "cf6f32bbe314326acbdfee7de0d17855e776f701669c644980ee7416ccba6aaa"
   }
 }

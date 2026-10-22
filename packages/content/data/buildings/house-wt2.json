@@ -1,0 +1,15 @@
+{
+  "$schema": "../../schemas/building.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "house-wt2",
+  "kind": "house",
+  "visual": "building.house-wt2",
+  "footprint": { "shape": "box", "w": 1.5, "d": 1.5 },
+  "special": true,
+  "modules": {
+    "level": { "maxLevel": 64 },
+    "drawsLines": {},
+    "spawns": { "troop": "soldier", "spawnSpeed": 0.5, "lineSpawnPenalty": 0.3 },
+    "grows": { "growTime": 2 }
+  }
+}

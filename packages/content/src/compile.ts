@@ -1,113 +1,131 @@
-import type { Archetype, Balance, Level } from './core.schema.js';
-import type { BotProfile } from './bot.schema.js';
-import type { BotParams } from './bot-params.js';
-import type { LoadedContent } from './parse-content.js';
-import { COMPONENT_REGISTRY } from './component-registry.js';
-import { ContentLoadError } from './fixed-point.js';
-import { resolveLevelOverrides } from './resolve-overrides.js';
-import { hashBotProfile, hashCompiledLevel } from './hash.js';
-import { resolveProfiles } from './resolve-profiles.js';
+import { MODULES, type ModuleId } from '@node-arena/defs';
+import type { Catalog } from './catalog.js';
+import { sha256, canonicalJson } from './hash.js';
+import { computeRequires, mergeModules, type ModuleBags, type SeatBot } from './level.js';
+import type { NextLevel } from './schemas.js';
 
-/** Flat loaded-unit params; generates.troop is a dense index into kinds. */
-export type CompiledComponentParams = Omit<Archetype['components'][string], 'troop'> & { troop?: number };
-export type CompiledComponents = Record<string, CompiledComponentParams>;
-export interface CompiledTower {
-  id: string;
-  archetype: string;
-  x: number;
-  y: number;
+export interface CompiledFootprint { shape: 'circle' | 'box'; radius?: number; w?: number; d?: number }
+export interface CompiledRules {
+  timeLimitSec: number | null;
+  stageThresholds: number[];
+  aliveCap: number;
+  growth: { base: number };
+  contactDistance: number;
+  laneHalfWidth: number;
+}
+export interface CompiledPlayer { id: string; kind: 'human' | 'ai'; colorKey: string }
+export interface CompiledUnit { id: string; visual: string; speed: number; hp: number; attack: number; defense: number }
+export interface CompiledBuilding {
+  id: string; archetype: string; x: number; z: number;
+  /** Dense player index, -1 = neutral. */
   owner: number;
-  garrison: number;
-  visual: string;
-  footprintRadius: number;
-  components: CompiledComponents;
+  level: number; ignoreForWin: boolean; special: boolean;
+  footprint: CompiledFootprint; visual: string; modules: ModuleBags;
 }
-export interface CompiledPlayer {
-  id: string;
-  kind: Level['players'][number]['kind'];
-  colorKey: string;
-  team: string;
+export interface CompiledElement {
+  id: string; archetype: string; x: number; z: number; yawMilliDeg: number;
+  footprint: CompiledFootprint; visual: string; variant?: string; modules: ModuleBags;
 }
-export interface CompiledTroopKind {
-  id: string;
-  value: number;
-  speedMilli: number;
-  visual: string;
-}
-/** Inheritance/schema metadata is absent; all fx3 params are already integers. */
-export interface ResolvedBotProfile {
-  id: string;
-  kind: BotProfile['kind'];
-  params: Omit<BotParams, 'extends'>;
-}
-export interface CompiledBot { player: number; profile: ResolvedBotProfile }
-
-/** Only compiler output crosses the sim boundary. Numeric fields use loaded units:
- * coordinates/radii/rates/speeds and bot fx3 params are milli-units; counts,
- * durations and dense indices are unscaled integers. Visual keys pass through.
- */
+export interface CompiledBot { player: number; bot: SeatBot }
 export interface CompiledLevel {
-  /** Authoritative registry names, for type-only consumers to assert parity. */
-  componentNames: readonly string[];
-  id: string;
-  timeLimitSec: number;
-  visual: string;
-  bounds: Level['bounds'];
-  globals: Balance['defaults'];
-  towers: CompiledTower[];
+  id: string; objective: string; timeLimitSec: number | null;
+  bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
+  theme: string;
+  rules: CompiledRules;
   players: CompiledPlayer[];
-  /** Referenced troop kinds only, sorted by id; generates.troop indexes this array. */
-  kinds: CompiledTroopKind[];
+  /** Referenced units only, sorted by id; array index is the dense unit index. */
+  units: CompiledUnit[];
+  buildings: CompiledBuilding[];
+  elements: CompiledElement[];
   bots: CompiledBot[];
-  /** Identity of resolved simulation inputs, excluding presentation and bots. */
+  requires: string[];
   simHash: string;
-  /** Separate identities of referenced resolved bot profiles. */
+  /** Keyed `<levelId>#<playerId>`. */
   botHash: Record<string, string>;
 }
 
-const byId = (a: { id: string }, b: { id: string }) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+function must<T>(value: T | undefined, what: string): T {
+  if (value === undefined) throw new TypeError(`compileLevel: ${what} (validate with loadLevel first)`);
+  return value;
+}
 
-/** Compile validated, path-keyed loadContent output without rescaling or mutation.
- * Overrides operate on resolved archetypes; profiles resolve in the same loaded units.
+const footprint = (f: { shape: 'circle' | 'box'; radius?: number; w?: number; d?: number }): CompiledFootprint =>
+  f.shape === 'circle' ? { shape: 'circle', radius: must(f.radius, 'circle radius') } : { shape: 'box', w: must(f.w, 'box w'), d: must(f.d, 'box d') };
+
+/** Params tagged `x-presentation` per module (never hashed). */
+const PRESENTATION: Record<string, ReadonlySet<string>> = Object.fromEntries(
+  (Object.keys(MODULES) as ModuleId[]).map((id) => {
+    const props = (MODULES[id].params as unknown as { properties: Record<string, Record<string, unknown>> }).properties;
+    return [id, new Set(Object.keys(props).filter((k) => props[k]!['x-presentation'] === true))];
+  }),
+);
+const simModules = (modules: ModuleBags): ModuleBags => Object.fromEntries(
+  Object.entries(modules).map(([id, params]) => [id, Object.fromEntries(Object.entries(params).filter(([k]) => !PRESENTATION[id]?.has(k)))]),
+);
+
+/**
+ * Simulation hash. Excludes name, source, theme, visual, variant, x-presentation params and bots.
+ * Array order is semantic (dense indices), so arrays are hashed as authored; bounds are hashed.
  */
-export function compileLevel(content: LoadedContent, levelId: string): CompiledLevel {
-  const entry = Object.entries(content).find((entry): entry is [string, Level] => 'towers' in entry[1] && entry[1].id === levelId);
-  if (!entry) throw new ContentLoadError([{ file: levelId, pointer: '/id', message: 'Unknown level id' }]);
-  const [file, level] = entry;
-  const { archetypes, troops, globals } = resolveLevelOverrides(content, level, file);
-  const timeLimitSec = level.timeLimitSec ?? globals.timeLimitSec;
-  if (!Number.isInteger(timeLimitSec) || timeLimitSec < 1 || timeLimitSec > 107374182) {
-    const balanceFile = Object.entries(content).find(([, entity]) => 'defaults' in entity)?.[0] ?? file;
-    const explicit = level.timeLimitSec !== undefined;
-    const overridden = level.overrides.globals?.timeLimitSec !== undefined;
-    throw new ContentLoadError([{ file: explicit || overridden ? file : balanceFile, pointer: explicit ? '/timeLimitSec' : overridden ? '/overrides/globals/timeLimitSec' : '/defaults/timeLimitSec', message: 'Duration must resolve to positive int32 ticks (maximum 107374182 seconds)' }]);
-  }
-  const players: CompiledPlayer[] = [...level.players].sort(byId).map(player => ({ id: player.id, kind: player.kind, colorKey: player.colorKey, team: player.team ?? player.id }));
-  const playerIndices = new Map(players.map((player, index) => [player.id, index]));
-  const sourceTowers = [...level.towers].sort(byId);
-  const referencedTroops = new Set(sourceTowers.flatMap(tower => {
-    const troop = archetypes[tower.archetype]!.components.generates?.troop;
-    return troop === undefined ? [] : [troop];
+export function computeSimHash(level: Omit<CompiledLevel, 'simHash' | 'botHash'>): string {
+  return sha256(canonicalJson({
+    id: level.id, objective: level.objective, timeLimitSec: level.timeLimitSec, bounds: level.bounds, rules: level.rules,
+    players: level.players,
+    units: level.units.map(({ visual: _v, ...u }) => u),
+    buildings: level.buildings.map(({ visual: _v, modules, ...b }) => ({ ...b, modules: simModules(modules) })),
+    elements: level.elements.map(({ visual: _v, variant: _variant, modules, ...e }) => ({ ...e, modules: simModules(modules) })),
+    requires: level.requires,
   }));
-  const kinds: CompiledTroopKind[] = [...referencedTroops].map(id => troops[id]!).sort(byId).map(troop => ({ id: troop.id, value: troop.value, speedMilli: troop.speed, visual: troop.visual }));
-  const kindIndices = new Map(kinds.map((kind, index) => [kind.id, index]));
-  const towers: CompiledTower[] = sourceTowers.map(tower => {
-    const archetype = archetypes[tower.archetype]!;
-    const components: CompiledComponents = {};
-    for (const name of Object.keys(archetype.components).sort()) {
-      const { troop, ...params } = structuredClone(archetype.components[name]!);
-      components[name] = { ...params, ...(troop === undefined ? {} : { troop: kindIndices.get(troop)! }) };
-    }
-    return { id: tower.id, archetype: tower.archetype, x: tower.pos.x, y: tower.pos.y, owner: tower.owner === null ? -1 : playerIndices.get(tower.owner)!, garrison: tower.garrison, visual: archetype.visual, footprintRadius: archetype.footprintRadius, components };
+}
+
+/** Per-seat bot hash input: level id, player id, the seat's bot block. */
+export function computeBotHash(levelId: string, playerId: string, bot: CompiledBot['bot']): string {
+  return sha256(canonicalJson({ level: levelId, player: playerId, bot }));
+}
+
+/** Resolve a validated level against the catalog (archetypes merged with overrides, fx3 as milli-ints). */
+export function compileLevel(catalog: Catalog, level: NextLevel): CompiledLevel {
+  const playerIndex = new Map(level.players.map((p, i) => [p.id, i]));
+  const unitIds = new Set<string>();
+  const buildings: CompiledBuilding[] = level.buildings.map((b) => {
+    const arch = must(catalog.buildings[b.archetype], `unknown building archetype ${b.archetype}`);
+    const modules = mergeModules(arch.modules as ModuleBags, b.params as ModuleBags | undefined);
+    const troop = modules.spawns?.troop;
+    if (typeof troop === 'string') unitIds.add(troop);
+    return {
+      id: b.id, archetype: b.archetype, x: b.pos.x, z: b.pos.z,
+      owner: b.owner === null ? -1 : must(playerIndex.get(b.owner), `unknown owner ${b.owner}`),
+      level: b.level, ignoreForWin: b.ignoreForWin, special: arch.special,
+      footprint: footprint(arch.footprint), visual: arch.visual, modules,
+    };
   });
-  const profiles = new Map(Object.values(resolveProfiles(content)).map(profile => [profile.id, profile]));
-  const bots: CompiledBot[] = [...level.players].sort(byId).flatMap((player, index) => {
-    if (player.kind !== 'bot') return [];
-    const profile = profiles.get(player.botProfile!)!;
-    const params = structuredClone(profile.params);
-    delete params.extends;
-    return [{ player: index, profile: { id: profile.id, kind: profile.kind, params } }];
+  const elements: CompiledElement[] = level.elements.map((e) => {
+    const arch = must(catalog.elements[e.archetype], `unknown element archetype ${e.archetype}`);
+    return {
+      id: e.id, archetype: e.archetype, x: e.pos.x, z: e.pos.z, yawMilliDeg: e.yawDeg,
+      footprint: footprint(arch.footprint), visual: arch.visual,
+      ...(e.variant !== undefined ? { variant: e.variant } : {}),
+      modules: mergeModules(arch.modules as ModuleBags, e.params as ModuleBags | undefined),
+    };
   });
-  const compiled = { componentNames: Object.keys(COMPONENT_REGISTRY.components).sort((a, b) => a < b ? -1 : a > b ? 1 : 0), id: level.id, timeLimitSec, visual: level.visual ?? globals.theme, bounds: structuredClone(level.bounds), globals, towers, players, kinds, bots };
-  return { ...compiled, simHash: hashCompiledLevel(compiled), botHash: Object.fromEntries(bots.map(bot => [bot.profile.id, hashBotProfile(bot.profile)])) };
+  const units: CompiledUnit[] = [...unitIds].sort().map((id) => {
+    const u = must(catalog.units[id], `unknown unit ${id}`);
+    return { id, visual: u.visual, speed: u.speed, hp: u.hp, attack: u.attack, defense: u.defense };
+  });
+  const bal = catalog.balance;
+  const timeLimitSec = level.timeLimitSec ?? null;
+  const players: CompiledPlayer[] = level.players.map((p) => ({ id: p.id, kind: p.kind, colorKey: p.colorKey }));
+  const bots: CompiledBot[] = [];
+  level.players.forEach((p, i) => { if (p.bot) bots.push({ player: i, bot: p.bot as SeatBot }); });
+  const base = {
+    id: level.id, objective: level.objective, timeLimitSec, bounds: { ...level.bounds }, theme: level.theme,
+    rules: {
+      timeLimitSec, stageThresholds: [...bal.stageThresholds], aliveCap: bal.spawn.aliveCap,
+      growth: { base: bal.growth.base }, contactDistance: bal.contactDistance, laneHalfWidth: bal.laneHalfWidth,
+    },
+    players, units, buildings, elements, bots, requires: computeRequires(catalog, level),
+  };
+  const botHash: Record<string, string> = {};
+  for (const { player, bot } of bots) { const id = players[player]!.id; botHash[`${level.id}#${id}`] = computeBotHash(level.id, id, bot); }
+  return { ...base, simHash: computeSimHash(base), botHash };
 }

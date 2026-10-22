@@ -1,9 +1,0 @@
-{
-  "$schema": "../../schemas/next/element.schema.json",
-  "schemaVersion": "2.0.0",
-  "id": "obstacle",
-  "visual": "element.obstacle",
-  "footprint": { "shape": "circle", "radius": 0.45 },
-  "modules": { "blocksLines": {} },
-  "variants": ["small", "big"]
-}

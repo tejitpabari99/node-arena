@@ -1,6 +1,0 @@
-{
-  "$schema": "../../schemas/next/campaign.schema.json",
-  "schemaVersion": "2.0.0",
-  "id": "common",
-  "entries": [{ "level": "levelview-1", "position": 4 }]
-}

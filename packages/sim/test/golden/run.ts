@@ -1,4 +1,5 @@
-import { createReplayRecorder, playReplay, type ReplayMetadata, type ReplayRecord, type SimEvent } from '../../src/index.js';
+import type { SimEvent } from '@node-arena/defs';
+import { createReplayRecorder, playReplay, type ReplayMetadata, type ReplayRecord } from '../../src/index.js';
 import { WordHash } from '../../src/math.js';
 import { scenarios, type Scenario } from './scenarios.js';
 export interface GoldenResult { name: string; replay: ReplayRecord; eventLogHash: string; events: SimEvent[] }
@@ -12,7 +13,7 @@ export function runScenario(scenario: Scenario, metadata: ReplayMetadata): Golde
   const recorder = createReplayRecorder(scenario.level, scenario.seed, metadata);
   const events: SimEvent[] = [];
   for (let i = 0; i < scenario.ticks && !recorder.view.over; i++) {
-    events.push(...recorder.step(scenario.commands.filter(c => c.tick === recorder.tick).map(c => c.cmd)));
+    events.push(...recorder.step(scenario.commands.filter(c => c.tick === recorder.view.tick).map(c => c.cmd)));
   }
   if (scenario.fullGame && !recorder.view.over) throw new Error(`Incomplete full-game fixture: ${scenario.name}`);
   const replay = recorder.record();

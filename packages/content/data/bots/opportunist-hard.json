@@ -1,3 +1,0 @@
-{"$schema": "../../schemas/bot.schema.json", "schemaVersion": "1.0.0", "id": "opportunist-hard", "kind": "utility",
-  "params": {"extends": "opportunist", "skill": {"decisionIntervalSec": 1.4, "noise": 0.1, "actionsPerDecision": 2}}
-}

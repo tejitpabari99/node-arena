@@ -4,10 +4,9 @@
     "$schema",
     "schemaVersion",
     "palettes",
-    "teamMarkers",
-    "models",
     "visuals",
     "themes",
+    "fx",
     "events",
     "camera"
   ],
@@ -18,102 +17,37 @@
     },
     "schemaVersion": {
       "type": "string",
-      "const": "1.2.0"
+      "const": "2.0.0"
     },
     "palettes": {
       "type": "object",
       "required": [
-        "default",
-        "colorblind"
+        "blue",
+        "green",
+        "red",
+        "yellow",
+        "gray"
       ],
       "properties": {
-        "default": {
-          "type": "object",
-          "patternProperties": {
-            "^.*$": {
-              "type": "string",
-              "pattern": "^#[0-9a-fA-F]{6}$"
-            }
-          },
-          "additionalProperties": false
-        },
-        "colorblind": {
-          "type": "object",
-          "patternProperties": {
-            "^.*$": {
-              "type": "string",
-              "pattern": "^#[0-9a-fA-F]{6}$"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    "teamMarkers": {
-      "type": "object",
-      "patternProperties": {
-        "^.*$": {
+        "blue": {
           "type": "string",
-          "minLength": 1
-        }
-      },
-      "additionalProperties": false
-    },
-    "models": {
-      "type": "object",
-      "patternProperties": {
-        "^.*$": {
-          "anyOf": [
-            {
-              "type": "object",
-              "required": [
-                "src"
-              ],
-              "properties": {
-                "src": {
-                  "type": "string",
-                  "minLength": 1
-                }
-              },
-              "additionalProperties": false
-            },
-            {
-              "type": "object",
-              "required": [
-                "primitive",
-                "size"
-              ],
-              "properties": {
-                "primitive": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "const": "box"
-                    },
-                    {
-                      "type": "string",
-                      "const": "capsule"
-                    },
-                    {
-                      "type": "string",
-                      "const": "cylinder"
-                    }
-                  ]
-                },
-                "size": {
-                  "type": "array",
-                  "items": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
-                  },
-                  "minItems": 3,
-                  "maxItems": 3
-                }
-              },
-              "additionalProperties": false
-            }
-          ]
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "green": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "red": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "yellow": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "gray": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
         }
       },
       "additionalProperties": false
@@ -133,46 +67,162 @@
               "anyOf": [
                 {
                   "type": "string",
-                  "const": "tower"
+                  "const": "unit"
                 },
                 {
                   "type": "string",
-                  "const": "troop"
+                  "const": "building"
+                },
+                {
+                  "type": "string",
+                  "const": "element"
+                },
+                {
+                  "type": "string",
+                  "const": "ground"
+                },
+                {
+                  "type": "string",
+                  "const": "lane"
+                },
+                {
+                  "type": "string",
+                  "const": "fx"
                 }
               ]
             },
             "model": {
-              "type": "string",
-              "minLength": 1
+              "type": "object",
+              "required": [
+                "parts",
+                "budget"
+              ],
+              "properties": {
+                "parts": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "budget": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "unit"
+                    },
+                    {
+                      "type": "string",
+                      "const": "building"
+                    },
+                    {
+                      "type": "string",
+                      "const": "obstacle"
+                    },
+                    {
+                      "type": "string",
+                      "const": "ground"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
             },
-            "scale": {
-              "type": "number",
-              "exclusiveMinimum": 0
+            "stages": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "mesh"
+                    ],
+                    "properties": {
+                      "mesh": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "enable"
+                    ],
+                    "properties": {
+                      "enable": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "minItems": 1
             },
-            "yOffset": {
-              "type": "number"
-            },
-            "build": {
-              "type": "string",
-              "const": "stacked"
-            },
-            "teamMaterial": {
-              "type": "string",
-              "minLength": 1
-            },
-            "tint": {
-              "type": "string",
-              "pattern": "^#[0-9a-fA-F]{6}$"
+            "team": {
+              "type": "object",
+              "required": [
+                "mode",
+                "textures"
+              ],
+              "properties": {
+                "mode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "textureSwap"
+                    }
+                  ]
+                },
+                "textures": {
+                  "type": "object",
+                  "required": [
+                    "blue",
+                    "green",
+                    "red",
+                    "yellow",
+                    "gray"
+                  ],
+                  "properties": {
+                    "blue": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "green": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "red": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "yellow": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "gray": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
             },
             "anim": {
               "anyOf": [
                 {
                   "type": "object",
                   "required": [
-                    "type"
+                    "mode"
                   ],
                   "properties": {
-                    "type": {
+                    "mode": {
                       "type": "string",
                       "const": "none"
                     }
@@ -182,32 +232,43 @@
                 {
                   "type": "object",
                   "required": [
-                    "type",
-                    "hz",
-                    "amp",
-                    "sway"
+                    "mode",
+                    "clips"
                   ],
                   "properties": {
-                    "type": {
+                    "mode": {
                       "type": "string",
-                      "const": "bob"
+                      "const": "node-tracks"
                     },
-                    "hz": {
-                      "type": "number",
-                      "exclusiveMinimum": 0
-                    },
-                    "amp": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "sway": {
-                      "type": "number",
-                      "minimum": 0
+                    "clips": {
+                      "type": "object",
+                      "required": [
+                        "run",
+                        "death"
+                      ],
+                      "properties": {
+                        "run": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "death": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "additionalProperties": false
                     }
                   },
                   "additionalProperties": false
                 }
               ]
+            },
+            "scale": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "yOffset": {
+              "type": "number"
             },
             "label": {
               "type": "object",
@@ -243,17 +304,51 @@
           "type": "object",
           "required": [
             "ground",
-            "sky",
-            "light"
+            "obstacle",
+            "light",
+            "sky"
           ],
           "properties": {
             "ground": {
-              "type": "string",
-              "pattern": "^#[0-9a-fA-F]{6}$"
+              "type": "object",
+              "required": [
+                "mesh",
+                "texture"
+              ],
+              "properties": {
+                "mesh": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "texture": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
             },
-            "sky": {
-              "type": "string",
-              "pattern": "^#[0-9a-fA-F]{6}$"
+            "obstacle": {
+              "type": "object",
+              "required": [
+                "small",
+                "big",
+                "texture"
+              ],
+              "properties": {
+                "small": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "big": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "texture": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
             },
             "light": {
               "type": "object",
@@ -305,70 +400,66 @@
               },
               "additionalProperties": false
             },
-            "palette": {
+            "sky": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "fx": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "fx": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "required": [
+            "texture",
+            "kind",
+            "params"
+          ],
+          "properties": {
+            "texture": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": "sprite"
+                },
+                {
+                  "type": "string",
+                  "const": "ring"
+                },
+                {
+                  "type": "string",
+                  "const": "burst"
+                },
+                {
+                  "type": "string",
+                  "const": "trail"
+                }
+              ]
+            },
+            "params": {
               "type": "object",
               "patternProperties": {
                 "^.*$": {
-                  "type": "string",
-                  "pattern": "^#[0-9a-fA-F]{6}$"
+                  "type": "number"
                 }
               },
               "additionalProperties": false
-            },
-            "scatter": {
-              "type": "object",
-              "required": [
-                "seed",
-                "density"
-              ],
-              "properties": {
-                "seed": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "density": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              },
-              "additionalProperties": false
-            },
-            "props": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "required": [
-                  "model",
-                  "pos"
-                ],
-                "properties": {
-                  "model": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "pos": {
-                    "type": "array",
-                    "items": {
-                      "type": "number"
-                    },
-                    "minItems": 3,
-                    "maxItems": 3
-                  },
-                  "scale": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
-                  },
-                  "rotation": {
-                    "type": "array",
-                    "items": {
-                      "type": "number"
-                    },
-                    "minItems": 3,
-                    "maxItems": 3
-                  }
-                },
-                "additionalProperties": false
-              }
             }
           },
           "additionalProperties": false
@@ -389,28 +480,6 @@
             "fx": {
               "type": "string",
               "minLength": 1
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    "levelVisuals": {
-      "type": "object",
-      "patternProperties": {
-        "^.*$": {
-          "type": "object",
-          "properties": {
-            "cameraMargin": {
-              "type": "number",
-              "minimum": -2,
-              "maximum": 5
-            },
-            "troopScale": {
-              "type": "number",
-              "exclusiveMinimum": 0,
-              "maximum": 2
             }
           },
           "additionalProperties": false

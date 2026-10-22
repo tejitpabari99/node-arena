@@ -6,7 +6,6 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { hashFixture } from './hash-fixture.js';
-import type { Content, Troop } from '../src/index.js';
 const script = fileURLToPath(new URL('../scripts/content-lock.ts', import.meta.url));
 const cli = (dir: string, ...args: string[]) => spawnSync(process.execPath, ['--import', 'tsx', script, '--dir', join(dir, 'packages/content'), '--rules', join(dir, 'docs/GAME_RULES.md'), ...args], { encoding: 'utf8' });
 function workspace() {
@@ -35,14 +34,14 @@ test('CLI writes lock, detects stale output and rejects regenerated unversioned 
     writeFixture(dir);
     let result = cli(dir); assert.equal(result.status, 0, result.stderr);
     const lock = JSON.parse(readFileSync(join(dir, 'packages/content/hashes.lock.json'), 'utf8'));
-    assert.match(lock.levels.sample, /^[a-f0-9]{64}$/); assert.match(lock.bots.base, /^[a-f0-9]{64}$/);
+    assert.match(lock.levels['levelview-1'], /^[a-f0-9]{64}$/); assert.match(Object.keys(lock.bots)[0]!, /^levelview-1#/); assert.match(Object.values(lock.bots)[0] as string, /^[a-f0-9]{64}$/);
     baseline(dir);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.equal(result.status, 0, result.stderr);
-    const files = hashFixture(); (files['data/troops/regular.json'] as Troop).speed = 12; writeFixture(dir, files);
+    const files = hashFixture(); files['data/units/soldier.json'].speed = 7; writeFixture(dir, files);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.notEqual(result.status, 0); assert.match(result.stderr, /stale/);
     result = cli(dir); assert.equal(result.status, 0, result.stderr);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.notEqual(result.status, 0); assert.match(result.stderr, /contentVersion/);
-    (files['content.json'] as Content).contentVersion = '1.0.1'; writeFixture(dir, files);
+    files['content.json'].contentVersion = '2.0.1'; writeFixture(dir, files);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.equal(result.status, 0, result.stderr);
     result = cli(dir, '--check', '--base', 'missing-ref'); assert.notEqual(result.status, 0);
     writeFileSync(join(dir, 'docs/GAME_RULES.md'), 'RULES_VERSION: 1.0.0\n');
@@ -50,18 +49,17 @@ test('CLI writes lock, detects stale output and rejects regenerated unversioned 
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('precontent baseline bootstraps a first dataset; absent dataset needs explicit bootstrap and cannot erase baseline', () => {
+test('missing content.json is refused and a baseline without a dataset cannot be erased', () => {
   const dir = workspace();
   try {
     baseline(dir);
-    let result = cli(dir, '--allow-bootstrap'); assert.equal(result.status, 0, result.stderr); assert.match(result.stdout, /No production dataset/);
-    result = cli(dir); assert.notEqual(result.status, 0); assert.match(result.stderr, /content.json/);
+    let result = cli(dir); assert.notEqual(result.status, 0); assert.match(result.stderr, /content.json/);
     writeFixture(dir);
     result = cli(dir); assert.equal(result.status, 0, result.stderr);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.equal(result.status, 0, result.stderr);
     baseline(dir);
     rmSync(join(dir, 'packages/content/content.json'));
-    result = cli(dir, '--check', '--base', 'HEAD', '--allow-bootstrap'); assert.notEqual(result.status, 0);
+    result = cli(dir, '--check', '--base', 'HEAD'); assert.notEqual(result.status, 0);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -73,7 +71,7 @@ test('CLI refuses regenerated bot hashes without a committed BOT_VERSION bump', 
     writeFileSync(source, "export const BOT_VERSION = '1.0.0';\n");
     const files = hashFixture(); writeFixture(dir, files);
     assert.equal(cli(dir).status, 0); baseline(dir);
-    const bot = files['data/bots/base.json'] as { params: { bias: { attack: number } } }; bot.params.bias.attack = 1.2;
+    const seat = files['data/levels/levelview-1.json'].players.find((p: any) => p.bot); seat.bot.behavior = seat.bot.behavior === 'full' ? 'attackOnly' : 'full';
     writeFixture(dir, files); assert.equal(cli(dir).status, 0);
     let result = cli(dir, '--check', '--base', 'HEAD');
     assert.notEqual(result.status, 0); assert.match(result.stderr, /BOT_VERSION.*increase/);

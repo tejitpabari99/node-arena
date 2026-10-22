@@ -1,8 +1,9 @@
 {
   "$schema": "../schemas/balance.schema.json",
-  "schemaVersion": "1.0.0",
-  "defaults": {
-    "timeLimitSec": 300,
-    "theme": "grass"
-  }
+  "schemaVersion": "2.0.0",
+  "stageThresholds": [10, 30],
+  "spawn": { "aliveCap": 30 },
+  "growth": { "base": 0.9 },
+  "contactDistance": 0.7,
+  "laneHalfWidth": 0.19
 }

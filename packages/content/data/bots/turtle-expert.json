@@ -1,3 +1,0 @@
-{"$schema": "../../schemas/bot.schema.json", "schemaVersion": "1.0.0", "id": "turtle-expert", "kind": "utility",
-  "params": {"extends": "turtle", "skill": {"decisionIntervalSec": 0.8, "noise": 0.03, "actionsPerDecision": 2}}
-}

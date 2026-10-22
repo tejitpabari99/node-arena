@@ -1,226 +1,47 @@
-import { hashState } from './hash.js';
-import { createView, refreshView, readTroops, snapshot, type Sim, type SimView, type TroopBuf, type SimSnapshot } from './read.js';
-import type { CompiledLevel, CompiledPlayer, CompiledTower, CompiledComponents } from '@node-arena/content';
-import { step, validateDraw, type Command, type RejectReason, type SimEvent, type GameOver } from './commands.js';
-import { TICK_RATE, isqrt, Sfc32 } from './math.js';
-import { ComponentRegistry, createComponentRegistry, sortedNames, compareNames, type Phase, type SimComponent, type ComponentSystem } from './registry.js';
+import { MODULES, type ModuleId } from '@node-arena/defs';
+import { IMPLS, MODULE_ORDER } from './modules/index.js';
+import type { Buildings, CompiledLevel, SimState } from './types.js';
 
-export interface Troop { p0: number; t0: number; owner: number; kind: number; seq: number; value: number }
-const troopColumns = ['p0', 't0', 'owner', 'kind', 'seq', 'value'] as const;
-/** FIFO SoA ring. Remaining value belongs to each entry, so tank fronts survive partial clashes. */
-export class TroopRing {
-  private col: Record<typeof troopColumns[number], Int32Array> = { p0: new Int32Array(1), t0: new Int32Array(1), owner: new Int32Array(1), kind: new Int32Array(1), seq: new Int32Array(1), value: new Int32Array(1) };
-  private head = 0;
-  size = 0;
-
-  constructor(private readonly debug = false) {}
-
-  push(troop: Troop): void {
-    if (this.debug) for (const name of troopColumns) {
-      const value = troop[name];
-      if (!Number.isInteger(value) || value < -2147483648 || value > 2147483647) throw new Error('int32 troop invariant breached');
-    }
-    if (this.size === this.col.p0.length) {
-      for (const name of troopColumns) {
-        const old = this.col[name];
-        const next = new Int32Array(old.length * 2);
-        for (let i = 0; i < this.size; i++) next[i] = old[(this.head + i) % old.length]!;
-        this.col[name] = next;
-      }
-      this.head = 0;
-    }
-    const index = (this.head + this.size) % this.col.p0.length;
-    for (const name of troopColumns) this.col[name][index] = troop[name];
-    this.size++;
-  }
-
-  /** Ordered traversal for debug checks and later read/hash consumers; never advances the ring. */
-  forEach(visit: (troop: Troop) => void): void {
-    for (let offset = 0; offset < this.size; offset++) {
-      const i = (this.head + offset) % this.col.p0.length;
-      visit({ p0: this.col.p0[i]!, t0: this.col.t0[i]!, owner: this.col.owner[i]!, kind: this.col.kind[i]!, seq: this.col.seq[i]!, value: this.col.value[i]! });
-    }
-  }
-
-  /** Nonallocating logical FIFO column access, independent of wrap/capacity. */
-  read(name: typeof troopColumns[number], offset: number): number {
-    return this.col[name][(this.head + offset) % this.col.p0.length]!;
-  }
-
-  /** Stream canonical troop words without repeating column lookup/index arithmetic. */
-  writeWords(out: { word(value: number): void }): void {
-    const { p0, t0, owner, kind, seq, value } = this.col;
-    const capacity = p0.length;
-    for (let offset = 0; offset < this.size; offset++) {
-      const i = (this.head + offset) % capacity;
-      out.word(p0[i]!); out.word(t0[i]!); out.word(owner[i]!);
-      out.word(kind[i]!); out.word(seq[i]!); out.word(value[i]!);
-    }
-  }
-
-  front(): Troop | undefined {
-    if (this.size === 0) return undefined;
-    const i = this.head;
-    return { p0: this.col.p0[i]!, t0: this.col.t0[i]!, owner: this.col.owner[i]!, kind: this.col.kind[i]!, seq: this.col.seq[i]!, value: this.col.value[i]! };
-  }
-
-  shift(): void {
-    if (this.size === 0) return;
-    this.head = (this.head + 1) % this.col.p0.length;
-    this.size--;
-  }
-
-  consumeFront(value: number): number {
-    if (!Number.isInteger(value) || value < 0) throw new RangeError('Expected nonnegative integer value');
-    if (this.size === 0) return 0;
-    const removed = Math.min(value, this.col.value[this.head]!);
-    this.col.value[this.head] = this.col.value[this.head]! - removed;
-    if (this.col.value[this.head] === 0) this.shift();
-    return removed;
-  }
+/** stage(L) = 1 + number of thresholds <= L (R-GRW-02). */
+export function stageOf(thresholds: readonly number[], level: number): number {
+  let stage = 1;
+  for (let i = 0; i < thresholds.length; i++) if (thresholds[i]! <= level) stage++;
+  return stage;
 }
-export interface Channel { key: number; from: number; to: number; length: number; drawn: number; drawSeq: number; owner: number; troops: TroopRing }
-export interface PlayerState {
-  team: Int32Array; alive: Int32Array; transit: Int32Array;
-  kind: CompiledPlayer['kind'][]; colorKey: string[];
-  stats: { generated: Float64Array; overflowLost: Float64Array; kills: Float64Array; captures: Float64Array };
-}
-export interface TowerState { owner: Int32Array; team: Int32Array; slots: Int32Array; lines: Int32Array; col: Record<string, Int32Array> }
-export interface ScheduledSystem extends ComponentSystem { readonly component: string }
-export interface SimState {
-  readonly view: SimView;
-  readTroops(out: TroopBuf): number;
-  snapshot(): SimSnapshot;
-  hash(): string;
-  tick: number;
-  over: GameOver | null;
-  debug: boolean;
-  teamIds: string[];
-  eliminated: Int32Array;
-  /** Value-unit accounting only; excluded from future rule-state hashes. */
-  accounting: { initial: number; generated: number; overflow: number; hits: number; clashes: number };
-  rejected: number;
-  drawSeq: number;
-  troopSeq: number;
-  pendingDepartures: Int32Array;
-  events: SimEvent[] | null;
-  step(commands: readonly Command[], options?: { events?: boolean }): readonly SimEvent[];
-  canDraw(player: string, from: string, to: string): RejectReason | null;
-  resetOnCapture(tower: number): void;
-  timeLimitTicks: number;
-  visual: string;
-  ids: { players: string[]; towers: string[] };
-  players: PlayerState;
-  tower: TowerState;
-  towerStatic: { x: number; y: number; archetype: string; visual: string; footprintRadius: number; components: string[] }[];
-  towerParams: CompiledComponents[];
-  kinds: { id: string; value: number; speedPerTick: number; visual: string }[];
-  /** Indexed from*N+to. All lengths are precomputed, channels remain lazy. */
-  lengths: Int32Array;
-  channels: (Channel | undefined)[];
-  componentTowers: Map<string, Int32Array>;
-  components: readonly SimComponent[];
-  readonly phases: readonly Phase[];
-  systems: Record<Phase, ScheduledSystem[]>;
-  prng: Sfc32;
-  ensureChannel(from: number, to: number): Channel;
-  /** Remove value from one front and its owner's transit; caller accounts the cause. */
-  killFront(channel: Channel, value: number): number;
-}
-export interface CreateOptions { readonly registry?: ComponentRegistry; readonly debug?: boolean }
 
-/** Internal state access remains available for mechanics fixtures. */
-export function create(level: CompiledLevel, seed: number, options: CreateOptions = {}): SimState & Sim {
-  const timeLimitTicks = level.timeLimitSec * TICK_RATE;
-  if (!Number.isInteger(level.timeLimitSec) || level.timeLimitSec <= 0 || !Number.isInteger(timeLimitTicks) || timeLimitTicks > 2147483647) throw new RangeError('Invalid timeLimitSec: timeLimitTicks must fit positive int32');
-  const registry = options.registry ?? createComponentRegistry();
-  registry.assertParity(level.componentNames);
-  const components = registry.definitions();
-  const phases = registry.orderedPhases();
-  const names = new Set(components.map(component => component.name));
-  const n = level.towers.length;
-  const p = level.players.length;
-  const column = () => new Int32Array(n);
-  const playerColumn = () => new Int32Array(p);
-  const statsColumn = () => new Float64Array(p);
-  const players: PlayerState = { team: playerColumn(), alive: playerColumn(), transit: playerColumn(), kind: level.players.map(player => player.kind), colorKey: level.players.map(player => player.colorKey), stats: { generated: statsColumn(), overflowLost: statsColumn(), kills: statsColumn(), captures: statsColumn() } };
-  const teams = new Map<string, number>();
-  for (let i = 0; i < p; i++) {
-    const team = level.players[i]!.team;
-    if (!teams.has(team)) teams.set(team, teams.size);
-    players.team[i] = teams.get(team)!;
+/** Indexes of buildings that carry module `id` in their compiled bag. */
+export function carriers(level: CompiledLevel, id: ModuleId): Int32Array {
+  const out: number[] = [];
+  for (let i = 0; i < level.buildings.length; i++) if (level.buildings[i]!.modules[id] !== undefined) out.push(i);
+  return Int32Array.from(out);
+}
+
+export function createState(level: CompiledLevel, seed: number): SimState {
+  const n = level.buildings.length;
+  const col: Record<string, Int32Array> = {};
+  for (const id of MODULE_ORDER) {
+    const fields = IMPLS[id].state;
+    if (!fields) continue;
+    for (const field of Object.keys(fields).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) col[`${id}.${field}`] = new Int32Array(n).fill(fields[field]!);
   }
-  const tower: TowerState = { owner: column(), team: column(), slots: column(), lines: column(), col: Object.create(null) as Record<string, Int32Array> };
-  const componentTowers = new Map<string, Int32Array>();
-  const systems: Record<Phase, ScheduledSystem[]> = Object.create(null) as Record<Phase, ScheduledSystem[]>;
-  for (const phase of phases) systems[phase] = [];
-  for (const component of components) {
-    const indices: number[] = [];
-    for (let i = 0; i < n; i++) if (Object.hasOwn(level.towers[i]!.components, component.name)) indices.push(i);
-    componentTowers.set(component.name, Int32Array.from(indices));
-    for (const name of sortedNames(component.state)) {
-      const col = column();
-      for (const i of indices) col[i] = component.state[name]!;
-      tower.col[`${component.name}.${name}`] = col;
-    }
-    for (const i of indices) component.initialize?.(level.towers[i]!, tower.col, i);
-    for (const phase of phases) {
-      const system = component.systems?.[phase];
-      if (system) systems[phase]!.push({ ...system, component: component.name });
-    }
-  }
-  for (const phase of phases) systems[phase]!.sort((a, b) => a.order - b.order || compareNames(a.component, b.component));
-  for (let i = 0; i < n; i++) {
-    const source = level.towers[i]!;
-    for (const name of sortedNames(source.components)) if (!names.has(name)) throw new Error(`Unknown component: ${name}`);
-    tower.owner[i] = source.owner;
-    tower.team[i] = source.owner === -1 ? -1 : players.team[source.owner]!;
-    if (source.owner !== -1) players.alive[source.owner] = 1;
-  }
-  const lengths = new Int32Array(n * n);
-  for (let from = 0; from < n; from++) for (let to = from + 1; to < n; to++) {
-    const dx = (level.towers[to]!.x - level.towers[from]!.x) * TICK_RATE;
-    const dy = (level.towers[to]!.y - level.towers[from]!.y) * TICK_RATE;
-    const length = isqrt(dx * dx + dy * dy);
-    lengths[from * n + to] = length;
-    lengths[to * n + from] = length;
-  }
-  const channels: (Channel | undefined)[] = Array.from({ length: n * n }, () => undefined);
-  let view: SimView;
-  const state: SimState = { get view() { return view; },
-    readTroops(out) { return readTroops(state, out); },
-    snapshot() { return snapshot(state); },
-    hash() { return hashState(state); }, tick: 0, over: null, rejected: 0, drawSeq: 0, troopSeq: 0, pendingDepartures: column(), events: null,
-    debug: options.debug ?? false, teamIds: [...teams.keys()], eliminated: playerColumn(),
-    accounting: { initial: level.towers.reduce((sum, tower) => sum + tower.garrison, 0), generated: 0, overflow: 0, hits: 0, clashes: 0 },
-    step(commands, options) {
-      if (state.over) return step(state, commands, options);
-      const events = step(state, commands, options);
-      refreshView(state);
-      return events;
-    },
-    canDraw(player, from, to) { return validateDraw(state, player, from, to).reason; },
-    resetOnCapture(tower) {
-      for (const component of components) if (Object.hasOwn(state.towerParams[tower]!, component.name)) component.hooks?.onCapture?.(state, tower);
-    }, timeLimitTicks, visual: level.visual, ids: { players: level.players.map(player => player.id), towers: level.towers.map(tower => tower.id) }, players, tower,
-    towerStatic: level.towers.map((tower: CompiledTower) => ({ x: tower.x, y: tower.y, archetype: tower.archetype, visual: tower.visual, footprintRadius: tower.footprintRadius, components: sortedNames(tower.components) })),
-    towerParams: level.towers.map(tower => Object.fromEntries(sortedNames(tower.components).map(name => [name, Object.fromEntries(Object.entries(tower.components[name]!).sort(([a], [b]) => compareNames(a, b)).map(([param, value]) => {
-      return [param, Array.isArray(value) ? [...value] : value];
-    }))]))),
-    kinds: level.kinds.map(kind => ({ id: kind.id, value: kind.value, speedPerTick: kind.speedMilli, visual: kind.visual })), lengths, channels, componentTowers, components, phases, systems, prng: new Sfc32(seed),
-    ensureChannel(from, to) {
-      if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to < 0 || from >= n || to >= n || from === to) throw new RangeError('Invalid channel pair');
-      const key = from * n + to;
-      return channels[key] ??= { key, from, to, length: lengths[key]!, drawn: 0, drawSeq: 0, owner: -1, troops: new TroopRing(state.debug) };
-    },
-    killFront(channel, value) {
-      const owner = channel.troops.front()?.owner;
-      const removed = channel.troops.consumeFront(value);
-      if (owner !== undefined && owner !== -1) players.transit[owner] = players.transit[owner]! - removed;
-      return removed;
-    },
+  const buildings: Buildings = {
+    n,
+    owner: new Int32Array(n), level: new Int32Array(n), maxLevel: new Int32Array(n), stage: new Int32Array(n),
+    lines: new Int32Array(n), alive: new Int32Array(n), ignoreForWin: new Int32Array(n), col,
   };
-  for (const component of components) component.setup?.(state, componentTowers.get(component.name)!);
-  view = createView(state);
+  level.buildings.forEach((b, i) => {
+    buildings.owner[i] = b.owner;
+    buildings.level[i] = b.level;
+    buildings.maxLevel[i] = Number(b.modules['level']?.['maxLevel'] ?? 0);
+    buildings.stage[i] = stageOf(level.rules.stageThresholds, b.level);
+    buildings.ignoreForWin[i] = b.ignoreForWin ? 1 : 0;
+  });
+  const state: SimState = { level, seed, tick: 0, over: null, drawSeq: 0, troopSeq: 0, rejected: 0, buildings, events: null };
+  for (const id of MODULE_ORDER) IMPLS[id].init?.(state, carriers(level, id));
   return state;
+}
+
+/** Guards the defs/impl pairing at runtime too: every defs module has an impl with the same id. */
+export function assertBindings(): void {
+  for (const id of Object.keys(MODULES) as ModuleId[]) if (IMPLS[id].id !== id) throw new Error(`IMPLS.${id}.id mismatch`);
 }

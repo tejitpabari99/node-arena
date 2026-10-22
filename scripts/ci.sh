@@ -16,13 +16,14 @@ cd "$(dirname "$0")/.."
 #   plus the failing test files split out of the live suites (never whole suites):
 #   "test:sim:golden:SP03" "test:tools:replay:SP06" "test:tools:rules:SP04"
 #   "test:bots:golden:SP06"
-# CUT additions (SP02 CUT / SP03 T1 applies them on top of the SP01 list):
-#   "typecheck:bots:SP06" "typecheck:web:SP08" "test:web:SP08"
-#   "build:bots:SP06" "test:bots:SP06" "build:web:SP08" "tools:levels:SP06" "tools:balance:SP06"
-#   "tools:replay:SP03" "check:manifest:SP07" "balance:SP06" "bench:sim:SP03"
-#   "bench:bots:SP06" "test:web:e2e:SP08"
-# (final owners follow the PRD red-window table; step names tools:* / balance /
-#  test:web:e2e become ci steps when their SP adds them.)
+# CUT additions (02 T6 + 03 T1 commit, on top of the SP01 list):
+#   "build:bots:SP06" "typecheck:bots:SP06" "test:bots:SP06" "bench:bots:SP06"
+#   "typecheck:web:SP08" "test:web:SP08" "check:manifest:SP07" "bench:sim:SP03"
+#   "test:bots:golden:SP06" stays: it is its own ci step (separate from test:bots), so it still needs the entry.
+# Not ci.sh steps, so not listed (they stay out of the gate chain until their owner restores them):
+#   tools:levels / tools:balance (SP06) and tools:replay (SP06): tools/src/{levels*,balance*,replay}.ts and
+#   their tests moved under tools/src/_parked/ and tools/test/_parked/ (excluded from tsconfig);
+#   build:web, balance, test:web:e2e (SP08/SP06): web/bots-owned scripts, not run by ci.sh.
 # ---------------------------------------------------------------------------
 PARKED=(
   "check:rules:SP04"
@@ -34,6 +35,14 @@ PARKED=(
   "test:tools:replay:SP06"
   "test:tools:rules:SP04"
   "test:bots:golden:SP06"
+  "build:bots:SP06"
+  "typecheck:bots:SP06"
+  "test:bots:SP06"
+  "bench:bots:SP06"
+  "typecheck:web:SP08"
+  "test:web:SP08"
+  "check:manifest:SP07"
+  "bench:sim:SP03"
 )
 
 is_parked() { # prints owner and returns 0 when step $1 is parked
