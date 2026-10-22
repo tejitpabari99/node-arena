@@ -168,3 +168,4 @@ main.tsx -> app/runtime (state machine boot|picker|playing|result|error)
 - E2E (rewrite): `app-flow`, `boot`, `hud`, `input`, `input-palette`->`input-gestures`, `slice`, `acceptance`, `dev`(delete); render-specific specs `towers|troops|lines-fx|model-regressions|scene|assets|spike` belong to 07 (08 only deletes those that reference removed UI).
 - Harness: `?level=<id>&seed=<n>&speed=<1..>`; probes expose anchors' screen coordinates, HUD state, command log; visual harness captures picker, HUD, popups at 1600x900.
 - Perf: 720 troops + HUD via 07's perf scene with 08 shell; record frame time.
+- [RESOLVED: review 2026-10-22 — content hash browser parity re-added by SP08] The v1 content browser-parity test (content hashing in a real browser vs Node) was deleted at CUT with no owner; SP08 re-adds it against the v2 `simHash`/`botHash` (sim golden browser parity is SP03 Task 8).
