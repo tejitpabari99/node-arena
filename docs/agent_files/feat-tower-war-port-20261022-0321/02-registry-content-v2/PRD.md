@@ -65,7 +65,7 @@ Binding (compile-time): `sim/src/modules/index.ts` exports `const IMPLS = { leve
 | File | Content |
 |---|---|
 | `balance.json` (singleton) | `stageThresholds [10,30]`, `spawn.aliveCap 30`, `growth.base 0.9`, `contactDistance 0.7`, `laneHalfWidth 0.19`, no boosters block [RESOLVED: owner Q3 - boosters deferred; see docs/FUTURES.md via SP09]; `timeLimitSec` is a level field; remaining values verbatim from 01 §7 (R10 key table) |
-| `units/{soldier,tank}.json` | `visual`, `speed 5`, `hp/attack/defense` 1/1/1 and 2/1/2 |
+| `units/{soldier,tank}.json` | `visual`, `speed 5`, `hp/attack/defense` 1/1/1 and 2/2/1 |
 | `buildings/{house-wt1,house-wt2,tower}.json` | `kind`, `visual`, `footprint` (`{shape:'circle',radius}` or `{shape:'box',w,d}`, fx3; both archetype kinds accept both; shipped values are placeholders, 04 edits them), `special` (bool; **`house-wt2.special = true`; `house-wt1` and `tower` = false**), `modules {...}` |
 | `elements/obstacle.json` | `visual`, `footprint` (circle or box), `modules {blocksLines:{}}`, `variants?: ['small','big']` |
 | `campaigns/common.json` | R6 |
@@ -178,6 +178,7 @@ None.
 - [RESOLVED: owner Q1] `shoots.neutralFires` ships **true** (neutral towers fire; content flag kept). [RESOLVED: owner Q3 - boosters deferred; see docs/FUTURES.md via SP09] No booster content, schema, `CompiledLevel.rules.boosters`, or booster commands/events.
 - [RESOLVED: dropped, `source.dropped`] cargo (present in several of the 20 levels); AiRM ops dropped by 05/06.
 - [DEFERRED] Module versions / replay header map, phase partial order, reserved-module status, unit modules, `extends`, packs, `unplayable-listed` picker.
+- [RESOLVED: review 2026-10-22 — tank = attack 2 / defense 1 / hp 2 per research 01/03 tables; earlier '2/1/2' was misread as hp/attack/defense]
 
 ## Acceptance Criteria
 - `pnpm build:prerequisites`, `lint`, `typecheck` (live set), `check:schemas`, `check:content --base "$VERSION_GUARD_BASE"`, `validate:content` green after every step (parked gates per step 4 excluded); after CUT no file in R1 delete list remains (grep: `COMPONENT_REGISTRY`, `assertParity`, `botProfile`, `band`, `data/bots`).

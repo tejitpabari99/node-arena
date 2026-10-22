@@ -46,7 +46,7 @@ v1 rules are a different game: round-robin shared generation, strict slots with 
 | TCK-05 | rewritten | Phase order (R5) | - | - |
 | TCK-06 | new | Timer/period translation (R3) | 06 F7 | - |
 | ENT-01 | rewritten | Building: id, pos, owner, level, kind, stage; house = lines+spawn+growth, tower = shooter; both capturable | 03#2,5.5 | `buildings.*` |
-| ENT-02 | rewritten | Troop: owner + source building + type fixed at departure; flat `hp/attack/defense` per type (soldier 1/1/1, tank 2/1/2); progress on a line | 03#2.3 | `units.*` |
+| ENT-02 | rewritten | Troop: owner + source building + type fixed at departure; flat `hp/attack/defense` per type (soldier hp/attack/defense 1/1/1, tank 2/2/1); progress on a line | 03#2.3 | `units.*` |
 | ENT-03 | kept+ | Line: owner, src->dst, own spawn timer, draw seq; troops FIFO survive cut | v1 | - |
 | ENT-04 | kept | Player id=team; human/ai/neutral; same commands, no privileges; every non-self owner hostile (AI vs AI too) | 03#5.2 | - |
 | SPN-01 | new | Each owned house line has a timer; period `mt = K_m*1_200_000 / (ws_m*L + 60000)` (floor) with `K_m = 1000 + cwc_m*(n-1)`, `L`=building level, `n`=lines | 03#4.1 | `spawnSpeed`, `lineSpawnPenalty` |
@@ -66,7 +66,7 @@ v1 rules are a different game: round-robin shared generation, strict slots with 
 | CMB-02 | kept | Arrival order: overshoot desc, line order, FIFO; ownership re-evaluated per arrival | v1 | - |
 | CMB-03 | rewritten | Hostile arrival deals `attack` (not hp), troop consumed whole. `n = L - attack`; `n<0` -> capture (CPT-01), **overshoot discarded**; else `L=n`. Capture needs damage **>** level | 03#5.3 | `units.*.attack` |
 | CMB-04 | new | Crossing via **interaction window**: hostile troops on different lines (different roads) fight when, at any instant within the tick, the distance between their centre-line positions is `<= contact` (window = region of lane coordinates `(s,u)` where that distance `<= contact`; covers X-crossings and near-parallel lines within `contact`). Swept (no tunnelling). Resolution order within the phase: ascending `(channelKeyA, channelKeyB)` (ordered-pair channel keys), then FIFO seq `(seqA, seqB)`; **sub-tick contact time is ignored** (all contacts in a tick resolve in that order, not by time of contact); survivors continue and may fight again in the same pass; same-owner lines never fight. Exchange = CMB-05. SP04 must match a brute-force per-tick oracle | 06 F9; 04 D6/R3 | `balance.contactDistance` |
-| CMB-05 | new | Exchange: both read `attack` first, apply simultaneously; `hp<=0` dies; up to 2 rounds while both alive. Soldier vs tank: soldier dies, tank hp 2->1 | 03#5.2 | - |
+| CMB-05 | new | Exchange: both read `attack` first, apply simultaneously; `hp<=0` dies; up to 2 rounds while both alive. Soldier vs tank (attack 1 vs 2): soldier dies, tank hp 2->1; tank vs tank: both die in round 1 | 03#5.2 | - |
 | CPT-01 | rewritten | Capture: owner flips; level=0; old owner's outgoing lines cancelled; **all troops whose source is this building die (incl. cut-line, in flight)**; growth timer reset; `ignoreForWin` cleared; neutral can't capture | 03#5.3 | - |
 | CPT-02 | rewritten | Incoming lines persist; other buildings' troops unaffected; arrivals re-evaluate vs current owner | v1 | - |
 | TWR-01 | new | Tower: `radius_m = (ar_m + rupl_m*(stage-1)) * radiusUnit` (3840/6000/8160), `delay mt = supl_m*1_200_000/(ad_m*L+60000)`; radius by stage, delay by level | 03#5.5 | `ad, supl, ar, rupl, radiusUnit` |
@@ -160,6 +160,7 @@ None.
 - [DEFERRED] Arrival inset / departure spawn point, lateral lane offsets, double-unit, shield, live-server RC overrides (APK defaults used everywhere).
 - [DEFERRED] Gate to flag stale `covers` tags on tombstoned ids (SP09 candidate).
 - Risk: TW tank at 20 Hz with closing speed 2 x 5 = 0.5 u/tick < contact 0.7: head-on is threshold-based so safe; crossing must use swept test (CMB-04) - stated in rule.
+- [RESOLVED: review 2026-10-22 — tank = attack 2 / defense 1 / hp 2 per research 01/03 tables; earlier '2/1/2' was misread as hp/attack/defense]
 
 ## Acceptance Criteria
 - `docs/GAME_RULES.md` header is exactly `RULES_VERSION: 2.0.0`; `checkRulesVersion` passes with the two version strings bumped.

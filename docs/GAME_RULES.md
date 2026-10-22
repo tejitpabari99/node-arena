@@ -609,11 +609,11 @@ Examples assume the stated Tower War default values (§7). They illustrate rules
 
 **E-BLOCK — lane thickening and tangent contact.** A line from `(0, 0)` to `(10, 0)` with `laneHalfWidth_m = 190`. A circle footprint at `(5, 1)` radius `0.81` (`810`): `810 + 190 = 1000` equals the centre offset (1.0), so contact is tangent and the draw is allowed. Radius `0.82` gives `1010 > 1000`: blocked. An obstacle covering the source centre blocks the draw; the source and target buildings' own footprints never do.
 
-**E-OVERFLOW — surplus forwarded.** `maxLevel = 64`. A friendly tank (`defense = 2`) arrives at a house with `L = 63`: `63 + 2 = 65`, level becomes `64`, surplus 1. The house has two outgoing lines: one `fwd` draw below 2 picks the line, and one new tank departs there at progress 0. With no outgoing line, or at `aliveCap`, the surplus is lost and no draw is made. The forwarded troop is free.
+**E-OVERFLOW — surplus forwarded.** `maxLevel = 64`. A friendly tank (`defense = 1`) arrives at a house with `L = 64`: `64 + 1 = 65`, level stays `64`, surplus 1 (at `L = 63` there is no surplus: `63 + 1 = 64`). The house has two outgoing lines: one `fwd` draw below 2 picks the line, and one new tank departs there at progress 0. With no outgoing line, or at `aliveCap`, the surplus is lost and no draw is made. The forwarded troop is free.
 
-**E-CAPTURE — damage must exceed level; overshoot discarded.** Soldier `attack = 1`. Hostile soldier arrives at level 3: `n = 2`, owner keeps the house. At level 1: `n = 0`, level 0, **not** captured. At level 0: `n = −1 < 0`, captured; the new level is 0 (overshoot is not kept). On capture, every troop whose source is the captured house dies, including troops on its cut lines.
+**E-CAPTURE — damage must exceed level; overshoot discarded.** Soldier `attack = 1`. Hostile soldier arrives at level 3: `n = 2`, owner keeps the house. At level 1: `n = 0`, level 0, **not** captured. At level 0: `n = −1 < 0`, captured; the new level is 0 (overshoot is not kept). Tank `attack = 2`: at level 3, `n = 1`, kept at level 1; at level 2, `n = 0`, not captured; at level 1, `n = −1`, captured at level 0 (overshoot discarded). On capture, every troop whose source is the captured house dies, including troops on its cut lines.
 
-**E-EXCHANGE — attack, not hit points.** Soldier (`hp 1, attack 1`) against tank (`hp 2, attack 1`): both read attack first; the soldier takes 1 and dies, the tank goes `2 → 1`. Soldier against soldier: both die in round 1. Tank against tank: round 1 leaves both at 1, round 2 kills both.
+**E-EXCHANGE — attack, not hit points.** Soldier (`hp 1, attack 1`) against tank (`hp 2, attack 2`): both read attack first and apply simultaneously; the soldier takes 2 and dies, the tank takes 1 and goes `2 → 1`; the tank survives, so a second round runs but the soldier is already dead and nothing more happens. Soldier against soldier: both die in round 1. Tank against tank: each takes 2, both go `2 → 0` and both die in round 1.
 
 **E-HEADON — fronts meet.** Opposing hostile soldiers on a line of 200000 progress units depart on the same tick. Contact is `700 × 20 = 14000` progress units, so the exchange fires when `progA + progB >= 186000`. The sum is `180000` after 18 ticks and `190000` after 19, so they fight on tick 19 (each at 95000, 4.75 world units). Closing speed is 0.5 world units per tick, below `contactDistance`, so a threshold test cannot skip the meeting. Cutting a line does not protect its troops.
 
@@ -671,8 +671,8 @@ One row per content key: the key rules name, its Tower War source, the rule ids 
 | `balance.contactDistance` | 2 × body sphere radius (03#14) | R-CMB-01, R-CMB-04 | 0.7 |
 | `troopType` | house archetype warrior type | R-SPN-02 | soldier |
 | `units.*.hp` | flat unit hit points (03#2.3) | R-ENT-02, R-CMB-05 | soldier 1, tank 2 |
-| `units.*.attack` | flat unit damage | R-ENT-02, R-CMB-03, R-CMB-05 | soldier 1, tank 1 |
-| `units.*.defense` | flat unit level gain | R-ENT-02, R-CAP-01 | soldier 1, tank 2 |
+| `units.*.attack` | flat unit damage | R-ENT-02, R-CMB-03, R-CMB-05 | soldier 1, tank 2 |
+| `units.*.defense` | flat unit level gain | R-ENT-02, R-CAP-01 | soldier 1, tank 1 |
 | `units.*.speed` | warrior speed (03#4.5) | R-TCK-04, R-ENT-02 | 5.0 |
 | `laneHalfWidth` | line half-width for blocking (03#3.2) | R-OBS-01 | 0.19 |
 | `ignoreForWin` | `cbi` (canBeIgnored) | R-WIN-01, R-WIN-02, R-CPT-01 | false |
