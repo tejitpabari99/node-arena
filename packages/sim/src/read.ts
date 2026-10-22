@@ -1,4 +1,5 @@
 import { TICK_RATE } from './math.js';
+import { hashState } from './hash.js';
 import { liveChannels, stageOf } from './state.js';
 import type { CompiledLevel, SimState } from './types.js';
 
@@ -52,4 +53,63 @@ export function refreshView(view: SimView, state: SimState): void {
   view.over = state.over;
   view.lines = liveChannels(state).filter((c) => c.drawn !== 0).map((c) => ({ channel: c.key, from: c.from, to: c.to, owner: state.buildings.owner[c.from]!, length: c.length, drawSeq: c.drawSeq }));
   for (let i = 0; i < state.buildings.n; i++) state.buildings.stage[i] = stageOf(state.level.rules.stageThresholds, state.buildings.level[i]!);
+}
+
+/** Caller-owned troop columns; `readTroops` fills row 0.. up to the shortest column. */
+export interface TroopBuffer {
+  channel: Int32Array; seq: Int32Array; owner: Int32Array; kind: Int32Array; progress: Int32Array; hp: Int32Array; speed: Int32Array;
+}
+
+export function createTroopBuffer(capacity: number): TroopBuffer {
+  const col = () => new Int32Array(capacity);
+  return { channel: col(), seq: col(), owner: col(), kind: col(), progress: col(), hp: col(), speed: col() };
+}
+
+/**
+ * Fill `buf` with every in-flight troop (live channels ascending key, FIFO front first). `progress` is at the
+ * current tick, clamped to the lane; `speed` is the constant unit speed in progress units/tick, so a renderer
+ * draws `min(progress + speed*alpha, lane length)`. Returns rows written (capped by the buffer size).
+ */
+export function readTroops(state: SimState, buf: TroopBuffer): number {
+  const cap = Math.min(buf.channel.length, buf.seq.length, buf.owner.length, buf.kind.length, buf.progress.length, buf.hp.length, buf.speed.length);
+  let n = 0;
+  for (const ch of liveChannels(state)) {
+    const r = ch.troops;
+    for (let i = 0; i < r.len && n < cap; i++, n++) {
+      const speed = state.level.units[r.kind[i]!]!.speed;
+      buf.channel[n] = ch.key; buf.seq[n] = r.seq[i]!; buf.owner[n] = r.owner[i]!; buf.kind[n] = r.kind[i]!; buf.hp[n] = r.hp[i]!;
+      buf.progress[n] = Math.min(r.p0[i]! + (state.tick - r.t0[i]!) * speed, ch.length);
+      buf.speed[n] = speed;
+    }
+  }
+  return n;
+}
+
+/** Serializable copy of the hashed state (plain JSON). `hash` equals `sim.hash()` at capture time. */
+export interface SimSnapshot {
+  tick: number; seed: number; hash: string;
+  over: { outcome: 'won' | 'lost' | 'timeout'; winner: number | null } | null;
+  drawSeq: number; troopSeq: number; rejected: number;
+  buildings: Record<'owner' | 'level' | 'maxLevel' | 'stage' | 'lines' | 'alive' | 'ignoreForWin', number[]>;
+  col: Record<string, number[]>;
+  channels: { key: number; drawn: number; drawSeq: number; timer: number; troops: Record<'p0' | 't0' | 'owner' | 'kind' | 'seq' | 'hp', number[]> }[];
+  fwd: [number, number, number, number][];
+}
+
+export function snapshotState(state: SimState): SimSnapshot {
+  const b = state.buildings, arr = (c: Int32Array, len = c.length): number[] => Array.from(c.subarray(0, len));
+  const col: Record<string, number[]> = {};
+  for (const name of Object.keys(b.col).sort((p, q) => (p < q ? -1 : p > q ? 1 : 0))) col[name] = arr(b.col[name]!);
+  return {
+    tick: state.tick, seed: state.seed, hash: hashState(state),
+    over: state.over ? { ...state.over } : null,
+    drawSeq: state.drawSeq, troopSeq: state.troopSeq, rejected: state.rejected,
+    buildings: { owner: arr(b.owner), level: arr(b.level), maxLevel: arr(b.maxLevel), stage: arr(b.stage), lines: arr(b.lines), alive: arr(b.alive), ignoreForWin: arr(b.ignoreForWin) },
+    col,
+    channels: liveChannels(state).map((ch) => {
+      const r = ch.troops;
+      return { key: ch.key, drawn: ch.drawn, drawSeq: ch.drawSeq, timer: ch.timer, troops: { p0: arr(r.p0, r.len), t0: arr(r.t0, r.len), owner: arr(r.owner, r.len), kind: arr(r.kind, r.len), seq: arr(r.seq, r.len), hp: arr(r.hp, r.len) } };
+    }),
+    fwd: state.fwd.map((s) => s.snapshot()),
+  };
 }

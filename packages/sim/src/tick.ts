@@ -4,11 +4,12 @@ import { runCommands } from './commands.js';
 import { arrivalPass, contactsPass } from './contacts.js';
 import { IMPLS, MODULE_ORDER } from './modules/index.js';
 import { carriers } from './state.js';
+import { winPass } from './win.js';
 import type { SimState } from './types.js';
 
 /**
  * One tick. `tick` increments first; then PHASES run in order. Core phases (commands, movement, contacts,
- * arrivals, outcome) are empty in this skeleton; module phases run in sorted module-id order.
+ * arrivals, outcome) run inline; module phases run in sorted module-id order.
  */
 export function step(state: SimState, commands: readonly unknown[], events: boolean): SimEvent[] {
   const out: SimEvent[] = [];
@@ -27,6 +28,7 @@ export function step(state: SimState, commands: readonly unknown[], events: bool
       const fn = IMPLS[id].phases?.[phase];
       if (fn) fn(state, carriers(state.level, id));
     }
+    if (phase === 'outcome') winPass(state); // phase 9, after every module phase
   }
   state.events = null;
   return out;

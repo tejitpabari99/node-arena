@@ -5,8 +5,8 @@ const api = require('../src/index.ts');
 const { metadata, compiledGolden } = require('./fixtures.cjs');
 
 const level = () => compiledGolden();
-function recorded(ticks = 45) {
-  const rec = api.createReplayRecorder(level(), 77, metadata);
+function recorded(ticks = 45, lvl = level()) {
+  const rec = api.createReplayRecorder(lvl, 77, metadata);
   for (let i = 0; i < ticks; i++) rec.step(i === 0 ? [{ type: 'Noop' }, null] : []);
   return rec.record();
 }
@@ -104,7 +104,8 @@ test('a finite time limit bounds finalTick; limit 0 (null) imposes none; outcome
   const rec = recorded(45);
   const timed = level(); timed.timeLimitSec = 1; // 20 ticks
   assert.throws(() => api.playReplay({ metadata, level: timed }, rec), /replay/i);
-  const shorter = recorded(20);
+  const shorter = recorded(20, timed); // timeout fires on tick 20 (R-WIN-03) and is recorded
+  assert.equal(shorter.outcome.outcome, 'timeout');
   assert.equal(api.playReplay({ metadata, level: timed }, shorter).ok, true);
   const long = recorded(300);
   assert.equal(api.playReplay(source(), long).ok, true);
