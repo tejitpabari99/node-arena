@@ -524,7 +524,7 @@ The human loses when they own no building with `ignoreForWin = false`. Troops in
 
 ### R-WIN-03
 
-A level may set `timeLimitSec`; when absent there is no limit (no campaign level sets one). At phase 9, `tick >= timeLimitSec × tickRate` ends the match as a timeout loss and takes precedence over a win in that tick. Harness step caps are not outcomes. Once recorded, an outcome is final.
+A level may set `timeLimitSec`; when absent there is no limit (no campaign level sets one). At phase 9, `tick >= timeLimitSec × tickRate` ends the match as a timeout loss, evaluated after win and loss in that tick (order win → loss → timeout: a win on the final tick counts as a win). Harness step caps are not outcomes. Once recorded, an outcome is final.
 
 *Source:* v1 R-WIN-03; 03#7.2.
 
@@ -623,7 +623,7 @@ Examples assume the stated Tower War default values (§7). They illustrate rules
 
 **E-TOWER — radius, delay, targeting.** `ar = 1.6`, `rupl = 0.9`, `radiusUnit = 2.4` (`1600`, `900`, `2400` milli): stage 1 `idiv(1600 × 2400, 1000) = 3840`, stage 2 `idiv(2500 × 2400, 1000) = 6000`, stage 3 `idiv(3400 × 2400, 1000) = 8160` (3.84, 6.0, 8.16 world units). With `supl = 1.75` (1750) and `ad = 2.0` (2000): `L = 1`: `idiv(1750 × 1_200_000, 2000 × 1 + 60000) = idiv(2_100_000_000, 62000) = 33870` mt (1.69 s); `L = 64`: `idiv(2_100_000_000, 188000) = 11170` mt (0.56 s). After a shot at `L = 1` the cooldown is `33870`, falls `1000` per tick and is `<= 0` after 34 ticks; at `L = 64` it takes 12 ticks. Leveling up mid-cooldown changes nothing. A stage-1 tower reaches `3840 + troopPad` (4.19 world units): a hostile troop at 1.0 world unit is ignored (`minRadius < dist` is strict); one at 3.0 is shot dead. If no troop is in range it hits the nearest hostile house that has level >= 1 and whose footprint is in reach (footprint box 1.5 × 1.5, half-size 0.75): a house with a centre 4.5 world units away along the x axis is in reach (`4.5 − 0.75 = 3.75 <= 3.84`), one 4.7 away along the x axis is not (`3.95 > 3.84`), and a level 0 house in reach is skipped. The shot lowers it by 1 (never capturing); other towers are never shot.
 
-**E-OUTCOME — win, loss, timeout.** The human owns every non-ignored building: the match is won in phase 9 and ignored buildings flip to the human. Troops in transit do not matter. If the human owns none, the match is lost; there is no draw. With `timeLimitSec` unset a match never times out; when set, `tick >= timeLimitSec × 20` is a timeout loss, even on a tick where the human would otherwise win.
+**E-OUTCOME — win, loss, timeout.** The human owns every non-ignored building: the match is won in phase 9 and ignored buildings flip to the human. Troops in transit do not matter. If the human owns none, the match is lost; there is no draw. With `timeLimitSec` unset a match never times out; when set, `tick >= timeLimitSec × 20` is a timeout loss, unless the human wins on that same tick (evaluation order win → loss → timeout).
 
 ## 6. Reserved modules — not implemented
 
