@@ -1,6 +1,6 @@
 ---
-status: in-progress
-summary: 9 tasks to delete utility bots and ship the exact deterministic TW AI (default + scripts), tests, goldens, proxy spike, bench, plus the 09 follow-up that un-parks bots gates.
+status: done
+summary: SP06 complete — Tasks 0–8 done; full CI green; bots gates un-parked
 date: 2026-10-22
 ---
 # Tasks: 06 AI port (Tower War bots)
@@ -16,7 +16,7 @@ Source of truth: [PRD.md](PRD.md). One bot kind `tw`, literal 20 Hz port of `Def
 | 5 | Unit + integration tests, lint test | 2, 3, 4 | done |
 | 6 | Goldens, bench, replay verify | 4, 5 | done |
 | 7 | Proxy solvability spike (levels 4-23) | 4, 05#4 | done |
-| 8 | Un-park bots gates and rewire tooling (with 09) | 6, 7 | in-progress |
+| 8 | Un-park bots gates and rewire tooling (with 09) | 6, 7 | done |
 
 ## Task 0 — Decomp timer-order pin
 What it is / what it means: Open Q1 resolved: implementer reads decomp first and pins tests to it. No ground truth otherwise (Risks).

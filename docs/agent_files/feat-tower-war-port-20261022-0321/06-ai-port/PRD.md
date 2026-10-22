@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: Delete the utility bots and ship an exact, deterministic 20 Hz copy of Tower War's AI (timer + weakest-first attack + nearest-own reinforce, scripted step queues) driven by inline per-level params; rework level validation around TW-AI-as-human-proxy.
 date: 2026-10-22
 ---
