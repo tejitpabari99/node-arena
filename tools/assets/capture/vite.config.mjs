@@ -9,6 +9,11 @@ export default {
   root: here,
   configFile: false,
   cacheDir: path.resolve(here, '../../../node_modules/.vite-asset-capture'),
-  resolve: { alias: { three: three } },
+  define: { __WEB_ASSETS__: JSON.stringify(`/@fs${path.resolve(here, '../../../apps/web/assets')}`) },
+  resolve: { alias: [
+    { find: /^three\/addons\//, replacement: `${three}/examples/jsm/` },
+    { find: /^three$/, replacement: `${three}/build/three.module.js` },
+    { find: /^@node-arena\/defs$/, replacement: path.resolve(here, '../../../packages/defs/src/index.ts') },
+  ] },
   server: { fs: { allow: [path.resolve(here, '../../..')] } },
 };

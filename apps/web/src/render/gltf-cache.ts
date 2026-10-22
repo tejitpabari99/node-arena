@@ -1,7 +1,7 @@
-import type { Object3D } from 'three';
+import type { AnimationClip, Object3D } from 'three';
 import { parseModelRef, type ModelRef } from '../manifest/model-ref.js';
 
-export interface LoadedGltf { scene: Object3D }
+export interface LoadedGltf { scene: Object3D; animations?: readonly AnimationClip[] }
 export type GltfLoadFn = (file: string) => Promise<LoadedGltf>;
 
 /** Default loader (browser): three's GLTFLoader + meshopt, imported lazily so node tests never touch it. */

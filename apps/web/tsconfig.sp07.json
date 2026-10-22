@@ -9,6 +9,7 @@
   "//": "SP07 isolated typecheck: only new SP07 files (legacy web is parked until SP08). Add files here as tasks land.",
   "include": [
     "src/render/registry.ts", "src/render/materials.ts", "src/render/gltf-cache.ts", "src/render/light-rig.ts",
-    "src/manifest/model-ref.ts", "src/manifest/resolve.ts", "test/sp07/*.ts"
+    "src/manifest/model-ref.ts", "src/manifest/resolve.ts", "test/sp07/*.ts",
+    "src/render/unit-anim.ts", "src/render/unit-renderer.ts"
   ]
 }
