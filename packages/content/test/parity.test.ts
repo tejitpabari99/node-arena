@@ -98,6 +98,11 @@ test('golden levelview-1: serialization is JSON.stringify(...,null,2)+"\\n" in 0
   assert.deepEqual(Object.keys(obj), ['$schema', 'schemaVersion', 'id', 'name', 'source', 'theme', 'bounds', 'objective', 'timeLimitSec', 'players', 'buildings', 'elements', 'requires']);
 });
 
+test('golden levelview-1: source.dropped lists cargo and the booster-only `sc` key (05 R2), sorted', () => {
+  const lv = JSON.parse(goldenText()) as { source: { dropped: string[] } };
+  assert.deepEqual(lv.source.dropped, ['cargo', 'sc']);
+});
+
 test('golden levelview-1: Frame contract rotation, bounds from the shared pad constant', () => {
   const lv = JSON.parse(goldenText()) as { bounds: unknown; buildings: Array<{ id: string; pos: { x: number; z: number } }> };
   // raw Unity (x,z) -> data (z,-x): b0 (-0.1,-6.79) -> (-6.79, 0.1)

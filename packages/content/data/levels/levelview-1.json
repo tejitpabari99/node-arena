@@ -10,7 +10,8 @@
     "campaignPosition": 4,
     "dialect": "v1-short",
     "dropped": [
-      "cargo"
+      "cargo",
+      "sc"
     ]
   },
   "theme": "green",

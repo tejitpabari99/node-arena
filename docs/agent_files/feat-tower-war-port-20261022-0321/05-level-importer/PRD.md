@@ -178,7 +178,7 @@ Order of middle rows is a choice (06 §7.2 caveat). LEVELS_GUIDE §5 ships this 
 ## Acceptance Criteria
 - `TW_EXTRACT=... pnpm import:tw --range 4-23` writes 20 level files + `common.json`; second run changes nothing; `pnpm check:import` clean; without the extract it skips.
 - Imported `levelview-1` equals 02's golden byte-for-byte; all 20 pass `validate:content` (schema, `requires` equality, refs, bounds, `level <= maxLevel`).
-- Positions 10 and 23 come from committed prefab files; each of the 20 lists `cargo` (and `wall`, `tutorial-script` where applicable) in `source.dropped`.
+- Positions 10 and 23 come from committed prefab files; each of the 20 lists `cargo` (and `wall`, `tutorial-script` where applicable) in `source.dropped`. [RESOLVED: review 2026-10-22 — booster-only keys like `sc` (spawn factor, not mapped, R2) are also listed in `source.dropped` using the TW key as the token; the `levelview-1` golden ships `["cargo", "sc"]`, sorted]
 - Conservation, rotation/yaw (Frame contract), determinism, gating and colliders tests pass.
 - `docs/LEVELS_GUIDE.md` exists with all 7 sections; §5 = static 06 §7.2 table marked "snapshot" plus the 20-level breakdown (generated tracker is the follow-up); a dry run of section 2 on `--range 24-25` reports `LevelView 101_ES` blocked by `wall`, writing nothing.
 - No change to files outside Owns except root scripts and `content.json`/lock via the documented commands.
