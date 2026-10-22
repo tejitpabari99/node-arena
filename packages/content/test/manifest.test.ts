@@ -94,3 +94,16 @@ test('row: level -> theme and visuals by kind; colorKey needs texture', () => {
   const m = mutate((x) => { delete x.visuals.soldier.team.textures.red; });
   assert.equal(ok(m), false);
 });
+
+test('cross-checks look up own keys only: "constructor" is not a visual, theme, palette, texture, fx or event', () => {
+  const c = catalog(), m = () => fixture() as any;
+  assert.match(content.crossCheckManifest(m(), { ...c, archetypes: [{ id: 'a', visual: 'constructor' }] }).join(), /visual "constructor" not in manifest/);
+  assert.match(content.crossCheckManifest(m(), { ...c, levels: [{ id: 'l1', theme: 'constructor', colorKeys: [] }] }).join(), /theme "constructor" not in manifest/);
+  const ck = content.crossCheckManifest(m(), { ...c, levels: [{ id: 'l1', theme: 'green', colorKeys: ['constructor'] }] }).join('\n');
+  assert.match(ck, /colorKey "constructor" has no palette entry/);
+  assert.match(ck, /colorKey "constructor" has no texture in visual "soldier"/);
+  assert.match(content.crossCheckManifest(mutate((x) => { x.visuals.soldier.fx = 'constructor'; }), c).join(), /fx "constructor" not in fx registry/);
+  assert.match(content.crossCheckManifest(mutate((x) => { x.themes.green.fx = ['constructor']; }), c).join(), /theme green: fx "constructor" not in fx registry/);
+  assert.match(content.crossCheckManifest(mutate((x) => { x.events.TroopDied.fx = 'constructor'; }), c).join(), /event TroopDied: fx "constructor"/);
+  assert.match(content.crossCheckManifest(mutate((x) => { x.events.constructor = {}; }), c).join(), /event "constructor" is not a known event/);
+});

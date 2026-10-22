@@ -73,6 +73,8 @@ export interface ManifestCatalog {
   stageThresholds: readonly number[];
 }
 
+const has = (o: object, k: string): boolean => Object.hasOwn(o, k);
+
 /** Pure cross-checks of a schema-valid manifest against content; returns error strings (empty = ok). */
 export function crossCheckManifest(m: ManifestV2, c: ManifestCatalog): string[] {
   const errors: string[] = [];
@@ -81,17 +83,17 @@ export function crossCheckManifest(m: ManifestV2, c: ManifestCatalog): string[] 
   ];
   for (const [kind, label, items] of groups) {
     for (const it of items) {
-      const v = m.visuals[it.visual];
+      const v = has(m.visuals, it.visual) ? m.visuals[it.visual] : undefined;
       if (!v) errors.push(`${label} ${it.id}: visual "${it.visual}" not in manifest`);
       else if (v.kind !== kind) errors.push(`${label} ${it.id}: visual "${it.visual}" kind "${v.kind}" != "${kind}"`);
     }
   }
   for (const lv of c.levels) {
-    if (!m.themes[lv.theme]) errors.push(`level ${lv.id}: theme "${lv.theme}" not in manifest`);
+    if (!has(m.themes, lv.theme)) errors.push(`level ${lv.id}: theme "${lv.theme}" not in manifest`);
     for (const ck of lv.colorKeys) {
-      if (!(ck in m.palettes)) errors.push(`level ${lv.id}: colorKey "${ck}" has no palette entry`);
+      if (!has(m.palettes, ck)) errors.push(`level ${lv.id}: colorKey "${ck}" has no palette entry`);
       for (const [vid, v] of Object.entries(m.visuals)) {
-        if (v.team && !(ck in v.team.textures)) errors.push(`level ${lv.id}: colorKey "${ck}" has no texture in visual "${vid}"`);
+        if (v.team && !has(v.team.textures, ck)) errors.push(`level ${lv.id}: colorKey "${ck}" has no texture in visual "${vid}"`);
       }
     }
   }
@@ -99,14 +101,14 @@ export function crossCheckManifest(m: ManifestV2, c: ManifestCatalog): string[] 
     if (v.stages && v.stages.length !== c.stageThresholds.length + 1) {
       errors.push(`visual ${vid}: stages length ${v.stages.length} != stageThresholds.length + 1 (${c.stageThresholds.length + 1})`);
     }
-    if (v.fx && !m.fx[v.fx]) errors.push(`visual ${vid}: fx "${v.fx}" not in fx registry`);
+    if (v.fx && !has(m.fx, v.fx)) errors.push(`visual ${vid}: fx "${v.fx}" not in fx registry`);
   }
   for (const [tid, t] of Object.entries(m.themes)) {
-    for (const f of t.fx ?? []) if (!m.fx[f]) errors.push(`theme ${tid}: fx "${f}" not in fx registry`);
+    for (const f of t.fx ?? []) if (!has(m.fx, f)) errors.push(`theme ${tid}: fx "${f}" not in fx registry`);
   }
   for (const [ev, e] of Object.entries(m.events)) {
-    if (!(ev in EVENTS)) errors.push(`event "${ev}" is not a known event`);
-    if (e.fx && !m.fx[e.fx]) errors.push(`event ${ev}: fx "${e.fx}" not in fx registry`);
+    if (!has(EVENTS, ev)) errors.push(`event "${ev}" is not a known event`);
+    if (e.fx && !has(m.fx, e.fx)) errors.push(`event ${ev}: fx "${e.fx}" not in fx registry`);
   }
   return errors;
 }
