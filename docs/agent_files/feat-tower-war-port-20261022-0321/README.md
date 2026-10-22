@@ -14,7 +14,7 @@ Copy Tower War 1.29.3 into Node Arena as a simplified browser game that replaces
 | 01 | Rules v2 contract | [PRD](01-rules-v2-contract/PRD.md) | GAME_RULES v2.0.0: 38 rule ids, integer 20 Hz milli-tick formulas | none | draft |
 | 02 | Registry + content v2 | [PRD](02-registry-content-v2/PRD.md) | `packages/defs` registry, content model, CUT of old content, 2.0.0 versions | 01 | draft |
 | 03 | Sim core | [PRD](03-sim-core/PRD.md) | Rewrite `packages/sim` as TW engine, streams, hash/replay v2, seams for 04 | 01, 02 | draft |
-| 04 | Geometry + shooters | [PRD](04-geometry-shooters/PRD.md) | Blocking, lane crossing combat, shooting tower, lane-interval seam | 03, 02 | draft |
+| 04 | Geometry + shooters | [PRD](04-geometry-shooters/PRD.md) | Blocking, lane crossing combat, shooting tower, lane-interval seam | 03, 02 | done |
 | 05 | Level importer | [PRD](05-level-importer/PRD.md) | `TW_EXTRACT` -> level v2 for positions 4–23, gating, LEVELS_GUIDE | 02 (soft 01, 04) | draft |
 | 06 | AI port | [PRD](06-ai-port/PRD.md) | Delete our bots; exact TW AI copy; TW-AI-as-proxy level validation | 03, 05 (soft 02, 04) | draft |
 | 07 | Art pipeline | [PRD](07-art-pipeline/PRD.md) | TW art -> committed GLB/textures, instanced team-texture renderers | 02 (soft) | draft |
@@ -66,3 +66,10 @@ Max 2 concurrent agents.
 - 09: run `TW_EXTRACT=... pnpm check:import && pnpm assets:tw:check` locally before merge (CI cannot).
 - 09: play levels 1–20 (positions 4–23); fill `09-gates-tooling-docs/owner-pass.md`; visual approval.
 - 01, 02, 03, 06: none.
+
+## SP04 completion (2026-10-22, PR #9)
+- Tasks 0–6 done.
+- Reviews: [Tasks 0–4 PASS](04-geometry-shooters/review-2026-10-22-1841.md), [Task 5 PASS](04-geometry-shooters/review-2026-10-22-1915.md).
+- Final acceptance: [04-geometry-shooters/code-2026-10-22-1926.md](04-geometry-shooters/code-2026-10-22-1926.md): full CI exit 0; 419 passed, 6 extract skips, 0 failed; 38/38 rules; 19/19 replays; strict benchmarks within limits.
+- 10 parked gates remain (7 SP06 bot/level, 2 SP08 web, 1 SP07 manifest); SP05 re-review explicitly skipped.
+- Next: SP06 AI port.

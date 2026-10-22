@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: Geometry + shooters for the Tower War port - exact corridor blocking (obstacles, third buildings), swept lane-vs-lane crossing combat, the shooting tower (lane-space targeting, instakill, house hit), and one lane-interval primitive reused as the seam for walls/mines/rivers. Decomp-verified where cheap; unknowns resolved by owner decisions.
 date: 2026-10-22
 ---
@@ -78,6 +78,15 @@ Does not own: rule text (01; amendment requests below), schemas/loader (02), sim
 **R6 Content values (SP04 authors)**: building footprint = `box` 1500 x 1500 (02 allows `circle|box` on both archetype kinds); obstacle footprints are **read from 05's `tools/src/import-tw/prefab/colliders.json`** (05 Task 0 UnityPy dump: `BoxCollider.m_Size/m_Center` + child local scale/yaw for `Obstacle.prefab` children and the `Building` collider; 05 emits per-child obstacle footprints = box + yaw, plus `variant`). Fallback only if the dump proves impossible within a day: circle radius 450 + calibration against ref screenshots, recorded as a known deviation in LEVELS_GUIDE; `laneHalfWidth` 190; `contactDistance` 700 (all existing 01/02 params).
 
 **R7 Tests/goldens** (non-skipped, tagged): see Acceptance.
+
+## Task 1 arithmetic clarification (approved 2026-10-22)
+
+- Engine progress is **milli × 20**, not world milli: `length = isqrt((20*dx)^2+(20*dz)^2)`. `makeLane` preserves that length; the authoritative continuous lane point is `A + (B-A)*p/length`. `lanePoint` truncates each signed world offset only for event/display coordinates, matching `troopPosition`.
+- The floored length is not a unit-vector norm. Therefore `(s-proj)^2+perp²` is conceptual only, not an exact integer identity. `proj` exposes dot-product/length-squared factors; `perpSq` exposes cross-product-squared factors. `distanceSq` exposes rational world milli² distance `(x²+z²)/denominator²`. Per-tick distance ordering/radius tests use checked Number limb arithmetic, never BigInt or unsafe cross-products. `compareSumProducts` compares signed sums of factored products for later swept discriminants without requiring another numeric implementation.
+- `laneIntervals` returns inclusive **integer engine-progress** samples inside the rounded padded shape; one convex shape gives zero or one interval. `strict=true` excludes its boundary. Annulus targeting subtracts the **closed** inner disc because distance `<= minRadius` is excluded. A continuous intersection narrower than one progress unit may yield no integer samples: blocking uses separate continuous `corridorOverlaps` SAT and must not infer blocking from interval nonemptiness.
+- Content yaw supports every integer `yawMilliDeg` (authored fx3 degrees, including fractional degrees). Positive yaw rotates local +x toward world -z (Unity/Three +Y), consistent with the importer frame contract in `tools/src/import-tw/rotate.ts`; no data-side yaw conversion is needed. Box axes are Q20 sine/cosine values computed by a compact 32-step integer CORDIC with Q40 working vectors and nanodegree angle constants. Component error is less than `1/1048576` (including final rounding), exhaustively checked over all 720001 schema-domain milli-degree values; represented box vertices and SAT are exact rational arithmetic against these axes, with no inflated AABB corner approximation. Corridor transverse and end-extension vectors use `(dx,dz)*20/engineLength`, the engine's floor-length normalization; relative length error is less than `1/engineLength`. Zero-length corridors use an axis-aligned rectangle.
+- Cold-only APIs (`laneIntervals`, `corridorOverlaps`, polygon SAT) use BigInt and must be called at create/precompute time. Precompute all tower stages and crossing pairs; do not call them from tick-time draw hooks or stage changes. Number-only hot APIs reject unsafe scalar intermediates. Tests cover coordinates ±500000, progress lengths through 28284271, and generic factored comparisons through safe-integer scalar limits; large squared products stay exact using base-2^22 Number limbs.
+- Decision 5's stale BigInt narrow-phase wording is superseded by R1: per-tick crossings use exact Number factored comparisons. Combat consumers remain Tasks 2–4; `CrossingSource` remains deferred to SP09/FUTURES.
 
 ## Architecture
 ```
