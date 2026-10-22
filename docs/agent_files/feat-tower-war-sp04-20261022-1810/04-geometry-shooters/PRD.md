@@ -79,6 +79,15 @@ Does not own: rule text (01; amendment requests below), schemas/loader (02), sim
 
 **R7 Tests/goldens** (non-skipped, tagged): see Acceptance.
 
+## Task 1 arithmetic clarification (approved 2026-10-22)
+
+- Engine progress is **milli × 20**, not world milli: `length = isqrt((20*dx)^2+(20*dz)^2)`. `makeLane` preserves that length; the authoritative continuous lane point is `A + (B-A)*p/length`. `lanePoint` truncates each signed world offset only for event/display coordinates, matching `troopPosition`.
+- The floored length is not a unit-vector norm. Therefore `(s-proj)^2+perp²` is conceptual only, not an exact integer identity. `proj` exposes dot-product/length-squared factors; `perpSq` exposes cross-product-squared factors. `distanceSq` exposes rational world milli² distance `(x²+z²)/denominator²`. Per-tick distance ordering/radius tests use checked Number limb arithmetic, never BigInt or unsafe cross-products. `compareSumProducts` compares signed sums of factored products for later swept discriminants without requiring another numeric implementation.
+- `laneIntervals` returns inclusive **integer engine-progress** samples inside the rounded padded shape; one convex shape gives zero or one interval. `strict=true` excludes its boundary. Annulus targeting subtracts the **closed** inner disc because distance `<= minRadius` is excluded. A continuous intersection narrower than one progress unit may yield no integer samples: blocking uses separate continuous `corridorOverlaps` SAT and must not infer blocking from interval nonemptiness.
+- Integer-degree content yaw is supplied as `yawMilliDeg` (multiples of 1000). Positive yaw rotates local +x toward world -z (Unity/Three +Y), consistent with the importer frame contract in `tools/src/import-tw/rotate.ts`; no data-side yaw conversion is needed. Box axes are nearest-integer Q20 sine/cosine values from an offline table. Component error is at most `1/(2*1048576)`; represented box vertices and SAT are exact rational arithmetic against these axes, with no inflated AABB corner approximation. Corridor transverse and end-extension vectors use `(dx,dz)*20/engineLength`, the engine's floor-length normalization; relative length error is less than `1/engineLength`. Zero-length corridors use an axis-aligned rectangle.
+- Cold-only APIs (`laneIntervals`, `corridorOverlaps`, polygon SAT) use BigInt and must be called at create/precompute time. Precompute all tower stages and crossing pairs; do not call them from tick-time draw hooks or stage changes. Number-only hot APIs reject unsafe scalar intermediates. Tests cover coordinates ±500000, progress lengths through 28284271, and generic factored comparisons through safe-integer scalar limits; large squared products stay exact using base-2^22 Number limbs.
+- Decision 5's stale BigInt narrow-phase wording is superseded by R1: per-tick crossings use exact Number factored comparisons. Combat consumers remain Tasks 2–4; `CrossingSource` remains deferred to SP09/FUTURES.
+
 ## Architecture
 ```
 geometry.ts: laneIntervals / perpSq / proj / SAT (pure)
