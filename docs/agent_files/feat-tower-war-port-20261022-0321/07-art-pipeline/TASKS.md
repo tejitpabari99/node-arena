@@ -18,8 +18,8 @@ Source of truth: [PRD.md](PRD.md). Order follows the PRD: validation (R2) gates 
 | 7 | Building + tower renderer (stages, labels) | 6 | done |
 | 8 | Unit renderer (instancing, baked anim, ghosts) | 6, 03#CUT events | done |
 | 9 | Ground, obstacle, lane renderers | 4, 6 | done |
-| 10 | FX sprite pool | 6, 04#radius | in-progress |
-| 11 | `createWorldRenderer` seam + legacy deletion | 7, 8, 9, 10 | todo |
+| 10 | FX sprite pool | 6, 04#radius | done |
+| 11 | `createWorldRenderer` seam + legacy deletion | 7, 8, 9, 10 | in-progress |
 | 12 | Compare loop, perf scene, acceptance | 11 | todo |
 
 ## Task 1 — Seed refs + capture/compare harness
