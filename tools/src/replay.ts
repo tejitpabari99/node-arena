@@ -16,8 +16,8 @@ interface GoldenBundle {
   scenarios: { name: string; level: CompiledLevel }[];
   results: { name: string; replay: ReplayRecord }[];
 }
-/** Golden directories scanned by the `golden` alias. SP06 appends 'packages/bots/test/golden' once bots goldens are v2. */
-const GOLDEN_DIRS = ['packages/sim/test/golden'];
+/** Golden directories scanned by the `golden` alias (sim goldens and bots goldens, the latter replayed without running bots). */
+const GOLDEN_DIRS = ['packages/sim/test/golden', 'packages/bots/test/golden'];
 /** Standalone records resolve only against authored content. Embedded golden-bundle levels are honoured only for
  * the `golden` alias (repo-owned fixtures under GOLDEN_DIRS), read as JSON data, hashed again, never executed; a
  * bundle passed as an arbitrary path is refused, so a crafted file cannot supply its own level. */

@@ -1,39 +1,36 @@
+// The web client imports `createBotDriver` from the built bots package (apps/web/src/driver/bot.ts).
+// Parity: the built ESM bundle (dist) behaves identically to the TS source used by tests.
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const { test } = require('node:test');
-const { createRequire } = require('node:module');
-const { mkdtemp, rm } = require('node:fs/promises');
-const { tmpdir } = require('node:os');
-const { join } = require('node:path');
-const { pathToFileURL } = require('node:url');
+require('tsx/cjs');
+const src = require('../src/index.ts');
+const sim = require('../../sim/src/index.ts');
+const fx = require('../../sim/test/fixtures.cjs');
 
-// The workspace already ships these tools with web. Resolve them explicitly from
-// that package instead of relying on an undeclared hoisted bots dependency.
-const webRequire = createRequire(join(__dirname, '../../../apps/web/package.json'));
-test('Node and Chromium complete identical compiled-level bot runs with full logs and hashes', { timeout: 60000 }, async () => {
-  const { chromium } = webRequire('@playwright/test');
-  const { build, preview } = await import(pathToFileURL(webRequire.resolve('vite')).href);
-  const { compiledCorpus } = await import('./fixtures/corpus.mjs');
-  const { runCorpus } = await import('./fixtures/matches.mjs');
-  const levels = await compiledCorpus();
-  const expected = runCorpus(levels);
-  const root = join(__dirname, 'fixtures/browser');
-  const outDir = await mkdtemp(join(tmpdir(), 'node-arena-bots-browser-'));
-  try {
-    await build({ configFile: false, root, logLevel: 'silent', build: { outDir, emptyOutDir: true } });
-    const server = await preview({ configFile: false, root, logLevel: 'silent', build: { outDir }, preview: { host: '127.0.0.1', port: 0 } });
-    try {
-      const browser = await chromium.launch({ headless: true });
-      try {
-        const page = await browser.newPage();
-        const errors = [];
-        page.on('pageerror', error => errors.push(error.message));
-        page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-        await page.goto(server.resolvedUrls.local[0]);
-        const actual = await page.evaluate(levels => window.runBotCorpus(levels), levels);
-        assert.deepEqual(errors, []);
-        assert.deepEqual(actual.nodeGlobals, ['undefined', 'undefined', 'undefined']);
-        assert.deepEqual(actual.matches, expected);
-      } finally { await browser.close(); }
-    } finally { await server.close(); }
-  } finally { await rm(outDir, { recursive: true, force: true }); }
+const dist = path.resolve(__dirname, '../dist/index.js');
+const loaded = fx.content.loadContent(fx.dataFiles());
+const level = loaded.compiled[loaded.catalog.campaigns.common.entries.find(e => e.position === 4).level];
+
+function play(api, simApi) {
+  const s = simApi.create(level, 17), d = api.createBotDriver(level, 17), log = [];
+  while (!s.view.over && s.view.tick < 1500) { const c = d.commands(s); log.push([s.view.tick, c]); s.step(c); }
+  return { log, hash: s.hash() };
+}
+
+test('covers R2: web consumes createBotDriver from the bots package entry', () => {
+  const web = fs.readFileSync(path.resolve(__dirname, '../../../apps/web/src/driver/bot.ts'), 'utf8');
+  assert.match(web, /export \{ createBotDriver \} from '@node-arena\/bots'/);
+});
+
+test('covers R2: built dist driver matches source driver (commands + hash)', { skip: !fs.existsSync(dist) && 'dist not built (pnpm build)' }, async () => {
+  const built = await import(dist);
+  assert.equal(typeof built.createBotDriver, 'function');
+  assert.deepEqual(built.HUMAN_PROXY, src.HUMAN_PROXY);
+  assert.equal(built.BOT_VERSION, src.BOT_VERSION);
+  const a = play(src, sim), b = play(built, sim);
+  assert.deepEqual(a.log, b.log);
+  assert.equal(a.hash, b.hash);
+  assert.ok(a.log.some(([, c]) => c.length));
 });

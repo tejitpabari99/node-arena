@@ -3,4 +3,4 @@
  * `check:parked --strict` fails while this is non-empty. Owners of commands that are also ci.sh steps must
  * match the ci.sh PARKED entry (checked in tools/test/parked.test.ts).
  */
-export const PARKED_COMMANDS: Readonly<Record<string, string>> = { 'validate:levels': 'SP06', balance: 'SP06' };
+export const PARKED_COMMANDS: Readonly<Record<string, string>> = {};

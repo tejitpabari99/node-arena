@@ -1,33 +1,63 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const { spawnSync } = require('node:child_process');
-const { mkdtempSync, writeFileSync, readFileSync, rmSync } = require('node:fs');
-const { tmpdir } = require('node:os');
-const { join } = require('node:path');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
-test('golden comparison catches a command mutation and same-version updates refuse', async () => {
-  const { buildBundle, verifyBundle, assertUpdate } = await import('../scripts/golden.mjs');
-  const bundle = await buildBundle();
-  assert.equal(bundle.scenarios.length, 3);
-  assert.ok(bundle.results.every(row => row.commandlog.length > 0));
-  assert.doesNotThrow(() => verifyBundle(bundle, bundle));
-  const changed = structuredClone(bundle);
-  changed.results[0].commandlog[0].cmd.to = 'mutated';
-  assert.throws(() => verifyBundle(bundle, changed), /golden.*differ/i);
-  assert.throws(() => assertUpdate(bundle.botVersion, bundle.botVersion), /increase/);
-  const next = bundle.botVersion.split('.').map(Number); next[2]++;
-  assert.doesNotThrow(() => assertUpdate(bundle.botVersion, next.join('.')));
-  assert.doesNotThrow(() => assertUpdate(undefined, '1.0.0'));
-  assert.throws(() => assertUpdate('1.0.1', '1.0.0'), /increase/);
-  assert.throws(() => assertUpdate(undefined, '2.0.0'), /initial/);
-  verifyBundle(JSON.parse(readFileSync(join(__dirname, 'golden/bots.json'), 'utf8')), bundle);
-  const dir = mkdtempSync(join(tmpdir(), 'bots-golden-'));
+const pkg = path.resolve(__dirname, '..');
+const golden = () => import('../scripts/golden.mjs');
+
+test('bots:golden check verifies the committed goldens against a fresh run', () => {
+  const result = spawnSync('node', ['scripts/golden.mjs'], { cwd: pkg, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /Verified 3 bot match goldens/);
+});
+
+test('covers R6: committed goldens cover pos 4, 6, 11 with commands and a final hash', () => {
+  const bundle = JSON.parse(fs.readFileSync(path.join(pkg, 'test/golden/bots.json'), 'utf8'));
+  assert.deepEqual(bundle.scenarios.map(s => s.position), [4, 6, 11]);
+  for (const r of bundle.results) {
+    assert.ok(r.commandCount > 0 && r.commandCount === r.replay.commands.length);
+    assert.match(r.finalHash, /^[0-9a-f]+$/);
+    assert.equal(r.finalHash, r.replay.finalHash);
+  }
+  assert.match(bundle.botVersion, /^\d+\.\d+\.\d+$/);
+});
+
+test('covers R6: assertUpdate requires a strictly increased BOT_VERSION (semver, not string)', async () => {
+  const { assertUpdate } = await golden();
+  assert.doesNotThrow(() => assertUpdate(undefined, '2.0.0'));
+  assert.throws(() => assertUpdate('2.0.0', '2.0.0'), /must increase/);
+  assert.throws(() => assertUpdate('2.1.0', '2.0.9'), /must increase/);
+  assert.throws(() => assertUpdate('2.0.0', 'abc'), /semver/);
+  assert.doesNotThrow(() => assertUpdate('2.0.0', '2.0.1'));
+  assert.doesNotThrow(() => assertUpdate('2.9.0', '2.10.0'));
+});
+
+test('covers R6: updateFile rejects an update without a BOT_VERSION bump and leaves the file untouched', async () => {
+  const { updateFile } = await golden();
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bots-golden-'));
+  const file = path.join(dir, 'bots.json');
   try {
-    const file = join(dir, 'bundle.json'); writeFileSync(file, JSON.stringify(bundle));
-    const result = spawnSync(process.execPath, [join(__dirname, '../scripts/golden.mjs'), '--update', '--file', file], { encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: '' } });
-    assert.notEqual(result.status, 0); assert.match(result.stderr, /increase/);
-    writeFileSync(file, JSON.stringify(changed));
-    const mutation = spawnSync(process.execPath, [join(__dirname, '../scripts/golden.mjs'), '--file', file], { encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: '' } });
-    assert.notEqual(mutation.status, 0); assert.match(mutation.stderr, /golden.*differ/i);
-  } finally { rmSync(dir, { recursive: true, force: true }); }
+    fs.writeFileSync(file, '{"botVersion":"2.0.0"}\n');
+    await assert.rejects(updateFile(file, { botVersion: '2.0.0', results: [] }, ['2.0.0']), /must increase/);
+    await assert.rejects(updateFile(file, { botVersion: '2.0.1', results: [] }, ['2.0.1', '2.0.0']), /must increase/);
+    assert.equal(fs.readFileSync(file, 'utf8'), '{"botVersion":"2.0.0"}\n');
+    await updateFile(file, { botVersion: '2.0.1', results: [] }, ['2.0.0', undefined]);
+    assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).botVersion, '2.0.1');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('covers R6: CLI --update without a BOT_VERSION bump is rejected', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bots-golden-'));
+  const file = path.join(dir, 'bots.json');
+  try {
+    const current = JSON.parse(fs.readFileSync(path.join(pkg, 'test/golden/bots.json'), 'utf8'));
+    fs.writeFileSync(file, JSON.stringify(current));
+    const result = spawnSync('node', ['scripts/golden.mjs', '--update', '--file', file], { cwd: pkg, encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: '' } });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /BOT_VERSION must increase/);
+    assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).botVersion, current.botVersion);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });

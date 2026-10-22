@@ -1,6 +1,6 @@
 ---
-status: draft
-summary: 9 tasks to delete utility bots and ship the exact deterministic TW AI (default + scripts), tests, goldens, proxy spike, bench, plus the 09 follow-up that un-parks bots gates.
+status: done
+summary: SP06 complete — Tasks 0–8 done; full CI green; bots gates un-parked
 date: 2026-10-22
 ---
 # Tasks: 06 AI port (Tower War bots)
@@ -8,15 +8,15 @@ Source of truth: [PRD.md](PRD.md). One bot kind `tw`, literal 20 Hz port of `Def
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 0 | Decomp timer-order pin | 03#1, 05#4 | todo |
-| 1 | Delete utility bots; shell + `BOT_VERSION` 2.0.0 | 02#4, 03#1 | todo |
-| 2 | Seat bot + default AI | 0, 1, 03#4, 04#3 | todo |
-| 3 | Script interpreter | 2 | todo |
-| 4 | Driver + `HUMAN_PROXY` export | 2, 3, 05#4 | todo |
-| 5 | Unit + integration tests, lint test | 2, 3, 4 | todo |
-| 6 | Goldens, bench, replay verify | 4, 5 | todo |
-| 7 | Proxy solvability spike (levels 4-23) | 4, 05#4 | todo |
-| 8 | Un-park bots gates and rewire tooling (with 09) | 6, 7 | todo |
+| 0 | Decomp timer-order pin | 03#1, 05#4 | done |
+| 1 | Delete utility bots; shell + `BOT_VERSION` 2.0.0 | 02#4, 03#1 | done |
+| 2 | Seat bot + default AI | 0, 1, 03#4, 04#3 | done |
+| 3 | Script interpreter | 2 | done |
+| 4 | Driver + `HUMAN_PROXY` export | 2, 3, 05#4 | done |
+| 5 | Unit + integration tests, lint test | 2, 3, 4 | done |
+| 6 | Goldens, bench, replay verify | 4, 5 | done |
+| 7 | Proxy solvability spike (levels 4-23) | 4, 05#4 | done |
+| 8 | Un-park bots gates and rewire tooling (with 09) | 6, 7 | done |
 
 ## Task 0 — Decomp timer-order pin
 What it is / what it means: Open Q1 resolved: implementer reads decomp first and pins tests to it. No ground truth otherwise (Risks).

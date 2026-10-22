@@ -11,7 +11,7 @@ const root = resolve(import.meta.dirname, '../..');
 const contentDir = join(root, 'packages/content');
 /** Temp repo root whose golden dir holds `bundle`; the `golden` alias is the only path that honours embedded levels. */
 async function goldenRoot(t: { after(fn: () => Promise<void>): void }, bundle: unknown) {
-  const dir = await directory(t); await mkdir(join(dir, 'packages/sim/test/golden'), { recursive: true });
+  const dir = await directory(t); await mkdir(join(dir, 'packages/sim/test/golden'), { recursive: true }); await mkdir(join(dir, 'packages/bots/test/golden'), { recursive: true });
   await writeFile(join(dir, 'packages/sim/test/golden/baseline.json'), JSON.stringify(bundle)); return dir;
 }
 function run(command: string, ...args: string[]) {
@@ -24,9 +24,9 @@ async function directory(t: { after(fn: () => Promise<void>): void }) {
   return dir;
 }
 
-test('replay:verify golden scans all nineteen v2 sim recordings (bots goldens rejoin with SP06)', () => {
+test('replay:verify golden scans all 22 v2 recordings (sim + bots goldens)', () => {
   const result = run('replay:verify', 'golden', '--format', 'json');
-  assert.equal(result.status, 0, result.stdout); assert.match(result.report.summary, /19 replays verified of 19/);
+  assert.equal(result.status, 0, result.stdout); assert.match(result.report.summary, /22 replays verified of 22/);
 });
 test('corrupted golden fixtures fail with a clear message (tampered finalHash, tampered command)', async t => {
   const original = JSON.parse(await readFile(join(root, 'packages/sim/test/golden/baseline.json'), 'utf8'));

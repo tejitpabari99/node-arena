@@ -19,8 +19,7 @@
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.check.json",
     "lint": "eslint src",
     "bench": "node scripts/bench.mjs",
-    "golden": "node scripts/golden.mjs",
-    "bots:churn": "node scripts/churn.mjs"
+    "golden": "node scripts/golden.mjs"
   },
   "dependencies": {
     "@node-arena/sim": "workspace:*",

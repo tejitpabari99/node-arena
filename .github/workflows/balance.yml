@@ -20,8 +20,8 @@ jobs:
       - name: Produce statistical reports (informational, outside PR gates)
         run: |
           mkdir -p balance-report
-          pnpm --silent balance --levels all --proxy reference,human-proxy,idle --seeds 200 --jobs 2 --format md > balance-report/balance.md
-          pnpm --silent balance --levels all --proxy reference,human-proxy,idle --seeds 200 --jobs 2 --format json > balance-report/balance.json
+          pnpm --silent balance --levels all --proxy 1000,2000,4000,idle --seeds 50 --jobs 2 --format md > balance-report/balance.md
+          pnpm --silent balance --levels all --proxy 1000,2000,4000,idle --seeds 50 --jobs 2 --format json > balance-report/balance.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: balance-report

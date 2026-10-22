@@ -24,6 +24,8 @@ cd "$(dirname "$0")/.."
 #   tools:levels / tools:balance (SP06): tools/src/{levels*,balance*}.ts and their tests moved under
 #   tools/src/_parked/ and tools/test/_parked/ (excluded from tsconfig); tools/src/replay.ts is live (v2);
 #   build:web, balance, test:web:e2e (SP08/SP06): web/bots-owned scripts, not run by ci.sh.
+# 06 Task 8 (SP06 follow-up): bots gates un-parked (build/typecheck/test:bots, test:bots:golden, bots:golden, bench:bots,
+#   validate:levels, balance); tools/src/{levels,balance*}.ts live again; SP06 entries removed from PARKED.
 # Review 2026-10-22 bookkeeping:
 #   sim:golden, bench:sim and replay:verify/test:tools:replay are un-parked (03 Task 8, 09 Task 2): they run live. Until SP06,
 #   the `golden` alias scans sim goldens only (GOLDEN_DIRS in tools/src/replay.ts); SP06 adds the bots goldens back.
@@ -32,13 +34,6 @@ cd "$(dirname "$0")/.."
 #   the live packages (defs, content, sim, tools) while bots/web are parked.
 # ---------------------------------------------------------------------------
 PARKED=(
-  "bots:golden:SP06"
-  "validate:levels:SP06"
-  "test:bots:golden:SP06"
-  "build:bots:SP06"
-  "typecheck:bots:SP06"
-  "test:bots:SP06"
-  "bench:bots:SP06"
   "typecheck:web:SP08"
   "test:web:SP08"
   "check:manifest:SP07"

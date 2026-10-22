@@ -1,139 +1,68 @@
 const assert = require('node:assert/strict');
-const { test, before } = require('node:test');
-let api, simApi;
-before(async () => {
-  api = { ...await import('../dist/index.js'), ...await import('@node-arena/bots/harness') };
-  simApi = await import('../../sim/dist/index.js');
-});
-const metadata = { rulesVersion: '1.0.0', schemaVersion: '1.0.0', contentVersion: '1.0.0' };
-const idle = { id: 'idle', kind: 'idle', params: {} };
-function level() {
-  return {
-    componentNames: ['capturable', 'drawsLines', 'garrison', 'generates'],
-    id: 'harness-fixture', simHash: 'a'.repeat(64), botHash: {}, timeLimitSec: 10, visual: 'map',
-    players: [{ id: 'human', team: 'red', kind: 'human', colorKey: 'red' }, { id: 'bot', team: 'blue', kind: 'bot', colorKey: 'blue' }],
-    bots: [{ player: 1, profile: idle }],
-    towers: [0, 1].map(i => ({
-      id: `t${i}`, x: i * 10000, y: 0, owner: i, garrison: i === 0 ? 10 : 0,
-      archetype: 'tower', visual: 'tower', footprintRadius: 1000,
-      components: { garrison: { cap: 50 }, generates: { troop: 0, ratePerSec: i === 0 ? 20000 : 0 }, drawsLines: { extraSlotAbove: [] }, capturable: {} },
-    })),
-    kinds: [{ id: 'regular', value: 1, speedMilli: 20000, visual: 'troop' }],
-  };
-}
-function run(options) {
-  assert.equal(typeof api.runMatch, 'function', 'public harness must exist');
-  return api.runMatch({ level: level(), seed: 42, ...options });
-}
-const draw = { type: 'DrawLine', player: 'human', from: 't0', to: 't1' };
+const { test } = require('node:test');
+require('tsx/cjs');
+const bots = require('../src/index.ts');
+const sim = require('../../sim/src/index.ts');
+const fx = require('../../sim/test/fixtures.cjs');
 
-test('scripted stamped commands win and record a playable replay with no bot on playback', () => {
-  const result = run({ controllers: [{ player: 'human', commands: [{ tick: 2, cmd: draw }] }], record: metadata });
-  assert.equal(result.outcome.outcome, 'won');
-  assert.equal(result.outcome.winnerTeam, 'red');
-  assert.equal(result.stats.rejected, 0);
-  assert.equal(result.stats.commandCount, 1);
-  assert.deepEqual(result.replay.commands, [{ tick: 2, cmd: draw }]);
-  assert.equal(result.stats.finalHash, result.replay.finalHash);
-  const playback = simApi.playReplay({ level: level(), metadata }, result.replay);
-  assert.equal(playback.ok, true);
-  assert.equal(playback.sim.rejected, 0);
-  assert.equal(playback.sim.hash(), result.stats.finalHash);
-  assert.deepEqual(result.stats.players.map(p => p.towers), [2, 0]);
-  assert.equal(result.stats.players[0].captures, 1);
-  assert.ok(result.stats.players[0].generated > 0);
-  assert.ok(result.stats.players[0].overflowLost >= 0);
-  assert.equal(result.stats.towers.length, 2);
+const level = fx.compiledGolden();
+const loaded = fx.content.loadContent(fx.dataFiles());
+const l4 = loaded.compiled[loaded.catalog.campaigns.common.entries.find(e => e.position === 4).level];
+
+test('covers R2: runMatch truncates at maxTicks; rejects bad maxTicks', () => {
+  const r = bots.runMatch({ level, seed: 1, maxTicks: 10 });
+  assert.equal(r.ticks, 10);
+  assert.deepEqual(r.outcome, { outcome: 'truncated', winner: null });
+  assert.throws(() => bots.runMatch({ level, seed: 1, maxTicks: -1 }), RangeError);
+  assert.throws(() => bots.runMatch({ level, seed: 1, maxTicks: 1.5 }), RangeError);
 });
 
-test('idle match reaches configured timeout while safety cap explicitly truncates', () => {
-  const natural = run();
-  assert.deepEqual(natural.outcome, { outcome: 'timeout', winnerTeam: null });
-  assert.equal(natural.ticks, 200);
-  assert.equal(natural.replay, null);
-  const truncated = run({ maxTicks: 5, record: metadata });
-  assert.deepEqual(truncated.outcome, { outcome: 'truncated', winnerTeam: null });
-  assert.equal(truncated.ticks, 5);
-  assert.equal(truncated.replay.outcome, null);
-  assert.equal(simApi.playReplay({ level: level(), metadata }, truncated.replay).ok, true);
-  assert.equal(run({ maxTicks: 200 }).outcome.outcome, 'timeout');
+test('covers R2: ScriptedController applies commands at their pre-step tick, in order', () => {
+  const probe = sim.create(level, 4);
+  const owned = probe.view.buildings.owner.findIndex(o => o === 0);
+  let pair = null;
+  for (let t = 0; t < probe.view.ids.buildings.length && !pair; t++) if (t !== owned && probe.canDraw(0, owned, t) === null) pair = [owned, t];
+  assert.ok(pair, 'fixture has a drawable pair for player 0');
+  const cmd = { type: 'DrawLine', player: 0, from: pair[0], to: pair[1] };
+  const r = bots.runMatch({ level, seed: 4, maxTicks: 5, controllers: [{ player: 0, commands: [{ tick: 2, cmd }] }] });
+  assert.equal(r.stats.commandCount >= 1, true);
+  assert.equal(r.stats.rejected, 0);
+  const rec = bots.runMatch({ level, seed: 4, maxTicks: 5, record: fx.metadata, controllers: [{ player: 0, commands: [{ tick: 2, cmd }] }] });
+  assert.ok(rec.replay.commands.some(c => c.tick === 2));
 });
 
-test('Bot controllers see only guarded player capabilities and run before each tick', () => {
-  const seen = [];
-  const result = run({ controllers: [{ player: 'human', decide(ctx, tick) {
-    assert.deepEqual(Reflect.ownKeys(ctx).sort(), ['canDraw', 'readTroops', 'view']);
-    for (const key of ['events', 'snapshot', 'hash', 'rejected', 'step', 'prng']) assert.throws(() => ctx[key], /Forbidden/);
-    assert.equal(ctx.view.tick, tick);
-    seen.push(tick);
-    return tick === 2 ? [draw] : [];
-  } }] });
-  assert.equal(result.outcome.outcome, 'won');
-  assert.deepEqual(seen, Array.from({ length: result.ticks }, (_, tick) => tick));
+test('covers R2: controller validation (player range, duplicates, unordered, wrong player, bad shape)', () => {
+  const cmd = p => ({ type: 'DrawLine', player: p, from: 0, to: 1 });
+  const bad = controllers => () => bots.runMatch({ level, seed: 1, maxTicks: 1, controllers });
+  assert.throws(bad([{ player: 9, commands: [] }]), RangeError);
+  assert.throws(bad([{ player: 0, commands: [] }, { player: 0, commands: [] }]), RangeError);
+  assert.throws(bad([{ player: 0, commands: [{ tick: 3, cmd: cmd(0) }, { tick: 1, cmd: cmd(0) }] }]), RangeError);
+  assert.throws(bad([{ player: 0, commands: [{ tick: 0, cmd: cmd(1) }] }]), RangeError);
+  assert.throws(bad([{ player: 0 }]), TypeError);
 });
 
-test('profile factory binds human proxy with identical driver cadence and seat seed', () => {
-  assert.equal(typeof api.createProfileBot, 'function');
-  const data = level();
-  const profile = { id: 'reference', kind: 'utility', params: { skill: { decisionIntervalSec: 175, noise: 300, actionsPerDecision: 1 } } };
-  const proxy = api.createProfileBot(data, 42, 'human', profile);
-  const defaultData = { ...data, bots: [{ player: 0, profile }] };
-  const driver = api.createBotDriver(defaultData, 42), sim = simApi.create(data, 42);
-  const ticks = [];
-  for (let tick = 0; tick < 12; tick++) {
-    const commands = proxy.decide(api.guardBotContext(sim), tick);
-    assert.deepEqual(commands, driver.commands(sim));
-    if (commands.length) ticks.push(tick);
-    sim.step([], { events: false });
-  }
-  assert.equal(ticks.length, 4);
-  assert.equal(ticks[1] - ticks[0], 3);
+test('covers R2: controller override replaces default seat; unspecified level bots stay active', () => {
+  const silent = { player: 1, decide: () => [] };
+  const a = bots.runMatch({ level, seed: 3, maxTicks: 400 });
+  const b = bots.runMatch({ level, seed: 3, maxTicks: 400, controllers: [silent] });
+  assert.ok(a.stats.commandCount >= 1);
+  assert.equal(b.stats.commandCount, 0);
+  // override order does not matter and a Bot controller is accepted alongside a script
+  const c = bots.runMatch({ level, seed: 3, maxTicks: 50, controllers: [silent, { player: 0, commands: [] }] });
+  const d = bots.runMatch({ level, seed: 3, maxTicks: 50, controllers: [{ player: 0, commands: [] }, silent] });
+  assert.equal(c.stats.finalHash, d.stats.finalHash);
 });
 
-test('real utility opponents reproduce full recorded matches and integer final stats', () => {
-  const data = level();
-  data.towers[1].components.generates.ratePerSec = 10000;
-  data.towers[1].garrison = 10;
-  const profile = { id: 'reference', kind: 'utility', params: { skill: { decisionIntervalSec: 100, noise: 100, actionsPerDecision: 1 } } };
-  data.bots = [{ player: 1, profile }];
-  function match() {
-    return run({ level: data, controllers: [api.createProfileBot(data, 42, 'human', profile)], record: metadata });
-  }
-  assert.equal(typeof api.createProfileBot, 'function');
-  const first = match();
-  assert.deepEqual(match(), first);
-  assert.notEqual(first.outcome.outcome, 'truncated');
-  assert.equal(first.stats.rejected, 0);
-  assert.ok(first.stats.commandCount >= 2);
-  for (const p of first.stats.players) for (const key of ['towers', 'garrison', 'transit', 'lines', 'generated', 'overflowLost', 'kills', 'captures']) assert.ok(Number.isSafeInteger(p[key]), key);
-  assert.equal(simApi.playReplay({ level: data, metadata }, first.replay).ok, true);
+test('covers R2: bot may not command for another player; BotContext guards hidden reads', () => {
+  const liar = { player: 0, decide: () => [{ type: 'DrawLine', player: 1, from: 0, to: 1 }] };
+  assert.throws(() => bots.runMatch({ level, seed: 1, maxTicks: 3, controllers: [liar] }), RangeError);
+  const sneaky = { player: 0, decide: ctx => { ctx.snapshot; return []; } };
+  assert.throws(() => bots.runMatch({ level, seed: 1, maxTicks: 3, controllers: [sneaky] }), TypeError);
 });
 
-test('controller mappings and scripted inputs fail before any decisions', () => {
-  let calls = 0;
-  const bot = { player: 'human', decide() { calls++; return []; } };
-  assert.throws(() => run({ controllers: [bot, bot] }), /duplicate/i);
-  assert.throws(() => run({ controllers: [{ ...bot, player: 'unknown' }] }), /player/i);
-  assert.throws(() => run({ controllers: [{ player: 'human' }] }), /controller/i);
-  assert.throws(() => run({ controllers: [{ player: 'human', commands: [{ tick: -1, cmd: draw }] }] }), /tick/i);
-  assert.throws(() => run({ controllers: [{ player: 'human', commands: [{ tick: 2, cmd: draw }, { tick: 1, cmd: draw }] }] }), /tick/i);
-  assert.throws(() => run({ controllers: [{ player: 'bot', commands: [{ tick: 1, cmd: draw }] }] }), /player/i);
-  assert.throws(() => run({ maxTicks: -1 }), /maxTicks/i);
-  assert.equal(calls, 0);
-});
-
-test('cross-seat commands and cumulative command rejection fail loudly without events', () => {
-  assert.throws(() => run({ controllers: [{ player: 'bot', decide() { return [draw]; } }] }), /player/i);
-  assert.throws(() => run({ controllers: [{ player: 'human', commands: [{ tick: 0, cmd: { ...draw, from: 't1' } }] }] }), /rejected.*tick/i);
-});
-
-// Sim outcomes retain their player-facing meaning even with tooling controlling all seats.
-test('bot-only roster preserves the simulation outcome instead of inventing a win', () => {
-  const data = level();
-  data.players[0].kind = 'bot';
-  data.bots.push({ player: 0, profile: idle });
-  const result = run({ level: data, record: metadata });
-  assert.deepEqual(result.outcome, { outcome: 'lost', winnerTeam: null });
-  assert.equal(result.ticks, 1);
-  assert.equal(simApi.playReplay({ level: data, metadata }, result.replay).ok, true);
+test('covers R2: stats on a campaign level are consistent', () => {
+  const r = bots.runMatch({ level: l4, seed: 8, maxTicks: 600 });
+  assert.equal(r.stats.rejected, 0);
+  assert.equal(r.stats.buildings.length, l4.buildings.length);
+  assert.equal(r.stats.players.reduce((n, p) => n + p.buildings, 0), r.stats.buildings.filter(b => b.owner !== null).length);
 });

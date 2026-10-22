@@ -1,123 +1,94 @@
 const assert = require('node:assert/strict');
-const { test, before } = require('node:test');
-let api, simApi;
-before(async () => {
-  api = await import('../dist/index.js');
-  simApi = await import('../../sim/dist/index.js');
-});
+const { test } = require('node:test');
+require('tsx/cjs');
+const bots = require('../src/index.ts');
+const sim = require('../../sim/src/index.ts');
+const fx = require('../../sim/test/fixtures.cjs');
 
-function level(interval = 175, kind = 'utility') {
-  return {
-    componentNames: ['capturable', 'drawsLines', 'garrison', 'generates'],
-    id: 'driver-fixture', timeLimitSec: 100, visual: 'map',
-    players: [{ id: 'human', team: 'red', kind: 'human', colorKey: 'red' }, { id: 'bot', team: 'blue', kind: 'bot', colorKey: 'blue' }],
-    bots: [{ player: 1, profile: { id: 'test', kind, params: { skill: { decisionIntervalSec: interval, noise: 300, actionsPerDecision: 1 } } } }],
-    towers: Array.from({ length: 3 }, (_, i) => ({
-      id: `t${i}`, x: i * 20000, y: 0, owner: i === 0 ? 1 : i === 2 ? 0 : -1,
-      garrison: 10, archetype: 'tower', visual: 'tower', footprintRadius: 1000,
-      components: { garrison: { cap: 50 }, generates: { troop: 0, ratePerSec: 10000 }, drawsLines: { extraSlotAbove: [] }, capturable: {} },
-    })),
-    kinds: [{ id: 'regular', value: 1, speedMilli: 3000, visual: 'troop' }],
-  };
-}
+const loaded = fx.content.loadContent(fx.dataFiles());
+const byPosition = pos => loaded.compiled[loaded.catalog.campaigns.common.entries.find(e => e.position === pos).level];
+const MAX = 20000;
+const levels = [4, 6].map(p => [p, byPosition(p)]);
 
-function driver(data, seed = 42) {
-  assert.equal(typeof api.createBotDriver, 'function', 'public bot driver must exist');
-  return api.createBotDriver(data, seed);
-}
-
-// Stable command observations expose cadence without relying on a test-only bot factory.
-function decisionTicks(data, seed, count) {
-  const sim = simApi.create(data, seed), d = driver(data, seed), ticks = [];
-  for (let i = 0; i < count; i++) {
-    if (d.commands(sim).length) ticks.push(sim.tick);
-    sim.step([], { events: false });
-  }
-  return ticks;
-}
-
-test('loaded milli-second cadence floors to ticks and uses the ordered per-seat seed phase', () => {
-  // FNV-1a("test") = 0xafd071e5. 175 milli-seconds at 20Hz floors to 3 ticks.
-  const seed = simApi.mixSeed(42, 1, 0xafd071e5);
-  const phase = new simApi.Sfc32(seed).next() % 3;
-  assert.deepEqual(decisionTicks(level(), 42, 12), Array.from({ length: 4 }, (_, i) => phase + i * 3));
-});
-
-test('sub-tick interval clamps to one and omitted skill defaults to every tick', () => {
-  assert.deepEqual(decisionTicks(level(1), 42, 4), [0, 1, 2, 3]);
-  const data = level();
-  data.bots[0].profile.params = {};
-  assert.deepEqual(decisionTicks(data, 42, 4), [0, 1, 2, 3]);
-});
-
-test('idle and empty driver emit no commands', () => {
-  assert.deepEqual(decisionTicks(level(1, 'idle'), 42, 10), []);
-  const data = level(); data.bots = [];
-  assert.deepEqual(decisionTicks(data, 42, 10), []);
-});
-
-test('same inputs reproduce complete command logs and final hashes without events', () => {
-  function run() {
-    const data = level(), sim = simApi.create(data, 42), d = driver(data), log = [];
-    for (let i = 0; i < 150 && !sim.view.over; i++) {
-      const commands = d.commands(sim);
-      log.push([sim.tick, commands]);
-      sim.step(commands, { events: false });
+test('covers R2: driver builds one seat per level.bots entry', () => {
+  for (const [, level] of levels) {
+    assert.ok(level.bots.length > 0);
+    const s = sim.create(level, 7);
+    const d = bots.createBotDriver(level, 7);
+    // Recording seats via a spy is impossible; check commands only come from bot players.
+    const players = new Set(level.bots.map(b => b.player));
+    for (let t = 0; t < 600 && !s.view.over; t++) {
+      const cmds = d.commands(s);
+      for (const c of cmds) assert.ok(players.has(c.player));
+      s.step(cmds);
     }
-    assert.equal(sim.rejected, 0);
-    return { log, hash: sim.hash() };
-  }
-  const first = run();
-  assert.ok(first.log.some(([, commands]) => commands.length));
-  assert.deepEqual(run(), first);
-});
-
-test('driver passes the ordered seat seed to utility noise independently of simulation seed', () => {
-  const data = level(1), sim = simApi.create(data, 999), d = driver(data, 42);
-  const bot = api.createUtilityBot({ player: 'bot', profile: data.bots[0].profile,
-    seed: simApi.mixSeed(42, 1, 0xafd071e5), towerCount: 3 });
-  for (let tick = 0; tick < 12; tick++) {
-    assert.deepEqual(d.commands(sim), bot.decide(api.guardBotContext(sim), tick));
-    sim.step([], { events: false });
   }
 });
 
-test('repeated invocation on one tick emits no duplicate commands or noise draws', () => {
-  const data = level(1), sim = simApi.create(data, 42), d = driver(data);
-  assert.equal(d.commands(sim).length, 1);
-  assert.deepEqual(d.commands(sim), []);
-  sim.step([], { events: false });
-  const cleanSim = simApi.create(data, 42), cleanDriver = driver(data);
-  cleanDriver.commands(cleanSim); cleanSim.step([], { events: false });
-  assert.deepEqual(d.commands(sim), cleanDriver.commands(cleanSim));
-});
-
-test('driver reads only the public clock and guarded visible capabilities', () => {
-  const data = level(1), sim = simApi.create(data, 42);
-  const allowed = new Set(['tick', 'view', 'canDraw', 'readTroops']);
-  const restricted = new Proxy(sim, { get(target, key) {
-    if (!allowed.has(key)) throw new Error(`Hidden Sim read: ${String(key)}`);
-    const value = target[key];
-    return typeof value === 'function' ? value.bind(target) : value;
-  } });
-  assert.equal(driver(data).commands(restricted).length, 1);
-});
-
-test('all compiled bot entries drive their own dense player seats', () => {
-  const data = level(1);
-  data.players[0].kind = 'bot';
-  data.bots.push({ player: 0, profile: { id: 'second', kind: 'utility', params: {} } });
-  const sim = simApi.create(data, 42);
-  assert.deepEqual(driver(data).commands(sim).map(command => command.player), ['bot', 'human']);
-});
-
-test('invalid dense player mappings and duplicate bot seats fail before decisions', () => {
-  for (const player of [-1, 2, 1.5]) {
-    const data = level(); data.bots[0].player = player;
-    assert.throws(() => driver(data), /player/i);
+test('covers R2: every seat is called every tick before step; same-tick re-call emits nothing', () => {
+  const level = byPosition(6);
+  assert.ok(level.bots.length >= 2);
+  const s = sim.create(level, 3);
+  const d = bots.createBotDriver(level, 3);
+  const seen = [];
+  const origStep = s.step.bind(s);
+  const spy = { get view() { return s.view; }, canDraw: s.canDraw.bind(s) };
+  // seat decide calls are observed through timer-driven activity: first action tick for each seat must occur
+  let acted = new Set();
+  for (let t = 0; t < 400; t++) {
+    const cmds = d.commands(spy);
+    assert.deepEqual(d.commands(spy), []);
+    for (const c of cmds) acted.add(c.player);
+    seen.push(s.view.tick);
+    origStep(cmds);
   }
-  const duplicate = level(); duplicate.bots.push(duplicate.bots[0]);
-  assert.throws(() => driver(duplicate), /player/i);
-  const data = level(1), other = level(1); other.players[1].id = 'wrong';
-  assert.throws(() => driver(data).commands(simApi.create(other, 42)), /player/i);
+  assert.deepEqual(seen, [...Array(400).keys()]);
+  assert.deepEqual([...acted].sort(), level.bots.map(b => b.player).sort());
+});
+
+test('covers R2: no commands after game over', () => {
+  const level = byPosition(4);
+  const s = sim.create(level, 1);
+  const d = bots.createBotDriver(level, 1);
+  let guard = 0;
+  while (!s.view.over && guard++ < MAX) s.step(d.commands(s));
+  assert.ok(s.view.over, 'level ends');
+  assert.deepEqual(d.commands(s), []);
+  const fresh = bots.createBotDriver(level, 1);
+  assert.deepEqual(fresh.commands(s), []);
+});
+
+test('covers R2: runMatch on campaign positions 4 and 6 terminates with 0 rejected', () => {
+  for (const [, level] of levels) {
+    const r = bots.runMatch({ level, seed: 11, maxTicks: MAX });
+    assert.ok(r.ticks <= MAX);
+    assert.equal(r.stats.rejected, 0);
+    assert.ok(r.stats.commandCount > 0);
+  }
+});
+
+test('covers R2: same level+seed twice gives identical command log and final hash', () => {
+  for (const [, level] of levels) {
+    const log = () => {
+      const s = sim.create(level, 5);
+      const d = bots.createBotDriver(level, 5);
+      const out = [];
+      while (!s.view.over && s.view.tick < 3000) {
+        const cmds = d.commands(s);
+        out.push([s.view.tick, cmds]);
+        s.step(cmds);
+      }
+      return { out, hash: s.hash(), rejected: 0 };
+    };
+    const a = log(), b = log();
+    assert.deepEqual(a.out, b.out);
+    assert.equal(a.hash, b.hash);
+    assert.ok(a.out.some(([, c]) => c.length));
+    assert.equal(bots.runMatch({ level, seed: 5, maxTicks: 3000 }).stats.finalHash, a.hash);
+  }
+});
+
+test('covers R6: HUMAN_PROXY exact shape; createSeatBot exported', () => {
+  assert.deepEqual(bots.HUMAN_PROXY, { kind: 'tw', actionDelayMs: 2000, behavior: 'full', script: [] });
+  assert.equal(typeof bots.createSeatBot, 'function');
 });
