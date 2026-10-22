@@ -117,6 +117,7 @@ step check:schemas pnpm check:schemas
 step check:content pnpm check:content --base "$base"
 step validate:content pnpm validate:content --base "$base"
 step check:manifest pnpm check:manifest
+step check:import pnpm check:import
 step check:rules pnpm check:rules
 step validate:levels pnpm validate:levels --seeds 4 --base "$base"
 step replay:verify pnpm replay:verify golden

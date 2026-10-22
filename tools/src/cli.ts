@@ -16,6 +16,7 @@ if (command === 'check:parked') {
   catch (error) { console.error((error as Error).message); process.exitCode = 2; }
   process.exit();
 }
+if (command === 'import:tw' || command === 'check:import') process.exit(await (await import('./import-tw/cli.js')).run(command, args));
 const report: GateReport = { command, ok: false, errors: [], warnings: [], summary: 'Validation failed.' };
 const manifestFile = 'apps/web/assets/manifest.json';
 let format: 'md' | 'json' = args[args.indexOf('--format') + 1] === 'json' ? 'json' : 'md';
