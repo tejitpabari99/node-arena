@@ -64,7 +64,7 @@ test('covers R-TWR-01: stage thresholds change public radius and select precompu
   api.setLevel(s, 4, 9); assert.equal(towerRadiusMilli(s, 4), 3840);
 });
 
-test('covers R-TWR-02, R-TWR-03: nearest middle-lane tank dies instantly; FIFO, alive and ledger preserved', () => {
+test('covers R-TWR-02, covers R-TWR-03: nearest middle-lane tank dies instantly; FIFO, alive and ledger preserved', () => {
   const s = fixture();
   const front = put(s, 1, 0, 240000), middle = put(s, 1, 0, 200000, 1), back = put(s, 1, 0, 160000);
   ready(s); phase(s);
@@ -148,7 +148,7 @@ test('covers R-TWR-04: neutralFires and hitsNeutralHouses each support both sett
   }
 });
 
-test('covers R-TWR-01, R-TWR-04: no-target stays ready, level change preserves cooldown, capture preserves cooldown', () => {
+test('covers R-TWR-01, covers R-TWR-04: no-target stays ready, level change preserves cooldown, capture preserves cooldown', () => {
   const s = fixture();
   ready(s); phase(s); assert.equal(s.buildings.col['shoots.cooldown'][4], 0);
   put(s, 1, 0, 200000); phase(s); assert.equal(shots(s).length, 1);

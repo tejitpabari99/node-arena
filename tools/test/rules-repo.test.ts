@@ -12,6 +12,6 @@ function run(command: string, ...args: string[]) {
 test('check:rules passes the repository with JSON and Markdown reports', () => {
   const result = run('check:rules', '--format', 'json');
   assert.equal(result.status, 0, result.stdout); assert.equal(result.report.ok, true);
-  assert.match(result.report.summary, /28/);
+  assert.match(result.report.summary, /38 active rules; 38 covered/);
   const markdown = run('check:rules'); assert.equal(markdown.status, 0, markdown.stdout); assert.match(markdown.stdout, /# check:rules: PASS/);
 });
