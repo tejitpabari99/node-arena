@@ -326,6 +326,70 @@ Surplus from R-CAP-01 re-enters play as **one** new troop of the arriving type, 
 
 *Since:* 2.0.0.
 
+### R-CMB-01
+
+Two hostile troops on opposite lines of the same building pair (head-on) fight when their fronts are within `contactDistance`: for the front-most troop of each line, the exchange fires when `progA + progB >= length − contactDistance_m × tickRate`. The exchange is resolved by R-CMB-05; afterwards the new fronts are tested again, repeating while a new pair qualifies. Only fronts fight; troops behind them wait.
+
+*Source:* v1 R-CMB-01; 03#5.2.
+
+*Params:* `balance.contactDistance`.
+
+*Examples:* E-HEADON.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-CMB-01 (cancel when the progress sum reaches the length).
+
+### R-CMB-02
+
+Arrivals (progress at or beyond line length) are applied in order of overshoot (`progress − length`) descending, then line order (source index, target index), then FIFO `seq`. Each arrival determines friendship or hostility against the building's owner at its own turn, including ownership changes caused by earlier arrivals in the same tick. Friendly arrivals follow R-CAP-01; hostile arrivals follow R-CMB-03.
+
+*Source:* v1 R-CMB-02.
+
+*Params:* None.
+
+*Examples:* E-ARRIVAL.
+
+*Since:* 2.0.0.
+
+### R-CMB-03
+
+A hostile arrival deals `attack` damage (not its hit points) and the troop is consumed whole. With `n = L − attack`: if `n < 0` the building is captured (R-CPT-01) and the **overshoot is discarded**; otherwise `L = n`. Capture therefore needs damage **greater than** the level; damage equal to the level leaves the owner at level 0.
+
+*Source:* 03#5.3 (`Building.TryDoDamageFrom` sets level 0 on overflow; no later "level = leftover").
+
+*Params:* `units.*.attack`.
+
+*Examples:* E-CAPTURE.
+
+*Since:* 2.0.0.
+
+*Supersedes:* v1 R-CMB-03 (leftover value became the new garrison).
+
+### R-CMB-04
+
+Hostile troops on different lines fight when, at any instant within the tick, the distance between their centre-line positions is `<= contactDistance` (the interaction window: the region of lane coordinates `(s, u)` where that distance holds; it covers X-crossings and near-parallel lines closer than `contactDistance`). The test is swept, so a troop cannot tunnel through another in one tick. All contacts in a tick resolve in ascending `(channelKeyA, channelKeyB)` of the ordered-pair channel keys, then `(seqA, seqB)`; sub-tick contact time is ignored. Each contact is an exchange under R-CMB-05; survivors continue and may fight again in the same pass. Same-owner troops never fight. Head-on pairs of the same building pair use R-CMB-01 instead.
+
+*Source:* 06 F9; research 04 D6/R3.
+
+*Params:* `balance.contactDistance`.
+
+*Examples:* E-CROSSING.
+
+*Since:* 2.0.0.
+
+### R-CMB-05
+
+An exchange reads both troops' `attack` first and applies both simultaneously; a troop with `hp <= 0` dies. If both survive, a second round runs (at most two rounds). `defense` plays no part in an exchange.
+
+*Source:* 03#5.2.
+
+*Params:* `units.*.hp`, `units.*.attack`.
+
+*Examples:* E-EXCHANGE.
+
+*Since:* 2.0.0.
+
 ### R-CPT-01
 
 Capture (R-CMB-03) changes the building's owner to the arriver's owner and sets its level to 0. The old owner's outgoing lines are cancelled. **Every troop whose source is this building dies, including troops on cut lines and in flight.** The growth timer resets, `ignoreForWin` is cleared, and the new owner's timers start from 0. Neutral owners cannot capture.
@@ -349,6 +413,84 @@ Capture keeps incoming lines. Troops of other buildings are unaffected. Every la
 *Params:* None.
 
 *Examples:* E-ARRIVAL.
+
+*Since:* 2.0.0.
+
+### R-TWR-01
+
+A tower's attack radius depends on its stage and its attack delay depends on its level:
+
+`radius_m = idiv((attackRadius_m + radiusUpByLevel_m × (stage − 1)) × radiusUnit_m, 1000)`
+
+`delay mt = idiv(speedUpByLevel_m × 1_200_000, attackDelay_m × L + 60000)`
+
+`stage` is R-GRW-02 at the tower's current level. The delay is evaluated once, at fire time (R-TCK-06 exemption).
+
+*Source:* 03#5.5; decomp `Tower` (`coefficientSpeedByLevelUp`, `coefficientRadiusByLevelUp`).
+
+*Params:* `attackDelay`, `attackRadius`, `speedUpByLevel`, `radiusUpByLevel`, `radiusUnit`.
+
+*Examples:* E-TOWER.
+
+*Since:* 2.0.0.
+
+### R-TWR-02
+
+A tower is ready when its cooldown is `<= 0`, its level is at least 1, and its owner is non-neutral — or neutral when `neutralFires` is true. A ready tower fires at the nearest hostile troop with `minRadius < dist <= radius + troopPad` (distances in milli-units, compared as squares via exact integers); ties by distance, then owner index, then troop `seq`. If no troop qualifies it fires at the nearest hostile **house**; towers are never targets of tower shots, and neutral houses are targets only when `hitsNeutralHouses` is true. A tower fires at most one shot per cooldown; the cooldown is then set from the current level (R-TWR-01). A ready tower with no target stays ready.
+
+*Source:* 03#5.5; decomp (trigger reach is the radius plus the troop body radius).
+
+*Params:* `minRadius`, `troopPad`, `hitsNeutralHouses`, `neutralFires`.
+
+*Examples:* E-TOWER.
+
+*Since:* 2.0.0.
+
+### R-TWR-03
+
+A shot at a troop kills it regardless of hit points. A shot at a house lowers its level by 1, floored at 0, and never captures. Bullet flight is visual only and is not simulated; the effect lands on the fire tick.
+
+*Source:* 03#5.5.
+
+*Params:* None.
+
+*Examples:* E-TOWER.
+
+*Since:* 2.0.0.
+
+### R-TWR-04
+
+A tower's cooldown timer persists through capture. A neutral tower fires at every non-neutral owner's troops when `neutralFires` is true (the decomp has no owner gate on firing); the flag exists so that a change of behaviour is a content flag plus a content-version bump, not a rule change.
+
+*Source:* 03#5.5; decomp `Update` / `TryAttackWarrior` / `OnLevelStateChanged` (owner type only toggles the radius indicator).
+
+*Params:* `neutralFires`.
+
+*Examples:* E-TOWER.
+
+*Since:* 2.0.0.
+
+### R-OBS-01
+
+A `DrawLine` is blocked when the segment from source centre to target centre, thickened by `laneHalfWidth` on each side, intersects an obstacle footprint or the footprint of any building other than the two endpoints. Touching is not overlap: tangent contact does not block. An obstacle that overlaps the segment blocks even at an endpoint; the endpoint buildings' own footprints never block. Footprints are `circle` or `box` shapes in archetype data.
+
+*Source:* 03#3.2 `CheckBlock`; 03#14.
+
+*Params:* `laneHalfWidth`, footprints in archetype data.
+
+*Examples:* E-BLOCK.
+
+*Since:* 2.0.0.
+
+### R-OBS-02
+
+Obstacles are static, unowned, take no part in winning and do not interact with troops.
+
+*Source:* 03#8.1.
+
+*Params:* Obstacle footprints.
+
+*Examples:* E-BLOCK.
 
 *Since:* 2.0.0.
 
