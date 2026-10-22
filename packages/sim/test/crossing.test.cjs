@@ -102,3 +102,77 @@ test('covers R-CMB-04: large oblique rational lanes match BigInt oracle; draw/cu
  try { global.BigInt=()=>{throw Error('BigInt on hot path');};api.runCommands(s,[{type:'DrawLine',player:0,from:0,to:2}]);api.cutLine(s,0,2,'player');put(s,0,3,0);api.crossingPass(s); } finally { global.BigInt=original; }
  api.assertInvariants(s);
 });
+
+test('covers R-CMB-04: per-pass motion reuse preserves mixed-owner rows and liveness after an earlier pair kills a row',()=>{
+ const s=state();
+ const a=put(s,0,2,40000),friendly=put(s,1,3,40000),enemy=put(s,1,3,40000);
+ api.getChannel(s,1,3).troops.owner[0]=0;
+ api.crossingPass(s);
+ assert.deepEqual(clashes(s).map(e=>[e.a.seq,e.b.seq]),[[a,enemy]]);
+ assert.equal(api.getChannel(s,1,3).troops.seq[0],friendly);
+ api.assertInvariants(s);
+});
+
+test('covers R-CMB-04: certified rounded sweep agrees with exact oracle in the three-milli band, oblique fractional progress and clamped/fresh motion',()=>{
+ for(const delta of [-3,-2,-1,0,1,2,3]) for(const mode of ['moving','fractional','clamped','fresh']) {
+  const l=level([[-3000,-4000],[-3560+delta,-3580],[3000,4000],[2440+delta,4420],[9000,9000]]);
+  // Cache a conservative superset so oracle comparisons also cover just-outside contacts.
+  l.rules={...l.rules,contactDistance:704};
+  const s=state(l);s.level.rules.contactDistance=700;
+  const A=api.getChannel(s,0,2),B=api.getChannel(s,1,3);
+  const p=mode==='clamped'?A.length-100:100000+(mode==='fractional'?123:0);
+  put(s,0,2,p);put(s,1,3,p);
+  s.tick=mode==='fresh'?0:1;
+  const pair=api.activeCrossings(s).find(p=>p.a===A.key&&p.b===B.key);
+  assert.ok(pair);
+  assert.equal(api.sweepCrossed(s,pair,A,0,B,0),sweptOracle(s,A,0,B,0),`delta ${delta}, ${mode}`);
+ }
+});
+
+test('covers R-CMB-04: certified sweep handles radii below three with zero relative velocity',()=>{
+ for(const radius of [0,1,2,3]) for(const delta of [0,1,3,4]) {
+  const l=level([[-3000,-4000],[-3000+delta,-4000],[3000,4000],[3000+delta,4000],[9000,9000]]);
+  l.rules={...l.rules,contactDistance:704};const s=state(l);s.level.rules.contactDistance=radius;
+  put(s,0,2,100123);put(s,1,3,100123);s.tick=1;
+  const A=api.getChannel(s,0,2),B=api.getChannel(s,1,3),pair=api.activeCrossings(s).find(p=>p.a===A.key&&p.b===B.key);
+  assert.equal(api.sweepCrossed(s,pair,A,0,B,0),sweptOracle(s,A,0,B,0),`radius ${radius}, delta ${delta}`);
+ }
+});
+
+test('covers R-CMB-04: rounded sweep uncertainty band at radius plus/minus one, two and three is exact',()=>{
+ for(const delta of [-3,-2,-1,0,1,2,3]) {
+  const l=level([[-2000,0],[-2000,700+delta],[2000,0],[2000,700+delta],[9000,9000]]);
+  l.rules={...l.rules,contactDistance:704};const s=state(l);s.level.rules.contactDistance=700;
+  put(s,0,2,40123);put(s,1,3,40123);s.tick=1;
+  const A=api.getChannel(s,0,2),B=api.getChannel(s,1,3),pair=api.activeCrossings(s).find(p=>p.a===A.key&&p.b===B.key);
+  assert.equal(api.sweepCrossed(s,pair,A,0,B,0),delta<=0);
+ }
+});
+
+test('covers R-CMB-04: private crossing scratch resets after death/refill, cut, capture and redraw with new owners and kinds',()=>{
+ const l=level();l.buildings[0].level=0;
+ const actual=state(structuredClone(l)),twin=state(structuredClone(l)),ref=state(structuredClone(l));
+ const all=[actual,twin,ref];
+ for(const s of all)api.runCommands(s,[{type:'DrawLine',player:0,from:0,to:2},{type:'DrawLine',player:1,from:1,to:3}]);
+ for(let tick=0;tick<12;tick++) {
+  for(const s of all) {
+   s.tick=tick;
+   if(tick===2)api.cutLine(s,0,2,'player');
+   if(tick===4){put(s,1,0,api.getChannel(s,1,0).length);api.arrivalPass(s);}
+   if(tick===5)api.runCommands(s,[{type:'DrawLine',player:1,from:0,to:2}]);
+   if(tick===7){api.setLevel(s,1,0);put(s,2,1,api.getChannel(s,2,1).length);api.arrivalPass(s);}
+   if(tick===8)api.runCommands(s,[{type:'DrawLine',player:0,from:1,to:3}]);
+   put(s,0,2,40000+(tick%3)*123,tick%2);
+   put(s,1,3,40000,(tick+1)%2);
+  }
+  api.crossingPass(actual);api.crossingPass(twin);brutePass(ref);
+  assert.deepEqual(actual.events,ref.events,`oracle tick ${tick}`);
+  assert.deepEqual(actual.events,twin.events,`independent scratch tick ${tick}`);
+  assert.equal(api.hashState(actual),api.hashState(ref),`oracle hash tick ${tick}`);
+  assert.equal(api.hashState(actual),api.hashState(twin),`independent hash tick ${tick}`);
+  for(const s of all)api.assertInvariants(s);
+ }
+ assert.ok(actual.events.some(e=>e.type==='BuildingCaptured'));
+ assert.ok(actual.events.some(e=>e.type==='LineCut'&&e.reason==='player'));
+ assert.ok(actual.events.some(e=>e.type==='LineDrawn'&&e.owner===1));
+});

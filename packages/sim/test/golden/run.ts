@@ -13,7 +13,7 @@ export function runScenario(scenario: Scenario, metadata: ReplayMetadata): Golde
   const recorder = createReplayRecorder(scenario.level, scenario.seed, metadata);
   const events: SimEvent[] = [];
   for (let i = 0; i < scenario.ticks && !recorder.view.over; i++) {
-    events.push(...recorder.step(scenario.commands.filter(c => c.tick === recorder.view.tick).map(c => c.cmd)));
+    events.push(...recorder.step(scenario.commands.filter(c => c.tick === recorder.view.tick).map(c => c.cmd), { events: true }));
   }
   if (scenario.fullGame && !recorder.view.over) throw new Error(`Incomplete full-game fixture: ${scenario.name}`);
   const replay = recorder.record();

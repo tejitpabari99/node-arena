@@ -27,10 +27,11 @@ export function makeLane(a: Point, b: Point, lengthProgress?: number): Lane {
   return { a: { ...a }, b: { ...b }, dx, dz, length };
 }
 /** Integer world point with signed truncation, identical to troopPosition. */
-export function lanePoint(lane: Lane, progress: number): Point {
+export function lanePoint(lane: Lane, progress: number, out: Point = { x: 0, z: 0 }): Point {
   checked(progress);
-  if (!lane.length) return { ...lane.a };
-  return { x: checked(lane.a.x + mulDiv(lane.dx, progress, lane.length)), z: checked(lane.a.z + mulDiv(lane.dz, progress, lane.length)) };
+  out.x = lane.length ? checked(lane.a.x + mulDiv(lane.dx, progress, lane.length)) : lane.a.x;
+  out.z = lane.length ? checked(lane.a.z + mulDiv(lane.dz, progress, lane.length)) : lane.a.z;
+  return out;
 }
 /** Exact projection in engine-progress: numerator * scale / denominator.
  * Keep the factors separate: their product need not be a safe Number. */

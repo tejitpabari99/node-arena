@@ -1,4 +1,4 @@
-import { lanePoint, makeLane, type Interval, type Lane } from './geometry.js';
+import { lanePoint, makeLane, type Interval, type Lane, type Point } from './geometry.js';
 import { checked, compareSumProducts, idiv } from './math.js';
 import type { Channel, SimState } from './types.js';
 
@@ -101,21 +101,58 @@ function sign(a:Terms,b:Terms=[]):number {
 }
 interface Time { n:number; d:number }
 interface Motion { p:number; v:number }
-function motion(state:SimState,ch:Channel,i:number):Motion {
+function motion(state:SimState,ch:Channel,i:number,out:Motion={p:0,v:0}):Motion {
   const t=ch.troops.t0[i]!,speed=state.level.units[ch.troops.kind[i]!]!.speed;
   // A troop born in phase 5 exists at progress zero, not one speed behind it.
-  return {p:checked(ch.troops.p0[i]!+Math.max(0,state.tick-1-t)*speed),v:t>=state.tick?0:speed};
+  out.p=checked(ch.troops.p0[i]!+Math.max(0,state.tick-1-t)*speed);out.v=t>=state.tick?0:speed;return out;
 }
-/** Exact continuous distance over a tick, split where either troop reaches a
- * physical endpoint. No BigInt, float distance, Q20 direction approximation,
- * or rounded display position enters the contact decision. */
+/** Exact swept minimum for the small, rounded world-coordinate trajectory.
+ * Unsafe scalar coefficients defer to the full rational solver. Products in the
+ * discriminant stay factored for exact Number-limb comparison. */
+function roundedSweep(rx:number,rz:number,vx:number,vz:number,radius:number):boolean|undefined {
+  const values=[rx*rx,rz*rz,vx*vx,vz*vz,rx*vx,rz*vz,radius*radius];
+  if(!values.every(Number.isSafeInteger))return undefined;
+  const aa=values[2]!+values[3]!,bb=values[4]!+values[5]!,cc=values[0]!+values[1]!-values[6]!;
+  const end=cc+2*bb+aa;
+  if(![aa,bb,cc,end,cc+2*bb,2*bb,bb+aa,values[0]!+values[1]!].every(Number.isSafeInteger))return undefined;
+  if(cc<=0||end<=0)return true;
+  return bb<0&&bb+aa>0&&compareSumProducts([[cc,aa]],[[bb,bb]])<=0;
+}
+/** Exact continuous distance over a tick, split at physical endpoints.
+ * Certified bounds account for rounding; ambiguous cases use the rational
+ * polynomial. No BigInt or floating-point distance enters the tick path. */
+interface PreparedSweep { readonly motion:Motion; readonly start:Point; readonly end:Point }
+function prepareSweep(state:SimState,ch:Channel,i:number,lane:Lane):PreparedSweep {
+  const m=motion(state,ch,i);
+  return {motion:m,start:lanePoint(lane,Math.max(0,Math.min(lane.length,m.p))),
+    end:lanePoint(lane,Math.max(0,Math.min(lane.length,checked(m.p+m.v))))};
+}
+/** Coordinate truncation has <2 milli relative error per axis. */
+export function sweepsMayTouch(a:PreparedSweep,b:PreparedSweep,r:number):boolean {
+  return !(Math.max(a.start.x,a.end.x)+r+2<Math.min(b.start.x,b.end.x)||
+    Math.max(b.start.x,b.end.x)+r+2<Math.min(a.start.x,a.end.x)||
+    Math.max(a.start.z,a.end.z)+r+2<Math.min(b.start.z,b.end.z)||
+    Math.max(b.start.z,b.end.z)+r+2<Math.min(a.start.z,a.end.z));
+}
 export function sweepCrossed(state:SimState,pair:CrossingPair,A:Channel,ia:number,B:Channel,ib:number):boolean {
-  const ma=motion(state,A,ia),mb=motion(state,B,ib),a=pair.laneA,b=pair.laneB,r=state.level.rules.contactDistance;
-  const ends=(lane:Lane,m:Motion)=>[lanePoint(lane,Math.max(0,Math.min(lane.length,m.p))),lanePoint(lane,Math.max(0,Math.min(lane.length,checked(m.p+m.v))))] as const;
-  const [a0,a1]=ends(a,ma),[b0,b1]=ends(b,mb);
-  // Truncation changes each coordinate by <1 milli: two milli padding makes
-  // this a conservative rejection only, including endpoint-clamped motion.
-  for(const axis of ['x','z'] as const)if(Math.max(a0[axis],a1[axis])+r+2<Math.min(b0[axis],b1[axis])||Math.max(b0[axis],b1[axis])+r+2<Math.min(a0[axis],a1[axis]))return false;
+  return sweepPrepared(state,pair,prepareSweep(state,A,ia,pair.laneA),prepareSweep(state,B,ib,pair.laneB));
+}
+/** Prepared trajectories stay valid for this crossing pass: combat only removes
+ * rows. Callers still recheck sequence liveness before applying an exchange. */
+export function sweepPrepared(state:SimState,pair:CrossingPair,A:PreparedSweep,B:PreparedSweep):boolean {
+  const ma=A.motion,mb=B.motion,a=pair.laneA,b=pair.laneB,r=state.level.rules.contactDistance;
+  const a0=A.start,a1=A.end,b0=B.start,b1=B.end;
+  if(!sweepsMayTouch(A,B,r))return false;
+  // Only an unclamped tick is linear between these rounded endpoints. Each
+  // endpoint has <1 milli error per coordinate per troop. Interpolation keeps
+  // relative error <2 per axis, hence Euclidean error <sqrt(8)<3 milli at every
+  // time. Inner/outer certificates preserve the exact r boundary; only the
+  // three-milli uncertainty band pays for the rational polynomial below.
+  if(ma.p>=0&&ma.p+ma.v<=a.length&&mb.p>=0&&mb.p+mb.v<=b.length) {
+    const rx=a0.x-b0.x,rz=a0.z-b0.z,vx=a1.x-a0.x-b1.x+b0.x,vz=a1.z-a0.z-b1.z+b0.z;
+    if(r>=3&&roundedSweep(rx,rz,vx,vz,r-3)===true)return true;
+    if(roundedSweep(rx,rz,vx,vz,r+3)===false)return false;
+  }
   const timesList:Time[]=[{n:0,d:1},{n:1,d:1}];
   for(const [m,L] of [[ma,a.length],[mb,b.length]] as const)if(m.v>0)for(const edge of [0,L]){const n=edge-m.p;if(n>0&&n<m.v)timesList.push({n,d:m.v});}
   timesList.sort((x,y)=>sign([[x.n,y.d]],[[y.n,x.d]]));
@@ -142,13 +179,42 @@ export function sweepCrossed(state:SimState,pair:CrossingPair,A:Channel,ia:numbe
   }
   return false;
 }
-/** FIFO candidate ids; the envelope is expanded by each row's actual sweep.
- * Mixed troop speeds are supported: never early-exit on a nonmonotone row. */
-export function crossingCandidates(state:SimState,ch:Channel,range:Interval):number[] {
-  const out:number[]=[];
-  for(let i=0;i<ch.troops.len;i++){
-    const m=motion(state,ch,i),start=Math.max(0,Math.min(ch.length,m.p)),end=Math.max(0,Math.min(ch.length,checked(m.p+m.v)));
-    if(end>=range[0]&&start<=range[1])out.push(ch.troops.seq[i]!);
+/** One immutable motion row per live troop, rebuilt after head-on combat each tick.
+ * Sequence order survives deaths during the crossing pass; consumers recheck liveness. */
+export interface CrossingRow { seq:number; start:number; end:number; owner:number; readonly motion:Motion; readonly sweep:PreparedSweep; ready:boolean }
+export interface CrossingScratch { readonly rows:CrossingRow[]; readonly pool:CrossingRow[]; start:number; end:number; owner:number|undefined }
+export function createCrossingScratch():CrossingScratch { return {rows:[],pool:[],start:0,end:0,owner:undefined}; }
+/** Scratch is private to its owning contact pass. Overwrite after head-on;
+ * previous rows and endpoint projections must never survive into a new tick. */
+export function fillCrossingScratch(state:SimState,ch:Channel,scratch:CrossingScratch):void {
+  const {rows,pool}=scratch;rows.length=ch.troops.len;
+  let ordered=true,start=ch.length,end=0,owner:number|undefined=ch.troops.owner[0];
+  for(let i=0;i<ch.troops.len;i++) {
+    let row=pool[i];
+    if(!row) {
+      const m={p:0,v:0};row={seq:0,start:0,end:0,owner:0,motion:m,ready:false,sweep:{motion:m,start:{x:0,z:0},end:{x:0,z:0}}};pool[i]=row;
+    }
+    const m=motion(state,ch,i,row.motion);
+    row.seq=ch.troops.seq[i]!;row.owner=ch.troops.owner[i]!;row.ready=false;
+    row.start=Math.max(0,Math.min(ch.length,m.p));row.end=Math.max(0,Math.min(ch.length,checked(m.p+m.v)));
+    rows[i]=row;
+    start=Math.min(start,row.start);end=Math.max(end,row.end);
+    if(row.owner!==owner)owner=undefined;
+    if(i>0&&row.seq<rows[i-1]!.seq)ordered=false;
   }
-  return out.sort((a,b)=>a-b);
+  if(!ordered)rows.sort((a,b)=>a.seq-b.seq);
+  scratch.start=start;scratch.end=end;scratch.owner=owner;
+}
+/** Independent allocating wrapper for internal consumers outside the hot pass. */
+export function crossingRows(state:SimState,ch:Channel):CrossingRow[] {
+  const scratch=createCrossingScratch();fillCrossingScratch(state,ch,scratch);return scratch.rows;
+}
+/** Project only rows entering a crossing window, into reusable point storage. */
+export function prepareCrossingRow(row:CrossingRow,lane:Lane):PreparedSweep {
+  if(!row.ready) { lanePoint(lane,row.start,row.sweep.start);lanePoint(lane,row.end,row.sweep.end);row.ready=true; }
+  return row.sweep;
+}
+/** Mixed speeds require testing every row; progress order need not be monotone. */
+export function crossingCandidates(state:SimState,ch:Channel,range:Interval):number[] {
+  return crossingRows(state,ch).filter(row=>row.end>=range[0]&&row.start<=range[1]).map(row=>row.seq);
 }

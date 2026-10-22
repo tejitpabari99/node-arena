@@ -22,7 +22,7 @@
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.golden.json",
     "lint": "eslint src",
     "sim:golden": "node scripts/golden.cjs",
-    "bench:sim": "node scripts/bench.cjs"
+    "bench:sim": "pnpm -w build:prerequisites && node scripts/bench.cjs"
   },
   "dependencies": {
     "@node-arena/content": "workspace:*",
