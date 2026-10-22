@@ -147,6 +147,7 @@ This table = 02 R7 (single contract). Stage thresholds 10/30 are content data (`
 - [RESOLVED: verify vs BF/ref/tw-yt frames in task 1, pick closest match, record in validation.md] Exact tank turret part (rotating vs static) in `1_BaseAttackSkin`. Verify against `BF/ref/tw-yt` frames in task 1.
 - [DEFERRED] Other skins, artillery, rocket tower, river, walls, mines art.
 - [RESOLVED: JS port] importer language (D1).
+- [RESOLVED: review 2026-10-22 — SP07 wires importer theme registration from manifest themes and removes the pre-SP07 constant]. Until then the 05 importer blocks any level whose position needs a theme outside `REGISTERED_THEMES_PRE_SP07 = ['green','snow']` (`tools/src/import-tw/gate.ts`); `registeredThemes()` in `tools/src/import-tw/run.ts` already switches to the manifest's theme ids once `apps/web/assets/manifest.json` has `schemaVersion` 2.x with `themes`.
 
 ## Acceptance Criteria
 - R2 validation report exists (turntable rendered under 08's mirrored root; env-mapping outcome recorded); all in-scope assets pass automated checks and visual compare.

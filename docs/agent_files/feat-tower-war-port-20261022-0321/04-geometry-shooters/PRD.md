@@ -122,6 +122,7 @@ Derived caches never enter the hash; state hashed = `shoots.cooldown` + troop co
 - [RESOLVED: detection range = radius + troop body; `troopPad` default 350 (decomp-trusted), content flag; 01 TWR-02 carries it]
 - [RESOLVED: owner — towers hit neutral houses] Tower vs neutral houses: `hitsNeutralHouses` default true.
 - [RESOLVED: Building box size comes from 05 Task 0 `colliders.json` (Building collider); 1.5 is the placeholder until then]
+- [RESOLVED: review 2026-10-22 — the dumped `Building` box is a trigger (`isTrigger`) with ~15 degrees local yaw (`localYawDeg` 14.99999) in the prefab; 04 decides AABB vs yawed box. 05's colliders test asserts both facts and that obstacle child boxes are centred (x/z 0)]
 - [RESOLVED: troop arrives/contacts when it touches the target's `Hit` box (0.6), not at centre; applies to attacker-vs-spawn contacts too; shared with 03 arrival semantics]
 - [RESOLVED: troops before houses; basis fixed `_canAttackTypes` dictionary order]
 - [RESOLVED: towers are not tower targets; basis House/Trolley class test (medium)]
