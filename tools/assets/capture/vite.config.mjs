@@ -9,6 +9,6 @@ export default {
   root: here,
   configFile: false,
   cacheDir: path.resolve(here, '../../../node_modules/.vite-asset-capture'),
-  resolve: { alias: { three: three } },
+  resolve: { alias: { 'three/addons': path.join(three, 'examples/jsm'), three: three, '@node-arena/defs': path.resolve(here, '../../../packages/defs/src/index.ts') } },
   server: { fs: { allow: [path.resolve(here, '../../..')] } },
 };

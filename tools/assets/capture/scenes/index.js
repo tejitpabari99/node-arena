@@ -6,7 +6,7 @@ export const scenes = {
   'l4-green': { load: () => import('./stub.js'), ref: 'tw-yt/L04.jpg' },
   'l21-snow': { load: () => import('./stub.js'), ref: 'tw-yt/L21.jpg' },
   'unit-lineup': { load: () => import('./stub.js') },
-  'stage-ladder': { load: () => import('./stub.js') },
+  'stage-ladder': { load: () => import('./stage-ladder.js'), ref: 'tw-yt/d-house-levels-11.jpg' },
   'fx': { load: () => import('./stub.js'), ref: 'tw-yt/d-tower-firing.jpg' },
 };
 export const sceneNames = Object.keys(scenes);
