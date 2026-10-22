@@ -9,9 +9,9 @@ Source of truth: [PRD](PRD.md). Implements CMB-04, TWR-01..04, OBS-01..02 on 03'
 | # | Task | Depends on | Status |
 |---|---|---|---|
 | 0 | Seam check + content footprint values | 03, 02, 05#0 | done |
-| 1 | Geometry primitive | 0 | in-progress |
+| 1 | Geometry primitive | 0 | done |
 | 2 | Corridor blocking + `explainDraw` (OBS) | 1, 0 | in-progress |
-| 3 | Crossing windows + swept combat (CMB-04) | 1 | todo |
+| 3 | Crossing windows + swept combat (CMB-04) | 1 | in-progress |
 | 4 | Shooting tower (TWR) | 1, 0 | todo |
 | 5 | Goldens, bench, restore/parity tests | 2, 3, 4 | todo |
 | 6 | Un-park `check:rules`, final acceptance | 5 | todo |
