@@ -76,7 +76,7 @@ export const ElementSchema = Type.Object({
 export const BalanceSchema = Type.Object({
   ...envelope,
   stageThresholds: Type.Array(count({ minimum: 1 }), { minItems: 2, maxItems: 2 }),
-  spawn: Type.Object({ aliveCap: count({ minimum: 1 }) }, { additionalProperties: false }),
+  spawn: Type.Object({ aliveCap: count({ minimum: 1, maximum: 1000 }) }, { additionalProperties: false }),
   growth: Type.Object({ base: fx3({ exclusiveMinimum: 0 }) }, { additionalProperties: false }),
   contactDistance: fx3({ exclusiveMinimum: 0 }),
   laneHalfWidth: fx3({ exclusiveMinimum: 0 }),

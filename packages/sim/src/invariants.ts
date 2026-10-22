@@ -1,4 +1,4 @@
-import { liveChannels, progressOf } from './state.js';
+import { liveChannels, progressOf, stageOf } from './state.js';
 import type { SimState } from './types.js';
 
 function fail(message: string): never { throw new Error(`invariant: ${message}`); }
@@ -34,6 +34,7 @@ export function assertInvariants(state: SimState): void {
   let totalAlive = 0;
   for (let i = 0; i < n; i++) {
     if (b.level[i]! < 0 || b.level[i]! > b.maxLevel[i]!) fail(`building ${i} level out of range`);
+    if (b.stage[i] !== stageOf(state.level.rules.stageThresholds, b.level[i]!)) fail(`building ${i} stage ${b.stage[i]} != stageOf(level)`);
     if (lines[i] !== b.lines[i]) fail(`building ${i} lines ${b.lines[i]} != recount ${lines[i]}`);
     if (alive[i] !== b.alive[i]) fail(`building ${i} alive ${b.alive[i]} != recount ${alive[i]}`);
     if (b.alive[i]! > cap) fail(`building ${i} alive over cap`);

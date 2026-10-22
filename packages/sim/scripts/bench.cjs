@@ -72,13 +72,13 @@ function clashesBetween(api, level, commands, seed, from, to) {
 
 /**
  * Stress run: fresh sims warmed (untimed) until every house is saturated, then `window` ticks timed while head-on
- * clashes resolve and the alive cap refills. Asserts 720 live troops were reached and >= 1 clash fell inside the timed window.
+ * clashes resolve and the alive cap refills. Asserts 720 live troops were reached (peak) and reports the minimum alive count inside the timed window (clashes thin it), and that >= 1 clash fell inside the timed window.
  */
 function runStress(trials = 20, window = 40) {
   const { api, levels } = load();
   const { level, commands } = stressFixture(levels);
   const steps = [], hashes = [];
-  let peak = 0, clashes = 0;
+  let peak = 0, clashes = 0, minTimed = Infinity;
   for (let trial = -2; trial < trials; trial++) { // trials -2..-1 warm the JIT and are not sampled
     const seed = 1000 + trial;
     const sim = api.create(level, seed);
@@ -86,16 +86,17 @@ function runStress(trials = 20, window = 40) {
     let guard = 0, ticks = 1;
     while (total(sim.view) < STRESS_TROOPS) { sim.step([], { events: false }); ticks++; assert.ok(++guard < 400, 'stress never saturated'); }
     peak = Math.max(peak, total(sim.view));
-    if (trial === 0) clashes = clashesBetween(api, level, commands, seed, ticks + 1, ticks + window);
+    if (trial === 0) clashes = clashesBetween(api, level, commands, seed, ticks, ticks + window - 1);
     for (let i = 0; i < window; i++) {
       const t0 = now(); sim.step([], { events: false }); const t1 = now(); sim.hash(); const t2 = now();
       if (trial >= 0) { steps.push(t1 - t0); hashes.push(t2 - t1); }
       peak = Math.max(peak, total(sim.view));
+      if (trial >= 0) minTimed = Math.min(minTimed, total(sim.view));
     }
   }
   assert.equal(peak, STRESS_TROOPS, `stress must reach ${STRESS_TROOPS} live troops (peak ${peak})`);
   assert.ok(clashes >= 1, `stress must resolve >= 1 head-on clash inside the timed window (saw ${clashes})`);
-  return { ...summarize(steps, hashes), peakTroops: peak, clashes };
+  return { ...summarize(steps, hashes), peakTroops: peak, minTimedTroops: minTimed, clashes };
 }
 
 function runRealistic(trials = 40, maxTicks = 1200) {
@@ -121,7 +122,7 @@ const BENCH_SCENARIOS = [
   { name: 'realistic', run: () => runRealistic() },
 ];
 
-const fmt = (m) => `mean ${m.mean.toFixed(4)} ms, p99 ${m.p99.toFixed(4)} ms, hash mean ${m.hash.toFixed(4)} ms, hash p99 ${m.hashP99.toFixed(4)} ms (${m.samples} samples, peak ${m.peakTroops} troops${m.clashes === undefined ? '' : `, ${m.clashes} clashes in window`})`;
+const fmt = (m) => `mean ${m.mean.toFixed(4)} ms, p99 ${m.p99.toFixed(4)} ms, hash mean ${m.hash.toFixed(4)} ms, hash p99 ${m.hashP99.toFixed(4)} ms (${m.samples} samples, peak ${m.peakTroops} troops${m.minTimedTroops === undefined ? '' : `, min ${m.minTimedTroops} in window`}${m.clashes === undefined ? '' : `, ${m.clashes} clashes in window`})`;
 function main(args = process.argv.slice(2)) {
   const ci = args.includes('--ci');
   const width = Math.max(...BENCH_SCENARIOS.map((x) => x.name.length));

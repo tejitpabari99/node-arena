@@ -151,7 +151,7 @@ test('R7 readTroops: columns, constant speed, progress at tick, capped by buffer
   assert.ok(a === n);
 });
 
-test('R7 readTroops: length column = lane length (kept after the line is cut); channelEnds decodes channel keys; kind is a unit index', () => {
+test('R7 readTroops: laneLength column = lane length (kept after the line is cut); channelEnds decodes channel keys; kind is a unit index', () => {
   const l = compiledGolden();
   const sim = api.create(l, 9);
   sim.step([{ type: 'DrawLine', player: 0, from: 0, to: 2 }]);
@@ -166,18 +166,18 @@ test('R7 readTroops: length column = lane length (kept after the line is cut); c
     const { from, to } = api.channelEnds(N, buf.channel[i]);
     assert.deepEqual([from, to], [0, 2]);
     assert.equal(buf.channel[i], from * N + to);
-    assert.equal(buf.length[i], api.laneLength(l, from, to));
-    assert.ok(buf.progress[i] <= buf.length[i]);
+    assert.equal(buf.laneLength[i], api.laneLength(l, from, to));
+    assert.ok(buf.progress[i] <= buf.laneLength[i]);
     assert.equal(sim.view.units[buf.kind[i]].id, l.units[buf.kind[i]].id);
   }
-  assert.equal(sim.readTroops({ ...api.createTroopBuffer(8), length: new Int32Array(2) }), 2, 'capped by the shortest column incl. length');
+  assert.equal(sim.readTroops({ ...api.createTroopBuffer(8), laneLength: new Int32Array(2) }), 2, 'capped by the shortest column incl. laneLength');
 });
 
 test('Sim seams: explainDraw / towerRadiusMilli exist (SP04 fills); explainDraw never throws and is null until then', () => {
   const sim = api.create(compiledGolden(), 9);
   assert.equal(sim.explainDraw(0, 0, 2), null);
   assert.equal(sim.explainDraw('x', {}, NaN), null);
-  assert.equal(typeof sim.towerRadiusMilli(sim.view, 0), 'number');
+  assert.strictEqual(sim.towerRadiusMilli(sim.view, 0), 0, 'stub: 0 = not a tower / no ring');
   const rec = api.createReplayRecorder(compiledGolden(), 9, require('./fixtures.cjs').metadata);
   assert.equal(typeof rec.explainDraw, 'function');
 });

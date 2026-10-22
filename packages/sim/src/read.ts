@@ -62,12 +62,12 @@ export function refreshView(view: SimView, state: SimState): void {
  * cut or replaced lines (the lane itself is no longer in `view.lines`).
  */
 export interface TroopBuffer {
-  channel: Int32Array; seq: Int32Array; owner: Int32Array; kind: Int32Array; progress: Int32Array; hp: Int32Array; speed: Int32Array; length: Int32Array;
+  channel: Int32Array; seq: Int32Array; owner: Int32Array; kind: Int32Array; progress: Int32Array; hp: Int32Array; speed: Int32Array; laneLength: Int32Array;
 }
 
 export function createTroopBuffer(capacity: number): TroopBuffer {
   const col = () => new Int32Array(capacity);
-  return { channel: col(), seq: col(), owner: col(), kind: col(), progress: col(), hp: col(), speed: col(), length: col() };
+  return { channel: col(), seq: col(), owner: col(), kind: col(), progress: col(), hp: col(), speed: col(), laneLength: col() };
 }
 
 /**
@@ -76,7 +76,7 @@ export function createTroopBuffer(capacity: number): TroopBuffer {
  * draws `min(progress + speed*alpha, lane length)`. Returns rows written (capped by the buffer size).
  */
 export function readTroops(state: SimState, buf: TroopBuffer): number {
-  const cap = Math.min(buf.channel.length, buf.seq.length, buf.owner.length, buf.kind.length, buf.progress.length, buf.hp.length, buf.speed.length, buf.length.length);
+  const cap = Math.min(buf.channel.length, buf.seq.length, buf.owner.length, buf.kind.length, buf.progress.length, buf.hp.length, buf.speed.length, buf.laneLength.length);
   let n = 0;
   for (const ch of liveChannels(state)) {
     const r = ch.troops;
@@ -84,7 +84,7 @@ export function readTroops(state: SimState, buf: TroopBuffer): number {
       const speed = state.level.units[r.kind[i]!]!.speed;
       buf.channel[n] = ch.key; buf.seq[n] = r.seq[i]!; buf.owner[n] = r.owner[i]!; buf.kind[n] = r.kind[i]!; buf.hp[n] = r.hp[i]!;
       buf.progress[n] = Math.min(progressOf(state, ch, i), ch.length);
-      buf.speed[n] = speed; buf.length[n] = ch.length;
+      buf.speed[n] = speed; buf.laneLength[n] = ch.length;
     }
   }
   return n;

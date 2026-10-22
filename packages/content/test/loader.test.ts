@@ -219,6 +219,7 @@ test('catalog failures carry file + pointer', () => {
   expectIssue(broken((f) => { f['data/buildings/house-wt1.json'].modules.spawns.troop = 'ghost'; }), 'data/buildings/house-wt1.json', '/modules/spawns/troop', /Unknown unit/);
   expectIssue(broken((f) => { f['data/campaigns/common.json'].entries.push({ level: 'lv-test', position: 5 }); }), 'data/campaigns/common.json', '/entries/1/level', /Duplicate/);
   expectIssue(broken((f) => { f['data/units/soldier.json'].speed = 5.0001; }), 'data/units/soldier.json', '/speed', /three decimal/);
+  expectIssue(broken((f) => { (f['data/balance.json'] as { spawn: { aliveCap: number } }).spawn.aliveCap = 1001; }), 'data/balance.json', '/spawn/aliveCap');
   expectIssue(broken((f) => { f['data/stuff.txt'] = {}; }), 'data/stuff.txt', '', /Unrecognised/);
   assert.throws(() => content.loadCatalog({ ...files(), 'data/units/bad.json': '{oops' }), (e: unknown) => e instanceof ContentLoadError && e.errors[0]!.pointer === '' && e.errors[0]!.file === 'data/units/bad.json');
   // a string source is accepted like an object

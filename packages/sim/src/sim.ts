@@ -38,7 +38,7 @@ export function create(level: CompiledLevel, seed: number): Sim {
     hash: () => hashState(state),
     canDraw: (player, from, to) => canDraw(state, player, from, to),
     explainDraw: (player, from, to) => explainDraw(state, player, from, to),
-    towerRadiusMilli: (v, building) => towerRadiusMilli(v, building),
+    towerRadiusMilli: (_view, building) => towerRadiusMilli(state, building),
     readTroops: (buf) => readTroops(state, buf),
     snapshot: () => snapshotState(state),
   };

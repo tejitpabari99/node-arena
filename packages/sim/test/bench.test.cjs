@@ -17,9 +17,10 @@ test('performance budgets reject each breached metric and CI tolerates only 5x',
   }
 });
 
-test('stress fixture reaches and holds 720 live troops (24 houses x alive cap 30) with head-on lines', () => {
+test('stress fixture reaches 720 live troops (24 houses x alive cap 30) and reports min alive in the timed window, with head-on lines', () => {
   const stats = bench.runStress(1, 40);
   assert.equal(stats.peakTroops, bench.STRESS_TROOPS);
+  assert.ok(Number.isInteger(stats.minTimedTroops) && stats.minTimedTroops > 0 && stats.minTimedTroops <= stats.peakTroops, `min alive in timed window reported (${stats.minTimedTroops})`);
   assert.ok(stats.clashes >= 1, 'head-on clashes happen inside the timed window');
   assert.equal(bench.STRESS_TROOPS, 720);
   const { level, commands } = bench.stressFixture(require('../test/golden/levels.ts'));
