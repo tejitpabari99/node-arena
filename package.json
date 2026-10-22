@@ -48,7 +48,8 @@
     "typecheck:bots": "pnpm exec tsc -p packages/bots/tsconfig.json --noEmit && pnpm exec tsc -p packages/bots/tsconfig.check.json",
     "typecheck:tools": "pnpm exec tsc -p tools/tsconfig.json",
     "typecheck:web": "pnpm exec tsc -p apps/web/tsconfig.json",
-    "typecheck": "pnpm typecheck:defs && pnpm typecheck:content && pnpm typecheck:sim && pnpm typecheck:bots && pnpm typecheck:tools && pnpm typecheck:web",
+    "//typecheck": "Live set only (defs, content, sim, tools); SP06/SP08 re-add typecheck:bots / typecheck:web on un-park.",
+    "typecheck": "pnpm typecheck:defs && pnpm typecheck:content && pnpm typecheck:sim && pnpm typecheck:tools",
     "ci": "bash scripts/ci.sh"
   },
   "devDependencies": {
