@@ -87,9 +87,8 @@ const goldenText = () => readFileSync(url('../data/levels/levelview-1.json'), 'u
 const syntheticText = () => readFileSync(url('./fixtures/obstacle-tower.json'), 'utf8');
 const catalog = () => content.loadCatalog(catalogFiles());
 
-// Pinned: moving these means the golden or sim-affecting compile semantics changed.
-const PINNED_GOLDEN_SIM = '3f8a403997aab39f0b8721d43ef30001bcfd2877fcde1646dfa0f3bb8e89b20d';
-const PINNED_GOLDEN_BOT = 'cf6f32bbe314326acbdfee7de0d17855e776f701669c644980ee7416ccba6aaa';
+// The pin is hashes.lock.json (guarded by check:content + the content version rule), not literals duplicated here.
+const lock = JSON.parse(readFileSync(url('../hashes.lock.json'), 'utf8')) as { levels: Record<string, string>; bots: Record<string, string> };
 
 test('golden levelview-1: serialization is JSON.stringify(...,null,2)+"\\n" in 05 R5 key order', () => {
   const text = goldenText();
@@ -122,8 +121,8 @@ test('golden levelview-1: loads, compiles and hashes stably', () => {
   const x = content.compileLevel(c, a.level), y = content.compileLevel(catalog(), content.loadLevel(catalog(), goldenText()).level);
   assert.deepEqual(x, y);
   assert.equal(x.simHash, y.simHash);
-  assert.equal(x.simHash, PINNED_GOLDEN_SIM);
-  assert.equal(x.botHash['levelview-1#p2'], PINNED_GOLDEN_BOT);
+  assert.equal(x.simHash, lock.levels['levelview-1']);
+  assert.equal(x.botHash['levelview-1#p2'], lock.bots['levelview-1#p2']);
   assert.equal(x.buildings.length, 5);
 });
 

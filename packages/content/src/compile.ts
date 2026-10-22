@@ -64,13 +64,13 @@ const simModules = (modules: ModuleBags): ModuleBags => Object.fromEntries(
 );
 
 /**
- * Simulation hash. Excludes name, source, theme, visual, variant, x-presentation params and bots.
+ * Simulation hash. Excludes name, source, theme, colorKey, visual, variant, x-presentation params and bots.
  * Array order is semantic (dense indices), so arrays are hashed as authored; bounds are hashed.
  */
 export function computeSimHash(level: Omit<CompiledLevel, 'simHash' | 'botHash'>): string {
   return sha256(canonicalJson({
     id: level.id, objective: level.objective, timeLimitSec: level.timeLimitSec, bounds: level.bounds, rules: level.rules,
-    players: level.players,
+    players: level.players.map(({ colorKey: _c, ...p }) => p),
     units: level.units.map(({ visual: _v, ...u }) => u),
     buildings: level.buildings.map(({ visual: _v, modules, ...b }) => ({ ...b, modules: simModules(modules) })),
     elements: level.elements.map(({ visual: _v, variant: _variant, modules, ...e }) => ({ ...e, modules: simModules(modules) })),

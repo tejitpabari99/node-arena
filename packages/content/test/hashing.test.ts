@@ -38,6 +38,7 @@ test('names, source, visuals, metadata and bot tuning preserve sim identity; bot
   const files = hashFixture();
   const level = files[`data/levels/${LEVEL}.json`];
   level.name = 'Renamed'; level.source.asset = 'Other'; level.theme = 'green';
+  for (const p of level.players) p.colorKey = `${p.colorKey}-alt`;
   files['data/units/soldier.json'].visual = 'unit.skin';
   files['content.json'].contentVersion = '2.0.1';
   const seat = level.players.find((p: any) => p.bot);

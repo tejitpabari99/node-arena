@@ -99,7 +99,7 @@ test('hashes: stable across runs, pinned digests', () => {
   assert.equal(a.botHash['lv-test#p2'], PINNED_BOT);
 });
 
-test('simHash excludes name, source, theme, visual, variant, x-presentation params, bots; includes the rest', () => {
+test('simHash excludes name, source, theme, colorKey, visual, variant, x-presentation params, bots; includes the rest', () => {
   const base = compile().simHash;
   const same = (mutate: (l: any, f: Record<string, any>) => void) => {
     const l = level(), f = clone(files()); mutate(l, f);
@@ -108,6 +108,7 @@ test('simHash excludes name, source, theme, visual, variant, x-presentation para
   same((l) => { l.name = 'Other'; });
   same((l) => { delete l.source; });
   same((l) => { l.theme = 'snow'; });
+  same((l) => { l.players[0].colorKey = 'green'; }); // colorKey is x-presentation
   same((l) => { l.elements[0].variant = 'small'; });
   same((_l, f) => { f['data/buildings/tower.json'].visual = 'building.other'; });
   same((_l, f) => { f['data/units/soldier.json'].visual = 'unit.other'; });
@@ -126,7 +127,6 @@ test('simHash excludes name, source, theme, visual, variant, x-presentation para
   differs((l) => { l.buildings[0].pos.x = -6.5; });
   differs((l) => { l.buildings[0].owner = null; });
   differs((l) => { l.elements[0].yawDeg = 31; });
-  differs((l) => { l.players[0].colorKey = 'green'; });
   differs((_l, f) => { f['data/balance.json'].growth.base = 0.8; });
   differs((_l, f) => { f['data/units/soldier.json'].hp = 2; });
   differs((_l, f) => { f['data/buildings/tower.json'].modules.shoots.attackRadius = 1.7; });
@@ -243,6 +243,10 @@ test('loadContent: aggregates level errors and campaign refs', () => {
   expectIssue(() => content.loadContent({ ...files(), 'data/levels/other.json': { ...level(), id: 'other' } }), 'data/campaigns/common.json', '/entries/0/level', /Unknown level/);
 });
 
+test('loadContent: campaign -> level refs are checked even when no level file is present', () => {
+  expectIssue(() => content.loadContent(files()), 'data/campaigns/common.json', '/entries/0/level', /Unknown level "lv-test"/);
+});
+
 test('real data files load as a catalog', async () => {
   const root = new URL('../data/', import.meta.url);
   const all: Record<string, string> = {};
@@ -257,5 +261,5 @@ test('real data files load as a catalog', async () => {
 });
 
 // Pinned: moving these means simulation-affecting compile semantics changed.
-const PINNED_SIM = 'f0792197c6e98c3181b5c3282525f0e8ed1db22bbdfbf99a05e41f4a55889cd5';
+const PINNED_SIM = 'a0a1dda78bc746113c400cf4c74d8007636f6afa08f2128adf693d2bac7fb4f2';
 const PINNED_BOT = 'a378728773bfbf5f6493cc6ddb6acc37ada5c58f04878b2dcb2d75fa8beca554';

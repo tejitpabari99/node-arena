@@ -28,7 +28,7 @@ export function loadContent(files: ContentFiles, options: CatalogOptions = {}): 
       }
     }
     for (const [cid, c] of Object.entries(built.catalog.campaigns)) {
-      c.entries.forEach((e, i) => { if (!(e.level in levels) && Object.keys(built.levelFiles).length) issues.push({ file: `data/campaigns/${cid}.json`, pointer: `/entries/${i}/level`, message: `Unknown level "${e.level}"` }); });
+      c.entries.forEach((e, i) => { if (!(e.level in levels)) issues.push({ file: `data/campaigns/${cid}.json`, pointer: `/entries/${i}/level`, message: `Unknown level "${e.level}"` }); });
     }
   }
   if (issues.length || !built.catalog) throw new ContentLoadError(issues);
