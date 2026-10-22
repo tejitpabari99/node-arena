@@ -1,7 +1,7 @@
 import { PHASES } from '@node-arena/defs';
 import type { Command, SimEvent } from '@node-arena/defs';
 import { runCommands } from './commands.js';
-import { crossingPass } from './contacts.js';
+import { arrivalPass, contactsPass } from './contacts.js';
 import { IMPLS, MODULE_ORDER } from './modules/index.js';
 import { carriers } from './state.js';
 import type { SimState } from './types.js';
@@ -21,7 +21,8 @@ export function step(state: SimState, commands: readonly unknown[], events: bool
   state.tick++;
   for (const phase of PHASES) {
     if (phase === 'commands') runCommands(state, commands);
-    if (phase === 'contacts') crossingPass(state); // head-on pass lands in Task 5; crossingPass is the SP04 stub
+    if (phase === 'contacts') contactsPass(state); // head-on pass, then the SP04 crossingPass stub
+    if (phase === 'arrivals') arrivalPass(state);
     for (const id of MODULE_ORDER) {
       const fn = IMPLS[id].phases?.[phase];
       if (fn) fn(state, carriers(state.level, id));

@@ -55,7 +55,7 @@ test('covers R-TCK-06, R-SPN-03, R-ENT-01: E-TIMER fires at ticks 19, 37, 56 wit
   assert.deepEqual(fires, [19, 37, 56]);
   assert.deepEqual(rems, [539, 78, 617]);
   assert.equal(state.buildings.level[0], 10, 'spawning is free; no growth with a line');
-  assert.equal(state.buildings.alive[0], 3);
+  assert.equal(state.buildings.alive[0] + state.counters.arrived, 3, 'first troop arrived at tick 51 (Task 5)');
 });
 
 test('covers R-SPN-01, R-TCK-06: TroopSpawned event shape; troop at progress 0 with next seq', () => {
