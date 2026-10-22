@@ -2,6 +2,8 @@
 
 Ad-free browser strategy game (persistent-route tower war) with solo campaign and private multiplayer with friends. Design in progress.
 
+> Licensing notice: Tower War (TW) derived data (imported levels, fixtures, colliders) is private. The repository must stay private; no public deploy.
+
 ## Contents
 - `docs/research/initial_research/engine-research.md` — engine/stack comparison
 - `docs/research/initial_research/similar-games.md` — survey of existing similar games
