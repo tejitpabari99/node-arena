@@ -1,0 +1,5 @@
+{
+ "game_settings": {
+  "levels": "{\"levels\":[{\"id\":\"3TutorLevel\",\"isTutor\":true},{\"id\":\"4TutorLevel\",\"isTutor\":true},{\"id\":\"2TutorLevel\",\"isTutor\":true},{\"id\":\"LevelView 1\"},{\"id\":\"LevelView 2_AB\"},{\"id\":\"LevelView 3_AB\"},{\"id\":\"LevelView 4\"},{\"id\":\"LevelView 5\"},{\"id\":\"LevelView 6\"},{\"id\":\"LevelView 182_NB\"},{\"id\":\"LevelView 8_ES\"},{\"id\":\"LevelView 10\"},{\"id\":\"LevelView 11\"},{\"id\":\"LevelView 12\"},{\"id\":\"LevelView 13\"},{\"id\":\"LevelView 14\"},{\"id\":\"LevelView 15\"},{\"id\":\"LevelView 16\"},{\"id\":\"LevelView 17\"},{\"id\":\"LevelView 49\"},{\"id\":\"LevelView 19\"},{\"id\":\"LevelView 20\"},{\"id\":\"LevelView 100_ES\"},{\"id\":\"LevelView 101_ES\"},{\"id\":\"LevelView 109_ES\"}]}"
+ }
+}
