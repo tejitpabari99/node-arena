@@ -5,8 +5,8 @@ Not reproducible in TS (needs UnityPy on the original Unity bundles), so the out
 is committed and treated like the other frozen prefab inputs. Re-run only to refresh.
 
 Run (needs the TW extract + its venv with UnityPy 1.25.4):
-  TW_EXTRACT=/root/projects/tower-war/_extract \
-  /root/projects/tower-war/_tools/venv/bin/python -I \
+  TW_EXTRACT=<tower-war>/_extract \
+  <tower-war>/_tools/venv/bin/python -I \
     tools/src/import-tw/prefab/dump_colliders.py [out.json]
 
 TW_EXTRACT's parent is the TW root (bundles live in <root>/base/...). Default out =
@@ -21,7 +21,9 @@ import sys
 import UnityPy
 
 UnityPy.config.FALLBACK_UNITY_VERSION = '6000.0.82f1'
-EXTRACT = os.environ.get('TW_EXTRACT', '/root/projects/tower-war/_extract')
+EXTRACT = os.environ.get('TW_EXTRACT')
+if not EXTRACT:
+    sys.exit('TW_EXTRACT is not set: point it at the Tower War extract directory (the one containing assets/ and converted/).')
 ROOT = os.path.dirname(EXTRACT.rstrip('/'))
 AA = ROOT + '/base/assets/aa/Android/'
 ASSETS = AA + 'defaultlocalgroup_assets_all_cb16a4f1857519c9c09b930305d4f18b.bundle'
