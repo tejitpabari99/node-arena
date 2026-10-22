@@ -31,6 +31,7 @@
     "check:manifest": "pnpm --filter @node-arena/tools check:manifest",
     "check:rules": "tsx tools/src/cli.ts check:rules",
     "check:parked": "tsx tools/src/cli.ts check:parked",
+    "assets:capture": "node tools/assets/capture/capture.mjs",
     "import:tw": "tsx tools/src/cli.ts import:tw",
     "check:import": "tsx tools/src/cli.ts check:import",
     "replay:verify": "tsx tools/src/cli.ts replay:verify",
