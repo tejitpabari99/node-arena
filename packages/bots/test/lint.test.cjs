@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const path = require('node:path');
 const { test } = require('node:test');
 const { ESLint } = require('eslint');
@@ -29,3 +30,13 @@ for (const cwd of [root, path.resolve(__dirname, '..')]) {
     assert.deepEqual(result.messages, []);
   });
 }
+
+test('covers R1: bots src has no CutLine, Math.random or Date', () => {
+  const dir = path.resolve(__dirname, '../src');
+  for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.ts'))) {
+    const code = fs.readFileSync(path.join(dir, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    assert.doesNotMatch(code, /CutLine/, `${f}: CutLine`);
+    assert.doesNotMatch(code, /Math\.random/, `${f}: Math.random`);
+    assert.doesNotMatch(code, /\bDate\b/, `${f}: Date`);
+  }
+});
