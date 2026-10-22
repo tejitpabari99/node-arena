@@ -2,7 +2,7 @@ import { readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { isCredited } from '@node-arena/content';
 /** Shipped asset folders whose every file must have a CREDITS.md row, even when no manifest key references it. */
-export const CREDITED_DIRS = ['models', 'textures', 'fx', 'audio'] as const;
+export const CREDITED_DIRS = ['models', 'textures', 'fx', 'audio', 'fonts'] as const;
 async function walk(base: string, prefix: string): Promise<string[]> {
   let entries;
   try { entries = await readdir(resolve(base, prefix), { withFileTypes: true }); } catch { return []; }

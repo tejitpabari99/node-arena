@@ -4,7 +4,7 @@
 
 ## Tower War 1.29.3 (Vaveda) extracted art, private repo, not redistributable
 
-All files in the table below are extracted from the Tower War 1.29.3 Android build by Vaveda (not CC0, not licensed for redistribution). They are committed to this **private** repository only, with the owner's approval; do not publish, mirror or open-source this repository or its built assets without replacing them. Regenerate with `TW_EXTRACT=<path to _extract> pnpm assets:tw` (input and output hashes in `tools/assets/tw-extract.lock.json`; `pnpm check:manifest` verifies the committed output hashes without the extract). Models are rebuilt as RAW glTF (no mirror), textures are the original 256px PNG bytes except environment textures (source 1024px, downscaled to 256px with sharp). `manifest.tw.json` (the manifest fragment) is generated data, not art. The level-number font (Coiny Regular, SIL OFL 1.1, Google Fonts) is not yet shipped; its row is added when SP07 Task 7 adds the font file.
+All files in the table below are extracted from the Tower War 1.29.3 Android build by Vaveda (not CC0, not licensed for redistribution). They are committed to this **private** repository only, with the owner's approval; do not publish, mirror or open-source this repository or its built assets without replacing them. Regenerate with `TW_EXTRACT=<path to _extract> pnpm assets:tw` (input and output hashes in `tools/assets/tw-extract.lock.json`; `pnpm check:manifest` verifies the committed output hashes without the extract). Models are rebuilt as RAW glTF (no mirror), textures are the original 256px PNG bytes except environment textures (source 1024px, downscaled to 256px with sharp). `manifest.tw.json` (the manifest fragment) is generated data, not art. The level-number font (Coiny Regular, SIL OFL 1.1) is credited in the Fonts section below.
 
 | File | Source in Tower War | Modifications |
 |---|---|---|
@@ -59,6 +59,12 @@ All files in the table below are extracted from the Tower War 1.29.3 Android bui
 | fx/lane-wave.png | FX texture `wave (lane ribbon, WayBaseStandard)` | None (original PNG bytes), renamed |
 | fx/lane-waveArrow.png | FX texture `waveArrow (lane)` | None (original PNG bytes), renamed |
 | fx/smoke.png | FX texture `smoke` | None (original PNG bytes), renamed |
+
+## Fonts (SIL OFL 1.1)
+
+| File | Source | Author | URL | Licence | Downloaded | Modifications |
+|---|---|---|---|---|---|---|
+| fonts/Coiny-Regular.ttf | Coiny Regular (level-number labels; the same font Tower War uses) | Marcelo Magalhaes | https://github.com/google/fonts/tree/main/ofl/coiny | SIL OFL 1.1 (`licenses/coiny-OFL.txt`) | 2026-10-22 | None |
 
 ## Legacy model files (Kenney CC0, deleted by SP07 Task 11)
 
