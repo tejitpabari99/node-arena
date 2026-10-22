@@ -69,7 +69,7 @@ Does not own: rule text (01), defs/content/lock/version commands (02), sim (03/0
 5. **`tools/levels-lock.json`** (`pnpm levels:lock` writes, `validate:levels` checks): per level, seed 1: outcome, final tick, final hash. Guards cross-Node and cross-commit determinism on real levels. Any change requires `RULES_VERSION`/`contentVersion`/`BOT_VERSION` bump per existing guards. CI default `--seeds 4` (OPEN: time budget).
 6. **`balance`**: report-only (exit 0 on stats); rows per level x proxy AD + idle; header carries rules/content/BOT versions; byte-identical `--jobs 1|2` kept. Delete targets code/tests.
 7. **`check:docs`** (`tools/src/docs-check.ts`): every root `pnpm` script appears in `tools/README.md` or `AGENTS.md`; every backticked repo path in `README.md`, `tools/README.md`, `docs/{CONTENT_GUIDE,LEVELS_GUIDE,CREDITS}.md` exists; no doc links to deleted v1 names (`bots:churn`, `layout`, `balance-targets`, `slice:verify`, `visual:`). Cheap, no network.
-8. **CI workflow**: (a) keep Node 22+24 matrix `pnpm run ci` (determinism across versions is the matrix itself); (b) Chromium install for web/content/sim stays (sim browser-parity golden) [verified: ci.yml]; add `@node-arena/defs` only if it adds browser tests; (c) `check:import` and `assets:tw:check` print `skipped (TW_EXTRACT unset)` and exit 0; in `ci.sh` surface as `::notice::`; **never** make them required in CI; (d) `check:manifest` validates committed asset hashes against `tw-extract.lock.json` without the extract [07]; (e) Playwright job keeps `test:web:all`; add `timeout-minutes`; (f) `balance.yml` args updated to new proxy flag names; (g) private-repo asset checkout needs no LFS unless 07 adds it [OPEN].
+8. **CI workflow**: (a) keep Node 22+24 matrix `pnpm run ci` (determinism across versions is the matrix itself); (b) Chromium install for web/content/sim stays (sim browser-parity golden) [verified: ci.yml]; add `@node-arena/defs` only if it adds browser tests; (c) `check:import` and `assets:tw:check` print `skipped (TW_EXTRACT unset)` and exit 0; in `ci.sh` surface as `::notice::`; **never** make them required in CI; (d) `check:manifest` validates committed asset hashes against `tw-extract.lock.json` without the extract [07]; (e) Playwright job keeps `test:web:all`; add `timeout-minutes`; (f) `balance.yml` args updated to new proxy flag names; (g) private-repo asset checkout needs no LFS [RESOLVED: owner — no LFS, plain git].
 9. **Docs**: see Docs table.
 10. **Final acceptance** (Phase C), below.
 
@@ -149,7 +149,7 @@ Final acceptance flow (Phase C): `pnpm run ci` (22, 24) -> `campaign:verify` -> 
 - Play levels 1-20 (positions 4-23) in browser; fill the checklist in `BF/09-gates-tooling-docs/owner-pass.md` (mechanics feel, readability, level order/difficulty, results flow). Visual approval vs refs.
 - [RESOLVED: owner accepts parked window; all gates green before merge]
 - [RESOLVED: owner — repo stays private; TW art committed]
-- Git LFS decision pending owner clarification.
+- [RESOLVED: owner — no LFS, plain git]
 
 ## Risks
 | Risk | Mitigation |
@@ -167,7 +167,7 @@ Final acceptance flow (Phase C): `pnpm run ci` (22, 24) -> `campaign:verify` -> 
 - [OPEN] CI time budget and seeds for `validate:levels` (measure after SP06; default 4, fallback 2).
 - [RESOLVED: owner — repo stays private; committing TW art is OK]
 - [RESOLVED: SP04 PRD exists; gates are `check:rules` tags CMB-04/TWR/OBS, `scenarios-geometry.ts` golden appended to 03's `run.ts` scenario array, bench scenario (720 troops, 40 hostile crossings, 3 towers)]
-- [OPEN] Does 07 need Git LFS for GLB/textures (size vs 16 MB-style limits)? Measure at 07 end.
+- [RESOLVED: owner — no LFS, plain git] TW art (~3 MB) and reference frames committed as plain git.
 - [OPEN] Web bundle/size budget gate beyond per-model budgets (not specified by 07/08).
 - [RESOLVED: S4 picker shows 1..20 (`position - 3`); saves keyed by `levelId`; `campaign:verify` names by `levelId`]
 - [RESOLVED: balance targets] report-only, delete targets.

@@ -43,6 +43,7 @@ Max 2 concurrent agents.
 - Local only, no deploy.
 - Trust decomp on contradictions.
 - LEVELS_GUIDE + coverage snapshot for future levels.
+- No Git LFS: plain git for TW art (~3 MB) and reference frames.
 
 ## Critique
 [critique-2026-10-22-0500.md](critique-2026-10-22-0500.md): 9 blocking / 10 non-blocking / 4 suggestions — all applied to PRDs.
@@ -74,7 +75,6 @@ Max 2 concurrent agents.
 | 08 | TW UI font (fallback: bundled OFL font) (verify vs `ref/tw-yt` in task 1) |
 | 08 | Keep `quality` setting (per 07 perf result) |
 | 09 | CI time budget and seeds for `validate:levels` (default 4, fallback 2) |
-| 09 | Git LFS for GLB/textures? measure at 07 end |
 | 09 | Web bundle/size budget gate beyond per-model budgets |
 
 ## Owner manual steps
@@ -83,5 +83,4 @@ Max 2 concurrent agents.
 - Resolved: parked window accepted; neutral-house targeting; video refs; repo private + TW art committed.
 - 09: run `TW_EXTRACT=... pnpm check:import && pnpm assets:tw:check` locally before merge (CI cannot).
 - 09: play levels 1–20 (positions 4–23); fill `09-gates-tooling-docs/owner-pass.md`; visual approval.
-- 09: Git LFS decision pending owner clarification.
 - 01, 02, 03, 06: none.
