@@ -13,7 +13,7 @@ import { loadPrefabLevels } from '../parse-prefab.js';
 import { campaignRange, readCampaign } from '../campaign.js';
 import { twExtractRoot } from '../env.js';
 import type { TwLevel, TwPlayer } from '../types.js';
-import { FIXTURE_TEXTASSETS } from './helpers.js';
+import { FIXTURE_TEXTASSETS, TEST_THEMES } from './helpers.js';
 
 const contentDir = resolve(import.meta.dirname, '../../../../packages/content');
 const files: ContentFiles = await loadFiles(contentDir);
@@ -28,7 +28,7 @@ const sumOk = (rows: LedgerRow[]): void => {
 };
 
 test('golden: raw LevelView 1 -> mapped -> serialized == levelview-1.json bytes', () => {
-  const m = mapLevel(lv('LevelView 1'), 4, catalog);
+  const m = mapLevel(lv('LevelView 1'), 4, catalog, { themes: TEST_THEMES });
   assert.ok(m.level);
   const golden = readFileSync(join(contentDir, 'data/levels/levelview-1.json'), 'utf8');
   assert.equal(serializeLevel(m.level), golden);
@@ -38,7 +38,7 @@ test('golden: raw LevelView 1 -> mapped -> serialized == levelview-1.json bytes'
 test('invariants on fixtures: human first, 1-3 AI, unique ids, bounds contain buildings, BD order kept; loadLevel accepts', () => {
   for (const asset of ['LevelView 1', 'LevelView 3_AB', 'LevelView 8_ES']) {
     const tw = lv(asset);
-    const m = mapLevel(tw, 5, catalog);
+    const m = mapLevel(tw, 5, catalog, { themes: TEST_THEMES });
     assert.ok(m.level, asset);
     const L = m.level as { players: { id: string; kind: string }[]; buildings: { id: string; pos: { x: number; z: number } }[]; bounds: { minX: number; maxX: number; minZ: number; maxZ: number } };
     assert.equal(L.players[0]?.kind, 'human');
@@ -56,8 +56,8 @@ test('invariants on fixtures: human first, 1-3 AI, unique ids, bounds contain bu
 
 test('order rule: human-first flag only reorders buildings; default keeps P order', () => {
   const tw = lv('LevelView 3_AB');
-  const a = mapLevel(tw, 5, catalog);
-  const b = mapLevel(tw, 5, catalog, { buildingOrder: 'human-first' });
+  const a = mapLevel(tw, 5, catalog, { themes: TEST_THEMES });
+  const b = mapLevel(tw, 5, catalog, { themes: TEST_THEMES, buildingOrder: 'human-first' });
   assert.ok(a.level && b.level);
   const ids = (x: typeof a): string[] => (x.level!['buildings'] as { id: string }[]).map((e) => e.id);
   assert.deepEqual([...ids(a)].sort(), [...ids(b)].sort());
@@ -72,7 +72,7 @@ test('obstacles: active children only, ids o<cluster>-<child>, box + variant; in
   const tw = lv('LevelView 3_AB');
   const first = tw.mapObjects.obstacles[0]!;
   first.active = first.active.map((_, i) => i !== 1);
-  const m = mapLevel(tw, 5, catalog);
+  const m = mapLevel(tw, 5, catalog, { themes: TEST_THEMES });
   assert.ok(m.level);
   const els = m.level['elements'] as { id: string; yawDeg: number; variant: string; footprint: { shape: string; w: number; d: number } }[];
   assert.ok(els.length > 0);
@@ -88,7 +88,7 @@ test('obstacles: active children only, ids o<cluster>-<child>, box + variant; in
 test('blocked level yields no level; ledger counts blocked entries', () => {
   const tw = lv('LevelView 1');
   tw.mapObjects.mines = [{ pos: [0, 0, 0], rot: [0, 0, 0], active: true }];
-  const m = mapLevel(tw, 4, catalog);
+  const m = mapLevel(tw, 4, catalog, { themes: TEST_THEMES });
   assert.equal(m.level, null);
   assert.equal(m.ledger.find((r) => r.list === 'Mine')!.blocked, 1);
   sumOk(m.ledger);
@@ -97,12 +97,12 @@ test('blocked level yields no level; ledger counts blocked entries', () => {
 test('no human -> MapError; duplicate slug -> error', () => {
   const tw = lv('LevelView 1');
   tw.players = tw.players.map((p) => (p.type === 'player' ? { ...p, type: 'neutral' as const } : p));
-  assert.throws(() => mapLevel(tw, 4, catalog), MapError);
+  assert.throws(() => mapLevel(tw, 4, catalog, { themes: TEST_THEMES }), MapError);
   assert.throws(() => assertUniqueIds([{ id: 'a' }, { id: 'a' }]), /duplicate/);
 });
 
 test('bot hook: botScript fills script; behavior BT 0 -> full, else attackOnly', () => {
-  const m = mapLevel(lv('LevelView 1'), 4, catalog, { botScript: () => ['x'] });
+  const m = mapLevel(lv('LevelView 1'), 4, catalog, { themes: TEST_THEMES, botScript: () => ['x'] });
   const ai = (m.level!['players'] as { bot?: { script: unknown[] } }[])[1]!;
   assert.deepEqual(ai.bot!.script, ['x']);
 });
@@ -116,7 +116,7 @@ test('conservation over positions 4-23 (TW_EXTRACT)', { skip }, () => {
   for (const e of entries) {
     const tw = prefabs.get(e.id) ?? parseRaw(root as string, e.id);
     ids.push(tw);
-    const m = mapLevel(tw, e.position, catalog);
+    const m = mapLevel(tw, e.position, catalog, { themes: TEST_THEMES });
     sumOk(m.ledger);
     // every TW list entry is accounted: ledger totals equal the raw list sizes
     const total = (name: string): number => m.ledger.filter((r) => r.list === name || r.list.startsWith(`${name}:`)).reduce((n, r) => n + r.total, 0);
@@ -130,7 +130,7 @@ test('conservation over positions 4-23 (TW_EXTRACT)', { skip }, () => {
 });
 
 test('script merge: 3_AB delay+line ordered by I; 8_ES nested steps; ids b<id>', () => {
-  const ais = (a: string): { bot: { script: unknown[] } }[] => (mapLevel(lv(a), 6, catalog).level!['players'] as { kind: string; bot: { script: unknown[] } }[]).filter((p) => p.kind === 'ai');
+  const ais = (a: string): { bot: { script: unknown[] } }[] => (mapLevel(lv(a), 6, catalog, { themes: TEST_THEMES }).level!['players'] as { kind: string; bot: { script: unknown[] } }[]).filter((p) => p.kind === 'ai');
   const ab = ais('LevelView 3_AB');
   assert.deepEqual(ab[0]!.bot.script, [{ op: 'line', own: 'b1', target: 'b2', afterMs: 1500 }, { op: 'delay', ms: 10000 }]);
   const es = ais('LevelView 8_ES');
@@ -152,7 +152,7 @@ test('scripted levels 4-23 (TW_EXTRACT): every bot ref resolves to a building or
   const per: string[] = [];
   for (const e of campaignRange(readCampaign(root as string), 4, 23)) {
     const tw = loadPrefabLevels().get(e.id) ?? parseRaw(root as string, e.id);
-    const m = mapLevel(tw, e.position, catalog);
+    const m = mapLevel(tw, e.position, catalog, { themes: TEST_THEMES });
     if (!m.level) continue;
     const L = m.level as { buildings: { id: string }[]; players: { bot?: { script: Record<string, unknown>[] } }[] };
     const ids = new Set(L.buildings.map((b) => b.id));
@@ -169,7 +169,7 @@ test('scripted levels 4-23 (TW_EXTRACT): every bot ref resolves to a building or
 });
 
 test('ledger comes from the output: AI list rows exist and a mapper that loses an entry fails', () => {
-  const m = mapLevel(lv('LevelView 3_AB'), 5, catalog);
+  const m = mapLevel(lv('LevelView 3_AB'), 5, catalog, { themes: TEST_THEMES });
   sumOk(m.ledger);
   const ai = m.ledger.filter((r) => r.list.startsWith('ai:'));
   assert.ok(ai.length > 0 && ai.every((r) => r.mapped === r.total), JSON.stringify(ai));
@@ -177,13 +177,13 @@ test('ledger comes from the output: AI list rows exist and a mapper that loses a
   assert.equal(bld.reduce((n, r) => n + r.mapped, 0), (m.level!['buildings'] as unknown[]).length);
   // an OBS emitter that silently loses a child
   const lossy = { OBS: (ctx: Parameters<typeof ELEMENT_EMITTERS['OBS']>[0]) => { const r = ELEMENT_EMITTERS['OBS']!(ctx); r.elements.pop(); return r; } };
-  assert.throws(() => mapLevel(lv('LevelView 3_AB'), 5, catalog, { elementEmitters: lossy }), /ledger does not conserve: OBS:children/);
+  assert.throws(() => mapLevel(lv('LevelView 3_AB'), 5, catalog, { themes: TEST_THEMES, elementEmitters: lossy }), /ledger does not conserve: OBS:children/);
   assert.throws(() => assertLedger([{ list: 'x', total: 3, mapped: 2, dropped: 0, blocked: 0, inactive: 0 }]), MapError);
 });
 
 test('AI list rows: each op is counted from the emitted script; AiRM is dropped', () => {
   const tw = lv('LevelView 3_AB');
-  const m = mapLevel(tw, 5, catalog);
+  const m = mapLevel(tw, 5, catalog, { themes: TEST_THEMES });
   const script = (m.level!['players'] as { bot?: { script: { op: string }[] } }[]).flatMap((p) => p.bot?.script ?? []);
   assert.equal(m.ledger.find((r) => r.list === 'ai:AiDS')?.mapped ?? 0, script.filter((o) => o.op === 'delay').length);
   assert.equal(m.ledger.find((r) => r.list === 'ai:AiCWS')?.mapped ?? 0, script.filter((o) => o.op === 'line').length);
@@ -193,7 +193,7 @@ test('AI list rows: each op is counted from the emitted script; AiRM is dropped'
   const ai = tw.players[aiIdx]!;
   const rm = { index: last(ai) + 1, targetPathPointIndex: 0, building: 0 };
   const tw2: TwLevel = { ...tw, players: tw.players.map((p, i) => (i === aiIdx ? { ...p, ai: { ...p.ai!, steps: { ...p.ai!.steps, railwayMoveSteps: [rm] } } } : p)) };
-  const m2 = mapLevel(tw2, 5, catalog);
+  const m2 = mapLevel(tw2, 5, catalog, { themes: TEST_THEMES });
   const row = m2.ledger.find((r) => r.list === 'ai:AiRM')!;
   assert.deepEqual([row.total, row.mapped, row.dropped], [1, 0, 1]);
   assert.ok(m2.level!['source'] && (m2.level!['source'] as { dropped: string[] }).dropped.includes('ai-rail-move'));
@@ -203,12 +203,12 @@ test('emitter registry: a map row with an archetype but no emitter is a MapError
   const fm = parseFeatureMap({ rows: loadFeatureMap().rows.map((r) => (r.tw === 'Mine' ? { ...r, archetype: 'obstacle' } : r)) });
   const tw = lv('LevelView 1');
   tw.mapObjects.mines = [{ pos: [0, 0, 0], rot: [0, 0, 0], active: true }];
-  assert.throws(() => mapLevel(tw, 4, catalog, { featureMap: fm }), /Mine maps to an archetype but has no element emitter/);
+  assert.throws(() => mapLevel(tw, 4, catalog, { themes: TEST_THEMES, featureMap: fm }), /Mine maps to an archetype but has no element emitter/);
   // a building row likewise (rocket -> tower)
   const fm2 = parseFeatureMap({ rows: loadFeatureMap().rows.map((r) => (r.tw === 'rocket' ? { ...r, archetype: 'tower' } : r)) });
   const tw2 = lv('LevelView 1');
   tw2.buildings = [...tw2.buildings, { owner: null, kind: 'rocket_tower', id: 98, pos: [0, 0, 0], key: 'x' }];
-  assert.throws(() => mapLevel(tw2, 4, catalog, { featureMap: fm2 }), /rocket maps to an archetype but has no building emitter/);
+  assert.throws(() => mapLevel(tw2, 4, catalog, { themes: TEST_THEMES, featureMap: fm2 }), /rocket maps to an archetype but has no building emitter/);
 });
 
 test('obstacle yaw = rotate(OCR.Y) only: collider yaw is not added', () => {
@@ -216,7 +216,7 @@ test('obstacle yaw = rotate(OCR.Y) only: collider yaw is not added', () => {
   tw.mapObjects.obstacles[0]!.childRot[0] = [0, 30, 0];
   const colliders = JSON.parse(JSON.stringify(loadColliders())) as ReturnType<typeof loadColliders>;
   colliders.obstacle.children[0]!.yawDeg = 45;
-  const m = mapLevel(tw, 5, catalog, { colliders });
+  const m = mapLevel(tw, 5, catalog, { themes: TEST_THEMES, colliders });
   const o = (m.level!['elements'] as { id: string; yawDeg: number }[]).find((e) => e.id === 'o0-0')!;
   assert.equal(o.yawDeg, 120);
 });
@@ -224,5 +224,5 @@ test('obstacle yaw = rotate(OCR.Y) only: collider yaw is not added', () => {
 test('inactive obstacle children are reported by id', () => {
   const tw = lv('LevelView 3_AB');
   tw.mapObjects.obstacles[0]!.active = tw.mapObjects.obstacles[0]!.active.map((_, i) => i !== 1);
-  assert.deepEqual(mapLevel(tw, 5, catalog).inactiveIds, ['o0-1']);
+  assert.deepEqual(mapLevel(tw, 5, catalog, { themes: TEST_THEMES }).inactiveIds, ['o0-1']);
 });

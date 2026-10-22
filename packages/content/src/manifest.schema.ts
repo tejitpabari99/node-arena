@@ -16,6 +16,8 @@ const literals = <T extends string>(values: readonly T[]) => Type.Union(values.m
 /** Team colour keys; `gray` = neutral. */
 export const TEAM_KEYS = ['blue', 'green', 'red', 'yellow', 'gray'] as const;
 const teamSet = <T extends Type.TSchema>(schema: T) => Type.Object(Object.fromEntries(TEAM_KEYS.map((k) => [k, schema])) as Record<(typeof TEAM_KEYS)[number], T>, closed);
+/** Per-visual textures: blue/green/red/yellow required; `gray` (neutral) only where the family has one (buildings, projectile). Units never are neutral; `crossCheckManifest` rejects a level colorKey with no texture. */
+const textureSet = () => Type.Object({ blue: path(), green: path(), red: path(), yellow: path(), gray: Type.Optional(path()) }, closed);
 
 const stage = Type.Union([
   Type.Object({ mesh: key() }, closed),
@@ -39,7 +41,7 @@ export const ManifestSchema = Type.Object({
     kind: literals(RENDER_KINDS),
     model: Type.Object({ parts: path(), budget: literals(Object.keys(BUDGET_CLASSES) as Array<keyof typeof BUDGET_CLASSES>) }, closed),
     stages: Type.Optional(Type.Array(stage, { minItems: 1 })),
-    team: Type.Optional(Type.Object({ mode: literals(TEAM_MODES), textures: teamSet(path()) }, closed)),
+    team: Type.Optional(Type.Object({ mode: literals(TEAM_MODES), textures: textureSet() }, closed)),
     anim: Type.Optional(anim),
     scale: positive(), yOffset: Type.Optional(Type.Number()),
     label: Type.Optional(Type.Object({ height: Type.Number({ minimum: 0 }) }, closed)),
@@ -48,7 +50,8 @@ export const ManifestSchema = Type.Object({
   themes: map(Type.Object({
     ground: Type.Object({ mesh: path(), texture: path() }, closed),
     obstacle: Type.Object({ small: path(), big: path(), texture: path() }, closed),
-    light: Type.Object({ dir: vector(), color: color(), intensity: Type.Number({ minimum: 0 }) }, closed),
+    /** `dir` points toward the light in the RAW asset frame. `ambient` = flat ambient fill (TW rig: directional 0.2 + ambient 0.896). */
+    light: Type.Object({ dir: vector(), color: color(), intensity: Type.Number({ minimum: 0 }), ambient: Type.Optional(Type.Object({ color: color(), intensity: Type.Number({ minimum: 0 }) }, closed)) }, closed),
     fog: Type.Optional(Type.Object({ color: color(), near: Type.Number({ minimum: 0 }), far: positive() }, closed)),
     sky: color(),
     /** Ambient fx ids (keys of `fx`). */

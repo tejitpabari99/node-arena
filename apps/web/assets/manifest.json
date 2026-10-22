@@ -1,47 +1,376 @@
 {
   "$schema": "../../../packages/content/schemas/manifest.schema.json",
-  "schemaVersion": "1.2.0",
+  "schemaVersion": "2.0.0",
   "palettes": {
-    "default": {"neutral": "#8C8C8C", "player.1": "#2E8BFF", "player.2": "#F0313F", "player.3": "#FDC534", "player.4": "#35B84A"},
-    "colorblind": {"neutral": "#999999", "player.1": "#0072B2", "player.2": "#D55E00", "player.3": "#F0E442", "player.4": "#009E73"}
-  },
-  "teamMarkers": {"neutral": "○", "player.1": "▲", "player.2": "■", "player.3": "●", "player.4": "◆"},
-  "models": {
-    "block": {"primitive": "box", "size": [4, 6, 4]},
-    "unit": {"primitive": "capsule", "size": [0.35, 0.7, 0.35]},
-    "building.small": {"src": "models/tower-small.glb"},
-    "building.standard": {"src": "models/tower-standard.glb"},
-    "building.large": {"src": "models/tower-large.glb"},
-    "character.regular": {"src": "models/troop-regular.glb"},
-    "prop.tree.pine": {"src": "models/prop-tree-pine.glb"},
-    "prop.tree.round": {"src": "models/prop-tree-round.glb"},
-    "prop.stump": {"src": "models/prop-stump.glb"},
-    "prop.crate": {"src": "models/prop-crate.glb"}
+    "blue": "#2E8BFF",
+    "green": "#35B84A",
+    "red": "#F0313F",
+    "yellow": "#FDC534",
+    "gray": "#8C8C8C"
   },
   "visuals": {
-    "tower.standard": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 7.6}},
-    "tower.small": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 5.4}},
-    "tower.large": {"kind": "tower", "model": "block", "build": "stacked", "scale": 0.72, "label": {"height": 12}},
-    "troop.regular": {"kind": "troop", "model": "character.regular", "scale": 14, "teamMaterial": "Shirt", "anim": {"type": "bob", "hz": 2.2, "amp": 0.12, "sway": 6}}
+    "building.house-wt1": {
+      "kind": "building",
+      "model": {
+        "parts": "models/tw/barracks.glb",
+        "budget": "building"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "textureSwap",
+        "textures": {
+          "blue": "textures/tw/barracks-blue.png",
+          "green": "textures/tw/barracks-green.png",
+          "red": "textures/tw/barracks-red.png",
+          "yellow": "textures/tw/barracks-yellow.png",
+          "gray": "textures/tw/barracks-gray.png"
+        }
+      },
+      "scale": 1,
+      "label": {
+        "height": 2
+      }
+    },
+    "building.house-wt2": {
+      "kind": "building",
+      "model": {
+        "parts": "models/tw/factory.glb",
+        "budget": "building"
+      },
+      "stages": [
+        {
+          "enable": [
+            "factory_base",
+            "main_pipe1",
+            "windows_"
+          ]
+        },
+        {
+          "enable": [
+            "factory_base",
+            "SecondLevelSmallPipe_0",
+            "SecondLevelSmallPipe_1",
+            "main_pipe1",
+            "main_pipe2"
+          ]
+        },
+        {
+          "enable": [
+            "factory_base",
+            "ThirdLevelSmallPipe_0",
+            "ThirdLevelSmallPipe_1",
+            "ThirdLevelSmallPipe_2",
+            "main_pipe1",
+            "main_pipe2",
+            "main_pipe3"
+          ]
+        }
+      ],
+      "team": {
+        "mode": "textureSwap",
+        "textures": {
+          "blue": "textures/tw/factory-blue.png",
+          "green": "textures/tw/factory-green.png",
+          "red": "textures/tw/factory-red.png",
+          "yellow": "textures/tw/factory-yellow.png",
+          "gray": "textures/tw/factory-gray.png"
+        }
+      },
+      "scale": 1,
+      "label": {
+        "height": 1.2
+      }
+    },
+    "building.tower": {
+      "kind": "building",
+      "model": {
+        "parts": "models/tw/tower.glb",
+        "budget": "building"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "textureSwap",
+        "textures": {
+          "blue": "textures/tw/tower-blue.png",
+          "green": "textures/tw/tower-green.png",
+          "red": "textures/tw/tower-red.png",
+          "yellow": "textures/tw/tower-yellow.png",
+          "gray": "textures/tw/tower-gray.png"
+        }
+      },
+      "scale": 1,
+      "label": {
+        "height": 2.24
+      }
+    },
+    "unit.soldier": {
+      "kind": "unit",
+      "model": {
+        "parts": "models/tw/soldier.glb",
+        "budget": "unit"
+      },
+      "team": {
+        "mode": "textureSwap",
+        "textures": {
+          "blue": "textures/tw/soldier-blue.png",
+          "green": "textures/tw/soldier-green.png",
+          "red": "textures/tw/soldier-red.png",
+          "yellow": "textures/tw/soldier-yellow.png"
+        }
+      },
+      "anim": {
+        "mode": "node-tracks",
+        "clips": {
+          "run": "Run",
+          "death": "Death"
+        }
+      },
+      "scale": 1
+    },
+    "unit.tank": {
+      "kind": "unit",
+      "model": {
+        "parts": "models/tw/tank.glb",
+        "budget": "unit"
+      },
+      "team": {
+        "mode": "textureSwap",
+        "textures": {
+          "blue": "textures/tw/tank-blue.png",
+          "green": "textures/tw/tank-green.png",
+          "red": "textures/tw/tank-red.png",
+          "yellow": "textures/tw/tank-yellow.png"
+        }
+      },
+      "anim": {
+        "mode": "none"
+      },
+      "scale": 1
+    },
+    "element.obstacle": {
+      "kind": "element",
+      "model": {
+        "parts": "models/tw/obstacle-green.glb",
+        "budget": "obstacle"
+      },
+      "scale": 1
+    },
+    "fx.projectile": {
+      "kind": "fx",
+      "model": {
+        "parts": "models/tw/projectile.glb",
+        "budget": "unit"
+      },
+      "team": {
+        "mode": "textureSwap",
+        "textures": {
+          "blue": "textures/tw/projectile-blue.png",
+          "green": "textures/tw/projectile-green.png",
+          "red": "textures/tw/projectile-red.png",
+          "yellow": "textures/tw/projectile-yellow.png",
+          "gray": "textures/tw/projectile-gray.png"
+        }
+      },
+      "scale": 1
+    }
   },
   "themes": {
-    "grass": { "ground": "#A3D419", "sky": "#FFE1B3", "light": {"dir": [-1, 2.2, 1.2], "color": "#FFF0D6", "intensity": 2.8},
-      "palette": {"grass": "#A3D419", "grassAlt": "#9DCB10", "sand": "#FFE1B3", "sandShade": "#FFCF8D", "rock": "#BC5439", "tree": "#028C1D", "crate": "#FD8539"},
-      "scatter": {"seed": 1, "density": 34} }
+    "green": {
+      "ground": {
+        "mesh": "models/tw/ground-green.glb",
+        "texture": "textures/tw/ground-green.png"
+      },
+      "obstacle": {
+        "small": "models/tw/obstacle-green.glb#small",
+        "big": "models/tw/obstacle-green.glb#big",
+        "texture": "textures/tw/obstacle-green.png"
+      },
+      "light": {
+        "dir": [
+          -0.2957,
+          0.9319,
+          -0.2101
+        ],
+        "color": "#ffffff",
+        "intensity": 0.2,
+        "ambient": {
+          "color": "#e5e5e5",
+          "intensity": 1
+        }
+      },
+      "sky": "#e5bf84"
+    },
+    "snow": {
+      "ground": {
+        "mesh": "models/tw/ground-snow.glb",
+        "texture": "textures/tw/ground-snow.png"
+      },
+      "obstacle": {
+        "small": "models/tw/obstacle-snow.glb#small",
+        "big": "models/tw/obstacle-snow.glb#big",
+        "texture": "textures/tw/obstacle-snow.png"
+      },
+      "light": {
+        "dir": [
+          -0.2957,
+          0.9319,
+          -0.2101
+        ],
+        "color": "#ffffff",
+        "intensity": 0.2,
+        "ambient": {
+          "color": "#e5e5e5",
+          "intensity": 1
+        }
+      },
+      "sky": "#daebfc"
+    }
+  },
+  "fx": {
+    "capture-ring": {
+      "texture": "fx/CFX3_T_HollowCircle.png",
+      "kind": "ring",
+      "params": {
+        "duration": 0.6,
+        "radiusFrom": 0.4,
+        "radiusTo": 2.2,
+        "alpha": 0.8
+      }
+    },
+    "capture-star": {
+      "texture": "fx/CFX_T_Star_Add.png",
+      "kind": "sprite-burst",
+      "params": {
+        "count": 6,
+        "duration": 0.5,
+        "size": 0.8,
+        "spread": 1.2
+      }
+    },
+    "clash-spark": {
+      "texture": "fx/Spark.png",
+      "kind": "sprite-burst",
+      "params": {
+        "count": 8,
+        "duration": 0.35,
+        "size": 0.35,
+        "spread": 0.8
+      }
+    },
+    "clash-glow": {
+      "texture": "fx/glow_2.png",
+      "kind": "sprite-burst",
+      "params": {
+        "count": 1,
+        "duration": 0.3,
+        "size": 1.2,
+        "spread": 0
+      }
+    },
+    "death-smoke": {
+      "texture": "fx/smoke.png",
+      "kind": "sprite-burst",
+      "params": {
+        "count": 4,
+        "duration": 0.7,
+        "size": 0.6,
+        "spread": 0.5,
+        "rise": 0.6
+      }
+    },
+    "tower-shot": {
+      "texture": "fx/lane-trail.png",
+      "kind": "beam",
+      "params": {
+        "duration": 0.15,
+        "width": 0.12
+      }
+    },
+    "lane-wave": {
+      "texture": "fx/lane-wave.png",
+      "kind": "beam",
+      "params": {
+        "width": 0.6,
+        "alpha": 0.502,
+        "tile": 1
+      }
+    },
+    "lane-waveArrow": {
+      "texture": "fx/lane-waveArrow.png",
+      "kind": "beam",
+      "params": {
+        "width": 0.6,
+        "alpha": 0.502,
+        "tile": 1
+      }
+    },
+    "lane-arrow": {
+      "texture": "fx/lane-arrow.png",
+      "kind": "beam",
+      "params": {
+        "width": 0.6,
+        "alpha": 0.502,
+        "tile": 1
+      }
+    },
+    "lane-trail": {
+      "texture": "fx/lane-trail.png",
+      "kind": "beam",
+      "params": {
+        "width": 0.6,
+        "alpha": 0.502,
+        "tile": 1
+      }
+    }
   },
   "events": {
-    "Captured": {"fx": "pulse", "sfx": "audio/capture.ogg"},
-    "Clash": {"fx": "puff", "sfx": "audio/clash.ogg"},
-    "LineCut": {"sfx": "audio/cut.ogg"},
-    "LineDrawn": {"sfx": "audio/ui-click.ogg"},
-    "GameOver": {"sfx": "audio/gameover.ogg"},
-    "Music": {"sfx": "audio/music-insistent.ogg"}
+    "BuildingCaptured": {
+      "sfx": "audio/capture.ogg",
+      "fx": "capture-ring"
+    },
+    "Clash": {
+      "sfx": "audio/clash.ogg",
+      "fx": "clash-spark"
+    },
+    "LineCut": {
+      "sfx": "audio/cut.ogg"
+    },
+    "LineDrawn": {
+      "sfx": "audio/ui-click.ogg"
+    },
+    "MatchOver": {
+      "sfx": "audio/gameover.ogg"
+    },
+    "TowerShot": {
+      "fx": "tower-shot"
+    },
+    "TroopDied": {
+      "fx": "death-smoke"
+    }
   },
-  "levelVisuals": {
-    "05-head-on": {"cameraMargin": 1.2},
-    "08-fork": {"cameraMargin": 1.2},
-    "09-chain-link": {"cameraMargin": -1, "troopScale": 0.9},
-    "12-underdog": {"cameraMargin": 1.2}
-  },
-  "camera": {"pitchDeg": 65, "fov": 35, "margin": 3}
+  "camera": {
+    "pitchDeg": 55,
+    "fov": 21,
+    "margin": 3
+  }
 }

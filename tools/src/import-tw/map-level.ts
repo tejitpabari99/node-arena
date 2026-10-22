@@ -136,7 +136,7 @@ export function assertLedger(rows: readonly LedgerRow[], who = 'level'): void {
 const AI_OP_TOKEN: Record<string, string> = { delay: 'AiDS', line: 'AiCWS', steps: 'AiSC' };
 const AI_LISTS = [['AiDS', 'delaySteps'], ['AiCWS', 'createWaySteps'], ['AiSC', 'actionSteps'], ['AiRM', 'railwayMoveSteps']] as const;
 
-export function mapLevel(tw: TwLevel, position: number, catalog: Catalog, options: MapOptions = {}): MapResult {
+export function mapLevel(tw: TwLevel, position: number, catalog: Catalog, options: MapOptions): MapResult {
   const fm = options.featureMap ?? loadFeatureMap();
   const opts: MapOptions = { ...options, featureMap: fm };
   const gate = computeBlocked(tw, position, catalog, opts);

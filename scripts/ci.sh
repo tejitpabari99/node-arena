@@ -26,6 +26,8 @@ cd "$(dirname "$0")/.."
 #   build:web, balance, test:web:e2e (SP08/SP06): web/bots-owned scripts, not run by ci.sh.
 # 06 Task 8 (SP06 follow-up): bots gates un-parked (build/typecheck/test:bots, test:bots:golden, bots:golden, bench:bots,
 #   validate:levels, balance); tools/src/{levels,balance*}.ts live again; SP06 entries removed from PARKED.
+# 07 Task 5 (SP07): check:manifest is un-parked (v2 manifest + asset/lock-hash/budget/credits checks run live, no TW_EXTRACT needed);
+#   its SP07 entry is removed from PARKED.
 # Review 2026-10-22 bookkeeping:
 #   sim:golden, bench:sim and replay:verify/test:tools:replay are un-parked (03 Task 8, 09 Task 2): they run live. Until SP06,
 #   the `golden` alias scans sim goldens only (GOLDEN_DIRS in tools/src/replay.ts); SP06 adds the bots goldens back.
@@ -36,7 +38,6 @@ cd "$(dirname "$0")/.."
 PARKED=(
   "typecheck:web:SP08"
   "test:web:SP08"
-  "check:manifest:SP07"
 )
 
 is_parked() { # prints owner and returns 0 when step $1 is parked

@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { twExtractRoot } from '../import-tw/env.js';
+import { main as mergeMain } from './merge-cli.js';
 import { runImport, type ImportResult } from './run.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -65,6 +66,7 @@ export async function main(args: readonly string[], env: Record<string, string |
   const total = [...result.files.values()].reduce((n, b) => n + b.length, 0);
   if (!check) {
     writeResult(result, ASSETS_ROOT, LOCK_FILE, true);
+    if (mergeMain([], ASSETS_ROOT) !== 0) return 1; // fold manifest.tw.json into manifest.json
     process.stdout.write(`assets:tw: wrote ${result.files.size} files (${total} bytes) + tw-extract.lock.json\n`);
     return 0;
   }

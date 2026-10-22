@@ -1,19 +1,84 @@
 # Credits
 
-Every shipped asset is CC0 1.0 (public domain dedication). `pnpm check:manifest` fails when a manifest `src`, or any file under `apps/web/assets/{models,audio}/`, is missing from this file. Licence texts are copied from each pack zip into `apps/web/assets/licenses/`. Licence was re-verified on each pack page at download time (page states "CC0 licensed", Creative Commons CC0).
+`pnpm check:manifest` fails when a manifest asset path, or any file under `apps/web/assets/{models,textures,fx,audio}/`, is missing from this file. Licence texts for the CC0 packs are copied into `apps/web/assets/licenses/`.
 
-Model files below were produced by `tools/assets/import-art.mjs` (`pnpm --filter @node-arena/tools assets:import -- <packs dir>`): dedupe, prune, tangents/extra UVs dropped, texture capped at 1024x1024 (the 512x512 source palettes are unchanged), position/normal/uv quantised, meshopt-compressed.
+## Tower War 1.29.3 (Vaveda) extracted art, private repo, not redistributable
+
+All files in the table below are extracted from the Tower War 1.29.3 Android build by Vaveda (not CC0, not licensed for redistribution). They are committed to this **private** repository only, with the owner's approval; do not publish, mirror or open-source this repository or its built assets without replacing them. Regenerate with `TW_EXTRACT=<path to _extract> pnpm assets:tw` (input and output hashes in `tools/assets/tw-extract.lock.json`; `pnpm check:manifest` verifies the committed output hashes without the extract). Models are rebuilt as RAW glTF (no mirror), textures are the original 256px PNG bytes except environment textures (source 1024px, downscaled to 256px with sharp). `manifest.tw.json` (the manifest fragment) is generated data, not art. The level-number font (Coiny Regular, SIL OFL 1.1, Google Fonts) is not yet shipped; its row is added when SP07 Task 7 adds the font file.
+
+| File | Source in Tower War | Modifications |
+|---|---|---|
+| models/tw/barracks.glb | House_Default prefab (WT1), stage meshes `stage0..2` | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| models/tw/factory.glb | Factory prefab (WT2), stage enable-lists | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| models/tw/ground-green.glb | `Ground` plane of "Environment military green for screen" | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| models/tw/ground-snow.glb | `snow_ground` plane of "env snow optimized for screen" | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| models/tw/obstacle-green.glb | `green_obstacle_1` / `green_obstacle_2` (small / big) | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| models/tw/obstacle-snow.glb | `snow_obstacle` (small = big mesh) | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| models/tw/projectile.glb | Tower cannonball + trail | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| models/tw/soldier.glb | `1_MilitaryDefaultWarriorSkinData` (default soldier skin): 9 rigid parts, Run + Death clips | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| models/tw/tank.glb | `1_MilitaryAttackWarriorSkinData` (default tank skin): 4 rigid parts | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| models/tw/tower.glb | Tower prefab, stage meshes `stage0..2` | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| textures/tw/barracks-blue.png | WT1 barracks texture, blue team | None (original PNG bytes) |
+| textures/tw/barracks-gray.png | WT1 barracks texture, neutral (gray) | None (original PNG bytes) |
+| textures/tw/barracks-green.png | WT1 barracks texture, green team | None (original PNG bytes) |
+| textures/tw/barracks-red.png | WT1 barracks texture, red team | None (original PNG bytes) |
+| textures/tw/barracks-yellow.png | WT1 barracks texture, yellow team | None (original PNG bytes) |
+| textures/tw/factory-blue.png | WT2 factory texture, blue team | None (original PNG bytes) |
+| textures/tw/factory-gray.png | WT2 factory texture, neutral (gray) | None (original PNG bytes) |
+| textures/tw/factory-green.png | WT2 factory texture, green team | None (original PNG bytes) |
+| textures/tw/factory-red.png | WT2 factory texture, red team | None (original PNG bytes) |
+| textures/tw/factory-yellow.png | WT2 factory texture, yellow team | None (original PNG bytes) |
+| textures/tw/ground-green.png | ground ground texture (MilitaryGroundTexture) | Downscaled 1024px -> 256px (sharp, lanczos3) |
+| textures/tw/ground-snow.png | ground ground texture (SnowGroundTexture) | Downscaled 1024px -> 256px (sharp, lanczos3) |
+| textures/tw/obstacle-green.png | obstacle obstacle atlas texture (MilitartEnvironmentTexture) | Downscaled 1024px -> 256px (sharp, lanczos3) |
+| textures/tw/obstacle-snow.png | obstacle obstacle atlas texture (SnowEnvironmentTexture) | Downscaled 1024px -> 256px (sharp, lanczos3) |
+| textures/tw/projectile-blue.png | tower projectile texture, blue team | None (original PNG bytes) |
+| textures/tw/projectile-gray.png | tower projectile texture, neutral (gray) | None (original PNG bytes) |
+| textures/tw/projectile-green.png | tower projectile texture, green team | None (original PNG bytes) |
+| textures/tw/projectile-red.png | tower projectile texture, red team | None (original PNG bytes) |
+| textures/tw/projectile-yellow.png | tower projectile texture, yellow team | None (original PNG bytes) |
+| textures/tw/soldier-blue.png | default soldier skin texture, blue team | None (original PNG bytes) |
+| textures/tw/soldier-green.png | default soldier skin texture, green team | None (original PNG bytes) |
+| textures/tw/soldier-red.png | default soldier skin texture, red team | None (original PNG bytes) |
+| textures/tw/soldier-yellow.png | default soldier skin texture, yellow team | None (original PNG bytes) |
+| textures/tw/tank-blue.png | default tank skin texture, blue team | None (original PNG bytes) |
+| textures/tw/tank-green.png | default tank skin texture, green team | None (original PNG bytes) |
+| textures/tw/tank-red.png | default tank skin texture, red team | None (original PNG bytes) |
+| textures/tw/tank-yellow.png | default tank skin texture, yellow team | None (original PNG bytes) |
+| textures/tw/tower-blue.png | tower texture, blue team | None (original PNG bytes) |
+| textures/tw/tower-gray.png | tower texture, neutral (gray) | None (original PNG bytes) |
+| textures/tw/tower-green.png | tower texture, green team | None (original PNG bytes) |
+| textures/tw/tower-red.png | tower texture, red team | None (original PNG bytes) |
+| textures/tw/tower-yellow.png | tower texture, yellow team | None (original PNG bytes) |
+| fx/CFX3_T_HollowCircle.png | FX texture `CFX3_T_HollowCircle` | None (original PNG bytes), renamed |
+| fx/CFX_T_Star_Add.png | FX texture `CFX_T_Star Add` | None (original PNG bytes), renamed |
+| fx/Spark.png | FX texture `Spark` | None (original PNG bytes), renamed |
+| fx/glow_2.png | FX texture `glow_2` | None (original PNG bytes), renamed |
+| fx/lane-arrow.png | FX texture `arrow (lane)` | None (original PNG bytes), renamed |
+| fx/lane-trail.png | FX texture `trail (lane)` | None (original PNG bytes), renamed |
+| fx/lane-wave.png | FX texture `wave (lane ribbon, WayBaseStandard)` | None (original PNG bytes), renamed |
+| fx/lane-waveArrow.png | FX texture `waveArrow (lane)` | None (original PNG bytes), renamed |
+| fx/smoke.png | FX texture `smoke` | None (original PNG bytes), renamed |
+
+## Legacy model files (Kenney CC0, deleted by SP07 Task 11)
+
+Still on disk until the old renderer is removed; every file stays credited meanwhile. All CC0 1.0 (public domain dedication); licence re-verified on each pack page at download time.
 
 | File | Pack | Author | URL | Licence | Downloaded | Modifications |
 |---|---|---|---|---|---|---|
-| models/tower-small.glb | City Kit Commercial 2.1 (`building-d.glb`) | Kenney | https://kenney.nl/assets/city-kit-commercial | CC0 1.0 | 2026-10-09 | Standard pipeline only |
-| models/tower-standard.glb | City Kit Commercial 2.1 (`building-g.glb`) | Kenney | https://kenney.nl/assets/city-kit-commercial | CC0 1.0 | 2026-10-09 | Standard pipeline only |
-| models/tower-large.glb | City Kit Commercial 2.1 (`building-skyscraper-a.glb`) | Kenney | https://kenney.nl/assets/city-kit-commercial | CC0 1.0 | 2026-10-09 | Standard pipeline only |
-| models/troop-regular.glb | Code-built chibi (team hat with brim, skin sphere head, white torso, team arms/legs; 232 tris, no rig, no texture), generated by `tools/assets/build-troop-chibi.mjs` | Node Arena (original geometry) | n/a | n/a | 2026-10-20 | SP04 Task 6: replaces the Kenney Mini Characters `character-male-a` mesh (CC0, https://kenney.nl/assets/mini-characters) which read as a boxy head from the steep camera; `Shirt` material = team colour; skin/cloth keep own colour with 15% team tint in shader (refs show skin faces). Blocky Characters (Kenney, CC0, kenney.nl/assets/blocky-characters) was trialled in SP04 Task 6 but not shipped |
-| models/prop-tree-pine.glb | Nature Kit 2.1 (`tree_pineTallA.glb`) | Kenney | https://kenney.nl/assets/nature-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only |
-| models/prop-tree-round.glb | Nature Kit 2.1 (`tree_default.glb`) | Kenney | https://kenney.nl/assets/nature-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only |
-| models/prop-stump.glb | Nature Kit 2.1 (`stump_round.glb`) | Kenney | https://kenney.nl/assets/nature-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only |
-| models/prop-crate.glb | Survival Kit (`box.glb`) | Kenney | https://kenney.nl/assets/survival-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only |
+| models/tower-small.glb | City Kit Commercial 2.1 (`building-d.glb`) | Kenney | https://kenney.nl/assets/city-kit-commercial | CC0 1.0 | 2026-10-09 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
+| models/tower-standard.glb | City Kit Commercial 2.1 (`building-g.glb`) | Kenney | https://kenney.nl/assets/city-kit-commercial | CC0 1.0 | 2026-10-09 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
+| models/tower-large.glb | City Kit Commercial 2.1 (`building-skyscraper-a.glb`) | Kenney | https://kenney.nl/assets/city-kit-commercial | CC0 1.0 | 2026-10-09 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
+| models/troop-regular.glb | Code-built chibi (team hat with brim, skin sphere head, white torso, team arms/legs; 232 tris, no rig, no texture) | Node Arena (original geometry) | n/a | n/a | 2026-10-20 | SP04 Task 6: replaces the Kenney Mini Characters `character-male-a` mesh (CC0, https://kenney.nl/assets/mini-characters) which read as a boxy head from the steep camera; `Shirt` material = team colour; skin/cloth keep own colour with 15% team tint in shader (refs show skin faces). Blocky Characters (Kenney, CC0, kenney.nl/assets/blocky-characters) was trialled in SP04 Task 6 but not shipped |
+| models/prop-tree-pine.glb | Nature Kit 2.1 (`tree_pineTallA.glb`) | Kenney | https://kenney.nl/assets/nature-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
+| models/prop-tree-round.glb | Nature Kit 2.1 (`tree_default.glb`) | Kenney | https://kenney.nl/assets/nature-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
+| models/prop-stump.glb | Nature Kit 2.1 (`stump_round.glb`) | Kenney | https://kenney.nl/assets/nature-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
+| models/prop-crate.glb | Survival Kit (`box.glb`) | Kenney | https://kenney.nl/assets/survival-kit | CC0 1.0 | 2026-10-19 | Standard pipeline only (dedupe, prune, texture cap 1024, meshopt) |
+
+## Audio (CC0)
+
+| File | Pack | Author | URL | Licence | Downloaded | Modifications |
+|---|---|---|---|---|---|---|
 | audio/clash.ogg | Impact Sounds 1.0 (`impactMetal_light_002.ogg`) | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
 | audio/capture.ogg | Impact Sounds 1.0 (`impactBell_heavy_000.ogg`) | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
 | audio/cut.ogg | Impact Sounds 1.0 (`impactGlass_light_002.ogg`) | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
@@ -22,11 +87,12 @@ Model files below were produced by `tools/assets/import-art.mjs` (`pnpm --filter
 | audio/music-insistent.ogg | Insistent: background loop (`Insistent.ogg`) | yd (submitted by qubodup) | https://opengameart.org/content/insistent-background-loop | CC0 1.0 (asset page lists "License(s): CC0") | 2026-10-09 | None (renamed); 128.7 s Vorbis, lazy-loaded with the level, not in the boot bundle |
 
 ## Licence copies
+
 - `apps/web/assets/licenses/kenney-city-kit-commercial-LICENSE.txt`
+- `apps/web/assets/licenses/kenney-impact-sounds-LICENSE.txt`
+- `apps/web/assets/licenses/kenney-interface-sounds-LICENSE.txt`
 - `apps/web/assets/licenses/kenney-mini-characters-LICENSE.txt`
 - `apps/web/assets/licenses/kenney-nature-kit-LICENSE.txt`
 - `apps/web/assets/licenses/kenney-survival-kit-LICENSE.txt`
-- `apps/web/assets/licenses/kenney-impact-sounds-LICENSE.txt`
 - `apps/web/assets/licenses/kenney-ui-audio-LICENSE.txt`
-- `apps/web/assets/licenses/kenney-interface-sounds-LICENSE.txt`
 - `apps/web/assets/licenses/opengameart-insistent-LICENSE.txt` (note recording the asset-page CC0 statement; OpenGameArt ships no licence file)

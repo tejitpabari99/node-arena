@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { loadCatalog, type Catalog, type ContentFiles } from '@node-arena/content';
 import { loadFiles } from '../files.js';
 import { campaignRange, isHandAuthored, mergeCampaign, parseCampaignDoc, readCampaign, type CampaignDoc } from './campaign.js';
-import { REGISTERED_THEMES_PRE_SP07, type GateResult } from './gate.js';
+import type { GateResult } from './gate.js';
 import { loadPrefabLevels } from './parse-prefab.js';
 import { TwParseError, parseRaw, slugify } from './parse-raw.js';
 import { assertUniqueIds, mapLevel, type MapResult } from './map-level.js';
@@ -47,18 +47,15 @@ export interface ImportResult {
 }
 
 /**
- * Registered theme set for the gate. v2 manifest (schemaVersion 2.x with `themes`) -> its theme ids; otherwise the explicit
- * pre-SP07 constant. SP07 dependency: it ships the v2 manifest and then deletes REGISTERED_THEMES_PRE_SP07.
+ * Registered theme set for the gate: the theme ids of the v2 asset manifest (`schemaVersion` 2.x with `themes`, shipped by SP07).
+ * Throws when the manifest is absent, unreadable or not v2: there is no fallback set.
  */
 export function registeredThemes(manifestPath: string): readonly string[] {
-  try {
-    const m: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
-    if (typeof m === 'object' && m !== null) {
-      const { schemaVersion, themes } = m as { schemaVersion?: unknown; themes?: unknown };
-      if (typeof schemaVersion === 'string' && /^([2-9]|\d{2,})\./.test(schemaVersion) && typeof themes === 'object' && themes !== null) return Object.keys(themes);
-    }
-  } catch { /* no manifest / unreadable: pre-SP07 set */ }
-  return REGISTERED_THEMES_PRE_SP07;
+  let m: unknown;
+  try { m = JSON.parse(readFileSync(manifestPath, 'utf8')); } catch (e) { throw new Error(`cannot read theme registry ${manifestPath}: ${(e as Error).message}`); }
+  const { schemaVersion, themes } = (typeof m === 'object' && m !== null ? m : {}) as { schemaVersion?: unknown; themes?: unknown };
+  if (typeof schemaVersion === 'string' && /^([2-9]|\d{2,})\./.test(schemaVersion) && typeof themes === 'object' && themes !== null) return Object.keys(themes);
+  throw new Error(`${manifestPath}: expected a v2 manifest (schemaVersion 2.x) with "themes" to register themes`);
 }
 
 const PREFAB_HINT = 'if this is a prefab level, copy its .ext.json from $TW_EXTRACT/converted/ext-prefab/ into tools/src/import-tw/prefab/ and commit it';

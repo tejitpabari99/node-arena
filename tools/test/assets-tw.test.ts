@@ -8,7 +8,7 @@ import { NodeIO, type Document, type Node } from '@gltf-transform/core';
 import { Extract, parseJsonExact } from '../src/assets-tw/extract.js';
 import { parseObj } from '../src/assets-tw/obj.js';
 import { runImport, type ImportResult } from '../src/assets-tw/run.js';
-import { OWNED_DIRS, diffResult, main, writeResult } from '../src/assets-tw/cli.js';
+import { OWNED_DIRS, REPO, diffResult, main, writeResult } from '../src/assets-tw/cli.js';
 import { twExtractRoot } from '../src/import-tw/env.js';
 
 const EXTRACT = twExtractRoot();
@@ -224,13 +224,17 @@ test('inventory: exactly the PRD R1 outputs; models embed no texture; textures a
     ...teams5.flatMap((t) => ['barracks', 'factory', 'tower', 'projectile'].map((f) => `textures/tw/${f}-${t}.png`)),
     ...['green', 'snow'].flatMap((t) => [`models/tw/ground-${t}.glb`, `models/tw/obstacle-${t}.glb`, `textures/tw/ground-${t}.png`, `textures/tw/obstacle-${t}.png`]),
     ...['CFX3_T_HollowCircle', 'CFX_T_Star_Add', 'glow_2', 'smoke', 'Spark', 'lane-arrow', 'lane-waveArrow', 'lane-wave', 'lane-trail'].map((f) => `fx/${f}.png`),
+    'manifest.tw.json',
   ].sort();
   assert.deepEqual([...r.files.keys()], want);
   for (const [p, bytes] of r.files) {
-    if (p.endsWith('.glb')) assert.equal((await new NodeIO().readBinary(bytes)).getRoot().listTextures().length, 0, p);
+    if (p.endsWith('.json')) JSON.parse(Buffer.from(bytes).toString('utf8'));
+    else if (p.endsWith('.glb')) assert.equal((await new NodeIO().readBinary(bytes)).getRoot().listTextures().length, 0, p);
     else assert.deepEqual([...bytes.slice(0, 8)], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], p);
   }
-  const lock = JSON.parse(r.lock) as { inputs: Record<string, string> };
+  const lock = JSON.parse(r.lock) as { inputs: Record<string, string>; outputs: Record<string, string> };
+  assert.deepEqual(Object.keys(lock.outputs), [...r.files.keys()], 'lock.outputs lists every generated file, sorted');
+  for (const [p, bytes] of r.files) assert.equal(lock.outputs[p], createHash('sha256').update(bytes).digest('hex'), p);
   const keys = Object.keys(lock.inputs);
   assert.deepEqual(keys, [...keys].sort());
   assert.ok(keys.every((k) => !k.startsWith('/') && !k.includes('..')));
@@ -293,4 +297,13 @@ test('determinism: two full runs are byte-identical', { skip: needExtract }, asy
   assert.deepEqual([...a.files.keys()], [...b.files.keys()]);
   for (const [p, bytes] of a.files) assert.ok(Buffer.compare(Buffer.from(bytes), Buffer.from(b.files.get(p)!)) === 0, p);
   assert.equal(a.lock, b.lock);
+});
+
+test('manifest fragment: deterministic, equals the committed manifest.tw.json, themes registered for green + snow', { skip: needExtract }, async () => {
+  const r = await imported();
+  const committed = readFileSync(join(REPO, 'apps/web/assets/manifest.tw.json'));
+  assert.equal(Buffer.compare(committed, Buffer.from(r.files.get('manifest.tw.json')!)), 0);
+  const f = JSON.parse(committed.toString('utf8')) as { themes: Record<string, unknown>; visuals: Record<string, { stages?: unknown[] }> };
+  assert.deepEqual(Object.keys(f.themes), ['green', 'snow']);
+  for (const id of ['building.house-wt1', 'building.house-wt2', 'building.tower']) assert.equal(f.visuals[id]!.stages!.length, 3, id);
 });

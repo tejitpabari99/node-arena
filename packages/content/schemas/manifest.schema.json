@@ -184,8 +184,7 @@
                     "blue",
                     "green",
                     "red",
-                    "yellow",
-                    "gray"
+                    "yellow"
                   ],
                   "properties": {
                     "blue": {
@@ -373,6 +372,24 @@
                 "intensity": {
                   "type": "number",
                   "minimum": 0
+                },
+                "ambient": {
+                  "type": "object",
+                  "required": [
+                    "color",
+                    "intensity"
+                  ],
+                  "properties": {
+                    "color": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "intensity": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false

@@ -17,7 +17,8 @@
     "levels:lock": "tsx src/cli.ts levels:lock",
     "balance": "tsx src/cli.ts balance",
     "assets:tw": "tsx src/assets-tw/cli.ts",
-    "assets:tw:check": "tsx src/assets-tw/cli.ts --check"
+    "assets:tw:check": "tsx src/assets-tw/cli.ts --check",
+    "assets:manifest": "tsx src/assets-tw/merge-cli.ts"
   },
   "dependencies": {
     "@node-arena/content": "workspace:*",

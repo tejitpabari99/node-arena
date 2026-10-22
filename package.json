@@ -35,6 +35,7 @@
     "assets:validate": "tsx tools/assets/validate/run.mjs",
     "assets:tw": "pnpm --filter @node-arena/tools assets:tw",
     "assets:tw:check": "pnpm --filter @node-arena/tools assets:tw:check",
+    "assets:manifest": "pnpm --filter @node-arena/tools assets:manifest",
     "import:tw": "tsx tools/src/cli.ts import:tw",
     "check:import": "tsx tools/src/cli.ts check:import",
     "replay:verify": "tsx tools/src/cli.ts replay:verify",
