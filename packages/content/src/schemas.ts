@@ -129,6 +129,8 @@ export const LevelSchema = Type.Object({
   }, { additionalProperties: false }), { minItems: 1 }),
   elements: Type.Array(Type.Object({
     id: id(), archetype: id(), pos: pos(), yawDeg: fx3({ minimum: -360, maximum: 360 }),
+    /** Per-instance footprint override (e.g. 05's per-child collider box); defaults to the archetype footprint. */
+    footprint: Type.Optional(FootprintSchema),
     variant: Type.Optional(Type.Union([Type.Literal('small'), Type.Literal('big')])),
     params: Type.Optional(moduleBags('element', false)),
   }, { additionalProperties: false })),

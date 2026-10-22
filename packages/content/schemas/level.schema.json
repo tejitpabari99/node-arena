@@ -576,6 +576,76 @@
             "maximum": 360,
             "x-unit": "fx3"
           },
+          "footprint": {
+            "type": "object",
+            "required": [
+              "shape"
+            ],
+            "properties": {
+              "shape": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "circle"
+                  },
+                  {
+                    "type": "string",
+                    "const": "box"
+                  }
+                ]
+              },
+              "radius": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "exclusiveMinimum": 0,
+                "x-unit": "fx3"
+              },
+              "w": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "exclusiveMinimum": 0,
+                "x-unit": "fx3"
+              },
+              "d": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "exclusiveMinimum": 0,
+                "x-unit": "fx3"
+              }
+            },
+            "additionalProperties": false,
+            "if": {
+              "properties": {
+                "shape": {
+                  "const": "circle"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "radius"
+              ],
+              "properties": {
+                "radius": {},
+                "w": false,
+                "d": false
+              }
+            },
+            "else": {
+              "required": [
+                "w",
+                "d"
+              ],
+              "properties": {
+                "w": {},
+                "d": {},
+                "radius": false
+              }
+            }
+          },
           "variant": {
             "anyOf": [
               {

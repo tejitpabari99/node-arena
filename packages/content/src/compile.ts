@@ -103,7 +103,7 @@ export function compileLevel(catalog: Catalog, level: NextLevel): CompiledLevel 
     const arch = must(catalog.elements[e.archetype], `unknown element archetype ${e.archetype}`);
     return {
       id: e.id, archetype: e.archetype, x: e.pos.x, z: e.pos.z, yawMilliDeg: e.yawDeg,
-      footprint: footprint(arch.footprint), visual: arch.visual,
+      footprint: footprint(e.footprint ?? arch.footprint), visual: arch.visual,
       ...(e.variant !== undefined ? { variant: e.variant } : {}),
       modules: mergeModules(arch.modules as ModuleBags, e.params as ModuleBags | undefined),
     };

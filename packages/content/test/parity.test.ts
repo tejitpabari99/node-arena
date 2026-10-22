@@ -133,6 +133,8 @@ test('synthetic obstacle+tower: obstacle outside bounds validates and is only lo
   assert.ok(!l.warnings.some((w) => w.pointer === '/elements/0/pos'));
   const compiled = content.compileLevel(catalog(), l.level);
   assert.equal(compiled.elements.length, 2);
+  assert.deepEqual(compiled.elements[0]!.footprint, { shape: 'box', w: 1200, d: 600 }, 'instance footprint override');
+  assert.deepEqual(compiled.elements[1]!.footprint, { shape: 'circle', radius: 450 }, 'archetype footprint default');
   assert.ok(compiled.requires.includes('blocksLines') && compiled.requires.includes('shoots'));
 });
 

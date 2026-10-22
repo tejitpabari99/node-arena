@@ -77,6 +77,19 @@ test('compiled level: R5 shape, milli-ints, -1 neutral owner, referenced units s
   assert.match(c.simHash, /^[0-9a-f]{64}$/);
 });
 
+test('element footprint: instance override wins over the archetype footprint, is hashed; variant stays presentation', () => {
+  const base = compile();
+  assert.deepEqual(base.elements[0]!.footprint, { shape: 'circle', radius: 450 }, 'no override -> archetype');
+  const withBox = (w: number) => { const l = level(); l.elements[0]!.footprint = { shape: 'box', w, d: 0.6 }; return l; };
+  const a = compile(withBox(1.2)), b = compile(withBox(2.4));
+  assert.deepEqual(a.elements[0]!.footprint, { shape: 'box', w: 1200, d: 600 });
+  assert.deepEqual(b.elements[0]!.footprint, { shape: 'box', w: 2400, d: 600 });
+  assert.notEqual(a.simHash, base.simHash);
+  assert.notEqual(a.simHash, b.simHash);
+  const bad = level(); bad.elements[0]!.footprint = { shape: 'box', w: 1 };
+  assert.ok(failures(() => compile(bad)).some((e) => e.pointer.startsWith('/elements/0/footprint')));
+});
+
 test('hashes: stable across runs, pinned digests', () => {
   const a = compile(), b = compile();
   assert.equal(a.simHash, b.simHash);

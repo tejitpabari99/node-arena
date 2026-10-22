@@ -18,7 +18,7 @@
     { "id": "b2", "archetype": "tower", "pos": { "x": 0, "z": 2 }, "owner": null, "level": 3, "ignoreForWin": true }
   ],
   "elements": [
-    { "id": "o0-0", "archetype": "obstacle", "pos": { "x": 0, "z": 0 }, "yawDeg": 30, "variant": "big" },
+    { "id": "o0-0", "archetype": "obstacle", "pos": { "x": 0, "z": 0 }, "yawDeg": 30, "footprint": { "shape": "box", "w": 1.2, "d": 0.6 }, "variant": "big" },
     { "id": "o1-0", "archetype": "obstacle", "pos": { "x": 27.5, "z": -24 }, "yawDeg": 90, "variant": "small" }
   ],
   "requires": ["blocksLines", "bot:tw", "drawsLines", "grows", "level", "objective:captureAll", "shoots", "spawns"]
