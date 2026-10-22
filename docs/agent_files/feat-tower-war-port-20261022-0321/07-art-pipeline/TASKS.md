@@ -11,8 +11,8 @@ Source of truth: [PRD.md](PRD.md). Order follows the PRD: validation (R2) gates 
 |---|---|---|---|
 | 1 | Seed refs + capture/compare harness | none | done |
 | 2 | Prototype validation gate (R2) | 1 | done |
-| 3 | JS importer + lock + check | 2 | in-progress |
-| 4 | Environment/obstacle mapping (time-boxed) | 3, 05#0 | todo |
+| 3 | JS importer + lock + check | 2 | done |
+| 4 | Environment/obstacle mapping (time-boxed) | 3, 05#0 | in-progress |
 | 5 | Manifest fragment, budgets, CREDITS | 3, 02#schema | todo |
 | 6 | Renderer registry + manifest resolve rewrite | 5 | todo |
 | 7 | Building + tower renderer (stages, labels) | 6 | todo |
