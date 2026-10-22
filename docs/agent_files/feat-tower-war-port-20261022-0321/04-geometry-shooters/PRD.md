@@ -60,14 +60,14 @@ Does not own: rule text (01; amendment requests below), schemas/loader (02), sim
 
 **R3 Lane crossings, CMB-04** (`crossings.ts`, `contacts.ts#crossingPass`)
 - Per ordered lane pair (different roads), geometry is static; memoised on first need. Distance between troop at `s` on A and `u` on B is `f(s,u) = s^2 + u^2 - 2c*s*u + 2kA*s - 2kB*u + k0`, with `c` (Q20 cosine), `kA,kB,k0` from lane origins/directions, all precomputed in BigInt at `create` (cold). Pairs whose minimum segment distance `> contact` are dropped. Surviving pairs store the bounding window `[sLo,sHi] x [uLo,uHi]` of `f <= contact^2`, clipped to the lanes.
-- Active list rebuilt incrementally in `onLineDrawn/onLineCut` and fully from `drawn` columns on snapshot restore (derived, **not hashed**).
+- Active list rebuilt incrementally in `onLineDrawn/onLineCut` and fully from `drawn` columns at `create` (derived, **not hashed**). [RESOLVED: review 2026-10-22 — no restore API in 2.0.0; replay-based equivalence: caches are rebuilt from state at create and checked by replay-to-tick-N]
 - Per tick (after head-on, same phase 6): for each active hostile pair (owners differ at tick time) in ascending `(channelKeyA, channelKeyB)`: troops of each lane inside window +/- max per-tick move (contiguous FIFO range, early exit); candidate pairs in `(seqA, seqB)` order; exact swept test (min over the tick of the quadratic `<= contact^2`, positions at tick-1 and tick from `p0,t0,speed`); contact -> shared `exchange(state, chA,seqA, chB,seqB)` (CMB-05, exported by 03; 04 does not reimplement it). Dead troops are skipped; survivors continue in the same pass. Same-owner lanes never fight. Head-on stays 03's special case (equivalent to `c=-1`).
 - Shared endpoints are ordinary crossings (a defender's fresh spawn vs an arriving attacker fights if within 0.7).
 - Event (payload defined by 03's CUT in `defs` EVENTS, 04 only emits): `Clash{kind:'headon'|'crossing', a:{channel,seq,owner}, b:{channel,seq,owner}, x, z}` (milli). Deaths emit `TroopDied{channel,seq,owner,kind,cause:'clash'|'capture'|'tower',x,z}` via `killTroop`.
 
 **R4 Tower (TWR-01..04)** (`modules/shoots.ts`)
 - Params from `shoots` + `balance.stageThresholds`: radius by stage, delay by level (SP01 integer forms), `minRadius`, plus content flags `neutralFires` (default **true**, [RESOLVED: owner — neutral towers fire]), `troopPad` (default **350**, decomp-trusted: trigger reach = radius + troop body 0.35), `hitsNeutralHouses` (default **true**, [RESOLVED: owner — towers hit neutral houses]). All three are content flags (02 R3), flip = content version bump.
-- Cache per (tower, lane, stage): annulus intervals (`laneIntervals` with outer `radius+troopPad`, minus `minRadius` disc), `proj`, `perp^2`. Invalidated by stage change only (level crossing 10/30) and rebuilt from state on restore.
+- Cache per (tower, lane, stage): annulus intervals (`laneIntervals` with outer `radius+troopPad`, minus `minRadius` disc), `proj`, `perp^2`. Invalidated by stage change only (level crossing 10/30) and rebuilt from state at create (no restore API in 2.0.0).
 - Phase 7 order = building idx. Cooldown column `shoots.cooldown` (mt, hashed): starts at `delayMt(L0)`; `-1000/tick` floor 0. Ready + (`neutralFires` (default true) or owner non-neutral): pick **nearest hostile troop** (min `d^2`, ties owner idx, then seq) among troops whose progress lies in an interval; else nearest hostile house with `level >= 1` **whose footprint is within reach** (reach = trigger sphere of `radius` intersects the house footprint box: nearest footprint point to the tower centre at distance <= radius, exact integer squares; no `troopPad`; ordered by centre distance, then building idx; neutral houses included when `hitsNeutralHouses`, default true; towers never targeted). Fire: set cooldown to `delayMt(L_now)`.
 - Troop: `killTroop(channel,seq,'tower')` (any hp). House: `level = max(0, level-1)`, never captures; stage drop never auto-cuts (LIN-02). One shot per cooldown; ready tower with no target stays ready.
 - Cooldown, radius cache survive capture (03 leaves `shoots.cooldown` untouched on capture).
@@ -83,7 +83,7 @@ Does not own: rule text (01; amendment requests below), schemas/loader (02), sim
 ```
 geometry.ts: laneIntervals / perpSq / proj / SAT (pure)
    |-> modules/blocksLines.ts   create: blocked[pair]; validateDraw; explainDraw
-   |-> crossings.ts             pair windows (memo), active list <- onLineDrawn/onLineCut/restore;  sweepCrossed (seam)
+   |-> crossings.ts             pair windows (memo), active list <- onLineDrawn/onLineCut/create;  sweepCrossed (seam)
    |        `-> contacts.ts#crossingPass (phase 6)  -> exchange() [03]  -> killTroop [03]
    `-> modules/shoots.ts        annulus cache per stage; phase 7; cooldown column
 ```
@@ -113,7 +113,7 @@ Derived caches never enter the hash; state hashed = `shoots.cooldown` + troop co
 | Obstacle sizes wrong (blocks too much/little) | values from 05's `colliders.json` dump; if dump fails, circle 450 + calibration vs ref screenshots (07/08), logged as deviation in LEVELS_GUIDE; overlap warning stays warning (02) |
 | Per-tick narrow phase misses 0.3 ms budget at stress | prefilter by window + FIFO range; Numbers-only per tick (BigInt only at `create`); bench scenario with 40 hostile crossing pairs |
 | Pad wrong changes level difficulty (neutral towers fire: owner-confirmed, L4 neutral level-5 tower shoots passers) | flags + goldens per setting; owner check on `troopPad` |
-| Restore drift in derived caches | rebuild-from-`drawn` test (snapshot mid-fight == straight run hash) |
+| Restore drift in derived caches | rebuild-from-`drawn` test: replay to tick N (`playReplay` with checkpoints) mid-fight == straight run hash; caches rebuilt from state at create (no snapshot restore API in 2.0.0) |
 | 03 seam drift (`exchange`, `killTroop` names) | listed as dependencies; acceptance tests import only those |
 
 ## Open Questions
@@ -133,7 +133,7 @@ Derived caches never enter the hash; state hashed = `shoots.cooldown` + troop co
 ## Acceptance Criteria
 - `check:rules` green for CMB-04, TWR-01..04, OBS-01..02 (each has a non-skipped `covers` test).
 - OBS: 500-case fuzz vs an independent float OBB reference (tests only) agrees; tangent not blocked; endpoint building exempt, third tower/house blocks, obstacle at endpoint blocks; `explainDraw` point inside first blocker; `canDraw`==`null` iff DrawLine accepts.
-- CMB-04: scenarios - X-cross soldier/soldier (both die), tank vs soldier (hp 2->1), fast tank vs tank (closing > 0.7/tick, no tunnelling), near-parallel lanes at 0.5, same-owner no fight, three-lane ordering, cut/capture mid-fight, snapshot restore mid-fight. Brute-force per-tick oracle (all troop pairs, exact swept) matches on 50 seeds.
+- CMB-04: scenarios - X-cross soldier/soldier (both die), tank vs soldier (hp 2->1), fast tank vs tank (closing > 0.7/tick, no tunnelling), near-parallel lanes at 0.5, same-owner no fight, three-lane ordering, cut/capture mid-fight, replay-to-tick-N mid-fight (replaces snapshot restore; no restore API in 2.0.0). Brute-force per-tick oracle (all troop pairs, exact swept) matches on 50 seeds.
 - TWR: delay L=1/10/30/64 exact mt (33,870 at L=1); radius change at levels 10/30; minRadius; nearest + tie order; tank dies; middle-of-lane kill keeps FIFO/`alive`/conservation; house -1 floor 0 no capture, `level>=1` only; cooldown persists capture; ready-without-target; neutral tower shoots non-neutral troops by default (golden); flags both settings (`troopPad` 0/350, `neutralFires` true/false, `hitsNeutralHouses` true/false); default tower shoots a neutral house (golden).
 - Per-tick narrow phase uses Numbers only with debug assert < 2^53; BigInt oracle in tests agrees. Event on/off hash parity; events match 03's payload types (`Clash`, `TroopDied`, `TowerShot`) exactly; `sim:golden` regenerated incl. `scenarios-geometry.ts`; `bench:sim` within budgets with added crossing/tower scenario (720 troops, 40 hostile crossings, 3 towers).
 - No `Math.sqrt/round`/floats in `packages/sim/src` (lint determinism preset).
