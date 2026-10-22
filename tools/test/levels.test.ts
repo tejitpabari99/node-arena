@@ -1,0 +1,66 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
+import { loadContent } from '@node-arena/content';
+import { loadFiles } from '../src/files.js';
+import { splitFiles } from '../src/content.js';
+import { buildLock, campaignLevels, checkLevelsLock, humanSeat, validateLevel, validateLevels } from '../src/levels.js';
+import { parseUnsolved, readUnsolved, type UnsolvedEntry } from '../src/unsolved.js';
+
+const root = resolve(import.meta.dirname, '../..');
+const { data } = splitFiles(await loadFiles(resolve(root, 'packages/content')));
+const compiled = loadContent(data).compiled;
+const entry = (id: string): UnsolvedEntry => ({ id, position: 5, reason: 'test', ownerSignOff: null });
+
+test('campaign list is exactly the 20 level files, one human seat per level', () => {
+  const levels = campaignLevels(data);
+  assert.equal(levels.length, 20);
+  for (const l of levels) assert.ok(humanSeat(compiled[l.id]!) >= 0);
+});
+test('solvable level passes (a)-(c): no rejects, idle never wins, seed-1 rerun equal', () => {
+  const report = validateLevel(compiled['levelview-1']!, 4, 2, null);
+  assert.equal(report.ok, true, JSON.stringify(report.errors));
+  assert.equal(report.idleWins, 0); assert.equal(report.deterministic, true);
+  assert.ok(report.totalWins > 0); assert.equal(report.runs, 6); assert.deepEqual(report.warnings, []);
+});
+test('allowlisted level that the proxy can solve is reported as a warning, not a failure', () => {
+  const report = validateLevel(compiled['levelview-1']!, 4, 1, entry('levelview-1'));
+  assert.equal(report.ok, true); assert.match(report.warnings.join(' '), /Now solvable/);
+});
+test('unsolvable level fails unless allowlisted (warning); capped runs are not failures', () => {
+  // Small cap forces 0 wins quickly; the stalemate level never finishes within it.
+  const bad = validateLevel(compiled['levelview-2-ab']!, 5, 1, null, 400);
+  assert.equal(bad.ok, false); assert.match(bad.errors.join(' '), /Unsolvable by proxy/);
+  assert.equal(bad.truncated, bad.runs);
+  const listed = validateLevel(compiled['levelview-2-ab']!, 5, 1, entry('levelview-2-ab'), 400);
+  assert.equal(listed.ok, true); assert.match(listed.warnings.join(' '), /Unsolved by proxy.*pending/);
+});
+test('validateLevels rejects an allowlist id that is not a campaign level and bad seeds', () => {
+  assert.throws(() => validateLevels(data, [entry('nope')], 'levelview-1', 1), /Unknown level nope/);
+  assert.throws(() => validateLevels(data, [], 'levelview-1', 0), /Seeds/);
+  assert.throws(() => validateLevels(data, [], 'missing', 1), /Unknown or empty/);
+});
+test('levels lock: matching, stale and missing entries', () => {
+  const report = validateLevel(compiled['levelview-1']!, 4, 1, null);
+  const lock = buildLock([report]);
+  assert.deepEqual(checkLevelsLock([report], lock), []);
+  assert.match(checkLevelsLock([report], { 'levelview-1': { ...lock['levelview-1']!, finalHash: '0' } })[0]!, /differs/);
+  assert.match(checkLevelsLock([report], {})[0]!, /missing/);
+});
+test('unsolved-by-proxy.json schema: committed file is valid and ids exist; bad shapes fail', async () => {
+  const list = await readUnsolved(resolve(root, 'tools/unsolved-by-proxy.json'));
+  const ids = new Set(campaignLevels(data).map(l => l.id));
+  assert.ok(list.length > 0); for (const e of list) assert.ok(ids.has(e.id), e.id);
+  assert.throws(() => parseUnsolved([{ id: 'a', position: 1, reason: 'x' }]), /Invalid/);
+  assert.throws(() => parseUnsolved([{ id: 'a', position: 1, reason: 'x', ownerSignOff: null, extra: 1 }]), /Invalid/);
+  assert.throws(() => parseUnsolved([entry('a'), entry('a')]), /Duplicate/);
+});
+test('validate:levels CLI: one level, JSON report with levels payload; bad options fail', () => {
+  const run = (...args: string[]) => spawnSync(process.execPath, ['--import', 'tsx', 'tools/src/cli.ts', 'validate:levels', '--format', 'json', ...args], { cwd: root, encoding: 'utf8' });
+  const ok = run('--levels', 'levelview-1', '--seeds', '1', '--base', process.env.VERSION_GUARD_BASE || 'HEAD');
+  assert.equal(ok.status, 0, ok.stdout + ok.stderr);
+  const report = JSON.parse(ok.stdout); assert.equal(report.levels.length, 1); assert.equal(report.levels[0].id, 'levelview-1');
+  assert.equal(run('--seeds', '0').status, 1);
+  assert.equal(run('--levels', 'unknown', '--seeds', '1').status, 1);
+});

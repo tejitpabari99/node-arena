@@ -28,5 +28,13 @@ test('validate-content adapter catches regenerated bot locks and locates the req
     });
     await writeFile(source, "export const BOT_VERSION = '1.0.1';\n");
     assert.match(await checkLock(files, dir, root, 'HEAD'), /BOT_VERSION gates agree/);
+    // Param drift (inline per-level v2 `bot` block: actionDelayMs) is caught the same way, without a bump.
+    seat.bot.actionDelayMs += 500;
+    await writeFile(join(dir, 'hashes.lock.json'), JSON.stringify(generateHashes(loadContent(dataOnly(files)))));
+    await execFileSync('git', ['-C', root, 'add', '.']);
+    execFileSync('git', ['-C', root, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'bump']);
+    seat.bot.actionDelayMs += 500;
+    await writeFile(join(dir, 'hashes.lock.json'), JSON.stringify(generateHashes(loadContent(dataOnly(files)))));
+    await assert.rejects(checkLock(files, dir, root, 'HEAD'), /BOT_VERSION.*increase/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

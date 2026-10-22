@@ -55,7 +55,7 @@ test('covers R6: CLI --update without a BOT_VERSION bump is rejected', () => {
   try {
     const current = JSON.parse(fs.readFileSync(path.join(pkg, 'test/golden/bots.json'), 'utf8'));
     fs.writeFileSync(file, JSON.stringify(current));
-    const result = spawnSync('node', ['scripts/golden.mjs', '--update', '--file', file], { cwd: pkg, encoding: 'utf8' });
+    const result = spawnSync('node', ['scripts/golden.mjs', '--update', '--file', file], { cwd: pkg, encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: '' } });
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /BOT_VERSION must increase/);
     assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).botVersion, current.botVersion);

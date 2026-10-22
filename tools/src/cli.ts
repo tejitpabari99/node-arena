@@ -6,6 +6,7 @@ import { checkLock, splitFiles } from './content.js';
 import { checkManifest } from './manifest.js';
 import { checkRules } from './rules.js';
 import { emitReport, type GateReport } from './output.js';
+import { writeFile } from 'node:fs/promises';
 import { PARKED_COMMANDS } from './parked-commands.js';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -22,10 +23,10 @@ const manifestFile = 'apps/web/assets/manifest.json';
 let format: 'md' | 'json' = args[args.indexOf('--format') + 1] === 'json' ? 'json' : 'md';
 async function main(): Promise<void> {
   if (command in PARKED_COMMANDS) throw new LocatedError('arguments', `${command} is parked until ${PARKED_COMMANDS[command]} (implementation in tools/src/_parked)`);
-  if (!['validate:content', 'check:manifest', 'check:rules', 'replay:verify'].includes(command)) throw new LocatedError('arguments', 'Expected validate:content, check:manifest, check:rules or replay:verify');
+  if (!['validate:content', 'validate:levels', 'levels:lock', 'balance', 'check:manifest', 'check:rules', 'replay:verify'].includes(command)) throw new LocatedError('arguments', 'Expected validate:content, validate:levels, levels:lock, balance, check:manifest, check:rules or replay:verify');
   const target = command === 'replay:verify' && args[0] && !args[0].startsWith('--') ? args.shift() : undefined;
   const opts: Record<string,string> = {};
-  const supported = command === 'check:rules' ? ['--rules', '--packages-dir', '--format'] : command === 'replay:verify' ? ['--dir', '--format'] : ['--dir', '--base', '--format', '--manifest', '--assets-dir', '--credits'];
+  const supported = command === 'balance' ? ['--dir', '--format', '--levels', '--proxy', '--seeds', '--jobs', '--mode'] : command === 'validate:levels' ? ['--dir', '--base', '--format', '--levels', '--seeds', '--max-ticks', '--lock', '--unsolved'] : command === 'levels:lock' ? ['--dir', '--format', '--lock', '--unsolved', '--max-ticks'] : command === 'check:rules' ? ['--rules', '--packages-dir', '--format'] : command === 'replay:verify' ? ['--dir', '--format'] : ['--dir', '--base', '--format', '--manifest', '--assets-dir', '--credits'];
   for (let i = 0; i < args.length; i += 2) {
     const key = args[i]!; const value = args[i + 1];
     if (!supported.includes(key)) throw new LocatedError('arguments', `Unknown option ${key}`);
@@ -52,6 +53,43 @@ async function main(): Promise<void> {
   const result = validateContent(data);
   report.errors.push(...result.errors); report.warnings.push(...result.warnings);
   if (report.errors.length) return;
+  const positive = (key: string, dflt: string): number => {
+    const raw = opts[key] ?? dflt;
+    if (!/^[1-9][0-9]*$/.test(raw)) throw new LocatedError('arguments', `${key} must be a positive integer`);
+    return Number(raw);
+  };
+  if (command === 'balance') {
+    const { balance } = await import('./balance.js');
+    report.balance = await balance(data, meta, { levels: opts['--levels'] ?? 'all', ...(opts['--proxy'] ? { proxy: opts['--proxy'] } : {}), seeds: positive('--seeds', '20'), jobs: positive('--jobs', '2'), mode: (opts['--mode'] ?? 'campaign') as 'campaign' | 'arena' });
+    report.ok = true; report.summary = `${report.balance.rows.length} balance rows (report only, no targets).`; return;
+  }
+  if (command === 'validate:levels' || command === 'levels:lock') {
+    const { validateLevels, buildLock, checkLevelsLock, DEFAULT_MAX_TICKS } = await import('./levels.js');
+    const { readUnsolved } = await import('./unsolved.js');
+    const lockPath = resolve(opts['--lock'] ?? resolve(root, 'tools/levels-lock.json'));
+    const unsolved = await readUnsolved(resolve(opts['--unsolved'] ?? resolve(root, 'tools/unsolved-by-proxy.json')));
+    const maxTicks = positive('--max-ticks', String(DEFAULT_MAX_TICKS));
+    if (command === 'levels:lock') {
+      report.levels = validateLevels(data, unsolved, 'all', 1, maxTicks);
+      const broken = report.levels.filter(level => !level.deterministic || level.errors.some(e => /rejected|rerun|Idle/.test(e)));
+      for (const level of broken) report.errors.push({ file: `data/levels/${level.id}.json`, pointer: '', message: level.errors.join('; ') });
+      if (broken.length) return;
+      await writeFile(lockPath, `${JSON.stringify(buildLock(report.levels), null, 2)}\n`);
+      report.summary = `Wrote ${lockPath} (${report.levels.length} levels, seed 1).`; report.ok = true; return;
+    }
+    report.summary = await checkLock(files, dir, root, opts['--base'] ?? (process.env.VERSION_GUARD_BASE || 'HEAD'));
+    const seeds = positive('--seeds', '4');
+    report.levels = validateLevels(data, unsolved, opts['--levels'] ?? 'all', seeds, maxTicks);
+    for (const level of report.levels) {
+      for (const message of level.errors) report.errors.push({ file: `data/levels/${level.id}.json`, pointer: '', message });
+      for (const message of level.warnings) report.warnings.push({ file: `data/levels/${level.id}.json`, pointer: '', message });
+    }
+    const lock = (await readJson(lockPath, 'tools/levels-lock.json')) as Record<string, { outcome: string; ticks: number; finalHash: string }>;
+    for (const message of checkLevelsLock(report.levels, lock)) report.errors.push({ file: 'tools/levels-lock.json', pointer: '', message });
+    report.summary += ` ${report.levels.filter(level => level.ok).length}/${report.levels.length} levels passed (${seeds} seeds); ${report.levels.filter(level => !level.solvable).length} unsolved by proxy.`;
+    if (report.errors.length) return;
+    report.ok = true; return;
+  }
   if (command === 'validate:content') {
     report.summary = await checkLock(files, dir, root, opts['--base'] ?? (process.env.VERSION_GUARD_BASE || 'HEAD'));
   }

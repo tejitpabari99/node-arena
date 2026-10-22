@@ -49,12 +49,12 @@ test('parkedArtifacts reports _parked dirs and a non-empty refusal list', () => 
   mkdirSync(resolve(dir, 'tools/test/_parked'), { recursive: true });
   assert.equal(parkedArtifacts(dir, { balance: 'SP06' }).length, 3);
 });
-test('PARKED_COMMANDS owners agree with ci.sh PARKED entries; the real repo lists its artifacts', () => {
+test('PARKED_COMMANDS owners agree with ci.sh PARKED entries; the real repo has no tools artifacts left', () => {
   const entries = parseParked(readFileSync(resolve(root, 'scripts/ci.sh'), 'utf8'));
   for (const [command, owner] of Object.entries(PARKED_COMMANDS)) {
     const gate = entries.find(e => e.gate === command);
     if (gate) assert.equal(gate.owner, owner, command);
   }
-  assert.ok(parkedArtifacts(root).some(a => a.startsWith('cli command validate:levels')));
+  assert.ok(!parkedArtifacts(root).some(a => a.includes('validate:levels') || a.includes('balance') || a.includes('_parked')), 'levels/balance are un-parked (06 Task 8)');
   assert.ok(!parkedArtifacts(root).some(a => a.includes('replay')), 'replay is un-parked');
 });

@@ -1,6 +1,5 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": { "noEmit": true, "types": ["node"] },
-  "include": ["src/**/*.ts", "test/**/*.ts"],
-  "exclude": ["src/_parked", "test/_parked"]
+  "include": ["src/**/*.ts", "test/**/*.ts"]
 }

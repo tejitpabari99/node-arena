@@ -6,9 +6,8 @@ Node-only TypeScript gates, executed with `tsx`. Build `@node-arena/content` fir
 
 - `layout/` — optional symmetry helper (`mirror|rot3|rot4`): `pnpm --filter @node-arena/tools layout layout/examples/rot3.json --out <level.json>` emits level JSON to commit; JSON stays source of truth.
 - `src/cli.ts` — content, manifest, rule coverage, replay and level gate dispatch and located diagnostics.
-- `src/levels.ts` / `src/levels-output.ts` — per-band match gate, committed solution verification and per-level reports.
-- `solutions/` — committed band-four scripted winning replays.
-- `test/fixtures/levels/` — isolated win, loss, idle-win and seeded band-four scenarios.
+- `src/levels.ts` / `src/levels-output.ts` / `src/unsolved.ts` — proxy solvability gate (06 R6), `levels-lock.json` determinism lock, `unsolved-by-proxy.json` allowlist.
+- `solutions/` — reserved (no recorded-solution fallback in v2).
 - `src/rules.ts` — active rule headings and literal coverage tags in parsed test titles.
 - `src/replay.ts` — public SP02 playback of standalone records and golden bundles, with content-level resolution.
 - `src/walk.ts` — sorted file traversal, excluding generated/dependency directories and refusing symlinks.
@@ -43,30 +42,23 @@ Options: `--format md|json` (default md), `--dir <content-package-directory>`, `
 
 The `golden` alias recursively scans `packages/sim/test/golden` and `packages/bots/test/golden` when the latter exists. SP02-style JSON bundles (`metadata`, `scenarios` with compiled `level`, `results` with `name`/`replay`) use embedded test-owned compiled inputs, recompute their simulation identities, and require authoritative metadata. Standalone records and `{replay: ...}` wrappers resolve authored levels instead. Auxiliary objects containing only command logs may coexist with records; malformed replay-like JSON fails and an input with zero replay records fails. The verifier reads JSON data, never imports executable fixture modules. All reports use the shared Markdown/JSON shape and exit 1 on failure.
 
-`validate:levels --levels id|all --seeds 4` first runs the same content/schema/lock/version checks as `validate:content`, then binds the resolved `reference` and `idle` profiles to the level's single human seat. Authored bot seats keep their compiled profiles. Seeds are exactly `1..K`, with fresh controllers each run; seed 1 is repeated and its final hash compared. Every match runs to its configured end with zero rejected commands and no invariant exceptions. A win requires both `outcome: won` and the human team's ID; timeouts never count.
+`validate:levels --levels id|all --seeds 4 --max-ticks 20000` first runs the same content/schema/lock/version checks as `validate:content`, then plays the human seat (the one player without a `bot` block) with the `tw` human proxy (`HUMAN_PROXY`) against the authored AIs, seeds exactly `1..K`, fresh controllers each run. Per level: (a) every run finishes within `--max-ticks` (untimed levels are capped; a capped stalemate is reported in the `Capped` column, not a failure) with 0 rejected commands and no invariant throw, and a seed-1 rerun (action delay 2000) has an equal final hash; (b) an idle human (no commands) never wins; (c) solvable = any win over proxy action delays 500/1000/2000 (`behavior: full`; faster = stronger). Win counts per delay are printed. Band-based `requiredWins` is retired. It also asserts the `common` campaign entries are exactly the files in `data/levels`.
 
-Bands 1–3 require all K reference wins. Band 4 requires at least K−1 (including zero required wins at K=1). Idle must win zero runs in every band. A band-four reference shortfall can pass via `tools/solutions/<levelId>.replay.json`, committed unchanged at HEAD. The standalone replay must pass public `playReplay` compatibility/checkpoint/final-hash/outcome verification for that exact level and record a legal human-team win. The gate then extracts only the human commands and runs them as a scripted controller against the authored opponents, requiring the same winning outcome, final tick and hash. A changed `simHash` invalidates the solution. Bundles, foreign-level records, staged-only or modified solution files cannot satisfy this fallback.
+`tools/unsolved-by-proxy.json` (`[{id, position, reason, ownerSignOff}]`, schema-checked in `src/unsolved.ts`) lists levels the proxy cannot win. An unsolvable level not in the list fails; a listed level is printed as a warning (owner sign-off pending until `ownerSignOff` is set after the manual playthrough); a listed level the proxy now solves also warns (remove it from the list). `tools/levels-lock.json` holds seed-1 (delay 2000) outcome, final tick and final hash per level; `validate:levels` fails on any difference and `pnpm levels:lock` rewrites it (do so only after the rules/content/BOT_VERSION bump that justifies the change).
 
 ```sh
 pnpm build
 pnpm validate:levels
-pnpm validate:levels --levels sample --seeds 4 --format json
-pnpm validate:levels --levels all --seeds 4 --base <git-revision>
+pnpm validate:levels --levels levelview-1 --seeds 1 --format json
+pnpm validate:levels --seeds 2 --base <git-revision>
+pnpm levels:lock
 ```
 
-Reports go to stdout: Markdown contains one section and seed table per level; JSON contains the shared gate fields plus sorted `levels` with per-seed outcomes, ticks, hashes, rejection counts and final player/tower statistics. Gate failures exit 1. `--dir` and `--base` have the same content/baseline meaning as `validate:content`. The current repository has one sample level; the gate automatically includes SP05's future authored dataset without creating or tuning campaign levels here. `src/levels.ts`, `src/levels-output.ts` and `test/fixtures/levels/` implement and exercise this gate.
+Reports go to stdout: Markdown has one table row per level; JSON has the shared gate fields plus `levels` (wins per proxy delay, idle wins, capped runs, lock entry, errors, warnings). Gate failures exit 1. Measured runtime at 4 seeds: ~38 s for all 20 levels (09 allows dropping CI to `--seeds 2` if over budget).
 
-`balance --levels all --proxy reference,human-proxy,idle --seeds 200 --jobs 2 --format md|json` measures the full configured match duration with fresh controllers and seeds exactly `1..N`. Campaign mode replaces the single human controller; authored opponent profiles remain fixed. `--levels <id>` selects one level. Root `pnpm balance` preserves supplied relative paths; `--dir` selects a different validated content corpus.
-
-`--mode arena` sorts and deduplicates selected profiles, then runs P rotations per seed. Dense seat s receives profile `(s + rotation) % P`: every profile visits every seat once per seed, including repeated profiles when there are fewer profiles than seats. Rows aggregate by level/profile over controlled seat appearances. `matches` counts matches containing that profile; `observations` counts controlled seats. Win percentages use the controlled seat's winning team (including bot-team wins reported as human-relative losses); timeouts never count as wins. Rows also contain median seconds to win (null with zero wins), timeout/draw percentages, and median final owned tower count.
-
-A real `worker_threads` pool defaults to two workers, and ordered aggregation gives byte-identical Markdown/JSON for `--jobs 1` and `--jobs 2`. Reports have sorted rows and a header with rulesVersion, contentVersion, resolved per-profile botHash and BOT_VERSION, with no timestamps or worker-count-dependent fields. Invalid content/profiles/options, worker failures, rejected commands and truncated matches fail the command; partial suites never produce a successful balance report. Statistical target violations flag rows and keep exit status 0, since balance is a measurement tool rather than the level gate.
-
-SP05 authors `tools/balance-targets.json`; no placeholder values are supplied here. All target numbers are percentages in 0..100. Every band `1`–`4` requires `{referenceWinMin, humanProxyWin:[min,max], timeoutMaxPct, idleWinMax}` with ordered human-proxy bounds and no unknown fields. [balance-targets.schema.json](balance-targets.schema.json) is the editor schema; `src/balance-targets.ts` exports the same TypeBox/Ajv runtime boundary. An optional `$schema` string can reference the editor schema. Use `--targets <file>` for fixture/custom targets; an explicitly supplied missing file fails. Missing default targets are explicitly reported as absent, and disable band checks. Reports list selected levels with SP01 overrides.
-
-Balance implementation: `src/balance.ts` builds the matrix and aggregates metrics, `src/balance-match.ts` runs one full match, `src/balance-pool.ts` owns worker lifecycle, `src/balance-worker.mjs` bootstraps TypeScript in each worker, `src/balance-worker.ts` processes tasks, and `src/balance-output.ts` emits the matrix. `test/balance.test.ts` covers real campaign/arena fixtures, cross-worker reproducibility, target bounds and worker failures.
+`balance --levels all --proxy 1000,2000,4000,idle --seeds 20 --jobs 2 --format md|json` is report only (exit 0, no targets, no flags): per level and proxy, win %, median seconds to win, timeout % (capped untimed matches count as timeouts) and median towers. Campaign mode replaces the human seat with the `tw` proxy at the given action delays (`--proxy` tokens are delays in ms plus `idle`); authored AIs stay. `--mode arena` drives every seat with a rotating `tw` proxy (seat `s` gets profile `(s + rotation) % P`). A `worker_threads` pool (default 2) keeps Markdown/JSON byte-identical for `--jobs 1` and `--jobs 2`; the header carries rulesVersion, contentVersion, bot hashes and BOT_VERSION. Files: `src/balance.ts` (matrix, aggregation), `src/balance-match.ts` (one match), `src/balance-pool.ts` (workers), `src/balance-worker.mjs`/`.ts` (worker entry), `src/balance-output.ts` (Markdown).
 
 ```sh
-pnpm balance --levels all --proxy reference,human-proxy,idle --seeds 200 --jobs 2
-pnpm balance --mode arena --proxy rusher,turtle,economist,opportunist --seeds 200 --format json
+pnpm balance --levels all --proxy 1000,2000,4000,idle --seeds 20 --jobs 2
+pnpm balance --mode arena --proxy 1000,2000 --seeds 20 --format json
 ```

@@ -14,3 +14,10 @@ Ideas deferred from current work. Not scheduled.
 - **`validate:content --fix-requires`.** Auto-fill level `requires`; manual until then.
 - **Optional campaign `loop`.**
 - **Web bundle/size budget gate** beyond per-model budgets.
+
+## From SP06 AI port (2026-10-22)
+- **Resource piles as AI targets (dropped).** Not ported; see the pile entry above (weakest-first order shifts on 412 levels).
+- **Reaction/under-attack handler.** Not implemented (inert as compiled in TW); revisit only if a level needs it.
+- **Boss, rocket-tower aiming and railway AI.** Not ported (no params, no behaviour).
+- **`seatPower` / difficulty scaling.** TW Common bots start at 80% of player power; ours are 100%. Needs a meta/difficulty design first.
+- **Useless-attack behaviour.** Disabled in TW RC; not ported.

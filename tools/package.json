@@ -14,6 +14,7 @@
     "check:rules": "tsx src/cli.ts check:rules",
     "replay:verify": "tsx src/cli.ts replay:verify",
     "validate:levels": "tsx src/cli.ts validate:levels",
+    "levels:lock": "tsx src/cli.ts levels:lock",
     "balance": "tsx src/cli.ts balance",
     "assets:import": "node assets/import-art.mjs"
   },

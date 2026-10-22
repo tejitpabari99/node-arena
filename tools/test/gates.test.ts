@@ -24,12 +24,6 @@ test('repo content passes with a JSON report (check:manifest is parked until SP0
   assert.equal(result.report.ok, true);
   assert.equal(result.report.command, 'validate:content');
 });
-test('parked level and balance gates refuse to run with their owner named', () => {
-  for (const command of ['validate:levels', 'balance']) {
-    const result = run(command);
-    assert.equal(result.status, 1); assert.match(result.report.errors[0].message, new RegExp(`${command} is parked until SP06`));
-  }
-});
 test('stale sim and bot locks fail without modifying files', async t => {
   for (const section of ['levels', 'bots']) {
     const dir = await fixture(t);
