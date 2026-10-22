@@ -123,7 +123,7 @@ export async function analyze(file, { expected, hands = false, weaponIcon = fals
     const pc = centroid(transformPointsFlat(part.pos, part.asSeen));
     c.rightPart = { part: rightPart, pass: [0, 1, 2].reduce((s, k) => s + (pc[k] - body[k]) * right[k], 0) > 0, note: 'asymmetric prop expected on the character right (cowboy holster)' };
   }
-  const stages = parts.filter(p => p.name.startsWith('stageMesh_'));
+  const stages = parts.filter(p => p.name.startsWith('stageMesh_') || /^stage\d+$/.test(p.name));
   if (stages.length) rep.stages = stages.map(p => ({ node: p.name, tris: p.tris, size: round(p.bboxSeen.size) }));
   // Run frame 0 vs bind pose
   const run = applyFirstFrame(root, 'Run');

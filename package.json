@@ -33,6 +33,8 @@
     "check:parked": "tsx tools/src/cli.ts check:parked",
     "assets:capture": "node tools/assets/capture/capture.mjs",
     "assets:validate": "tsx tools/assets/validate/run.mjs",
+    "assets:tw": "pnpm --filter @node-arena/tools assets:tw",
+    "assets:tw:check": "pnpm --filter @node-arena/tools assets:tw:check",
     "import:tw": "tsx tools/src/cli.ts import:tw",
     "check:import": "tsx tools/src/cli.ts check:import",
     "replay:verify": "tsx tools/src/cli.ts replay:verify",

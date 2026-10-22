@@ -1,5 +1,5 @@
 // Turntable page. window.renderShot(opts) draws one view on the canvas; the runner screenshots it.
-// opts: { glb, yaw, pitch, mirror, color: 'srgb'|'gamma', stage, tex, w, h, bg, pose, fov, hideInactive }
+// opts: { glb, yaw, pitch, mirror, color: 'srgb'|'gamma', stage, stageNodes, tex, w, h, bg, pose, fov, hideInactive }
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createMirroredWorldRoot } from './world-root.js';
@@ -53,6 +53,17 @@ window.renderShot = async o => {
       if (n.name.startsWith('stageMesh_')) n.visible = n.userData.houseArtStageIndex === o.stage;
       if (n.isMesh && n.children.some(c => c.name.startsWith('stageMesh_'))) n.material.visible = false; // parent keeps children visible
     });
+  }
+  if (o.stage != null) {
+    // Importer output (Task 3): stage0..N nodes; hide the others.
+    model.traverse(n => { if (/^stage\d+$/.test(n.name)) n.visible = n.name === `stage${o.stage}`; });
+  }
+  if (o.stageNodes != null) {
+    // Importer output: show only the nodes of extras.stageNodes[stageNodes] (enable-list stages, e.g. the factory).
+    let rootNode = null;
+    model.traverse(n => { if (!rootNode && n.userData?.stageNodes) rootNode = n; });
+    const list = new Set(rootNode.userData.stageNodes[o.stageNodes]);
+    model.traverse(n => { if (n.isMesh) n.visible = list.has(n.name); });
   }
   if (o.showAll) model.traverse(n => { n.visible = true; });
   const scene = new THREE.Scene();

@@ -4,7 +4,8 @@
 // Without TW_EXTRACT (or a missing extract) it prints a skip notice and exits 0 (CI has no extract).
 // For each in-scope prototype GLB it (1) runs the automated checks on the prototype as authored and on the
 // in-memory RAW candidate (candidate.mjs = what the Task 3 importer must emit), both judged under the mirrored
-// worldRoot (02 Frame contract); (2) renders turntable sheets to <out>. Exit 1 only if a RAW candidate fails.
+// worldRoot (02 Frame contract); (2) runs the same checks on the real Task 3 importer output (tools/src/assets-tw, regenerated
+// into gitignored BF/ref/out/importer-tw); (3) renders turntable sheets to <out>. Exit 1 only if a RAW candidate or the importer output fails.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -13,6 +14,7 @@ import sharp from 'sharp';
 import { analyze } from './analyze.mjs';
 import { toRaw } from './candidate.mjs';
 import { startShooter } from './shots.mjs';
+import { runImport } from '../../src/assets-tw/run.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(here, '../../..');
@@ -46,11 +48,11 @@ const sprite = prefix => {
 
 // In-scope assets (PRD R1) + one out-of-scope calibration asset (Cowboy: source of the "known sizes").
 const ASSETS = [
-  { id: 'soldier-default', glb: cat('glb_proto/1_MilitaryDefaultWarriorSkinData.glb'), opts: { hands: true, weaponIcon: true }, icon: sprite('1_Base'), clip: 'Run' },
-  { id: 'tank-default', glb: cat('glb_proto/1_MilitaryAttackWarriorSkinData.glb'), opts: { expected: [0.94, 1.0, 1.6] }, icon: sprite('1_tank') },
-  { id: 'barracks-wt1', glb: cat('glb_proto_buildings/House_Default__None_.glb'), opts: {}, texPrefix: 'MilitaryDefaultHouse', stages: [0, 1, 2] },
-  { id: 'factory-wt2', glb: cat('glb_proto_buildings/House_Attack__None_.glb'), opts: {}, texPrefix: 'MilitaryAttHouse' },
-  { id: 'watch-tower', glb: cat('glb_proto_buildings/Tower.glb'), opts: {}, texPrefix: 'MilitaryTower', stages: [0, 1, 2] },
+  { id: 'soldier-default', imp: 'soldier', glb: cat('glb_proto/1_MilitaryDefaultWarriorSkinData.glb'), opts: { hands: true, weaponIcon: true }, icon: sprite('1_Base'), clip: 'Run' },
+  { id: 'tank-default', imp: 'tank', glb: cat('glb_proto/1_MilitaryAttackWarriorSkinData.glb'), opts: { expected: [0.94, 1.0, 1.6] }, icon: sprite('1_tank') },
+  { id: 'barracks-wt1', imp: 'barracks', glb: cat('glb_proto_buildings/House_Default__None_.glb'), opts: {}, texPrefix: 'MilitaryDefaultHouse', stages: [0, 1, 2] },
+  { id: 'factory-wt2', imp: 'factory', glb: cat('glb_proto_buildings/House_Attack__None_.glb'), opts: {}, texPrefix: 'MilitaryAttHouse' },
+  { id: 'watch-tower', imp: 'tower', glb: cat('glb_proto_buildings/Tower.glb'), opts: {}, texPrefix: 'MilitaryTower', stages: [0, 1, 2] },
   { id: 'calibration-cowboy', glb: cat('glb_proto/10_CowboyDefaultWarriorSkinDara.glb'), opts: { hands: true, expected: [0.6, 0.9, 0.85], rightPart: 'holster' }, calibration: true },
 ];
 for (const a of ASSETS) {
@@ -66,6 +68,12 @@ const rawDir = path.join(BF, 'ref/out/proto-check-raw'); // gitignored scratch (
 fs.mkdirSync(rawDir, { recursive: true });
 fs.mkdirSync(outDir, { recursive: true });
 
+// Importer output (Task 3): regenerate into the temp dir; models carry no texture, so unit checks use the blue team texture, buildings the neutral one.
+const impDir = path.join(BF, 'ref/out/importer-tw'); // gitignored scratch inside the repo (the render server only serves the repo + extract)
+fs.rmSync(impDir, { recursive: true, force: true });
+const imported = await runImport(EXTRACT);
+for (const [p, bytes] of imported.files) { fs.mkdirSync(path.dirname(path.join(impDir, p)), { recursive: true }); fs.writeFileSync(path.join(impDir, p), bytes); }
+
 const report = { rulesOfJudgement: 'as the game sees it: under the mirrored worldRoot (scale.z=-1), FrontSide', assets: {} };
 let failed = false;
 for (const a of ASSETS) {
@@ -73,18 +81,23 @@ for (const a of ASSETS) {
   await toRaw(a.glb, a.rawGlb);
   const proto = await analyze(a.glb, a.opts);
   const raw = await analyze(a.rawGlb, a.opts);
-  report.assets[a.id] = { proto, rawCandidate: raw, calibration: !!a.calibration };
+  let importer = null;
+  if (a.imp) {
+    a.impGlb = path.join(impDir, 'models/tw', `${a.imp}.glb`);
+    importer = await analyze(a.impGlb, { ...a.opts, texFile: path.join(impDir, 'textures/tw', `${a.imp}-${a.texPrefix ? 'gray' : 'blue'}.png`) });
+  }
+  report.assets[a.id] = { proto, rawCandidate: raw, ...(importer ? { importer } : {}), calibration: !!a.calibration };
   const fails = v => Object.entries(v.checks).filter(([, c]) => c && c.pass === false).map(([k]) => k);
-  const pf = fails(proto), rf = fails(raw);
-  console.log(`${a.calibration ? '(calibration) ' : ''}${a.id.padEnd(20)} proto: ${pf.length ? 'FAIL ' + pf.join(',') : 'pass'} | raw candidate: ${rf.length ? 'FAIL ' + rf.join(',') : 'pass'}`);
-  if (rf.length && !a.calibration) failed = true;
+  const pf = fails(proto), rf = fails(raw), imf = importer ? fails(importer) : null;
+  console.log(`${a.calibration ? '(calibration) ' : ''}${a.id.padEnd(20)} proto: ${pf.length ? 'FAIL ' + pf.join(',') : 'pass'} | raw candidate: ${rf.length ? 'FAIL ' + rf.join(',') : 'pass'}${imf ? ` | importer: ${imf.length ? 'FAIL ' + imf.join(',') : 'pass'}` : ''}`);
+  if ((rf.length || imf?.length) && !a.calibration) failed = true;
 }
 fs.writeFileSync(path.join(outDir, 'report.json'), JSON.stringify(stripBulk(report), null, 2) + '\n');
 console.log(`report: ${path.relative(repo, path.join(outDir, 'report.json'))}`);
 
 if (render) await renderAll(ASSETS);
 fs.rmSync(tmp, { recursive: true, force: true });
-console.log(failed ? 'assets:validate: RAW candidate FAILED (see above)' : 'assets:validate: RAW candidate passes all in-scope automated checks');
+console.log(failed ? 'assets:validate: RAW candidate or importer output FAILED (see above)' : 'assets:validate: RAW candidate and importer output pass all in-scope automated checks');
 process.exit(failed ? 1 : 0);
 
 function stripBulk(r) { return JSON.parse(JSON.stringify(r)); }
@@ -126,6 +139,15 @@ async function renderAll(assets) {
         { label: `${a.id} PROTO as authored, mirrored worldRoot: yaw 0/90/180/270 + game cam (FOV21 pitch55)`, imgs: await row(a.glb, {}) },
         { label: `${a.id} RAW candidate (importer output), mirrored worldRoot: same views`, imgs: await row(a.rawGlb, {}) },
       ];
+      if (a.impGlb) {
+        const impTex = `/@fs${path.join(impDir, 'textures/tw', `${a.imp}-${a.texPrefix ? 'gray' : 'blue'}.png`)}`;
+        const impBase = { tex: impTex };
+        const impRow = async extra => { const imgs = []; for (const yaw of yaws) imgs.push(await shot(a.impGlb, { ...impBase, yaw, pitch: 20, ...extra })); imgs.push(await shot(a.impGlb, { ...impBase, yaw: 180, pitch: 55, fov: 21, ...extra })); return imgs; };
+        rows.push({ label: `${a.id} IMPORTER output (tools/src/assets-tw), mirrored worldRoot: same views`, imgs: await impRow({}) });
+        if (a.clip) rows.push({ label: `${a.id} IMPORTER output, ${a.clip} frame 0 pose`, imgs: await impRow({ clip: a.clip, t: 0 }) });
+        if (a.stages) for (const st of a.stages) rows.push({ label: `${a.id} IMPORTER output stage ${st} (stage${st})`, imgs: await impRow({ stage: st }) });
+        if (a.id === 'factory-wt2') for (const st of [0, 1, 2]) rows.push({ label: `factory-wt2 IMPORTER output stage ${st} (extras.stageNodes[${st}])`, imgs: await impRow({ stageNodes: st }) });
+      }
       if (a.clip) rows.push({ label: `${a.id} RAW candidate, ${a.clip} frame 0 pose`, imgs: await row(a.rawGlb, { clip: a.clip, t: 0 }) });
       if (a.stages) {
         for (const st of a.stages) rows.push({ label: `${a.id} RAW candidate stage ${st} (stageMesh_${st})`, imgs: await row(a.rawGlb, { stage: st }) });
