@@ -2,33 +2,95 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# CI provides the PR base or pre-push commit. Local runs compare to HEAD's parent.
-base="${CONTENT_BASE:-}"
-if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
-  if git rev-parse --verify 'HEAD^' >/dev/null 2>&1; then
-    base=HEAD^
-  else
-    # An initial commit establishes the first content/version baseline.
-    base=HEAD
+# ---------------------------------------------------------------------------
+# PARKED: gates temporarily skipped, as "<step-name>:<SPnn owner>". A parked step
+# prints "PARKED(SPnn) <step-name>" and is skipped (exit 0 for that step); every
+# other step still runs. Each owning SP deletes its own entries in its last task.
+# Adding an entry needs an SP owner and must happen in the commit that needs it.
+# `pnpm check:parked --strict` (enforced last when CI_RELEASE=1) fails while any remain.
+# Keep this array on its own lines; tools/src/parked.ts parses it.
+#
+# Initial SP01 park list (SP01 applies it in its first commit):
+#   "check:rules:SP04" "sim:golden:SP03" "replay:verify:SP03"
+#   "bots:golden:SP06" "validate:levels:SP06"
+# CUT additions (SP02 CUT / SP03 T1 applies them on top of the SP01 list):
+#   "typecheck:bots:SP06" "typecheck:web:SP08" "test:bots:SP06" "test:web:SP08"
+#   "build:bots:SP06" "build:web:SP08" "tools:levels:SP06" "tools:balance:SP06"
+#   "tools:replay:SP03" "check:manifest:SP07" "balance:SP06" "bench:sim:SP03"
+#   "bench:bots:SP06" "test:web:e2e:SP08"
+# (final owners follow the PRD red-window table; step names tools:* / balance /
+#  test:web:e2e become ci steps when their SP adds them.)
+# ---------------------------------------------------------------------------
+PARKED=(
+)
+
+is_parked() { # prints owner and returns 0 when step $1 is parked
+  local entry
+  for entry in "${PARKED[@]+"${PARKED[@]}"}"; do
+    if [[ "${entry%:*}" == "$1" ]]; then printf '%s' "${entry##*:}"; return 0; fi
+  done
+  return 1
+}
+step() { # step <name> <command...>
+  local name="$1" owner; shift
+  if owner=$(is_parked "$name"); then echo "PARKED($owner) $name"; return 0; fi
+  echo "==> $name"
+  "$@"
+}
+
+# Version-guard base precedence: explicit VERSION_GUARD_BASE > CONTENT_BASE (CI passes
+# the PR base / pre-push commit) > `git merge-base HEAD main` (or origin/main) for the
+# whole branch > HEAD^ (initial commit: HEAD). CI_RELEASE=1 (merge to main) runs with
+# VERSION_GUARD_BASE unset so scripts use their normal HEAD / HEAD^ guard.
+cb="${CONTENT_BASE:-}"; [[ "$cb" =~ ^0+$ ]] && cb=""
+if [[ "${CI_RELEASE:-}" == "1" ]]; then
+  unset VERSION_GUARD_BASE
+  base="${cb:-HEAD^}"
+else
+  base="${VERSION_GUARD_BASE:-$cb}"
+  if [[ -z "$base" ]]; then
+    base=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || true)
   fi
+  [[ -z "$base" ]] && base=HEAD^
+  export VERSION_GUARD_BASE="$base"
 fi
-git rev-parse --verify "${base}^{commit}" >/dev/null
+if ! git rev-parse --verify "${base}^{commit}" >/dev/null 2>&1; then
+  # An initial commit establishes the first content/version baseline.
+  base=HEAD
+  [[ -n "${VERSION_GUARD_BASE:-}" ]] && export VERSION_GUARD_BASE="$base"
+fi
 echo "Content version baseline: $base"
 
-pnpm lint
+step lint pnpm lint
 # Workspace tests import package dist exports, which do not exist on a fresh checkout.
-pnpm build:prerequisites
-pnpm typecheck
-pnpm test
-pnpm check:schemas
-pnpm check:content --base "$base"
-pnpm validate:content --base "$base"
-pnpm check:manifest
-pnpm check:rules
-pnpm validate:levels --seeds 4 --base "$base"
-pnpm replay:verify golden
-pnpm sim:golden
-pnpm bots:golden
-pnpm bench:sim
+step build:content pnpm build:content
+step build:sim pnpm build:sim
+step build:bots pnpm build:bots
+step typecheck:content pnpm typecheck:content
+step typecheck:sim pnpm typecheck:sim
+step typecheck:bots pnpm typecheck:bots
+step typecheck:tools pnpm typecheck:tools
+step typecheck:web pnpm typecheck:web
+step test:content pnpm test:content
+step test:sim pnpm test:sim
+step test:bots pnpm test:bots
+step test:tools pnpm test:tools
+step test:web pnpm test:web
+step check:schemas pnpm check:schemas
+step check:content pnpm check:content --base "$base"
+step validate:content pnpm validate:content --base "$base"
+step check:manifest pnpm check:manifest
+step check:rules pnpm check:rules
+step validate:levels pnpm validate:levels --seeds 4 --base "$base"
+step replay:verify pnpm replay:verify golden
+step sim:golden pnpm sim:golden
+step bots:golden pnpm bots:golden
+step bench:sim pnpm bench:sim
 # PRD permits 5x the strict local 1 ms bot decision budget on shared CI runners.
-pnpm bench:bots --ci
+step bench:bots pnpm bench:bots --ci
+# Last step: lists the parked gates; fails on any only for release runs.
+if [[ "${CI_RELEASE:-}" == "1" ]]; then
+  step check:parked pnpm check:parked --strict
+else
+  step check:parked pnpm check:parked
+fi

@@ -44,11 +44,14 @@ export function verifyBundle(expected, actual) {
 function committedVersion(file) {
   // Also guards deletion/replacement of the working fixture. Missing HEAD file is bootstrap.
   const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: fileURLToPath(new URL('../../..', import.meta.url)), encoding: 'utf8' }).trim();
+  // VERSION_GUARD_BASE (branch merge-base) overrides HEAD; unset = unchanged.
+  const ref = process.env.VERSION_GUARD_BASE || 'HEAD';
+  console.log(`version guard base: ${ref}`);
   const path = relative(root, file).replaceAll('\\', '/');
   if (path.startsWith('../')) return undefined;
-  const names = execFileSync('git', ['-C', root, 'ls-tree', '-r', '--name-only', 'HEAD', '--', path], { encoding: 'utf8' }).trim();
+  const names = execFileSync('git', ['-C', root, 'ls-tree', '-r', '--name-only', ref, '--', path], { encoding: 'utf8' }).trim();
   if (!names) return undefined;
-  return JSON.parse(execFileSync('git', ['-C', root, 'show', `HEAD:${path}`], { encoding: 'utf8' })).botVersion;
+  return JSON.parse(execFileSync('git', ['-C', root, 'show', `${ref}:${path}`], { encoding: 'utf8' })).botVersion;
 }
 async function main() {
   const args = process.argv.slice(2); let file = defaultFile, update = false;

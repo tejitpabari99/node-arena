@@ -10,6 +10,12 @@ import { emitReport, type GateReport } from './output.js';
 
 const root = resolve(import.meta.dirname, '../..');
 const args = process.argv.slice(2); const command = args.shift() ?? '';
+if (command === 'check:parked') {
+  const { runParked } = await import('./parked.js');
+  try { process.exitCode = await runParked(args, resolve(root, 'scripts/ci.sh')); }
+  catch (error) { console.error((error as Error).message); process.exitCode = 2; }
+  process.exit();
+}
 const report: GateReport = { command, ok: false, errors: [], warnings: [], summary: 'Validation failed.' };
 let manifestFile = 'apps/web/assets/manifest.json';
 let format: 'md' | 'json' = args[args.indexOf('--format') + 1] === 'json' ? 'json' : 'md';
@@ -49,7 +55,7 @@ async function main(): Promise<void> {
   report.errors.push(...result.errors); report.warnings.push(...result.warnings);
   if (report.errors.length) return;
   if (command === 'validate:content' || command === 'validate:levels') {
-    report.summary = await checkLock(files, dir, root, opts['--base'] ?? 'HEAD');
+    report.summary = await checkLock(files, dir, root, opts['--base'] ?? (process.env.VERSION_GUARD_BASE || 'HEAD'));
     if (command === 'validate:levels') {
       const rawSeeds = opts['--seeds'] ?? '4';
       if (!/^[1-9][0-9]*$/.test(rawSeeds)) throw new LocatedError('arguments', '--seeds must be a positive integer');

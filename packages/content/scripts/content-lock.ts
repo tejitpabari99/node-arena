@@ -55,7 +55,7 @@ async function main() {
   const dir = resolve(option('--dir', fileURLToPath(new URL('..', import.meta.url))));
   const rules = await readFile(resolve(option('--rules', fileURLToPath(new URL('../../../docs/GAME_RULES.md', import.meta.url)))), 'utf8');
   const check = args.includes('--check');
-  const baseline = check ? readBaseline(dir, option('--base', 'HEAD')) : undefined;
+  const baseline = check ? readBaseline(dir, option('--base', process.env.VERSION_GUARD_BASE || 'HEAD')) : undefined;
   const files = await dataFiles(dir);
   const metadataRaw = await optionalRead(join(dir, 'content.json'));
   let hashes: HashesLock;
@@ -79,7 +79,7 @@ async function main() {
       if (lock === null || canonicalJson(JSON.parse(lock)) !== canonicalJson(hashes)) throw new Error('hashes.lock.json is stale or missing; run pnpm content:lock');
       checkContentVersion(metadata, hashes, baseline);
       const root = execFileSync('git', ['-C', dir, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
-      checkBotVersion(hashes.bots, baseline?.hashes.bots, readBotVersion(root), readBotVersion(root, option('--base', 'HEAD')));
+      checkBotVersion(hashes.bots, baseline?.hashes.bots, readBotVersion(root), readBotVersion(root, option('--base', process.env.VERSION_GUARD_BASE || 'HEAD')));
     }
   }
   const destination = join(dir, 'hashes.lock.json');

@@ -54,7 +54,10 @@ function main(args = process.argv.slice(2)) {
   const metadata = JSON.parse(fs.readFileSync(path.resolve(packageRoot, '../content/content.json'), 'utf8'));
   const candidate = createBaseline(metadata);
   const existing = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
-  const committed = gitBaseline(repoRoot, 'HEAD');
+  // VERSION_GUARD_BASE (branch merge-base) overrides the HEAD / HEAD^ comparison refs; unset = unchanged.
+  const guardBase = process.env.VERSION_GUARD_BASE || '';
+  if (guardBase) process.stdout.write(`version guard base: ${guardBase}\n`);
+  const committed = gitBaseline(repoRoot, guardBase || 'HEAD');
   if (args.includes('--update')) {
     updateFile(file, candidate, [existing, committed]);
     process.stdout.write(`${candidate.results.length} golden replays updated\n`);
@@ -63,7 +66,7 @@ function main(args = process.argv.slice(2)) {
     // Check staged/worktree updates against HEAD, and committed updates against
     // the parent (or CI's explicit merge-base), so hand-editing JSON cannot bypass.
     if (committed && JSON.stringify(existing) !== JSON.stringify(committed)) assertVersionBump(candidate, committed);
-    const baseRef = process.env.SIM_GOLDEN_BASE_REF ?? 'HEAD^';
+    const baseRef = process.env.SIM_GOLDEN_BASE_REF ?? (guardBase || 'HEAD^');
     const base = gitBaseline(repoRoot, baseRef);
     if (base && JSON.stringify(existing) !== JSON.stringify(base)) assertVersionBump(candidate, base);
     process.stdout.write(`${candidate.results.length} golden replays verified (Node)\n`);
