@@ -2,6 +2,8 @@
 const assert = require('node:assert/strict');
 const BUDGETS = { mean: 0.3, p99: 1, hash: 0.5, hashP99: 0.5 };
 const STRESS_TROOPS = 720;
+// Lane length (world units) of the stress fixture: short enough that head-on fronts meet right after saturation.
+const STRESS_LANE = 100;
 
 function assertBudgets(metrics, ci = false) {
   for (const [metric, budget] of Object.entries(BUDGETS)) {
@@ -13,12 +15,12 @@ function assertBudgets(metrics, ci = false) {
 
 function load() {
   require('tsx/cjs');
-  return { api: require('../src/index.ts'), levels: require('../test/golden/levels.ts') };
+  return { api: require('../src/internal.ts'), levels: require('../test/golden/levels.ts') };
 }
 const total = (view) => Array.from(view.buildings.alive).reduce((a, b) => a + b, 0);
 
 /**
- * (a) Stress: 24 houses (L64, 3 lines each, 130-unit lanes), 4 blocks of K(3,3) between a human and an AI side,
+ * (a) Stress: 24 houses (L64, 3 lines each, STRESS_LANE-unit lanes), 4 blocks of K(3,3) between a human and an AI side,
  * so every line has a hostile reverse line (head-on pairs). Each house saturates at the alive cap of 30: 24 x 30 = 720.
  * Returns { level, commands } where commands are the tick-0 draws.
  */
@@ -27,7 +29,7 @@ function stressFixture(levels) {
   for (let block = 0; block < 4; block++) {
     const z = block * 40, first = buildings.length;
     for (let i = 0; i < 3; i++) buildings.push({ at: [0, z + i * 5], owner: 0, level: 64 });
-    for (let i = 0; i < 3; i++) buildings.push({ at: [130, z + i * 5], owner: 1, level: 64 });
+    for (let i = 0; i < 3; i++) buildings.push({ at: [STRESS_LANE, z + i * 5], owner: 1, level: 64 });
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
       commands.push({ type: 'DrawLine', player: 0, from: first + i, to: first + 3 + j });
       commands.push({ type: 'DrawLine', player: 1, from: first + 3 + j, to: first + i });
@@ -56,25 +58,44 @@ function summarize(steps, hashes) {
   return { mean: mean(steps), p99: percentile(a, 0.99), hash: mean(hashes), hashP99: percentile(h, 0.99), samples: steps.length };
 }
 
-/** Stress run: fresh sims warmed (untimed) until every house is saturated, then timed while 720 troops are alive. */
+/** Count Clash events over the same deterministic run (events on, untimed): ticks `from`..`to` after the draw tick. */
+function clashesBetween(api, level, commands, seed, from, to) {
+  const sim = api.create(level, seed);
+  let clashes = 0;
+  sim.step(commands, { events: true }); // the draw tick itself is outside the window
+  for (let t = 1; t <= to; t++) {
+    const ev = sim.step([], { events: true });
+    if (t >= from) clashes += ev.filter((e) => e.type === 'Clash').length;
+  }
+  return clashes;
+}
+
+/**
+ * Stress run: fresh sims warmed (untimed) until every house is saturated, then `window` ticks timed while head-on
+ * clashes resolve and the alive cap refills. Asserts 720 live troops were reached and >= 1 clash fell inside the timed window.
+ */
 function runStress(trials = 20, window = 40) {
   const { api, levels } = load();
   const { level, commands } = stressFixture(levels);
   const steps = [], hashes = [];
-  let peak = 0;
+  let peak = 0, clashes = 0;
   for (let trial = -2; trial < trials; trial++) { // trials -2..-1 warm the JIT and are not sampled
-    const sim = api.create(level, 1000 + trial);
+    const seed = 1000 + trial;
+    const sim = api.create(level, seed);
     sim.step(commands, { events: false });
-    let guard = 0;
-    while (total(sim.view) < STRESS_TROOPS) { sim.step([], { events: false }); assert.ok(++guard < 400, 'stress never saturated'); }
-    for (let i = 0; i < window && total(sim.view) === STRESS_TROOPS; i++) {
+    let guard = 0, ticks = 1;
+    while (total(sim.view) < STRESS_TROOPS) { sim.step([], { events: false }); ticks++; assert.ok(++guard < 400, 'stress never saturated'); }
+    peak = Math.max(peak, total(sim.view));
+    if (trial === 0) clashes = clashesBetween(api, level, commands, seed, ticks + 1, ticks + window);
+    for (let i = 0; i < window; i++) {
       const t0 = now(); sim.step([], { events: false }); const t1 = now(); sim.hash(); const t2 = now();
       if (trial >= 0) { steps.push(t1 - t0); hashes.push(t2 - t1); }
       peak = Math.max(peak, total(sim.view));
     }
   }
-  assert.equal(peak, STRESS_TROOPS, `stress must reach and hold ${STRESS_TROOPS} live troops (peak ${peak})`);
-  return { ...summarize(steps, hashes), peakTroops: peak };
+  assert.equal(peak, STRESS_TROOPS, `stress must reach ${STRESS_TROOPS} live troops (peak ${peak})`);
+  assert.ok(clashes >= 1, `stress must resolve >= 1 head-on clash inside the timed window (saw ${clashes})`);
+  return { ...summarize(steps, hashes), peakTroops: peak, clashes };
 }
 
 function runRealistic(trials = 40, maxTicks = 1200) {
@@ -94,13 +115,20 @@ function runRealistic(trials = 40, maxTicks = 1200) {
   return { ...summarize(steps, hashes), peakTroops: peak };
 }
 
-const fmt = (m) => `mean ${m.mean.toFixed(4)} ms, p99 ${m.p99.toFixed(4)} ms, hash mean ${m.hash.toFixed(4)} ms, hash p99 ${m.hashP99.toFixed(4)} ms (${m.samples} samples, peak ${m.peakTroops} troops)`;
+/** Bench scenarios, run in order and each held to the budgets. SP04 appends its geometry scenario here (`{ name, run }`). */
+const BENCH_SCENARIOS = [
+  { name: 'stress', run: () => runStress() },
+  { name: 'realistic', run: () => runRealistic() },
+];
+
+const fmt = (m) => `mean ${m.mean.toFixed(4)} ms, p99 ${m.p99.toFixed(4)} ms, hash mean ${m.hash.toFixed(4)} ms, hash p99 ${m.hashP99.toFixed(4)} ms (${m.samples} samples, peak ${m.peakTroops} troops${m.clashes === undefined ? '' : `, ${m.clashes} clashes in window`})`;
 function main(args = process.argv.slice(2)) {
   const ci = args.includes('--ci');
-  const stress = runStress(), realistic = runRealistic();
-  process.stdout.write(`bench:sim stress    ${fmt(stress)}\nbench:sim realistic ${fmt(realistic)}\n`);
-  assertBudgets(stress, ci); assertBudgets(realistic, ci);
+  const width = Math.max(...BENCH_SCENARIOS.map((x) => x.name.length));
+  const results = BENCH_SCENARIOS.map((x) => ({ name: x.name, metrics: x.run() }));
+  for (const { name, metrics } of results) process.stdout.write(`bench:sim ${name.padEnd(width)} ${fmt(metrics)}\n`);
+  for (const { metrics } of results) assertBudgets(metrics, ci);
   process.stdout.write(`bench:sim within budget${ci ? ' (CI x5)' : ''}\n`);
 }
-module.exports = { assertBudgets, runStress, runRealistic, stressFixture, realisticFixture, STRESS_TROOPS };
+module.exports = { assertBudgets, BENCH_SCENARIOS, STRESS_LANE, runStress, runRealistic, stressFixture, realisticFixture, STRESS_TROOPS };
 if (require.main === module) { try { main(); } catch (error) { process.stderr.write(`${error.message}\n`); process.exitCode = 1; } }

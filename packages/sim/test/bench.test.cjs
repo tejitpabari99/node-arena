@@ -18,8 +18,9 @@ test('performance budgets reject each breached metric and CI tolerates only 5x',
 });
 
 test('stress fixture reaches and holds 720 live troops (24 houses x alive cap 30) with head-on lines', () => {
-  const stats = bench.runStress(1, 5);
+  const stats = bench.runStress(1, 40);
   assert.equal(stats.peakTroops, bench.STRESS_TROOPS);
+  assert.ok(stats.clashes >= 1, 'head-on clashes happen inside the timed window');
   assert.equal(bench.STRESS_TROOPS, 720);
   const { level, commands } = bench.stressFixture(require('../test/golden/levels.ts'));
   assert.equal(level.buildings.length, 24);
@@ -30,4 +31,9 @@ test('stress fixture reaches and holds 720 live troops (24 houses x alive cap 30
 
 test('realistic fixture has 12 buildings', () => {
   assert.equal(bench.realisticFixture(require('../test/golden/levels.ts')).level.buildings.length, 12);
+});
+
+test('BENCH_SCENARIOS is the append point for SP04: named scenarios with a run()', () => {
+  assert.deepEqual(bench.BENCH_SCENARIOS.map((x) => x.name), ['stress', 'realistic']);
+  for (const x of bench.BENCH_SCENARIOS) assert.equal(typeof x.run, 'function');
 });
