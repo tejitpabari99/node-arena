@@ -16,3 +16,5 @@ export { step } from './tick.js';
 
 export * from './geometry.js';
 export { checked, compareSumProducts, compareRationalSquares } from './math.js';
+
+export { activeCrossings, sweepCrossed, crossingCandidates } from './crossings.js';

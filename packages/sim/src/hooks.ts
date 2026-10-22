@@ -1,4 +1,5 @@
 import type { RejectReason } from '@node-arena/defs';
+import { refreshCrossings } from './crossings.js';
 import { IMPLS, MODULE_ORDER } from './modules/index.js';
 import type { LineCutReason, SimState } from './types.js';
 
@@ -12,10 +13,12 @@ export function firstDrawRejection(state: SimState, from: number, to: number): R
 }
 
 export function fireLineDrawn(state: SimState, from: number, to: number, drawSeq: number): void {
+  refreshCrossings(state);
   for (const id of MODULE_ORDER) IMPLS[id].hooks?.onLineDrawn?.(state, from, to, drawSeq);
 }
 
 export function fireLineCut(state: SimState, from: number, to: number, reason: LineCutReason): void {
+  refreshCrossings(state);
   for (const id of MODULE_ORDER) IMPLS[id].hooks?.onLineCut?.(state, from, to, reason);
 }
 

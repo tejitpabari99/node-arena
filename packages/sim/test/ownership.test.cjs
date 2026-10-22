@@ -44,7 +44,7 @@ test('covers R-TCK-05: nine phases in order, outcome last; capture inline, kille
   assert.deepEqual([...PHASES], ['commands', 'reserved', 'growth', 'spawn', 'movement', 'contacts', 'towers', 'arrivals', 'outcome']);
   const s = mk((l) => { l.buildings[1].level = 0; });
   put(s, 0, 1, 0, len(s, 0, 1)); // lands on b1 (L0, p1) this tick: captured
-  const T = put(s, 1, 2, 0, 100); // b1's troop in flight; killed by the capture
+  const T = put(s, 1, 2, 0, 20000); // Beyond shared-endpoint contact; killed by the capture
   s.buildings.alive[1] = 1; s.buildings.alive[0] = 1; s.counters.spawned = 2;
   const ev = step(s, [], true);
   assert.equal(s.buildings.owner[1], 0);

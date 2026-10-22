@@ -1,6 +1,7 @@
 import type { ModuleId } from '@node-arena/defs';
 import type { SimEvent } from '@node-arena/defs';
 import { TICK_RATE, idiv, isqrt, mulDiv } from './math.js';
+import { createCrossings, refreshCrossings } from './crossings.js';
 import { TroopRing } from './ring.js';
 import { createStreams } from './streams.js';
 import { IMPLS, MODULE_ORDER } from './modules/index.js';
@@ -92,6 +93,7 @@ export function createState(level: CompiledLevel, seed: number): SimState {
     channels: new Map(), fwd, counters: { spawned: 0, arrived: 0, died: 0, killed: 0 }, events: null,
   };
   for (const id of MODULE_ORDER) IMPLS[id].init?.(state, carrierMap[id]);
+  createCrossings(state);
   return state;
 }
 
@@ -137,6 +139,7 @@ export function spawnTroop(state: SimState, from: number, to: number, kind: numb
   ch.troops.push(0, state.tick, state.buildings.owner[from]!, kind, seq, state.level.units[kind]!.hp);
   state.buildings.alive[from]!++;
   state.counters.spawned++;
+  refreshCrossings(state);
   return seq;
 }
 

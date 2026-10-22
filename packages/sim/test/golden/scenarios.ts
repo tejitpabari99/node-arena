@@ -56,7 +56,7 @@ export const scenarios: Scenario[] = [
     [draw(1, 0, 0, 1), cut(28, 0, 0, 1)]),
   scenario('capture-kills-troops', 'Capture kills every troop sourced at the captured building: on its drawn line and on a line it cut earlier.',
     buildLevel('golden-capture-kills', [house(0, 0, 0, 64), house(10, 0, 1, 1), house(10, 40, null, 5), house(30, 0, null, 5)]), 72,
-    [draw(1, 0, 0, 1), draw(1, 1, 1, 2), cut(25, 1, 1, 2), draw(26, 1, 1, 3), cut(28, 0, 0, 1)]),
+    [draw(1, 0, 0, 1), draw(1, 1, 1, 2), cut(25, 1, 1, 2), draw(30, 1, 1, 3), cut(28, 0, 0, 1)]),
   scenario('exchange-soldier-vs-tank', 'Head-on exchange: soldier dies, tank hp 2 -> 1; the damaged tank trades with the next soldier.',
     buildLevel('golden-exchange-st', [house(0, 0, 0, 64), house(10, 0, 1, 64, { tank: true })]), 70,
     [draw(1, 0, 0, 1), draw(1, 1, 1, 0)]),

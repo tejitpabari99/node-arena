@@ -1,13 +1,24 @@
 import type { SimEvent } from '@node-arena/defs';
+import { activeCrossings, crossingCandidates, sweepCrossed } from './crossings.js';
 import { cutLine } from './commands.js';
 import { fireCapture } from './hooks.js';
 import { TICK_RATE, idiv } from './math.js';
 import { killTroop, liveChannels, progressOf, setLevel, spawnTroop, troopPosition } from './state.js';
 import type { Channel, SimState } from './types.js';
 
-/** SP04 seam (CMB-04 lane crossings, phase 6 after head-on). Stub: no-op. */
-export function crossingPass(_state: SimState): void {
-  // SP04 replaces this body.
+/** R-CMB-04: deterministic pair/sequence order, after head-on. */
+export function crossingPass(state: SimState): void {
+  for (const pair of activeCrossings(state)) {
+    const A = state.channels.get(pair.a)!, B = state.channels.get(pair.b)!;
+    if (!A.troops.len || !B.troops.len) continue;
+    const seqsA = crossingCandidates(state, A, pair.windowA), seqsB = crossingCandidates(state, B, pair.windowB);
+    for (const seqA of seqsA) for (const seqB of seqsB) {
+      const ia = A.troops.indexOfSeq(seqA), ib = B.troops.indexOfSeq(seqB);
+      if (ia < 0) break;
+      if (ib < 0 || A.troops.owner[ia] === B.troops.owner[ib]) continue;
+      if (sweepCrossed(state, pair, A, ia, B, ib)) exchange(state, A.key, seqA, B.key, seqB, 'crossing');
+    }
+  }
 }
 
 export interface ExchangeResult { readonly aAlive: boolean; readonly bAlive: boolean }
