@@ -56,7 +56,13 @@ test('default human output reports a failed gate and rejects unknown options', (
   assert.equal(result.status, 1); assert.match(result.stdout, /FAIL/); assert.match(result.stdout, /Unknown option/);
 });
 test('regenerated sim lock still requires a contentVersion increase over explicit baseline', async t => {
-  const dir = await fixture(t);
+  // Hermetic: fixture is the committed HEAD content, so it matches the --base HEAD baseline regardless of working-tree state.
+  const dir = await mkdtemp(join(tmpdir(), 'arena-tools-head-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const archive = spawnSync('git', ['archive', 'HEAD', 'packages/content', '--format=tar'], { cwd: root, maxBuffer: 1 << 28 });
+  assert.equal(archive.status, 0, String(archive.stderr));
+  const untar = spawnSync('tar', ['-x', '-C', dir, '--strip-components=2'], { input: archive.stdout });
+  assert.equal(untar.status, 0, String(untar.stderr));
   const path = join(dir, 'data/units/soldier.json');
   const troop = JSON.parse(await readFile(path, 'utf8')); troop.speed += 1;
   await writeFile(path, JSON.stringify(troop));
