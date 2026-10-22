@@ -10,9 +10,9 @@ Source of truth: [PRD.md](PRD.md). One bot kind `tw`, literal 20 Hz port of `Def
 |---|---|---|---|
 | 0 | Decomp timer-order pin | 03#1, 05#4 | done |
 | 1 | Delete utility bots; shell + `BOT_VERSION` 2.0.0 | 02#4, 03#1 | done |
-| 2 | Seat bot + default AI | 0, 1, 03#4, 04#3 | in-progress |
-| 3 | Script interpreter | 2 | todo |
-| 4 | Driver + `HUMAN_PROXY` export | 2, 3, 05#4 | todo |
+| 2 | Seat bot + default AI | 0, 1, 03#4, 04#3 | done |
+| 3 | Script interpreter | 2 | done |
+| 4 | Driver + `HUMAN_PROXY` export | 2, 3, 05#4 | in-progress |
 | 5 | Unit + integration tests, lint test | 2, 3, 4 | todo |
 | 6 | Goldens, bench, replay verify | 4, 5 | todo |
 | 7 | Proxy solvability spike (levels 4-23) | 4, 05#4 | todo |
