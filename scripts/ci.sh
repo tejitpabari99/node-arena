@@ -14,25 +14,32 @@ cd "$(dirname "$0")/.."
 #   "check:rules:SP04" "sim:golden:SP03" "replay:verify:SP06"
 #   "bots:golden:SP06" "validate:levels:SP06"
 #   plus the failing test files split out of the live suites (never whole suites):
-#   "test:sim:golden:SP03" "test:tools:replay:SP06" "test:tools:rules:SP04"
+#   "test:sim:golden:SP03" "test:tools:replay:SP03" "test:tools:rules:SP04"
 #   "test:bots:golden:SP06"
 # CUT additions (02 T6 + 03 T1 commit, on top of the SP01 list):
 #   "build:bots:SP06" "typecheck:bots:SP06" "test:bots:SP06" "bench:bots:SP06"
 #   "typecheck:web:SP08" "test:web:SP08" "check:manifest:SP07" "bench:sim:SP03"
 #   "test:bots:golden:SP06" stays: it is its own ci step (separate from test:bots), so it still needs the entry.
 # Not ci.sh steps, so not listed (they stay out of the gate chain until their owner restores them):
-#   tools:levels / tools:balance (SP06) and tools:replay (SP06): tools/src/{levels*,balance*,replay}.ts and
+#   tools:levels / tools:balance (SP06) and tools:replay (SP03): tools/src/{levels*,balance*,replay}.ts and
 #   their tests moved under tools/src/_parked/ and tools/test/_parked/ (excluded from tsconfig);
 #   build:web, balance, test:web:e2e (SP08/SP06): web/bots-owned scripts, not run by ci.sh.
+# Review 2026-10-22 bookkeeping:
+#   replay:verify and test:tools:replay are owned by SP03 (09 red-window un-parks replay:verify at "SP03 done").
+#   Until SP06, the `golden` alias of replay:verify must scan sim goldens only: SP09 Task 2 (in the SP03 window)
+#   adapts tools/src/replay.ts; SP06 adds the bots goldens back.
+#   Browser parity: the deleted content/sim browser-parity tests are restored by SP03 Task 8 (sim golden
+#   browser parity) and SP08 (content hash browser parity). Root `build`/`test`/`build:prerequisites` cover only
+#   the live packages (defs, content, sim, tools) while bots/web are parked.
 # ---------------------------------------------------------------------------
 PARKED=(
   "check:rules:SP04"
   "sim:golden:SP03"
-  "replay:verify:SP06"
+  "replay:verify:SP03"
   "bots:golden:SP06"
   "validate:levels:SP06"
   "test:sim:golden:SP03"
-  "test:tools:replay:SP06"
+  "test:tools:replay:SP03"
   "test:tools:rules:SP04"
   "test:bots:golden:SP06"
   "build:bots:SP06"

@@ -27,7 +27,7 @@ test('repo content passes with a JSON report (check:manifest is parked until SP0
 test('parked level, balance and replay gates refuse to run with their owner named', () => {
   for (const command of ['validate:levels', 'balance', 'replay:verify']) {
     const result = run(command);
-    assert.equal(result.status, 1); assert.match(result.report.errors[0].message, /parked until SP06/);
+    assert.equal(result.status, 1); assert.match(result.report.errors[0].message, new RegExp(`${command} is parked until ${command === 'replay:verify' ? 'SP03' : 'SP06'}`));
   }
 });
 test('stale sim and bot locks fail without modifying files', async t => {

@@ -6,6 +6,7 @@ import { checkLock, splitFiles } from './content.js';
 import { checkManifest } from './manifest.js';
 import { checkRules } from './rules.js';
 import { emitReport, type GateReport } from './output.js';
+import { PARKED_COMMANDS } from './parked-commands.js';
 
 const root = resolve(import.meta.dirname, '../..');
 const args = process.argv.slice(2); const command = args.shift() ?? '';
@@ -18,8 +19,6 @@ if (command === 'check:parked') {
 const report: GateReport = { command, ok: false, errors: [], warnings: [], summary: 'Validation failed.' };
 const manifestFile = 'apps/web/assets/manifest.json';
 let format: 'md' | 'json' = args[args.indexOf('--format') + 1] === 'json' ? 'json' : 'md';
-// Gates whose implementation moved to tools/src/_parked (restored by SP06) until their owner un-parks them.
-const PARKED_COMMANDS: Record<string, string> = { 'replay:verify': 'SP06', 'validate:levels': 'SP06', balance: 'SP06' };
 async function main(): Promise<void> {
   if (command in PARKED_COMMANDS) throw new LocatedError('arguments', `${command} is parked until ${PARKED_COMMANDS[command]} (implementation in tools/src/_parked)`);
   if (!['validate:content', 'check:manifest', 'check:rules'].includes(command)) throw new LocatedError('arguments', 'Expected validate:content, check:manifest or check:rules');
