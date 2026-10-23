@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { loadContent } from '@node-arena/content';
+import { runMatch } from '@node-arena/bots';
 import { loadFiles } from '../src/files.js';
 import { splitFiles } from '../src/content.js';
-import { buildLock, campaignLevels, checkLevelsLock, humanSeat, validateLevel, validateLevels } from '../src/levels.js';
+import { buildLock, campaignLevels, checkLevelsLock, humanSeat, validateLevel, validateLevels, type playProxy } from '../src/levels.js';
+import { levelsMarkdown } from '../src/levels-output.js';
 import { parseUnsolved, readUnsolved, type UnsolvedEntry } from '../src/unsolved.js';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -36,6 +38,56 @@ test('unsolvable level fails unless allowlisted (warning); capped runs are not f
   const listed = validateLevel(compiled['levelview-2-ab']!, 5, 1, entry('levelview-2-ab'), 400);
   assert.equal(listed.ok, true); assert.match(listed.warnings.join(' '), /Unsolved by proxy.*pending/);
 });
+test('idle human victory fails the gate even when all proxies win', () => {
+  const level = structuredClone(compiled['levelview-1']!);
+  const seat = humanSeat(level);
+  for (const building of level.buildings) building.owner = seat;
+  const report = validateLevel(level, 4, 1, null);
+  assert.equal(report.ok, false);
+  assert.equal(report.idleWins, 1);
+  assert.equal(report.totalWins, 3);
+  assert.match(report.errors.join(' '), /Idle human won 1\/1/);
+});
+
+test('rejected command exceptions fail every affected idle/proxy run, despite allowlisting', () => {
+  const level = compiled['levelview-1']!;
+  const reject: typeof playProxy = (fixture, seed) => {
+    const player = humanSeat(fixture);
+    // Exercise the real harness rejection path, rather than fabricating an error message.
+    runMatch({ level: fixture, seed, maxTicks: 1, controllers: [{ player, commands: [
+      { tick: 0, cmd: { type: 'DrawLine', player, from: -1, to: -1 } },
+    ] }] });
+    assert.fail('Malformed command must be rejected');
+  };
+  const report = validateLevel(level, 4, 1, entry(level.id), 1, reject);
+  assert.equal(report.ok, false);
+  for (const proxy of ['idle', 'proxy-500', 'proxy-1000', 'proxy-2000']) {
+    assert.ok(report.errors.some(error => error.startsWith(`${proxy} seed 1: Match rejected 1 command(s)`)), JSON.stringify(report.errors));
+  }
+});
+
+test('simulation invariant exceptions fail every affected idle/proxy run, despite allowlisting', () => {
+  const level = compiled['levelview-1']!;
+  // Inject only the simulation failure boundary; the real gate must preserve its diagnostic.
+  const invariant: typeof playProxy = () => { throw new Error('invariant: building 0 level out of range'); };
+  const report = validateLevel(level, 4, 1, entry(level.id), 1, invariant);
+  assert.equal(report.ok, false);
+  for (const proxy of ['idle', 'proxy-500', 'proxy-1000', 'proxy-2000']) {
+    assert.ok(report.errors.some(error => error.startsWith(`${proxy} seed 1: invariant: building 0 level out of range`)), JSON.stringify(report.errors));
+  }
+});
+
+test('default 20000-tick cap is accepted and printed as Capped for an allowlisted stalemate', () => {
+  const report = validateLevel(compiled['levelview-2-ab']!, 5, 1, entry('levelview-2-ab'));
+  assert.equal(report.ok, true, JSON.stringify(report.errors));
+  assert.equal(report.truncated, 3);
+  assert.equal(report.lock.outcome, 'truncated');
+  assert.equal(report.lock.ticks, 20000);
+  assert.equal(report.deterministic, true);
+  assert.match(levelsMarkdown([report]), /\| Capped \|/);
+  assert.match(levelsMarkdown([report]), /\| 3\/3 \| true \|/);
+});
+
 test('validateLevels rejects an allowlist id that is not a campaign level and bad seeds', () => {
   assert.throws(() => validateLevels(data, [entry('nope')], 'levelview-1', 1), /Unknown level nope/);
   assert.throws(() => validateLevels(data, [], 'levelview-1', 0), /Seeds/);
