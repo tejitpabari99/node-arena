@@ -10,6 +10,7 @@ For Kane CLI Hack Day (2026-10-24) Node Arena becomes a game an AI tester plays 
 
 ## Problem
 Hack-day rule: Kane CLI must verify the app, judged higher when Kane is inside the agent workflow; integration must be built on the day. Spikes (see [research](../../research/kane-cli.md)) showed Kane cannot drag on the Three.js canvas (silent false PASS) but clicks DOM buttons reliably, and runs ~10 s per authored step. The game is real-time and drag-only, so Kane cannot play it as-is. Audience: hack-day judges and attendees; secondarily the owner's dev workflow.
+Probe 2 (2026-10-23, 121 credits) results: see scratch notes summarized in decision log; `--cdp-endpoint` works, double-click + banner reading verified.
 
 ## Licensing (owner decision)
 Owner confirmed (legal check) that using the current artwork and levels is fine for this demo; assets will change later. No licensing restriction applies to this work, including the public hosted demo. The UI, web page and game must not mention "Tower War" anywhere (today only a CSS comment in `apps/web/src/style.css` does; UI text is clean). Carry this decision into design, tasks and code.
@@ -46,8 +47,10 @@ Owner confirmed (legal check) that using the current artwork and levels is fine 
 | CI: GitHub Actions on this branch, build:test + preview + Kane replays, workflow_dispatch + PRs touching apps/web, non-blocking; secrets LT_USERNAME/LT_ACCESS_KEY added by owner | No CI | Third "Kane in dev workflow" proof; not production |
 | Cut order if late: hosted link → log relay → assurance runs (keep cover from designed tests) → floating building tags | — | Owner agreed |
 | Failure plan: owner records a full Kane win video beforehand; Test Manager share link as proof; switch to recording if live match stalls > ~3 min | — | Owner agreed |
-| Match driver: per-move loop on one persistent browser (`--ws-endpoint`), fallback to segmented long objectives (~6 moves) | Single long objective | PROVISIONAL — final pick per tonight's ws-endpoint probe |
-| Speed-up levers: unambiguous button text; persistent browser; minimal-checking flags (`--mode action`, `--bug-detection off`, `--final-validation off`, `--assertion-mode dom`) | Replay as primary | Owner chose; replay only for fixed sequences/backup |
+| Match driver: real-time slow-motion (0.25x) only; Kane chooses every move itself by reading panel labels; driver script runs short Kane objectives of 1–3 moves each on one persistent browser attached via `--cdp-endpoint http://127.0.0.1:9222 --allow-missing-url`; stops on Victory/Defeat dialog | Pause-while-Kane-decides; script picks moves and Kane only clicks; one long play-until-victory objective | Owner: 0.25x should be enough; Kane must be the player. Probe: long objective drifted and failed (34 cr); `--ws-endpoint` hangs, `--cdp-endpoint` attaches to existing tab and keeps game state across runs |
+| Speed levers: unambiguous button text; persistent browser via `--cdp-endpoint`; batch 2–3 moves per objective (amortise ~20 s fixed run overhead) with `--max-steps` ≤8; start the next run as soon as the last step completes (don't wait for post-run finalize/upload) — to verify; optional one-click pair buttons ('A → C') halving steps per move — to evaluate in design | Minimal-checking flags (`--mode action`, `--bug-detection off`, …) | Probe P4: flags gave no measurable gain (41 s vs 39 s; noise larger). Measured per run: ~8 s startup + ~5–6 s per step + ~10–13 s finalize/upload; 2-click move ≈ 40 s, 5–13 credits |
+| Panel locks on game over (buttons disabled, banner 'Game over') | Leave enabled | Probe: Kane 'passed' clicks after loss; panel log said accepted after game over |
+| Ground truth for win/loss and moves = game command log / result dialog read by the driver over CDP, never Kane's claim | Trust Kane run_end | False PASS seen in spikes A and probe P1 |
 
 ## Design
 | Part | Does | Depends on |
@@ -59,7 +62,7 @@ Owner confirmed (legal check) that using the current artwork and levels is fine 
 | Control panel | Bottom card: building buttons (state labels), line buttons (live), select→target DrawLine (numeric ids), dblclick CutLine, reject → red banner (from `CommandRejected` events / `legality`), press animations | harness/app controller |
 | Building tags | DOM tags positioned over buildings each frame via scene projection | renderer inspection |
 | Layout | Camera framing: bottom margin = panel height, map shifted up under top bar | camera fit |
-| Kane driver | Script: persistent Chrome + per-move `kane-cli run` (or segmented objective), stops on Victory dialog; objective text forbids speed button | probe result |
+| Kane driver | Script: persistent Chrome attached via `--cdp-endpoint`; short `kane-cli run` objectives of 1–3 moves (`--max-steps` ≤8), Kane picks every move from panel labels; next run starts as soon as last step completes (to verify); stops on Victory/Defeat dialog; objective text forbids speed button | probe result |
 | Stop hook | `kane-verify.sh` replays panel smoke test; exit 2 feeds failure to Claude; `stop_hook_active` guard | panel |
 | Assurance | ingest excerpt → extract → review → design → testrun → `cover` | panel |
 | CI | Actions workflow replaying saved tests | saved tests, owner secrets |
@@ -78,9 +81,9 @@ Failure handling: Kane false PASS → verify via Victory dialog / panel log (nev
 ## Open risks
 | Risk | Cheapest test |
 |---|---|
-| `--ws-endpoint` attach doesn't persist state / closes browser | Tonight's probe (running) |
+| Kane falls behind at 0.25x (bot outpaces ~40 s/move) | First rehearsal match on na-kane; tune bot `actionDelayMs`, map, moves-per-run |
+| Overlapping next run with previous run's finalize breaks/double-attaches | One 2-run overlap test with --cdp-endpoint |
 | Kane picks bad pairs and never wins | One rehearsal match at 0.25x on na-kane; tune bot delay/map |
-| Double-click / banner reading unreliable | Tonight's probe P2/P3 |
 | Screencast too laggy for viewers | 10-min local screencast check on hack day |
 | Credit burn per match higher than ~100–200 | Measure first rehearsal; cap via floor |
 | Hack-day time (≈7 h) too short for everything | Cut order above |
