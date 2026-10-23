@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 type Obj = Record<string, unknown>;
-interface Override { botStartDelayMs?: Record<string, number>; botActionDelayMs?: Record<string, number>; buildingLevel?: Record<string, number>; buildingPos?: Record<string, { x: number; z: number }> }
+interface Override { botStartDelayMs?: Record<string, number>; botActionDelayMs?: Record<string, number>; buildingLevel?: Record<string, number>; buildingArchetype?: Record<string, string>; buildingPos?: Record<string, { x: number; z: number }> }
 
 let cached: Record<string, Override> | undefined;
 const load = (): Record<string, Override> => (cached ??= JSON.parse(readFileSync(join(import.meta.dirname, 'level-overrides.json'), 'utf8')) as Record<string, Override>);
@@ -22,6 +22,11 @@ export function applyLevelOverrides(slug: string, level: Obj): Obj {
     const p = (out['players'] as Obj[]).find((q) => q['id'] === id);
     if (!p || !p['bot']) throw new Error(`level-overrides ${slug}: no bot seat ${id}`);
     (p['bot'] as Obj)['actionDelayMs'] = d;
+  }
+  for (const [id, arch] of Object.entries(ov.buildingArchetype ?? {})) {
+    const b = (out['buildings'] as Obj[]).find((q) => q['id'] === id);
+    if (!b) throw new Error(`level-overrides ${slug}: no building ${id}`);
+    b['archetype'] = arch;
   }
   for (const [id, lv] of Object.entries(ov.buildingLevel ?? {})) {
     const b = (out['buildings'] as Obj[]).find((q) => q['id'] === id);

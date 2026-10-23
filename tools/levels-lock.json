@@ -10,9 +10,9 @@
     "finalHash": "3f1c63155ff032cb"
   },
   "levelview-100-es": {
-    "outcome": "won",
-    "ticks": 861,
-    "finalHash": "bf571ce36c9dd582"
+    "outcome": "truncated",
+    "ticks": 20000,
+    "finalHash": "90a06ea48da80665"
   },
   "levelview-11": {
     "outcome": "won",
@@ -55,9 +55,9 @@
     "finalHash": "a7223fa098718399"
   },
   "levelview-19": {
-    "outcome": "lost",
-    "ticks": 2450,
-    "finalHash": "421d20c28c3b92df"
+    "outcome": "won",
+    "ticks": 1774,
+    "finalHash": "00ed2757a5f64b94"
   },
   "levelview-2-ab": {
     "outcome": "truncated",
@@ -81,8 +81,8 @@
   },
   "levelview-49": {
     "outcome": "won",
-    "ticks": 1397,
-    "finalHash": "0b50ce265e42815c"
+    "ticks": 1465,
+    "finalHash": "c8ca089653f90df2"
   },
   "levelview-5": {
     "outcome": "won",

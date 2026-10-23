@@ -17,20 +17,23 @@
     "botActionDelayMs": { "p2": 5500, "p3": 5500 }
   },
   "levelview-49": {
-    "reason": "Playtest: Level 17 too easy. Bot p2 reacts faster (9 s -> 6 s).",
-    "botActionDelayMs": { "p2": 6000 }
+    "reason": "Playtest: Level 17 too easy. Bot p2 reacts faster (9 s -> 6 s); contested neutral tank house b0 moved from x -7.25 to -3.25 (out of p1's back yard, toward centre); p2 house b4 starts at level 8 (was 5).",
+    "botActionDelayMs": { "p2": 6000 },
+    "buildingPos": { "b0": { "x": -3.25, "z": 0 } },
+    "buildingLevel": { "b4": 8 }
   },
   "levelview-19": {
-    "reason": "Playtest: Level 18 too easy. Bot p2 reacts faster (24 s -> 12 s).",
-    "botActionDelayMs": { "p2": 12000 }
+    "reason": "Playtest: Level 18 now too hard. Bot p2 reacts faster (24 s -> 16 s; was 12 s).",
+    "botActionDelayMs": { "p2": 16000 }
   },
   "levelview-20": {
     "reason": "Playtest: Level 19 too easy. Bots react faster (p2 11 s -> 7.5 s, p3 9 s -> 6.5 s).",
     "botActionDelayMs": { "p2": 7500, "p3": 6500 }
   },
   "levelview-100-es": {
-    "reason": "Playtest: Level 20 too easy. Bot p2 reacts faster (20 s -> 10 s); its house b1 starts at level 4 (was 1).",
-    "botActionDelayMs": { "p2": 10000 },
-    "buildingLevel": { "b1": 4 }
+    "reason": "Playtest: Level 20 way too easy. Bot p2 reacts faster (20 s -> 8 s); its house b1 becomes a tank house (house-wt1 -> house-wt2; b1 has no params, so none to drop) and starts at level 8 (was 1).",
+    "botActionDelayMs": { "p2": 8000 },
+    "buildingArchetype": { "b1": "house-wt2" },
+    "buildingLevel": { "b1": 8 }
   }
 }
