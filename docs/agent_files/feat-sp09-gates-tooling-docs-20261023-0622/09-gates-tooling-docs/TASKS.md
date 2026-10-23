@@ -18,7 +18,7 @@ Source of truth: [PRD.md](PRD.md). Canonical program lineage: [original SP09 pla
 | 7 | CI workflow updates + env-skip surfacing | 0, 05, 07, 3, 4 | done |
 | 8 | check:docs gate | 0, 5 | done |
 | 9 | Docs refresh (README, tools/README, FUTURES, AGENTS, CREDITS check, research index, web README) | 8, 07, 08, 5 | done |
-| 10 | Final acceptance: full CI on Node 22 + 24, strict parked, perf | 1-9, all SPs | todo |
+| 10 | Final acceptance: full CI on Node 22 + 24, strict parked, perf | 1-9, all SPs | done |
 | 11 | Campaign + owner pass hand-off | 10 | todo |
 
 ## Task 0 — Phase A: parked-step CI runner
@@ -101,3 +101,7 @@ Done when: 20/20 campaign levels clean, grid saved, checklist file ready.
 ### Task 5 completion — 2026-10-23
 
 Removed the remaining web slice script/spec, AGENTS command and tools README layout entry. Other churn/visual/layout/targets artifacts were already removed. README and web README required no cleanup. Verified package JSON, zero live obsolete command/path references outside historical exclusions, `git diff --check`, `pnpm typecheck:web`, and browser test build. Full CI attempt stopped at a concurrent Task 3 restricted internal import; final full gates remain Task 10. Optional browser suite was interrupted before completion per orchestrator scope direction.
+
+### Task 10 completion — 2026-10-23
+
+Final release CI passed on clean local clones at `432d929`, Node 22.23.3 and 24.22.1, pnpm 10.34.6; extract and version overrides unset, strict parked empty. Both regenerated seed-1 locks match committed data. Strict sim/bot benchmarks, preview + development browser suites (16 + 16), and SP07 render budgets passed. See [automated acceptance record](code-2026-10-23-0728.md). Task 11 and owner play/visual/GPU/proxy sign-offs remain.
