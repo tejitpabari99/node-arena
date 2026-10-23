@@ -11,13 +11,15 @@ export interface AppSnapshot {
   screen: Screen; loading: boolean; restartPopup: boolean; levels: readonly CampaignLevel[];
   levelId: string | null; save: SaveData; notices: readonly string[]; error: unknown;
   result: SimView['over']; remainingSeconds: number;
+  /** Close camera zoom; reset to false per app load, kept across level restarts. */
+  zoomed: boolean;
 }
 export interface LevelRuntime {
   readonly inspection?: unknown;
   frame(update: FrameUpdate): void; tick(update: TickUpdate): void;
-  refresh(): void; cancel(): boolean; dispose(): void;
+  refresh(): void; cancel(): boolean; dispose(): void; setZoom?(zoomed: boolean): void;
 }
-export interface RuntimeContext { level: CompiledLevel; manifest: ManifestV2; driver: GameDriver; enabled(): boolean }
+export interface RuntimeContext { level: CompiledLevel; manifest: ManifestV2; driver: GameDriver; enabled(): boolean; zoomed: boolean }
 export interface AppOptions {
   files: ContentFiles; campaignId?: string; loadManifest?: () => Promise<ManifestV2>; save?: SaveStore;
   autoStart?: boolean; resultDelayMs?: number; createSim?: GameDriverOptions['createSim']; createBotDriver?: GameDriverOptions['createBotDriver'];
@@ -30,7 +32,7 @@ export function isLevelUnlocked(state: Pick<AppSnapshot,'levels'|'save'>, id: st
 /** Level resources have generation-scoped ownership, including asynchronous renderer construction. */
 export function createAppController(options: AppOptions) {
   const save=options.save??createSaveStore(), listeners=new Set<()=>void>(),events=new Set<(u:TickUpdate)=>void>();
-  let state: AppSnapshot={screen:'boot',loading:true,restartPopup:false,levels:[],levelId:null,save:save.snapshot(),notices:[],error:null,result:null,remainingSeconds:0};
+  let state: AppSnapshot={screen:'boot',loading:true,restartPopup:false,levels:[],levelId:null,save:save.snapshot(),notices:[],error:null,result:null,remainingSeconds:0,zoomed:false};
   let loaded: LoadedContent|undefined, manifest: ManifestV2|undefined,driver:GameDriver|null=null,runtime:LevelRuntime|undefined;
   let lastSeed=1;
   let finishing: ReturnType<typeof setTimeout>|null=null,finishingOn=false;
@@ -71,7 +73,7 @@ export function createAppController(options: AppOptions) {
           onPauseChange:reason=>{if(reason&&token===generation&&state.screen==='playing'&&!finishingOn){state={...state,restartPopup:true};runtime?.cancel();publish();}},
         });
         driver=owned;
-        created=await options.createRuntime?.({level,manifest,driver:owned,enabled:()=>state.screen==='playing'&&!state.restartPopup&&!finishingOn});
+        created=await options.createRuntime?.({level,manifest,driver:owned,enabled:()=>state.screen==='playing'&&!state.restartPopup&&!finishingOn,zoomed:state.zoomed});
         if(disposed||token!==generation){created?.dispose();owned.dispose();return;}
         runtime=created;lastPublication=-Infinity;save.setLastLevel(id);
         state={...state,screen:'playing',loading:false,restartPopup:owned.paused,remainingSeconds:Math.ceil(owned.sim.view.timeLimitTicks/TICK_RATE)};
@@ -85,6 +87,7 @@ export function createAppController(options: AppOptions) {
     restart(){return state.levelId?api.startLevel(state.levelId,lastSeed):Promise.resolve();},
     next(){const i=state.levels.findIndex(l=>l.id===state.levelId),next=state.levels[i+1];return next?api.startLevel(next.id):Promise.resolve();},
     retry(){return state.levelId&&loaded?api.restart():api.boot();},
+    toggleZoom(){state={...state,zoomed:!state.zoomed};runtime?.setZoom?.(state.zoomed);publish();},
     updateSettings(patch:Partial<SaveSettings>){save.updateSettings(patch);publish();},
     dismissNotices(){state={...state,notices:[]};publish();},
     step(count=1){return driver?.step(count)??0;},

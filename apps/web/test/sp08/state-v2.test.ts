@@ -16,3 +16,12 @@ it('runtime failure is recoverable, and disposing while loading cleans late reso
 it('driver publishes public view tick and opted-in sim events',async()=>{const step=vi.fn();const app=setup({createSim:(level,seed)=>{const sim=create(level,seed);return {...sim,step:(commands,options)=>{step(commands,options);return sim.step(commands,options);}};}});await app.boot();await app.startLevel(app.snapshot().levels[0]!.id);const updates:number[]=[];app.subscribeEvents(u=>updates.push(u.tick));app.step(3);expect(updates).toEqual([1,2,3]);expect(step.mock.calls[0]![1]).toEqual({events:true});app.dispose();});
 it('restart replaces a pending generation without disposing its successor',async()=>{const pending:((r:LevelRuntime)=>void)[]=[];const app=setup({createRuntime:()=>new Promise(r=>pending.push(r))});await app.boot();const first=app.startLevel(app.snapshot().levels[0]!.id);const second=app.restart();const fresh=runtime(),stale=runtime();pending[1]!(fresh);await second;pending[0]!(stale);await first;expect(app.runtime).toBe(fresh);expect(stale.dispose).toHaveBeenCalledOnce();expect(fresh.dispose).not.toHaveBeenCalled();expect(app.snapshot().screen).toBe('playing');app.dispose();expect(fresh.dispose).toHaveBeenCalledOnce();});
 it('publishes ordinary HUD ticks at no more than 10 Hz',async()=>{const app=setup();await app.boot();await app.startLevel(app.snapshot().levels[0]!.id);const ticks:number[]=[];app.subscribe(()=>ticks.push(app.driver!.sim.view.tick));app.step(20);expect(ticks.length).toBeGreaterThan(0);for(let i=1;i<ticks.length;i++)expect(ticks[i]!-ticks[i-1]!).toBeGreaterThanOrEqual(TICK_RATE/10);app.dispose();});
+it('zoom toggle defaults off, forwards to runtime, and survives restart',async()=>{
+  const setZoom=vi.fn();const ctxs:boolean[]=[];
+  const app=setup({createRuntime:async(c)=>{ctxs.push(c.zoomed);return {...runtime(),setZoom};}});
+  await app.boot();expect(app.snapshot().zoomed).toBe(false);
+  await app.startLevel(app.snapshot().levels[0]!.id);
+  app.toggleZoom();expect(app.snapshot().zoomed).toBe(true);expect(setZoom).toHaveBeenLastCalledWith(true);
+  await app.restart();expect(ctxs).toEqual([false,true]);
+  app.toggleZoom();expect(app.snapshot().zoomed).toBe(false);expect(setZoom).toHaveBeenLastCalledWith(false);
+});

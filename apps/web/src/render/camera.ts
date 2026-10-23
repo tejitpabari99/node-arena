@@ -26,7 +26,12 @@ export function levelVisualBounds(view: Pick<SimView, 'bounds'>, buildingIds: re
 }
 
 /** Fixed unrotated TW camera. Solve perspective inequalities at every 3D box corner. */
-export function fitCamera(camera: PerspectiveCamera, bounds: Box3, settings: ManifestV2['camera'], aspect: number, viewport?: CameraViewport): void {
+export const ZOOM_NEAR = 0.87;
+export const ZOOM_CLOSE = 0.72;
+/** Camera framing: extent multiplier on the fitted view (1 = old full fit). Single source of truth for both zoom levels. */
+export function zoomFraming(zoomed: boolean): number { return zoomed ? ZOOM_CLOSE : ZOOM_NEAR; }
+
+export function fitCamera(camera: PerspectiveCamera, bounds: Box3, settings: ManifestV2['camera'], aspect: number, viewport?: CameraViewport, framing = 1): void {
   camera.clearViewOffset();
   let fractionX = 1, fractionY = 1;
   if (viewport) {
@@ -47,7 +52,7 @@ export function fitCamera(camera: PerspectiveCamera, bounds: Box3, settings: Man
   for (const x of [padded.min.x, padded.max.x]) for (const y of [padded.min.y, padded.max.y]) for (const z of [padded.min.z, padded.max.z]) {
     const p = new Vector3(x,y,z).sub(center), depth = p.dot(back);
     minDepth = Math.min(minDepth,depth); maxDepth = Math.max(maxDepth,depth);
-    distance = Math.max(distance,depth + Math.abs(p.x)/(tanY*safeAspect*fractionX),depth + Math.abs(p.dot(up))/(tanY*fractionY),depth+.1);
+    distance = Math.max(distance,depth + framing*Math.abs(p.x)/(tanY*safeAspect*fractionX),depth + framing*Math.abs(p.dot(up))/(tanY*fractionY),depth+.1);
   }
   distance += .01; camera.fov = settings.fov; camera.aspect = safeAspect;
   camera.near = Math.max(.001,(distance-maxDepth)/2); camera.far = Math.max(camera.near+1,(distance-minDepth)*2);

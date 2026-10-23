@@ -17,6 +17,7 @@ export function Hud({state,app,onMute}:{state:AppSnapshot;app:AppController;onMu
   return <>
     <div id="game-hud" aria-label="Battle controls" aria-hidden={modal}>
       <button class="battle-back" aria-label="Pause" onClick={()=>app.pause()}><svg viewBox="0 0 58 58" aria-hidden="true" focusable="false"><circle cx="29" cy="29" r="27" class="pause-disc"/><rect x="19" y="16" width="7" height="26" rx="2.5"/><rect x="32" y="16" width="7" height="26" rx="2.5"/></svg></button>
+      <button class="battle-zoom" aria-label={state.zoomed?'Zoom out':'Zoom in'} onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();app.toggleZoom();}}><svg viewBox="0 0 58 58" aria-hidden="true" focusable="false"><circle cx="29" cy="29" r="27" class="pause-disc"/><rect x="16" y="25.5" width="26" height="7" rx="2.5"/>{!state.zoomed&&<rect x="25.5" y="16" width="7" height="26" rx="2.5"/>}</svg></button>
       <div class="battle-ownership"><OwnershipBar segments={view?ownership(view):[]} palettes={app.manifest?.palettes??{}}/><p class="battle-level">{level?.name}</p></div>
       <button class="mute-button battle-mute" aria-label={muted?'Unmute sound':'Mute sound'} aria-pressed={muted} onClick={onMute}><img src={uiSprites[muted?'soundOff':'soundOn']} alt=""/></button>
     </div>

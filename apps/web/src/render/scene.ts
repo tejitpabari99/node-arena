@@ -3,7 +3,7 @@ import type { ManifestV2 } from '@node-arena/content';
 import type { SimEvent } from '@node-arena/defs';
 import type { SimView } from '@node-arena/sim';
 import { Disposables } from './disposables.js';
-import { fitCamera, HUD_PADDING, levelVisualBounds, type HudPadding } from './camera.js';
+import { fitCamera, HUD_PADDING, levelVisualBounds, zoomFraming, type HudPadding } from './camera.js';
 import { createMirroredWorldRoot } from './world-root.js';
 import { createWorldRenderer, type WorldFrame, type WorldLevel, type WorldRendererOptions } from './world.js';
 
@@ -14,6 +14,7 @@ export interface SceneOptions {
   parent: HTMLElement;
   scope?: Disposables;
   padding?: HudPadding;
+  zoomed?: boolean;
   worldOptions?: Omit<WorldRendererOptions, 'worldRoot'>;
 }
 
@@ -33,14 +34,14 @@ export function createLevelScene(options: SceneOptions) {
   const worldRoot = createMirroredWorldRoot(); scene.add(worldRoot);
   const world = createWorldRenderer(scene, manifest, { ...options.worldOptions, worldRoot });
   const ids = level.buildings.map(b => b.id);
-  let bounds = levelVisualBounds(view,ids,world.anchors), disposed = false;
+  let bounds = levelVisualBounds(view,ids,world.anchors), disposed = false, zoomed = options.zoomed ?? false;
   const render = () => { if (!disposed) renderer.render(scene,camera); };
   const resize = () => {
     if (disposed) return;
     const width = Math.max(1,parent.clientWidth), height = Math.max(1,parent.clientHeight);
     renderer.setPixelRatio(Math.min(2,Math.max(1,window.devicePixelRatio || 1)));
     renderer.setSize(width,height);
-    fitCamera(camera,bounds,manifest.camera,width/height,{width,height,padding: options.padding ?? HUD_PADDING});
+    fitCamera(camera,bounds,manifest.camera,width/height,{width,height,padding: options.padding ?? HUD_PADDING},zoomFraming(zoomed));
     render();
   };
   const observer = new ResizeObserver(resize); observer.observe(parent);
@@ -57,7 +58,7 @@ export function createLevelScene(options: SceneOptions) {
     bounds = levelVisualBounds(view,ids,world.anchors); resize();
   });
   return { scene,camera,worldRoot,world,renderer,canvas: renderer.domElement,ready,
-    get bounds() { return bounds; },resize,render,
+    get bounds() { return bounds; },get zoomed() { return zoomed; },setZoom(next: boolean) { zoomed = next; resize(); },resize,render,
     update(frame: WorldFrame,events: readonly SimEvent[],dtMs: number) { if (!disposed) world.update(frame,events,dtMs); },
     dispose: () => scope.dispose(),
   };

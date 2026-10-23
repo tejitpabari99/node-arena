@@ -7,7 +7,7 @@ export type AttachInput = (context: RuntimeContext, scene: ReturnType<typeof cre
 /** Async asset readiness belongs to the level generation; callers dispose a superseded result. */
 export async function createBrowserRuntime(context: RuntimeContext,parent: HTMLElement,attachInput?: AttachInput): Promise<LevelRuntime> {
   const {level,manifest,driver}=context;
-  const scene=createLevelScene({level,manifest,view:driver.sim.view,parent});
+  const scene=createLevelScene({level,manifest,view:driver.sim.view,parent,zoomed:context.zoomed});
   let input:RuntimeInput|undefined,disposed=false;
   const dispose=()=>{if(disposed)return;disposed=true;input?.dispose();scene.dispose();};
   try {
@@ -22,7 +22,7 @@ export async function createBrowserRuntime(context: RuntimeContext,parent: HTMLE
         frame.view=update.sim.view;frame.alpha=update.alpha;frame.n=update.sim.readTroops(frame.troops);
         scene.update(frame,pending,dt);pending.length=0;input?.refresh();scene.render();},
       tick(update){if(!disposed)pending.push(...update.events);},
-      refresh(){if(!disposed)input?.refresh();},cancel(){return input?.cancel()??false;},dispose,
+      refresh(){if(!disposed)input?.refresh();},setZoom(zoomed){if(!disposed){scene.setZoom(zoomed);input?.refresh();}},cancel(){return input?.cancel()??false;},dispose,
     };
   }catch(error){dispose();throw error;}
 }
