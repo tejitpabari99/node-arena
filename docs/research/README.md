@@ -1,7 +1,7 @@
 # Research index
 
 - [initial_research/](initial_research/) — initial engine/stack and similar-game research.
-- [kane-cli.md](kane-cli.md) — Kane CLI (TestMu AI) research, hack-day integration options for Node Arena, KaneAI Pro value assessment.
+- [kane-cli.md](kane-cli.md) — Kane CLI (TestMu AI) research, hack-day integration options for Node Arena, live feasibility spikes + hack-day plan, KaneAI Pro value assessment. Spike artifacts (hook, tests, screenshots): [kane-cli/](kane-cli/README.md).
 - [tower-wars/README.md](tower-wars/README.md) — Tower War 1.29.3 teardown overview, provenance and unresolved evidence.
 - [tower-wars/01-characters-units-towers.md](tower-wars/01-characters-units-towers.md) — units, buildings, skins and art pipeline.
 - [tower-wars/02-levels.md](tower-wars/02-levels.md) — source formats, campaign order and feature introduction curve.
