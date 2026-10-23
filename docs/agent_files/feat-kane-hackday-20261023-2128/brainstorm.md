@@ -6,7 +6,7 @@ date: 2026-10-23
 # Brainstorm: Kane CLI hack-day integration
 
 ## TL;DR
-For Kane CLI Hack Day (2026-10-24) Node Arena becomes a game an AI tester plays live: Kane drives a test-build-only DOM control panel (building buttons → line buttons, red error banner, double-click cut) on a hidden, always-unlocked Kane level against a slow, easy bot, at 0.25x game speed, streamed to a public "Start" page. Around it, Kane sits in the dev workflow three ways: a Claude Code Stop-hook replay loop, assurance (rules → tests → `cover`), and a non-blocking CI replay job. All integration code is built on the day; today produces design only.
+For Kane CLI Hack Day (2026-10-24) Node Arena becomes a game an AI tester plays live: Kane drives a test-build-only DOM control panel (one-click pair buttons grouped by source building, red error banner, double-click cut) on a hidden, always-unlocked Kane level against a slow, easy bot, at 0.25x game speed, streamed to a public "Start" page. Around it, Kane sits in the dev workflow three ways: a Claude Code Stop-hook replay loop, assurance (rules → tests → `cover`), and a non-blocking CI replay job. All integration code is built on the day; today produces design only.
 
 ## Problem
 Hack-day rule: Kane CLI must verify the app, judged higher when Kane is inside the agent workflow; integration must be built on the day. Spikes (see [research](../../research/kane-cli.md)) showed Kane cannot drag on the Three.js canvas (silent false PASS) but clicks DOM buttons reliably, and runs ~10 s per authored step. The game is real-time and drag-only, so Kane cannot play it as-is. Audience: hack-day judges and attendees; secondarily the owner's dev workflow.
@@ -28,14 +28,14 @@ Owner confirmed (legal check) that using the current artwork and levels is fine 
 | New hidden, always-unlocked Kane level, separate `kane` campaign, reached via `?kane=1`, not in the regular picker | Add to common campaign | `common` must stay 20 levels (campaign.spec asserts 20); a single-entry campaign is always unlocked |
 | Easy bot = large `actionDelayMs` (e.g. ≥20000, current L1 = 12000) and possibly `behavior: attackOnly` | Code-level difficulty | Pure content knob; bot delay is game-time so it scales with speed |
 | Control panel (Kane mode) | Canvas drag, coordinates | Kane drag falls back to viewport centre; DOM clicks work (Spike D) |
-| Building button label: tag · owner · troops (+ type if not house), e.g. `D · grey · 5 · tower` | Grey out illegal pairs | Kane hitting red errors is part of the show and tests error paths |
+| Button states (colour + state word, since Kane reads text): green `ready` (drawable now; click draws, becomes active), red `active` (line exists; double-click cuts), grey temporarily-unavailable with reason word (e.g. `no free route` = source out of slots / level cap; other transient reject reasons). Grey is clickable → red top error banner with the reason. Text e.g. `A → C · ready · C: grey 5`, `A → C · active`, `A → B · no free route` | Disabled grey; colour-only | Shows the error path; Kane reads words not colours |
 | Errors: red banner at top with sim reject reason (blocked-obstacle, no-slot, duplicate, …) | Silent failure | Kane reads DOM text; reasons already exist in sim |
-| Double-click line button cancels line (CutLine) | Separate cancel button | Owner request; DrawLine + CutLine = every player command |
-| Lines column built from live sim state | From click history | Lines vanish on capture/replacement |
-| Visible press feedback (~400 ms sink + ripple; source stays highlighted; new line button slides in), same for human and Kane | Native :active only | Kane clicks are instantaneous; audience must see presses |
+| Double-click a red/active pair button cancels the line (CutLine) | Separate cancel button | Owner request; DrawLine + CutLine = every player command; probe verified double-click → CutLine |
+| Pairs generated at runtime from the sim: sources = buildings Kane (human player 0) currently owns (updates as it captures); targets = any other building (enemy/neutral/own). Pairs permanently impossible (blocked by obstacle/building, i.e. geometry) not shown at all | Show all pairs | Owner: just give Kane the possible paths |
+| Visible press feedback (~400 ms press + ripple; button changes colour/state on accept), same for human and Kane | Native :active only | Kane clicks are instantaneous; audience must see presses |
 | Same `?kane=1` level/panel for owner play; canvas drag still works | Separate human mode | No extra mode to build |
 | Layout: shift the battlefield up into the free top space; bottom reserved for the panel card; zoom out only if still not fitting | Overlay / shrink canvas / zoom out first | Owner: plenty of space at top; map must stay visible |
-| Panel card: full width, one row, two columns (buttons \| lines), large square-ish buttons | — | Owner spec |
+| Panel = single bottom row of pair buttons, grouped by source building (header per group, e.g. `A (blue 20)`); one click = one move | Two-click select→target + separate lines column | Halves Kane steps per move (~5–6 s/step); simpler to follow |
 | Building tags (A, B, …) as DOM overlay over buildings, not the canvas number sprite | Modify `building-label.ts` texture | DOM readable by Kane; label textures cached by level:stage |
 | Kane mode test-build only (dev / `VITE_TEST_HOOKS`, `?kane=1`) | Production feature | No production change for now |
 | Hosted demo: public link (no password), Start button, live CDP screencast of Kane's browser + Kane NDJSON log via SSE, hosted on this Linux box behind cloudflared or owner's nginx | LambdaTest cloud browser; HyperExecute remote; noVNC; spectator mirror | Screencast ~15–30 fps is fine at 0.25x; cloud options lack public live view / need tunnel; spectator mirror deferred |
@@ -48,7 +48,7 @@ Owner confirmed (legal check) that using the current artwork and levels is fine 
 | Cut order if late: hosted link → log relay → assurance runs (keep cover from designed tests) → floating building tags | — | Owner agreed |
 | Failure plan: owner records a full Kane win video beforehand; Test Manager share link as proof; switch to recording if live match stalls > ~3 min | — | Owner agreed |
 | Match driver: real-time slow-motion (0.25x) only; Kane chooses every move itself by reading panel labels; driver script runs short Kane objectives of 1–3 moves each on one persistent browser attached via `--cdp-endpoint http://127.0.0.1:9222 --allow-missing-url`; stops on Victory/Defeat dialog | Pause-while-Kane-decides; script picks moves and Kane only clicks; one long play-until-victory objective | Owner: 0.25x should be enough; Kane must be the player. Probe: long objective drifted and failed (34 cr); `--ws-endpoint` hangs, `--cdp-endpoint` attaches to existing tab and keeps game state across runs |
-| Speed levers: unambiguous button text; persistent browser via `--cdp-endpoint`; batch 2–3 moves per objective (amortise ~20 s fixed run overhead) with `--max-steps` ≤8; start the next run as soon as the last step completes (don't wait for post-run finalize/upload) — to verify; optional one-click pair buttons ('A → C') halving steps per move — to evaluate in design | Minimal-checking flags (`--mode action`, `--bug-detection off`, …) | Probe P4: flags gave no measurable gain (41 s vs 39 s; noise larger). Measured per run: ~8 s startup + ~5–6 s per step + ~10–13 s finalize/upload; 2-click move ≈ 40 s, 5–13 credits |
+| Speed levers: unambiguous button text; persistent browser via `--cdp-endpoint`; one-click pair buttons ('A → C'); batch 2–3 moves per objective (1 click each; amortise ~20 s fixed run overhead) with `--max-steps` ≤8; "start next run during finalize" pending probe 3 and likely invalid: hack-day KaneAI Pro plan allows 1 concurrent cloud authoring session per agent, so runs cannot overlap | Minimal-checking flags (`--mode action`, `--bug-detection off`, …) | Probe P4: flags gave no measurable gain (41 s vs 39 s; noise larger). Measured per run: ~8 s startup + ~5–6 s per step + ~10–13 s finalize/upload; old 2-click move ≈ 40 s, 5–13 credits |
 | Panel locks on game over (buttons disabled, banner 'Game over') | Leave enabled | Probe: Kane 'passed' clicks after loss; panel log said accepted after game over |
 | Ground truth for win/loss and moves = game command log / result dialog read by the driver over CDP, never Kane's claim | Trust Kane run_end | False PASS seen in spikes A and probe P1 |
 
@@ -59,10 +59,10 @@ Owner confirmed (legal check) that using the current artwork and levels is fine 
 | Level gate fix | `tools/src/levels.ts` mismatch check excludes levels in non-common campaigns | content |
 | Kane boot | `?kane=1` → `campaignId: 'kane'` (`apps/web/src/main.tsx`), auto-start `na-kane`; test-build only | content |
 | Speed control | Driver speed set {0.25, 0.5, 1, 2}; top-bar cycle button; default 0.25 in Kane mode | driver |
-| Control panel | Bottom card: building buttons (state labels), line buttons (live), select→target DrawLine (numeric ids), dblclick CutLine, reject → red banner (from `CommandRejected` events / `legality`), press animations | harness/app controller |
+| Control panel | Bottom row of pair buttons grouped by source building; pairs built at runtime from sim (owned sources → other-building targets, geometry-impossible pairs hidden); states ready/active/unavailable-with-reason (colour + word); click ready = DrawLine, dblclick active = CutLine, click grey → red banner (from `CommandRejected` events / `legality`); press animations | harness/app controller |
 | Building tags | DOM tags positioned over buildings each frame via scene projection | renderer inspection |
 | Layout | Camera framing: bottom margin = panel height, map shifted up under top bar | camera fit |
-| Kane driver | Script: persistent Chrome attached via `--cdp-endpoint`; short `kane-cli run` objectives of 1–3 moves (`--max-steps` ≤8), Kane picks every move from panel labels; next run starts as soon as last step completes (to verify); stops on Victory/Defeat dialog; objective text forbids speed button | probe result |
+| Kane driver | Script: persistent Chrome attached via `--cdp-endpoint`; short `kane-cli run` objectives of 2–3 moves, 1 click each (`--max-steps` ≤8), Kane picks every move from pair-button text; runs sequential (1 concurrent session; overlap pending probe 3, likely invalid); stops on Victory/Defeat dialog; objective text forbids speed button | probe result |
 | Stop hook | `kane-verify.sh` replays panel smoke test; exit 2 feeds failure to Claude; `stop_hook_active` guard | panel |
 | Assurance | ingest excerpt → extract → review → design → testrun → `cover` | panel |
 | CI | Actions workflow replaying saved tests | saved tests, owner secrets |
@@ -82,7 +82,7 @@ Failure handling: Kane false PASS → verify via Victory dialog / panel log (nev
 | Risk | Cheapest test |
 |---|---|
 | Kane falls behind at 0.25x (bot outpaces ~40 s/move) | First rehearsal match on na-kane; tune bot `actionDelayMs`, map, moves-per-run |
-| Overlapping next run with previous run's finalize breaks/double-attaches | One 2-run overlap test with --cdp-endpoint |
+| Overlapping next run with previous run's finalize (likely invalid: 1 concurrent cloud authoring session per agent on hack-day plan) | Probe 3: one 2-run overlap test with --cdp-endpoint |
 | Kane picks bad pairs and never wins | One rehearsal match at 0.25x on na-kane; tune bot delay/map |
 | Screencast too laggy for viewers | 10-min local screencast check on hack day |
 | Credit burn per match higher than ~100–200 | Measure first rehearsal; cap via floor |
