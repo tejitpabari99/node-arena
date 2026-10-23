@@ -69,7 +69,7 @@ Balance is report-only: statistical results do not fail a gate. It reports win p
 
 ## CI and version baselines
 
-`scripts/ci.sh` wraps named gates and reports each parked entry with its owning SP. `pnpm check:parked` lists remaining entries/artifacts; strict mode fails until all are removed. `CI_RELEASE=1` makes the final parked check strict. See the [SP09 plan](../docs/agent_files/feat-sp09-gates-tooling-docs-20261023-0622/09-gates-tooling-docs/PRD.md) for ownership/closure history.
+`scripts/ci.sh` wraps named gates and reports each parked entry with its owning SP. `pnpm check:parked` lists remaining entries/artifacts; strict mode fails until all are removed. `CI_RELEASE=1` makes the final parked check strict. See the [SP09 plan](../docs/agent_files/feat-tower-war-port-20261022-0321/09-gates-tooling-docs/PRD.md) for ownership/closure history.
 
 For branch runs the baseline priority is VERSION_GUARD_BASE, CONTENT_BASE, merge-base against main (or origin/main), then HEAD^ (HEAD for an initial commit). CI exports the branch baseline to content and golden version guards; release runs unset VERSION_GUARD_BASE and use the normal committed baseline. Outside CI, content CLI defaults to VERSION_GUARD_BASE or HEAD. Invalid explicit revisions fail. Regenerating a lock cannot bypass version bumps. A shell template, with a placeholder revision:
 

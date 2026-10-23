@@ -10,7 +10,7 @@ const web=createRequire(path.join(root,'apps/web/package.json'));
 const pw=await import(pathToFileURL(web.resolve('@playwright/test')).href);
 const chromium=pw.chromium??pw.default.chromium;
 const {createServer}=await import(pathToFileURL(web.resolve('vite')).href);
-const out=path.join(root,'docs/agent_files/feat-sp08-web-client-20261023-0124/ref/out');
+const out=path.join(root,'docs/agent_files/feat-tower-war-port-20261022-0321/08-web-client/ref/out');
 const ref=path.join(root,'docs/agent_files/feat-tower-war-port-20261022-0321/ref/tw-yt');
 fs.mkdirSync(out,{recursive:true});
 const server=await createServer({root:path.join(root,'apps/web'),configFile:path.join(root,'apps/web/vite.config.ts'),logLevel:'warn',server:{host:'127.0.0.1',port:0}});
