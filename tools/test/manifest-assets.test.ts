@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import type { ManifestV2 } from '@node-arena/content';
-import { lightDirFromQuat, mergeManifest, stringify, type Fragment } from '../src/assets-tw/manifest-fragment.js';
+import { lightDirFromQuat, lightDirToDataFrame, mergeManifest, stringify, type Fragment } from '../src/assets-tw/manifest-fragment.js';
 import { mergeFiles } from '../src/assets-tw/merge-cli.js';
 import { checkManifestAssets } from '../src/manifest-assets.js';
 
@@ -95,4 +95,12 @@ test('lightDirFromQuat: TW directional light (quat 0.5016,0.3786,-0.2589,0.7335)
   assert.ok(d[1] > 0.9, `toward-light y is up: ${d}`);
   assert.ok(Math.abs(Math.hypot(...d) - 1) < 1e-3, 'unit length');
   assert.deepEqual(lightDirFromQuat([0, 0, 0, 1]), [0, 0, -1]);
+});
+
+test('lightDirToDataFrame: raw Unity (x,z) -> data frame (z,-x) quarter turn; y and length unchanged', () => {
+  assert.deepEqual(lightDirToDataFrame([1, 0, 0]), [0, 0, -1]);
+  assert.deepEqual(lightDirToDataFrame([0, 1, 0]), [0, 1, 0]);
+  assert.deepEqual(lightDirToDataFrame([0, 0, 1]), [1, 0, 0]);
+  const d = lightDirToDataFrame(lightDirFromQuat([0.5016, 0.3786, -0.2589, 0.7335]));
+  assert.deepEqual(d, [-0.2101, 0.9319, 0.2957]);
 });

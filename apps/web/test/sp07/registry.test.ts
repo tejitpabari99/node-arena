@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Group, Object3D, Texture, SRGBColorSpace, LinearMipmapLinearFilter, MeshLambertMaterial } from 'three';
+import { BoxGeometry, Mesh, type BufferGeometry, Group, Object3D, Texture, SRGBColorSpace, LinearMipmapLinearFilter, MeshLambertMaterial } from 'three';
 import { RENDER_KINDS } from '@node-arena/defs';
 import { RendererRegistry, type RendererFactory } from '../../src/render/registry.js';
 import { MaterialCache } from '../../src/render/materials.js';
@@ -106,6 +106,18 @@ describe('model cache', () => {
     await expect(c.file('a.glb')).rejects.toThrow('x');
     await expect(c.file('a.glb')).resolves.toBeDefined();
     expect(load).toHaveBeenCalledTimes(2);
+  });
+  it('dispose frees the geometry of every loaded scene (also loads still in flight) and empties the cache', async () => {
+    const geos = [new BoxGeometry(), new BoxGeometry(), new BoxGeometry()], spies = geos.map(g => vi.spyOn(g, 'dispose'));
+    const mk = (g: BufferGeometry) => { const s = new Group(); s.add(new Mesh(g)); return { scene: s }; };
+    let release!: () => void;
+    const late = new Promise<void>(r => { release = r; });
+    const c = new ModelCache(async f => { if (f === 'late.glb') await late; return mk(geos[f === 'a.glb' ? 0 : f === 'b.glb' ? 1 : 2]!); });
+    await c.file('a.glb'); await c.file('b.glb'); const pending = c.file('late.glb');
+    c.dispose();
+    expect(c.loadedFiles).toBe(0);
+    release(); await pending; await Promise.resolve();
+    for (const sp of spies) expect(sp).toHaveBeenCalledTimes(1);
   });
 });
 

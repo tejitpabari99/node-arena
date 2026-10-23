@@ -7,6 +7,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RENDER_KINDS } from '@node-arena/defs';
 import { MaterialCache } from '../../src/render/materials.js';
 import { ModelCache, type LoadedGltf } from '../../src/render/gltf-cache.js';
+import { registerWorldRenderers } from '../../src/render/world.js';
 import { RendererRegistry, defaultRegistry } from '../../src/render/registry.js';
 import { createGroundRenderer, planGround, readGroundPrefab, GROUND_MARGIN } from '../../src/render/ground-renderer.js';
 import { childIndex, createElementRenderer, placeObstacles, type ChildExtra, type ElementInstance } from '../../src/render/element-renderer.js';
@@ -26,8 +27,10 @@ const ctx = (id: string) => ({ visualId: id, visual: manifest.visuals[id]!, ...m
 const L4 = { minX: -9000, maxX: 6000, minZ: -7000, maxZ: 8000 }, L21 = { minX: -10000, maxX: 10000, minZ: -7000, maxZ: 7000 };
 
 describe('registration', () => {
-  it('ground, element, lane are in the default registry', async () => {
-    expect(defaultRegistry.has('ground') && defaultRegistry.has('element') && defaultRegistry.has('lane')).toBe(true);
+  it('importing renderer modules has no registration side effect; registerWorldRenderers registers every kind', async () => {
+    expect(defaultRegistry.kinds()).toEqual([]);
+    const w = new RendererRegistry(); registerWorldRenderers(w, manifest);
+    expect([...w.kinds()].sort()).toEqual([...RENDER_KINDS].sort());
     const r = new RendererRegistry(); for (const k of RENDER_KINDS) r.register(k, () => ({ dispose() {} }));
     expect(r.kinds().length).toBe(RENDER_KINDS.length);
   });

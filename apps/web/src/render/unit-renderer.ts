@@ -1,13 +1,13 @@
 import { DynamicDrawUsage, Group, InstancedMesh, type BufferGeometry, type Material } from 'three';
 import type { SimEvent, SimView, TroopBuffer } from '@node-arena/sim';
 import { parseModelRef } from '../manifest/model-ref.js';
-import { registerRenderer, type Renderer, type RendererContext } from './registry.js';
+import { MILLI_TO_WORLD } from './scale.js';
+import { type Renderer, type RendererContext } from './registry.js';
 import { bakeClip, bakeRest, collectParts, loopFrame, mul4, oneShotFrame, phaseOf, proceduralDeath, type BakedClip } from './unit-anim.js';
 
 /** Death ghost pool cap (R4). */
 export const GHOST_CAP = 64;
-/** Sim world coordinates are milli-units; scene units are metres. */
-export const MILLI_TO_WORLD = 0.001;
+export { MILLI_TO_WORLD } from './scale.js';
 /** Global LOD (manifest `model.lod`): swap every part to the simplified geometry above LOD_ON alive troops of this visual, back at <= LOD_OFF. Geometry swap only: draw calls are unchanged. */
 export const LOD_ON = 200;
 export const LOD_OFF = 150;
@@ -141,12 +141,21 @@ export async function createUnitRenderer(ctx: RendererContext, opts: UnitRendere
         if (team < 0) continue;
         spawnGhost(ev.x * worldScale, ev.z * worldScale, (phaseOf(ev.channel, ev.seq) - 0.5) * Math.PI * 2, team);
       }
+      // Grow (rebuild) once, before any matrix is written: a mid-loop rebuild would zero the rows already written this frame.
+      counts.fill(0);
+      for (let i = 0; i < n; i++) {
+        if (!mine[troops.kind[i]!]) continue;
+        const team = ownerTeam[troops.owner[i]!] ?? -1;
+        if (team >= 0) counts[team]!++;
+      }
+      let peak = 0;
+      for (let t = 0; t < T; t++) peak = Math.max(peak, counts[t]!);
+      ensure(peak + GHOST_CAP);
       counts.fill(0);
       for (let i = 0; i < n; i++) {
         if (!mine[troops.kind[i]!]) continue;
         const team = ownerTeam[troops.owner[i]!] ?? -1;
         if (team < 0) continue;
-        ensure(counts[team]! + 1 + GHOST_CAP);
         troopPose(view, troops, i, alpha, worldScale, pose);
         put(team, run, loopFrame(run, time, phaseOf(troops.channel[i]!, troops.seq[i]!)), pose.x, pose.z, pose.yaw);
       }
@@ -173,5 +182,3 @@ export async function createUnitRenderer(ctx: RendererContext, opts: UnitRendere
   };
   return r;
 }
-
-registerRenderer('unit', ctx => createUnitRenderer(ctx));

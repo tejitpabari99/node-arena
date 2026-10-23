@@ -30,7 +30,7 @@ const anim = Type.Union([
 const effect = { sfx: Type.Optional(key()), fx: Type.Optional(key()) };
 
 /**
- * Manifest v2 (02 R7 = 07 contract). `stages[]` is indexed by `view.buildings.stage`
+ * Manifest v2 (02 R7 = 07 contract). `stages[]` is indexed by `view.buildings.stage - 1` (sim stage is 1-based)
  * (length = `balance.stageThresholds.length + 1`, checked by `crossCheckManifest`; thresholds are content only).
  * Removed vs v1: tint, bob, build:'stacked', levelVisuals, colorblind, minLevel.
  */

@@ -19,6 +19,11 @@ export const TW_LIGHT = { quat: [0.5016, 0.3786, -0.2589, 0.7335] as const, inte
 const r4 = (n: number): number => Math.round(n * 1e4) / 1e4;
 const hex = (n: number): string => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
 
+/** Raw Unity asset frame -> the data frame the renderer lives in (02 Frame contract: the level import maps (x,z) -> (z,-x); y unchanged). */
+export function lightDirToDataFrame([x, y, z]: readonly [number, number, number]): [number, number, number] {
+  return [z + 0, y, -x + 0];
+}
+
 /** Unity directional light shines along its local +z; `dir` is the direction TOWARD the light, in the RAW asset frame. */
 export function lightDirFromQuat([x, y, z, w]: readonly [number, number, number, number] | readonly number[]): [number, number, number] {
   const v = [0, 0, 1] as const;
@@ -101,7 +106,7 @@ export async function buildFragment(files: ReadonlyMap<string, Uint8Array>): Pro
   const proj = rootExtras(await glb('projectile'));
   visuals['fx.projectile'] = { kind: 'fx', model: { parts: 'models/tw/projectile.glb', budget: 'unit' }, team: { mode: 'textureSwap', textures: tex('projectile', proj.teams ?? []) }, scale: 1 };
 
-  const dir = lightDirFromQuat(TW_LIGHT.quat);
+  const dir = lightDirToDataFrame(lightDirFromQuat(TW_LIGHT.quat)); // stored in the data frame, like everything the renderer places
   const amb = hex(TW_LIGHT.ambient * 255);
   const themes: Record<string, unknown> = {};
   for (const t of THEME_IDS) {

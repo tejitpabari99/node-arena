@@ -95,6 +95,49 @@ describe('createWorldRenderer', () => {
     expect(world.pickMeshes.length).toBeGreaterThan(0);
   });
 
+  describe('overlapping setLevel (generation token)', () => {
+    /** Loader whose theme-specific files (green/snow) block until released, so completion order is controllable. */
+    function gatedLoader() {
+      const gates = new Map<string, () => void>();
+      const load = (file: string): Promise<LoadedGltf> => /green|snow/.test(file)
+        ? new Promise<LoadedGltf>((res, rej) => { gates.set(file, () => { loadGlb(file).then(res, rej); }); })
+        : loadGlb(file);
+      const release = (theme: string) => { for (const [f, g] of [...gates]) if (f.includes(theme)) { gates.delete(f); g(); } };
+      const waitFor = async (theme: string) => { for (let i = 0; i < 200 && ![...gates.keys()].some(f => f.includes(theme)); i++) await new Promise(r => setTimeout(r, 1)); };
+      return { load, release, waitFor };
+    }
+    const obstacleCount = (o: Object3D) => meshes(o).filter(m => m.name.startsWith('obstacle:')).reduce((s, m) => s + (m as unknown as { count: number }).count, 0);
+    const groundCount = (o: Object3D) => meshes(o).filter(m => m.name === 'ground-plane').length;
+
+    const els = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `o1-${i}`, x: i * 1000, z: 0, yawMilliDeg: 0, visual: 'element.obstacle', variant: i % 2 ? 'big' : 'small' }));
+    const LA = { ...L4, elements: els(5) } as unknown as CompiledLevel, LB = { ...L21, elements: els(3) } as unknown as CompiledLevel;
+
+    for (const order of ['A-then-B', 'B-then-A'] as const) {
+      it(`only B's ground/obstacles remain when A and B overlap (load completion ${order})`, async () => {
+        const g = gatedLoader();
+        const scene = new Scene(), materials = new MaterialCache(() => new Texture()), models = new ModelCache(g.load);
+        const world = createWorldRenderer(scene, manifest, { registry: new RendererRegistry(), materials, models, painter });
+        const a = world.setLevel(LA, LA.theme); // not awaited
+        await g.waitFor('green');
+        const b = world.setLevel(LB, LB.theme);
+        await g.waitFor('snow');
+        if (order === 'A-then-B') { g.release('green'); await a; g.release('snow'); } else { g.release('snow'); await b; g.release('green'); }
+        await Promise.all([a, b]);
+
+                const ref = make();
+        await ref.world.setLevel(LB, LB.theme);
+        expect(groundCount(scene)).toBe(1);
+        expect(obstacleCount(scene)).toBe(3);
+        expect(obstacleCount(scene)).toBe(obstacleCount(ref.scene));
+        expect(count(scene)).toBe(count(ref.scene));
+        expect(world.anchors.building(L21.buildings[0]!.id)).toBeDefined();
+        const gs = (o: Object3D) => meshes(o).find(m => m.name === 'ground-plane')!.scale.toArray();
+        expect(gs(scene)).toEqual(gs(ref.scene)); // B's ground size, not A's
+        world.dispose(); ref.world.dispose();
+      });
+    }
+  });
+
   it('update with real sim frames + events draws buildings, units, lanes and fx; anchors and pick work', async () => {
     const { world, scene } = make();
     await world.setLevel(L4, L4.theme);

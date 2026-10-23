@@ -10,7 +10,7 @@ Code: `tools/assets/validate/` (`run.mjs` orchestrator, `analyze.mjs` per-GLB ch
 Evidence: `BF/ref/proto-check/` (`report.json` + PNG sheets). `report.json` is deterministic (no timestamps).
 
 ## Method
-- Judged **as the game sees it**: under the mirrored `worldRoot` (`scale.z = -1`, `tools/assets/validate/world-root.js`, exported for SP08), FrontSide, `MeshLambertMaterial`, no tint. Winding "as seen" = `signedVolume(world) * sign(det(world))` (three.js flips front-face for negative-determinant parents).
+- Judged **as the game sees it**: under the mirrored `worldRoot` (`scale.z = -1`, `tools/assets/validate/world-root.js` is the validation copy; SP08 uses `apps/web/src/render/world-root.ts`), FrontSide, `MeshLambertMaterial`, no tint. Winding "as seen" = `signedVolume(world) * sign(det(world))` (three.js flips front-face for negative-determinant parents).
 - Two variants per asset: **PROTO** (prototype GLB on disk, never edited) and **RAW candidate** (in-memory transform in `candidate.mjs`, written only to the gitignored `BF/ref/out/proto-check-raw/`). The RAW candidate is what the Task 3 importer must emit.
 - Camera: FOV 21 / pitch 55 for the "game cam" tile; yaw 0/90/180/270 turntable at pitch 20. Model forward is **+z** in model space for both soldier and tank (verified: side view at yaw 90 faces screen right; tank muzzle at yaw 180 faces camera). So "front" tiles are yaw ~180.
 - Lights (see Colour space) are the game's own: Directional 0.2 + flat ambient 0.8962.
@@ -54,7 +54,7 @@ The importer reads `catalog/*.json` + OBJ + PNG (not the prototype GLBs), so the
 5. **Run frame 0 == bind pose** (soldier 0 pos / 0.53 deg; cowboy 1.1 deg): baking Run at frame 0 introduces no seam. Every mesh part of the soldier is animated (no static parts). Run durations: 0.567 s (soldier), 0.533 s (cowboy), matching PRD. Death/ParachuteFly clips exist but were not validated here (Task 8).
 6. **Tank is rigid and clip-less** (4 parts `base`, `gun`, `track`, `wheels`, constant node transforms: each part node has a fixed 90 deg y rotation under the `1_tank` node, which is itself rotated 180 deg and scaled 0.4/0.45/0.4). Part `gun` is barrel + mount (centre y 0.814, z +0.332 in raw frame); the hex plate/turret box is in `base`.
 7. Texture sampler: clamp-to-edge both axes (UVs never exceed [0,1]). 256px textures as in the PRD.
-8. Mirror helper for SP08: `tools/assets/validate/world-root.js` (`createMirroredWorldRoot()`, `scale.z = -1`). Lights must be children of that root when authored in Unity space; labels/sprites outside it.
+8. Mirror helper for SP08: `apps/web/src/render/world-root.ts` (`createMirroredWorldRoot()`, `scale.z = -1`; `tools/assets/validate/world-root.js` is only the validation-harness copy). Lights must be children of that root when authored in Unity space; labels/sprites outside it.
 
 ## Open verifications (all resolved or recorded)
 ### Default skin = skin id 1 per type? **Verified**
@@ -175,3 +175,28 @@ Tris breakdown before LOD: soldiers 600 x 1,036 = 622k + tanks 120 x 408 = 49k +
 | 7 | Capture / tower-shot / death FX visible and pooled; no per-frame alloc | met | `fx.png` (pool stats `created` = cap, no growth); fx-pool tests |
 | 8 | R7 deletion list gone; grep kenney / tower-mesh / BUILTIN_FX none outside history | partial | deletion list gone; residue: `render/camera.ts` still imports deleted `tower-mesh.js` (SP08-owned, legacy parked, not in sp07 tsc); `acceptance.spec.ts` comment (SP08 e2e); audio credits (Kenney sounds, kept by design) |
 | 9 | `sim:golden`, `replay:verify golden`, simHash unchanged | met | both pass; no sim/content change |
+
+## Review fix loop (review-2026-10-23-0024.md)
+### Deviations
+- **Stage index:** `manifest.schema.ts` comment said `stages[]` is indexed by `view.buildings.stage`; sim stage is 1-based and the renderer uses `stage - 1`. Comment corrected to `stages[view.buildings.stage - 1]` (JSDoc only: generated schema JSON unchanged, `check:schemas` current).
+- **Light dir frame:** theme `light.dir` is now stored in the data frame (raw Unity direction rotated (x,z) -> (z,-x), `lightDirToDataFrame` in `tools/src/assets-tw/manifest-fragment.ts`), matching the frame the rig lives in; `assets:tw` regenerated manifest + lock (`assets:tw:check` OK). Was 90 deg off.
+- **`setLevel` race:** ground/element renderers carry a generation token: a superseded or disposed `setLevel` drops its results instead of applying them (old behaviour: clear before `await`, stale results leaked into the newer level). Tests fire two un-awaited `setLevel` calls with gated loaders in both load-completion orders.
+- **Registration:** renderer modules no longer register on import; only `registerWorldRenderers` (called by `createWorldRenderer`) registers. `registerBuildingRenderer` / `registerFxRenderer` remain as explicit helpers.
+- **`MILLI_TO_WORLD`** lives in `render/scale.ts` (re-exported from `unit-renderer.ts`).
+- **Unit capacity** is grown once before the troop loop (a mid-loop rebuild zeroed rows already written; old code rebuilt hundreds of times on first frames). `ModelCache.dispose` now disposes loaded geometries (call it only for a world-owned cache).
+
+### v2 manifest loader
+`apps/web/src/manifest/load.ts` is v2 (`ManifestSchema` from `@node-arena/content`, `assertManifestReferences` against a registry param; default = fresh registry populated by `registerWorldRenderers`; pass the world's registry to match exactly). Deleted v1-only files: `manifest/assets.ts` (AssetManager), `manifest/validate.ts` (node validator; `tools/src/manifest.ts` + `check:manifest` are the v2 validator), `render/model.ts` (primitive/merge helpers). Nothing SP07 uses them.
+
+**Legacy (parked) importers left broken for SP08** (SP08 deletes or rewrites them; none are in the sp07 tsc/vitest set):
+- `manifest/assets.ts`: `src/app/state.ts`; tests `assets`, `audio`, `cache-regressions`, `app` (dynamic); e2e `assets`, `scene`, `towers`, `cache-regressions`, `model-regressions` specs (load via `/src/manifest/assets.ts`).
+- `render/model.ts`: `src/render/scene.ts`; tests `app`, `cache-regressions`, `scene`, `model-regressions`, `assets`; e2e `troops`, `assets`, `model-regressions` specs.
+- `manifest/validate.ts`: tests `manifest`, `themes`.
+- `manifest/load.ts` v1 shape (`parseManifest` of v1 manifests, now v2-only): `src/app/state.ts` (`loadManifest`), tests `manifest`, `themes`, `app`, `audio`, `dev`, `hud`, `visual-probe`, `visual-clash`, `rollout-params`, `rollout-props`.
+(`render/disposables.ts` kept: still imported by legacy `app/runtime.ts`, `input/index.ts`, `render/scene.ts`.)
+
+### Gates
+`pnpm test:web:sp07` and `pnpm typecheck:web:sp07` (root; `test:sp07` / `typecheck:sp07` in `apps/web`) are live `scripts/ci.sh` steps. They need `pnpm build:prerequisites` first (sim package types), which `ci.sh` already runs earlier. SP08 folds them into the full web steps on un-park.
+
+### Owner steps
+- Real-iGPU 60 fps check of the perf scene (not measurable headless; software rasteriser ~920 ms/frame).

@@ -1,7 +1,7 @@
 import { Group, Mesh, MirroredRepeatWrapping, RepeatWrapping, type BufferGeometry, type Object3D } from 'three';
 import type { ManifestV2 } from '@node-arena/content';
-import { registerRenderer, type Renderer, type RendererContext } from './registry.js';
-import { MILLI_TO_WORLD } from './unit-renderer.js';
+import { type Renderer, type RendererContext } from './registry.js';
+import { MILLI_TO_WORLD } from './scale.js';
 
 export type ThemeDef = ManifestV2['themes'][string];
 export interface Bounds { minX: number; maxX: number; minZ: number; maxZ: number }
@@ -56,14 +56,17 @@ export interface GroundRenderer extends Renderer {
 
 export function createGroundRenderer(ctx: RendererContext): GroundRenderer {
   const root = new Group(); root.name = 'ground';
-  let mesh: Mesh | null = null; let plan: GroundPlan | null = null;
+  let mesh: Mesh | null = null; let plan: GroundPlan | null = null; let gen = 0;
   const r: GroundRenderer = {
     root,
     get plan() { return plan; },
     async setLevel(bounds, theme, margin = GROUND_MARGIN) {
+      const mine = ++gen; // a newer setLevel (or dispose) supersedes this one: stale results are dropped, never applied
       const { scene } = await ctx.models.file(theme.ground.mesh);
       const { prefab, geometry } = readGroundPrefab(scene);
-      plan = planGround(bounds, prefab, margin);
+      const next = planGround(bounds, prefab, margin);
+      if (mine !== gen) return next;
+      plan = next;
       const tex = ctx.materials.texture(theme.ground.texture);
       // u edges differ in shade (not tileable along u): mirror u so repeats have no seam; v (grass/sand bands) stays plain repeat.
       tex.wrapS = MirroredRepeatWrapping; tex.wrapT = RepeatWrapping;
@@ -79,9 +82,7 @@ export function createGroundRenderer(ctx: RendererContext): GroundRenderer {
       root.add(mesh);
       return plan;
     },
-    dispose() { if (mesh) root.remove(mesh); mesh = null; plan = null; },
+    dispose() { gen++; if (mesh) root.remove(mesh); mesh = null; plan = null; },
   };
   return r;
 }
-
-registerRenderer('ground', ctx => createGroundRenderer(ctx));

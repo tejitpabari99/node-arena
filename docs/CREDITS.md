@@ -80,6 +80,7 @@ All files in the table below are extracted from the Tower War 1.29.3 Android bui
 
 ## Licence copies
 
+- `apps/web/assets/licenses/coiny-OFL.txt`
 - `apps/web/assets/licenses/kenney-impact-sounds-LICENSE.txt`
 - `apps/web/assets/licenses/kenney-interface-sounds-LICENSE.txt`
 - `apps/web/assets/licenses/kenney-ui-audio-LICENSE.txt`

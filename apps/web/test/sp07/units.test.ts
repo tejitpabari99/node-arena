@@ -127,6 +127,17 @@ describe('unit renderer (real soldier/tank GLB)', () => {
     const f: UnitFrame = { view: mkView(), troops: buf, n: 600, alpha: 0 }; fill(buf, 600); buf.kind.fill(1); r.update(f, [], 16);
     expect(r.stats.lod).toBe(0);
   });
+  it('growth happens once before the troop loop: no mid-frame rebuild, no identity-matrix frame', async () => {
+    const r = await createUnitRenderer(ctxFor('unit.soldier')), view = mkView(), buf = createTroopBuffer(400);
+    const n = 150; fill(buf, n); for (let i = 0; i < n; i++) { buf.owner[i] = 0; buf.kind[i] = 0; }
+    const base = r.stats.meshesCreated;
+    r.update({ view, troops: buf, n, alpha: 0 }, [], 16); // initial capacity too small -> grows inside the frame
+    expect(r.stats.meshesCreated - base).toBe(r.maxDrawCalls); // exactly one rebuild
+    const mesh = r.root.children.find(c => (c as import('three').InstancedMesh).count === n) as import('three').InstancedMesh;
+    expect(mesh).toBeDefined();
+    const id = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    for (let i = 0; i < n; i++) expect(Array.from(mesh.instanceMatrix.array.slice(i * 16, i * 16 + 16))).not.toEqual(id);
+  });
   it('capacity grows only when needed, never shrinks', async () => {
     const r = await createUnitRenderer(ctxFor('unit.soldier')), view = mkView(), buf = createTroopBuffer(400);
     const f: UnitFrame = { view, troops: buf, n: 4, alpha: 0 }; fill(buf, 4);

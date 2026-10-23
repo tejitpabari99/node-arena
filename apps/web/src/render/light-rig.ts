@@ -8,7 +8,7 @@ export interface LightRig { group: Group; directional: DirectionalLight; ambient
 
 /**
  * Builds the theme light rig (Task 2 decision: TW rig = directional white 0.2 + flat ambient 0.896; no extra tonemapping).
- * `light.dir` points TOWARD the light in the raw asset frame. The directional light sits `distance` along it, targeting the origin.
+ * `light.dir` points TOWARD the light in the data frame (the frame the rig lives in; the asset pipeline rotates the raw Unity direction). The directional light sits `distance` along it, targeting the origin.
  * Expects renderer.outputColorSpace = SRGBColorSpace (three default; owned by SP08) and textures tagged SRGB (materials.ts).
  */
 export function buildLightRig(light: ThemeLight, distance = 50): LightRig {

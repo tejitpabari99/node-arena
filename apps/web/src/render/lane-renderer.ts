@@ -1,7 +1,7 @@
 import { BufferAttribute, DoubleSide, Group, Mesh, MeshBasicMaterial, PlaneGeometry, RepeatWrapping, type Texture } from 'three';
 import type { SimView } from '@node-arena/sim';
-import { registerRenderer, type Renderer, type RendererContext } from './registry.js';
-import { MILLI_TO_WORLD } from './unit-renderer.js';
+import { type Renderer, type RendererContext } from './registry.js';
+import { MILLI_TO_WORLD } from './scale.js';
 
 /** `WayBaseStandard` (validation Task 2): LineRenderer width 0.6, Tile texture mode, half-alpha (0.502) team tint, flat. */
 export const LANE_WIDTH = 0.6;
@@ -127,5 +127,3 @@ export function createLaneRenderer(ctx: RendererContext, initial: Partial<LaneSt
   texture();
   return r;
 }
-
-registerRenderer('lane', ctx => createLaneRenderer(ctx));

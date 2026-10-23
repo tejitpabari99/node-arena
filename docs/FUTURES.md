@@ -21,3 +21,8 @@ Ideas deferred from current work. Not scheduled.
 - **Boss, rocket-tower aiming and railway AI.** Not ported (no params, no behaviour).
 - **`seatPower` / difficulty scaling.** TW Common bots start at 80% of player power; ours are 100%. Needs a meta/difficulty design first.
 - **Useless-attack behaviour.** Disabled in TW RC; not ported.
+
+## From SP07 review (2026-10-23)
+- **Environment dressing pass.** Ref bands carry rocks/crates/tyres/sandbags/trees (green) and cliffs/igloo/snowmen (snow); dropped for the `ground` 500-tri budget. Add as instanced low-poly props with a new budget class (`top_part_2`/`bottom_part_2` are 5.3k/4.2k green, 3.7k/1.8k snow tris).
+- **Persistent lane + cannonball tower beam.** Ref shows a solid green lane line plus a visible cannonball for tower shots; ours is a short-lived beam flash (`tower-shot` fx).
+- **Tower range ring polish.** Ring is a translucent disc + brighter edge tuned by eye against JPEG refs; revisit colours/opacity if a real-device pass shows a mismatch.
