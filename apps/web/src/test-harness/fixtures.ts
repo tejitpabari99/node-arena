@@ -8,6 +8,7 @@ export function createFixtureSim(mode: 'win'|'loss'): (level:CompiledLevel,seed:
     let result:SimView['over']=null;
     const human=view.players.findIndex(p=>p.kind==='human');
     return {...real,view,
+      get rejected(){return real.rejected;},
       step(commands,options){
         if(result)return [];
         const trigger=commands.some(c=>c.type==='DrawLine'&&c.player===human&&real.canDraw(c.player,c.from,c.to)===null);

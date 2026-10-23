@@ -10,6 +10,8 @@ import type { CompiledLevel, DrawExplanation } from './types.js';
 
 export interface Sim {
   readonly view: SimView;
+  /** Cumulative rejected submissions, including those without an emitted event. */
+  readonly rejected: number;
   step(commands: readonly Command[], options?: { events?: boolean }): SimEvent[];
   hash(): string;
   /** Reject code `DrawLine` would give now, or null. Never throws; any input type. */
@@ -30,6 +32,7 @@ export function create(level: CompiledLevel, seed: number): Sim {
   refreshView(view, state);
   return {
     view,
+    get rejected() { return state.rejected; },
     step(commands, options) {
       const out = step(state, commands, options?.events === true);
       refreshView(view, state);

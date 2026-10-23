@@ -66,3 +66,18 @@ test('covers R2: stats on a campaign level are consistent', () => {
   assert.equal(r.stats.buildings.length, l4.buildings.length);
   assert.equal(r.stats.players.reduce((n, p) => n + p.buildings, 0), r.stats.buildings.filter(b => b.owner !== null).length);
 });
+
+for (const record of [false, fx.metadata]) {
+  test(`runMatch rejects unknown runtime command types (${record ? 'recorded' : 'unrecorded'})`, () => {
+    const cmd = { type: 'UnknownCommand', player: 0, from: 0, to: 1 };
+    assert.throws(() => bots.runMatch({
+      level, seed: 1, maxTicks: 1, record,
+      controllers: [{ player: 0, commands: [{ tick: 0, cmd }] }],
+    }), /Match rejected 1 command\(s\) at tick 1/);
+  });
+}
+
+test('BotContext hides authoritative rejection diagnostics', () => {
+  const sneaky = { player: 0, decide: ctx => { ctx.rejected; return []; } };
+  assert.throws(() => bots.runMatch({ level, seed: 1, maxTicks: 1, controllers: [sneaky] }), /Forbidden BotContext property: rejected/);
+});

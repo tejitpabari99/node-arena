@@ -141,8 +141,8 @@ export function runMatch(options: MatchOptions): MatchResult {
       }
     }
     commandCount += commands.length;
-    // Rejections are only observable as events; the controllers never see them.
-    rejected += sim.step(commands, { events: true }).filter(event => event.type === 'CommandRejected').length;
+    sim.step(commands);
+    rejected = sim.rejected;
     if (rejected !== 0) throw new Error(`Match rejected ${rejected} command(s) at tick ${sim.view.tick}`);
   }
   return {

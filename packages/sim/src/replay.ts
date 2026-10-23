@@ -84,6 +84,7 @@ export function createReplayRecorder(level: CompiledLevel, seed: number, metadat
   const commands: ReplayRecord['commands'] = [], checkpoints: ReplayRecord['checkpoints'] = [];
   return {
     get view() { return sim.view; },
+    get rejected() { return sim.rejected; },
     hash: () => sim.hash(),
     canDraw: (player, from, to) => sim.canDraw(player, from, to),
     explainDraw: (player, from, to) => sim.explainDraw(player, from, to),
