@@ -9,27 +9,29 @@
 - Do not trust assumptions when verifiable information exists. Assess confidence before acting.
 
 ## Project
-Node Arena: browser tower-war game. pnpm monorepo. Read `README.md` first.
+Node Arena: local browser Tower War game, 20 Common campaign positions 4–23. Private repository; extracted Vaveda art/data are not redistributable; no public deploy. pnpm monorepo. Read `README.md` first.
+- `packages/defs` pure module/bot/command/objective/event/phase registries
+- `packages/content` schemas, loader/compiler, balance/building/unit/element/level JSON and locks
 - `packages/sim` deterministic rules engine
-- `packages/content` balance / levels / bot JSON + schemas
-- `packages/bots` bot engine and contracts
+- `packages/bots` Tower War AI, scripts and human proxy
 - `apps/web` Vite + Three.js + Preact client
-- `tools/` content/version/manifest gates, balance matrix
+- `tools/` import/asset/content/version/manifest/docs gates, level lock and report-only balance matrix
 
 Main scripts (root `package.json`; Node >=22.13, pnpm 10.34.6):
-- `pnpm build:prerequisites` (needed on fresh checkout), `pnpm build`
-- `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm run ci` (full gate chain, needs Chromium)
-- `pnpm dev` (web client)
-- `pnpm test:web:e2e` (production-browser), `pnpm test:web:all` (preview + dev suites), `pnpm slice:verify`
-- `pnpm check:rules` (every active rule has a `covers R-...` test)
-- `pnpm validate:content --base HEAD`, `pnpm check:content --base HEAD`, `pnpm check:manifest`
-- `pnpm content:schemas` / `check:schemas`, `pnpm content:lock`
-- `pnpm validate:levels`, `pnpm sim:golden`, `pnpm replay:verify golden`, `pnpm bots:golden`
-- `pnpm bench:sim`, `pnpm bench:bots`, `pnpm balance`
+- `pnpm build:prerequisites` (fresh checkout), `pnpm build`
+- `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm run ci` (gate chain, needs Chromium)
+- `pnpm dev`, `pnpm test:web:e2e`, `pnpm test:web:all`, `pnpm campaign:verify` (20-level browser smoke)
+- `pnpm check:rules`, `pnpm validate:content --base HEAD`, `pnpm check:content --base HEAD`, `pnpm check:manifest`
+- `pnpm content:schemas`, `pnpm check:schemas`, `pnpm content:lock`
+- `pnpm import:tw`, `pnpm check:import`, `pnpm assets:tw`, `pnpm assets:tw:check` (`TW_EXTRACT` is local-only; checks skip without it)
+- `pnpm validate:levels`, `pnpm levels:lock`, `pnpm sim:golden`, `pnpm replay:verify golden`, `pnpm bots:golden`
+- `pnpm bench:sim`, `pnpm bench:bots`, `pnpm balance` (report-only)
+- `pnpm check:docs`, `pnpm check:parked`, `pnpm check:parked --strict`
+- Full command inventory and gate semantics: `tools/README.md`.
 
-Rules authority: `docs/GAME_RULES.md` is the mechanics contract. Mechanics change order: update rule text + changelog + bump `RULES_VERSION` (semver: major = replay outcomes change, minor = additive, patch = clarification) -> tests (`covers R-...`) -> code. Tunable numbers live in content (`balance.json` etc.); a value change edits content + content version/hash, not rules.
+Rules authority: `docs/GAME_RULES.md` is the v2 mechanics contract. Stable `R-AREA-NN` IDs require real test titles containing `covers R-...`; keep tombstones. Mechanics order: rule text + changelog + `RULES_VERSION` bump (major = existing replay outcomes change, minor = additive, patch = clarification), then tests, then code. Tunable values live in content; change content version/hash when identities move. Bot identity changes also require `BOT_VERSION`.
 
-Docs: pipeline docs go in `docs/agent_files/<branch-slug>-<YYYYMMDD-HHMM>/` (see `.agents/skills/_shared/dev-common.md`; reuse the existing folder for the branch). Deferred ideas go in `docs/FUTURES.md`.
+Docs: `docs/CONTENT_GUIDE.md` covers authoring/version guards; `docs/LEVELS_GUIDE.md` covers import/feature coverage and dropped data. Pipeline docs go in `docs/agent_files/<branch-slug>-<YYYYMMDD-HHMM>/` (see `.agents/skills/_shared/dev-common.md`; reuse the existing folder for the branch). Deferred ideas go in `docs/FUTURES.md`.
 
 ## Principal Orchestrator Mode
 Act as principal architect and orchestrator. Break work down and delegate execution to sub-agents; do not implement directly.

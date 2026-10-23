@@ -1,0 +1,12 @@
+{
+  "troops": 720,
+  "buildings": 20,
+  "lines": 36,
+  "drawCalls": 197,
+  "unitDrawCalls": 52,
+  "triangles": 236550,
+  "geometries": 62,
+  "textures": 42,
+  "msPerFrameSwiftShader": 567.7,
+  "msUpdateOnly": 0.6
+}

@@ -39,20 +39,20 @@ export function playProxy(level: CompiledLevel, seed: number, actionDelayMs: num
     ticks: result.ticks, finalHash: result.stats.finalHash, rejected: result.stats.rejected };
 }
 /** Validates one level against 06 R6 (a)-(c); `unsolved` is the allowlist entry for this level, if any. */
-export function validateLevel(level: CompiledLevel, position: number, seeds: number, unsolved: UnsolvedEntry | null, maxTicks = DEFAULT_MAX_TICKS): LevelReport {
+export function validateLevel(level: CompiledLevel, position: number, seeds: number, unsolved: UnsolvedEntry | null, maxTicks = DEFAULT_MAX_TICKS, runProxy: typeof playProxy = playProxy): LevelReport {
   const seat = humanSeat(level);
   const report: LevelReport = { id: level.id, position, seeds, humanSeat: seat, idleWins: 0, wins: {}, totalWins: 0, runs: 0, truncated: 0, solvable: false, unsolved, deterministic: false, ok: false, errors: [], warnings: [], lock: { outcome: '', ticks: 0, finalHash: '' } };
   const fail = (what: string, error: unknown) => report.errors.push(`${what}: ${(error as Error).message}`);
   let first: LevelRunReport | undefined;
   for (let seed = 1; seed <= seeds; seed++) {
     try {
-      const idle = playProxy(level, seed, 'idle', maxTicks);
+      const idle = runProxy(level, seed, 'idle', maxTicks);
       if (idle.won) report.idleWins++;
       if (idle.rejected) report.errors.push(`idle seed ${seed}: ${idle.rejected} rejected commands`);
     } catch (error) { fail(`idle seed ${seed}`, error); }
     for (const ad of SOLVE_DELAYS) {
       try {
-        const run = playProxy(level, seed, ad, maxTicks);
+        const run = runProxy(level, seed, ad, maxTicks);
         report.runs++; report.wins[run.proxy] = (report.wins[run.proxy] ?? 0) + (run.won ? 1 : 0);
         if (run.won) report.totalWins++;
         if (run.truncated) report.truncated++;
@@ -63,7 +63,7 @@ export function validateLevel(level: CompiledLevel, position: number, seeds: num
   }
   if (first) {
     report.lock = { outcome: first.outcome, ticks: first.ticks, finalHash: first.finalHash };
-    try { const again = playProxy(level, 1, LOCK_DELAY, maxTicks); report.deterministic = again.finalHash === first.finalHash && again.ticks === first.ticks; }
+    try { const again = runProxy(level, 1, LOCK_DELAY, maxTicks); report.deterministic = again.finalHash === first.finalHash && again.ticks === first.ticks; }
     catch (error) { fail('seed 1 rerun', error); }
     if (!report.deterministic) report.errors.push('Seed 1 rerun final hash differs');
   }

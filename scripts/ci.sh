@@ -40,7 +40,8 @@ cd "$(dirname "$0")/.."
 # 08 Task 10: full web build/typecheck/unit+browser-fixture tests restored; isolated SP07 steps
 #   folded into the full web suites. Production/dev browser suites remain test:web:all in their dedicated job.
 # ---------------------------------------------------------------------------
-PARKED=()
+PARKED=(
+)
 
 is_parked() { # prints owner and returns 0 when step $1 is parked
   local entry
@@ -54,6 +55,11 @@ step() { # step <name> <command...>
   if owner=$(is_parked "$name"); then echo "PARKED($owner) $name"; return 0; fi
   echo "==> $name"
   "$@"
+  # The extract stays local-only. Keep the CLI's exit status authoritative and
+  # annotate successful env-skips so Actions makes them visible in the run log.
+  if [[ -z "${TW_EXTRACT:-}" && ( "$name" == check:import || "$name" == assets:tw:check ) ]]; then
+    echo "::notice::$name skipped (TW_EXTRACT unset)"
+  fi
 }
 
 # Version-guard base precedence: explicit VERSION_GUARD_BASE > CONTENT_BASE (CI passes
@@ -117,6 +123,7 @@ step check:manifest pnpm check:manifest
 step assets:ui:check pnpm assets:ui:check
 step check:rules pnpm check:rules
 step check:import pnpm check:import
+step assets:tw:check pnpm assets:tw:check
 step validate:levels pnpm validate:levels --seeds 4 --base "$base"
 step replay:verify pnpm replay:verify golden
 step sim:golden pnpm sim:golden
@@ -125,6 +132,8 @@ step bots:golden pnpm bots:golden
 step bench:sim pnpm bench:sim --ci
 # PRD permits 5x the strict local 1 ms bot decision budget on shared CI runners.
 step bench:bots pnpm bench:bots --ci
+# Phase D: parked until Task 9 refreshes documentation.
+step check:docs pnpm check:docs
 # Last step: lists the parked gates; fails on any only for release runs.
 if [[ "${CI_RELEASE:-}" == "1" ]]; then
   step check:parked pnpm check:parked --strict

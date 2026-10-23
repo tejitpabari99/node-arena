@@ -4,7 +4,7 @@
 
 ## Tower War 1.29.3 (Vaveda) extracted art, private repo, not redistributable
 
-All files in the table below are extracted from the Tower War 1.29.3 Android build by Vaveda (not CC0, not licensed for redistribution). They are committed to this **private** repository only, with the owner's approval; do not publish, mirror or open-source this repository or its built assets without replacing them. Regenerate with `TW_EXTRACT=<path to _extract> pnpm assets:tw` (input and output hashes in `tools/assets/tw-extract.lock.json`; `pnpm check:manifest` verifies the committed output hashes without the extract). Models are rebuilt as RAW glTF (no mirror), textures are the original 256px PNG bytes except environment textures (source 1024px, downscaled to 256px with sharp). `manifest.tw.json` (the manifest fragment) is generated data, not art. The level-number font (Coiny Regular, SIL OFL 1.1) is credited in the Fonts section below.
+All files in the table below are extracted from the Tower War 1.29.3 Android build by Vaveda (not CC0, not licensed for redistribution). They are committed to this **private** repository only, with the owner's approval; do not publish, mirror or open-source this repository or its built assets without replacing them. Regenerate with `TW_EXTRACT=<path to _extract> pnpm assets:tw` (input and output hashes in `tools/assets/tw-extract.lock.json`; `pnpm check:manifest` verifies the committed output hashes without the extract). Models are rebuilt as RAW glTF (no mirror), textures are the original 256px PNG bytes except environment textures (source 1024px, downscaled to 256px with sharp). `apps/web/assets/manifest.tw.json` (the manifest fragment) is generated data, not art. The level-number font (Coiny Regular, SIL OFL 1.1) is credited in the Fonts section below.
 
 | File | Source in Tower War | Modifications |
 |---|---|---|
@@ -65,18 +65,18 @@ All files in the table below are extracted from the Tower War 1.29.3 Android bui
 
 | File | Source | Author | URL | Licence | Downloaded | Modifications |
 |---|---|---|---|---|---|---|
-| fonts/Coiny-Regular.ttf | Coiny Regular (level-number labels; the same font Tower War uses) | Marcelo Magalhaes | https://github.com/google/fonts/tree/main/ofl/coiny | SIL OFL 1.1 (`licenses/coiny-OFL.txt`) | 2026-10-22 | None |
+| fonts/Coiny-Regular.ttf | Coiny Regular (level-number labels; the same font Tower War uses) | Marcelo Magalhaes | https://github.com/google/fonts/tree/main/ofl/coiny | SIL OFL 1.1 (`apps/web/assets/licenses/coiny-OFL.txt`) | 2026-10-22 | None |
 
 ## Audio (CC0)
 
 | File | Pack | Author | URL | Licence | Downloaded | Modifications |
 |---|---|---|---|---|---|---|
-| audio/clash.ogg | Impact Sounds 1.0 (`impactMetal_light_002.ogg`) | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
-| audio/capture.ogg | Impact Sounds 1.0 (`impactBell_heavy_000.ogg`) | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
-| audio/cut.ogg | Impact Sounds 1.0 (`impactGlass_light_002.ogg`) | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
-| audio/ui-click.ogg | UI Audio (`click2.ogg`) | Kenney | https://kenney.nl/assets/ui-audio | CC0 1.0 | 2026-10-09 | None (renamed) |
-| audio/gameover.ogg | Interface Sounds 1.0 (`confirmation_003.ogg`) | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
-| audio/music-insistent.ogg | Insistent: background loop (`Insistent.ogg`) | yd (submitted by qubodup) | https://opengameart.org/content/insistent-background-loop | CC0 1.0 (asset page lists "License(s): CC0") | 2026-10-09 | None (renamed); 128.7 s Vorbis, lazy-loaded with the level, not in the boot bundle |
+| audio/clash.ogg | Impact Sounds 1.0 (impactMetal_light_002.ogg) | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
+| audio/capture.ogg | Impact Sounds 1.0 (impactBell_heavy_000.ogg) | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
+| audio/cut.ogg | Impact Sounds 1.0 (impactGlass_light_002.ogg) | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
+| audio/ui-click.ogg | UI Audio (click2.ogg) | Kenney | https://kenney.nl/assets/ui-audio | CC0 1.0 | 2026-10-09 | None (renamed) |
+| audio/gameover.ogg | Interface Sounds 1.0 (confirmation_003.ogg) | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | 2026-10-09 | None (renamed) |
+| audio/music-insistent.ogg | Insistent: background loop (Insistent.ogg) | yd (submitted by qubodup) | https://opengameart.org/content/insistent-background-loop | CC0 1.0 (asset page lists "License(s): CC0") | 2026-10-09 | None (renamed); 128.7 s Vorbis, lazy-loaded with the level, not in the boot bundle |
 
 ## Licence copies
 

@@ -1,0 +1,122 @@
+[
+  {
+    "levelId": "levelview-1",
+    "tick": 100,
+    "triangles": 2272,
+    "filename": "screenshots/01-levelview-1.png"
+  },
+  {
+    "levelId": "levelview-2-ab",
+    "tick": 100,
+    "triangles": 5556,
+    "filename": "screenshots/02-levelview-2-ab.png"
+  },
+  {
+    "levelId": "levelview-3-ab",
+    "tick": 100,
+    "triangles": 8624,
+    "filename": "screenshots/03-levelview-3-ab.png"
+  },
+  {
+    "levelId": "levelview-4",
+    "tick": 100,
+    "triangles": 5296,
+    "filename": "screenshots/04-levelview-4.png"
+  },
+  {
+    "levelId": "levelview-5",
+    "tick": 100,
+    "triangles": 3120,
+    "filename": "screenshots/05-levelview-5.png"
+  },
+  {
+    "levelId": "levelview-6",
+    "tick": 100,
+    "triangles": 2936,
+    "filename": "screenshots/06-levelview-6.png"
+  },
+  {
+    "levelId": "levelview-182-nb",
+    "tick": 100,
+    "triangles": 3306,
+    "filename": "screenshots/07-levelview-182-nb.png"
+  },
+  {
+    "levelId": "levelview-8-es",
+    "tick": 100,
+    "triangles": 3164,
+    "filename": "screenshots/08-levelview-8-es.png"
+  },
+  {
+    "levelId": "levelview-10",
+    "tick": 100,
+    "triangles": 3018,
+    "filename": "screenshots/09-levelview-10.png"
+  },
+  {
+    "levelId": "levelview-11",
+    "tick": 100,
+    "triangles": 5492,
+    "filename": "screenshots/10-levelview-11.png"
+  },
+  {
+    "levelId": "levelview-12",
+    "tick": 100,
+    "triangles": 3400,
+    "filename": "screenshots/11-levelview-12.png"
+  },
+  {
+    "levelId": "levelview-13",
+    "tick": 100,
+    "triangles": 3290,
+    "filename": "screenshots/12-levelview-13.png"
+  },
+  {
+    "levelId": "levelview-14",
+    "tick": 100,
+    "triangles": 4282,
+    "filename": "screenshots/13-levelview-14.png"
+  },
+  {
+    "levelId": "levelview-15",
+    "tick": 100,
+    "triangles": 5844,
+    "filename": "screenshots/14-levelview-15.png"
+  },
+  {
+    "levelId": "levelview-16",
+    "tick": 100,
+    "triangles": 5278,
+    "filename": "screenshots/15-levelview-16.png"
+  },
+  {
+    "levelId": "levelview-17",
+    "tick": 100,
+    "triangles": 5258,
+    "filename": "screenshots/16-levelview-17.png"
+  },
+  {
+    "levelId": "levelview-49",
+    "tick": 100,
+    "triangles": 5702,
+    "filename": "screenshots/17-levelview-49.png"
+  },
+  {
+    "levelId": "levelview-19",
+    "tick": 100,
+    "triangles": 3692,
+    "filename": "screenshots/18-levelview-19.png"
+  },
+  {
+    "levelId": "levelview-20",
+    "tick": 100,
+    "triangles": 6874,
+    "filename": "screenshots/19-levelview-20.png"
+  },
+  {
+    "levelId": "levelview-100-es",
+    "tick": 100,
+    "triangles": 2504,
+    "filename": "screenshots/20-levelview-100-es.png"
+  }
+]

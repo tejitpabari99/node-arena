@@ -111,7 +111,7 @@ Totals: 13 obstacle levels (5, 6, 7, 10, 11, 12, 13, 16, 17, 19, 20, 22, 23), 10
 ### Deviations from TW (shipped 20)
 
 - **cargo** dropped in all 20 (owner decision).
-- **wall** dropped in `levelview-100-es` (position 23) only, via `onlyLevels` in `feature-map.json` (recorded token `wall`). Other wall levels (24, 25, ...) stay blocked.
+- **wall** dropped in `levelview-100-es` (position 23) only, via `onlyLevels` in `tools/src/import-tw/feature-map.json` (recorded token `wall`). Other wall levels (24, 25, ...) stay blocked.
 - **tutorial scripts** (`BaseTutorial`, `TutorLevelBase`) on the two prefab levels (`levelview-182-nb` pos 10, `levelview-100-es` pos 23) are not data: `tutorial-script` in `source.dropped`.
 - **Building collider yaw deviation.** Buildings use the rules-contract AABB, 1.5 × 1.5 (half-size 750 milli); the dumped `Building` trigger has local yaw ≈15°. That prefab yaw is intentionally not applied: buildings have no authored rotation, and GAME_RULES E-TOWER fixes the axis-aligned reach example.
 - **Obstacle archetype default.** Hand-authored obstacles without an instance footprint use child 0's dumped box, rounded to 0.713 × 0.713. Imported children retain their own rounded boxes and world `yawDeg`; no importer regeneration is needed.
@@ -141,4 +141,4 @@ No level drops anything else. Inactive obstacle children are not in `source.drop
 - **Long / v0 dialects.** Only the v1-short dialect (and the two frozen prefab levels) is supported. Long-key (C# property names), v0 (`Player`/`AI`) and boss levels (`LevelViewBoss`) are refused explicitly.
 - **Bot scripts.** `AiDS`/`AiCWS`/`AiSC` merge into one `bot.script` by `I` across the three lists; gaps or duplicates are an error. Unresolvable refs become `null`.
 - **Param overrides depend on archetype defaults.** `params` on a building are written only when the TW value differs from the archetype's value in the catalog. Retuning an archetype changes which overrides are needed: re-import (`check:import` is local-only, so CI will not notice).
-- **Never hand-edit imported levels.** `pnpm check:import` diffs bytes against the importer output; change the importer or `feature-map.json` instead.
+- **Never hand-edit imported levels.** `pnpm check:import` diffs bytes against the importer output; change the importer or `tools/src/import-tw/feature-map.json` instead.
