@@ -1,5 +1,6 @@
 import { isLevelUnlocked, type AppSnapshot } from '../app/state';
-import ui from '../../assets/ui/manifest.json';
+import uiSource from '../../assets/ui/manifest.json?raw';
+const ui=JSON.parse(uiSource) as {sprites:Record<'soundOn'|'soundOff',{path:string}>};
 export interface PickerProps { state: AppSnapshot; onStart(id:string):void; onMute():void; onCredits():void }
 export function Picker({state,onStart,onMute,onCredits}:PickerProps) {
   const muted=state.save.settings.musicMute&&state.save.settings.sfxMute;
