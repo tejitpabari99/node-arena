@@ -14,7 +14,7 @@ it('adapts pointer events to numeric driver commands and cleans up cancel listen
   const root=new Group(); root.scale.z=-1; root.updateMatrixWorld(); const scene=new Scene(); scene.add(root);
   const points=[new Vector3(-2,0,1),new Vector3(2,0,1)]; const commands: unknown[]=[];
   const sim={view:{players:[{kind:'human',colorKey:'blue'}],ids:{buildings:['a','b']},buildings:{owner:[0,-1]},buildingStatic:[{x:-2000,z:1000,drawsLines:true},{x:2000,z:1000,drawsLines:true}],lines:[],over:null},canDraw:()=>null} as unknown as Sim;
-  const world={anchors:{building:(id: string)=>({pos:points[id==='a'?0:1]!,radius:.7,labelPos:new Vector3()})},pickMeshes:[],previewLane:()=>{},clearPreview:()=>{}};
+  const world={anchors:{building:(id: string)=>({pos:points[id==='a'?0:1]!,radius:.7,labelPos:new Vector3()})},pickMeshes:[],previewLane:()=>{},clearPreview:()=>{},select:()=>{}};
   let enabled=true; const input=createInputController({canvas:canvas as unknown as HTMLCanvasElement,camera,worldRoot:root,scene,sim,world,driver:{submit:c=>commands.push(c)},isEnabled:()=>enabled});
   const screen=(i:number)=>{const p=points[i]!.clone().applyMatrix4(root.matrixWorld).project(camera);return [(p.x+1)*500,(1-p.y)*500] as const;};
   const [ax,ay]=screen(0),[bx,by]=screen(1);

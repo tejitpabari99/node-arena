@@ -4,6 +4,7 @@ export interface GestureOptions {
   now(): number; diagonal(): number; own(building: number): boolean;
   canDraw(from: number, to: number): boolean;
   draw(from: number, to: number): void;
+  blocked?(from: number): void;
   stroke(from: Point2, to: Point2, seen: Set<number>): void;
   preview(from: number, point: GesturePoint): void;
   clear(): void; eraser(active: boolean): void; trail(point: Point2): void;
@@ -42,7 +43,10 @@ export function createGestureMachine(options: GestureOptions) {
   function up(id: number, point: GesturePoint) {
     if (pointer!==id || mode==='idle') return;
     move(id,point);
-    if (mode==='draw' && current.building!==null && options.own(source) && options.canDraw(source,current.building)) options.draw(source,current.building);
+    if (mode==='draw') {
+      if (current.building!==null && options.own(source) && options.canDraw(source,current.building)) options.draw(source,current.building);
+      else options.blocked?.(source);
+    }
     cancel();
   }
   return { down,move,up,cancel,refresh,get mode() { return mode; },get pointer() { return pointer; } };
