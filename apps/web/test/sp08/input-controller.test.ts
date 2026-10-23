@@ -61,3 +61,27 @@ it('raycasts current-stage roofs after pick targets are replaced, ignoring stale
   expect(commands).toHaveLength(1);
   input.dispose();geometry.dispose();material.dispose();
 });
+
+for (const button of [0, 2]) it(`cuts an early lane crossing through incremental pointer events with button ${button}`, () => {
+  const canvas = new Canvas(), camera = new PerspectiveCamera(45, 1, .1, 100);
+  camera.position.set(0, 10, 12); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
+  const root = new Group(); root.scale.z = -1; root.updateMatrixWorld();
+  const points = [new Vector3(-2, 0, 1), new Vector3(2, 0, 1)];
+  const commands: unknown[] = [];
+  const sim = { view: {
+    players: [{ kind: 'human', colorKey: 'blue' }], ids: { buildings: ['a', 'b'] },
+    buildings: { owner: [0, -1] }, buildingStatic: [{ drawsLines: true }, { drawsLines: true }],
+    lines: [{ channel: 1, owner: 0, from: 0, to: 1 }], over: null,
+  }, canDraw: () => null } as unknown as Sim;
+  const world = { anchors: { building: (id: string) => ({ pos: points[id === 'a' ? 0 : 1]!, radius: .7, labelPos: new Vector3() }) },
+    pickMeshes: [], previewLane: () => {}, clearPreview: () => {}, select: () => {} };
+  const input = createInputController({ canvas: canvas as unknown as HTMLCanvasElement, camera, worldRoot: root,
+    sim, world, driver: { submit: c => commands.push(c) } });
+  const midpoint = new Vector3(0, 0, 1).applyMatrix4(root.matrixWorld).project(camera);
+  const x = (midpoint.x + 1) * 500, y = (1 - midpoint.y) * 500;
+  event(canvas, 'pointerdown', x, y - 5, button);
+  for (let step = 1; step <= 20; step++) event(canvas, 'pointermove', x, y - 5 + step * 2, button);
+  event(canvas, 'pointerup', x, y + 35, button);
+  expect(commands).toEqual([{ type: 'CutLine', player: 0, from: 0, to: 1 }]);
+  input.dispose();
+});
