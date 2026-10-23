@@ -18,7 +18,7 @@ async function fixture(t: { after(fn: () => Promise<void>): void }) {
   await cp(join(root, 'packages/content'), dir, { recursive: true, filter: path => !/(node_modules|dist|test)/.test(path) });
   return dir;
 }
-test('repo content passes with a JSON report (check:manifest is parked until SP07 ships a v2 manifest)', () => {
+test('repo content passes with a JSON report', () => {
   const result = run('validate:content', '--base', process.env.VERSION_GUARD_BASE || 'HEAD');
   assert.equal(result.status, 0, result.stdout);
   assert.equal(result.report.ok, true);

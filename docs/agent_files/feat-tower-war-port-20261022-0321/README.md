@@ -17,7 +17,7 @@ Copy Tower War 1.29.3 into Node Arena as a simplified browser game that replaces
 | 04 | Geometry + shooters | [PRD](04-geometry-shooters/PRD.md) | Blocking, lane crossing combat, shooting tower, lane-interval seam | 03, 02 | done |
 | 05 | Level importer | [PRD](05-level-importer/PRD.md) | `TW_EXTRACT` -> level v2 for positions 4–23, gating, LEVELS_GUIDE | 02 (soft 01, 04) | draft |
 | 06 | AI port | [PRD](06-ai-port/PRD.md) | Delete our bots; exact TW AI copy; TW-AI-as-proxy level validation | 03, 05 (soft 02, 04) | done |
-| 07 | Art pipeline | [PRD](07-art-pipeline/PRD.md) | TW art -> committed GLB/textures, instanced team-texture renderers | 02 (soft) | draft |
+| 07 | Art pipeline | [PRD](07-art-pipeline/PRD.md) | TW art -> committed GLB/textures, instanced team-texture renderers | 02 (soft) | done |
 | 08 | Web client | [PRD](08-web-client/PRD.md) | Camera, HUD, input, screens, save v2; delete legacy UI | 03, 07 (soft 04, 05, 02) | draft |
 | 09 | Gates, tooling, docs | [PRD](09-gates-tooling-docs/PRD.md) | Gate inventory/redefinition, parked CI scaffold, docs, final acceptance | all (Phase A first) | draft |
 
@@ -80,3 +80,10 @@ Max 2 concurrent agents.
 - Refs: [proxy-spike-2026-10-22.md](06-ai-port/proxy-spike-2026-10-22.md), [timer-order-pin.md](06-ai-port/timer-order-pin.md).
 - 3 parked gates left: typecheck:web, test:web (SP08), check:manifest (SP07).
 - Next per execution order: SP07 art pipeline (still todo; was meant to run parallel with 03/05), then SP08, then 09 rest.
+
+## SP07 completion (2026-10-23)
+- Tasks 1-12 done; TW assets importer, manifest v2, instanced renderers, world-renderer seam; unit LOD + review fixes.
+- Run: [07-art-pipeline/code-2026-10-23-0045.md](07-art-pipeline/code-2026-10-23-0045.md); re-review: [07-art-pipeline/review-2026-10-23-0045.md](07-art-pipeline/review-2026-10-23-0045.md) (PASS; earlier NEEDS_CHANGES [review-2026-10-23-0024.md](07-art-pipeline/review-2026-10-23-0024.md), 4 must-fix fixed).
+- 2 parked gates left: typecheck:web, test:web (SP08). New live gates: test:web:sp07, typecheck:web:sp07; check:manifest un-parked.
+- Perf: 233k tris / 52 unit draws / ~1.9 MB gzip.
+- Next: SP08 web client, then 09 rest.

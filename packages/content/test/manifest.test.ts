@@ -52,7 +52,12 @@ test('row: stages length must equal thresholds + 1 (cross-check)', () => {
 
 test('row: team textureSwap with blue/green/red/yellow/gray', () => {
   assert.equal(ok(mutate((m) => { m.visuals.soldier.team.mode = 'tint'; })), false);
-  assert.equal(ok(mutate((m) => { delete m.visuals.soldier.team.textures.gray; })), false);
+  assert.equal(ok(mutate((m) => { delete m.visuals.soldier.team.textures.blue; })), false);
+  // gray is optional per visual (units are never neutral); a level that uses it still needs the texture
+  const noGray = mutate((m) => { delete m.visuals.soldier.team.textures.gray; });
+  assert.equal(ok(noGray), true);
+  assert.match(content.crossCheckManifest(noGray, { ...catalog(), levels: [{ id: 'l1', theme: 'green', colorKeys: ['gray'] }] }).join(), /colorKey "gray" has no texture in visual "soldier"/);
+  assert.deepEqual(content.crossCheckManifest(noGray, { ...catalog(), levels: [{ id: 'l1', theme: 'green', colorKeys: ['blue'] }] }), []);
   assert.equal(ok(mutate((m) => { m.visuals.soldier.tint = '#ffffff'; })), false);
 });
 
@@ -65,6 +70,8 @@ test('row: anim node-tracks with run/death clips; bob removed', () => {
 test('row: themes shape {ground,obstacle,light,fog?,sky,fx?}; levelVisuals/colorblind/build removed', () => {
   assert.equal(ok(mutate((m) => { delete m.themes.green.obstacle.big; })), false);
   assert.equal(ok(mutate((m) => { m.themes.green.ground = '#00ff00'; })), false);
+  assert.equal(ok(mutate((m) => { m.themes.green.light.ambient = { color: '#e5e5e5', intensity: 1 }; })), true);
+  assert.equal(ok(mutate((m) => { m.themes.green.light.ambient = { color: '#e5e5e5' }; })), false);
   assert.equal(ok(mutate((m) => { m.themes.green.fog = { color: '#cccccc', near: 5, far: 40 }; })), true);
   assert.equal(ok(mutate((m) => { m.levelVisuals = {}; })), false);
   assert.equal(ok(mutate((m) => { m.palettes.colorblind = {}; })), false);

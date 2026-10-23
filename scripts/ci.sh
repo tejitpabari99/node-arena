@@ -26,6 +26,11 @@ cd "$(dirname "$0")/.."
 #   build:web, balance, test:web:e2e (SP08/SP06): web/bots-owned scripts, not run by ci.sh.
 # 06 Task 8 (SP06 follow-up): bots gates un-parked (build/typecheck/test:bots, test:bots:golden, bots:golden, bench:bots,
 #   validate:levels, balance); tools/src/{levels,balance*}.ts live again; SP06 entries removed from PARKED.
+# 07 Task 5 (SP07): check:manifest is un-parked (v2 manifest + asset/lock-hash/budget/credits checks run live, no TW_EXTRACT needed);
+#   its SP07 entry is removed from PARKED.
+# 07 review fixes (SP07): typecheck:web:sp07 / test:web:sp07 are live steps (SP07's isolated render/manifest typecheck via
+#   apps/web/tsconfig.sp07.json and vitest test/sp07); legacy web typecheck:web/test:web stay parked for SP08, which folds
+#   these into the full web steps on un-park.
 # Review 2026-10-22 bookkeeping:
 #   sim:golden, bench:sim and replay:verify/test:tools:replay are un-parked (03 Task 8, 09 Task 2): they run live. Until SP06,
 #   the `golden` alias scans sim goldens only (GOLDEN_DIRS in tools/src/replay.ts); SP06 adds the bots goldens back.
@@ -36,7 +41,6 @@ cd "$(dirname "$0")/.."
 PARKED=(
   "typecheck:web:SP08"
   "test:web:SP08"
-  "check:manifest:SP07"
 )
 
 is_parked() { # prints owner and returns 0 when step $1 is parked
@@ -96,6 +100,7 @@ step typecheck:sim pnpm typecheck:sim
 step typecheck:bots pnpm typecheck:bots
 step typecheck:tools pnpm typecheck:tools
 step typecheck:web pnpm typecheck:web
+step typecheck:web:sp07 pnpm typecheck:web:sp07
 step test:defs pnpm test:defs
 step test:content pnpm test:content
 step test:sim pnpm test:sim
@@ -106,6 +111,7 @@ step test:tools pnpm test:tools
 step test:tools:replay pnpm --filter @node-arena/tools test:replay
 step test:tools:rules pnpm --filter @node-arena/tools test:rules
 step test:web pnpm test:web
+step test:web:sp07 pnpm test:web:sp07
 step check:schemas pnpm check:schemas
 step check:content pnpm check:content --base "$base"
 step validate:content pnpm validate:content --base "$base"

@@ -5,7 +5,6 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { mergeCampaign, parseCampaign, parseCampaignDoc, type CampaignFileEntry, type MergeRow } from '../campaign.js';
 import { REMOTE_CONFIG_FILE, TEXTASSET_DIR, twExtractRoot } from '../env.js';
-import { REGISTERED_THEMES_PRE_SP07 } from '../gate.js';
 import { CAMPAIGN_FILE, defaultContentDir, registeredThemes, runImport } from '../run.js';
 import { report, safeTarget } from '../cli.js';
 import { FIXTURES, FIXTURE_TEXTASSETS } from './helpers.js';
@@ -52,17 +51,19 @@ test('mergeCampaign: unknown entry fields (e.g. loop) are preserved', () => {
   assert.throws(() => parseCampaignDoc('{}'), /entries/);
 });
 
-test('registeredThemes: v2 manifest themes, else the explicit pre-SP07 constant', () => {
+test('registeredThemes: ids of the v2 manifest themes; no fallback (absent, unreadable or v1 manifest throws)', () => {
   const dir = mkdtempSync(join(tmpdir(), 'na-themes-'));
   try {
     const p = join(dir, 'm.json');
-    assert.deepEqual(registeredThemes(p), REGISTERED_THEMES_PRE_SP07);
+    assert.throws(() => registeredThemes(p), /cannot read theme registry/);
     writeFileSync(p, JSON.stringify({ schemaVersion: '1.2.0', themes: { grass: {} } }));
-    assert.deepEqual(registeredThemes(p), REGISTERED_THEMES_PRE_SP07);
+    assert.throws(() => registeredThemes(p), /expected a v2 manifest/);
     writeFileSync(p, JSON.stringify({ schemaVersion: '2.0.0', themes: { green: {}, lava: {} } }));
     assert.deepEqual(registeredThemes(p), ['green', 'lava']);
     writeFileSync(p, '{nope');
-    assert.deepEqual(registeredThemes(p), REGISTERED_THEMES_PRE_SP07);
+    assert.throws(() => registeredThemes(p), /cannot read theme registry/);
+    // the committed manifest registers exactly the themes the importer can map today
+    assert.deepEqual(registeredThemes(join(import.meta.dirname, '../../../../apps/web/assets/manifest.json')), ['green', 'snow']);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -85,6 +86,9 @@ function sandbox(): { extract: string; content: string; done: () => void } {
   const src = defaultContentDir();
   cpSync(join(src, 'content.json'), join(content, 'content.json'));
   cpSync(join(src, 'data'), join(content, 'data'), { recursive: true });
+  // The theme registry is the v2 asset manifest, found at <repo>/apps/web/assets/manifest.json relative to the content dir.
+  mkdirSync(join(base, 'repo/apps/web/assets'), { recursive: true });
+  cpSync(join(src, '../../apps/web/assets/manifest.json'), join(base, 'repo/apps/web/assets/manifest.json'));
   return { extract, content, done: () => rmSync(base, { recursive: true, force: true }) };
 }
 

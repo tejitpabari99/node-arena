@@ -7,13 +7,6 @@ import { FeatureMapError, archetypeKey, loadFeatureMap, recordedToken, resolveAr
 export const ENV = ['green', 'snow', 'lava', 'mine', 'jungle', 'darkmine'] as const;
 export const DEFAULT_ENV_SHIFT = 0;
 
-/**
- * Themes the importer may emit until SP07 (art pipeline) wires theme registration from the v2 manifest.
- * SP07 DEPENDENCY: when a v2 manifest with `themes` exists the importer passes those instead (run.ts `registeredThemes`),
- * and SP07 deletes this constant. A level whose position needs any other theme (e.g. 'lava') is blocked.
- */
-export const REGISTERED_THEMES_PRE_SP07: readonly string[] = ['green', 'snow'];
-
 export function themeFor(position: number, envShift: number = DEFAULT_ENV_SHIFT): string {
   return ENV[Math.floor((position - 1 + envShift) / 20) % ENV.length]!;
 }
@@ -74,12 +67,12 @@ export interface GateResult {
 export interface GateOptions {
   featureMap?: FeatureMap;
   envShift?: number;
-  /** Registered theme set. Default REGISTERED_THEMES_PRE_SP07 (never silently the catalog's or the full cycle). */
-  themes?: readonly string[];
+  /** Registered theme set: the v2 manifest's `themes` ids (run.ts `registeredThemes`). Required: never silently the catalog's or the full cycle. */
+  themes: readonly string[];
 }
 
 /** Throws FeatureMapError for a construct with no feature-map row. */
-export function computeBlocked(level: TwLevel, position: number, catalog: Catalog, options: GateOptions = {}): GateResult {
+export function computeBlocked(level: TwLevel, position: number, catalog: Catalog, options: GateOptions): GateResult {
   const fm = options.featureMap ?? loadFeatureMap();
   const blocked: Blocked[] = [];
   const dropped = new Set<string>();
@@ -112,8 +105,7 @@ export function computeBlocked(level: TwLevel, position: number, catalog: Catalo
   }
 
   const theme = themeFor(position, options.envShift);
-  const registered = options.themes ?? REGISTERED_THEMES_PRE_SP07;
-  if (!registered.includes(theme)) blocked.push({ tw: 'theme', reason: `theme ${theme} not registered` });
+  if (!options.themes.includes(theme)) blocked.push({ tw: 'theme', reason: `theme ${theme} not registered` });
 
   return { pos: position, id: level.id, blocked, dropped: [...dropped].sort(), droppedTw: [...droppedTw].sort() };
 }

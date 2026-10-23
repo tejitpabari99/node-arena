@@ -4,6 +4,7 @@ import { loadFiles, LocatedError, readJson, readText } from './files.js';
 import { uncreditedAssets } from './credits.js';
 import { checkLock, splitFiles } from './content.js';
 import { checkManifest } from './manifest.js';
+import { checkManifestAssets } from './manifest-assets.js';
 import { checkRules } from './rules.js';
 import { emitReport, type GateReport } from './output.js';
 import { writeFile } from 'node:fs/promises';
@@ -26,7 +27,7 @@ async function main(): Promise<void> {
   if (!['validate:content', 'validate:levels', 'levels:lock', 'balance', 'check:manifest', 'check:rules', 'replay:verify'].includes(command)) throw new LocatedError('arguments', 'Expected validate:content, validate:levels, levels:lock, balance, check:manifest, check:rules or replay:verify');
   const target = command === 'replay:verify' && args[0] && !args[0].startsWith('--') ? args.shift() : undefined;
   const opts: Record<string,string> = {};
-  const supported = command === 'balance' ? ['--dir', '--format', '--levels', '--proxy', '--seeds', '--jobs', '--mode'] : command === 'validate:levels' ? ['--dir', '--base', '--format', '--levels', '--seeds', '--max-ticks', '--lock', '--unsolved'] : command === 'levels:lock' ? ['--dir', '--format', '--lock', '--unsolved', '--max-ticks'] : command === 'check:rules' ? ['--rules', '--packages-dir', '--format'] : command === 'replay:verify' ? ['--dir', '--format'] : ['--dir', '--base', '--format', '--manifest', '--assets-dir', '--credits'];
+  const supported = command === 'balance' ? ['--dir', '--format', '--levels', '--proxy', '--seeds', '--jobs', '--mode'] : command === 'validate:levels' ? ['--dir', '--base', '--format', '--levels', '--seeds', '--max-ticks', '--lock', '--unsolved'] : command === 'levels:lock' ? ['--dir', '--format', '--lock', '--unsolved', '--max-ticks'] : command === 'check:rules' ? ['--rules', '--packages-dir', '--format'] : command === 'replay:verify' ? ['--dir', '--format'] : ['--dir', '--base', '--format', '--manifest', '--assets-dir', '--credits', '--lock'];
   for (let i = 0; i < args.length; i += 2) {
     const key = args[i]!; const value = args[i + 1];
     if (!supported.includes(key)) throw new LocatedError('arguments', `Unknown option ${key}`);
@@ -96,14 +97,19 @@ async function main(): Promise<void> {
   else {
     // Manifest validation lives in @node-arena/content (schema + cross-checks); SP07 adds the v2 asset/budget checks.
     const manifestPath = resolve(opts['--manifest'] ?? resolve(root, manifestFile));
-    const issues = checkManifest(await readJson(manifestPath), result.content!);
+    const manifest = await readJson(manifestPath);
+    const issues = checkManifest(manifest, result.content!);
     if (issues.length) { report.errors.push(...issues.map(issue => ({ ...issue, file: manifestPath }))); return; }
+    // Asset files, lock hashes of committed outputs (no TW_EXTRACT needed), budgets, textures, fragment merge. A custom --assets-dir skips the repo lock unless --lock is given.
+    const assetsDir = resolve(opts['--assets-dir'] ?? resolve(root, 'apps/web/assets'));
+    const lockPath = opts['--lock'] ? resolve(opts['--lock']) : opts['--assets-dir'] ? undefined : resolve(root, 'tools/assets/tw-extract.lock.json');
+    const assetIssues = await checkManifestAssets(manifest as Parameters<typeof checkManifestAssets>[0], assetsDir, lockPath);
+    if (assetIssues.length) { report.errors.push(...assetIssues.map(message => ({ file: manifestPath, pointer: '', message }))); return; }
     // Default to the repository CREDITS.md (the default path may be absent; an explicit --credits must exist).
     const credits = opts['--credits'] ? await readText(resolve(opts['--credits'])) : await readText(resolve(root, 'docs/CREDITS.md')).catch(() => '');
-    const assetsDir = resolve(opts['--assets-dir'] ?? resolve(root, 'apps/web/assets'));
     const missing = await uncreditedAssets(assetsDir, credits);
     if (missing.length) throw new LocatedError(manifestPath, `Asset files missing from CREDITS.md: ${missing.join(', ')}`);
-    report.summary = 'Manifest schema, content cross-checks and credits valid.';
+    report.summary = 'Manifest schema, content cross-checks, asset files/hashes/budgets and credits valid.';
   }
   report.ok = true;
 }

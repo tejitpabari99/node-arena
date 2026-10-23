@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@node-arena/defs": ["../../packages/defs/src/index.ts"],
+      "@node-arena/content": ["../../packages/content/src/index.ts"]
+    }
+  },
+  "//": "SP07 isolated typecheck: only new SP07 files (legacy web is parked until SP08). Add files here as tasks land.",
+  "include": [
+    "src/render/registry.ts", "src/render/materials.ts", "src/render/gltf-cache.ts", "src/render/light-rig.ts",
+    "src/manifest/model-ref.ts", "src/manifest/resolve.ts", "src/manifest/load.ts", "test/sp07/*.ts",
+    "src/render/unit-anim.ts", "src/render/unit-renderer.ts",
+    "src/render/building.ts", "src/render/building-label.ts",
+    "src/render/ground-renderer.ts", "src/render/element-renderer.ts", "src/render/lane-renderer.ts", "src/render/environment.ts",
+    "src/render/fx-pool.ts", "src/render/world.ts", "src/render/world-root.ts"
+  ]
+}

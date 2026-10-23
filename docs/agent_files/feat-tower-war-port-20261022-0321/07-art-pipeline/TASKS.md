@@ -9,18 +9,18 @@ Source of truth: [PRD.md](PRD.md). Order follows the PRD: validation (R2) gates 
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Seed refs + capture/compare harness | none | todo |
-| 2 | Prototype validation gate (R2) | 1 | todo |
-| 3 | JS importer + lock + check | 2 | todo |
-| 4 | Environment/obstacle mapping (time-boxed) | 3, 05#0 | todo |
-| 5 | Manifest fragment, budgets, CREDITS | 3, 02#schema | todo |
-| 6 | Renderer registry + manifest resolve rewrite | 5 | todo |
-| 7 | Building + tower renderer (stages, labels) | 6 | todo |
-| 8 | Unit renderer (instancing, baked anim, ghosts) | 6, 03#CUT events | todo |
-| 9 | Ground, obstacle, lane renderers | 4, 6 | todo |
-| 10 | FX sprite pool | 6, 04#radius | todo |
-| 11 | `createWorldRenderer` seam + legacy deletion | 7, 8, 9, 10 | todo |
-| 12 | Compare loop, perf scene, acceptance | 11 | todo |
+| 1 | Seed refs + capture/compare harness | none | done |
+| 2 | Prototype validation gate (R2) | 1 | done |
+| 3 | JS importer + lock + check | 2 | done |
+| 4 | Environment/obstacle mapping (time-boxed) | 3, 05#0 | done |
+| 5 | Manifest fragment, budgets, CREDITS | 3, 02#schema | done |
+| 6 | Renderer registry + manifest resolve rewrite | 5 | done |
+| 7 | Building + tower renderer (stages, labels) | 6 | done |
+| 8 | Unit renderer (instancing, baked anim, ghosts) | 6, 03#CUT events | done |
+| 9 | Ground, obstacle, lane renderers | 4, 6 | done |
+| 10 | FX sprite pool | 6, 04#radius | done |
+| 11 | `createWorldRenderer` seam + legacy deletion | 7, 8, 9, 10 | done |
+| 12 | Compare loop, perf scene, acceptance | 11 | done |
 
 ## Task 1 — Seed refs + capture/compare harness
 What it is / what it means: Reference material and the Playwright loop every later visual judgement uses (R6, D8).

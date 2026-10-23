@@ -10,6 +10,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "preview:test": "vite preview --host 127.0.0.1 --outDir dist-test",
     "test": "vitest run",
+    "test:sp07": "vitest run test/sp07",
+    "typecheck:sp07": "tsc -p tsconfig.sp07.json",
     "test:e2e": "pnpm build:test && playwright test",
     "slice:verify": "pnpm build:test && SLICE=1 playwright test e2e/slice.spec.ts --workers=1",
     "test:e2e:dev": "WEB_TEST_SERVER=dev playwright test",

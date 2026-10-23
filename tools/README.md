@@ -8,6 +8,7 @@ Node-only TypeScript gates, executed with `tsx`. Build `@node-arena/content` fir
 - `src/cli.ts` — content, manifest, rule coverage, replay and level gate dispatch and located diagnostics.
 - `src/levels.ts` / `src/levels-output.ts` / `src/unsolved.ts` — proxy solvability gate (06 R6), `levels-lock.json` determinism lock, `unsolved-by-proxy.json` allowlist.
 - `solutions/` — reserved (no recorded-solution fallback in v2).
+- `src/assets-tw/` — Tower War art importer (`TW_EXTRACT=<extract> pnpm assets:tw`, `pnpm assets:tw:check`): reads the private extract's catalogs/OBJ/PNG and writes RAW GLBs (`apps/web/assets/models/tw`), team textures (`textures/tw`), FX/lane PNGs (`fx`) and `tools/assets/tw-extract.lock.json` (sha256 of every input). Both commands skip with exit 0 when `TW_EXTRACT` is unset. Add new asset families as jobs in `run.ts` (`JOBS`).
 - `src/rules.ts` — active rule headings and literal coverage tags in parsed test titles.
 - `src/replay.ts` — public SP02 playback of standalone records and golden bundles, with content-level resolution.
 - `src/walk.ts` — sorted file traversal, excluding generated/dependency directories and refusing symlinks.
