@@ -2,6 +2,7 @@
 // default export is `async ({ canvas, name, width, height }) => void` and which has drawn >=1 frame on resolve.
 // `ref` (optional) = path relative to BF/ref/ of the reference frame used by `--compare`.
 export const scenes = {
+  'l4-frame': { load: () => import('./l4-frame.js'), ref: 'tw-yt/L04.jpg' },
   'stub': { load: () => import('./stub.js') },
   'l4-green': { load: () => import('./l4-green.js'), ref: 'tw-yt/L04.jpg' },
   'l21-snow': { load: () => import('./l21-snow.js'), ref: 'tw-yt/L21.jpg' },

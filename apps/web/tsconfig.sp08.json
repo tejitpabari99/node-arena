@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.sp07.json",
+  "include": ["src/render/camera.ts", "src/render/scene.ts", "src/render/overlays.ts", "test/sp08/*.ts"]
+}
