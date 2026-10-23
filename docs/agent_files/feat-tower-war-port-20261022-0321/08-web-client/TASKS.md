@@ -8,9 +8,9 @@ Source of truth: docs/agent_files/feat-tower-war-port-20261022-0321/08-web-clien
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Camera, worldRoot mirror, L4 frame check | 03 (R7), 07 renderer | todo |
-| 2 | UI sprites, font, HUD layout from refs | 1 | todo |
-| 3 | Ownership bar math | 03 (R7) | todo |
+| 1 | Camera, worldRoot mirror, L4 frame check | 03 (R7), 07 renderer | done |
+| 2 | UI sprites, font, HUD layout from refs | 1 | in-progress |
+| 3 | Ownership bar math | 03 (R7) | done |
 | 4 | Save v2, state machine, runtime, picker | 1, 2 | todo |
 | 5 | In-play HUD and popups | 2, 3, 4 | todo |
 | 6 | Gesture state machine and input controller | 1, 4 | todo |
