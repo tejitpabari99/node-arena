@@ -126,3 +126,25 @@ test('hash round-trips through playReplay and includes seed-dependent stream sta
   for (let i = 0; i < 65; i++) other.step([]);
   assert.notEqual(other.hash(), sim.hash(), 'seed-dependent stream states are hashed');
 });
+
+for (const recording of [false, true]) {
+  test(`authoritative rejection count includes unreported and silent rejections (${recording ? 'recorder' : 'sim'})`, () => {
+    const sim = recording ? api.createReplayRecorder(level(), 77, metadata) : api.create(level(), 77);
+    assert.equal(sim.rejected, 0);
+    const unknown = { type: 'UnknownCommand', player: 0, from: 0, to: 1 };
+    const events = sim.step([unknown], { events: true });
+    assert.deepEqual(events.filter(event => event.type === 'CommandRejected'), []);
+    assert.equal(sim.rejected, 1);
+    assert.equal(sim.rejected, sim.snapshot().rejected);
+    assert.deepEqual(sim.step([{ type: 'DrawLine', player: 0, from: -1, to: 1 }], { events: false }), []);
+    assert.equal(sim.rejected, 2);
+    assert.equal(sim.rejected, sim.snapshot().rejected);
+    assert.equal(Reflect.set(sim, 'rejected', 99), false);
+    assert.equal(sim.rejected, 2);
+    if (recording) {
+      const played = api.playReplay(source(), sim.record());
+      assert.equal(played.ok, true);
+      assert.equal(played.sim.rejected, 2);
+    }
+  });
+}

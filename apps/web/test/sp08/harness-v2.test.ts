@@ -47,3 +47,10 @@ it('anchor projection applies the mirrored world matrix before the camera',()=>{
  const stage={scene,worldRoot,camera,world:{anchors:{building:()=>({pos:new Vector3(2,0,0),labelPos:new Vector3(2,1,0),radius:1})}},canvas:{getBoundingClientRect:()=>({left:50,top:20,width:1000,height:1000})}} as unknown as Parameters<typeof projectAnchor>[0];
  expect(projectAnchor(stage,'a').x).toBeLessThan(550);expect(projectAnchor(stage,'a',true).y).toBeLessThan(projectAnchor(stage,'a').y);
 });
+
+it('outcome fixture forwards live authoritative rejection diagnostics',()=>{
+ const sim=createFixtureSim('win')(level,1);
+ expect(sim.rejected).toBe(0);
+ sim.step([{type:'DrawLine',player:0,from:-1,to:1}]);
+ expect(sim.rejected).toBe(1);expect(sim.rejected).toBe(sim.snapshot().rejected);
+});

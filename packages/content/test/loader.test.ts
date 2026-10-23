@@ -238,6 +238,8 @@ test('loadContent: aggregates level errors and campaign refs', () => {
   const ok = content.loadContent(f);
   assert.deepEqual(Object.keys(ok.compiled), ['lv-test']);
   assert.equal(ok.compiled['lv-test']!.simHash, PINNED_SIM);
+  assert.equal(ok.levels['constructor'], undefined, 'missing loaded level has no inherited value');
+  assert.equal(ok.compiled['constructor'], undefined, 'missing compiled level has no inherited value');
   const l = level(); l.buildings[0].level = 99;
   const errs = failures(() => content.loadContent({ ...files(), 'data/levels/lv-test.json': l }));
   assert.ok(errs.some((e) => e.file === 'data/levels/lv-test.json' && e.pointer === '/buildings/0/level'));
@@ -246,6 +248,23 @@ test('loadContent: aggregates level errors and campaign refs', () => {
 
 test('loadContent: campaign -> level refs are checked even when no level file is present', () => {
   expectIssue(() => content.loadContent(files()), 'data/campaigns/common.json', '/entries/0/level', /Unknown level "lv-test"/);
+});
+
+test('loadContent: inherited names do not satisfy missing campaign level refs', () => {
+  const f: Record<string, any> = { ...files(), 'data/levels/lv-test.json': level() };
+  f['data/campaigns/common.json'].entries[0].level = 'constructor';
+  expectIssue(() => content.loadContent(f), 'data/campaigns/common.json', '/entries/0/level', /Unknown level "constructor"/);
+});
+
+test('loadContent: an authored constructor level resolves to its loaded and compiled data', () => {
+  const f: Record<string, any> = { ...files(), 'data/levels/constructor.json': { ...level(), id: 'constructor' } };
+  f['data/campaigns/common.json'].entries[0].level = 'constructor';
+  const loaded = content.loadContent(f);
+  assert.ok(Object.hasOwn(loaded.levels, 'constructor'));
+  assert.ok(Object.hasOwn(loaded.compiled, 'constructor'));
+  assert.equal(loaded.levels['constructor']!.level.id, 'constructor');
+  assert.equal(loaded.compiled['constructor']!.id, 'constructor');
+  assert.equal(loaded.compiled['constructor']!.buildings.length, 3);
 });
 
 test('real data files load as a catalog', async () => {

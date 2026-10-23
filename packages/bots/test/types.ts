@@ -1,5 +1,5 @@
 import type { CompiledLevel } from '@node-arena/content';
-import type { Command, Sim, SimView } from '@node-arena/sim';
+import type { Command, ReplayRecorder, Sim, SimView } from '@node-arena/sim';
 import { guardBotContext, createBotDriver, runMatch, type MatchResult, type BotDriver, type Bot, type BotContext } from '../src/index.js';
 
 declare const sim: Sim;
@@ -36,3 +36,14 @@ if (match.outcome.outcome === 'truncated') {
 }
 // @ts-expect-error Replay headers require explicit authoritative versions, not a boolean opt-in.
 runMatch({ level, seed: 42, record: true });
+
+// @ts-expect-error Authoritative rejection diagnostics stay outside BotContext.
+void ctx.rejected;
+const rejected: number = sim.rejected;
+// @ts-expect-error Rejection diagnostics are read-only.
+sim.rejected = 0;
+declare const recorder: ReplayRecorder;
+const recordedRejected: number = recorder.rejected;
+// @ts-expect-error Recorder diagnostics are also read-only.
+recorder.rejected = 0;
+void [rejected, recordedRejected];

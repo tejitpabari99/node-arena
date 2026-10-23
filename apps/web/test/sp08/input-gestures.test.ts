@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { segmentDistance } from '../../src/input/geometry.js';
 import { createGestureMachine } from '../../src/input/gestures.js';
 
 function setup() {
@@ -36,3 +37,23 @@ describe('gesture machine', () => {
     for (const button of [0,2]) { h.machine.down(1,'mouse',button,p(0)); h.machine.cancel(); expect(h.machine.mode).toBe('idle'); }
   });
 });
+
+for (const button of [0, 2]) for (const steps of [1, 20]) {
+  it(`cuts an early crossing with button ${button} in ${steps} move events`, () => {
+    const cuts: number[] = [];
+    const machine = createGestureMachine({
+      now: () => 0, diagonal: () => Math.hypot(1600, 900),
+      own: () => true, canDraw: () => true, draw: () => {},
+      stroke: (a, b, seen) => {
+        if (!seen.has(3) && segmentDistance(a, b, { x: 5, y: -100 }, { x: 5, y: 100 }) <= 8) {
+          seen.add(3); cuts.push(3);
+        }
+      },
+      preview: () => {}, clear: () => {}, eraser: () => {}, trail: () => {},
+    });
+    machine.down(1, 'mouse', button, p(0));
+    for (let step = 1; step <= steps; step++) machine.move(1, p(step * 40 / steps));
+    machine.up(1, p(40));
+    expect(cuts).toEqual([3]);
+  });
+}

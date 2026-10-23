@@ -8,3 +8,23 @@ for(const mode of ['swipe','right button','eraser'] as const)test(`${mode} cuts 
  await page.mouse.move(mx-ox,my-oy,{steps:8});await page.mouse.move(mx+ox,my+oy,{steps:8});await page.mouse.up({button:mode==='right button'?'right':'left'});await page.evaluate(()=>window.__na!.step());
  expect(await page.evaluate(()=>window.__na!.commandLog.filter(s=>s.cmd.type==='CutLine'))).toEqual([{tick:1,cmd:{type:'CutLine',player:p.player,from:p.from,to:p.to}}]);
 });
+
+for (const button of ['left', 'right'] as const) test(`${button} incremental swipe preserves a crossing before the cut threshold`, async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await openLevel(page);
+  const p = await draw(page), mx = (p.a.x + p.b.x) / 2, my = (p.a.y + p.b.y) / 2;
+  const dx = p.b.x - p.a.x, dy = p.b.y - p.a.y, length = Math.hypot(dx, dy);
+  const nx = -dy / length, ny = dx / length;
+  expect(await page.evaluate(() => window.__na!.visualProbe().lines.length)).toBe(1);
+  await page.mouse.move(mx - nx * 5, my - ny * 5);
+  await page.mouse.down({ button });
+  for (let step = 1; step <= 20; step++) {
+    const distance = -5 + step * 2;
+    await page.mouse.move(mx + nx * distance, my + ny * distance);
+  }
+  await page.mouse.up({ button });
+  await page.evaluate(() => window.__na!.step());
+  expect(await page.evaluate(() => window.__na!.commandLog.filter(s => s.cmd.type === 'CutLine')))
+    .toEqual([{ tick: 1, cmd: { type: 'CutLine', player: p.player, from: p.from, to: p.to } }]);
+  expect(await page.evaluate(() => window.__na!.visualProbe().lines.length)).toBe(0);
+});

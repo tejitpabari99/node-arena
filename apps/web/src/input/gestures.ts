@@ -37,8 +37,10 @@ export function createGestureMachine(options: GestureOptions) {
   function move(id: number, point: GesturePoint) {
     if (pointer!==id || mode==='idle') return;
     copy(current,point); refresh();
-    if (mode==='cut' || mode==='eraser') { options.stroke(previous,current,seen); options.trail(current); }
-    previous.x=current.x; previous.y=current.y;
+    if (mode==='cut' || mode==='eraser') {
+      options.stroke(previous,current,seen); options.trail(current);
+      previous.x=current.x; previous.y=current.y;
+    }
   }
   function up(id: number, point: GesturePoint) {
     if (pointer!==id || mode==='idle') return;
