@@ -20,7 +20,7 @@ Main scripts (root `package.json`; Node >=22.13, pnpm 10.34.6):
 - `pnpm build:prerequisites` (needed on fresh checkout), `pnpm build`
 - `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm run ci` (full gate chain, needs Chromium)
 - `pnpm dev` (web client)
-- `pnpm test:web:e2e` (production-browser), `pnpm test:web:all` (preview + dev suites), `pnpm slice:verify`
+- `pnpm test:web:e2e` (production-browser), `pnpm test:web:all` (preview + dev suites)
 - `pnpm check:rules` (every active rule has a `covers R-...` test)
 - `pnpm validate:content --base HEAD`, `pnpm check:content --base HEAD`, `pnpm check:manifest`
 - `pnpm content:schemas` / `check:schemas`, `pnpm content:lock`

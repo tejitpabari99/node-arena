@@ -4,7 +4,6 @@ Node-only TypeScript gates, executed with `tsx`. Build `@node-arena/content` fir
 
 ## Contents
 
-- `layout/` — optional symmetry helper (`mirror|rot3|rot4`): `pnpm --filter @node-arena/tools layout layout/examples/rot3.json --out <level.json>` emits level JSON to commit; JSON stays source of truth.
 - `src/cli.ts` — content, manifest, rule coverage, replay and level gate dispatch and located diagnostics.
 - `src/levels.ts` / `src/levels-output.ts` / `src/unsolved.ts` — proxy solvability gate (06 R6), `levels-lock.json` determinism lock, `unsolved-by-proxy.json` allowlist.
 - `solutions/` — reserved (no recorded-solution fallback in v2).

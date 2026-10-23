@@ -13,7 +13,7 @@ Source of truth: [PRD.md](PRD.md). Canonical program lineage: [original SP09 pla
 | 2 | Adapt replay.ts to v2 header; restore tools:replay | 0, 03 | done |
 | 3 | Rewrite validate:levels + levels-lock + unsolved-by-proxy | 0, 03, 05, 06 (R6 follow-up) | in-progress |
 | 4 | Rewrite balance (report-only) | 3, 06 | done |
-| 5 | Delete bots:churn, visual harness, slice:verify | 06, 08 | partial |
+| 5 | Delete bots:churn, visual harness, slice:verify | 06, 08 | done |
 | 6 | campaign:verify | 08, 5 | todo |
 | 7 | CI workflow updates + env-skip surfacing | 0, 05, 07, 3, 4 | todo |
 | 8 | check:docs gate | 0, 5 | todo |
@@ -94,3 +94,7 @@ Done when: 20/20 campaign levels clean, grid saved, checklist file ready.
 ## Owner steps (not agent tasks)
 - Locally run `TW_EXTRACT=... pnpm check:import && pnpm assets:tw:check` before merge.
 - Play levels 1-20 (positions 4-23) in browser; fill `owner-pass.md`; visual approval vs refs; record fps; sign off any `unsolved-by-proxy.json` entries.
+
+### Task 5 completion — 2026-10-23
+
+Removed the remaining web slice script/spec, AGENTS command and tools README layout entry. Other churn/visual/layout/targets artifacts were already removed. README and web README required no cleanup. Verified package JSON, zero live obsolete command/path references outside historical exclusions, `git diff --check`, `pnpm typecheck:web`, and browser test build. Full CI attempt stopped at a concurrent Task 3 restricted internal import; final full gates remain Task 10. Optional browser suite was interrupted before completion per orchestrator scope direction.
