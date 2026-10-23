@@ -9,11 +9,11 @@ Source of truth: docs/agent_files/feat-tower-war-port-20261022-0321/08-web-clien
 | # | Task | Depends on | Status |
 |---|---|---|---|
 | 1 | Camera, worldRoot mirror, L4 frame check | 03 (R7), 07 renderer | done |
-| 2 | UI sprites, font, HUD layout from refs | 1 | in-progress |
+| 2 | UI sprites, font, HUD layout from refs | 1 | done |
 | 3 | Ownership bar math | 03 (R7) | done |
-| 4 | Save v2, state machine, runtime, picker | 1, 2 | todo |
+| 4 | Save v2, state machine, runtime, picker | 1, 2 | in-progress |
 | 5 | In-play HUD and popups | 2, 3, 4 | todo |
-| 6 | Gesture state machine and input controller | 1, 4 | todo |
+| 6 | Gesture state machine and input controller | 1, 4 | in-progress |
 | 7 | Blocked-draw preview and reasons | 6, 04 explainDraw | todo |
 | 8 | Driver passthrough and test harness | 4, 6 | todo |
 | 9 | E2E rewrite and legacy purge | 5, 7, 8 | todo |
