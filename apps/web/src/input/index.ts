@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry, Line, LineBasicMaterial, Matrix4, Plane, Raycaster, Vector2, Vector3, type Intersection, type Mesh, type Object3D, type PerspectiveCamera, type Scene } from 'three';
+import { BufferAttribute, BufferGeometry, Line, LineBasicMaterial, Matrix4, Plane, Raycaster, Vector2, Vector3, type Intersection, type Object3D, type PerspectiveCamera, type Scene } from 'three';
 import type { Command, Sim, DrawExplanation, RejectReason } from '@node-arena/sim';
 import type { WorldRenderer } from '../render/world.js';
 import type { BuildingAnchor } from '../render/building.js';
@@ -21,7 +21,6 @@ export function createInputController(options: InputControllerOptions) {
   const projected=new Vector3(), offset=new Vector3(), intersections: Intersection[]=[];
   const anchors: (BuildingAnchor | undefined)[]=sim.view.ids.buildings.map(id=>world.anchors.building(id));
   const screens=anchors.map(()=>({x:0,y:0,radius:0}));
-  const pickMeshes: Mesh[]=world.pickMeshes;
   const point: GesturePoint={x:0,y:0,building:null}, start={x:0,z:0}, end={x:0,z:0};
   const positions=new Float32Array(128*3), trailGeometry=new BufferGeometry();
   const trailAttribute=new BufferAttribute(positions,3); trailGeometry.setAttribute('position',trailAttribute);trailGeometry.setDrawRange(0,0);
@@ -53,7 +52,7 @@ export function createInputController(options: InputControllerOptions) {
     point.x=event.clientX-left;point.y=event.clientY-top;point.building=null;
     if(!groundAt(point.x,point.y)) return point;
     // Mesh hit catches roofs; footprint radius catches a building's ground anchor.
-    intersections.length=0;ray.intersectObjects(pickMeshes,false,intersections);
+    intersections.length=0;ray.intersectObjects(world.pickMeshes,false,intersections);
     for(const intersection of intersections) {
       const i=intersection.object.userData.buildingIndex as number | undefined;
       if(i!==undefined && anchors[i]) { point.building=i;return point; }

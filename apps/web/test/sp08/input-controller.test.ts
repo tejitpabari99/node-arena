@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { Group, PerspectiveCamera, Scene, Vector3 } from 'three';
+import { BoxGeometry, Group, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene, Vector3 } from 'three';
 import type { Sim } from '@node-arena/sim';
 import { createInputController } from '../../src/input/index.js';
 
@@ -33,4 +33,31 @@ it('adapts pointer events to numeric driver commands and cleans up cancel listen
   event(canvas,'pointerdown',ax,ay);event(canvas,'pointerup',bx,by);expect(commands).toHaveLength(2);
   expect(event(canvas,'contextmenu',ax,ay).defaultPrevented).toBe(true);
   input.dispose(); event(canvas,'pointerdown',ax,ay);event(canvas,'pointerup',bx,by);expect(commands).toHaveLength(2);
+});
+
+it('raycasts current-stage roofs after pick targets are replaced, ignoring stale hidden meshes', () => {
+  const canvas=new Canvas(), camera=new PerspectiveCamera(45,1,.1,100);
+  camera.position.set(0,10,12);camera.lookAt(0,0,0);camera.updateMatrixWorld();
+  const root=new Group();root.scale.z=-1;
+  const geometry=new BoxGeometry(.8,.5,.8), material=new MeshBasicMaterial();
+  const stale=new Mesh(geometry,material), current=new Mesh(geometry,material);
+  stale.position.set(-2,2,1);current.position.set(-2,5,1);
+  stale.userData.buildingIndex=current.userData.buildingIndex=0;
+  root.add(stale,current);root.updateMatrixWorld(true);
+  const positions=[new Vector3(-2,0,1),new Vector3(2,0,1)];
+  const commands: unknown[]=[];
+  const sim={view:{players:[{kind:'human',colorKey:'blue'}],ids:{buildings:['source','target']},buildings:{owner:[0,-1]},buildingStatic:[{drawsLines:true},{drawsLines:true}],lines:[],over:null},canDraw:()=>null} as unknown as Sim;
+  let picks=[stale];
+  const world={anchors:{building:(id:string)=>({pos:positions[id==='source'?0:1]!,radius:.3,labelPos:new Vector3()})},get pickMeshes(){return picks;},previewLane:()=>{},clearPreview:()=>{},select:()=>{}};
+  const input=createInputController({canvas:canvas as unknown as HTMLCanvasElement,camera,worldRoot:root,sim,world,driver:{submit:c=>commands.push(c)}});
+  const screen=(p:Vector3)=>{const v=p.clone().applyMatrix4(root.matrixWorld).project(camera);return {x:(v.x+1)*500,y:(1-v.y)*500};};
+  const target=screen(positions[1]!);
+  const drag=(from:Vector3)=>{const start=screen(from);event(canvas,'pointerdown',start.x,start.y);event(canvas,'pointermove',target.x,target.y);event(canvas,'pointerup',target.x,target.y);};
+  // Renderer replaces its stage-specific pick list after the controller has attached.
+  stale.visible=false;current.visible=true;picks=[current];input.refresh();
+  drag(current.position);
+  expect(commands).toEqual([{type:'DrawLine',player:0,from:0,to:1}]);
+  drag(stale.position);
+  expect(commands).toHaveLength(1);
+  input.dispose();geometry.dispose();material.dispose();
 });
