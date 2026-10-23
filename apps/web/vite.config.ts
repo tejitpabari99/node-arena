@@ -8,7 +8,6 @@ export default defineConfig({
   build: {
     rollupOptions: { input: {
       main: fileURLToPath(new URL('./index.html', import.meta.url)),
-      spike: fileURLToPath(new URL('./spike.html', import.meta.url)),
     } },
   },
   resolve: {

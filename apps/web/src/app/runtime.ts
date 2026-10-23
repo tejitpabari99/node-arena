@@ -1,153 +1,28 @@
-import { createPerfMetrics } from "../dev";
-import { TICK_RATE } from "@node-arena/sim";
-import type { SaveSettings } from "../save";
-import type { LevelRuntime, RuntimeContext } from "./state";
-import { Disposables } from "../render/disposables";
-import { createLevelScene } from "../render/scene";
-import { createTowerRenderer } from "../render/towers";
-import { createTroopRenderer, troopSizeFactor } from "../render/troops";
-import { parseLodMode } from "../render/troop-lod";
-import { createLineRenderer } from "../render/lines";
-import { createFxRenderer } from "../render/fx";
-import { createBrawlRenderer } from "../render/brawl";
-import { createInputController } from "../input";
-import { createManifestResolver } from "../manifest/resolve";
-/** Construction failures dispose the partially populated scope before the controller releases assets. */
-export function createBrowserRuntime(
-  context: RuntimeContext,
-  parent: HTMLElement,
-  settings: SaveSettings,
-): LevelRuntime {
-  const scope = new Disposables();
+import { createTroopBuffer, type SimEvent } from '@node-arena/sim';
+import type { LevelRuntime, RuntimeContext } from './state';
+import { createLevelScene } from '../render/scene';
+import type { WorldFrame } from '../render/world';
+export interface RuntimeInput { refresh(): void; cancel(): boolean; dispose(): void }
+export type AttachInput = (context: RuntimeContext, scene: ReturnType<typeof createLevelScene>) => RuntimeInput;
+/** Async asset readiness belongs to the level generation; callers dispose a superseded result. */
+export async function createBrowserRuntime(context: RuntimeContext,parent: HTMLElement,attachInput?: AttachInput): Promise<LevelRuntime> {
+  const {level,manifest,driver}=context;
+  const scene=createLevelScene({level,manifest,view:driver.sim.view,parent});
+  let input:RuntimeInput|undefined,disposed=false;
+  const dispose=()=>{if(disposed)return;disposed=true;input?.dispose();scene.dispose();};
   try {
-    const { level, manifest, session, driver } = context;
-    let input: ReturnType<typeof createInputController> | undefined;
-    const scene = createLevelScene({
-      level,
-      manifest,
-      models: session.models,
-      parent,
-      scope,
-      quality: settings.quality,
-      onCanvasChange: (canvas) => input?.setCanvas(canvas),
-    });
-    const towers = createTowerRenderer({
-      view: driver.sim.view,
-      manifest,
-      models: session.models,
-      scene: scene.scene,
-      camera: scene.camera,
-      parent,
-      scope,
-      colorblind: settings.colorblind,
-    });
-    const troops = createTroopRenderer({
-      sim: driver.sim,
-      manifest,
-      models: session.models,
-      scene: scene.scene,
-      scope,
-      sizeFactor: troopSizeFactor(level.towers.filter((t) => t.owner >= 0).map((t) => towers.visualWidth(t.id) ?? NaN), createManifestResolver(manifest).levelVisual(level.id)),
-      reducedMotion: settings.reducedMotion,
-      palette: settings.colorblind ? "colorblind" : "default",
-      now: () => performance.now(),
-      lod: parseLodMode(new URLSearchParams(window.location.search).get("lod")), // ?lod=low|high forces a set (visual harness); default auto
-    });
-    const lines = createLineRenderer({
-      view: driver.sim.view,
-      visualWidth: (id) => towers.visualWidth(id),
-      manifest,
-      scene: scene.scene,
-      scope,
-    });
-    const fx = createFxRenderer({
-      view: driver.sim.view,
-      manifest,
-      scene: scene.scene,
-      scope,
-    });
-    const brawl = createBrawlRenderer({
-      view: driver.sim.view,
-      manifest,
-      scene: scene.scene,
-      scope,
-      lines,
-      figureHeight: troops.meshes[0]?.userData.heightWorld as number | undefined,
-      reducedMotion: settings.reducedMotion,
-      palette: settings.colorblind ? "colorblind" : "default",
-    });
-    input = createInputController({
-      canvas: scene.canvas,
-      sim: driver.sim,
-      camera: scene.camera,
-      scene: scene.scene,
-      manifest,
-      scope,
-      submit: (command) => driver.submit(command),
-      isEnabled: () => context.enabled() && !driver.paused,
-      lines,
-      palette: settings.colorblind ? "colorblind" : "default",
-    });
-    const resize = () => {
-      towers.resize();
-      input?.refresh();
-    };
-    window.addEventListener("resize", resize);
-    scope.defer(() => window.removeEventListener("resize", resize));
-    const metrics = createPerfMetrics();
+    await scene.ready;
+    input=attachInput?.(context,scene);
+    const frame:WorldFrame={view:driver.sim.view,troops:createTroopBuffer(level.buildings.filter(b=>b.kind==='house').length*level.rules.aliveCap),n:0,alpha:0,towerRadiusMilli:driver.sim.towerRadiusMilli.bind(driver.sim)};
+    const pending:SimEvent[]=[];
+    let previous=performance.now();
     return {
-      get metrics() { return metrics.snapshot(); },
-      resetMetrics() { metrics.reset(); },
-      get inspection() { return { scene:scene.scene, camera:scene.camera, renderer:scene.renderer, towers, troops, lines, fx, brawl, scope }; },
-      frame(update) {
-        const start = performance.now();
-        const seconds = (update.sim.tick + update.alpha) / TICK_RATE;
-        towers.animate(seconds);
-        troops.update(update.alpha, seconds);
-        lines.update(seconds, troops);
-        brawl.update(seconds, scene.camera, troops);
-        fx.update(seconds);
-        input?.refresh();
-        const renderStart = performance.now();
-        scene.render();
-        const end = performance.now();
-        metrics.frame(start,end-start+(update.preparationMs??0),driver.lastStepMs,scene.renderer.info.render.calls,scene.renderer.info.render.triangles,
-          troops.count,end-renderStart);
-      },
-      tick(update) {
-        towers.update(update.sim.view);
-        lines.consumeEvents(update.events, update.sim.view);
-        brawl.consumeEvents(update.events, update.sim.view);
-        fx.consumeEvents(update.events, update.sim.view);
-        input?.refresh();
-      },
-      settings(value) {
-        scene.setQuality(value.quality);
-        towers.update(driver.sim.view, { colorblind: value.colorblind });
-        const palette = value.colorblind ? "colorblind" : "default";
-        troops.setPalette(palette);
-        lines.setPalette(palette);
-        fx.setPalette(palette);
-        brawl.setPalette(palette);
-        troops.setReducedMotion(value.reducedMotion);
-        lines.setReducedMotion(value.reducedMotion);
-        fx.setReducedMotion(value.reducedMotion);
-        brawl.setReducedMotion(value.reducedMotion);
-        input?.setPalette(palette);
-        scene.render();
-      },
-      refresh() {
-        input?.refresh();
-      },
-      cancel() {
-        return input?.cancel() ?? false;
-      },
-      dispose() {
-        scope.dispose();
-      },
+      get inspection(){return scene;},
+      frame(update){if(disposed)return;const now=performance.now(),dt=Math.max(0,now-previous);previous=now;
+        frame.view=update.sim.view;frame.alpha=update.alpha;frame.n=update.sim.readTroops(frame.troops);
+        scene.update(frame,pending,dt);pending.length=0;input?.refresh();scene.render();},
+      tick(update){if(!disposed)pending.push(...update.events);},
+      refresh(){if(!disposed)input?.refresh();},cancel(){return input?.cancel()??false;},dispose,
     };
-  } catch (error) {
-    scope.dispose();
-    throw error;
-  }
+  }catch(error){dispose();throw error;}
 }
