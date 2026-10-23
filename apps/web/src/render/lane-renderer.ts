@@ -11,7 +11,26 @@ export const LANE_Y = 0.05;
 /** Texture scroll speed in tiles per second along the lane (from -> to). */
 export const LANE_SCROLL = 0.5;
 export const LANE_TEXTURE = 'fx/lane-wave.png';
-const FALLBACK_COLOR = '#8C8C8C';
+const FALLBACK_COLOR = '#6E6E6E';
+/** Darker, higher-contrast line tints (lines only; building/unit team textures unchanged). Was blue #2E8BFF, green #35B84A, red #F0313F, yellow #FDC534, gray #8C8C8C. */
+export const LANE_COLORS: Readonly<Record<string, string>> = {
+  blue: '#1458C8', green: '#1C7A2C', red: '#C81E2C', yellow: '#D9A010', gray: '#6E6E6E',
+};
+const laneColor = (palettes: Readonly<Record<string, string>>, key: string): string =>
+  Object.hasOwn(LANE_COLORS, key) ? LANE_COLORS[key]! : palettes[key]!;
+
+/**
+ * End point of a drawn line. A line with an opposing reverse line (head-on clash, R-LIN-03/R-CMB-01) stops at the
+ * midpoint so the two owners' colours meet there; otherwise it runs to `b`. Writes into `out`.
+ */
+export function clashEnd(a: LanePoint, b: LanePoint, opposed: boolean, out: LanePoint): LanePoint {
+  out.x = opposed ? (a.x + b.x) / 2 : b.x; out.z = opposed ? (a.z + b.z) / 2 : b.z; return out;
+}
+export const hasOpposite = (lines: readonly { from: number; to: number }[], i: number): boolean => {
+  const l = lines[i]!;
+  for (let j = 0; j < lines.length; j++) if (j !== i && lines[j]!.from === l.to && lines[j]!.to === l.from) return true;
+  return false;
+};
 
 export interface LaneStyle {
   /** Asset path of a manifest `beam` fx texture (`fx/lane-{wave,arrow,waveArrow,trail}.png`). */
@@ -83,7 +102,7 @@ export function createLaneRenderer(ctx: RendererContext, initial: Partial<LaneSt
     const key = Object.hasOwn(style.palettes, colorKey) ? colorKey : '';
     let m = mats.get(key);
     if (!m) {
-      m = new MeshBasicMaterial({ map: texture(), color: key ? style.palettes[key]! : FALLBACK_COLOR, transparent: true, opacity: style.alpha, depthWrite: false, side: DoubleSide });
+      m = new MeshBasicMaterial({ map: texture(), color: key ? laneColor(style.palettes, key) : FALLBACK_COLOR, transparent: true, opacity: style.alpha, depthWrite: false, side: DoubleSide });
       mats.set(key, m);
     }
     return m;
@@ -109,6 +128,7 @@ export function createLaneRenderer(ctx: RendererContext, initial: Partial<LaneSt
         let rib = pool[i];
         if (!rib) { rib = new Ribbon(material('')); pool.push(rib); root.add(rib.mesh); stats.created++; }
         A.x = a.x * MILLI_TO_WORLD; A.z = a.z * MILLI_TO_WORLD; B.x = b.x * MILLI_TO_WORLD; B.z = b.z * MILLI_TO_WORLD;
+        clashEnd(A, B, hasOpposite(lines, i), B);
         rib.set(A, B, style.width, tiles, material(view.players[l.owner]?.colorKey ?? ''));
       }
       for (let i = lines.length; i < pool.length; i++) pool[i]!.mesh.visible = false;
