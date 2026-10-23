@@ -44,9 +44,13 @@ jobs:
           pnpm --filter @node-arena/content exec playwright install --with-deps chromium
           pnpm --filter @node-arena/sim exec playwright install --with-deps chromium
       - run: pnpm run ci
+        env:
+          # Main pushes use normal version guards and require no parked gates.
+          CI_RELEASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '1' || '0' }}
   playwright:
     name: Web preview and development browser suites
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
