@@ -12,12 +12,12 @@ Source of truth: docs/agent_files/feat-tower-war-port-20261022-0321/08-web-clien
 | 2 | UI sprites, font, HUD layout from refs | 1 | done |
 | 3 | Ownership bar math | 03 (R7) | done |
 | 4 | Save v2, state machine, runtime, picker | 1, 2 | done |
-| 5 | In-play HUD and popups | 2, 3, 4 | in-progress |
+| 5 | In-play HUD and popups | 2, 3, 4 | done |
 | 6 | Gesture state machine and input controller | 1, 4 | done |
 | 7 | Blocked-draw preview and reasons | 6, 04 explainDraw | done |
 | 8 | Driver passthrough and test harness | 4, 6 | done |
 | 9 | E2E rewrite and legacy purge | 5, 7, 8 | in-progress |
-| 10 | Visual pass, perf, gate un-park | 9, 07 perf scene, 09 red-window table | todo |
+| 10 | Visual pass, perf, gate un-park | 9, 07 perf scene, 09 red-window table | in-progress |
 
 ## Task 1 — Camera, worldRoot mirror, L4 frame check
 What it is / what it means: First proof that the landscape frame works end to end: the single LH->RH mirror lives at `worldRoot` here (D1, B3), camera is unrotated.
