@@ -173,3 +173,16 @@ test('covers R2: runMatch drives level bots end-to-end with 0 rejected, determin
   assert.equal(r1.stats.finalHash, r2.stats.finalHash);
   assert.ok(r1.stats.commandCount >= 1);
 });
+
+test('startDelayMs: idles until delay elapsed, then normal cadence; absent = unchanged', () => {
+  const view = fakeView({ owner: [0, 1], level: [5, 5] });
+  const collect = (params) => {
+    const st = { timer: 0 };
+    const acted = [];
+    for (let t = 0; t < 110; t++) if (run(view, allow, seq([0]), st, params).length) acted.push(t);
+    return acted;
+  };
+  assert.deepEqual(collect({ ...P, startDelayMs: 0 }), collect(P));
+  // 1000 ms = 20 ticks idle, then first action 34 ticks later, then every 35
+  assert.deepEqual(collect({ ...P, startDelayMs: 1000 }), [54, 89]);
+});

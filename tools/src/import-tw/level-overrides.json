@@ -1,0 +1,7 @@
+{
+  "levelview-14": {
+    "reason": "Playtest: campaign Level 13 too hard. Bots idle 8 s; neutral towers b2/b5 moved toward the opponents.",
+    "botStartDelayMs": { "p2": 8000, "p3": 8000 },
+    "buildingPos": { "b2": { "x": 2.1, "z": 4.72 }, "b5": { "x": 2.1, "z": -4.48 } }
+  }
+}
