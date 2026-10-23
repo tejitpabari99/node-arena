@@ -3,5 +3,34 @@
     "reason": "Playtest: campaign Level 13 too hard. Bots idle 4 s; neutral towers b2/b5 nudged 0.6 outward in z so they cover less of the player-to-neutral-house lines.",
     "botStartDelayMs": { "p2": 4000, "p3": 4000 },
     "buildingPos": { "b2": { "x": -0.39, "z": 5.32 }, "b5": { "x": -0.37, "z": -5.08 } }
+  },
+  "levelview-15": {
+    "reason": "Playtest: Level 14 too easy. Bot p2 reacts faster (15 s -> 9 s).",
+    "botActionDelayMs": { "p2": 9000 }
+  },
+  "levelview-16": {
+    "reason": "Playtest: Level 15 too easy. Bots p2/p3 react faster (15 s -> 10 s).",
+    "botActionDelayMs": { "p2": 10000, "p3": 10000 }
+  },
+  "levelview-17": {
+    "reason": "Playtest: Level 16 too easy. Bots p2/p3 react faster (7 s -> 5.5 s).",
+    "botActionDelayMs": { "p2": 5500, "p3": 5500 }
+  },
+  "levelview-49": {
+    "reason": "Playtest: Level 17 too easy. Bot p2 reacts faster (9 s -> 6 s).",
+    "botActionDelayMs": { "p2": 6000 }
+  },
+  "levelview-19": {
+    "reason": "Playtest: Level 18 too easy. Bot p2 reacts faster (24 s -> 12 s).",
+    "botActionDelayMs": { "p2": 12000 }
+  },
+  "levelview-20": {
+    "reason": "Playtest: Level 19 too easy. Bots react faster (p2 11 s -> 7.5 s, p3 9 s -> 6.5 s).",
+    "botActionDelayMs": { "p2": 7500, "p3": 6500 }
+  },
+  "levelview-100-es": {
+    "reason": "Playtest: Level 20 too easy. Bot p2 reacts faster (20 s -> 10 s); its house b1 starts at level 4 (was 1).",
+    "botActionDelayMs": { "p2": 10000 },
+    "buildingLevel": { "b1": 4 }
   }
 }

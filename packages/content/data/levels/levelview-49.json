@@ -35,7 +35,7 @@
       "colorKey": "yellow",
       "bot": {
         "kind": "tw",
-        "actionDelayMs": 9000,
+        "actionDelayMs": 6000,
         "behavior": "full",
         "script": [
           {

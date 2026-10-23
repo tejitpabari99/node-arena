@@ -37,7 +37,7 @@
       "colorKey": "red",
       "bot": {
         "kind": "tw",
-        "actionDelayMs": 20000,
+        "actionDelayMs": 10000,
         "behavior": "full",
         "script": []
       }
@@ -63,7 +63,7 @@
         "z": 3.22
       },
       "owner": "p2",
-      "level": 1,
+      "level": 4,
       "ignoreForWin": false
     },
     {

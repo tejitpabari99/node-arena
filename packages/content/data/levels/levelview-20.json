@@ -35,7 +35,7 @@
       "colorKey": "red",
       "bot": {
         "kind": "tw",
-        "actionDelayMs": 11000,
+        "actionDelayMs": 7500,
         "behavior": "full",
         "script": []
       }
@@ -46,7 +46,7 @@
       "colorKey": "green",
       "bot": {
         "kind": "tw",
-        "actionDelayMs": 9000,
+        "actionDelayMs": 6500,
         "behavior": "full",
         "script": [
           {

@@ -3,5 +3,7 @@
   { "id": "levelview-12", "position": 14, "reason": "Deadlock 3/2/1 split vs 2 AIs, all slots full; 0/12, cap hit every run", "ownerSignOff": null },
   { "id": "levelview-14", "position": 16, "reason": "Proxy ends with 1 tower vs two 3-tower AIs; 0/12, cap hit every run", "ownerSignOff": null },
   { "id": "levelview-16", "position": 18, "reason": "Proxy eliminated by 3 AIs (incl. scripted p4 AD2000); 0/12 wins", "ownerSignOff": null },
-  { "id": "levelview-17", "position": 19, "reason": "Proxy clears one AI, never removes last 1-2 enemy towers; 0/12, cap hit every run", "ownerSignOff": null }
+  { "id": "levelview-17", "position": 19, "reason": "Proxy clears one AI, never removes last 1-2 enemy towers; 0/12, cap hit every run", "ownerSignOff": null },
+  { "id": "levelview-15", "position": 17, "reason": "Playtest retune (faster bot p2): proxy stalemates, 0/12 wins, cap hit every run", "ownerSignOff": null },
+  { "id": "levelview-19", "position": 21, "reason": "Playtest retune (faster bot p2): proxy loses/never wins; 0/12 wins", "ownerSignOff": null }
 ]

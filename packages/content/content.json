@@ -1,6 +1,6 @@
 {
   "$schema": "schemas/content.schema.json",
   "schemaVersion": "2.0.0",
-  "contentVersion": "2.1.1",
+  "contentVersion": "2.2.0",
   "rulesVersion": "2.0.0"
 }
