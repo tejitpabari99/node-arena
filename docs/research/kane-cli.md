@@ -166,12 +166,16 @@ Expands option 3 / DOM-control workaround from the [Hack-day plan](#hack-day-pla
 - Cannot batch arbitrary actions into one call: re-observes after each action by design. Inferred; internal model/prompt not documented.
 - Replay of an authored `_test.md` skips the LLM (0 credits, ~5x faster: 2 steps 24 s wall incl. launch).
 - Speed-up levers:
-  1. Make UI unambiguous (unique visible button text) so locators resolve without vision.
-  2. `--assertion-mode dom`, `--final-validation off`, `--bug-detection off`, `--mode action` (latency effect untested).
-  3. Keep one browser alive across runs: TUI chained runs, or launch own headed Chrome with remote debugging and attach every run via `--ws-endpoint` + `--allow-missing-url`; game state persists, launch cost disappears (untested; highest-value probe).
+  1. (chosen) Make UI unambiguous (unique visible button text) so locators resolve without vision.
+  2. (chosen) `--assertion-mode dom`, `--final-validation off`, `--bug-detection off`, `--mode action` (latency effect untested).
+  3. (chosen) Keep one browser alive across runs: TUI chained runs, or launch own headed Chrome with remote debugging and attach every run via `--ws-endpoint` + `--allow-missing-url`; game state persists, launch cost disappears (untested; highest-value probe).
   4. Replay recorded openings/scripted sequences for free; go live (LLM) only for the interesting part.
   5. Slow the game instead of speeding Kane (see Game speed).
 - The LLM round trip itself cannot be sped up from our side.
+- **Decided (owner, 2026-10-23):**
+  - Chosen levers: (a) unambiguous DOM button text (e.g. `A · blue · 20`) so Kane resolves targets by locator, never vision; (b) one persistent headed Chrome attached by every run via `--ws-endpoint` + `--allow-missing-url` (no relaunch per move, game state persists) - first probe on hack day; (c) minimal-checking flags: `--mode action`, `--bug-detection off`, `--final-validation off`, `--assertion-mode dom` - measure latency gain on the day.
+  - Not chosen as primary: replaying saved tests (only for fixed sequences / recorded backup).
+  - Game side: Kane mode slows the game (slow speed below 1x, or turn-based) AND slows the bot (large `actionDelayMs` on the AI seat) so Kane's ~10 s/step latency doesn't decide the match.
 
 ### Feature design (owner request)
 - **Audience view:** run Kane headed (no `--headless`) on the presenter laptop; game window + terminal (Kane TUI/stderr shows each step live) side by side / screen-shared.
@@ -190,11 +194,11 @@ Expands option 3 / DOM-control workaround from the [Hack-day plan](#hack-day-pla
 - **Cancel:** double-click a line button -> `CutLine {player, from, to}` (Kane documents double-click; untested).
 - **Coverage:** DrawLine and CutLine are the only player commands (`packages/defs/src/commands.ts`; boosters deferred), so the panel exposes every player mechanic.
 - **Gating:** test-build only (behind `VITE_TEST_HOOKS` / dev, like `window.__na`), plus `?kane=1` query flag; never in production bundle.
-- **Game speed:** driver allows only `setSpeed(1|2)` (`apps/web/src/driver/index.ts`).
+- **Game speed (decided):** driver allows only `setSpeed(1|2)` (`apps/web/src/driver/index.ts`).
   - Add a Kane-mode slow speed (0.25-0.5x) or a turn-based mode (sim paused; each accepted move advances N seconds).
   - Turn-based + fixed seed makes a recorded match replayable deterministically (free, fast demo backup); real-time live matches are not replayable (timing differs per run).
-- **Kane level:** hand-authored `na-` level per `docs/LEVELS_GUIDE.md` §4 (copy `levelview-1.json`, add campaign entry, `requires`, lock/bump).
-  - "Tough map, easy bot": obstacles to force routing + several neutrals; easy bot via large `actionDelayMs` in the AI seat's `bot` block.
+- **Kane level (decided):** hand-authored `na-` level per `docs/LEVELS_GUIDE.md` §4 (copy `levelview-1.json`, add campaign entry, `requires`, lock/bump).
+  - "Tough map, easy bot": obstacles to force routing + several neutrals; easy bot via large `actionDelayMs` in the AI seat's `bot` block (decided).
   - Levels have up to ~15 buildings; keep ≤10 for button-row width. Still uses TW models (licensing: private).
 - **Ground truth:** never trust Kane's "Victory"/"line drawn" claims alone (Spike A false-passes); assert via DOM result dialog + panel log, optionally record `__na.commandLog` via a CDP watcher for the demo.
 
