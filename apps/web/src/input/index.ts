@@ -1,165 +1,146 @@
-import { BufferGeometry, Float32BufferAttribute, Mesh, Line, LineBasicMaterial, Plane, Raycaster, Vector2, Vector3, type Camera, type Scene } from 'three';
-import type { Manifest } from '@node-arena/content';
-import type { Command, Sim } from '@node-arena/sim';
-import { Disposables } from '../render/disposables.js';
-import type { LineSegment, ProjectedLineSegment } from '../render/lines.js';
-import { createLaneMaterial, LANE_WIDTH_FACTOR } from '../render/lane-material.js';
-import { hoverRadius, pointSegmentDistance, segmentDistance, swipeRadius, type Point2 } from './geometry.js';
+import { BufferAttribute, BufferGeometry, Line, LineBasicMaterial, Matrix4, Plane, Raycaster, Vector2, Vector3, type Intersection, type Object3D, type PerspectiveCamera, type Scene } from 'three';
+import type { Command, Sim, DrawExplanation, RejectReason } from '@node-arena/sim';
+import type { WorldRenderer } from '../render/world.js';
+import type { BuildingAnchor } from '../render/building.js';
+import { DRAW_REASON_TEXT } from './reasons.js';
+import { segmentDistance } from './geometry.js';
+import { createGestureMachine, type GesturePoint } from './gestures.js';
 
-export interface InputLines {
-  readonly segments?: readonly LineSegment[];
-  projectSegments?(camera: Camera, width: number, height: number): readonly ProjectedLineSegment[];
-  laneWidth?(a: number, b: number): number;
-  setHighlighted?(channel: number | null, owner?: number): void;
-}
 export interface InputControllerOptions {
-  canvas: HTMLCanvasElement; sim: Sim; camera: Camera; scene: Scene; manifest: Manifest; scope: Disposables;
-  submit(command: Command): unknown;
-  isEnabled?(): boolean;
-  lines?: InputLines;
-  palette?: keyof Manifest['palettes'];
+  canvas: HTMLCanvasElement; sim: Sim; camera: PerspectiveCamera;
+  world: Pick<WorldRenderer,'anchors' | 'pickMeshes' | 'previewLane' | 'clearPreview' | 'select'>;
+  worldRoot: Object3D; scene?: Scene;
+  driver: { submit(command: Command): unknown };
+  isEnabled?(): boolean; now?(): number;
 }
-type Gesture = { pointer: number; kind: 'draw'; from: number } | { pointer: number; kind: 'cut'; previous: Point2; cut: Set<number> };
-
-/** Reads only the public view and canDraw; the driver owns command timing and all sim steps. */
+/** Public sim read API only; the driver's submit owns command tick stamps. */
 export function createInputController(options: InputControllerOptions) {
-  const scope = new Disposables(), ray = new Raycaster(), ground = new Plane(new Vector3(0,1,0),0);
-  let canvas = options.canvas, disposed = false, gesture: Gesture | null = null, cursor: Point2 | null = null;
-  let palette = options.palette ?? 'default';
-  const previewGeometry = scope.add(new BufferGeometry());
-  previewGeometry.setAttribute('position', new Float32BufferAttribute(new Float32Array(12),3));
-  previewGeometry.setAttribute('uv',new Float32BufferAttribute([0,0,0,1,1,0,1,1],2)); previewGeometry.setIndex([0,1,2,2,1,3]);
-  // Ghost chevron ribbon: the lane shader, static (motion 0), translucent, one colour on the whole length.
-  const previewMaterial = scope.add(createLaneMaterial({ value: 0 },{ value: 0 })); previewMaterial.uniforms.alphaMul!.value = .6; previewMaterial.uniforms.split!.value = 1;
-  const preview = new Mesh(previewGeometry,previewMaterial); preview.visible = false; preview.frustumCulled = false; preview.renderOrder = 3; preview.userData.inputPreview = true;
-  options.scene.add(preview); scope.defer(() => preview.removeFromParent());
-  const trailGeometry = scope.add(new BufferGeometry());
-  trailGeometry.setAttribute('position',new Float32BufferAttribute(new Float32Array(128*3),3)); trailGeometry.setDrawRange(0,0);
-  const trail = new Line(trailGeometry,scope.add(new LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: .8, depthWrite: false })));
-  trail.visible = false; trail.frustumCulled = false; trail.renderOrder = 3; options.scene.add(trail); scope.defer(() => trail.removeFromParent());
-  let trailCount = 0;
-  const reason = canvas.ownerDocument.createElement('div'); reason.dataset.inputReason = ''; reason.setAttribute('role','status');
-  Object.assign(reason.style,{ position:'fixed', pointerEvents:'none', display:'none', zIndex:'20', padding:'4px 8px', color:'#fff', background:'#8c1826', borderRadius:'4px', fontSize:'14px' });
-  canvas.ownerDocument.body.append(reason); scope.label(reason);
-  function human() { return options.sim.view.players.findIndex(player => player.kind === 'human'); }
-  function enabled() { return !disposed && !options.sim.view.over && human() >= 0 && (options.isEnabled?.() ?? true); }
-  function local(event: MouseEvent): Point2 { const box = canvas.getBoundingClientRect(); return { x:event.clientX-box.left, y:event.clientY-box.top }; }
-  function world(point: Point2): Vector3 | null {
-    const box = canvas.getBoundingClientRect(); if (!box.width || !box.height) return null;
-    options.camera.updateMatrixWorld(); ray.setFromCamera(new Vector2(point.x/box.width*2-1,1-point.y/box.height*2),options.camera);
-    return ray.ray.intersectPlane(ground,new Vector3());
-  }
-  function pick(point: Vector3): number | null {
-    let found: number | null = null, nearest = Infinity;
-    options.sim.view.towerStatic.forEach((tower,index) => {
-      const radius = tower.footprintRadius/1000*1.25, distance = Math.hypot(point.x-tower.x/1000,point.z-tower.y/1000);
-      if (radius > 0 && distance < radius && distance/radius < nearest) { found = index; nearest = distance/radius; }
-    }); return found;
-  }
-  function towerPoint(index: number) { const tower = options.sim.view.towerStatic[index]!; return new Vector3(tower.x/1000,0,tower.y/1000); }
-  function project(point: Vector3, width: number, height: number): Point2 { const p = point.clone().project(options.camera); return { x:(p.x+1)*width/2,y:(1-p.y)*height/2 }; }
-  function projectedLines(): readonly { channel: number; owner: number; start: Point2; end: Point2; halfWidthPx: number }[] {
-    const box = canvas.getBoundingClientRect(); options.camera.updateMatrixWorld();
-    return options.lines?.projectSegments?.(options.camera,box.width,box.height) ?? options.sim.view.lines.map(line =>
-      ({ channel:line.channel,owner:line.owner,start:project(towerPoint(line.from),box.width,box.height),end:project(towerPoint(line.to),box.width,box.height),halfWidthPx:0 }));
-  }
-  function highlight(channel: number | null) { options.lines?.setHighlighted?.(channel, human()); }
-  function nearestLine(point: Point2) {
-    let selected: number | null = null, best = Infinity;
-    for (const line of projectedLines()) if (line.owner === human()) {
-      const distance = pointSegmentDistance(point,line.start,line.end);
-      if (distance <= hoverRadius(line.halfWidthPx) && distance < best) { best = distance; selected = line.channel; }
-    }
-    return selected;
-  }
-  function command(type: Command['type'], from: number, to: number) {
-    if (!enabled()) return;
-    const view = options.sim.view;
-    options.submit({ type, player:view.ids.players[human()]!, from:view.ids.towers[from]!, to:view.ids.towers[to]! });
-  }
-  function cut(channel: number) { const line = options.sim.view.lines.find(line => line.channel === channel && line.owner === human()); if (line) command('CutLine',line.from,line.to); }
-  function stroke(a: Point2, b: Point2, active: Extract<Gesture,{kind:'cut'}>) {
-    for (const line of projectedLines()) if (line.owner === human() && !active.cut.has(line.channel) && segmentDistance(a,b,line.start,line.end) <= swipeRadius(line.halfWidthPx)) {
-      active.cut.add(line.channel); cut(line.channel);
+  const {canvas,sim,camera,world,worldRoot}=options;
+  const now=options.now ?? (()=>performance.now());
+  const ray=new Raycaster(), ndc=new Vector2(), ground=new Plane(new Vector3(0,1,0),0), hit=new Vector3(), inverse=new Matrix4();
+  const projected=new Vector3(), offset=new Vector3(), intersections: Intersection[]=[];
+  const anchors: (BuildingAnchor | undefined)[]=sim.view.ids.buildings.map(id=>world.anchors.building(id));
+  const screens=anchors.map(()=>({x:0,y:0,radius:0}));
+  const point: GesturePoint={x:0,y:0,building:null}, start={x:0,z:0}, end={x:0,z:0};
+  const positions=new Float32Array(128*3), trailGeometry=new BufferGeometry();
+  const trailAttribute=new BufferAttribute(positions,3); trailGeometry.setAttribute('position',trailAttribute);trailGeometry.setDrawRange(0,0);
+  const trailMaterial=new LineBasicMaterial({color:0xffffff,transparent:true,opacity:.8,depthWrite:false});
+  const trail=new Line(trailGeometry,trailMaterial);trail.visible=false;trail.frustumCulled=false;trail.renderOrder=4;options.scene?.add(trail);
+  let trailCount=0,disposed=false,width=1,height=1,left=0,top=0,groundHit=false;
+  const oldTouch=canvas.style.touchAction,oldCursor=canvas.style.cursor;
+  canvas.style.touchAction='none';
+  const human=sim.view.players.findIndex(player=>player.kind==='human');
+  const enabled=()=>!disposed && human>=0 && !sim.view.over && (options.isEnabled?.() ?? true);
+  function measure() {const box=canvas.getBoundingClientRect();width=box.width || 1;height=box.height || 1;left=box.left;top=box.top;}
+  function projectAnchors() {
+    camera.updateMatrixWorld();worldRoot.updateWorldMatrix(true,false);inverse.copy(worldRoot.matrixWorld).invert();
+    for(let i=0;i<anchors.length;i++) {
+      const a=anchors[i];if(!a) continue;
+      projected.copy(a.pos).applyMatrix4(worldRoot.matrixWorld).project(camera);
+      const p=screens[i]!;p.x=(projected.x+1)*width/2;p.y=(1-projected.y)*height/2;
+      offset.copy(a.pos);offset.x+=a.radius;offset.applyMatrix4(worldRoot.matrixWorld).project(camera);
+      p.radius=Math.abs((offset.x-projected.x)*width/2);
     }
   }
-  function addTrail(point: Point2) {
-    const p = world(point); if (!p) return;
-    const positions = trailGeometry.getAttribute('position');
-    if (trailCount === 128) { (positions.array as Float32Array).copyWithin(0,3); trailCount--; }
-    positions.setXYZ(trailCount++,p.x,.065,p.z); positions.needsUpdate = true; trailGeometry.setDrawRange(0,trailCount); trail.visible = true;
+  function groundAt(x: number,y: number) {
+    ndc.set(x/width*2-1,1-y/height*2);ray.setFromCamera(ndc,camera);
+    groundHit=ray.ray.intersectPlane(ground,hit)!==null;
+    if(groundHit) hit.applyMatrix4(inverse);
+    return groundHit;
   }
-  function updatePreview(point: Point2, from: number) {
-    const hit = world(point); if (!hit) { preview.visible = false; reason.style.display = 'none'; return; }
-    const to = pick(hit), end = to === null ? hit : towerPoint(to), start = towerPoint(from), dx=end.x-start.x,dz=end.z-start.z,length=Math.hypot(dx,dz);
-    const view = options.sim.view, lo = Math.min(from,to ?? from), hi = Math.max(from,to ?? from);
-    const width = to === null ? (options.lines?.laneWidth?.(from,from) ?? LANE_WIDTH_FACTOR*2*view.towerStatic[from]!.footprintRadius/1000) : (options.lines?.laneWidth?.(lo,hi) ?? LANE_WIDTH_FACTOR*(view.towerStatic[from]!.footprintRadius+view.towerStatic[to]!.footprintRadius)/1000);
-    const nx=length ? -dz/length*width/2 : 0,nz=length ? dx/length*width/2 : 0;
-    const positions = previewGeometry.getAttribute('position');
-    [[start.x-nx,start.z-nz],[start.x+nx,start.z+nz],[end.x-nx,end.z-nz],[end.x+nx,end.z+nz]].forEach(([x,z],i)=>positions.setXYZ(i,x!,.06,z!));
-    positions.needsUpdate = true; preview.visible = true;
-    const u = previewMaterial.uniforms; u.laneLen!.value = length || 1; u.laneW!.value = width; u.fade!.value = Math.max(.5,width*1.5);
-    const rejection = to === null ? null : options.sim.canDraw(view.ids.players[human()]!,view.ids.towers[from]!,view.ids.towers[to]!);
-    const tint = rejection ? '#e3384f' : options.manifest.palettes[palette][view.players[human()]!.colorKey]!; (u.colA!.value as { set(v: string): void }).set(tint); (u.colB!.value as { set(v: string): void }).set(tint);
-    reason.textContent = rejection ?? ''; reason.style.display = rejection ? 'block' : 'none';
-    const box = canvas.getBoundingClientRect(); reason.style.left = `${box.left+point.x+14}px`; reason.style.top = `${box.top+point.y+14}px`;
+  function local(event: PointerEvent) {
+    point.x=event.clientX-left;point.y=event.clientY-top;point.building=null;
+    if(!groundAt(point.x,point.y)) return point;
+    // Mesh hit catches roofs; footprint radius catches a building's ground anchor.
+    intersections.length=0;ray.intersectObjects(world.pickMeshes,false,intersections);
+    for(const intersection of intersections) {
+      const i=intersection.object.userData.buildingIndex as number | undefined;
+      if(i!==undefined && anchors[i]) { point.building=i;return point; }
+    }
+    let nearest=Infinity;
+    for(let i=0;i<anchors.length;i++) {
+      const a=anchors[i];if(!a) continue;
+      const d=Math.hypot(hit.x-a.pos.x,hit.z-a.pos.z)/a.radius;
+      if(d<=1 && d<nearest) {nearest=d;point.building=i;}
+    }
+    return point;
   }
-  function cancel(): boolean {
-    const active = gesture; gesture = null; preview.visible = trail.visible = false; trailCount = 0; reason.style.display = 'none'; highlight(null);
-    if (active) { try { if (canvas.hasPointerCapture(active.pointer)) canvas.releasePointerCapture(active.pointer); } catch { /* Removed/replaced canvases have no live pointer. */ } }
-    return active !== null;
+  let label: HTMLDivElement | undefined, marker: HTMLDivElement | undefined;
+  let flashUntil=0, flashing=false, lastFrom=-1, lastTo=-1, lastReason: RejectReason | null=null;
+  let explanation: DrawExplanation | null=null;
+  function clearFeedback() {if(label) label.hidden=true;if(marker) marker.hidden=true;lastFrom=-1;lastTo=-1;lastReason=null;explanation=null;}
+  function clearFlash() {if(flashing) world.select(null);flashing=false;}
+  function feedback(from: number,to: number,reason: RejectReason,x: number,y: number) {
+    if(!label) {
+      label=canvas.ownerDocument.createElement('div');label.dataset.inputFeedback='reason';label.setAttribute('role','status');
+      Object.assign(label.style,{position:'fixed',zIndex:'20',pointerEvents:'none',background:'#8b1828',color:'#fff',padding:'6px 10px',borderRadius:'8px',font:'bold 14px sans-serif',maxWidth:'240px'});
+      marker=canvas.ownerDocument.createElement('div');marker.dataset.inputFeedback='blocker';marker.setAttribute('aria-hidden','true');
+      Object.assign(marker.style,{position:'fixed',zIndex:'19',pointerEvents:'none',width:'14px',height:'14px',border:'3px solid #ff394d',borderRadius:'50%',background:'#fff',transform:'translate(-50%,-50%)'});
+      canvas.ownerDocument.body.append(label,marker);
+    }
+    if(label.textContent!==DRAW_REASON_TEXT[reason]) label.textContent=DRAW_REASON_TEXT[reason];
+    label.style.left=`${left+x+16}px`;label.style.top=`${top+y+16}px`;label.hidden=false;
+    if(from!==lastFrom || to!==lastTo || reason!==lastReason) {explanation=sim.explainDraw(human,from,to);lastFrom=from;lastTo=to;lastReason=reason;}
+    marker!.hidden=explanation===null;
+    if(explanation) {
+      projected.set(explanation.point.x/1000,.06,explanation.point.z/1000).applyMatrix4(worldRoot.matrixWorld).project(camera);
+      marker!.style.left=`${left+(projected.x+1)*width/2}px`;marker!.style.top=`${top+(1-projected.y)*height/2}px`;
+    }
   }
-  function refresh() {
-    if (!enabled()) { cancel(); return; }
-    if (!cursor) return;
-    if (gesture?.kind === 'draw') updatePreview(cursor,gesture.from);
-    else if (!gesture) highlight(nearestLine(cursor));
-  }
-  function setPalette(value: keyof Manifest['palettes']) { if (disposed) return; palette = value; refresh(); }
+  function release(id: number) {try {if(canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);} catch { /* Detached canvas. */ }}
+  const machine=createGestureMachine({now,diagonal:()=>Math.hypot(width,height),own:i=>sim.view.buildings.owner[i]===human && sim.view.buildingStatic[i]!.drawsLines,
+    canDraw:(from,to)=>sim.canDraw(human,from,to)===null,
+    blocked:from=>{world.select(from);flashing=true;flashUntil=now()+300;},
+    draw:(from,to)=>{if(enabled()) options.driver.submit({type:'DrawLine',player:human,from,to});},
+    stroke:(a,b,seen)=>{
+      if(!enabled()) return;
+      for(const line of sim.view.lines) {
+        if(line.owner!==human || seen.has(line.channel)) continue;
+        const from=screens[line.from],to=screens[line.to];if(!from || !to) continue;
+        if(segmentDistance(a,b,from,to)<=8) {seen.add(line.channel);options.driver.submit({type:'CutLine',player:human,from:line.from,to:line.to});}
+      }
+    },
+    preview:(from,p)=>{
+      const a=anchors[from];if(!a || !groundAt(p.x,p.y)) {world.clearPreview();clearFeedback();return;}
+      const target=p.building===null?undefined:anchors[p.building];start.x=a.pos.x;start.z=a.pos.z;end.x=target?.pos.x ?? hit.x;end.z=target?.pos.z ?? hit.z;
+      const reason=p.building===null ? null : sim.canDraw(human,from,p.building);
+      const valid=p.building!==null && reason===null;
+      world.previewLane(start,end,valid?sim.view.players[human]!.colorKey:'red');
+      if(reason!==null && p.building!==null) feedback(from,p.building,reason,p.x,p.y);else clearFeedback();
+    },
+    clear:()=>{clearFeedback();world.clearPreview();trail.visible=false;trailCount=0;trailGeometry.setDrawRange(0,0);},
+    eraser:active=>{canvas.style.cursor=active?'crosshair':oldCursor;},
+    trail:p=>{
+      if(!groundAt(p.x,p.y)) return;
+      if(trailCount===128) {positions.copyWithin(0,3);trailCount--;}
+      projected.set(hit.x,.075,hit.z).applyMatrix4(worldRoot.matrixWorld);
+      trailAttribute.setXYZ(trailCount++,projected.x,projected.y,projected.z);trailAttribute.needsUpdate=true;trailGeometry.setDrawRange(0,trailCount);trail.visible=true;
+    },
+  });
+  function cancel() {clearFlash();const id=machine.pointer;const active=machine.cancel();if(id>=0) release(id);return active;}
+  function refresh() {if(!enabled()) {cancel();return;}if(flashing && now()>=flashUntil) clearFlash();projectAnchors();machine.refresh();}
   function down(event: PointerEvent) {
-    if (!enabled()) { cancel(); return; }
-    if (event.button !== 0 || !event.isPrimary || gesture) return;
-    cursor = local(event); const hit = world(cursor); if (!hit) return;
-    const tower = pick(hit), view = options.sim.view;
-    if (tower !== null) {
-      if (view.tower.owner[tower] !== human() || !view.towerStatic[tower]!.components.includes('drawsLines')) return;
-      gesture = { kind:'draw',pointer:event.pointerId,from:tower }; updatePreview(cursor,tower);
-    } else { gesture = { kind:'cut',pointer:event.pointerId,previous:cursor,cut:new Set() }; addTrail(cursor); }
-    event.preventDefault(); highlight(null);
-    try { canvas.setPointerCapture(event.pointerId); } catch { /* Synthetic events may have no active native pointer. */ }
+    if(!enabled()) {cancel();return;} if(!event.isPrimary || machine.pointer>=0) return;
+    clearFlash();measure();projectAnchors();if(!machine.down(event.pointerId,event.pointerType,event.button,local(event))) return;
+    event.preventDefault();try {canvas.setPointerCapture(event.pointerId);} catch { /* Synthetic pointer. */ }
   }
-  function move(event: PointerEvent) {
-    if (!enabled()) { cancel(); return; }
-    if (!event.isPrimary || (gesture && gesture.pointer !== event.pointerId)) return;
-    cursor = local(event);
-    if (gesture?.kind === 'cut') { stroke(gesture.previous,cursor,gesture); gesture.previous = cursor; addTrail(cursor); }
-    refresh();
+  function move(event: PointerEvent) {if(!enabled()) {cancel();return;}if(machine.pointer!==event.pointerId) return;machine.move(event.pointerId,local(event));event.preventDefault();}
+  function up(event: PointerEvent) {if(!enabled()) {cancel();return;}if(machine.pointer!==event.pointerId) return;machine.up(event.pointerId,local(event));release(event.pointerId);event.preventDefault();}
+  function lost(event: PointerEvent) {if(machine.pointer===event.pointerId) cancel();}
+  function key(event: KeyboardEvent) {if(event.key==='Escape') cancel();}
+  function context(event: Event) {event.preventDefault();}
+  const handlers={pointerdown:down,pointermove:move,pointerup:up,pointercancel:lost,lostpointercapture:lost,contextmenu:context};
+  for(const [name,handler] of Object.entries(handlers)) canvas.addEventListener(name,handler as EventListener);
+  const window=canvas.ownerDocument.defaultView;
+  window?.addEventListener('resize',measure);window?.addEventListener('blur',cancel);window?.addEventListener('keydown',key as EventListener);
+  function dispose() {
+    if(disposed) return;cancel();disposed=true;
+    for(const [name,handler] of Object.entries(handlers)) canvas.removeEventListener(name,handler as EventListener);
+    window?.removeEventListener('resize',measure);window?.removeEventListener('blur',cancel);window?.removeEventListener('keydown',key as EventListener);
+    canvas.style.touchAction=oldTouch;canvas.style.cursor=oldCursor;
+    label?.remove();marker?.remove();
+    trail.removeFromParent();trailGeometry.dispose();trailMaterial.dispose();
   }
-  function up(event: PointerEvent) {
-    if (!enabled()) { cancel(); return; }
-    if (!gesture || gesture.pointer !== event.pointerId || event.button !== 0) return;
-    cursor = local(event);
-    if (gesture.kind === 'draw') {
-      const hit = world(cursor), to = hit ? pick(hit) : null, view = options.sim.view;
-      if (to !== null && options.sim.canDraw(view.ids.players[human()]!,view.ids.towers[gesture.from]!,view.ids.towers[to]!) === null) command('DrawLine',gesture.from,to);
-    } else stroke(gesture.previous,cursor,gesture);
-    cancel(); refresh();
-  }
-  function context(event: MouseEvent) {
-    event.preventDefault(); if (!enabled()) { cancel(); return; }
-    cancel(); cursor = local(event); const line = nearestLine(cursor); if (line !== null) cut(line); refresh();
-  }
-  function lost(event: PointerEvent) { if (gesture?.pointer === event.pointerId) cancel(); }
-  function leave() { if (!gesture) { cursor = null; highlight(null); } }
-  const handlers = { pointerdown:down,pointermove:move,pointerup:up,pointercancel:lost,lostpointercapture:lost,contextmenu:context,pointerleave:leave };
-  function bind(target: HTMLCanvasElement, remove = false) {
-    for (const [name,handler] of Object.entries(handlers)) {
-      if (remove) target.removeEventListener(name,handler as EventListener);
-      else target.addEventListener(name,handler as EventListener);
-    }
-  }
-  function setCanvas(next: HTMLCanvasElement) { if (disposed || canvas === next) return; cancel(); bind(canvas,true); canvas=next; cursor=null; bind(canvas); }
-  function dispose() { if (disposed) return; cancel(); disposed=true; bind(canvas,true); scope.dispose(); }
-  bind(canvas); options.scope.defer(dispose);
-  return { cancel,setCanvas,setPalette,refresh,dispose };
+  measure();projectAnchors();
+  return {refresh,cancel,dispose};
 }

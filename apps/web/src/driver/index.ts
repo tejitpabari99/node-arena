@@ -1,3 +1,4 @@
+import { ownership } from '../ui/ownership';
 import type { CompiledLevel } from '@node-arena/content';
 import { create, TICK_RATE, type Command, type Sim, type SimEvent } from '@node-arena/sim';
 import { createBotDriver, type BotDriver, type CreateBotDriver } from './bot';
@@ -94,6 +95,8 @@ export class GameDriver {
     if (options.autoStart !== false) this.start();
   }
 
+  /** Computed only when read by the HUD/probe, never in the animation loop. */
+  get ownership() { return ownership(this.currentSim.view); }
   get sim(): Sim { return this.currentSim; }
   get alpha(): number { return this.accumulator / STEP_MS; }
   get paused(): boolean { return this.reason !== null; }
@@ -108,7 +111,7 @@ export class GameDriver {
   /** Stamp at submission; copy/freeze so caller edits cannot change queued input. */
   submit(cmd: Command): CommandSubmission | null {
     if (!this.canStep()) return null;
-    const submission = Object.freeze({ tick: this.sim.tick, cmd: Object.freeze({ ...cmd }) });
+    const submission = Object.freeze({ tick: this.sim.view.tick, cmd: Object.freeze({ ...cmd }) });
     this.queued.push(submission);
     return submission;
   }
@@ -194,14 +197,14 @@ export class GameDriver {
   private fixedStep(): void {
     const players = this.queued;
     this.queued = [];
-    const bots = this.bot.commands(this.sim).map(cmd => Object.freeze({ tick: this.sim.tick, cmd: Object.freeze({ ...cmd }) }));
+    const bots = this.bot.commands(this.sim).map(cmd => Object.freeze({ tick: this.sim.view.tick, cmd: Object.freeze({ ...cmd }) }));
     const submissions = Object.freeze([...players, ...bots]);
     const commands = submissions.map(submission => submission.cmd);
     const start = performance.now();
-    const events = this.sim.step(commands);
+    const events = this.sim.step(commands, { events: true });
     this.stepMs = performance.now() - start;
     if (this.sim.view.over) this.queued = [];
-    this.options.onTick?.({ tick: this.sim.tick, sim: this.sim, submissions, events });
+    this.options.onTick?.({ tick: this.sim.view.tick, sim: this.sim, submissions, events });
   }
 
   private emitFrame(steps: number, preparationMs = 0): void {

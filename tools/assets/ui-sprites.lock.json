@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "inputs": {
+    "assets/defaultlocalgroup_assets/Sprite/icon_replay_3634523782040163252.png": "e36338ab726500d219aa04e7f9d0d6330f6260720790c51838513615f879db50",
+    "assets/defaultlocalgroup_assets/Sprite/back_button_8931190119670670509.png": "dc900d6177168785b99ba3d2f545bc4cb1578ceaaabdec9734d2f69f9d006e87",
+    "assets/defaultlocalgroup_assets/Sprite/bar_back_2061739084309080640.png": "30236e8e014216e5da47cdb545e7d997fe9a3d01934f65025312822eba075d85",
+    "assets/defaultlocalgroup_assets/Sprite/bg_popup_1_-5735763378444923586.png": "aa2e7325ede14342f8aafe738da0f22075538006f6f771258d1eb56eca491a1d",
+    "assets/defaultlocalgroup_assets/Sprite/LoseVictoryButton_-7321245380983350766.png": "63440735736ac6642fcf27f76813be98ed0f547cd6c88c77d9a908e623866854",
+    "assets/defaultlocalgroup_assets/Sprite/Button_Gray_-7921802730567541994.png": "c9ee31f42c0117c96eea20c00ec0a7194cb6a84a026b73dd0010f32507e421c0",
+    "assets/defaultlocalgroup_assets/Sprite/sound_on_icon_1205780184134245712.png": "5caddab5c601036ce867f2db60b0d3329c789619ac0b397f072979629deb8321",
+    "assets/defaultlocalgroup_assets/Sprite/sound_off_icon_7389953912037365447.png": "a218ef8da4a427b1f9e26a8f7cc6381ada83a0c1de4a66a399e50fc19c3aa233"
+  },
+  "outputs": {
+    "ui/back.png": "e36338ab726500d219aa04e7f9d0d6330f6260720790c51838513615f879db50",
+    "ui/backButton.png": "dc900d6177168785b99ba3d2f545bc4cb1578ceaaabdec9734d2f69f9d006e87",
+    "ui/barBack.png": "30236e8e014216e5da47cdb545e7d997fe9a3d01934f65025312822eba075d85",
+    "ui/popup.png": "aa2e7325ede14342f8aafe738da0f22075538006f6f771258d1eb56eca491a1d",
+    "ui/primary.png": "63440735736ac6642fcf27f76813be98ed0f547cd6c88c77d9a908e623866854",
+    "ui/secondary.png": "c9ee31f42c0117c96eea20c00ec0a7194cb6a84a026b73dd0010f32507e421c0",
+    "ui/soundOn.png": "5caddab5c601036ce867f2db60b0d3329c789619ac0b397f072979629deb8321",
+    "ui/soundOff.png": "a218ef8da4a427b1f9e26a8f7cc6381ada83a0c1de4a66a399e50fc19c3aa233",
+    "manifest.ui.json": "73a3da59d5b994a89a0b4133644c50a362dfdd19e26115435766b139cadd966d",
+    "fonts/Coiny-Regular.ttf": "ef02d723a54abe4819bea54ea8b2ecf72d77d258010bb336cd4862a37705eac7",
+    "licenses/coiny-OFL.txt": "5c289da4a19f054ace8e31a144a6a254601898cd7faf9eaa301141afda0adbbe",
+    "ui/manifest.json": "73a3da59d5b994a89a0b4133644c50a362dfdd19e26115435766b139cadd966d"
+  }
+}

@@ -40,6 +40,8 @@ try {
       await page.waitForFunction(() => window.__sceneReady || window.__sceneError, null, { timeout: 60_000 });
       const err = await page.evaluate(() => window.__sceneError);
       if (err) throw new Error(err);
+      const metrics = await page.evaluate(() => window.__perfResult ?? null);
+      if(metrics) fs.writeFileSync(path.join(outDir, `${name}.json`), `${JSON.stringify(metrics,null,2)}\n`);
       const file = path.join(outDir, `${name}.png`);
       await page.screenshot({ path: file });
       console.log(`captured ${name} -> ${path.relative(root, file)}`);

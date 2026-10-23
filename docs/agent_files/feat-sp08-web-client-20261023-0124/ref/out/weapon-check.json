@@ -1,0 +1,48 @@
+{
+  "winding": {
+    "pass": true,
+    "failing": []
+  },
+  "uvRange": {
+    "pass": true,
+    "failing": []
+  },
+  "centroidTexel": {
+    "pass": true,
+    "failing": []
+  },
+  "handedness": {
+    "pass": true,
+    "rightMinusLeftAlongRight": 0.293,
+    "note": "hand_right must lie on the character right (facing = model +z, mirrored root)"
+  },
+  "muzzleSideBind": -1,
+  "weaponSide": {
+    "pass": true,
+    "muzzleSide": -1,
+    "note": "icon 1_Base: grip hand = character right, muzzle toward character left (-1). Far end from hand_right grip, bind pose; corroborates handedness"
+  },
+  "muzzleSideRunFrame0": -1,
+  "runFrame0": {
+    "pass": true,
+    "tolerance": "max node pos delta <= 0.01, max angle <= 2 deg",
+    "durationSec": 0.567,
+    "clip": "Run",
+    "channels": 26,
+    "animatedNodes": 11,
+    "maxPosDelta": 0,
+    "maxAngleDeg": 0.601,
+    "worstNode": "gun5",
+    "staticMeshParts": [],
+    "bboxBindSeen": [
+      0.572,
+      0.883,
+      0.766
+    ],
+    "bboxRun0Seen": [
+      0.572,
+      0.883,
+      0.766
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "extends":"./tsconfig.json",
+  "compilerOptions":{"paths":{"@node-arena/defs":["../../packages/defs/src/index.ts"],"@node-arena/content":["../../packages/content/src/index.ts"],"@node-arena/sim":["../../packages/sim/src/index.ts"]}},
+  "include":["src/app/*.ts","src/save/index.ts","src/ui/App.tsx","src/ui/Picker.tsx","src/ui/Credits.tsx","src/main.tsx","test/sp08/save-v2.test.ts","test/sp08/state-v2.test.ts","test/sp08/runtime-v2.test.ts","test/sp08/picker.test.ts"]
+}

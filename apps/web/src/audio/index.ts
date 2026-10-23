@@ -1,4 +1,4 @@
-import type { Manifest } from '@node-arena/content';
+import type { ManifestV2 } from '@node-arena/content';
 import type { SimEvent, SimView } from '@node-arena/sim';
 import { defaultSave, type SaveSettings } from '../save';
 export interface AudioOptions {
@@ -10,13 +10,14 @@ export interface AudioOptions {
   cooldownSeconds?: number;
 }
 interface Voice { source: AudioBufferSourceNode }
-/** Manifest sfx values are relative asset paths, already decoded by AssetSession. */
+/** ManifestV2 sfx values are relative asset paths, decoded by the browser audio connector. */
 export function createAudio(options: AudioOptions = {}) {
   const target = options.gestureTarget ?? (typeof document === 'undefined' ? undefined : document);
   const cap = Math.max(1, Math.floor(options.voiceCap ?? 8));
   const cooldown = Math.max(0, options.cooldownSeconds ?? .12);
   let context = options.context, sfxGain: GainNode | undefined, musicGain: GainNode | undefined;
-  let manifest: Manifest | undefined, buffers: ReadonlyMap<string, AudioBuffer> | undefined;
+  let musicSrc: string | null = null;
+  let manifest: ManifestV2 | undefined, buffers: ReadonlyMap<string, AudioBuffer> | undefined;
   let settings = defaultSave().settings, music: Voice | undefined, disposed = false, resuming = false;
   const voices = new Set<Voice>(), last = new Map<string, number>();
   function ensureContext() {
@@ -49,14 +50,14 @@ export function createAudio(options: AudioOptions = {}) {
     return voice;
   }
   function startMusic() {
-    if (disposed || music) return;
-    const src = manifest?.events.Music?.sfx, buffer = src ? buffers?.get(src) : undefined;
+    if (disposed || music || !musicSrc || ensureContext()?.state !== 'running') return;
+    const buffer = musicSrc ? buffers?.get(musicSrc) : undefined;
     if (buffer) music = start(buffer, true);
   }
   function clearLevel() {
     for (const voice of voices) release(voice, true);
     if (music) release(music, true);
-    last.clear(); manifest = undefined; buffers = undefined;
+    last.clear(); musicSrc = null; manifest = undefined; buffers = undefined;
   }
   function gesture() {
     if (disposed || resuming) return;
@@ -70,16 +71,16 @@ export function createAudio(options: AudioOptions = {}) {
   target?.addEventListener('pointerdown', gesture);
   target?.addEventListener('keydown', gesture);
   return {
-    setLevel(nextManifest: Manifest, nextBuffers: ReadonlyMap<string, AudioBuffer>) {
-      if (disposed || (manifest === nextManifest && buffers === nextBuffers)) return;
-      clearLevel(); manifest = nextManifest; buffers = nextBuffers; startMusic();
+    setLevel(nextManifestV2: ManifestV2, nextBuffers: ReadonlyMap<string, AudioBuffer>, nextMusic: string | null = null) {
+      if (disposed || (manifest === nextManifestV2 && buffers === nextBuffers && musicSrc === nextMusic)) return;
+      clearLevel(); manifest = nextManifestV2; buffers = nextBuffers; musicSrc = nextMusic; startMusic();
     },
     clearLevel,
     settings(value: SaveSettings) { if (!disposed) { settings = { ...value }; applySettings(); } },
     consumeEvents(events: readonly SimEvent[], view: SimView) {
       if (disposed || !manifest || !buffers || settings.sfxMute || settings.sfxVol === 0) return;
       for (const event of events) {
-        const src = manifest.events[event.type]?.sfx ?? (event.type === 'Captured' ? manifest.visuals[view.towerStatic[event.tower]?.visual ?? '']?.sfx : undefined);
+        const src = manifest.events[event.type]?.sfx ?? (event.type === 'BuildingCaptured' ? manifest.visuals[view.buildingStatic[event.building]?.visual ?? '']?.sfx : undefined);
         const buffer = src ? buffers.get(src) : undefined; if (!buffer) continue;
         const ctx = ensureContext(); if (!ctx || ctx.state !== 'running') continue;
         if (ctx.currentTime - (last.get(event.type) ?? -Infinity) < cooldown) continue;

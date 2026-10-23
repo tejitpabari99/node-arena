@@ -5,7 +5,7 @@ export function parseCredits(markdown: string): CreditEntry[] {
   const seen = new Map<string, CreditEntry>();
   for (const line of markdown.split("\n")) {
     const cells = line.split("|").slice(1, -1).map((c) => c.trim());
-    if (cells.length < 5 || !/^(models|audio)\//.test(cells[0]!)) continue;
+    if (cells.length < 5 || !/^(models|audio|fonts)\//.test(cells[0]!)) continue;
     const entry = { title: cells[1]!.replace(/\s*\(.*$/, ""), author: cells[2]!, url: cells[3]!, licence: cells[4]!.replace(/\s*\(.*$/, "") };
     seen.set(`${entry.title}|${entry.author}|${entry.url}`, entry);
   }
@@ -25,7 +25,7 @@ export function Credits({ entries = credits, onBack }: { entries?: readonly Cred
           </li>
         ))}
       </ul>
-      <button onClick={onBack}>Back to menu</button>
+      <button onClick={onBack}>Back to levels</button>
     </section>
   );
 }

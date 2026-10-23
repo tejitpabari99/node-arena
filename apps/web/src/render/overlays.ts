@@ -6,13 +6,13 @@ export type OverlayReader = (view: SimView, index: number) => OverlayValue | nul
 export type OverlayRegistry = Map<string, OverlayReader>;
 export function createOverlayRegistry(): OverlayRegistry {
   return new Map<string, OverlayReader>([
-    ['garrison', (view, index) => {
-      const count = view.tower.col['garrison.count']?.[index];
-      return count === undefined ? null : { text: String(count), description: `Garrison ${count}` };
+    ['level', (view, index) => {
+      const level = view.buildings.level[index];
+      return level === undefined ? null : { text: String(level), description: `Level ${level}` };
     }],
     ['drawsLines', (view, index) => {
-      const slots = view.tower.slots[index] ?? 0, lines = view.tower.lines[index] ?? 0;
-      return { text: '●'.repeat(Math.max(0, Math.min(lines, slots))) + '○'.repeat(Math.max(0, slots - lines)), description: `Lines ${lines} of ${slots} slots` };
+      const lines = view.buildings.lines[index];
+      return lines === undefined ? null : { text: String(lines), description: `${lines} active lines` };
     }],
     ['capturable', () => null],
   ]);

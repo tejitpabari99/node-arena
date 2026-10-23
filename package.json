@@ -7,7 +7,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "test": "pnpm --workspace-concurrency=1 --filter @node-arena/defs --filter @node-arena/content --filter @node-arena/sim --filter @node-arena/bots --filter @node-arena/tools test",
+    "test": "pnpm --workspace-concurrency=1 --filter @node-arena/defs --filter @node-arena/content --filter @node-arena/sim --filter @node-arena/bots --filter @node-arena/tools --filter @node-arena/web test",
     "test:defs": "pnpm --filter @node-arena/defs test",
     "test:content": "pnpm --filter @node-arena/content test",
     "test:sim": "pnpm --filter @node-arena/sim test",
@@ -16,7 +16,7 @@
     "test:tools": "pnpm --filter @node-arena/tools test",
     "test:web": "pnpm --filter @node-arena/web test",
     "test:web:sp07": "pnpm --filter @node-arena/web test:sp07",
-    "build": "pnpm --filter @node-arena/defs --filter @node-arena/content --filter @node-arena/sim --filter @node-arena/bots --filter @node-arena/tools build",
+    "build": "pnpm --filter @node-arena/defs --filter @node-arena/content --filter @node-arena/sim --filter @node-arena/bots --filter @node-arena/tools --filter @node-arena/web build",
     "lint": "eslint .",
     "content:schemas": "pnpm --filter @node-arena/content schemas:generate",
     "check:schemas": "pnpm --filter @node-arena/content schemas:check",
@@ -26,7 +26,6 @@
     "bench:sim": "pnpm --filter @node-arena/sim bench:sim",
     "dev": "pnpm --filter @node-arena/web dev",
     "test:web:e2e": "pnpm --filter @node-arena/web test:e2e",
-    "slice:verify": "pnpm --filter @node-arena/web slice:verify",
     "test:web:all": "pnpm --filter @node-arena/web test:e2e:all",
     "validate:content": "pnpm --filter @node-arena/tools validate:content",
     "check:manifest": "pnpm --filter @node-arena/tools check:manifest",
@@ -58,9 +57,11 @@
     "typecheck:tools": "pnpm exec tsc -p tools/tsconfig.json",
     "typecheck:web": "pnpm exec tsc -p apps/web/tsconfig.json",
     "typecheck:web:sp07": "pnpm --filter @node-arena/web typecheck:sp07",
-    "//typecheck": "Live set only (defs, content, sim, bots, tools); SP08 re-adds typecheck:web on un-park.",
-    "typecheck": "pnpm typecheck:defs && pnpm typecheck:content && pnpm typecheck:sim && pnpm typecheck:bots && pnpm typecheck:tools",
-    "ci": "bash scripts/ci.sh"
+    "typecheck": "pnpm typecheck:defs && pnpm typecheck:content && pnpm typecheck:sim && pnpm typecheck:bots && pnpm typecheck:tools && pnpm typecheck:web",
+    "ci": "bash scripts/ci.sh",
+    "assets:ui": "node --import tsx tools/assets/ui-sprites.mjs",
+    "assets:ui:check": "node --import tsx tools/assets/ui-sprites.mjs --check",
+    "assets:capture:web": "node tools/assets/capture/sp08.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

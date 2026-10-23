@@ -8,7 +8,7 @@ export default defineConfig({
   build: {
     rollupOptions: { input: {
       main: fileURLToPath(new URL('./index.html', import.meta.url)),
-      spike: fileURLToPath(new URL('./spike.html', import.meta.url)),
+      ...(process.env.VITE_TEST_HOOKS === '1' ? { parity: fileURLToPath(new URL('./e2e/content-parity.html', import.meta.url)) } : {}),
     } },
   },
   resolve: {

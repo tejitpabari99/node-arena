@@ -1,6 +1,6 @@
 // `assets:manifest` / `assets:manifest --check`: merge apps/web/assets/manifest.tw.json into the single apps/web/assets/manifest.json
 // (deterministic, idempotent; hand-owned parts such as palettes, camera and event sfx are kept). Needs no TW_EXTRACT.
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { FRAGMENT_PATH, mergeManifest, stringify, type Fragment } from './manifest-fragment.js';
@@ -19,12 +19,23 @@ export function main(args: readonly string[], assetsRoot: string = ASSETS): numb
   const check = args.includes('--check');
   for (const a of args) if (a !== '--check') { process.stderr.write(`Unknown option ${a}\n`); return 2; }
   if (!existsSync(join(assetsRoot, FRAGMENT_PATH))) { process.stderr.write(`assets:manifest: ${FRAGMENT_PATH} missing (run \`pnpm assets:tw\` with TW_EXTRACT)\n`); return 1; }
-  const { text, current } = mergeFiles(assetsRoot);
+  const world = mergeFiles(assetsRoot);
+  // SP08 has a separate presentation namespace: the closed world manifest schema has no UI fields.
+  const uiFragment = join(assetsRoot, 'manifest.ui.json');
+  const uiPath = join(assetsRoot, 'ui/manifest.json');
+  const uiText = existsSync(uiFragment) ? stringify(JSON.parse(readFileSync(uiFragment, 'utf8'))) : undefined;
+  const uiCurrent = uiText === undefined || (existsSync(uiPath) && readFileSync(uiPath, 'utf8') === uiText);
+  const { text } = world;
+  const current = world.current && uiCurrent;
   if (check) {
-    process.stdout.write(current ? 'assets:manifest:check OK (manifest.json = base + manifest.tw.json)\n' : 'assets:manifest:check FAIL: manifest.json is not the merge of itself and manifest.tw.json; run `pnpm assets:manifest`\n');
+    process.stdout.write(current ? 'assets:manifest:check OK (world + optional UI fragments)\n' : 'assets:manifest:check FAIL: world or UI manifest differs from its fragment; run `pnpm assets:manifest`\n');
     return current ? 0 : 1;
   }
-  if (!current) writeFileSync(join(assetsRoot, 'manifest.json'), text);
+  if (!world.current) writeFileSync(join(assetsRoot, 'manifest.json'), text);
+  if (!uiCurrent && uiText !== undefined) {
+    mkdirSync(dirname(uiPath), { recursive: true });
+    writeFileSync(uiPath, uiText);
+  }
   process.stdout.write(`assets:manifest: ${current ? 'already up to date' : 'wrote manifest.json'}\n`);
   return 0;
 }

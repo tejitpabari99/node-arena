@@ -3,15 +3,37 @@
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
-    "types": ["vite/client", "node"],
+    "types": [
+      "vite/client",
+      "node"
+    ],
     "noEmit": true,
     "paths": {
-      "@node-arena/content": ["../../packages/content/src/index.ts"],
-      "@node-arena/sim": ["../../packages/sim/src/index.ts"]
+      "@node-arena/content": [
+        "../../packages/content/src/index.ts"
+      ],
+      "@node-arena/sim": [
+        "../../packages/sim/src/index.ts"
+      ],
+      "@node-arena/defs": [
+        "../../packages/defs/src/index.ts"
+      ],
+      "@node-arena/bots": [
+        "../../packages/bots/src/index.ts"
+      ]
     }
   },
-  "include": ["src", "test", "e2e", "*.config.ts"]
+  "include": [
+    "src",
+    "test",
+    "e2e",
+    "*.config.ts"
+  ]
 }

@@ -6,14 +6,10 @@ export interface SaveSettings {
   sfxVol: number;
   musicMute: boolean;
   sfxMute: boolean;
-  colorblind: boolean;
-  quality: 'low' | 'med' | 'high';
-  reducedMotion: boolean;
-  /** First-level tip dismissed. Optional in persisted v1 blobs; loads as false. */
-  tipSeen: boolean;
+
 }
 export interface SaveData {
-  v: 1;
+  v: 2;
   completed: Record<string, { firstAt: string }>;
   settings: SaveSettings;
   lastLevel: string | null;
@@ -21,9 +17,8 @@ export interface SaveData {
 export type SaveStorage = Pick<Storage, 'getItem' | 'setItem'>;
 export interface SaveNotice { kind: 'reset' | 'storage'; message: string }
 export interface MatchResult {
-  outcome: 'won' | 'lost' | 'timeout' | 'draw';
-  devTuned: boolean;
-  replay: boolean;
+  winner: number | null;
+  human: number;
 }
 export interface SaveStore {
   snapshot(): SaveData;
@@ -43,9 +38,8 @@ export interface SaveOptions {
 
 export function defaultSave(): SaveData {
   return {
-    v: 1, completed: Object.create(null) as SaveData['completed'],
-    settings: { musicVol: 0.7, sfxVol: 1, musicMute: false, sfxMute: false,
-      colorblind: false, quality: 'med', reducedMotion: typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches, tipSeen: false },
+    v: 2, completed: Object.create(null) as SaveData['completed'],
+    settings: { musicVol: 0.7, sfxVol: 1, musicMute: false, sfxMute: false },
     lastLevel: null,
   };
 }
@@ -66,61 +60,32 @@ function level(value: unknown): string | null {
   if (value !== null && typeof value !== 'string') throw new Error('Invalid level id');
   return value;
 }
-function settings(value: unknown, legacy = false): SaveSettings {
+function settings(value: unknown): SaveSettings {
   const source = record(value);
-  const keys = ['musicVol', 'sfxVol', 'musicMute', 'sfxMute', 'colorblind', 'quality'];
-  if (!legacy) keys.push('reducedMotion');
-  if (Object.hasOwn(source, 'tipSeen')) keys.push('tipSeen'); // optional key: key-less blobs load as false, no v bump
-  exact(source, keys);
+  exact(source, ['musicVol', 'sfxVol', 'musicMute', 'sfxMute']);
   for (const key of ['musicVol', 'sfxVol']) {
     const volume = source[key];
-    if (typeof volume !== 'number' || !Number.isFinite(volume) || volume < 0 || volume > 1) {
-      throw new Error('Volume must be finite and between 0 and 1');
-    }
+    if (typeof volume !== 'number' || !Number.isFinite(volume) || volume < 0 || volume > 1) throw new Error('Invalid volume');
   }
-  for (const key of ['musicMute', 'sfxMute', 'colorblind', ...(!legacy ? ['reducedMotion'] : []), ...(keys.includes('tipSeen') ? ['tipSeen'] : [])]) {
-    if (typeof source[key] !== 'boolean') throw new Error('Invalid settings flag');
-  }
-  if (!['low', 'med', 'high'].includes(source.quality as string)) throw new Error('Invalid quality');
-  return { ...source, ...(legacy ? { reducedMotion: false } : {}), tipSeen: source.tipSeen ?? false } as unknown as SaveSettings;
+  for (const key of ['musicMute', 'sfxMute']) if (typeof source[key] !== 'boolean') throw new Error('Invalid mute');
+  return { ...source } as unknown as SaveSettings;
 }
+
 function validateSave(value: unknown): SaveData {
   const source = record(value);
   exact(source, ['v', 'completed', 'settings', 'lastLevel']);
-  if (source.v !== 1) throw new Error('Invalid save version');
+  if (source.v !== 2) throw new Error('Invalid save version');
   const completed: SaveData['completed'] = Object.create(null) as SaveData['completed'];
   for (const [id, entry] of Object.entries(record(source.completed))) {
     const completion = record(entry);
     exact(completion, ['firstAt']);
     completed[id] = { firstAt: date(completion.firstAt) };
   }
-  return { v: 1, completed, settings: settings(source.settings), lastLevel: level(source.lastLevel) };
+  return { v: 2, completed, settings: settings(source.settings), lastLevel: level(source.lastLevel) };
 }
 
-/** Index n upgrades version n to n+1. v0 used date strings and had no reduced-motion flag. */
-export const migrations: ReadonlyArray<(old: unknown) => unknown> = Object.freeze([
-  (old: unknown): SaveData => {
-    const source = record(old);
-    exact(source, ['v', 'completed', 'settings', 'lastLevel']);
-    if (source.v !== 0) throw new Error('Invalid historical save version');
-    const completed: SaveData['completed'] = Object.create(null) as SaveData['completed'];
-    for (const [id, firstAt] of Object.entries(record(source.completed))) {
-      completed[id] = { firstAt: date(firstAt) };
-    }
-    return { v: 1, completed, settings: settings(source.settings, true), lastLevel: level(source.lastLevel) };
-  },
-]);
-
-/** Pure parse/migrate/validate, always returning a fresh object. Throws on unsafe saves. */
-export function decodeSave(raw: string): SaveData {
-  let value: unknown = JSON.parse(raw);
-  const version = record(value).v;
-  if (typeof version !== 'number' || !Number.isInteger(version) || version < 0 || version > 1) {
-    throw new Error('Unsupported save version');
-  }
-  for (let current = version; current < 1; current++) value = migrations[current]!(value);
-  return validateSave(value);
-}
+/** Pure v2 validation. Historical saves are intentionally discarded. */
+export function decodeSave(raw: string): SaveData { return validateSave(JSON.parse(raw)); }
 
 function browserStorage(): SaveStorage | null {
   return typeof window === 'undefined' ? null : window.localStorage;
@@ -159,7 +124,7 @@ export function createSaveStore(options: SaveOptions = {}): SaveStore {
       notify('reset');
       write(SAVE_BACKUP_KEY, raw);
     }
-    // Also persists migrated saves and recovered defaults. Failed writes retain state.
+    // Persists recovered defaults. Failed writes retain session state.
     persist();
   }
   return {
@@ -173,8 +138,8 @@ export function createSaveStore(options: SaveOptions = {}): SaveStore {
     setLastLevel(levelId) { state.lastLevel = level(levelId); persist(); },
     recordResult(levelId, result) {
       if (typeof levelId !== 'string') throw new Error('Invalid level id');
-      // Require explicit normal-match provenance, including at runtime for JS callers.
-      if (result.outcome !== 'won' || result.devTuned !== false || result.replay !== false) return false;
+      // Sim outcome can be won for any team; compare the authoritative winner.
+      if (!Number.isInteger(result.human) || result.human < 0 || result.winner !== result.human) return false;
       if (Object.hasOwn(state.completed, levelId)) return false;
       state.completed[levelId] = { firstAt: (options.now?.() ?? new Date()).toISOString() };
       persist();

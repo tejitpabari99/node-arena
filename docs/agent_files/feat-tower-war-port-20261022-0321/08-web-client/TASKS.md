@@ -1,23 +1,23 @@
 ---
-status: draft
-summary: 10 tasks to rebuild the web shell (camera, mirror, HUD, picker, save v2, gestures, harness, e2e) for Tower War, landscape, no boosters.
-date: 2026-10-22
+status: done
+summary: All 10 Tower War web-client tasks implemented and verified; final review PASS.
+date: 2026-10-23
 ---
 # Tasks: 08 Web client
 Source of truth: docs/agent_files/feat-tower-war-port-20261022-0321/08-web-client/PRD.md. Consumes 03's R7 view API and 07's world renderer/anchors/previewLane; 04's explainDraw is soft. Legacy screens, HUD, save fields and dev tuning are deleted in the same commit that replaces them. Visual tasks iterate screenshots against `ref/tw-yt/` (portrait refs, landscape layout).
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Camera, worldRoot mirror, L4 frame check | 03 (R7), 07 renderer | todo |
-| 2 | UI sprites, font, HUD layout from refs | 1 | todo |
-| 3 | Ownership bar math | 03 (R7) | todo |
-| 4 | Save v2, state machine, runtime, picker | 1, 2 | todo |
-| 5 | In-play HUD and popups | 2, 3, 4 | todo |
-| 6 | Gesture state machine and input controller | 1, 4 | todo |
-| 7 | Blocked-draw preview and reasons | 6, 04 explainDraw | todo |
-| 8 | Driver passthrough and test harness | 4, 6 | todo |
-| 9 | E2E rewrite and legacy purge | 5, 7, 8 | todo |
-| 10 | Visual pass, perf, gate un-park | 9, 07 perf scene, 09 red-window table | todo |
+| 1 | Camera, worldRoot mirror, L4 frame check | 03 (R7), 07 renderer | done |
+| 2 | UI sprites, font, HUD layout from refs | 1 | done |
+| 3 | Ownership bar math | 03 (R7) | done |
+| 4 | Save v2, state machine, runtime, picker | 1, 2 | done |
+| 5 | In-play HUD and popups | 2, 3, 4 | done |
+| 6 | Gesture state machine and input controller | 1, 4 | done |
+| 7 | Blocked-draw preview and reasons | 6, 04 explainDraw | done |
+| 8 | Driver passthrough and test harness | 4, 6 | done |
+| 9 | E2E rewrite and legacy purge | 5, 7, 8 | done |
+| 10 | Visual pass, perf, gate un-park | 9, 07 perf scene, 09 red-window table | done |
 
 ## Task 1 — Camera, worldRoot mirror, L4 frame check
 What it is / what it means: First proof that the landscape frame works end to end: the single LH->RH mirror lives at `worldRoot` here (D1, B3), camera is unrotated.
