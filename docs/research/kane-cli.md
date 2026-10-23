@@ -123,6 +123,7 @@ Artifacts: [kane-cli/](kane-cli/README.md) (hook, tests, assurance outputs, DOM-
 - 1K credits tomorrow ~ 40 short authored tests, or ~10 use-cases designed + ~15 authored tests; replays unlimited. Pro trial quota (12,000/month) is far above this; hack-day credit allotment unverified.
 
 ## Hack-day plan (2026-10-24)
+See also: [Kane playtester mode design](#kane-playtester-mode--design-proposed-not-built) (richer DOM-control playtester, speed analysis, effort).
 Recommended demo combo (derived from verdicts): **Stop-hook replay loop (1) + Assurance cover on rules excerpt (2) + DOM-control playtester via test-only accessible tower controls (3 workaround)**. Demo arc: Claude changes HUD/level -> Stop hook replays Kane tests -> fail -> Claude fixes -> pass -> `kane-cli cover` shows proven vs owed.
 
 ### Pre-flight checklist (tonight / 9 AM)
@@ -155,6 +156,68 @@ Recommended demo combo (derived from verdicts): **Stop-hook replay loop (1) + As
 - Trusting Kane assertions on gameplay without ground truth.
 - Mobile track (out of scope) and PvP two-session demo (multiplayer not built).
 - Installing kane-cli with pnpm.
+
+## Kane playtester mode — design (proposed, not built)
+Expands option 3 / DOM-control workaround from the [Hack-day plan](#hack-day-plan-2026-10-24). Nothing here is built or tested unless marked.
+
+### How Kane executes (why it is slow)
+- Agent loop per step (observed in spikes + skill docs): capture page state (DOM/accessibility + screenshot) -> cloud LLM decides next action -> resolve target (DOM locator by text/aria; vision coordinates only as fallback, e.g. drag) -> execute via Chrome DevTools Protocol -> wait for page to settle -> next step.
+- Each step = one LLM round trip; measured ~10 s/step during authoring (A1: 10 steps 142 s). Plus Chrome launch + page load per `run` (~10-15 s; A0 trivial run 35 s).
+- Cannot batch arbitrary actions into one call: re-observes after each action by design. Inferred; internal model/prompt not documented.
+- Replay of an authored `_test.md` skips the LLM (0 credits, ~5x faster: 2 steps 24 s wall incl. launch).
+- Speed-up levers:
+  1. Make UI unambiguous (unique visible button text) so locators resolve without vision.
+  2. `--assertion-mode dom`, `--final-validation off`, `--bug-detection off`, `--mode action` (latency effect untested).
+  3. Keep one browser alive across runs: TUI chained runs, or launch own headed Chrome with remote debugging and attach every run via `--ws-endpoint` + `--allow-missing-url`; game state persists, launch cost disappears (untested; highest-value probe).
+  4. Replay recorded openings/scripted sequences for free; go live (LLM) only for the interesting part.
+  5. Slow the game instead of speeding Kane (see Game speed).
+- The LLM round trip itself cannot be sped up from our side.
+
+### Feature design (owner request)
+- **Audience view:** run Kane headed (no `--headless`) on the presenter laptop; game window + terminal (Kane TUI/stderr shows each step live) side by side / screen-shared.
+  - Optional in-page "Kane log" pane: page cannot read Kane's stream directly; needs a tiny local relay tailing the run's `events.ndjson` (session folder) and pushing to the page via SSE/WebSocket (~1 h).
+  - The panel's own action log (clicks, accepted/rejected) is trivial.
+- **Building tags:** DOM tags (A, B, C…) positioned over each building every frame via `__na.project(id)` / scene projection.
+  - Do NOT change the cached canvas number sprite (`apps/web/src/render/building-label.ts`, cache key level:stage).
+  - DOM text is readable by Kane; canvas numbers only via vision (drifts in real time).
+- **Bottom card:** full width, single row, two columns.
+  - Col 1: one square-ish large button per building; label carries state, e.g. `A · blue · 20` (owner colour + troop level from sim snapshot) so Kane can reason about moves.
+  - Col 2: one button per active line `A → C`, built from live sim state (lines also vanish on capture / replacement; `LineCut` reasons `player|replaced|captured`), not from click history.
+- **Draw:** click source button then target button -> `DrawLine {player, from, to}` with NUMERIC building indices (string ids rejected as `malformed`; Spike D). Accept/reject read from `CommandRejected` events after the next tick, not the `submit` return value.
+- **Error banner:** red, top, DOM text, e.g. "Can't draw A → C: blocked by obstacle".
+  - Sim reasons: DrawLine `gameover|malformed|unknown-id|not-owner|self|not-drawer|duplicate|no-slot|blocked-obstacle|blocked-building`; CutLine `no-line|not-owner|…`.
+  - Pre-check with `__na.legality(from,to)` (`canDraw` + `explainDraw` gives blocker point/ref).
+- **Cancel:** double-click a line button -> `CutLine {player, from, to}` (Kane documents double-click; untested).
+- **Coverage:** DrawLine and CutLine are the only player commands (`packages/defs/src/commands.ts`; boosters deferred), so the panel exposes every player mechanic.
+- **Gating:** test-build only (behind `VITE_TEST_HOOKS` / dev, like `window.__na`), plus `?kane=1` query flag; never in production bundle.
+- **Game speed:** driver allows only `setSpeed(1|2)` (`apps/web/src/driver/index.ts`).
+  - Add a Kane-mode slow speed (0.25-0.5x) or a turn-based mode (sim paused; each accepted move advances N seconds).
+  - Turn-based + fixed seed makes a recorded match replayable deterministically (free, fast demo backup); real-time live matches are not replayable (timing differs per run).
+- **Kane level:** hand-authored `na-` level per `docs/LEVELS_GUIDE.md` §4 (copy `levelview-1.json`, add campaign entry, `requires`, lock/bump).
+  - "Tough map, easy bot": obstacles to force routing + several neutrals; easy bot via large `actionDelayMs` in the AI seat's `bot` block.
+  - Levels have up to ~15 buildings; keep ≤10 for button-row width. Still uses TW models (licensing: private).
+- **Ground truth:** never trust Kane's "Victory"/"line drawn" claims alone (Spike A false-passes); assert via DOM result dialog + panel log, optionally record `__na.commandLog` via a CDP watcher for the demo.
+
+### Cost / run shape
+- Measured ~2.5-3 credits per authored step.
+- One long objective (play until Victory) ≈ 60-100 credits for a 10-15-move match, but drifts past ~15 steps.
+- Per-move loop (script calls `kane-cli run` once per move: "read board, make one move") is more robust but ≈13+ credits per call (~150-200 per match); the `--ws-endpoint` persistent-browser approach would cut launch overhead per move.
+- Owner will top up credits.
+
+### Effort estimate (guess, for hack day; all must be built on the day)
+| Piece | Estimate |
+|---|---|
+| Panel + tags + error banner + lines column | ~2-3 h |
+| Slow / turn-based mode | ~1 h |
+| Kane level + easy bot + lock/bump | ~1-2 h |
+| Log relay (optional) | ~1 h |
+| Kane objectives + rehearsal + recorded backup | ~1-2 h |
+
+### Open probes (untested)
+- `--ws-endpoint` attach to a pre-launched headed Chrome.
+- Double-click on line buttons.
+- Latency effect of mode/validation flags.
+- One long "play until Victory" objective vs per-move loop.
 
 ## KaneAI Pro (free 3 months for attendees)
 Plan: 12,000 credits/month per agent; Cloud KaneAI Web; 1 concurrent cloud authoring session; local authoring via Kane CLI; 1 Test Manager seat; AI-native test generation; 100 HyperExecute minutes/month (Linux/Windows/macOS); latest Pro features.
