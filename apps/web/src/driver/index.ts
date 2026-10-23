@@ -1,3 +1,4 @@
+import { ownership } from '../ui/ownership';
 import type { CompiledLevel } from '@node-arena/content';
 import { create, TICK_RATE, type Command, type Sim, type SimEvent } from '@node-arena/sim';
 import { createBotDriver, type BotDriver, type CreateBotDriver } from './bot';
@@ -94,6 +95,8 @@ export class GameDriver {
     if (options.autoStart !== false) this.start();
   }
 
+  /** Computed only when read by the HUD/probe, never in the animation loop. */
+  get ownership() { return ownership(this.currentSim.view); }
   get sim(): Sim { return this.currentSim; }
   get alpha(): number { return this.accumulator / STEP_MS; }
   get paused(): boolean { return this.reason !== null; }

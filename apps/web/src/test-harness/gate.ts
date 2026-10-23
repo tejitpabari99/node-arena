@@ -1,11 +1,8 @@
-/** Test hooks (`?test=1`, `?fixture=`) exist only in dev or a build made with VITE_TEST_HOOKS=1 (see main.tsx). */
-
-export interface TestHookRequest { testing: boolean; fixture: string | null }
-
-/** Parses the hook params; everything is inert unless `enabled`. */
+export interface TestHookRequest { testing: boolean; fixture: 'win' | 'loss' | null; level: string | null; seed: number; speed: 1 | 2 }
+/** Production does not import this module; still explicitly inert when disabled. */
 export function testHookRequest(search: string, enabled: boolean): TestHookRequest {
-  if (!enabled) return { testing: false, fixture: null };
-  const query = new URLSearchParams(search);
-  const testing = query.get('test') === '1';
-  return { testing, fixture: testing && query.has('fixture') ? query.get('fixture')! : null };
+  const defaults: TestHookRequest={testing:false,fixture:null,level:null,seed:1,speed:1};
+  if(!enabled)return defaults;
+  const q=new URLSearchParams(search),testing=q.get('test')==='1',fixture=q.get('fixture'),seed=Number(q.get('seed')??1);
+  return {testing,fixture:testing&&(fixture==='win'||fixture==='loss')?fixture:null,level:q.get('level'),seed:Number.isSafeInteger(seed)&&seed>=0&&seed<=0xffffffff?seed:1,speed:q.get('speed')==='2'?2:1};
 }

@@ -30,6 +30,7 @@ export function createAppController(options: AppOptions) {
   const save=options.save??createSaveStore(), listeners=new Set<()=>void>(),events=new Set<(u:TickUpdate)=>void>();
   let state: AppSnapshot={screen:'boot',loading:true,restartPopup:false,levels:[],levelId:null,save:save.snapshot(),notices:[],error:null,result:null,remainingSeconds:0};
   let loaded: LoadedContent|undefined, manifest: ManifestV2|undefined,driver:GameDriver|null=null,runtime:LevelRuntime|undefined;
+  let lastSeed=1;
   let generation=0,disposed=false,lastPublication=-Infinity;
   const publish=()=>{ if(disposed)return; const notices=[...state.notices];let notice;while((notice=save.consumeNotice()))notices.push(notice.message);state={...state,save:save.snapshot(),notices};listeners.forEach(fn=>fn()); };
   const clear=()=>{const oldRuntime=runtime;runtime=undefined;driver?.dispose();driver=null;oldRuntime?.dispose();};
@@ -48,7 +49,7 @@ export function createAppController(options: AppOptions) {
       state={...state,screen:'picker',loading:false,levels,error:null};publish();
     }catch(error){if(!disposed&&token===generation)fail(error);}},
     async startLevel(id:string,seed=1){if(disposed||!loaded||!manifest||!isLevelUnlocked(state,id))return;
-      const level=loaded.compiled[id];if(!level)return;const token=++generation;clear();
+      const level=loaded.compiled[id];if(!level)return;lastSeed=seed;const token=++generation;clear();
       state={...state,screen:'boot',loading:true,levelId:id,result:null,restartPopup:false,error:null};publish();
       let owned:GameDriver|undefined,created:LevelRuntime|undefined;
       try{
@@ -75,7 +76,7 @@ export function createAppController(options: AppOptions) {
     pause(){if(state.screen!=='playing')return;runtime?.cancel();driver?.pause();},
     resume(){if(state.screen!=='playing'||!state.restartPopup)return;driver?.resume();if(driver&&!driver.paused){state={...state,restartPopup:false};runtime?.refresh();publish();}},
     escape(){if(state.restartPopup)api.resume();else if(state.screen==='playing'&&!runtime?.cancel())api.pause();},
-    restart(){return state.levelId?api.startLevel(state.levelId):Promise.resolve();},
+    restart(){return state.levelId?api.startLevel(state.levelId,lastSeed):Promise.resolve();},
     next(){const i=state.levels.findIndex(l=>l.id===state.levelId),next=state.levels[i+1];return next?api.startLevel(next.id):Promise.resolve();},
     retry(){return state.levelId&&loaded?api.restart():api.boot();},
     updateSettings(patch:Partial<SaveSettings>){save.updateSettings(patch);publish();},
