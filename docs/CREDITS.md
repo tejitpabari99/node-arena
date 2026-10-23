@@ -16,6 +16,7 @@ All files in the table below are extracted from the Tower War 1.29.3 Android bui
 | models/tw/obstacle-snow.glb | `snow_obstacle` (small = big mesh) | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
 | models/tw/projectile.glb | Tower cannonball + trail | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
 | models/tw/soldier.glb | `1_MilitaryDefaultWarriorSkinData` (default soldier skin): 9 rigid parts, Run + Death clips | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
+| models/tw/soldier-lod1.glb | Same skin as soldier.glb, simplified (meshopt, 294 tris), same 9 part nodes, no clips | Importer: per-part meshopt simplify of the soldier OBJ meshes (unit LOD) |
 | models/tw/tank.glb | `1_MilitaryAttackWarriorSkinData` (default tank skin): 4 rigid parts | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
 | models/tw/tower.glb | Tower prefab, stage meshes `stage0..2` | Importer: OBJ -> RAW GLB, rigid part nodes, no embedded texture |
 | textures/tw/barracks-blue.png | WT1 barracks texture, blue team | None (original PNG bytes) |

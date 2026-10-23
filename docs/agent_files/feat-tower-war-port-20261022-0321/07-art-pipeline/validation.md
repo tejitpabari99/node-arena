@@ -150,12 +150,14 @@ Captures: `pnpm assets:capture --scene all --compare` (1600x900, SwiftShader) ->
 | Metric | Measured | Budget | |
 |---|---|---|---|
 | Unit draw calls (InstancedMesh) | 52 (soldier 9x4 + tank 4x4) | <= 60 | met |
-| Total draw calls (units + buildings + labels + lanes + ground + fx) | 181 | n/a | info |
-| Triangles (`renderer.info.render.triangles`) | **678,098** | <= 300,000 | **NOT MET** |
+| Total draw calls (units + buildings + labels + lanes + ground + fx) | 189 (was 181; +8 range discs) | n/a | info |
+| Triangles (`renderer.info.render.triangles`) | **233,410** (was 678,098 before unit LOD) | <= 300,000 | met |
 | CPU `world.update` (720 troops, bake+matrix) | 0.6 ms/frame | | fine |
 | Frame time, headless SwiftShader 1600x900 (software rasteriser, `readPixels` sync) | ~920 ms | 60 fps on iGPU | not measurable here (software); **owner check on a real iGPU** |
 | Total gzip of new SP07 assets (models/tw 95 KB + textures/tw 1,644 KB + fx 55 KB + Coiny font 69 KB, manifest ~10 KB) | ~1.87 MB | <= 3 MB | met |
-Tris breakdown: soldiers 600 x 1,036 = 622k + tanks 120 x 408 = 49k + buildings/ground/fx ~7k. The PRD's own numbers (1,036-tri soldier x 720) cannot satisfy 300k; the unit mesh itself is the budget. Recommended follow-up (PRD risk row "fallback ... merged LOD body for far units"): importer emits a ~250-tri simplified soldier (meshopt simplify per part) and `unit-renderer` switches to it when `n` troops > ~250 (or by camera distance); 720 x 250 = 180k fits. Not done here (new importer + renderer feature, outside Task 12).
+Tris breakdown before LOD: soldiers 600 x 1,036 = 622k + tanks 120 x 408 = 49k + buildings/ground/fx ~7k. After LOD: soldiers 600 x 294 = 176k + tanks 49k + rest ~8k = 233k.
+**LOD decision (fix-up):** importer emits `models/tw/soldier-lod1.glb` (same 9 part nodes/names, UVs + normals kept, no clips): per-part `MeshoptSimplifier.simplifyWithAttributes` (uv weights 0.5, target ratio 0.25, error 0.15), 1,036 -> 294 tris, deterministic (`assets:tw:check` OK). Manifest: additive optional `visuals.<id>.model.lod` (schema regenerated, schemaVersion unchanged); `check:manifest` verifies part-node parity and fewer tris. Renderer: GLOBAL switch, not per-unit distance (two LOD sets would double InstancedMeshes, 52 -> ~104 draws): when alive troops of the visual > 200 (`LOD_ON`) every part's InstancedMesh swaps `geometry` to the LOD one; back to full at <= 150 (`LOD_OFF`, hysteresis). Draw calls unchanged (unit 52). Tank kept full (408 tris, <=120 units, 49k). Worst case all-soldier 720 = 212k. Visual: perf.png soldiers still read as team-coloured TW soldiers at the SP08 camera; the unit-lineup (few units) stays on the full mesh.
+**Range ring:** now a translucent white fill disc (opacity 0.18, child `range-disc`) under the brighter edge ring (0.55), team-neutral, matching refs L04/L09/d-tower-firing (see l4-green.compare.png); selection ring gets a yellow 0.2 fill.
 
 ### Un-park confirmation
 - `scripts/ci.sh`: `step check:manifest pnpm check:manifest` runs live (line ~113); `check:manifest:SP07` is not in `PARKED`.
@@ -166,7 +168,7 @@ Tris breakdown: soldiers 600 x 1,036 = 622k + tanks 120 x 408 = 49k + buildings/
 |---|---|---|---|
 | 1 | R2 validation report; turntable under mirrored root; env-mapping outcome | met | this file (Tasks 1-4 sections), `ref/proto-check/` |
 | 2 | `assets:tw` + `:check` reproduce hashes; `check:manifest` passes, named budgets, CREDITS | met | `pnpm assets:tw:check` OK, `pnpm check:manifest` pass (run notes below) |
-| 3 | Perf: 720 troops + 20 buildings, 60 fps, <=60 unit draws, tris <=300k, recorded | partial | draws 52 met; tris 678k NOT MET; fps not measurable headless (owner iGPU check); numbers recorded |
+| 3 | Perf: 720 troops + 20 buildings, 60 fps, <=60 unit draws, tris <=300k, recorded | met except fps | draws 52 met; tris 233,410 met (unit LOD); fps not measurable headless (owner iGPU check); numbers recorded |
 | 4 | Manifest passes 02 schema (stage-indexed, no minLevel/levelVisuals, themes.sky, FX kinds); capacity = houses x aliveCap grow-only; interpolation clamped | met | `check:manifest`, sp07 tests (unit-renderer capacity/clamp tests) |
 | 5 | L4 + Snow side-by-side vs named refs in `ref/out/` with diffs noted | met | `l4-green.compare.png` (L04), `l21-snow.compare.png` (L21), `ref/out/NOTES.md` |
 | 6 | Team colour switch on capture: per-team texture for houses and tower; stage at 10/30 | met | `stage-ladder.png` (5/10/30 all teams, 3 families), `fx.png` capture; sp07 building tests |

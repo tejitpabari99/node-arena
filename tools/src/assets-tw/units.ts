@@ -2,8 +2,31 @@
 // four team textures each (original 256px PNG bytes, no recompress).
 import type { Node } from '@gltf-transform/core';
 import { SCENES_DIR, meshIndex, type Extract } from './extract.js';
+import { MeshoptSimplifier } from 'meshoptimizer';
 import { ModelBuilder, buildTree, pngSize, type PartRec, type Tree } from './glb.js';
+import type { RawGeometry } from './obj.js';
 import type { Output } from './output.js';
+
+/**
+ * Unit LOD1 (PRD 07 risk row "720 troops x 9 parts"): per-part meshopt simplification, same node tree as the full model (so
+ * the baked animation applies unchanged), UVs kept (weighted attribute simplify). Fixed ratio/error => deterministic bytes.
+ * Only families listed in LOD_FAMILIES get one (tank is 408 tris and few; soldier 1,036 -> ~294).
+ */
+export const LOD_FAMILIES = ['soldier'] as const;
+export const LOD_RATIO = 0.25;
+export const LOD_ERROR = 0.15;
+const LOD_MIN_INDICES = 12;
+
+/** Simplify one part mesh; vertices are compacted so unused ones are dropped. Attribute order/values of kept vertices unchanged. */
+export function simplifyGeometry(g: RawGeometry, ratio = LOD_RATIO, error = LOD_ERROR): RawGeometry {
+  const target = Math.max(LOD_MIN_INDICES, Math.floor((g.indices.length * ratio) / 3) * 3);
+  const uv = g.uvs ?? new Float32Array(g.vertexCount * 2);
+  const [idx] = MeshoptSimplifier.simplifyWithAttributes(g.indices, g.positions, 3, uv, 2, [0.5, 0.5], null, target, error, []);
+  const remap = new Map<number, number>(), keep: number[] = [];
+  const indices = Uint32Array.from(idx, (v) => { let k = remap.get(v); if (k === undefined) { k = keep.length; remap.set(v, k); keep.push(v); } return k; });
+  const pick = (src: Float32Array, w: number): Float32Array => { const o = new Float32Array(keep.length * w); keep.forEach((v, i) => { for (let c = 0; c < w; c++) o[i * w + c] = src[v * w + c]!; }); return o; };
+  return { positions: pick(g.positions, 3), normals: g.normals ? pick(g.normals, 3) : null, uvs: g.uvs ? pick(g.uvs, 2) : null, indices, vertexCount: keep.length, triangleCount: indices.length / 3 };
+}
 
 export const UNIT_TEAMS = ['blue', 'green', 'red', 'yellow'] as const;
 const COLOUR: Record<(typeof UNIT_TEAMS)[number], string> = { blue: 'Blue', green: 'Green', red: 'Red', yellow: 'Yellow' };
@@ -85,6 +108,13 @@ export async function unitsJob(ex: Extract): Promise<Output[]> {
     if (clips) addAnimations(b, tree, recs, clips, anims);
     tree.root.setExtras({ family: spec.family, teams: [...UNIT_TEAMS], source: skin.name });
     outs.push({ path: `models/tw/${spec.family}.glb`, bytes: await b.write(tree.root, spec.family) });
+    if ((LOD_FAMILIES as readonly string[]).includes(spec.family)) {
+      await MeshoptSimplifier.ready;
+      const lb = new ModelBuilder(ex, objs, 'team', simplifyGeometry);
+      const lt = buildTree(lb, recs, spec.family);
+      lt.root.setExtras({ family: spec.family, teams: [...UNIT_TEAMS], source: skin.name, lod: 1 });
+      outs.push({ path: `models/tw/${spec.family}-lod1.glb`, bytes: await lb.write(lt.root, spec.family) });
+    }
     for (const team of UNIT_TEAMS) {
       const tex = skin.materials[COLOUR[team]]?.tex._MainTex;
       if (!tex) throw new Error(`${spec.skin}: no ${COLOUR[team]} texture`);

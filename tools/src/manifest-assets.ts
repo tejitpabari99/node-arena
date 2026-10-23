@@ -45,6 +45,7 @@ function references(m: ManifestV2): Array<{ path: string; from: string; texture?
   const refs: Array<{ path: string; from: string; texture?: boolean }> = [];
   for (const [id, v] of Object.entries(m.visuals)) {
     refs.push({ path: v.model.parts, from: `visual ${id} model.parts` });
+    if (v.model.lod) refs.push({ path: v.model.lod, from: `visual ${id} model.lod` });
     for (const [team, t] of Object.entries(v.team?.textures ?? {})) refs.push({ path: t, from: `visual ${id} texture ${team}`, texture: true });
   }
   for (const [id, t] of Object.entries(m.themes)) {
@@ -97,6 +98,15 @@ export async function checkManifestAssets(m: ManifestV2, assetsDir: string, lock
       const tris = baseTris + names.reduce((s, n) => s + (named(d, n) ? nodeTris(named(d, n)!) : 0), 0);
       if (tris > budget) errors.push(`visual ${id}${v.stages ? ` stage ${i}` : ''}: ${tris} tris > ${v.model.budget} budget ${budget}`);
     });
+    if (v.model.lod && present.has(v.model.lod)) {
+      const l = await doc(v.model.lod);
+      if (l) {
+        const names = (x: Document) => meshNodes(x).map((n) => n.getName()).join(',');
+        if (names(l) !== names(d)) errors.push(`visual ${id}: lod ${v.model.lod} part nodes differ from ${v.model.parts}`);
+        const lt = meshNodes(l).reduce((s, n) => s + own(n), 0), ft = meshNodes(d).reduce((s, n) => s + own(n), 0);
+        if (lt >= ft) errors.push(`visual ${id}: lod has ${lt} tris, not fewer than ${ft}`);
+      }
+    }
     if (v.anim?.mode === 'node-tracks') {
       const clips = d.getRoot().listAnimations().map((a) => a.getName());
       for (const c of Object.values(v.anim.clips)) if (!clips.includes(c)) errors.push(`visual ${id}: clip "${c}" not in ${v.model.parts} (has ${clips.join(', ') || 'none'})`);

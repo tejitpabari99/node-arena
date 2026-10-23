@@ -121,6 +121,10 @@
                       "const": "ground"
                     }
                   ]
+                },
+                "lod": {
+                  "type": "string",
+                  "minLength": 1
                 }
               },
               "additionalProperties": false

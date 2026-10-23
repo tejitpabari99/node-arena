@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Group, Mesh, BoxGeometry, Object3D, Texture, MeshLambertMaterial } from 'three';
+import { Group, Mesh, BoxGeometry, Object3D, Texture, MeshLambertMaterial, MeshBasicMaterial } from 'three';
 import type { SimEvent } from '@node-arena/defs';
 import { createBuildingFactory, MILLI, PROJECTILE_MS, type BuildingRenderer, type BuildingInit } from '../../src/render/building.js';
 import { MaterialCache } from '../../src/render/materials.js';
@@ -97,6 +97,14 @@ describe('building renderer: labels, anchors, ring, shots', () => {
     r.update(frame(5, 0), [], 16);
     expect(r.labelRoot.children[0]!.position.z).toBeCloseTo(3);
     expect(r.labelRoot.children[0]!.position.x).toBeCloseTo(2);
+  });
+  it('range ring carries a translucent white fill disc (TW refs), team-neutral', async () => {
+    const { make } = setup('building.tower'); const r = await make(); r.setBuildings(inits);
+    r.update(frame(5, 0), [], 16, { towerRadiusMilli: () => 4500 });
+    const ring = r.root.getObjectByName('b0')!.children.find(c => c.scale.x === 4.5)!;
+    const disc = ring.getObjectByName('range-disc') as Mesh; expect(disc.isMesh).toBe(true);
+    const m = disc.material as MeshBasicMaterial; expect(m.transparent).toBe(true); expect(m.opacity).toBeGreaterThan(0.1); expect(m.opacity).toBeLessThan(0.3); expect(m.color.getHex()).toBe(0xffffff);
+    r.dispose();
   });
   it('tower range ring uses sim.towerRadiusMilli; shot spawns projectile with owner team and lands', async () => {
     const { make, proj } = setup('building.tower'); const r = await make(); r.setBuildings(inits);

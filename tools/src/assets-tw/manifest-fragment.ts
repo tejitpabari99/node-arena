@@ -90,7 +90,7 @@ export async function buildFragment(files: ReadonlyMap<string, Uint8Array>): Pro
     const doc = await glb(family), x = rootExtras(doc);
     const clips = doc.getRoot().listAnimations().map((a) => a.getName());
     visuals[`unit.${family}`] = {
-      kind: 'unit', model: { parts: `models/tw/${family}.glb`, budget: 'unit' },
+      kind: 'unit', model: { parts: `models/tw/${family}.glb`, budget: 'unit', ...(files.has(`models/tw/${family}-lod1.glb`) ? { lod: `models/tw/${family}-lod1.glb` } : {}) },
       team: { mode: 'textureSwap', textures: tex(family, x.teams ?? []) },
       anim: clips.includes('Run') && clips.includes('Death') ? { mode: 'node-tracks', clips: { run: 'Run', death: 'Death' } } : { mode: 'none' },
       scale: 1,

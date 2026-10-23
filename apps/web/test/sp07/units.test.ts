@@ -108,6 +108,25 @@ describe('unit renderer (real soldier/tank GLB)', () => {
     expect(draws).toBeLessThanOrEqual(60); expect(rs.maxDrawCalls + rt.maxDrawCalls).toBeLessThanOrEqual(60);
     expect(rs.root.children.reduce((s, c) => s + ((c as import('three').InstancedMesh).count), 0) / 9).toBeGreaterThan(500);
   });
+  it('global LOD: swaps to the simplified part geometry above the troop threshold, with hysteresis, no extra draws', async () => {
+    const { LOD_ON, LOD_OFF } = await import('../../src/render/unit-renderer.js');
+    const r = await createUnitRenderer(ctxFor('unit.soldier')), view = mkView(), buf = createTroopBuffer(800);
+    const tris = () => r.root.children.filter((_, i) => i % 4 === 0).reduce((s, c) => { const g = (c as import('three').InstancedMesh).geometry; return s + (g.index?.count ?? 0) / 3; }, 0);
+    const f: UnitFrame = { view, troops: buf, n: 0, alpha: 0 };
+    const run = (n: number) => { buf.owner.fill(0); buf.kind.fill(0); fill(buf, n); for (let i = 0; i < n; i++) { buf.owner[i] = i % 4; buf.kind[i] = 0; } f.n = n; r.update(f, [], 16); };
+    run(LOD_OFF - 1); expect(tris()).toBe(1036); expect(r.stats.lod).toBe(0);
+    run(LOD_ON + 1); expect(r.stats.lod).toBe(1); expect(tris()).toBeLessThan(400); expect(tris()).toBeGreaterThan(150);
+    expect(r.drawCalls).toBeLessThanOrEqual(r.maxDrawCalls);
+    run(LOD_OFF + 1); expect(r.stats.lod).toBe(1); // hysteresis band keeps LOD
+    run(LOD_OFF); expect(r.stats.lod).toBe(0); expect(tris()).toBe(1036);
+    // rebuilt (grown) meshes pick up the active LOD geometry
+    run(LOD_ON + 1); r.setCapacity(40, 100); run(LOD_ON + 1); expect(tris()).toBeLessThan(400);
+  });
+  it('tank has no LOD', async () => {
+    const r = await createUnitRenderer(ctxFor('unit.tank')), buf = createTroopBuffer(800); buf.kind.fill(1);
+    const f: UnitFrame = { view: mkView(), troops: buf, n: 600, alpha: 0 }; fill(buf, 600); buf.kind.fill(1); r.update(f, [], 16);
+    expect(r.stats.lod).toBe(0);
+  });
   it('capacity grows only when needed, never shrinks', async () => {
     const r = await createUnitRenderer(ctxFor('unit.soldier')), view = mkView(), buf = createTroopBuffer(400);
     const f: UnitFrame = { view, troops: buf, n: 4, alpha: 0 }; fill(buf, 4);

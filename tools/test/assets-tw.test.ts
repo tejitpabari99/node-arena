@@ -143,6 +143,16 @@ for (const [family, protoFile] of [['soldier', 'glb_proto/1_MilitaryDefaultWarri
   });
 }
 
+test('soldier LOD1: same part nodes + UV/team texture inputs, 150..450 tris, no clips, no tank LOD', { skip: needExtract }, async () => {
+  const r = await imported(), full = await read(r, 'models/tw/soldier.glb'), lod = await read(r, 'models/tw/soldier-lod1.glb');
+  const names = (d: Document) => d.getRoot().listNodes().filter((n) => n.getMesh()).map((n) => n.getName());
+  assert.deepEqual(names(lod), names(full));
+  const tris = lod.getRoot().listMeshes().reduce((s, m) => s + m.listPrimitives().reduce((q, p) => q + p.getIndices()!.getCount() / 3, 0), 0);
+  assert.ok(tris >= 150 && tris <= 450, `lod tris ${tris}`);
+  for (const m of lod.getRoot().listMeshes()) for (const p of m.listPrimitives()) assert.ok(p.getAttribute('TEXCOORD_0') && p.getAttribute('NORMAL'));
+  assert.equal(lod.getRoot().listAnimations().length, 0);
+  assert.equal(r.files.has('models/tw/tank-lod1.glb'), false);
+});
 test('oracle: soldier Run clip equals the prototype Run (RAW values), Death keeps only decoded channels', { skip: needExtract }, async () => {
   const mine = await read(await imported(), 'models/tw/soldier.glb'), proto = await oracle('glb_proto/1_MilitaryDefaultWarriorSkinData.glb');
   const clip = (d: Document, suffix: string) => d.getRoot().listAnimations().find((x) => x.getName().endsWith(suffix))!;
@@ -219,7 +229,7 @@ test('inventory: exactly the PRD R1 outputs; models embed no texture; textures a
   const r = await imported();
   const teams5 = ['blue', 'green', 'red', 'yellow', 'gray'], teams4 = ['blue', 'green', 'red', 'yellow'];
   const want = [
-    ...['soldier', 'tank', 'barracks', 'factory', 'tower', 'projectile'].map((f) => `models/tw/${f}.glb`),
+    ...['soldier', 'tank', 'barracks', 'factory', 'tower', 'projectile'].map((f) => `models/tw/${f}.glb`), 'models/tw/soldier-lod1.glb',
     ...teams4.flatMap((t) => [`textures/tw/soldier-${t}.png`, `textures/tw/tank-${t}.png`]),
     ...teams5.flatMap((t) => ['barracks', 'factory', 'tower', 'projectile'].map((f) => `textures/tw/${f}-${t}.png`)),
     ...['green', 'snow'].flatMap((t) => [`models/tw/ground-${t}.glb`, `models/tw/obstacle-${t}.glb`, `textures/tw/ground-${t}.png`, `textures/tw/obstacle-${t}.png`]),

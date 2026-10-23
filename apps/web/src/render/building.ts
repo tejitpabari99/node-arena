@@ -1,5 +1,5 @@
 import {
-  DoubleSide, Group, Mesh, MeshBasicMaterial, RingGeometry, Sprite, SpriteMaterial, Vector3,
+  DoubleSide, Group, Mesh, MeshBasicMaterial, CircleGeometry, RingGeometry, Sprite, SpriteMaterial, Vector3,
   type Material, type Object3D,
 } from 'three';
 import type { SimEvent } from '@node-arena/defs';
@@ -76,6 +76,9 @@ class BuildingRendererImpl implements BuildingRenderer {
   private stageSets: Set<string>[]; private allStageNodes: string[];
   private shots: Shot[] = []; private selected: number | null = null; private showRanges = true;
   private ringGeo = new RingGeometry(0.97, 1, 64).rotateX(-Math.PI / 2);
+  /** Translucent fill under the edge ring (TW refs: filled disc + brighter edge). Team-neutral. */
+  private discGeo = new CircleGeometry(1, 64).rotateX(-Math.PI / 2);
+  private discMats = { range: new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false, side: DoubleSide }), sel: new MeshBasicMaterial({ color: 0xffe14d, transparent: true, opacity: 0.2, depthWrite: false, side: DoubleSide }) };
   private ringMats = { range: new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false, side: DoubleSide }), sel: new MeshBasicMaterial({ color: 0xffe14d, transparent: true, opacity: 0.9, depthWrite: false, side: DoubleSide }) };
   private spriteMats: SpriteMaterial[] = []; private lastPick: Mesh[] | null = null;
 
@@ -169,8 +172,9 @@ class BuildingRendererImpl implements BuildingRenderer {
     if (!want) { if (i.ring) i.ring.visible = false; return; }
     const r = (isTower && sim ? sim.towerRadiusMilli(view, i.init.index) : i.init.radius * 1.25) / MILLI;
     if (r <= 0) { if (i.ring) i.ring.visible = false; return; }
-    if (!i.ring) { i.ring = new Mesh(this.ringGeo, this.ringMats.range); i.ring.position.y = 0.02; i.ring.renderOrder = 2; i.group.add(i.ring); }
+    if (!i.ring) { i.ring = new Mesh(this.ringGeo, this.ringMats.range); i.ring.position.y = 0.02; i.ring.renderOrder = 2; const disc = new Mesh(this.discGeo, this.discMats.range); disc.name = 'range-disc'; disc.position.y = -0.005; disc.renderOrder = 1; i.ring.add(disc); i.group.add(i.ring); }
     i.ring.material = sel ? this.ringMats.sel : this.ringMats.range;
+    (i.ring.getObjectByName('range-disc') as Mesh).material = sel ? this.discMats.sel : this.discMats.range;
     i.ring.scale.set(r, 1, r); i.ring.visible = true; i.ringRadius = r;
   }
 
@@ -208,6 +212,6 @@ class BuildingRendererImpl implements BuildingRenderer {
   }
 
   dispose(): void {
-    this.clearInstances(); this.ringGeo.dispose(); this.ringMats.range.dispose(); this.ringMats.sel.dispose(); this.deps.painter.dispose();
+    this.clearInstances(); this.ringGeo.dispose(); this.discGeo.dispose(); this.discMats.range.dispose(); this.discMats.sel.dispose(); this.ringMats.range.dispose(); this.ringMats.sel.dispose(); this.deps.painter.dispose();
   }
 }

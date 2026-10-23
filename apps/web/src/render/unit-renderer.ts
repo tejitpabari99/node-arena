@@ -8,6 +8,9 @@ import { bakeClip, bakeRest, collectParts, loopFrame, mul4, oneShotFrame, phaseO
 export const GHOST_CAP = 64;
 /** Sim world coordinates are milli-units; scene units are metres. */
 export const MILLI_TO_WORLD = 0.001;
+/** Global LOD (manifest `model.lod`): swap every part to the simplified geometry above LOD_ON alive troops of this visual, back at <= LOD_OFF. Geometry swap only: draw calls are unchanged. */
+export const LOD_ON = 200;
+export const LOD_OFF = 150;
 
 /** Per-frame input (built by SP08 from `sim.readTroops`): never a snapshot. */
 export interface UnitFrame {
@@ -31,7 +34,7 @@ export interface UnitRenderer extends Renderer {
   readonly drawCalls: number;
   /** Max possible draw calls = parts x teams. */
   readonly maxDrawCalls: number;
-  readonly stats: { meshesCreated: number; capacity: number; ghosts: number };
+  readonly stats: { meshesCreated: number; capacity: number; ghosts: number; /** 1 while the simplified geometry is active. */ lod: 0 | 1 };
 }
 
 export interface Pose { x: number; z: number; yaw: number }
@@ -70,14 +73,21 @@ export async function createUnitRenderer(ctx: RendererContext, opts: UnitRendere
   const textures = visual.team.textures, teamKeys = Object.keys(textures), T = teamKeys.length, scale = visual.scale ?? 1;
   const mats: Material[] = teamKeys.map(t => ctx.materials.teamMaterial(ctx.visualId, t, textures));
   const geoms: BufferGeometry[] = meshes.map(m => m.geometry);
+  let lodGeoms: BufferGeometry[] | null = null;
+  if (visual.model.lod) {
+    const lod = collectParts((await ctx.models.file(parseModelRef(visual.model.lod).file)).scene).meshes;
+    if (lod.length !== P || lod.some((m, p) => m.name !== meshes[p]!.name)) throw new Error(`LOD ${visual.model.lod} part nodes differ from ${visual.model.parts}`);
+    lodGeoms = lod.map(m => m.geometry);
+  }
+  let useLod = false;
   const root = new Group(); root.name = `units:${ctx.visualId}`;
-  const stats = { meshesCreated: 0, capacity: 0, ghosts: 0 };
+  const stats: UnitRenderer['stats'] = { meshesCreated: 0, capacity: 0, ghosts: 0, lod: 0 };
   let grid: InstancedMesh[][] = []; // [part][team]
 
   function allocate(cap: number): void {
     for (const row of grid) for (const m of row) { root.remove(m); m.dispose(); }
     grid = geoms.map((g, p) => mats.map((mat, t) => {
-      const m = new InstancedMesh(g, mat, cap); stats.meshesCreated++;
+      const m = new InstancedMesh(useLod ? lodGeoms![p]! : g, mat, cap); stats.meshesCreated++;
       m.instanceMatrix.setUsage(DynamicDrawUsage); m.frustumCulled = false; m.count = 0; m.visible = false; m.name = `${meshes[p]!.name}:${teamKeys[t]}`;
       root.add(m); return m;
     }));
@@ -139,6 +149,10 @@ export async function createUnitRenderer(ctx: RendererContext, opts: UnitRendere
         ensure(counts[team]! + 1 + GHOST_CAP);
         troopPose(view, troops, i, alpha, worldScale, pose);
         put(team, run, loopFrame(run, time, phaseOf(troops.channel[i]!, troops.seq[i]!)), pose.x, pose.z, pose.yaw);
+      }
+      if (lodGeoms) {
+        const alive = counts.reduce((s, c) => s + c, 0), want = useLod ? alive > LOD_OFF : alive > LOD_ON;
+        if (want !== useLod) { useLod = want; stats.lod = want ? 1 : 0; for (let p = 0; p < P; p++) for (let t = 0; t < T; t++) grid[p]![t]!.geometry = useLod ? lodGeoms[p]! : geoms[p]!; }
       }
       let live = 0;
       for (let k = 0; k < GHOST_CAP; k++) {

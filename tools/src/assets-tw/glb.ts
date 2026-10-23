@@ -2,7 +2,7 @@
 // SP08 owns the single mirror at worldRoot. Output is deterministic: no timestamps, stable insertion order.
 import { Document, NodeIO, type Buffer as GltfBuffer, type Material, type Mesh, type Node } from '@gltf-transform/core';
 import type { Extract } from './extract.js';
-import { parseObj } from './obj.js';
+import { parseObj, type RawGeometry } from './obj.js';
 
 export type Vec3 = [number, number, number];
 export type Vec4 = [number, number, number, number];
@@ -23,7 +23,8 @@ export class ModelBuilder {
   readonly buffer: GltfBuffer = this.doc.createBuffer();
   readonly material: Material;
   private readonly meshes = new Map<string, Mesh>();
-  constructor(private readonly ex: Extract, private readonly objs: Map<string, string>, materialName = 'team') {
+  /** `reduce` (optional) post-processes every parsed mesh, e.g. LOD simplification. */
+  constructor(private readonly ex: Extract, private readonly objs: Map<string, string>, materialName = 'team', private readonly reduce: (g: RawGeometry) => RawGeometry = (g) => g) {
     this.material = this.doc.createMaterial(materialName).setBaseColorFactor([1, 1, 1, 1]).setMetallicFactor(0).setRoughnessFactor(1);
   }
 
@@ -34,7 +35,7 @@ export class ModelBuilder {
     if (hit) return hit;
     const file = this.objs.get(key);
     if (!file) throw new Error(`mesh pid ${key} (${name}) has no OBJ in the extract`);
-    const g = parseObj(this.ex.text(file), file);
+    const g = this.reduce(parseObj(this.ex.text(file), file));
     const acc = (type: 'SCALAR' | 'VEC2' | 'VEC3', array: Float32Array | Uint16Array | Uint32Array) => this.doc.createAccessor().setType(type).setArray(array).setBuffer(this.buffer);
     const prim = this.doc.createPrimitive()
       .setAttribute('POSITION', acc('VEC3', g.positions))

@@ -35,6 +35,7 @@ export function assertManifestReferences(m: Manifest, registry: Pick<RendererReg
   for (const [key, v] of Object.entries(m.visuals)) {
     if (!registry.has(v.kind)) throw new ManifestError('key', key, `No renderer registered for kind ${v.kind}`);
     assertAssetPath(v.model.parts, true);
+    if (v.model.lod) assertAssetPath(v.model.lod, true);
     for (const t of Object.values(v.team?.textures ?? {})) if (t) assertAssetPath(t);
     if (v.fx && !Object.hasOwn(m.fx, v.fx)) throw new ManifestError('key', key, `Unresolved fx ${v.fx}`);
     if (v.sfx) assertAssetPath(v.sfx);

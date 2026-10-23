@@ -127,7 +127,8 @@
       "kind": "unit",
       "model": {
         "parts": "models/tw/soldier.glb",
-        "budget": "unit"
+        "budget": "unit",
+        "lod": "models/tw/soldier-lod1.glb"
       },
       "team": {
         "mode": "textureSwap",

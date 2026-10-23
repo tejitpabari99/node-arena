@@ -39,7 +39,8 @@ export const ManifestSchema = Type.Object({
   palettes: teamSet(color()),
   visuals: map(Type.Object({
     kind: literals(RENDER_KINDS),
-    model: Type.Object({ parts: path(), budget: literals(Object.keys(BUDGET_CLASSES) as Array<keyof typeof BUDGET_CLASSES>) }, closed),
+    /** `lod`: optional simplified sibling GLB with the same part nodes (unit renderer swaps geometry when many troops are alive). */
+    model: Type.Object({ parts: path(), budget: literals(Object.keys(BUDGET_CLASSES) as Array<keyof typeof BUDGET_CLASSES>), lod: Type.Optional(path()) }, closed),
     stages: Type.Optional(Type.Array(stage, { minItems: 1 })),
     team: Type.Optional(Type.Object({ mode: literals(TEAM_MODES), textures: textureSet() }, closed)),
     anim: Type.Optional(anim),
