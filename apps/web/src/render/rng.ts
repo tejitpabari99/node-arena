@@ -1,5 +1,5 @@
 // Seeded render randomness (PRD SP01 N6): unseeded random and wall clocks are banned in src/render and src/fx
-// (visual/lib/lint-determinism.mjs + eslint no-restricted-properties). Any render jitter
+// (eslint no-restricted-properties). Any render jitter
 // (e.g. brawl puffs) draws from seededRandom(pairKey, tick) so captures are reproducible.
 
 /** mulberry32 PRNG: deterministic floats in [0, 1) from a 32-bit seed. */

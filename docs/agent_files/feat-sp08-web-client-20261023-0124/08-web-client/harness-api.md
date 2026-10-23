@@ -40,7 +40,7 @@ URL examples:
   screen: Screen,
   popup: 'restart' | 'result' | null,
   hud: {remainingSeconds: number, ownership: OwnershipSegment[], levelId: string | null},
-  buildings: [{id, index, owner, level, point:{x,y}, label:{x,y}}],
+  buildings: [{id, index, owner, level, point:{x,y}, label:{x,y},modelRect:{x,y,w,h}|null,labelRect:{x,y,w,h}|null}],
   lines: [{channel, from, to, owner, length, drawSeq}]
 }
 // OwnershipSegment = {player:number,colorKey:string,permille:number}
@@ -49,3 +49,5 @@ URL examples:
 A mouse gesture test can get building points via `project(id)`, drag on the canvas, call `step()`, and inspect `commandLog`. Choose a legal pair with `legality()`; use rejection reason/explanation to find blocked draws. Win/loss popup tests use fixture URLs, then a legal DrawLine through either mouse drag or submit/step; click Next/Retry in the real UI. Query `state().levels` for all 20 campaign ids. Capture picker, HUD, restart/result popups with ordinary Playwright screenshots.
 
 Validation: 17 scoped tests passed; dedicated main/audio/harness/test TypeScript subset passed with the existing source paths for defs/content/sim; scoped ESLint passed. Vite test and production bundles built. Production JS string scan found no `__na`, `test-harness`, `createFixtureSim`, or `testHookRequest`. Browser at 1600x900 loaded level20 seed73 tick0, produced projected anchor probes, fixture DrawLine entered win result, localStorage remained null, zero page errors. Full app `tsc`/`build:test` remains blocked by parked v1 tests/e2e and legacy assets modules (Task9 cleanup); direct Vite builds validate current entrypoints.
+
+`modelRect` projects visible building mesh bounding-box corners with world matrices; hidden stage meshes/ancestors are excluded. `labelRect` projects the actual Sprite billboard corners including its scale, center and material rotation. Both are CSS pixel bounds, read only and available solely in gated harness bundles.

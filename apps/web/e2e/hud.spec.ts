@@ -1,62 +1,25 @@
-import { expect, test } from "@playwright/test";
-
-async function startLevel(page: import("@playwright/test").Page, name: RegExp) {
-  await page.getByRole("button", { name: "Play", exact: true }).click();
-  await page.getByRole("button", { name: name }).click();
-  await expect(page.locator("main")).toHaveAttribute("data-screen", "playing");
-}
-
-test("tip shows once on level 1, dismiss persists across reload, absent on later levels", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
-  await startLevel(page, /First Steps/);
-  const tip = page.locator('[data-hud="tip"]');
-  await expect(tip).toBeVisible();
-  await expect(tip).toHaveAttribute("role", "status");
-  await tip.getByRole("button", { name: "Dismiss" }).click();
-  await expect(tip).toHaveCount(0);
-  await page.reload();
-  await startLevel(page, /First Steps/);
-  await expect(page.locator('[data-hud="root"]')).toBeVisible();
-  await expect(page.locator('[data-hud="tip"]')).toHaveCount(0);
+import { expect,test } from '@playwright/test';
+import { draw,openLevel } from './helpers';
+test('Back pauses with restart popup; Continue resumes; Restart clears commands and Levels opens picker',async({page})=>{
+ await openLevel(page);await draw(page);await page.getByRole('button',{name:'Back to battle options'}).click();
+ await expect(page.getByRole('dialog')).toHaveAccessibleName('Do you want to restart the battle?');
+ expect(await page.evaluate(()=>window.__na!.step(20))).toBe(0);
+ await page.getByRole('button',{name:'Continue',exact:true}).click();expect(await page.evaluate(()=>window.__na!.step())).toBe(1);
+ await page.getByRole('button',{name:'Back to battle options'}).click();await page.getByRole('button',{name:'Restart',exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.__na!.view?.tick)).toBe(0);expect(await page.evaluate(()=>window.__na!.commandLog)).toEqual([]);
+ await page.getByRole('button',{name:'Back to battle options'}).click();await page.getByRole('button',{name:'Levels',exact:true}).click();await expect(page.locator('.level-card')).toHaveCount(20);
 });
-
-test("tip is not shown on levels other than level 1", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
-  await startLevel(page, /Neutral Ground/);
-  await expect(page.locator('[data-hud="root"]')).toBeVisible();
-  await expect(page.locator('[data-hud="tip"]')).toHaveCount(0);
+test('ownership uses building levels rather than in-flight units and updates after a real capture',async({page})=>{
+ await openLevel(page);await draw(page);
+ for(let i=0;i<20;i++) {if(await page.evaluate(()=>window.__na!.events.some(e=>e.type==='BuildingCaptured')))break;await page.evaluate(()=>window.__na!.step(100));}
+ expect(await page.evaluate(()=>window.__na!.events.some(e=>e.type==='BuildingCaptured'))).toBe(true);
+ const expected=await page.evaluate(()=>{const api=window.__na!,v=api.view!,segments=api.hud().ownership,totals=segments.map(({player:p})=>Array.from(v.buildings.owner).reduce((sum,owner,i)=>sum+(owner===p?v.buildings.level[i]!:0),0)),total=totals.reduce((a,b)=>a+b,0);let assigned=0;return totals.map((n,p)=>({n,p})).filter(s=>s.n>0).map((s,i,a)=>{const permille=i===a.length-1?1000-assigned:Math.floor(s.n*1000/total);assigned+=permille;return {player:segments[s.p]!.player,colorKey:segments[s.p]!.colorKey,permille};});});
+ expect(await page.evaluate(()=>window.__na!.hud().ownership)).toEqual(expected);
+ for(const s of expected)await expect(page.locator(`[data-ownership-player="${s.player}"]`)).toHaveAttribute('data-permille',String(s.permille));
 });
-
-test("strength meter exposes role=meter with team percent valuetext summing to 100", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
-  await startLevel(page, /First Steps/);
-  const meter = page.locator('[data-hud="meter"]');
-  await expect(meter).toHaveAttribute("role", "meter");
-  await expect(meter).toHaveAttribute("aria-valuetext", /^([A-Za-z ]+ \d+%)(, [A-Za-z ]+ \d+%)+$/);
-  const text = (await meter.getAttribute("aria-valuetext"))!;
-  const sum = [...text.matchAll(/(\d+)%/g)].reduce((a, m) => a + Number(m[1]), 0);
-  expect(sum).toBe(100);
-  // aria-valuenow tracks the first segment (read both attrs in one tick-safe evaluate).
-  const { now, vt } = await meter.evaluate((el) => ({ now: Number(el.getAttribute("aria-valuenow")), vt: el.getAttribute("aria-valuetext")! }));
-  expect(now).toBe(Number(/(\d+)%/.exec(vt)![1]));
-});
-
-test("Esc pauses and the round Pause/speed buttons work", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
-  await startLevel(page, /First Steps/);
-  const speed = page.getByRole("button", { name: "Game speed" });
-  await expect(speed).toHaveText("1×");
-  await speed.click();
-  await expect(speed).toHaveText("2×");
-  await expect(speed).toHaveAttribute("aria-pressed", "true");
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("heading", { name: "Paused", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Resume", exact: true }).click();
-  await expect(page.locator("main")).toHaveAttribute("data-screen", "playing");
-  await page.getByRole("button", { name: "Pause", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Paused", exact: true })).toBeVisible();
+test('four-colour campaign battle shows four segments and only back/mute controls',async({page})=>{
+ await openLevel(page,20);const number=await page.evaluate(()=>{const api=window.__na!;return api.state().levels.length;});
+ let found=false;for(let i=number;i>=1;i--){await page.evaluate(n=>window.__na!.load(n),i);if(await page.locator('[data-ownership-player]').count()===4){found=true;break;}}
+ expect(found).toBe(true);await expect(page.locator('#game-hud button')).toHaveCount(2);
+ await page.getByRole('button',{name:'Mute sound'}).click();await expect(page.getByRole('button',{name:'Unmute sound'})).toHaveAttribute('aria-pressed','true');
 });

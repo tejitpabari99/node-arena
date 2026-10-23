@@ -1,6 +1,6 @@
 # Versioned progress and settings
 
-One `createSaveStore()` per app session. `snapshot()` returns independent copies. Settings contain only `musicVol`, `sfxVol` (0..1), `musicMute`, and `sfxMute`.
+One `createSaveStore()` per app session. `snapshot()` returns independent copies. Audio preferences contain only `musicVol`, `sfxVol` (0..1), `musicMute`, and `sfxMute`.
 
 `nodearena:save` stores `{v:2, completed:{[levelId]:{firstAt}}, settings, lastLevel}`. Call `recordResult(levelId,{winner,human})` with public simulation winner and the human player index. Only a human winner records completion; repeated victories preserve the first timestamp. Campaign positions never become save keys.
 

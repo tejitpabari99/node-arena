@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import v0 from './fixtures/save/v0.json';
-import v1 from './fixtures/save/v1.json';
-import { createSaveStore, decodeSave, defaultSave, migrations, SAVE_KEY, type SaveStorage } from '../src/save';
+
+
+import { createSaveStore, decodeSave, defaultSave, SAVE_KEY, type SaveStorage } from '../src/save';
 
 class MemoryStorage implements SaveStorage {
   values = new Map<string, string>();
   getItem(key: string) { return this.values.get(key) ?? null; }
   setItem(key: string, value: string) { this.values.set(key, value); }
 }
-/** Fixtures predate tipSeen; they load with the default false. */
-const v1Loaded = { ...v1, settings: { ...v1.settings, tipSeen: false } };
+const v1 = defaultSave();
+const v0 = { ...v1, v: 1 };
 const seeded = (value: unknown) => {
   const storage = new MemoryStorage();
   storage.setItem(SAVE_KEY, typeof value === 'string' ? value : JSON.stringify(value));
@@ -17,33 +17,7 @@ const seeded = (value: unknown) => {
 };
 
 describe('versioned saves', () => {
-  it('loads a key-less v1 blob with tipSeen === false', () => {
-    expect('tipSeen' in v1.settings).toBe(false);
-    expect(decodeSave(JSON.stringify(v1)).settings.tipSeen).toBe(false);
-    expect(createSaveStore({ storage: seeded(v1) }).snapshot().settings.tipSeen).toBe(false);
-  });
-  it('round-trips tipSeen true and rejects a non-boolean tipSeen', () => {
-    const storage = new MemoryStorage();
-    createSaveStore({ storage }).updateSettings({ tipSeen: true });
-    expect(JSON.parse(storage.getItem(SAVE_KEY)!).settings.tipSeen).toBe(true);
-    expect(createSaveStore({ storage }).snapshot().settings.tipSeen).toBe(true);
-    expect(() => decodeSave(JSON.stringify({ ...v1, settings: { ...v1.settings, tipSeen: 'yes' } }))).toThrow();
-  });
-  it.each([v0, v1])('migrates fixture v$v without mutating input', (fixture) => {
-    const before = JSON.stringify(fixture);
-    expect(decodeSave(JSON.stringify(fixture))).toEqual(v1Loaded);
-    expect(JSON.stringify(fixture)).toBe(before);
-    expect(migrations).toHaveLength(1);
-    expect(migrations[0]!(v0)).toEqual(v1Loaded);
-  });
-  it('persists migration to current version and retains dates keyed by id', () => {
-    const storage = seeded(v0);
-    const store = createSaveStore({ storage });
-    expect(store.snapshot()).toEqual(v1Loaded);
-    expect(JSON.parse(storage.getItem(SAVE_KEY)!)).toEqual(v1Loaded);
-    expect(store.consumeNotice()).toBeNull();
-  });
-  it.each(['{bad json', 'null', JSON.stringify({ ...v1, v: 2 }), JSON.stringify({ ...v1, v: -1 }), JSON.stringify({ ...v1, mystery: true }), JSON.stringify({ ...v1, completed: { a: { firstAt: 'bad date' } } })])('backs up invalid raw input %s, resets and consumes notice once', (raw) => {
+  it.each(['{bad json', 'null', JSON.stringify({ ...v1, v: 3 }), JSON.stringify({ ...v1, v: -1 }), JSON.stringify({ ...v1, mystery: true }), JSON.stringify({ ...v1, completed: { a: { firstAt: 'bad date' } } })])('backs up invalid raw input %s, resets and consumes notice once', (raw) => {
     const storage = seeded(raw);
     const store = createSaveStore({ storage });
     expect(storage.getItem(`${SAVE_KEY}.bak`)).toBe(raw);
@@ -74,29 +48,27 @@ describe('versioned saves', () => {
     const now = vi.fn(() => new Date('2026-10-08T12:00:00.000Z'));
     const store = createSaveStore({ storage, now });
     for (const outcome of ['lost', 'timeout', 'draw'] as const) {
-      expect(store.recordResult('a', { outcome, devTuned: false, replay: false })).toBe(false);
+      expect(store.recordResult('a', { winner: outcome === 'lost' ? 1 : null, human: 0 })).toBe(false);
     }
-    expect(store.recordResult('a', { outcome: 'won', devTuned: true, replay: false })).toBe(false);
-    expect(store.recordResult('a', { outcome: 'won', devTuned: false, replay: true })).toBe(false);
-    expect(store.recordResult('a', { outcome: 'won', devTuned: false, replay: false })).toBe(true);
+    expect(store.recordResult('a', { winner: 0, human: 0 })).toBe(true);
     now.mockReturnValue(new Date('2026-10-09T12:00:00.000Z'));
-    expect(store.recordResult('a', { outcome: 'won', devTuned: false, replay: false })).toBe(false);
+    expect(store.recordResult('a', { winner: 0, human: 0 })).toBe(false);
     store.setLastLevel('a');
-    store.updateSettings({ quality: 'high', reducedMotion: true });
+    store.updateSettings({ musicVol: .4, sfxMute: true });
     const snapshot = store.snapshot();
     snapshot.completed.a!.firstAt = 'changed';
-    snapshot.settings.quality = 'low';
+    snapshot.settings.musicVol = .9;
     const loaded = createSaveStore({ storage }).snapshot();
     expect(loaded.completed.a?.firstAt).toBe('2026-10-08T12:00:00.000Z');
-    expect(loaded.settings.quality).toBe('high');
-    expect(loaded.settings.reducedMotion).toBe(true);
+    expect(loaded.settings.musicVol).toBe(.4);
+    expect(loaded.settings.sfxMute).toBe(true);
     expect(loaded.lastLevel).toBe('a');
   });
   it('supports untrusted ids without prototype setters or inherited completion', () => {
     const storage = seeded(JSON.stringify({ ...v1, completed: JSON.parse('{"__proto__":{"firstAt":"2026-10-01T12:00:00.000Z"}}') }));
     const store = createSaveStore({ storage });
     expect(store.snapshot().completed.__proto__?.firstAt).toBe('2026-10-01T12:00:00.000Z');
-    expect(store.recordResult('constructor', { outcome: 'won', devTuned: false, replay: false })).toBe(true);
+    expect(store.recordResult('constructor', { winner: 0, human: 0 })).toBe(true);
     expect(Object.prototype.hasOwnProperty.call(JSON.parse(storage.getItem(SAVE_KEY)!).completed, 'constructor')).toBe(true);
     expect(Object.prototype).not.toHaveProperty('firstAt');
   });
@@ -109,7 +81,7 @@ describe('versioned saves', () => {
       return storage;
     } });
     store.updateSettings({ musicVol: 0.2 });
-    store.recordResult('session', { outcome: 'won', devTuned: false, replay: false });
+    store.recordResult('session', { winner: 0, human: 0 });
     store.setLastLevel('session');
     expect(store.snapshot().settings.musicVol).toBe(0.2);
     expect(store.snapshot().completed.session).toBeDefined();
@@ -123,8 +95,8 @@ describe('versioned saves', () => {
     vi.stubGlobal('window', { get localStorage() { throw new Error('SecurityError'); } });
     try {
       const store = createSaveStore();
-      store.updateSettings({ colorblind: true });
-      expect(store.snapshot().settings.colorblind).toBe(true);
+      store.updateSettings({ musicMute: true });
+      expect(store.snapshot().settings.musicMute).toBe(true);
       expect(store.consumeNotice()?.kind).toBe('storage');
     } finally { vi.unstubAllGlobals(); }
   });
@@ -135,7 +107,7 @@ describe('versioned saves', () => {
     { ...v1, completed: [] }, { ...v1, lastLevel: 2 },
     { ...v1, completed: { a: { firstAt: '2026-10-01T12:00:00.000Z', extra: true } } },
     { ...v1, settings: { ...v1.settings, extra: true } },
-    { ...v1, settings: { ...v1.settings, reducedMotion: undefined } },
+    { ...v1, settings: { ...v1.settings, musicMute: undefined } },
   ])('rejects malformed version/schema %j', (input) => {
     const raw = JSON.stringify(input);
     const storage = seeded(raw);
@@ -151,8 +123,8 @@ describe('versioned saves', () => {
     };
     const store = createSaveStore({ storage });
     expect(storage.getItem(`${SAVE_KEY}.bak`)).toBe('{bad');
-    store.updateSettings({ quality: 'low' });
-    expect(store.snapshot().settings.quality).toBe('low');
+    store.updateSettings({ sfxVol: .2 });
+    expect(store.snapshot().settings.sfxVol).toBe(.2);
     expect(store.consumeNotice()?.kind).toBe('reset');
     expect(store.consumeNotice()?.kind).toBe('storage');
     expect(store.consumeNotice()).toBeNull();

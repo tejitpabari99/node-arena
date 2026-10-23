@@ -144,7 +144,7 @@ class FxRendererImpl implements FxRenderer {
       for (let k = 0; k < count; k++) {
         const i = this.sprites.acquire(), o = this.sprites.objs[i]!, s = this.sprites.slots[i]!, m = o.material as SpriteMaterial;
         m.map = tex; m.blending = add; m.color.copy(col);
-        // deterministic fan-out: golden-angle spiral offset by the event position (no Math.random: replays look identical)
+        // deterministic fan-out: golden-angle spiral offset by the event position (replays look identical)
         const ang = k * GOLDEN + (x * 0.00137 + z * 0.00291), r = spread * (0.55 + 0.45 * ((k * 0.618) % 1));
         s.age = 0; s.dur = dur * 1000; s.alpha = 0.9 * alphaScale; s.g = size;
         s.a = wx; s.b = SPRITE_Y; s.c = wz; s.d = (Math.cos(ang) * r) / dur; s.e = rise / dur; s.f = (Math.sin(ang) * r) / dur;
