@@ -9,7 +9,7 @@
   "modules": {
     "level": { "maxLevel": 64 },
     "drawsLines": {},
-    "spawns": { "troop": "soldier", "spawnSpeed": 0.5, "lineSpawnPenalty": 0.3 },
+    "spawns": { "troop": "tank", "spawnSpeed": 0.5, "lineSpawnPenalty": 0.3 },
     "grows": { "growTime": 2 }
   }
 }

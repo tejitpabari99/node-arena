@@ -3,7 +3,7 @@
   "metadata": {
     "rulesVersion": "2.0.0",
     "schemaVersion": "2.0.0",
-    "contentVersion": "2.0.1"
+    "contentVersion": "2.1.0"
   },
   "scenarios": [
     {
@@ -5244,7 +5244,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-spawn-table",
           "simHash": "853ace707a7a24b2b2d00d84fcd58110b947d8593d7ead9e6daba5a448271ec2",
           "seed": 20261022
@@ -5429,7 +5429,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-growth",
           "simHash": "1f9509d0c52456bef6fbb3c62ca11aeba7af7913b95158af6698c00cc0e3501d",
           "seed": 20261022
@@ -5461,7 +5461,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-capture-exact",
           "simHash": "3a3de830a982e8fcbcdc6e8e576881fe661392036c91fec7fff1e90799b47446",
           "seed": 20261022
@@ -5508,7 +5508,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-capture-flip",
           "simHash": "7d26b4cb906f69db4b3a8032e840a765fbfc13b4d3f3cdabb7fa1006c8fa446f",
           "seed": 20261022
@@ -5559,7 +5559,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-capture-kills",
           "simHash": "ed103cc2d608d8fa9d9fd0e4405f2a11dfefc9acd11d85f0f8eee5d42d717e49",
           "seed": 20261022
@@ -5637,7 +5637,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-exchange-st",
           "simHash": "04d18a747ad2518c90c70c9adbc8e175ce7f4feede6e9163493d77ecbe7fcfae",
           "seed": 20261022
@@ -5688,7 +5688,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-exchange-tt",
           "simHash": "96eaf7ea14507ba2a9002331fb02703f9272740820d00e2ce840f3b2aa4818ac",
           "seed": 20261022
@@ -5735,7 +5735,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-reverse-replace",
           "simHash": "d5f5a03703639a5d46434e505e736940e5f615abb49b4c3612596a12273bf0bc",
           "seed": 20261022
@@ -5790,7 +5790,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-no-auto-cut",
           "simHash": "581ff0de2b09c27d49e41b5db360b6b5ddad2ecb0747ff9cde711093f145a56e",
           "seed": 20261022
@@ -5859,7 +5859,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-overflow-forward",
           "simHash": "6e21c91e4ed9c29bf7b76d07f72716e447543a7038e5d7412a957d87213c3477",
           "seed": 777
@@ -5949,7 +5949,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-alive-cap",
           "simHash": "976ac8d0d6f91dd379c7f5fd86e432d0669196b24a5202a25a06b59fb9895088",
           "seed": 20261022
@@ -6057,7 +6057,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-win",
           "simHash": "9f4f42fd305c45377b62fd71f15e5062c7de17cf0f3c57586d9beb7962e08de0",
           "seed": 20261022
@@ -6107,7 +6107,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-loss",
           "simHash": "81a5c51e79dc4eb5244b95c4b8e9a826ab781cca62e746566ee3a61e9e949709",
           "seed": 20261022
@@ -6157,7 +6157,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-timeout",
           "simHash": "3e3d769ced8e921134f66087b6f54957ad0a105c6f712ff261b3eb25358c955c",
           "seed": 20261022
@@ -6202,7 +6202,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-rejections",
           "simHash": "357ebe335a0229eadd201217f148c76e9f5fb40e4c8d851fb6d1dbdd02f4603b",
           "seed": 20261022
@@ -6362,7 +6362,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-neutral-troop",
           "simHash": "735f4de6bfb5e66807d7ae01d764257b4f9a4dc678201cd72a68dd0310c6ecfd",
           "seed": 17
@@ -6412,7 +6412,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-neutral-house",
           "simHash": "b894e43411f4d6c6dece2434001101ee3859b2f2e1e470cf96ef8093332fe4ac",
           "seed": 17
@@ -6452,7 +6452,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-geometry-crossing",
           "simHash": "7952f206aa2f67fabbabdb789514151b164661803e9b183e0620150405445aa1",
           "seed": 77
@@ -6537,7 +6537,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.0.1",
+          "contentVersion": "2.1.0",
           "levelId": "golden-geometry-obstacle",
           "simHash": "787870e2df67baed42dfb6fe9a5a1001c9690006e86b3bd70e8fef3995887ba8",
           "seed": 17
