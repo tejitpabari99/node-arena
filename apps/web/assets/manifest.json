@@ -271,10 +271,10 @@
       "texture": "fx/Spark.png",
       "kind": "sprite-burst",
       "params": {
-        "count": 8,
-        "duration": 0.35,
-        "size": 0.35,
-        "spread": 0.8
+        "count": 10,
+        "duration": 0.4,
+        "size": 0.7,
+        "spread": 1
       }
     },
     "clash-glow": {
@@ -283,7 +283,7 @@
       "params": {
         "count": 1,
         "duration": 0.3,
-        "size": 1.2,
+        "size": 2,
         "spread": 0
       }
     },
@@ -302,8 +302,8 @@
       "texture": "fx/lane-trail.png",
       "kind": "beam",
       "params": {
-        "duration": 0.15,
-        "width": 0.12
+        "duration": 0.2,
+        "width": 0.45
       }
     },
     "lane-wave": {

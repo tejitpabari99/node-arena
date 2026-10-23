@@ -1,4 +1,4 @@
-import { Group, Mesh, RepeatWrapping, type BufferGeometry, type Object3D } from 'three';
+import { Group, Mesh, MirroredRepeatWrapping, RepeatWrapping, type BufferGeometry, type Object3D } from 'three';
 import type { ManifestV2 } from '@node-arena/content';
 import { registerRenderer, type Renderer, type RendererContext } from './registry.js';
 import { MILLI_TO_WORLD } from './unit-renderer.js';
@@ -65,7 +65,8 @@ export function createGroundRenderer(ctx: RendererContext): GroundRenderer {
       const { prefab, geometry } = readGroundPrefab(scene);
       plan = planGround(bounds, prefab, margin);
       const tex = ctx.materials.texture(theme.ground.texture);
-      tex.wrapS = tex.wrapT = RepeatWrapping;
+      // u edges differ in shade (not tileable along u): mirror u so repeats have no seam; v (grass/sand bands) stays plain repeat.
+      tex.wrapS = MirroredRepeatWrapping; tex.wrapT = RepeatWrapping;
       tex.repeat.set(plan.repeatU, plan.repeatV);
       // GLB uv is v-down (flipY=false); the Unity offset was authored v-up, so the sign flips.
       tex.offset.set(prefab.uvOffset[0], -prefab.uvOffset[1]);

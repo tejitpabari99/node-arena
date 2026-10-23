@@ -129,3 +129,47 @@ Budgets: ground 200 <= 500, obstacles 40-66 <= 300, textures 256px. Source textu
 ### Open / notes
 - GUID -> prefab remains unproven (name mapping); if Addressables resolution ever shows `environmentPrefab` is a different prefab (e.g. `multi_stage_environment`), ground meshes (same `Ground` plane) are unaffected; only the dropped dressing would differ.
 - River obstacles (`ROBS`, `riverObstacleMaterial`), `multi_stage_environment`, other themes (lava, mine, jungle, darkmine) out of scope (only green + snow registered).
+
+## Task 12 — compare + perf
+Captures: `pnpm assets:capture --scene all --compare` (1600x900, SwiftShader) -> `ref/out/`; per-capture notes in `ref/out/NOTES.md`. Perf scene: `--scene perf` (`tools/assets/capture/scenes/perf.js`).
+
+### Lighting / colour decision: **sRGB pipeline kept (R4 default); light intensities x PI**
+- Root cause of "everything far too dark/dull": three >= r155 has no legacy-light PI factor (Lambert divides irradiance by PI), so Unity's legacy intensities (ambient 0.896 + directional 0.2, pi-free) rendered ~3.14x too dark. Fix in `light-rig.ts`: `UNITY_LIGHT_SCALE = Math.PI` multiplies both ambient and directional. Theme data stays Unity-true (manifest `light` unchanged: 0.2 / 0.896).
+- Before/after: l4 grass olive (~(105,125,40)) -> (155,185,46) vs ref grass ~(178,200,56); buildings now bright saturated team colours, snow pale blue like the refs.
+- Gamma vs sRGB re-check: after the PI fix the sRGB pipeline matches the refs closely by eye on buildings/units/grass/snow, and Task 1's gamma advantage was ~5% (inside JPEG noise) and was measured against the broken (too-dark) scale. Keeping SRGB textures + sRGB output also keeps HUD/sprites (label sprites, Coiny text) correct, so **no gamma switch**. Remaining: our grass is ~10% darker/greener than the ref (ref (178,200,56) vs ours (155,185,46)); snow slightly bluer (ours is a blue-tinted ice texture, ref nearly white). Acceptable; per-theme tweak possible via manifest `light.ambient` if owner wants brighter (not done, no value fits both).
+
+### Known issues resolved
+1. Dark/dull: fixed (above).
+2. FX tuned (manifest fragment `FX_ENTRIES`): clash-spark count 8->10, size 0.35->0.7, spread 0.8->1.0, 0.4 s; clash-glow size 1.2->2.0; tower-shot beam width 0.12->0.45, 0.2 s. Visible in `fx.compare.png` (sparks/glow clear; beam still lighter/thinner than the ref's solid green lane + cannonball, since the beam is a short-lived flash by design).
+3. L4/L21 captures now at tick 45 (troops in flight visible).
+4. Green-ground seam: cause = ground texture not tileable along u (edge columns differ (173,202,57) vs (154,186,44)). Fix: `MirroredRepeatWrapping` on u in `ground-renderer.ts` (v bands keep plain repeat). Seam gone in `l4-green.png`.
+5. Env dressing dropped (rocks/crates/tyres/sand-border props, canyon, trees): **visible gap, moderate**. Refs' top/bottom bands carry red canyon rocks, crates, barrels, sandbags, tree rows (green) and snow cliffs, igloo, campfire, snowmen (snow). Ours shows plain sand/ice edges; gameplay area (grass/ice, buildings, lanes, units) matches. Not added (out of scope, tri budget). **Follow-up**: dressing pass as merged/instanced low-poly props (`top_part_2`/`bottom_part_2` are 5.3k/4.2k tris green, 3.7k/1.8k snow, i.e. well within 300k total if instanced once; budget class `ground` 500 is the blocker) — new budget class + task.
+6. Obstacle atlas 256px: ice cubes (snow) and bushes render crisp enough at the SP08 camera (`obstacles-snow.png`); no blur seen, `ENV_TEXTURE_PX` unchanged. Note ice cubes read more saturated blue than the ref's pale ice.
+
+### Perf scene (`perf`): 720 troops (600 soldier + 120 tank, animated Run, 36 lanes) + 20 buildings (houses WT1/WT2, towers, 4 teams, mixed stages), snow theme, FOV 21 / 55 deg
+| Metric | Measured | Budget | |
+|---|---|---|---|
+| Unit draw calls (InstancedMesh) | 52 (soldier 9x4 + tank 4x4) | <= 60 | met |
+| Total draw calls (units + buildings + labels + lanes + ground + fx) | 181 | n/a | info |
+| Triangles (`renderer.info.render.triangles`) | **678,098** | <= 300,000 | **NOT MET** |
+| CPU `world.update` (720 troops, bake+matrix) | 0.6 ms/frame | | fine |
+| Frame time, headless SwiftShader 1600x900 (software rasteriser, `readPixels` sync) | ~920 ms | 60 fps on iGPU | not measurable here (software); **owner check on a real iGPU** |
+| Total gzip of new SP07 assets (models/tw 95 KB + textures/tw 1,644 KB + fx 55 KB + Coiny font 69 KB, manifest ~10 KB) | ~1.87 MB | <= 3 MB | met |
+Tris breakdown: soldiers 600 x 1,036 = 622k + tanks 120 x 408 = 49k + buildings/ground/fx ~7k. The PRD's own numbers (1,036-tri soldier x 720) cannot satisfy 300k; the unit mesh itself is the budget. Recommended follow-up (PRD risk row "fallback ... merged LOD body for far units"): importer emits a ~250-tri simplified soldier (meshopt simplify per part) and `unit-renderer` switches to it when `n` troops > ~250 (or by camera distance); 720 x 250 = 180k fits. Not done here (new importer + renderer feature, outside Task 12).
+
+### Un-park confirmation
+- `scripts/ci.sh`: `step check:manifest pnpm check:manifest` runs live (line ~113); `check:manifest:SP07` is not in `PARKED`.
+- `pnpm assets:tw:check` runnable locally with `TW_EXTRACT=/root/projects/tower-war/_extract` (output OK this task); CI skips it without the extract (not wired further; 09 owns CI).
+
+### PRD Acceptance Criteria
+| # | Criterion | Status | Evidence |
+|---|---|---|---|
+| 1 | R2 validation report; turntable under mirrored root; env-mapping outcome | met | this file (Tasks 1-4 sections), `ref/proto-check/` |
+| 2 | `assets:tw` + `:check` reproduce hashes; `check:manifest` passes, named budgets, CREDITS | met | `pnpm assets:tw:check` OK, `pnpm check:manifest` pass (run notes below) |
+| 3 | Perf: 720 troops + 20 buildings, 60 fps, <=60 unit draws, tris <=300k, recorded | partial | draws 52 met; tris 678k NOT MET; fps not measurable headless (owner iGPU check); numbers recorded |
+| 4 | Manifest passes 02 schema (stage-indexed, no minLevel/levelVisuals, themes.sky, FX kinds); capacity = houses x aliveCap grow-only; interpolation clamped | met | `check:manifest`, sp07 tests (unit-renderer capacity/clamp tests) |
+| 5 | L4 + Snow side-by-side vs named refs in `ref/out/` with diffs noted | met | `l4-green.compare.png` (L04), `l21-snow.compare.png` (L21), `ref/out/NOTES.md` |
+| 6 | Team colour switch on capture: per-team texture for houses and tower; stage at 10/30 | met | `stage-ladder.png` (5/10/30 all teams, 3 families), `fx.png` capture; sp07 building tests |
+| 7 | Capture / tower-shot / death FX visible and pooled; no per-frame alloc | met | `fx.png` (pool stats `created` = cap, no growth); fx-pool tests |
+| 8 | R7 deletion list gone; grep kenney / tower-mesh / BUILTIN_FX none outside history | partial | deletion list gone; residue: `render/camera.ts` still imports deleted `tower-mesh.js` (SP08-owned, legacy parked, not in sp07 tsc); `acceptance.spec.ts` comment (SP08 e2e); audio credits (Kenney sounds, kept by design) |
+| 9 | `sim:golden`, `replay:verify golden`, simHash unchanged | met | both pass; no sim/content change |

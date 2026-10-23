@@ -112,7 +112,7 @@ describe('model cache', () => {
 describe('light rig', () => {
   it('builds directional + flat ambient from the green theme', () => {
     const rig = buildLightRig(manifest.themes.green!.light);
-    expect(rig.directional.intensity).toBeCloseTo(0.2); expect(rig.ambient).toBeDefined();
+    expect(rig.directional.intensity).toBeCloseTo(0.2 * Math.PI); expect(rig.ambient!.intensity).toBeCloseTo(Math.PI); expect(rig.ambient).toBeDefined();
     expect(rig.directional.position.length()).toBeCloseTo(50);
     expect(rig.directional.position.y).toBeGreaterThan(0);
   });

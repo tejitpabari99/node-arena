@@ -33,6 +33,7 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=sw
 let failed = 0;
 try {
   const page = await browser.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 1 });
+  page.on('console', m => { if (m.type() === 'log') console.log('  [page]', m.text()); });
   for (const name of names) {
     await page.goto(`http://127.0.0.1:${port}/?scene=${encodeURIComponent(name)}`);
     try {

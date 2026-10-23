@@ -1,6 +1,8 @@
 import { AmbientLight, DirectionalLight, Group, Vector3 } from 'three';
 import type { ManifestV2 } from '@node-arena/content';
 
+/** three >=r155 has no legacy-light pi factor: Lambert divides irradiance by pi, so Unity (legacy, pi-free) intensities must be multiplied by pi. */
+export const UNITY_LIGHT_SCALE = Math.PI;
 export type ThemeLight = ManifestV2['themes'][string]['light'];
 export interface LightRig { group: Group; directional: DirectionalLight; ambient?: AmbientLight }
 
@@ -11,10 +13,10 @@ export interface LightRig { group: Group; directional: DirectionalLight; ambient
  */
 export function buildLightRig(light: ThemeLight, distance = 50): LightRig {
   const group = new Group(); group.name = 'light-rig';
-  const directional = new DirectionalLight(light.color, light.intensity);
+  const directional = new DirectionalLight(light.color, light.intensity * UNITY_LIGHT_SCALE);
   directional.position.copy(new Vector3(...(light.dir as [number, number, number])).normalize().multiplyScalar(distance));
   group.add(directional, directional.target);
   const rig: LightRig = { group, directional };
-  if (light.ambient) { rig.ambient = new AmbientLight(light.ambient.color, light.ambient.intensity); group.add(rig.ambient); }
+  if (light.ambient) { rig.ambient = new AmbientLight(light.ambient.color, light.ambient.intensity * UNITY_LIGHT_SCALE); group.add(rig.ambient); }
   return rig;
 }

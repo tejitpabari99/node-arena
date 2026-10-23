@@ -67,7 +67,7 @@ describe('ground sizing', () => {
       const box = m.geometry.boundingBox!.clone().applyMatrix4(m.matrixWorld);
       expect(box.max.x).toBeCloseTo(plan.halfX); expect(box.max.z).toBeCloseTo(plan.halfZ); expect(box.min.x).toBeCloseTo(-plan.halfX);
       const tex = c.materials.texture(t.ground.texture);
-      expect(tex.wrapS).toBe(1000); expect(tex.repeat.x).toBeCloseTo(plan.repeatU);
+      expect(tex.wrapS).toBe(1002); expect(tex.repeat.x).toBeCloseTo(plan.repeatU);
       expect(g.plan).toBe(plan); g.dispose(); expect(g.root.children.length).toBe(0);
     }
   });
@@ -173,7 +173,7 @@ describe('environment composite', () => {
     for (const [theme, bounds] of [['green', L4], ['snow', L21]] as const) {
       const { materials, models } = mk(), env = createEnvironment(manifest, materials, models);
       await env.setLevel({ bounds, elements: [{ id: 'o1-0', x: 0, z: 0, yawMilliDeg: 0, visual: 'element.obstacle', variant: 'big' }] }, theme);
-      expect(env.light?.directional.intensity).toBeCloseTo(0.2); expect(env.ground.plan).not.toBeNull(); expect(env.elements.counts.big).toBe(1);
+      expect(env.light?.directional.intensity).toBeCloseTo(0.2 * Math.PI); expect(env.ground.plan).not.toBeNull(); expect(env.elements.counts.big).toBe(1);
       await expect(env.setLevel({ bounds, elements: [] }, 'lava')).rejects.toThrow(/Unresolved theme/);
       env.dispose();
     }

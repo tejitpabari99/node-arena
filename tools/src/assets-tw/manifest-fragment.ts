@@ -1,7 +1,7 @@
 // Manifest fragment (PRD 07 R3/R4): `apps/web/assets/manifest.tw.json` is derived from the importer's own outputs (GLB extras, node/clip
 // names, textures) and merged into the single `manifest.json` by `mergeManifest` (`pnpm assets:manifest`). The fragment owns
 // `visuals`, `themes`, `fx` and the `fx` field of `events`; everything else in manifest.json (palettes, sfx, camera) is hand-owned.
-// Deterministic: fixed key order, no timestamps. Numeric fx `params` are placeholder defaults, tuned by the renderer tasks (10, 12).
+// Deterministic: fixed key order, no timestamps. Numeric fx `params` tuned in Task 12 against ref/tw-yt.
 import { NodeIO, type Document, type Node } from '@gltf-transform/core';
 import sharp from 'sharp';
 import type { Output } from './output.js';
@@ -52,10 +52,10 @@ const rootExtras = (doc: Document): RootExtras => (doc.getRoot().listScenes()[0]
 export const FX_ENTRIES = {
   'capture-ring': { texture: 'fx/CFX3_T_HollowCircle.png', kind: 'ring', params: { duration: 0.6, radiusFrom: 0.4, radiusTo: 2.2, alpha: 0.8 } },
   'capture-star': { texture: 'fx/CFX_T_Star_Add.png', kind: 'sprite-burst', params: { count: 6, duration: 0.5, size: 0.8, spread: 1.2 } },
-  'clash-spark': { texture: 'fx/Spark.png', kind: 'sprite-burst', params: { count: 8, duration: 0.35, size: 0.35, spread: 0.8 } },
-  'clash-glow': { texture: 'fx/glow_2.png', kind: 'sprite-burst', params: { count: 1, duration: 0.3, size: 1.2, spread: 0 } },
+  'clash-spark': { texture: 'fx/Spark.png', kind: 'sprite-burst', params: { count: 10, duration: 0.4, size: 0.7, spread: 1.0 } },
+  'clash-glow': { texture: 'fx/glow_2.png', kind: 'sprite-burst', params: { count: 1, duration: 0.3, size: 2.0, spread: 0 } },
   'death-smoke': { texture: 'fx/smoke.png', kind: 'sprite-burst', params: { count: 4, duration: 0.7, size: 0.6, spread: 0.5, rise: 0.6 } },
-  'tower-shot': { texture: 'fx/lane-trail.png', kind: 'beam', params: { duration: 0.15, width: 0.12 } },
+  'tower-shot': { texture: 'fx/lane-trail.png', kind: 'beam', params: { duration: 0.2, width: 0.45 } },
   // Lane ribbon (WayBaseStandard: LineRenderer width 0.6, tiled `wave`, half-alpha tint). Team colour applied at runtime.
   'lane-wave': { texture: 'fx/lane-wave.png', kind: 'beam', params: { width: 0.6, alpha: 0.502, tile: 1 } },
   'lane-waveArrow': { texture: 'fx/lane-waveArrow.png', kind: 'beam', params: { width: 0.6, alpha: 0.502, tile: 1 } },
