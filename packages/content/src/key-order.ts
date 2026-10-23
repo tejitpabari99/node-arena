@@ -8,7 +8,7 @@ export const KEY_ORDER = {
   source: ['game', 'gameVersion', 'asset', 'campaignPosition', 'dialect', 'dropped'],
   bounds: ['minX', 'maxX', 'minZ', 'maxZ'],
   player: ['id', 'kind', 'colorKey', 'bot'],
-  bot: ['kind', 'actionDelayMs', 'behavior', 'script'],
+  bot: ['kind', 'actionDelayMs', 'startDelayMs', 'behavior', 'script'],
   building: ['id', 'archetype', 'pos', 'owner', 'level', 'ignoreForWin', 'params'],
   element: ['id', 'archetype', 'pos', 'yawDeg', 'footprint', 'variant', 'params'],
   pos: ['x', 'z'],

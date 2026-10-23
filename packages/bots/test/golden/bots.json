@@ -1,9 +1,9 @@
 {
-  "botVersion": "2.0.1",
+  "botVersion": "2.1.0",
   "metadata": {
     "rulesVersion": "2.0.0",
     "schemaVersion": "2.0.0",
-    "contentVersion": "2.1.0"
+    "contentVersion": "2.1.1"
   },
   "botHash": {
     "pos4-levelview-1-seed-1": {
@@ -1368,7 +1368,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.1.0",
+          "contentVersion": "2.1.1",
           "levelId": "levelview-1",
           "simHash": "cf956da3615b9e6f3f4dc6fba7d2de81146aa5331f18c85467df2a0c1bdc1b2a",
           "seed": 1
@@ -1734,7 +1734,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.1.0",
+          "contentVersion": "2.1.1",
           "levelId": "levelview-3-ab",
           "simHash": "94b3d932be89238122c6d2123d517488b7d6094fb3d6a2269abea83f53c855b5",
           "seed": 2
@@ -2234,7 +2234,7 @@
         "header": {
           "rulesVersion": "2.0.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.1.0",
+          "contentVersion": "2.1.1",
           "levelId": "levelview-8-es",
           "simHash": "fc94a04a75706bb85fb8ae8e4acd7c8b0a2f91d4fa36f9198db8a605783af4a1",
           "seed": 3

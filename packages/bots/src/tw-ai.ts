@@ -7,7 +7,7 @@ export const MS_PER_TICK = 50;
 /** Seeded per-seat stream; `below(n)` is the only draw. */
 export interface SeatRng { below(n: number): number }
 export type CanDraw = (player: unknown, from: unknown, to: unknown) => string | null;
-export interface DefaultState { timer: number }
+export interface DefaultState { timer: number; /** ms elapsed toward `startDelayMs`. */ startElapsed?: number }
 
 const owned = (view: SimView, me: number, i: number): boolean => view.buildings.owner[i] === me;
 
@@ -87,9 +87,11 @@ function defense(view: SimView, canDraw: CanDraw, rng: SeatRng, me: number, free
  * Zero-building seat: timer frozen, no decision. Emits at most one `DrawLine`, never a cut.
  */
 export function decideDefault(
-  view: SimView, canDraw: CanDraw, rng: SeatRng, me: number, state: DefaultState, params: Pick<SeatBot, 'actionDelayMs' | 'behavior'>,
+  view: SimView, canDraw: CanDraw, rng: SeatRng, me: number, state: DefaultState, params: Pick<SeatBot, 'actionDelayMs' | 'behavior'> & { startDelayMs?: number },
 ): Command[] {
   if (view.over || countOwned(view, me) === 0) return [];
+  const startDelay = params.startDelayMs ?? 0;
+  if (startDelay > 0 && (state.startElapsed ?? 0) < startDelay) { state.startElapsed = (state.startElapsed ?? 0) + MS_PER_TICK; return []; }
   if (state.timer < params.actionDelayMs) { state.timer += MS_PER_TICK; return []; }
   state.timer -= params.actionDelayMs;
   const free = freeSources(view, me);

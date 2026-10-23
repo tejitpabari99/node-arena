@@ -8,6 +8,7 @@ import type { GateResult } from './gate.js';
 import { loadPrefabLevels } from './parse-prefab.js';
 import { TwParseError, parseRaw, slugify } from './parse-raw.js';
 import { assertUniqueIds, mapLevel, type MapResult } from './map-level.js';
+import { applyLevelOverrides } from './level-overrides.js';
 import { serializeCampaign, serializeLevel } from './serialize.js';
 import type { CampaignEntry } from './types.js';
 
@@ -111,7 +112,7 @@ export async function runImport(o: ImportOptions): Promise<ImportResult> {
   const blocked: ImportResult['blocked'] = [];
   for (const r of rows) {
     if (r.result.level && !SLUG_RE.test(r.slug)) throw new Error(`level slug ${JSON.stringify(r.slug)} (${JSON.stringify(r.entry.id)}) is not [a-z0-9-]+`);
-    if (r.result.level) files.set(`${LEVELS_DIR}/${r.slug}.json`, serializeLevel(r.result.level));
+    if (r.result.level) files.set(`${LEVELS_DIR}/${r.slug}.json`, serializeLevel(applyLevelOverrides(r.slug, r.result.level)));
     else blocked.push({ id: r.entry.id, position: r.entry.position, reasons: r.result.gate.blocked.map((b) => b.reason) });
   }
   let campaign: ImportResult['campaign'] = [];
