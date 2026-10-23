@@ -14,8 +14,8 @@ export interface LoadedContent {
 export function loadContent(files: ContentFiles, options: CatalogOptions = {}): LoadedContent {
   const built = buildCatalog(files, options);
   const issues = [...built.issues];
-  const levels: Record<string, LoadedLevel> = {};
-  const compiled: Record<string, CompiledLevel> = {};
+  const levels = Object.create(null) as Record<string, LoadedLevel>;
+  const compiled = Object.create(null) as Record<string, CompiledLevel>;
   const warnings: ContentIssue[] = [];
   if (built.catalog) {
     for (const [file, source] of Object.entries(built.levelFiles)) {
@@ -28,7 +28,7 @@ export function loadContent(files: ContentFiles, options: CatalogOptions = {}): 
       }
     }
     for (const [cid, c] of Object.entries(built.catalog.campaigns)) {
-      c.entries.forEach((e, i) => { if (!(e.level in levels)) issues.push({ file: `data/campaigns/${cid}.json`, pointer: `/entries/${i}/level`, message: `Unknown level "${e.level}"` }); });
+      c.entries.forEach((e, i) => { if (!Object.hasOwn(levels, e.level)) issues.push({ file: `data/campaigns/${cid}.json`, pointer: `/entries/${i}/level`, message: `Unknown level "${e.level}"` }); });
     }
   }
   if (issues.length || !built.catalog) throw new ContentLoadError(issues);
