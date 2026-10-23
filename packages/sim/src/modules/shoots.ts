@@ -98,7 +98,10 @@ export const shoots: SimModuleFor<'shoots'> = {
           killTroop(state, best.channel, best.seq, 'tower');
           state.events?.push({ type: 'TowerShot', tower: i, target: { kind: 'troop', channel: best.channel, seq: best.seq }, ...best.point });
         } else {
-          const target = stage.houses.find(j => b.owner[j]! !== b.owner[i]! && b.level[j]! >= 1 && (b.owner[j]! >= 0 || (p.hitsNeutralHouses ?? true)));
+          // Opponents' houses first; neutral houses only when no opponent house is in reach (R-TWR-02).
+          const eligible = (j: number) => b.owner[j]! !== b.owner[i]! && b.level[j]! >= 1;
+          const target = stage.houses.find(j => eligible(j) && b.owner[j]! >= 0)
+            ?? ((p.hitsNeutralHouses ?? true) ? stage.houses.find(j => eligible(j) && b.owner[j]! < 0) : undefined);
           if (target === undefined) continue;
           setLevel(state, target, Math.max(0, b.level[target]! - 1));
           const house = state.level.buildings[target]!;

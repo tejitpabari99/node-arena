@@ -127,6 +127,29 @@ test('covers R-TWR-02: troop priority over closer house; other towers never targ
   ready(s2); phase(s2); assert.equal(shots(s2).length, 0);
 });
 
+test('covers R-TWR-02: opponent house preferred over nearer neutral house; neutral shot only when no opponent in reach; troops first', () => {
+  const mk = () => fixture(l => {
+    Object.assign(l.buildings[0], { x: 1500, z: 0, level: 3, owner: -1 }); // nearer, neutral
+    Object.assign(l.buildings[1], { x: 3000, z: 0, level: 3, owner: 1 });  // farther, opponent
+  });
+  const s = mk();
+  ready(s); phase(s);
+  assert.equal(shots(s)[0].target.building, 1, 'opponent house before nearer neutral');
+  assert.equal(s.buildings.level[0], 3);
+  ready(s); phase(s); ready(s); phase(s);
+  assert.equal(s.buildings.level[1], 0);
+  ready(s); phase(s);
+  assert.equal(shots(s)[3].target.building, 0, 'neutral shot once no opponent house is eligible');
+  const t = mk();
+  put(t, 3, 2, 200000); ready(t); phase(t);
+  assert.equal(shots(t)[0].target.kind, 'troop');
+  const out = fixture(l => {
+    Object.assign(l.buildings[0], { x: 1500, z: 0, level: 3, owner: -1 });
+    Object.assign(l.buildings[1], { x: 9000, z: 0, level: 3, owner: 1 });
+  });
+  ready(out); phase(out); assert.equal(shots(out)[0].target.building, 0, 'out-of-reach opponent does not block neutral');
+});
+
 test('covers R-TWR-04: neutralFires and hitsNeutralHouses each support both settings and defaults', () => {
   for (const neutralFires of [true, false, undefined]) {
     const s = fixture(l => {

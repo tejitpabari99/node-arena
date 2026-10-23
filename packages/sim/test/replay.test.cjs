@@ -45,7 +45,7 @@ test('pause, split and twice-per-driver-interval yield identical replay hashes',
 
 test('header versions, identity, seed format and malformed records are refused', () => {
   const rec = recorded();
-  for (const [key, value] of [['rulesVersion', '3.0.0'], ['schemaVersion', '9.0.0'], ['contentVersion', '9.0.0'], ['levelId', 'other'], ['simHash', 'b'.repeat(64)], ['seed', -1], ['seed', 4294967296], ['seed', 1.5], ['seed', '77']]) {
+  for (const [key, value] of [['rulesVersion', '2.0.0'], ['schemaVersion', '9.0.0'], ['contentVersion', '9.0.0'], ['levelId', 'other'], ['simHash', 'b'.repeat(64)], ['seed', -1], ['seed', 4294967296], ['seed', 1.5], ['seed', '77']]) {
     const tampered = structuredClone(rec); tampered.header[key] = value;
     assert.throws(() => api.playReplay(source(), tampered), /replay/i, key);
   }
@@ -97,7 +97,7 @@ test('v1 replays are rejected: 1.x rulesVersion, v1 outcome shape (winnerTeam/dr
   const v1hash = structuredClone(rec); v1hash.header.simHash = 'a'.repeat(32);
   assert.throws(() => api.playReplay(source(), v1hash), /replay/i);
   assert.equal(rec.header.rulesVersion, metadata.rulesVersion);
-  assert.equal(metadata.rulesVersion.split('.')[0], '2');
+  assert.equal(metadata.rulesVersion.split('.')[0], '3');
 });
 
 test('a finite time limit bounds finalTick; limit 0 (null) imposes none; outcome carries winner', () => {
