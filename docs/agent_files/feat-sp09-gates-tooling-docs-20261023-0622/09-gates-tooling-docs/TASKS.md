@@ -1,6 +1,6 @@
 ---
-status: in-progress
-summary: SP09 tasks — Phase A parked-CI scaffold first, incremental gate rewires/deletions per SP, Phase D docs + check:docs, Phase C final acceptance
+status: done
+summary: All 12 agent tasks complete; automated acceptance and owner handoff ready, manual approval pending
 date: 2026-10-23
 ---
 # Tasks: Gates, tooling, docs (SP09)
@@ -19,7 +19,7 @@ Source of truth: [PRD.md](PRD.md). Canonical program lineage: [original SP09 pla
 | 8 | check:docs gate | 0, 5 | done |
 | 9 | Docs refresh (README, tools/README, FUTURES, AGENTS, CREDITS check, research index, web README) | 8, 07, 08, 5 | done |
 | 10 | Final acceptance: full CI on Node 22 + 24, strict parked, perf | 1-9, all SPs | done |
-| 11 | Campaign + owner pass hand-off | 10 | todo |
+| 11 | Campaign + owner pass hand-off | 10 | done |
 
 ## Task 0 — Phase A: parked-step CI runner
 What it is / what it means: The scaffold that makes a long red window explicit instead of silent (Decisions 1, 2, 2b). Runs before SP01 so `pnpm run ci` is green at every later commit.
@@ -95,7 +95,7 @@ What changes at a high level: Run `campaign:verify`; create `owner-pass.md` chec
 Done when: 20/20 campaign levels clean, grid saved, checklist file ready.
 
 ## Owner steps (not agent tasks)
-- Locally run `TW_EXTRACT=... pnpm check:import && pnpm assets:tw:check` before merge.
+- Local extract checks already completed by an agent: `check:import` (20 levels / 21 current files) and `assets:tw:check` (53 byte-identical files, identical lock). No remaining owner shell step.
 - Play levels 1-20 (positions 4-23) in browser; fill `owner-pass.md`; visual approval vs refs; record fps; sign off any `unsolved-by-proxy.json` entries.
 
 ### Task 5 completion — 2026-10-23
@@ -104,4 +104,9 @@ Removed the remaining web slice script/spec, AGENTS command and tools README lay
 
 ### Task 10 completion — 2026-10-23
 
-Final release CI passed on clean local clones at `432d929`, Node 22.23.3 and 24.22.1, pnpm 10.34.6; extract and version overrides unset, strict parked empty. Both regenerated seed-1 locks match committed data. Strict sim/bot benchmarks, preview + development browser suites (16 + 16), and SP07 render budgets passed. See [automated acceptance record](code-2026-10-23-0728.md). Task 11 and owner play/visual/GPU/proxy sign-offs remain.
+Final release CI passed on clean local clones at `432d929`, Node 22.23.3 and 24.22.1, pnpm 10.34.6; extract and version overrides unset, strict parked empty. Both regenerated seed-1 locks match committed data. Strict sim/bot benchmarks, preview + development browser suites (16 + 16), and SP07 render budgets passed. See [automated acceptance record](code-2026-10-23-0728.md). Task 11 handoff is complete below; owner play/input/visual/GPU/proxy sign-offs remain.
+
+
+### Task 11 completion — 2026-10-23
+
+[Owner handoff](owner-pass.md) ready with 20 canonical UI/source mappings, manual play/readability/results/difficulty table, mouse/touch/visual/FPS checks and five pending proxy-warning decisions. Reused actual Task 6 browser proof (22 tests including 20 real levels and two injected-error fixtures); copied [grid](evidence/campaign-grid.png) and [results](evidence/campaign-results.json) byte-for-byte. Verified 1920×976 PNG, canonical IDs/order, tick 100 and positive triangles for all 20; local links and whitespace clean. No product changes or broad test rerun: executable campaign inputs unchanged. All five source `ownerSignOff` values remain JSON `null`; manual owner approval is pending. All 12 agent tasks complete.
