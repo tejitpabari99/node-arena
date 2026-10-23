@@ -29,7 +29,7 @@ try{
     await page.evaluate(()=>window.__na.render());await shot(`l4-hud-${width}x${height}`);
   }
   await page.setViewportSize({width:1600,height:900});await page.goto(base+'?test=1&level=1');await ready();
-  await page.getByRole('button',{name:'Back to battle options'}).click();await page.getByRole('dialog').waitFor();await shot('restart');
+  await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('dialog').waitFor();await shot('restart');
   for(const [fixture,heading]of [['win','Victory!'],['loss','Defeat']]){
     await page.goto(base+`?test=1&level=1&fixture=${fixture}`);await ready();await page.evaluate(()=>{
       const api=window.__na,v=api.view,player=0;

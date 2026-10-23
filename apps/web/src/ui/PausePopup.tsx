@@ -16,10 +16,10 @@ export function BattlePopup({title,children}:{title:string;children:ComponentChi
     <h1>{title}</h1><div class="battle-actions">{children}</div>
   </section></div>;
 }
-export function RestartPopup({onRestart,onContinue,onLevels}:{onRestart():void;onContinue():void;onLevels():void}){
-  return <BattlePopup title="Do you want to restart the battle?">
-    <button class="battle-action primary" onClick={onRestart}>Restart</button>
-    <button class="battle-action secondary" onClick={onContinue}>Continue</button>
+export function PausePopup({onResume,onRestart,onLevels}:{onResume():void;onRestart():void;onLevels():void}){
+  return <BattlePopup title="Paused">
+    <button class="battle-action primary" onClick={onResume}>Resume</button>
+    <button class="battle-action secondary" onClick={onRestart}>Restart</button>
     <button class="battle-action secondary" onClick={onLevels}>Levels</button>
   </BattlePopup>;
 }

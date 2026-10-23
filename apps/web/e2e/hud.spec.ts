@@ -1,13 +1,14 @@
 import { expect,test } from '@playwright/test';
 import { draw,openLevel } from './helpers';
-test('Back pauses with restart popup; Continue resumes; Restart clears commands and Levels opens picker',async({page})=>{
- await openLevel(page);await draw(page);await page.getByRole('button',{name:'Back to battle options'}).click();
- await expect(page.getByRole('dialog')).toHaveAccessibleName('Do you want to restart the battle?');
+test('Pause button opens Paused menu; Resume resumes; Restart clears commands and Levels opens picker',async({page})=>{
+ await openLevel(page);await draw(page);await page.getByRole('button',{name:'Pause'}).click();
+ await expect(page.getByRole('dialog')).toHaveAccessibleName('Paused');
  expect(await page.evaluate(()=>window.__na!.step(20))).toBe(0);
- await page.getByRole('button',{name:'Continue',exact:true}).click();expect(await page.evaluate(()=>window.__na!.step())).toBe(1);
- await page.getByRole('button',{name:'Back to battle options'}).click();await page.getByRole('button',{name:'Restart',exact:true}).click();
+ await page.getByRole('button',{name:'Resume',exact:true}).click();expect(await page.evaluate(()=>window.__na!.step())).toBe(1);
+ await page.getByRole('button',{name:'Pause'}).click();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);
+ await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Restart',exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>window.__na!.view?.tick)).toBe(0);expect(await page.evaluate(()=>window.__na!.commandLog)).toEqual([]);
- await page.getByRole('button',{name:'Back to battle options'}).click();await page.getByRole('button',{name:'Levels',exact:true}).click();await expect(page.locator('.level-card')).toHaveCount(20);
+ await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Levels',exact:true}).click();await expect(page.locator('.level-card')).toHaveCount(20);
 });
 test('ownership uses building levels rather than in-flight units and updates after a real capture',async({page})=>{
  await openLevel(page);await draw(page);

@@ -1,4 +1,4 @@
-import { BattlePopup } from './RestartPopup';
+import { BattlePopup } from './PausePopup';
 export interface ResultPopupProps { won:boolean; hasNext:boolean; onNext():void; onReplay():void; onLevels():void }
 export function ResultPopup({won,hasNext,onNext,onReplay,onLevels}:ResultPopupProps){
   return <BattlePopup title={won?(hasNext?'Victory!':'All levels complete!'):'Defeat'}>
