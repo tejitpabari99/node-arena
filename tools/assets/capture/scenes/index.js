@@ -11,6 +11,7 @@ export const scenes = {
   'unit-lineup': { load: () => import('./unit-lineup.js'), ref: 'tw-yt/d-battle-lanes.jpg' },
   'stage-ladder': { load: () => import('./stage-ladder.js'), ref: 'tw-yt/d-house-levels-11.jpg' },
   'fx': { load: () => import('./fx-scene.js'), ref: 'tw-yt/d-tower-firing.jpg' },
+  'perf-shell': { load: () => import('./perf-shell.js') },
   'perf': { load: () => import('./perf.js') },
   'obstacles-green': { load: () => import('./obstacles-green.js') },
   'obstacles-snow': { load: () => import('./obstacles-snow.js') },

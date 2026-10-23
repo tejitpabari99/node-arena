@@ -37,11 +37,10 @@ cd "$(dirname "$0")/.."
 #   Browser parity: the deleted content/sim browser-parity tests are restored by SP03 Task 8 (sim golden
 #   browser parity) and SP08 (content hash browser parity). Root `build`/`test`/`build:prerequisites` cover only
 #   the live packages (defs, content, sim, tools) while bots/web are parked.
+# 08 Task 10: full web build/typecheck/unit+browser-fixture tests restored; isolated SP07 steps
+#   folded into the full web suites. Production/dev browser suites remain test:web:all in their dedicated job.
 # ---------------------------------------------------------------------------
-PARKED=(
-  "typecheck:web:SP08"
-  "test:web:SP08"
-)
+PARKED=()
 
 is_parked() { # prints owner and returns 0 when step $1 is parked
   local entry
@@ -94,13 +93,13 @@ step build:defs pnpm build:defs
 step build:content pnpm build:content
 step build:sim pnpm build:sim
 step build:bots pnpm build:bots
+step build:web pnpm build:web
 step typecheck:defs pnpm typecheck:defs
 step typecheck:content pnpm typecheck:content
 step typecheck:sim pnpm typecheck:sim
 step typecheck:bots pnpm typecheck:bots
 step typecheck:tools pnpm typecheck:tools
 step typecheck:web pnpm typecheck:web
-step typecheck:web:sp07 pnpm typecheck:web:sp07
 step test:defs pnpm test:defs
 step test:content pnpm test:content
 step test:sim pnpm test:sim
@@ -111,11 +110,11 @@ step test:tools pnpm test:tools
 step test:tools:replay pnpm --filter @node-arena/tools test:replay
 step test:tools:rules pnpm --filter @node-arena/tools test:rules
 step test:web pnpm test:web
-step test:web:sp07 pnpm test:web:sp07
 step check:schemas pnpm check:schemas
 step check:content pnpm check:content --base "$base"
 step validate:content pnpm validate:content --base "$base"
 step check:manifest pnpm check:manifest
+step assets:ui:check pnpm assets:ui:check
 step check:rules pnpm check:rules
 step check:import pnpm check:import
 step validate:levels pnpm validate:levels --seeds 4 --base "$base"

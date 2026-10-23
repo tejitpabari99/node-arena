@@ -21,7 +21,7 @@ export default [
   { ignores: ['**/node_modules/**', '**/dist/**', '**/test-results/**', '**/playwright-report/**', '.worktrees/**'] },
   { files: ['**/*.ts', '**/*.tsx'], languageOptions: { parser: tseslint.parser } },
   {
-    // Render determinism (SP01 N6, mirrors apps/web/visual/lib/lint-determinism.mjs): seed jitter via src/render/rng.ts.
+    // Render determinism (SP01 N6): seed jitter via src/render/rng.ts.
     files: ['apps/web/src/render/**/*.{ts,tsx}', 'apps/web/src/fx/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-properties': ['error',

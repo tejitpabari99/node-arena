@@ -1,0 +1,42 @@
+{
+  "population": "synthetic public SimView / SP07 perf layout",
+  "shell": "createAppController + createLevelScene + mountApp/Hud",
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "viewport": {
+    "width": 1600,
+    "height": 900,
+    "dpr": 1
+  },
+  "troops": 720,
+  "buildings": 20,
+  "lines": 36,
+  "drawCalls": 197,
+  "unitDrawCalls": 52,
+  "triangles": 236550,
+  "hud": {
+    "warmupUpdates": 400,
+    "batches": 200,
+    "updatesPerBatch": 10,
+    "samples": 2000,
+    "medianMs": 0.030000019073486327,
+    "maxMs": 0.3600000381469727,
+    "includes": "two public ticks + snapshot publication + ownership + asynchronous Preact DOM commit + committed ownership assertion; per-update batched time, excludes canvas"
+  },
+  "softwareFrames": {
+    "warmup": 5,
+    "samples": 20,
+    "medianMs": 450.40000009536743,
+    "meanMs": 498.19500000476836,
+    "includes": "world update + render + synchronous readPixels GPU completion"
+  },
+  "worldUpdate": {
+    "samples": 100,
+    "medianMs": 0.5999999046325684
+  },
+  "ownershipPermille": [
+    191,
+    265,
+    287,
+    257
+  ]
+}

@@ -12,7 +12,7 @@ import { fitCamera } from './env-scene.js';
 const BASE = `${__WEB_ASSETS__}`;
 const N_TROOPS = 720, COLS = 5, ROWS = 4;
 
-export default async function perf({ canvas, width, height }) {
+export function createPerfFixture() {
   const base = structuredClone(levels['l21-snow']);
   const colors = ['blue', 'green', 'red', 'yellow'];
   const visuals = ['building.house-wt1', 'building.house-wt2', 'building.house-wt1', 'building.tower', 'building.house-wt1'];
@@ -27,13 +27,6 @@ export default async function perf({ canvas, width, height }) {
   level.units = [{ ...base.units[0] }, { ...base.units[0], id: 'tank', visual: 'unit.tank', speed: 4000 }];
   const n = buildings.length;
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
-  renderer.setSize(width, height, false);
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(manifest.themes[level.theme].sky);
-  const worldRoot = createMirroredWorldRoot(); scene.add(worldRoot);
-  const world = createWorldRenderer(scene, manifest, { worldRoot, baseURL: BASE });
-  await world.setLevel(level, level.theme);
-
   const col = f => Int32Array.from(buildings.map(f));
   const lines = [];
   const pairs = [];
@@ -41,7 +34,7 @@ export default async function perf({ canvas, width, height }) {
   for (const [from, to] of pairs) { const a = buildings[from], b = buildings[to]; lines.push({ channel: from * n + to, from, to, owner: a.owner, length: Math.round(Math.hypot(a.x - b.x, a.z - b.z)), drawSeq: 0 }); }
   const view = {
     tick: 0, over: null, timeLimitTicks: 0, bounds: level.bounds, ids: { buildings: [], players: [], elements: [] }, players: level.players,
-    buildings: { owner: col(b => b.owner), level: col(b => b.level), maxLevel: col(() => 64), stage: col(b => (b.level >= 30 ? 2 : b.level >= 10 ? 1 : 0)), lines: col(() => 0), alive: col(() => 1), ignoreForWin: col(() => 0), col: {} },
+    buildings: { owner: col(b => b.owner), level: col(b => b.level), maxLevel: col(() => 64), stage: col(b => (b.level >= 30 ? 3 : b.level >= 10 ? 2 : 1)), lines: col(() => 0), alive: col(() => 1), ignoreForWin: col(() => 0), col: {} },
     buildingStatic: buildings.map(b => ({ x: b.x, z: b.z, kind: b.kind, archetype: b.archetype, visual: b.visual, footprint: b.footprint, special: false, drawsLines: true, initialOwner: b.owner, modules: [] })),
     elements: [], lines, units: level.units, freeSlots: () => 0,
   };
@@ -52,6 +45,18 @@ export default async function perf({ canvas, width, height }) {
     buf.laneLength[i] = l.length; buf.speed[i] = level.units[buf.kind[i]].speed / 20; buf.progress[i] = Math.floor(((i * 37) % 97) / 97 * l.length * 0.9);
   }
   const frame = { view, troops: buf, n: N_TROOPS, alpha: 0.5 };
+  return { level, frame };
+}
+
+export default async function perf({ canvas, width, height }) {
+  const { level, frame } = createPerfFixture(), { view, troops: buf } = frame;
+  const n = level.buildings.length, lines = view.lines;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  renderer.setSize(width, height, false);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(manifest.themes[level.theme].sky);
+  const worldRoot = createMirroredWorldRoot(); scene.add(worldRoot);
+  const world = createWorldRenderer(scene, manifest, { worldRoot, baseURL: BASE });
+  await world.setLevel(level, level.theme);
   const camera = new THREE.PerspectiveCamera(21, width / height, 0.5, 400);
   fitCamera(camera, level.bounds, manifest.camera.margin);
   world.update(frame, [], 0);
