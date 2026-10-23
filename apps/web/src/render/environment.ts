@@ -45,10 +45,10 @@ export function createEnvironment(manifest: ManifestV2, materials: MaterialCache
   return env;
 }
 
-/** Lane ribbon params from the manifest `lane-wave` beam fx entry (width, alpha, tile, texture). */
+/** Lane ribbon params from the manifest `lane-wave` beam fx entry (texture, tile; width/alpha come from LANE_WIDTH/LANE_ALPHA). */
 function beamStyle(manifest: ManifestV2) {
   const fx = manifest.fx['lane-wave'];
   if (!fx) return {};
-  const p = fx.params as { width?: number; alpha?: number; tile?: number };
-  return { texture: fx.texture, ...(p.width !== undefined && { width: p.width }), ...(p.alpha !== undefined && { alpha: p.alpha }), ...(p.tile !== undefined && { tile: p.tile }) };
+  const p = fx.params as { tile?: number };
+  return { texture: fx.texture, ...(p.tile !== undefined && { tile: p.tile }) };
 }

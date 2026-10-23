@@ -4,17 +4,21 @@ import { type Renderer, type RendererContext } from './registry.js';
 import { MILLI_TO_WORLD } from './scale.js';
 
 /** `WayBaseStandard` (validation Task 2): LineRenderer width 0.6, Tile texture mode, half-alpha (0.502) team tint, flat. */
-export const LANE_WIDTH = 0.6;
-export const LANE_ALPHA = 0.502;
+/** Presentation overrides (manifest beam width 0.6 / alpha 0.502 are ignored): ~23% narrower, near-opaque so the tint reads on grass. */
+export const LANE_WIDTH = 0.46;
+export const LANE_ALPHA = 0.85;
 /** Height above the ground plane (y = 0); lanes draw under buildings/units. */
+/** Dark outline: fraction of strip width (per side) that fades to LANE_EDGE_DARK brightness. */
+export const LANE_EDGE = 0.22;
+export const LANE_EDGE_DARK = 0.35;
 export const LANE_Y = 0.05;
 /** Texture scroll speed in tiles per second along the lane (from -> to). */
 export const LANE_SCROLL = 0.5;
 export const LANE_TEXTURE = 'fx/lane-wave.png';
-const FALLBACK_COLOR = '#6E6E6E';
-/** Darker, higher-contrast line tints (lines only; building/unit team textures unchanged). Was blue #2E8BFF, green #35B84A, red #F0313F, yellow #FDC534, gray #8C8C8C. */
+const FALLBACK_COLOR = '#4A4A4A';
+/** Darker, higher-contrast line tints (lines only; building/unit team textures unchanged). Was (pre-266f55d) blue #2E8BFF, green #35B84A, red #F0313F, yellow #FDC534, gray #8C8C8C. */
 export const LANE_COLORS: Readonly<Record<string, string>> = {
-  blue: '#1458C8', green: '#1C7A2C', red: '#C81E2C', yellow: '#D9A010', gray: '#6E6E6E',
+  blue: '#0A3FD0', green: '#0B6B1C', red: '#D0101E', yellow: '#E0A000', gray: '#4A4A4A',
 };
 const laneColor = (palettes: Readonly<Record<string, string>>, key: string): string =>
   Object.hasOwn(LANE_COLORS, key) ? LANE_COLORS[key]! : palettes[key]!;
@@ -103,6 +107,13 @@ export function createLaneRenderer(ctx: RendererContext, initial: Partial<LaneSt
     let m = mats.get(key);
     if (!m) {
       m = new MeshBasicMaterial({ map: texture(), color: key ? laneColor(style.palettes, key) : FALLBACK_COLOR, transparent: true, opacity: style.alpha, depthWrite: false, side: DoubleSide });
+      m.onBeforeCompile = (sh) => {
+        // Solid strip with dark edge outline; the lane texture only modulates brightness (its own alpha is ~0.4 and fades at the edges).
+        sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+          float laneEdge = smoothstep(0.0, ${LANE_EDGE.toFixed(2)}, min(vMapUv.y, 1.0 - vMapUv.y));
+          diffuseColor.rgb = diffuseColor.rgb / max(sampledDiffuseColor.rgb, vec3(0.001)) * mix(0.85, 1.0, sampledDiffuseColor.a) * mix(${LANE_EDGE_DARK.toFixed(2)}, 1.0, laneEdge);
+          diffuseColor.a = opacity;`);
+      };
       mats.set(key, m);
     }
     return m;

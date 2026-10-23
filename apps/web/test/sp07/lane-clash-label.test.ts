@@ -15,8 +15,8 @@ describe('lane clash', () => {
     expect(clashEnd(a, b, false, { x: 0, z: 0 })).toEqual({ x: 10, z: 4 });
   });
   it('line colours are darker than the originals', () => {
-    expect(LANE_COLORS['blue']).toBe('#1458C8');
-    expect(LANE_COLORS['green']).toBe('#1C7A2C');
+    expect(LANE_COLORS['blue']).toBe('#0A3FD0');
+    expect(LANE_COLORS['green']).toBe('#0B6B1C');
   });
 });
 
