@@ -17,7 +17,7 @@ Source of truth: [PRD.md](PRD.md). Canonical program lineage: [original SP09 pla
 | 6 | campaign:verify | 08, 5 | done |
 | 7 | CI workflow updates + env-skip surfacing | 0, 05, 07, 3, 4 | done |
 | 8 | check:docs gate | 0, 5 | done |
-| 9 | Docs refresh (README, tools/README, FUTURES, AGENTS, CREDITS check, research index, web README) | 8, 07, 08, 5 | todo |
+| 9 | Docs refresh (README, tools/README, FUTURES, AGENTS, CREDITS check, research index, web README) | 8, 07, 08, 5 | done |
 | 10 | Final acceptance: full CI on Node 22 + 24, strict parked, perf | 1-9, all SPs | todo |
 | 11 | Campaign + owner pass hand-off | 10 | todo |
 
@@ -81,6 +81,8 @@ Status note (2026-10-23): detector, CLI/root registration and late CI step compl
 What it is / what it means: Phase D; docs match code.
 What changes at a high level: Rewrite README (contents, TW scope, 20 levels, local-only, `TW_EXTRACT`, TW screenshots copied to `docs/img/`, delete v1 images); rewrite `tools/README.md` (gate semantics, env skips, `levels:lock`, parked pointer); merge into FUTURES (never replace 04/06 entries): walls, mines, water, rocket towers, fortress, trolley, railway, unit modules, boosters (facts recorded), tutorials, meta, PvP, skins, cargo, deploy, levels 24+, portrait/mobile, level editor, new themes, `CrossingSource` note, bundle-size gate; update AGENTS project section only; research index; trim `apps/web/README.md`; cross-links in CONTENT_GUIDE; verify CREDITS header (Vaveda art, private, non-redistributable, CC0 rows).
 Done when: `check:docs` green; no edits to Style/Orchestrator sections.
+
+Status note (2026-10-23): refreshed current Tower War docs, all 57 root scripts, research index and deferred-feature evidence; copied/resized three real campaign captures and removed v1 images. `pnpm check:docs --format json` passed with zero drift; `pnpm check:manifest --format json` passed (17 existing outside-bounds warnings). AGENTS protected sections and earlier FUTURES entries preserved; docs parking entry removed after green check. Source filenames in credits and concrete guide paths normalized for the new checker.
 
 ## Task 10 — Final acceptance (automated)
 What it is / what it means: Phase C proof the whole program is releasable.

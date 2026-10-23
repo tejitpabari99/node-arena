@@ -41,7 +41,6 @@ cd "$(dirname "$0")/.."
 #   folded into the full web suites. Production/dev browser suites remain test:web:all in their dedicated job.
 # ---------------------------------------------------------------------------
 PARKED=(
-  "check:docs:SP09"
 )
 
 is_parked() { # prints owner and returns 0 when step $1 is parked

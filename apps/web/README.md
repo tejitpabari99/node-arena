@@ -1,20 +1,28 @@
 # Web client
 
-Vite, Preact and Three.js landscape Tower War client. Node >=22.13, pnpm 10.34.6.
+Landscape Tower War client: Vite + Preact + Three.js, local campaign progress and audio settings. Node >=22.13, pnpm 10.34.6. Run commands from the repository root.
 
-- `src/app/` — campaign picker, match lifecycle and runtime.
-- `src/ui/` — 20 campaign cards, building ownership HUD, restart/result dialogs and credits.
-- `src/render/` — SP07 world renderer; camera and one mirrored world root.
-- `src/input/` — pointer draw, swipe/right-button cut and hold eraser; commands enter through GameDriver.
-- `src/save/` — v2 local progress and four audio preferences. Older saves are backed up and reset.
-- `src/audio/` — manifest audio and gesture-gated playback.
-- `src/test-harness/` — development/test-build hooks; ordinary production omits them.
-- `test/sp07`, `test/sp08` — current renderer and shell unit/browser tests.
-- `e2e/` — real driver commands, picker/results, all campaign camera sizes and browser content identity parity.
-- `assets/` — imported models, textures, audio, UI sprites and v2 manifest.
+- `apps/web/src/app/` — picker, match lifecycle and runtime.
+- `apps/web/src/ui/` — 20 campaign cards, building ownership HUD, dialogs and credits.
+- `apps/web/src/render/` — world renderer, camera and one mirrored world root.
+- `apps/web/src/input/` — pointer draw, swipe/right-button cut and hold eraser through GameDriver.
+- `apps/web/src/save/`, `apps/web/src/audio/` — v2 local progress, four audio preferences and gesture-gated playback; old saves backed up/reset.
+- `apps/web/src/test-harness/` — development/test-build hooks; excluded from ordinary production.
+- `apps/web/test/sp07/`, `apps/web/test/sp08/`, `apps/web/e2e/` — renderer/shell tests, real driver commands, campaign camera sizes and content identity parity.
+- `apps/web/assets/` — imported art/audio/UI and v2 manifests; private source art, see [credits](../../docs/CREDITS.md).
 
-Run `pnpm dev`, `pnpm --filter @node-arena/web build`, `pnpm --filter @node-arena/web test`, or root `pnpm test:web:all` (test build + preview and development browser suites, one worker).
+| Command | Purpose |
+|---|---|
+| `pnpm dev` | Development server on loopback |
+| `pnpm build:web` | Typecheck and ordinary production bundle |
+| `pnpm test:web` | Renderer/shell unit and browser tests |
+| `pnpm test:web:e2e` | Test build and preview Playwright suite |
+| `pnpm test:web:all` | Preview + development suites, sequential with one worker |
+| `pnpm campaign:verify` | All 20 levels, five-second smoke, screenshots/grid/JSON under `test-results/campaign/` |
+| `pnpm assets:capture:web` | Real-client SP08 reference captures |
 
-Browser hooks: `/?test=1&level=1&seed=1` uses manual ticks and isolated progress; `window.__na` exposes probes and driver commands. `?fixture=win|loss` requires `test=1` and exists only in development/test bundles. The hash-parity HTML entry is emitted only by `build:test`.
+Install Chromium before browser checks: `pnpm --filter @node-arena/web exec playwright install --with-deps chromium`. Package commands also expose build:test, preview:test and test:e2e:dev.
 
-Renderer capture tools live in `tools/assets/` and the active branch's SP07/SP08 artifacts. The v1 visual metrics/capture toolchain has been removed.
+Harness URL: `/?test=1&level=1&seed=1` selects manual ticks and isolated progress; window.__na exposes probes/driver commands. Fixture query values win/loss require test=1 and development/test bundles. The hash-parity HTML entry is emitted only by the test build. Production excludes these hooks.
+
+See [root development](../../README.md#development), [gates/tools](../../tools/README.md) and [levels/fidelity](../../docs/LEVELS_GUIDE.md). No deployment is configured or authorized by these commands.
