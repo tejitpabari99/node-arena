@@ -47,7 +47,7 @@ Chromium is also needed by content/sim browser parity checks; install it with th
 | `pnpm lint` / `pnpm typecheck` | Static checks |
 | `pnpm run ci` | Named gate chain, including browser parity; [baseline and parking](tools/README.md#ci-and-version-baselines) |
 | `pnpm test:web:e2e` / `pnpm test:web:all` | Test-build browser suite / preview + development suites |
-| `pnpm campaign:verify` | Opt-in 20-level browser smoke and captures under `test-results/campaign/` |
+| `pnpm campaign:verify` | Opt-in 20-level browser smoke and captures in the generated directory test-results/campaign/ |
 | `pnpm validate:levels` / `pnpm levels:lock` | Check / regenerate seed-1 campaign determinism lock |
 | `pnpm check:docs` / `pnpm check:parked --strict` | Documentation consistency / closing parked-gate check |
 

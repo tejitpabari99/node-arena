@@ -65,7 +65,7 @@ Balance is report-only: statistical results do not fail a gate. It reports win p
 
 `pnpm import:tw` defaults to Common positions 4–23; `pnpm check:import` covers the committed imported campaign. Import merges by position and never edits metadata/locks. Read [the levels guide](../docs/LEVELS_GUIDE.md) before changing ranges or feature policy. `pnpm assets:tw` writes models/textures/FX plus the extract lock. `pnpm assets:manifest` merges the world fragment into the world manifest and copies the optional UI fragment to its presentation namespace; `--check` checks without writing and needs no extract. `pnpm assets:ui` generates UI sprites and its lock.
 
-`pnpm assets:capture` renders named SP07 scenes (options include --scene, --compare, --out); `pnpm assets:capture:web` captures the real SP08 client. `pnpm assets:validate` compares prototype/RAW importer geometry and optionally renders turntables; it skips without the private prototype extract. These are local development tools. `pnpm campaign:verify` builds the test client, loads all 20 campaign levels for five seconds, checks browser errors and writes screenshots, grid and JSON under `test-results/campaign/`.
+`pnpm assets:capture` renders named SP07 scenes (options include --scene, --compare, --out); `pnpm assets:capture:web` captures the real SP08 client. `pnpm assets:validate` compares prototype/RAW importer geometry and optionally renders turntables; it skips without the private prototype extract. These are local development tools. `pnpm campaign:verify` builds the test client, loads all 20 campaign levels for five seconds, checks browser errors and writes screenshots, grid and JSON in the generated directory test-results/campaign/.
 
 ## CI and version baselines
 
