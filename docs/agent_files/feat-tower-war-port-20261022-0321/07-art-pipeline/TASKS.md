@@ -20,7 +20,7 @@ Source of truth: [PRD.md](PRD.md). Order follows the PRD: validation (R2) gates 
 | 9 | Ground, obstacle, lane renderers | 4, 6 | done |
 | 10 | FX sprite pool | 6, 04#radius | done |
 | 11 | `createWorldRenderer` seam + legacy deletion | 7, 8, 9, 10 | done |
-| 12 | Compare loop, perf scene, acceptance | 11 | in-progress |
+| 12 | Compare loop, perf scene, acceptance | 11 | done |
 
 ## Task 1 — Seed refs + capture/compare harness
 What it is / what it means: Reference material and the Playwright loop every later visual judgement uses (R6, D8).
