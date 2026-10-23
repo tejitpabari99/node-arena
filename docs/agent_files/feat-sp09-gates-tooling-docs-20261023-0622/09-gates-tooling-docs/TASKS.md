@@ -11,11 +11,11 @@ Source of truth: [PRD.md](PRD.md). Canonical program lineage: [original SP09 pla
 | 0 | Phase A: parked-step CI runner, per-package scripts, VERSION_GUARD_BASE, check:parked | none (runs before SP01) | done |
 | 1 | Delete v1 tools-owned tooling (layout, v1 solutions, balance-targets) | 0, 02 CUT / 03#1 | done |
 | 2 | Adapt replay.ts to v2 header; restore tools:replay | 0, 03 | done |
-| 3 | Rewrite validate:levels + levels-lock + unsolved-by-proxy | 0, 03, 05, 06 (R6 follow-up) | in-progress |
+| 3 | Rewrite validate:levels + levels-lock + unsolved-by-proxy | 0, 03, 05, 06 (R6 follow-up) | done |
 | 4 | Rewrite balance (report-only) | 3, 06 | done |
 | 5 | Delete bots:churn, visual harness, slice:verify | 06, 08 | done |
-| 6 | campaign:verify | 08, 5 | todo |
-| 7 | CI workflow updates + env-skip surfacing | 0, 05, 07, 3, 4 | todo |
+| 6 | campaign:verify | 08, 5 | done |
+| 7 | CI workflow updates + env-skip surfacing | 0, 05, 07, 3, 4 | done |
 | 8 | check:docs gate | 0, 5 | todo |
 | 9 | Docs refresh (README, tools/README, FUTURES, AGENTS, CREDITS check, research index, web README) | 8, 07, 08, 5 | todo |
 | 10 | Final acceptance: full CI on Node 22 + 24, strict parked, perf | 1-9, all SPs | todo |
