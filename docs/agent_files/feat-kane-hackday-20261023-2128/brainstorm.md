@@ -68,7 +68,7 @@ Owner confirmed (legal check) that using the current artwork and levels is fine 
 | CI | Actions workflow replaying saved tests | saved tests, owner secrets |
 | Hosted stream | Node server: Start → spawn Chrome + Kane; CDP `Page.startScreencast` frames over WebSocket; NDJSON via SSE; single-run lock; credit floor; keys server-side; exposed via cloudflared/nginx | Kane driver |
 
-Failure handling: Kane false PASS → verify via Victory dialog / panel log (never Kane's claim alone); Kane stalls → recording; credits low → server refuses Start; ws-endpoint fails → segmented objectives.
+Failure handling: Kane false PASS → verify via Victory dialog / panel log (never Kane's claim alone); Kane stalls → recording; credits low → server refuses Start; `--cdp-endpoint` attach fails → fresh Kane-launched browser per run (game restarts from URL) and fewer, longer runs.
 
 ## Non-goals
 - No production-bundle changes; Kane mode only in test builds.
