@@ -40,7 +40,9 @@ cd "$(dirname "$0")/.."
 # 08 Task 10: full web build/typecheck/unit+browser-fixture tests restored; isolated SP07 steps
 #   folded into the full web suites. Production/dev browser suites remain test:web:all in their dedicated job.
 # ---------------------------------------------------------------------------
-PARKED=()
+PARKED=(
+  "check:docs:SP09"
+)
 
 is_parked() { # prints owner and returns 0 when step $1 is parked
   local entry
@@ -131,6 +133,8 @@ step bots:golden pnpm bots:golden
 step bench:sim pnpm bench:sim --ci
 # PRD permits 5x the strict local 1 ms bot decision budget on shared CI runners.
 step bench:bots pnpm bench:bots --ci
+# Phase D: parked until Task 9 refreshes documentation.
+step check:docs pnpm check:docs
 # Last step: lists the parked gates; fails on any only for release runs.
 if [[ "${CI_RELEASE:-}" == "1" ]]; then
   step check:parked pnpm check:parked --strict

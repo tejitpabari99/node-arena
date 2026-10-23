@@ -16,7 +16,7 @@ Source of truth: [PRD.md](PRD.md). Canonical program lineage: [original SP09 pla
 | 5 | Delete bots:churn, visual harness, slice:verify | 06, 08 | done |
 | 6 | campaign:verify | 08, 5 | done |
 | 7 | CI workflow updates + env-skip surfacing | 0, 05, 07, 3, 4 | done |
-| 8 | check:docs gate | 0, 5 | todo |
+| 8 | check:docs gate | 0, 5 | done |
 | 9 | Docs refresh (README, tools/README, FUTURES, AGENTS, CREDITS check, research index, web README) | 8, 07, 08, 5 | todo |
 | 10 | Final acceptance: full CI on Node 22 + 24, strict parked, perf | 1-9, all SPs | todo |
 | 11 | Campaign + owner pass hand-off | 10 | todo |
@@ -75,6 +75,7 @@ Status note (2026-10-22): balance.yml part done by 06 Task 8 (c16aa54; new proxy
 What it is / what it means: Doc-drift gate (Decision 9, req 7); cheap, no network.
 What changes at a high level: `tools/src/docs-check.ts`: every root script is mentioned in `tools/README.md` or `AGENTS.md`; backticked repo paths in README, tools/README, CONTENT_GUIDE, LEVELS_GUIDE, CREDITS exist; no links to deleted names. Add to ci.sh as a late step (parked until Phase D docs land).
 Done when: passes on the refreshed docs; fixtures with a stale path / deleted name fail.
+Status note (2026-10-23): detector, CLI/root registration and late CI step complete; 13 focused docs/parked fixtures pass, focused ESLint and tools typecheck pass. `check:docs:SP09` intentionally remains parked pending Task 9 docs refresh; current docs drift is reported, never suppressed.
 
 ## Task 9 — Docs refresh
 What it is / what it means: Phase D; docs match code.

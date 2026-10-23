@@ -24,10 +24,10 @@ const manifestFile = 'apps/web/assets/manifest.json';
 let format: 'md' | 'json' = args[args.indexOf('--format') + 1] === 'json' ? 'json' : 'md';
 async function main(): Promise<void> {
   if (command in PARKED_COMMANDS) throw new LocatedError('arguments', `${command} is parked until ${PARKED_COMMANDS[command]} (implementation in tools/src/_parked)`);
-  if (!['validate:content', 'validate:levels', 'levels:lock', 'balance', 'check:manifest', 'check:rules', 'replay:verify'].includes(command)) throw new LocatedError('arguments', 'Expected validate:content, validate:levels, levels:lock, balance, check:manifest, check:rules or replay:verify');
+  if (!['validate:content', 'validate:levels', 'levels:lock', 'balance', 'check:manifest', 'check:rules', 'replay:verify', 'check:docs'].includes(command)) throw new LocatedError('arguments', 'Expected validate:content, validate:levels, levels:lock, balance, check:manifest, check:rules, replay:verify or check:docs');
   const target = command === 'replay:verify' && args[0] && !args[0].startsWith('--') ? args.shift() : undefined;
   const opts: Record<string,string> = {};
-  const supported = command === 'balance' ? ['--dir', '--format', '--levels', '--proxy', '--seeds', '--jobs', '--mode'] : command === 'validate:levels' ? ['--dir', '--base', '--format', '--levels', '--seeds', '--max-ticks', '--lock', '--unsolved'] : command === 'levels:lock' ? ['--dir', '--format', '--lock', '--unsolved', '--max-ticks'] : command === 'check:rules' ? ['--rules', '--packages-dir', '--format'] : command === 'replay:verify' ? ['--dir', '--format'] : ['--dir', '--base', '--format', '--manifest', '--assets-dir', '--credits', '--lock'];
+  const supported = command === 'check:docs' ? ['--dir', '--format'] : command === 'balance' ? ['--dir', '--format', '--levels', '--proxy', '--seeds', '--jobs', '--mode'] : command === 'validate:levels' ? ['--dir', '--base', '--format', '--levels', '--seeds', '--max-ticks', '--lock', '--unsolved'] : command === 'levels:lock' ? ['--dir', '--format', '--lock', '--unsolved', '--max-ticks'] : command === 'check:rules' ? ['--rules', '--packages-dir', '--format'] : command === 'replay:verify' ? ['--dir', '--format'] : ['--dir', '--base', '--format', '--manifest', '--assets-dir', '--credits', '--lock'];
   for (let i = 0; i < args.length; i += 2) {
     const key = args[i]!; const value = args[i + 1];
     if (!supported.includes(key)) throw new LocatedError('arguments', `Unknown option ${key}`);
@@ -37,6 +37,11 @@ async function main(): Promise<void> {
   }
   if (opts['--format'] && !['md','json'].includes(opts['--format'])) throw new LocatedError('arguments', '--format must be md or json');
   format = opts['--format'] === 'json' ? 'json' : 'md';
+  if (command === 'check:docs') {
+    const { checkDocs } = await import('./docs-check.js');
+    const result = await checkDocs(resolve(opts['--dir'] ?? root));
+    report.summary = result.summary; report.errors.push(...result.errors); report.ok = result.errors.length === 0; return;
+  }
   const dir = resolve(opts['--dir'] ?? resolve(root, 'packages/content'));
   if (command === 'check:rules') {
     const result = await checkRules(resolve(opts['--rules'] ?? resolve(root, 'docs/GAME_RULES.md')), resolve(opts['--packages-dir'] ?? resolve(root, 'packages')));

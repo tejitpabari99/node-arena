@@ -18,7 +18,8 @@
     "balance": "tsx src/cli.ts balance",
     "assets:tw": "tsx src/assets-tw/cli.ts",
     "assets:tw:check": "tsx src/assets-tw/cli.ts --check",
-    "assets:manifest": "tsx src/assets-tw/merge-cli.ts"
+    "assets:manifest": "tsx src/assets-tw/merge-cli.ts",
+    "check:docs": "tsx src/cli.ts check:docs"
   },
   "dependencies": {
     "@node-arena/content": "workspace:*",
