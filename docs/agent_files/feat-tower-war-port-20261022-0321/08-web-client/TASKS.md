@@ -15,8 +15,8 @@ Source of truth: docs/agent_files/feat-tower-war-port-20261022-0321/08-web-clien
 | 5 | In-play HUD and popups | 2, 3, 4 | in-progress |
 | 6 | Gesture state machine and input controller | 1, 4 | done |
 | 7 | Blocked-draw preview and reasons | 6, 04 explainDraw | done |
-| 8 | Driver passthrough and test harness | 4, 6 | in-progress |
-| 9 | E2E rewrite and legacy purge | 5, 7, 8 | todo |
+| 8 | Driver passthrough and test harness | 4, 6 | done |
+| 9 | E2E rewrite and legacy purge | 5, 7, 8 | in-progress |
 | 10 | Visual pass, perf, gate un-park | 9, 07 perf scene, 09 red-window table | todo |
 
 ## Task 1 — Camera, worldRoot mirror, L4 frame check
