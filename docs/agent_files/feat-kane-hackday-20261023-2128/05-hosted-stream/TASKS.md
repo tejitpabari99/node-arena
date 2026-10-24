@@ -8,9 +8,9 @@ Source of truth: [PRD.md](PRD.md). Builds `tools/kane/stream/**` plus root scrip
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Scaffold, `ws` pin, abuse-guard module | 03 | in-progress |
-| 2 | Log relay allowlist and replay buffer | 1 | todo |
-| 3 | Run lifecycle and fake driver | 1 | todo |
+| 1 | Scaffold, `ws` pin, abuse-guard module | 03 | done |
+| 2 | Log relay allowlist and replay buffer | 1 | in-progress |
+| 3 | Run lifecycle and fake driver | 1 | in-progress |
 | 4 | Screencast and CDP method allowlist | 1 | todo |
 | 5 | HTTP, SSE and WebSocket server | 2, 3, 4 | todo |
 | 6 | Viewer page | 5 | todo |
