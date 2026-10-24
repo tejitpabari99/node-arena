@@ -1,0 +1,5 @@
+# Relay fixture provenance
+
+`fixtures-real-driver.ndjson` is a structural subset of the genuine SP03 paid rehearsal recorded on 2026-10-24 at local ignored `kane-runs/rehearsal-task7/settled.ndjson` in the `feat/kane-sp03` worktree. One example per outer driver type / inner Kane type (plus both observed step statuses), in original sequence order. No new Kane runs or credit spend. The absent-type step and typed `run_end` shapes corroborate [P-KANE-P3](../../../../docs/agent_files/feat-kane-hackday-20261023-2128/probes-20261024.md#p-kane-p3-ndjson-schemas).
+
+Sanitization before commit: tenant/session/run/building IDs -> `fixture-id`; local paths -> `/home/fixture/session`; URLs -> `https://example.invalid/fixture`; balances/aggregate spend -> `99999`; Chrome PID -> `12345`; UUIDs embedded in text -> `fixture-id`. Timings, sequence numbers, real public step text, structures and public per-run `credits_consumed` retained. These placeholders exercise rejection without committing real identifiers, local paths, portal URLs or credentials.
