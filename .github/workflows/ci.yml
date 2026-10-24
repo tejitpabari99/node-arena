@@ -62,3 +62,5 @@ jobs:
       - run: pnpm build:prerequisites
       - run: pnpm --filter @node-arena/web exec playwright install --with-deps chromium
       - run: pnpm test:web:all
+      - name: Verify Kane production exclusion
+        run: pnpm check:kane-bundle

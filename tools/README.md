@@ -36,7 +36,7 @@ Node-only tools run through the root pnpm scripts and `tools/src/cli.ts`. Run `p
 | `pnpm bench:sim` / `pnpm bench:bots` | Strict local performance budgets; `--ci` permits shared-runner budgets |
 | `pnpm check:docs` | Every root script is documented in this file or AGENTS; documented paths exist; removed tooling references fail |
 | `pnpm art:status [--strict]` | Report-only list of merged-manifest file fields outside the art prefix, with TW/stock labels and replacement totals; strict exits 1 while any remain |
-| `pnpm check:kane-bundle [--no-build]` | Builds web `dist` and `dist-test` (unless `--no-build`); production dist has 0 files matching `na-kane`/`Kane Arena`, test-hooks dist has >0; prod `/` and `/?kane=1` show the 20-card picker without `window.__na`. Not part of `pnpm run ci` (needs `build:test`) |
+| `pnpm check:kane-bundle [--no-build]` | Builds web `dist` and `dist-test` (unless `--no-build`); production dist has 0 files matching `na-kane`/`Kane Arena`, test-hooks dist has >0; prod `/` and `/?kane=1` show the 20-card picker without `window.__na`. Runs after `test:web:all` in the GitHub browser job; excluded from the 38-step content/simulation `pnpm run ci` chain to avoid duplicate browser builds |
 | `pnpm check:parked --strict` | No parked CI entries, refused commands or parked source/test directories remain |
 
 Content/manifest/replay/level/balance reports use `--format md|json` (default Markdown). Failures exit 1; malformed command arguments fail. Caller-supplied paths resolve from the working directory. Defaults resolve from the repository. Common content options: `--dir`, `--base`, `--manifest`, `--assets-dir`, `--credits`, `--lock`; supported options depend on the command. Manifest credits default to `docs/CREDITS.md`; committed assets are checked without the extract. A custom assets directory omits the repo asset lock unless an explicit lock is supplied.
@@ -93,7 +93,7 @@ For branch runs the baseline priority is VERSION_GUARD_BASE, CONTENT_BASE, merge
 CONTENT_BASE=<revision> pnpm run ci
 ```
 
-GitHub CI keeps Node 22/24, Chromium for web/content/sim and a separate sequential browser-suite job. Local CI needs Chromium too. `pnpm run ci` is the script invocation; pnpm reserves its bare ci command. Browser suites use development/test bundles with hooks; ordinary production excludes hooks. Neither CI nor campaign verification deploys anything.
+GitHub CI keeps Node 22/24, Chromium for web/content/sim and a separate sequential browser-suite job. The browser job also runs `pnpm check:kane-bundle` after `pnpm test:web:all`: it builds both production and test-hook bundles, then checks the production picker on an owned preview server using an ephemeral port. Local CI needs Chromium too. `pnpm run ci` is the script invocation; pnpm reserves its bare ci command. Browser suites use development/test bundles with hooks; ordinary production excludes hooks. Neither CI nor campaign verification deploys anything.
 
 ## Root script inventory
 
