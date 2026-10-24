@@ -54,7 +54,7 @@ test('blank document Save lists issues in the chip popover; level-name exposes i
   await expect(chip).toHaveText('Unsaved');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(chip).toHaveText(/^Can't save · \d+ issues$/);
-  await chip.click();
+  await expect(page.getByTestId('save-popover')).toBeVisible();
   await expect(page.getByTestId('save-popover')).toContainText('must NOT have fewer than 1 items');
   await expect(page.getByTestId('save-popover').locator('li[data-item]').first()).toBeVisible();
 });
@@ -197,7 +197,7 @@ test('beforeunload guard is registered only while the document is dirty', async 
   expect(await guarded()).toBe(false);
   await placeBuilding(page);
   await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
-  expect(await guarded()).toBe(true);
+  await expect.poll(guarded).toBe(true);
 });
 
 test('file modal is standalone with no document: all three paths create one, bad and existing ids alert', async ({ page }) => {
@@ -261,4 +261,17 @@ test('file modal over an open document: dirty replace prompts, Cancel keeps, Dis
   await page.getByRole('button', { name: 'Discard and continue', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(name).toHaveAttribute('title', 'na-discard-test');
+});
+
+test('manifest load failure shows a dismissible alert toast', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  await page.route('**/manifest.json', route => route.fulfill({ status: 500, body: 'nope' }));
+  await page.goto('/editor.html');
+  await page.getByLabel('New level id').fill('na-toast-manifest');
+  await page.getByRole('button', { name: 'Create blank' }).click();
+  const toast = page.locator('.ed-canvas').getByTestId('error-toast');
+  await expect(toast).toBeVisible();
+  await expect(toast).toHaveAttribute('role', 'alert');
+  await toast.getByRole('button', { name: 'Dismiss error' }).click();
+  await expect(toast).toHaveCount(0);
 });

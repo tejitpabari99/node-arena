@@ -25,7 +25,6 @@ test('starts blank drafts and copies without retaining source identity', async (
   await browserExpect(page.locator('.ed-shell')).toHaveAttribute('data-players', '2');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await browserExpect(page.getByTestId('save-chip')).toContainText("Can't save");
-  await page.getByTestId('save-chip').click();
   await browserExpect(page.getByTestId('save-popover')).toContainText('/buildings');
   await browserExpect(page.getByTestId('save-popover')).toContainText('must NOT have fewer than 1 items');
   await page.getByTestId('level-name').click();

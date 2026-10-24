@@ -4,6 +4,8 @@ import { chipText } from './save-core.js';
 import { useEditor } from './EditorContext.js';
 
 export interface TopBarProps {
+  /** Increments on each failed manual save; opens the popover. */
+  failureSeq: number;
   issues: ContentIssue[];
   warnings: ContentIssue[];
   /** Non-issue save failure (network etc.) for the current revision. */
@@ -15,10 +17,12 @@ export interface TopBarProps {
 }
 
 /** Editor top bar: navigation, name, undo/redo, save chip + Save, Play. Check/Finalize arrive via `extras` until they move. */
-export function TopBar({ issues, warnings, saveMessage, issueLabel, onName, onPlay, extras }: TopBarProps) {
+export function TopBar({ failureSeq, issues, warnings, saveMessage, issueLabel, onName, onPlay, extras }: TopBarProps) {
   const { doc, history, dispatch, locked, save, saveState } = useEditor();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLSpanElement>(null);
+  const seen = useRef(failureSeq);
+  useEffect(() => { if (failureSeq !== seen.current) { seen.current = failureSeq; setOpen(true); } }, [failureSeq]);
   useEffect(() => {
     if (!open) return;
     const away = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };

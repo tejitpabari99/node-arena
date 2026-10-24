@@ -5,6 +5,7 @@ import { loadManifest } from '../manifest/load.js';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { PlayOverlay } from './PlayOverlay.js';
 import { LegacyPanel } from './LegacyPanel.js';
+import { Toasts } from './Toasts.js';
 import { Shell } from './Shell.js';
 import { TopBar } from './TopBar.js';
 import { JobPopovers, type JobPopover } from './JobPopovers.js';
@@ -59,6 +60,7 @@ export function Editor() {
     return { minX: cx - 20, maxX: cx + 20, minZ: cz - 15, maxZ: cz + 15 };
   }, [openSeq.current]);
   const [error, setError] = useState('');
+  const [manualFailures, setManualFailures] = useState(0);
   const [fileOpen, setFileOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -84,7 +86,7 @@ export function Editor() {
     const current = historyRef.current;
     if (!current) return;
     const sent = current.present, seq = openSeq.current;
-    if (source === 'manual') { setBusy(true); setError(''); clearSave(); }
+    if (source === 'manual') { setBusy(true); clearSave(); }
     setSaving(count => count + 1);
     try {
       const checked = validateEditorDocument(await getCatalog(), sent, sent.id);
@@ -98,7 +100,7 @@ export function Editor() {
       if (openSeq.current !== seq) return;
       // 409 = another job holds the gate: transient, the next tick retries.
       if (source === 'auto' && reason instanceof EditorApiError && reason.status === 409) return;
-      setAttempted(true);
+      setAttempted(true); if (source === 'manual') setManualFailures(count => count + 1);
       if (reason instanceof ContentLoadError) { setValidation({ issues: reason.errors, warnings: [] }); setFailure({ doc: sent, message: '' }); }
       else if (reason instanceof EditorApiError && reason.issues.length) { setValidation({ issues: reason.issues, warnings: [] }); setFailure({ doc: sent, message: '' }); }
       else setFailure({ doc: sent, message: reason instanceof Error ? reason.message : String(reason) });
@@ -178,7 +180,7 @@ export function Editor() {
   /** Replaces the working document: fresh history, selection and saved baseline. */
   function replaceDoc(next: LevelDoc, saved: boolean) {
     setDoc(next); if (saved) markSaved(next);
-    setSelection([]); setError(''); clearSave(); setFileOpen(false);
+    setSelection([]); clearSave(); setFileOpen(false);
   }
   const { levels, setLevels, loading, error: startError, copyHint } = useInitialLoad(replaceDoc);
   useEffect(() => { (window as unknown as { __editorSave?: typeof doSave }).__editorSave = doSave; });
@@ -191,13 +193,10 @@ export function Editor() {
     paste() { if (!clipboard) return; pasteCount.current++; dispatch({ type: 'edit', op: { type: 'paste', clipboard, offset: { x: .5 * pasteCount.current, z: .5 * pasteCount.current } }, area }); },
     save: doSave, saveState, dirty,
   } : null;
-  const alerts = <>
-    {error && <p role="alert">{error}</p>}
-    {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
-  </>;
-  const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar issues={validation.issues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel} onName={() => setFileOpen(true)} onPlay={() => setPlaying(true)}
+  const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar failureSeq={manualFailures} issues={validation.issues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel} onName={() => setFileOpen(true)} onPlay={() => setPlaying(true)}
     extras={<JobPopovers open={popover} setOpen={setPopover} job={job} busy={busy} dirty={dirty} onCheck={() => void solvable()} onCancel={() => proxyAbort.current?.abort()} onFinalize={() => void finalize()} checkIssues={issues} issueLabel={issueLabel} checkError={checkError} proxyEvents={proxyEvents} finalizeEvents={finalizeEvents} finalizeError={finalizeError} lockStatus={lockStatus} lockOutput={lockOutput} />} /></EditorCtx.Provider>;
-  return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<>{alerts}<EditorCtx.Provider value={ctx}><LegacyPanel pointer={pointer} /></EditorCtx.Provider></>}>
+  return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<EditorCtx.Provider value={ctx}><LegacyPanel pointer={pointer} /></EditorCtx.Provider>}>
+    <Toasts banners={history ? scriptRemovalMessages(history) : []} error={error} onDismissError={() => setError('')} />
     <EditorCtx.Provider value={ctx}><Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} onPointer={setPointer} /></EditorCtx.Provider>
   </Shell> : <FileModal standalone levels={levels} dirty={false} loading={loading} startError={startError} copyHint={copyHint} onClose={() => undefined} onReplace={replaceDoc} />}
   {doc && fileOpen && <FileModal standalone={false} levels={levels} dirty={dirty} loading={loading} startError="" copyHint={copyHint} currentId={doc.id} onClose={() => setFileOpen(false)} onReplace={replaceDoc} />}{playing && doc && <PlayOverlay doc={doc} onExit={() => setPlaying(false)} />}</>;

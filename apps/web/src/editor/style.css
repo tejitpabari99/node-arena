@@ -19,6 +19,9 @@
 .editor-properties { margin: 16px 0; padding: 12px; background: var(--ed-panel); border: 1px solid var(--ed-border); border-radius: 6px; }
 .editor-properties summary { cursor: pointer; }
 .editor-properties fieldset { min-width: 0; border: 1px solid var(--ed-border); }
+.ed-toasts { position: absolute; z-index: 3; top: 12px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; max-width: min(560px, 90%); pointer-events: none; }
+.ed-toast { pointer-events: auto; margin: 0; padding: 10px 14px; border-radius: 12px; box-shadow: 0 8px 24px #1b3a4b33; }
+.ed-toast-error { display: flex; align-items: center; gap: 10px; border: 1px solid var(--ed-border); background: var(--ed-panel); color: var(--ed-ink); }
 .editor-script-banner { padding: 12px; border: 1px solid #be8225; background: #fff1c9; color: #5a3a07; }
 
 .editor-layout-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
