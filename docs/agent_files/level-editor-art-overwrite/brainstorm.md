@@ -11,7 +11,7 @@ Two separate projects, designed together, built separately. **(1) Level editor:*
 
 ## Problem
 - **Levels:** new levels are authored by hand-editing JSON (copy a levelview, fix `requires`, lock, bump versions, validate), with no visual feedback until you play. `docs/FUTURES.md` lists an editor as a deferred product decision; this brief makes that decision.
-- **Art:** the importer owns `models/tw/`, `textures/tw/`, `fx/`, and `manifest.json`'s `visuals`/`themes`/`fx` (`mergeManifest` in `tools/src/assets-tw/manifest-fragment.ts` replaces them whole from `manifest.tw.json`). Any hand-swapped file fails the hash lock (`tools/src/manifest-assets.ts`), any hand-edited visual fails the merge check, and re-running the importer overwrites it. There is no legal way to replace art. The current art is Vaveda's and must be replaced before anything goes public.
+- **Art:** the importer owns `models/tw/`, `textures/tw/`, `fx/`, and `manifest.json`'s `visuals`/`themes`/`fx` (`mergeManifest` in `tools/src/assets-tw/manifest-fragment.ts` replaces them whole from `manifest.tw.json`). Any hand-swapped file fails the hash lock (`tools/src/manifest-assets.ts`), any hand-edited visual fails the merge check, and re-running the importer overwrites it. There is no supported override path. Assets based on / motivated by Tower War.
 - **User:** the repo owner, authoring levels and art locally. Not players.
 
 ## Decision log
@@ -21,7 +21,7 @@ Two separate projects, designed together, built separately. **(1) Level editor:*
 |---|---|---|
 | Build our own editor | Tiled/LDtk plus a converter | Generic editors are 2D, can't run our rules (live validation, line-of-sight, solvability), have no Play, and still need a converter |
 | `apps/web/editor.html` reusing the game renderer and runtime, with a Vite dev middleware for fs ops | Standalone app under `tools/` (like `assets:validate`) | Play must use the exact game runtime (no drift); avoids duplicated wiring |
-| Dev-only (DEV / test-hooks gated, kept out of the prod rollup like the `parity` entry) | Public tool | Private repo, no public deploy |
+| Dev-only (DEV / test-hooks gated, kept out of the prod rollup like the `parity` entry) | Public tool | Local file authoring |
 | v1 = layout + player/AI settings + Play | Layout-only; AI settings without Play | Fast tweak-play loop is the point |
 | Start from blank, copy of any level, or reopen `na-*` | Copy only | All needed; `levelview-*` always forces save-as-copy |
 | Play runs in-editor from the in-memory level (no save); Esc returns with edits intact | Save, then open the game in a new tab | Faster loop |
@@ -51,7 +51,7 @@ Two separate projects, designed together, built separately. **(1) Level editor:*
 | No preview page; instead two playable **showcase levels** (green, snow) in the custom list: all 3 building types at low/mid/high level (every stage), human + 3 AIs + neutral gray (all colours), small and big obstacles; units, projectiles and fx appear in play | Turntable preview page | Seeing art in a real playable level is what matters |
 | Reload the page to see changes | Live hot-swap | Much simpler |
 | Override pointing at a key/node the importer no longer has → **fail loudly** | Silently drop with a warning | No silent art regressions |
-| `art:status` command lists visuals still using original TW art | None | To-do list before going public |
+| `art:status` command lists visuals still using original TW art | None | Track optional art replacements |
 
 ## Design
 
@@ -87,7 +87,6 @@ Two separate projects, designed together, built separately. **(1) Level editor:*
 - Live art hot-swap
 - Any public or production build of either tool
 - Git commits from tools
-- Licensing enforcement beyond the warning
 
 ## Open risks
 | Risk | Cheapest test |

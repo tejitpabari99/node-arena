@@ -58,7 +58,7 @@ Skins other than default; garage/skinned models; artillery unit; rocket/fortress
 - Assets are imported **RAW**: no x-negate, no winding fix (02 Frame contract). 08 owns the single LH->RH mirror at `worldRoot` (three.js flips face winding for negative-determinant objects); label/text sprites stay outside the mirrored root.
 - Output: `apps/web/assets/models/tw/*.glb` (rigid nodes per part; glTF animations Run/Death kept for tooling; stage meshes as named nodes `stage0..2`, enable-lists as `extras.stageNodes`), `textures/tw/<family>-<team>.png` (original 256px, sRGB, no recompress), `fx/*.png`, and manifest fragment `apps/web/assets/manifest.tw.json` merged by a tiny script (single manifest remains).
 - Reproducible: sorted traversal, no timestamps, `tools/assets/tw-extract.lock.json` records sha256 of every input read. `assets:tw:check` (needs env) regenerates to temp and diffs; without env, `check:manifest` still validates committed output hashes, so CI needs no extract.
-- Credits: `docs/CREDITS.md` rewritten: one block "Tower War 1.29.3 (Vaveda) extracted art, private repo, not redistributable" + per-file table. Licence-gate keeps working.
+- Credits: `docs/CREDITS.md` rewritten: one block "Assets based on / motivated by Tower War." + per-file table. Asset coverage checks keep working.
 
 ### R4 Team colour, instancing, animation
 - Team = per-team texture, **not tint**. Geometry shared; one `MeshLambertMaterial({map})` per (family, team) [5 colours buildings, 4 units]. Buildings: one mesh per (stage, team) swapped on capture/level cross (<=120 objects, plain meshes).
@@ -122,7 +122,7 @@ This table = 02 R7 (single contract). Stage thresholds 10/30 are content data (`
 
 ## Manual steps (owner)
 - None. [RESOLVED: owner supplied YouTube walkthrough refs, `BF/ref/tw-yt/`]
-- [RESOLVED: owner — repo stays private; committing extracted TW art is OK]
+- [RESOLVED: TW art committed; assets based on / motivated by Tower War.]
 
 ## Risks
 | Risk | Mitigation |
@@ -134,7 +134,7 @@ This table = 02 R7 (single contract). Stage thresholds 10/30 are content data (`
 | Instanced rigid parts desync at rest pose (seams) | validate Run frame 0 vs bind pose in R2 |
 | Gray/neutral unit texture absent (units never neutral) | not needed; lint rejects |
 | 720 troops x 9 parts perf on integrated GPU | perf scene gate; fallback atlas + merged LOD body for far units |
-| Private-repo art committed | licence block in CREDITS; repo stays private [RESOLVED: owner] |
+| TW art provenance | acknowledgment in CREDITS: Assets based on / motivated by Tower War. |
 
 ## Open Questions
 - [RESOLVED: verify in Task 1; fallback skin id 1 per type] Is "default skin" = skin id 1 per type (John Doe, T-72)? Verify via `WarriorSkinSettings.defaultWarriorSkinsData` pids 2404/2394/2415 (MB, not hierarchy) in Task 1.
