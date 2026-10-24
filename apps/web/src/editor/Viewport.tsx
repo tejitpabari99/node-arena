@@ -3,7 +3,7 @@ import { ItemProperties } from './Properties.js';
 import { copySelection, snapYaw, type Clipboard, type DocOp, type LibraryItem } from './model.js';
 import type { LevelDoc } from './document.js';
 import type { Point, Selection } from './picking.js';
-import { createEditorViewport, type EditorViewport, type ViewportStatus } from './viewport.js';
+import { createEditorViewport, type EditorViewport, type ViewportStatus } from './viewport-engine.js';
 
 export function Viewport({ doc, onEdit, disabled = false }: { doc: LevelDoc; onEdit?: (op: DocOp) => void; disabled?: boolean }) {
   const edit = useRef(onEdit), locked = useRef(disabled); edit.current = onEdit; locked.current = disabled;

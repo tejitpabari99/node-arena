@@ -60,7 +60,7 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   expect(errors).toEqual([]);
 });
 
-import type { EditorViewport } from '../src/editor/viewport.js';
+import type { EditorViewport } from '../src/editor/viewport-engine.js';
 import type { DocHistory } from '../src/editor/model.js';
 declare global { interface Window { __editorLayout?: { viewport: EditorViewport; history: DocHistory; rebuilds: number } } }
 
@@ -68,8 +68,8 @@ test('multi-selection drags use snapped shared deltas, ghosts only during motion
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Real dev preview');
   await page.goto('/editor.html');
   const target = await page.evaluate(async () => {
-    const path = '/src/editor/viewport.ts', modelPath = '/src/editor/model.ts';
-    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport.js');
+    const path = '/src/editor/viewport-engine.ts', modelPath = '/src/editor/model.ts';
+    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport-engine.js');
     const { createHistory, historyReducer } = await import(/* @vite-ignore */ modelPath) as typeof import('../src/editor/model.js');
     const doc = await (await fetch('/__editor/level/levelview-1')).json() as LevelDoc;
     doc.buildings = [

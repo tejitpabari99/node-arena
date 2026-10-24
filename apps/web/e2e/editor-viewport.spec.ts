@@ -18,7 +18,7 @@ test('working copy renders, reports blank drafts, and has editor camera controls
   await page.getByRole('button', { name: 'Game camera', exact: true }).click();
 });
 
-import type { EditorViewport, ViewportStatus } from '../src/editor/viewport.js';
+import type { EditorViewport, ViewportStatus } from '../src/editor/viewport-engine.js';
 import type { LevelDoc } from '../src/editor/document.js';
 import type { Selection } from '../src/editor/picking.js';
 declare global { interface Window { __editorViewport?: EditorViewport; __editorStatuses?: ViewportStatus[]; __editorSelection?: Selection[] } }
@@ -30,8 +30,8 @@ test('real preview opens all20, rebuilds edits, picks through offset rect, and s
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/editor.html');
   await page.evaluate(async () => {
-    const path = '/src/editor/viewport.ts';
-    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport.js');
+    const path = '/src/editor/viewport-engine.ts';
+    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport-engine.js');
     const host = document.createElement('div');
     host.id = 'viewport-fixture'; host.className = 'editor-workspace';
     Object.assign(host.style, { position: 'absolute', left: '240px', top: '100px', width: '900px', height: '650px' });

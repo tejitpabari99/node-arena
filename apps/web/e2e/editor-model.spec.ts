@@ -41,7 +41,7 @@ test('library drops, deletion, and undo/redo persist through real preview rebuil
   expect(errors).toEqual([]);
 });
 
-import type { EditorViewport } from '../src/editor/viewport.js';
+import type { EditorViewport } from '../src/editor/viewport-engine.js';
 import type { DocOp } from '../src/editor/model.js';
 declare global { interface Window { __editorModel?: { viewport: EditorViewport; doc: LevelDoc; ops: DocOp[]; rebuilds: number } } }
 
@@ -49,8 +49,8 @@ test('single-item movement commits correct data coordinates once on release and 
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Uses real dev viewport');
   await page.goto('/editor.html');
   const target = await page.evaluate(async () => {
-    const path = '/src/editor/viewport.ts', modelPath = '/src/editor/model.ts';
-    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport.js');
+    const path = '/src/editor/viewport-engine.ts', modelPath = '/src/editor/model.ts';
+    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport-engine.js');
     const { reduceDocument } = await import(/* @vite-ignore */ modelPath) as typeof import('../src/editor/model.js');
     const doc = await (await fetch('/__editor/level/levelview-1')).json() as LevelDoc;
     const host = document.createElement('div'); host.className = 'editor-workspace';
