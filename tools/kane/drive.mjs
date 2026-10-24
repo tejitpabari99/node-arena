@@ -70,8 +70,15 @@ export async function runDriver(options, deps = {}) {
   const startServer = deps.ensurePreviewServer ?? ensurePreviewServer, run = deps.runKane ?? runKane;
   const sleep = deps.sleep ?? ((ms, signal) => delay(ms, undefined, { signal }));
   const started = Date.now();
-  let page, stopServer, runs = 0, noProgress = 0, connectionFailures = 0, mode = options.mode, initialCredits, currentCredits, outcome = 'error';
+  let page, stopServer, runs = 0, noProgress = 0, connectionFailures = 0, reportedCredits = 0, mode = options.mode, initialCredits, currentCredits, outcome = 'error';
   const warn = fields => emit('warn', fields);
+  // Billing arrives after a run. Enforce 150 between paid calls; an in-flight charge can cross it.
+  const matchSpend = () => Math.max(0, reportedCredits, initialCredits === undefined ? 0 : initialCredits - currentCredits);
+  const budgetAvailable = () => {
+    if (matchSpend() < 150) return true;
+    warn({ code: 'credit_budget', msg: `150-credit match budget reached (${matchSpend()} credits); no further paid runs` });
+    return false;
+  };
   const pageCall = async method => {
     try { return await page[method](); }
     catch (error) { error.exitCode ??= 22; throw error; }
@@ -84,7 +91,7 @@ export async function runDriver(options, deps = {}) {
     initialCredits ??= currentCredits;
     emit('credits', { balance: currentCredits, floor: options.minCredits, ok: currentCredits >= options.minCredits,
       balanceDelta: initialCredits - currentCredits });
-    return currentCredits >= options.minCredits;
+    return currentCredits >= options.minCredits && budgetAvailable();
   };
   try {
     const enough = await credits();
@@ -152,6 +159,10 @@ export async function runDriver(options, deps = {}) {
           // Prefer observed terminal ground truth even if Kane reports a connection error.
           after = await pageCall('summary');
         }
+        const charge = response.end?.credits_consumed;
+        if (typeof charge === 'number' && Number.isFinite(charge) && charge >= 0) {
+          reportedCredits = Math.min(Number.MAX_VALUE, reportedCredits + charge);
+        }
         emit('run_end', { iter, kaneExit: response.code, kaneStatus: response.end?.status ?? null,
           creditsRun: response.end?.credits_consumed ?? null, durationMs: response.durationMs, sessionDir: response.end?.session_dir ?? null });
         const delta = acceptedMoveDelta(before, after);
@@ -166,6 +177,7 @@ export async function runDriver(options, deps = {}) {
         const afterTerminal = gameResult(after, emit);
         if (afterTerminal) { outcome = afterTerminal; break; }
         if (creditError) throw creditError;
+        if (matchSpend() >= 150) { outcome = 'credit_floor'; break; }
         const failureText = `${response.stderr ?? ''}\n${response.end?.reason ?? ''}\n${response.end?.reason_code ?? ''}`;
         if (/unauthenticated|unauthori[sz]ed|AUTH_REQUIRED|AUTH_FAILED|invalid[_ ]token|token expired|not logged in|please (?:log ?in|authenticate)|insufficient credits/i.test(failureText)) {
           warn({ code: 'kane_auth', msg: 'Kane refused the run for authentication or credits' });
@@ -194,7 +206,7 @@ export async function runDriver(options, deps = {}) {
       try { await cleanup(); } catch (error) { outcome = 'error'; try { warn({ code: 'cleanup', msg: error.message }); } catch { /* Continue all cleanup. */ } }
     }
   }
-  const terminal = { outcome, exitCode: exitCodeFor(outcome), runs, creditsUsed: initialCredits === undefined ? 0 : initialCredits - currentCredits, wallMs: Date.now() - started };
+  const terminal = { outcome, exitCode: exitCodeFor(outcome), runs, creditsUsed: matchSpend(), wallMs: Date.now() - started };
   emit('driver_end', terminal);
   return terminal;
 }
@@ -204,6 +216,7 @@ const help = `Usage: node tools/kane/drive.mjs [flags]
 --headless --software-gl --moves N --max-steps N --run-timeout SECONDS (>=120)
 --max-runs N --stall-runs N --idle-max SECONDS --min-credits N --log PATH
 --dry-run (free balance lookup; never kane-cli run) --credits-only --no-fallback --help
+150-credit match budget enforced between paid calls; an in-flight charge may cross the cap.
 `;
 
 export async function main(argv = process.argv.slice(2)) {

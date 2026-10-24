@@ -149,3 +149,41 @@ test('unavailable preview is page-not-ready23 before starting Chrome', async () 
   assert.equal((await runDriver(opts(), h.deps)).exitCode, 23);
   assert.equal(h.stats().runs, 0); assert.equal(h.stats().closed, 0);
 });
+
+for (const [name, balances, charge, expectedRuns, expectedSpend] of [
+  ['reported charges with lagging healthy balance', [100533], 75, 2, 150],
+  ['balance debit with small reported charge', [100533, 100533, 100380], 1, 1, 153],
+  ['pre-spend balance debit', [100533, 100380], 1, 0, 153],
+]) test(`150-credit match budget stops paid calls: ${name}`, async () => {
+  const h = harness({ balances }); let calls = 0;
+  h.deps.runKane = async () => { calls++; return { code: 0, end: { status: 'passed', credits_consumed: charge } }; };
+  const result = await runDriver(opts({ stallRuns: 20 }), h.deps);
+  assert.equal(result.exitCode, 21); assert.equal(calls, expectedRuns); assert.equal(result.creditsUsed, expectedSpend);
+  assert.ok(h.events.some(event => event.code === 'credit_budget' && /150/.test(event.msg)));
+});
+
+test('invalid reported charges cannot poison the budget and dry run spends nothing', async () => {
+  for (const charge of [-20, NaN, Infinity, '150', null]) {
+    const h = harness({ balances: [100533] }); let calls = 0;
+    h.deps.runKane = async () => { calls++; return { code: 0, end: { status: 'passed', credits_consumed: charge } }; };
+    const result = await runDriver(opts({ maxRuns: 2, stallRuns: 20 }), h.deps);
+    assert.equal(result.exitCode, 30); assert.equal(calls, 2); assert.equal(result.creditsUsed, 0);
+  }
+  const h = harness({ balances: [100533] });
+  const result = await runDriver(opts({ dryRun: true }), h.deps);
+  assert.equal(result.exitCode, 20); assert.equal(result.creditsUsed, 0); assert.equal(h.stats().runs, 0);
+});
+
+test('grounded win remains authoritative when the last run reaches credit budget', async () => {
+  const h = harness({ summaries: [initial, initial, { ...initial, result: 'won' }], balances: [100533] });
+  h.deps.runKane = async () => ({ code: 0, end: { status: 'failed', credits_consumed: 151 } });
+  const result = await runDriver(opts(), h.deps);
+  assert.equal(result.exitCode, 0); assert.equal(result.creditsUsed, 151);
+});
+
+test('launch mode shares the same between-call credit budget across fresh games', async () => {
+  const h = harness({ balances: [100533] }); let calls = 0;
+  h.deps.runLaunchKane = async () => { calls++; return { response: { code: 0, end: { status: 'passed', credits_consumed: 80 } }, before: structuredClone(initial), after: structuredClone(mixed) }; };
+  const result = await runDriver(opts({ mode: 'launch', stallRuns: 20 }), h.deps);
+  assert.equal(result.exitCode, 21); assert.equal(calls, 2); assert.equal(result.creditsUsed, 160);
+});
