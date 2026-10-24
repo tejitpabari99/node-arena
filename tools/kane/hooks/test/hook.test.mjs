@@ -106,7 +106,7 @@ test('missing dependency skips; loop guard still succeeds with missing jq', asyn
   assert.equal(await f.calls(), '');
 });
 
-test('missing/stale dist builds; fresh bundle and NOBUILD skip build; default timeout120', async t => {
+test('every uncached verification builds even a fresh bundle; NOBUILD skips build; default timeout120', async t => {
   const f = await fixture(t); await f.change('go');
   const env = { KANE_HOOK_NOBUILD: '0', KANE_HOOK_FORCE: '1' };
   assert.equal(f.run(env).status, 0);
@@ -118,7 +118,7 @@ test('missing/stale dist builds; fresh bundle and NOBUILD skip build; default ti
   assert.equal(f.run(env).status, 0);
   assert.equal(f.run({ ...env, KANE_HOOK_NOBUILD: '1' }).status, 0);
   const calls = await f.calls();
-  assert.equal(calls.split('\n').filter(line => line.startsWith('build ')).length, 2);
+  assert.equal(calls.split('\n').filter(line => line.startsWith('build ')).length, 3);
   assert.match(calls, /timeout=120/);
 });
 
@@ -129,4 +129,33 @@ test('build error exits2 with last30 lines and no replay', async t => {
   assert.match(result.stderr, /build-line-11/); assert.match(result.stderr, /build-line-40/);
   assert.doesNotMatch(result.stderr, /build-line-10\b/);
   assert.doesNotMatch(await f.calls(), /replay/);
+});
+
+
+for (const change of ['source deletion', 'index.html', 'vite.config.ts']) test(`${change} rebuilds a fresh bundle before replay and caches only a passing verification`, async t => {
+  const f = await fixture(t);
+  const pairs = join(f.root, 'apps/web/src/pairs.ts');
+  const html = join(f.root, 'apps/web/index.html');
+  const config = join(f.root, 'apps/web/vite.config.ts');
+  await writeFile(pairs, 'export const label = "ready";');
+  await f.change('import {label} from "./pairs"; console.log(label);');
+  await writeFile(html, '<main>original</main>');
+  await writeFile(config, 'export default {};');
+  f.git('add', 'apps/web'); f.git('commit', '-qm', 'build inputs');
+  await mkdir(join(f.root, 'apps/web/dist-test'));
+  const bundle = join(f.root, 'apps/web/dist-test/index.html');
+  await writeFile(bundle, 'previous successful build');
+  const fresh = new Date(Date.now() + 2000); await utimes(bundle, fresh, fresh);
+  if (change === 'source deletion') await rm(pairs);
+  else await writeFile(change === 'index.html' ? html : config, 'broken build input');
+  const result = f.run({ KANE_HOOK_NOBUILD: '0', TEST_BUILD_RC: '1' });
+  assert.equal(result.status, 2, result.stderr);
+  assert.match(await f.calls(), /build --filter @node-arena\/web build:test/);
+  assert.doesNotMatch(await f.calls(), /replay/);
+  // A build failure cannot cache a pass against the obsolete preview bundle.
+  assert.equal(f.run({ KANE_HOOK_NOBUILD: '0' }).status, 0);
+  const calls = await f.calls();
+  assert.equal(calls.split('\n').filter(line => line.startsWith('build ')).length, 2);
+  assert.equal(f.run({ KANE_HOOK_NOBUILD: '0' }).status, 0);
+  assert.equal(await f.calls(), calls);
 });

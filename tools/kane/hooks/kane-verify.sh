@@ -62,14 +62,13 @@ WORK=$(mktemp -d "${TMPDIR:-/tmp}/kane-hook-run-XXXXXX") || {
 }
 trap 'rm -rf "$WORK"' EXIT
 if [[ ${KANE_HOOK_NOBUILD:-0} != 1 ]]; then
-  # index.html is written by a successful Vite build; directory mtimes alone can
-  # remain unchanged when an existing bundle is rewritten.
-  if [[ ! -f apps/web/dist-test/index.html ]] || [[ -n $(find apps/web/src -type f -newer apps/web/dist-test/index.html -print -quit) ]]; then
-    if ! pnpm --filter @node-arena/web build:test > "$WORK/build.log" 2>&1; then
-      printf 'Kane browser verification build failed:\n' >&2
-      tail -n 30 "$WORK/build.log" >&2
-      exit 2
-    fi
+  # File mtimes miss deleted sources and changes to HTML/configuration. Build
+  # every state that needs replay; the clean-tree and passed-state skips above
+  # keep repeated Stops free of both builds and paid verification.
+  if ! pnpm --filter @node-arena/web build:test > "$WORK/build.log" 2>&1; then
+    printf 'Kane browser verification build failed:\n' >&2
+    tail -n 30 "$WORK/build.log" >&2
+    exit 2
   fi
 fi
 node tools/kane/replay.mjs --serve </dev/null > "$WORK/replay.out" 2> "$WORK/replay.err"

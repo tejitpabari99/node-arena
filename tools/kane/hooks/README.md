@@ -1,8 +1,9 @@
 # Opt-in Claude Code Stop verification
 
 `kane-verify.sh` checks the shipped Kane smoke recording after web edits. It builds
-the test client when stale, replays on preview port **4173**, and returns exit 2
-with the failing test, status, reason and session directory for Claude to act on.
+the test client on every verification requiring replay, replays on preview port
+**4173**, and returns exit 2 with the failing test, status, reason and session
+directory for Claude to act on.
 A passed check exits 0. Infrastructure problems print `skipped` and exit 0;
 build failures exit 2 with the last 30 build-log lines.
 
@@ -37,7 +38,7 @@ only in a session with exclusive preview/browser ownership.
 |---|---|
 | `KANE_WATCH` | `apps/web`; one Git pathspec, including untracked files |
 | `KANE_HOOK_FORCE=1` | Bypass clean-tree and last-passed-state skips; useful for rehearsal |
-| `KANE_HOOK_NOBUILD=1` | Skip build freshness check; use only with a known-current test bundle |
+| `KANE_HOOK_NOBUILD=1` | Skip rebuilding; use only with a known-current test bundle |
 | `KANE_HOOK_LOG` | Optional path receiving one timestamped line per Stop invocation |
 | `KANE_TIMEOUT` | Per-test seconds; defaults to 120, replay clamps smaller values to 120 |
 | `KANE_CLI_CHROME_PATH` | Optional Chromium executable override; otherwise use Playwright's cache |
@@ -47,7 +48,10 @@ only in a session with exclusive preview/browser ownership.
 tree skips replay. Unchanged changes that already passed skip too: the cache in
 `${TMPDIR:-/tmp}/kane-hook-<repo-hash>` fingerprints tracked diffs and untracked
 contents. Failed checks are never cached. Missing `jq`, `node`, or `kane-cli`
-also skip with a note.
+also skip with a note. After the clean-tree and last-passed-state skips, every
+verification rebuilds the test client unless `KANE_HOOK_NOBUILD=1`. This includes
+source deletions and HTML/configuration edits, which file mtimes cannot reliably
+detect.
 
 Budget **(Stops with changed web content requiring replay) × ~1–3 credits** per
 session, per saved test. Forced checks cost too; cache hits and clean skips cost
