@@ -12,8 +12,8 @@ For Kane CLI Hack Day (2026-10-24) Node Arena becomes a game an AI tester plays 
 Hack-day rule: Kane CLI must verify the app, judged higher when Kane is inside the agent workflow; integration must be built on the day. Spikes (see [research](../../research/kane-cli.md)) showed Kane cannot drag on the Three.js canvas (silent false PASS) but clicks DOM buttons reliably, and runs ~10 s per authored step. The game is real-time and drag-only, so Kane cannot play it as-is. Audience: hack-day judges and attendees; secondarily the owner's dev workflow.
 Probe 2 (2026-10-23, 121 credits): `--cdp-endpoint` attach works and keeps game state across runs; double-click → CutLine and red-banner reading verified; results folded into the decision log below.
 
-## Licensing (owner decision)
-Owner confirmed (legal check) that using the current artwork and levels is fine for this demo; assets will change later. No licensing restriction applies to this work, including the public hosted demo. The UI, web page and game must not mention "Tower War" anywhere (today only a CSS comment in `apps/web/src/style.css` does; UI text is clean). Carry this decision into design, tasks and code.
+## Asset acknowledgment
+Assets based on / motivated by Tower War.
 
 ## Decision log
 | Decision | Alternative rejected | Why |
@@ -79,7 +79,7 @@ Failure handling: Kane false PASS → verify via Victory dialog / panel log (nev
 - No production-bundle changes; Kane mode only in test builds.
 - No changes to regular campaign levels or GAME_RULES (no RULES_VERSION bump).
 - No mobile; no multiplayer; no Kane-vs-Kane.
-- No licensing restrictions (owner cleared) but no "Tower War" mention anywhere in UI/web page.
+- Assets based on / motivated by Tower War.
 - Spectator mirror (deterministic replay in viewer's browser) deferred to FUTURES (PvP groundwork).
 - Not merged to main during the hack unless owner chooses.
 

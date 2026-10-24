@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { spawnSync } from 'node:child_process';
 const root = resolve(import.meta.dirname, '../..');
 const run = (...args: string[]) => spawnSync(process.execPath, ['--import', 'tsx', join(root, 'tools/assets/ui-sprites.mjs'), ...args], { cwd: root, encoding: 'utf8', env: { ...process.env, TW_EXTRACT: '' } });
-test('committed UI assets verify without private extract', () => {
+test('committed UI assets verify without source extract', () => {
   const r = run('--check');
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /UI assets OK/);

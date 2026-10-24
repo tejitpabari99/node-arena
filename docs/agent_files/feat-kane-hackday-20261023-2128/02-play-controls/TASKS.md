@@ -15,7 +15,7 @@ Source of truth: [PRD.md](PRD.md). All Kane UI lives in `apps/web/src/kane/`, im
 | 5 | Building tags | 3 | todo |
 | 6 | Camera room for panel | 3 | todo |
 | 7 | `__na.kane.summary()` + visibility auto-resume | 4, 5 | todo |
-| 8 | Remove original-game name | — | todo |
+| 8 | Asset acknowledgment | — | todo |
 | 9 | Kane panel e2e + final gates | 4–8 | todo |
 
 ## Task 1 — Speed type + driver tests
@@ -53,10 +53,10 @@ What it is: ground-truth hook for 03/04/05 and background-tab safety (R6, O1).
 What changes at a high level: add `api.kane.summary()` returning the JSON in the PRD (tick, speed, over, result, letters, human commands/drawn/cut/rejected, banner, pairs); human rows = `player===0`; resets with the driver. In Kane mode, auto-resume the driver on `visibilitychange` to visible and do not open the restart popup for a hidden pause.
 Done when: one `Runtime.evaluate` returns the summary; hide/show leaves the game running with no stuck popup. [DEFERRED] re-verify no stuck restart popup in rehearsal.
 
-## Task 8 — Remove original-game name
+## Task 8 — Asset acknowledgment
 What it is: R5.
-What changes at a high level: reword the single CSS comment at `style.css` line 4 only.
-Done when: case-insensitive grep for the original game name over `apps/web/{src,e2e,assets,index.html}` returns 0.
+What changes at a high level: record "Assets based on / motivated by Tower War.".
+Done when: asset acknowledgment is recorded.
 
 ## Task 9 — Kane panel e2e + final gates
 What it is: acceptance coverage (Acceptance Criteria).

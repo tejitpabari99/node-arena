@@ -26,7 +26,7 @@ const render = !args.includes('--no-render');
 
 const EXTRACT = process.env.TW_EXTRACT;
 if (!EXTRACT || !fs.existsSync(path.join(EXTRACT, 'catalog/glb_proto'))) {
-  console.log('assets:validate: TW_EXTRACT not set or has no catalog/glb_proto; skipping (needs the private Tower War extract).');
+  console.log('assets:validate: TW_EXTRACT not set or has no catalog/glb_proto; skipping (needs the Tower War extract).');
   process.exit(0);
 }
 const cat = f => path.join(EXTRACT, 'catalog', f);

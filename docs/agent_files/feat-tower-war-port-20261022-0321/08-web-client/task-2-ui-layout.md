@@ -58,6 +58,6 @@ Compared against original `ref/tw-yt/d-hud-topbar-18.jpg`: curved white undo arr
 
 - Test-first: three tests initially failed on missing importer/UI outputs; after implementation all 3 passed. Tests cover committed verification without extract, tampered sprite/font plus stale output and drift without writes, and shared merge preserving SP07 fragment while restoring UI output. Included in tools' normal test discovery.
 - `pnpm exec tsx --test tools/test/manifest-assets.test.ts tools/test/assets-tw.test.ts`: 16 pass, 13 source-dependent skips, zero failures.
-- UI check with and without private extract: 12 locked outputs verified. Reimport/lock `cmp`: identical.
+- UI check with and without source extract: 12 locked outputs verified. Reimport/lock `cmp`: identical.
 - Shared manifest `--check`, targeted ESLint and `pnpm typecheck:tools`: pass.
 - Capture: both named scenes + comparison images produced at 1600×900. No full CI or intermediate review (per requested end-only review).

@@ -22,7 +22,7 @@ Non-goals: any viewer input to the game or Chrome, accounts/passwords, spectator
 ## Requirements
 
 ### R1 Viewer page (static, `GET /`)
-- Header title "Kane plays Node Arena" (no "Tower War" anywhere in `public/`; test greps it).
+- Header title "Kane plays Node Arena". Assets based on / motivated by Tower War.
 - Start button, status pill (`idle|starting|live|finished|failed|cooldown`), 16:9 canvas, log pane (newest at bottom, auto-scroll, copy of Kane step text and driver events), viewer count.
 - Start is disabled unless state is `idle`; on `live` late viewers auto-join the running stream (last frame sent immediately, SSE replay).
 - On `failed` show "Live run unavailable" + link to `/backup.mp4` if the owner placed it in `public/` [owner step].
@@ -141,7 +141,7 @@ Server sends `X-Accel-Buffering: no` on SSE itself. Cloudflare idle timeout ~100
 
 ## Acceptance Criteria
 - `node --test tools/kane/stream/test` green: allowlist (secrets/paths/balance stripped, unknown type dropped, fixtures from a real run), state machine (second `/start` -> 409, cooldown, daily cap), rate limit, origin check, SSE replay + `Last-Event-ID`, backpressure (fake slow WS client never grows buffer past cap), CDP wrapper rejects `Input.dispatchMouseEvent`.
-- `grep -rniE 'tower war' tools/kane/stream/public` -> 0; `grep -rn 'Input\.' tools/kane/stream --include=*.mjs` -> 0 (excluding test strings).
+- `grep -rn 'Input\.' tools/kane/stream --include=*.mjs` -> 0 (excluding test strings).
 - Credit-free smoke: `KANE_STREAM_DRIVER=tools/kane/stream/test/fake-driver.mjs pnpm kane:stream`, open page, press Start: canvas shows live frames of preview:test, log pane fills, run ends, cleanup leaves 0 `chrome`/`vite`/driver processes (`pgrep` check) and `/api/state` = `idle` after cooldown.
 - With `--min-credits 99999` equivalent (`KANE_STREAM_MIN_CREDITS`), `POST /start` -> 503 and no process spawned.
 - `ss -ltnp` shows 8787, 4173, 9222 bound only to 127.0.0.1 (nginx :80 the only public listener); from outside the box (via Cloudflare) `/` works, SSE and WS stay up >120 s through the proxy, and `:4173`/`:9222`/`:8787` are unreachable; direct non-Cloudflare access to :80 is blocked by ufw.

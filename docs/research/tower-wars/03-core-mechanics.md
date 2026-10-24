@@ -4,7 +4,7 @@ Game: Tower War - Tactical Conquest 1.29.3 (Vaveda, Unity 6000.0.82f1 IL2CPP). D
 
 ## 0. Conventions, sources, confidence
 
-Path prefixes (all under `/root/projects/tower-war/_extract/`, local only, never copied here):
+Path prefixes (all under `/root/projects/tower-war/_extract/`, local research paths):
 
 | Short | Full |
 |---|---|

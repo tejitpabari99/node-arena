@@ -36,7 +36,7 @@ export async function runImport(extractRoot: string, jobs: readonly Job[] = JOBS
   for (const k of [...ex.inputs.keys()].sort()) inputs[k] = ex.inputs.get(k)!;
   const outputs: Record<string, string> = {};
   for (const [p, bytes] of files) outputs[p] = createHash('sha256').update(bytes).digest('hex');
-  // `outputs` lets `check:manifest` verify the committed assets without the private extract.
+  // `outputs` lets `check:manifest` verify the committed assets without the source extract.
   const lock = JSON.stringify({ format: 2, note: '`inputs`: sha256 of every file read from TW_EXTRACT (paths relative to it); `outputs`: sha256 of every generated file (paths relative to apps/web/assets); written by `pnpm assets:tw`', inputs, outputs }, null, 2) + '\n';
   return { files, lock };
 }

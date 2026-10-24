@@ -58,7 +58,7 @@ Credits: extract, design, maintain cost credits (`kane-cli balance`); list/revie
 Recommendation: #1 + #2, with one #3 flow as the showcase run.
 
 ### Risks / checks before the event
-- Licensing: Tower War-derived data is private (README). Kane uploads screenshots to TestMu cloud; share links open without project access. Prefer demoing on original/non-TW content (e.g. `sample.json` level).
+- Assets based on / motivated by Tower War. Kane uploads screenshots to TestMu cloud; share links open without project access.
 - Verified in spikes: Kane reaches `localhost`; Kane can NOT drag inside the canvas (see spikes). Integration itself still built on the day.
 - Owner-only: `kane-cli login`, OpenAI account, registration confirmation.
 
@@ -146,7 +146,7 @@ Recommended demo combo (derived from verdicts): **Stop-hook replay loop (1) + As
 - Silent false-PASS on game actions: only assert DOM/HUD or ground-truthed outcomes; say so in the demo.
 - Real-time drift and 10s/step latency: use `?test=1`, frozen speed, `fixture=` hooks.
 - Credits: do not kill authoring runs with tight timeouts; keep tests short; `--no-adaptive-heal`.
-- Licensing: screenshots upload to TestMu cloud and share links open without project access; avoid TW-derived art; use original/`sample.json` content and never commit share links.
+- Screenshots upload to TestMu cloud and share links open without project access. Assets based on / motivated by Tower War.
 - Venue wifi / third-party outage: keep the recorded backup run and replay evidence offline (`kane-cli evidence serve`).
 - Block path of the Stop hook not proven end-to-end; test it early.
 
@@ -199,7 +199,7 @@ Expands option 3 / DOM-control workaround from the [Hack-day plan](#hack-day-pla
   - Turn-based + fixed seed makes a recorded match replayable deterministically (free, fast demo backup); real-time live matches are not replayable (timing differs per run).
 - **Kane level (decided):** hand-authored `na-` level per `docs/LEVELS_GUIDE.md` §4 (copy `levelview-1.json`, add campaign entry, `requires`, lock/bump).
   - "Tough map, easy bot": obstacles to force routing + several neutrals; easy bot via large `actionDelayMs` in the AI seat's `bot` block (decided).
-  - Levels have up to ~15 buildings; keep ≤10 for button-row width. Still uses TW models (licensing: private).
+  - Levels have up to ~15 buildings; keep ≤10 for button-row width. Still uses TW models.
 - **Ground truth:** never trust Kane's "Victory"/"line drawn" claims alone (Spike A false-passes); assert via DOM result dialog + panel log, optionally record `__na.commandLog` via a CDP watcher for the demo.
 
 ### Cost / run shape
@@ -231,7 +231,7 @@ Verdict: use it (free, low downside), but as a supplement — Claude Code + Play
 - Credits: each run reports `credits_consumed`; measured ~13-31 per authored run (~3/step), replay 0, failing replay ~1.3 (details in spikes credits table). Balance delta is ~1-2 above `run_end` per run.
 - HyperExecute 100 min/month: enough to try cross-OS, not real CI.
 - Strong: resilient selector-free tests; fast smoke tests of any site; evidence reports for non-engineers/clients; requirement-to-test traceability (Assurance); mobile and cross-OS coverage.
-- Weak: slower (~10s per LLM step) and less deterministic than Playwright (flaky as a strict gate); canvas/WebGL input broken (drag) and assertions can false-PASS; uploads screenshots to cloud (bad for private/licensed projects); lock-in and credit dependence after trial; overlaps with agent-written Playwright.
+- Weak: slower (~10s per LLM step) and less deterministic than Playwright (flaky as a strict gate); canvas/WebGL input broken (drag) and assertions can false-PASS; uploads screenshots to cloud; lock-in and credit dependence after trial; overlaps with agent-written Playwright.
 - Good uses: normal web UIs (dashboards, SaaS, forms, logins) — post-agent-change smoke checks; author in English then export to Playwright and keep that; occasional mobile/cross-browser checks; client/demo projects needing proof links.
 - Less useful: game rendering, backend-only, sensitive data.
 - Before relying: check trial auto-renew / card requirement; measure credits per run; export to Playwright so nothing breaks when the trial ends.
