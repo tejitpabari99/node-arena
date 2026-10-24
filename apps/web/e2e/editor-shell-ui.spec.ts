@@ -1,5 +1,6 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
+import { acceptDialogs } from './helpers.js';
 
 const development = process.env.WEB_TEST_SERVER === 'dev';
 declare global { interface Window { __editorSave?: (source?: 'manual' | 'auto') => Promise<void> } }
@@ -15,10 +16,10 @@ async function mockSave(page: Page, hold?: Promise<void>) {
   });
   return posted;
 }
-async function placeBuilding(page: Page) {
+async function placeBuilding(page: Page, at = .45) {
   const box = (await page.getByLabel('Edit viewport').boundingBox())!, item = page.getByRole('button', { name: 'Place house-wt1', exact: true }), source = (await item.boundingBox())!;
   await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
-  await page.mouse.move(box.x + box.width * .45, box.y + box.height * .45, { steps: 8 }); await page.mouse.up();
+  await page.mouse.move(box.x + box.width * at, box.y + box.height * at, { steps: 8 }); await page.mouse.up();
 }
 
 test('chip walks Unsaved, Saving, Saved and back to Unsaved on edit', async ({ page }) => {
@@ -79,8 +80,129 @@ test('an edit made during a stalled save survives and the chip stays Unsaved', a
   await expect(chip).toHaveText('Saved ✓');
 });
 
+async function openClocked(page: Page, url = '/editor.html?template=levelview-1') {
+  await page.clock.install();
+  await page.goto(url);
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+}
+
+test('new document is never autosaved before a manual Save, even when edited', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  const posted = await mockSave(page);
+  await openClocked(page);
+  await placeBuilding(page);
+  await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
+  await page.clock.runFor(15000);
+  expect(posted.length).toBe(0);
+});
+
+test('after a manual Save an edit autosaves once within 5s and the chip returns to Saved', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  const posted = await mockSave(page);
+  await openClocked(page);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  expect(posted.length).toBe(1);
+  await page.clock.runFor(10000);
+  expect(posted.length).toBe(1);
+  await placeBuilding(page);
+  await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
+  await page.clock.runFor(5100);
+  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  expect(posted.length).toBe(2);
+  await page.clock.runFor(10000);
+  expect(posted.length).toBe(2);
+});
+
+test('a failed autosave shows the error chip and is not retried until the next edit', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  let fail = false, calls = 0;
+  await page.route('**/__editor/save', async route => {
+    calls++;
+    const body = route.request().postDataJSON() as { level: unknown };
+    if (fail) await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'disk full' }) });
+    else await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ level: body.level, warnings: [] }) });
+  });
+  await openClocked(page);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  fail = true;
+  await placeBuilding(page);
+  await page.clock.runFor(5100);
+  await expect(page.getByTestId('save-chip')).toHaveText(/Can't save/);
+  expect(calls).toBe(2);
+  await page.clock.runFor(20000);
+  expect(calls).toBe(2);
+  fail = false;
+  await placeBuilding(page, .6);
+  await page.clock.runFor(5100);
+  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  expect(calls).toBe(3);
+});
+
+test('a 409 job-running autosave response is transient and retried on the next tick', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  let calls = 0;
+  await page.route('**/__editor/save', async route => {
+    calls++;
+    const body = route.request().postDataJSON() as { level: unknown };
+    if (calls === 2) await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: 'job already running' }) });
+    else await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ level: body.level, warnings: [] }) });
+  });
+  await openClocked(page);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await placeBuilding(page);
+  await page.clock.runFor(5100);
+  await expect.poll(() => calls).toBe(2);
+  await expect(page.getByTestId('save-chip')).not.toHaveText(/Can't save/);
+  await page.clock.runFor(5100);
+  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  expect(calls).toBe(3);
+});
+
+test('no autosave while Check or Finalize runs; autosave never hits Finalize', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  const posted = await mockSave(page);
+  let release!: () => void; const hold = new Promise<void>(resolve => { release = resolve; });
+  let finalizeCalls = 0, checkCalls = 0;
+  await page.route('**/__editor/solvable', async route => { checkCalls++; await hold; await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'stub' }) }); });
+  await page.route('**/__editor/finalize', async route => { finalizeCalls++; await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'stub' }) }); });
+  await openClocked(page);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await placeBuilding(page);
+  await page.getByRole('button', { name: 'Check', exact: true }).click();
+  await expect.poll(() => checkCalls).toBe(1);
+  const before = posted.length;
+  await page.clock.runFor(20000);
+  expect(posted.length).toBe(before);
+  release();
+  await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeEnabled();
+  await page.clock.runFor(5100);
+  await expect.poll(() => posted.length).toBe(before + 1);
+  expect(finalizeCalls).toBe(0);
+});
+
+test('beforeunload guard is registered only while the document is dirty', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  acceptDialogs(page);
+  await mockSave(page);
+  const guarded = () => page.evaluate(() => { const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); return event.defaultPrevented; });
+  await page.goto('/editor.html?template=levelview-1');
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+  expect(await guarded()).toBe(true);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  expect(await guarded()).toBe(false);
+  await placeBuilding(page);
+  await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
+  expect(await guarded()).toBe(true);
+});
+
 test('file modal is standalone with no document: all three paths create one, bad and existing ids alert', async ({ page }) => {
   test.skip(!development, 'Editor API is dev-only');
+  acceptDialogs(page);
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/editor.html');
   const dialog = page.getByRole('dialog');

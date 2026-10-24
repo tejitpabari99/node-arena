@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chipText, createSaveQueue, isDirty, stableStringify } from '../../src/editor/save-core.js';
+import { chipText, createSaveQueue, isDirty, shouldAutosave, stableStringify } from '../../src/editor/save-core.js';
 
 describe('dirty model', () => {
   it('is dirty without a saved ref, clean by reference or by stable JSON', () => {
@@ -32,5 +32,15 @@ describe('save queue', () => {
     dirty = true; gates[1]!(); dirty = true; await third;
     await Promise.resolve(); await Promise.resolve(); expect(log).toEqual(['auto', 'manual', 'manual']);
     gates[2]!(); await fourth; expect(queue.busy).toBe(false);
+  });
+});
+
+describe('autosave decision', () => {
+  const ok = { armed: true, dirty: true, valid: true, jobRunning: false, saveInFlight: false, failedThisRevision: false };
+  it('fires only when armed, dirty, valid, idle, not in flight and not failed for this revision', () => {
+    expect(shouldAutosave(ok)).toBe(true);
+    for (const key of Object.keys(ok) as Array<keyof typeof ok>) {
+      expect(shouldAutosave({ ...ok, [key]: !ok[key] })).toBe(false);
+    }
   });
 });

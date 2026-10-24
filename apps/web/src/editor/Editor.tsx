@@ -9,6 +9,7 @@ import { Shell } from './Shell.js';
 import { TopBar } from './TopBar.js';
 import { JobPopovers, type JobPopover } from './JobPopovers.js';
 import { createSaveQueue, isDirty, stableStringify } from './save-core.js';
+import { useAutosave } from './useAutosave.js';
 import { Viewport } from './Viewport.js';
 import { EditorCtx, type EditorContext } from './EditorContext.js';
 import type { EditorViewport, ViewportStatus } from './viewport-engine.js';
@@ -37,8 +38,10 @@ export function Editor() {
   const [failure, setFailure] = useState<{ doc: LevelDoc; message: string } | null>(null);
   const [validation, setValidation] = useState<{ issues: ContentIssue[]; warnings: ContentIssue[] }>({ issues: [], warnings: [] });
   const [saving, setSaving] = useState(0);
+  // Armed by a successful manual Save of the current doc; reset whenever the doc is replaced.
+  const armedRef = useRef(false);
   function setDoc(next: LevelDoc | null) {
-    openSeq.current++; markSaved(null); setAttempted(false); setFailure(null); setValidation({ issues: [], warnings: [] });
+    openSeq.current++; armedRef.current = false; markSaved(null); setAttempted(false); setFailure(null); setValidation({ issues: [], warnings: [] });
     setHistory(next ? createHistory(next) : null);
   }
   function dispatch(action: HistoryAction) { if (busy) return; clearSave(); setHistory(state => state ? historyReducer(state, action) : state); }
@@ -87,12 +90,14 @@ export function Editor() {
       const checked = validateEditorDocument(await getCatalog(), sent, sent.id);
       const result = await saveLevel(checked.level);
       if (openSeq.current !== seq) return;
-      markSaved(result.level); setFailure(null); setValidation({ issues: [], warnings: result.warnings });
+      markSaved(result.level); setFailure(null); if (source === 'manual') armedRef.current = true; setValidation({ issues: [], warnings: result.warnings });
       // Swap in the normalized document only if nothing was edited during the request; no history entry.
       setHistory(state => state && state.present === sent ? { ...state, present: result.level } : state);
       setLevels(await listLevels());
     } catch (reason) {
       if (openSeq.current !== seq) return;
+      // 409 = another job holds the gate: transient, the next tick retries.
+      if (source === 'auto' && reason instanceof EditorApiError && reason.status === 409) return;
       setAttempted(true);
       if (reason instanceof ContentLoadError) { setValidation({ issues: reason.errors, warnings: [] }); setFailure({ doc: sent, message: '' }); }
       else if (reason instanceof EditorApiError && reason.issues.length) { setValidation({ issues: reason.issues, warnings: [] }); setFailure({ doc: sent, message: '' }); }
@@ -121,6 +126,16 @@ export function Editor() {
   const armed = savedDoc !== null || attempted;
   const failureActive = !!failure && !!doc && (failure.doc === doc || stableStringify(failure.doc) === stableStringify(doc));
   const saveMessage = failureActive ? failure!.message : '';
+  const autosaveRef = useRef({ armed: false, dirty: false, valid: false, jobRunning: false, saveInFlight: false, failedThisRevision: false });
+  autosaveRef.current = { armed: armedRef.current, dirty, valid: validation.issues.length === 0, jobRunning: busy, saveInFlight: !!saveQueue.current?.busy, failedThisRevision: failureActive };
+  useAutosave(() => ({ ...autosaveRef.current, armed: armedRef.current, saveInFlight: !!saveQueue.current?.busy }), () => void doSave('auto'));
+  // Leave-page guard only while there is something unsaved.
+  useEffect(() => {
+    if (!dirty) return;
+    const guard = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', guard);
+    return () => window.removeEventListener('beforeunload', guard);
+  }, [dirty]);
   const saveState: EditorContext['saveState'] = saving > 0 ? 'saving' : (armed && validation.issues.length > 0) || saveMessage ? 'error' : dirty ? 'unsaved' : 'saved';
   // Lock status is fetched lazily: when the Finalize popover opens and after a job finishes while it is open.
   useEffect(() => {

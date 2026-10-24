@@ -35,3 +35,15 @@ export function createSaveQueue<S>(run: (source: S) => Promise<void>, stillDirty
     },
   };
 }
+
+export interface AutosaveState {
+  armed: boolean; dirty: boolean; valid: boolean;
+  /** Finalize, Check or a manual Save is running. */
+  jobRunning: boolean; saveInFlight: boolean;
+  /** The last save attempt failed for exactly this revision. */
+  failedThisRevision: boolean;
+}
+/** Autosave tick decision: only after a manual Save of this doc, never re-hammering a failed revision. */
+export function shouldAutosave(s: AutosaveState): boolean {
+  return s.armed && s.dirty && s.valid && !s.jobRunning && !s.saveInFlight && !s.failedThisRevision;
+}
