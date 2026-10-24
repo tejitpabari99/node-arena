@@ -162,7 +162,9 @@
   },
   "submission_handoff": {
     "text_fields": "User must paste pitch, harness description, Kane feature selections and limitations; no event text-field tool.",
-    "shipped_prize_bundle": "Paste both live X post and Substack blog links, tick their checklist rows and press Save before finalizing."
+    "shipped_prize_bundle": "Paste both live X post and Substack blog links, tick their checklist rows and press Save before finalizing.",
+    "blog_url": "https://tejitpabari.substack.com/p/letting-kane-cli-play-node-arena?r=58t4g&utm_campaign=post&utm_medium=web&showWelcomeOnShare=true",
+    "x_post_url": "https://x.com/tejit99/status/2114142477439697336?s=20"
   },
   "updated_at_utc": "2026-10-24T23:37:00.128Z",
   "update_timestamp_note": "Completion time of the latest included local assurance validation; prepared_at_utc retains the original preparation time.",

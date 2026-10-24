@@ -9,4 +9,4 @@ Submission materials prepared from `kane-cli` source commit `244f9b7bf2369a9658b
 
 The owner confirmed installed agent-session Stop-hook use and approved the second assurance checkpoint. Regular GitHub CI passed; the linked Kane workflow skipped credentialed replay, while actual Kane execution is documented from local runs. The latest assurance result is explicitly a local validation snapshot, separate from the original reviewed source commit.
 
-No raw logs, evidence packs, screenshots or credentials are included. Event reporting/linkage and the live X post/Substack blog links must be checked before finalization.
+No raw logs, evidence packs, screenshots or credentials are included. The published X post and Substack blog links are included in the [submission handoff](submission.md#submission-handoff) and JSON report. Event reporting/linkage must be checked, and the user must paste both links, tick their checklist rows and press **Save** before finalization.

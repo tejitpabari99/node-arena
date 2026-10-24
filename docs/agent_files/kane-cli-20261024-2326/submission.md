@@ -89,7 +89,12 @@ Expected completion is `stalled` / exit 20 with zero paid runs; that indicates a
 
 Paste the pitch, harness description, Kane feature selections and limitations into the event form; these text fields have no event tool. A local run report is prepared. Check current reporting consent, event report creation and project linkage before claiming event evidence is attached; see the mutable status fields in [kane-run-report.json](kane-run-report.json).
 
-Before finalizing the **Shipped prize bundle**, paste both live links—the user’s X post and Substack blog—tick the corresponding checklist rows and press **Save**. Those external links are not supplied by this artifact.
+Published links supplied by the user:
+
+- Blog: [Substack post](https://tejitpabari.substack.com/p/letting-kane-cli-play-node-arena?r=58t4g&utm_campaign=post&utm_medium=web&showWelcomeOnShare=true)
+- X post: [Published post](https://x.com/tejit99/status/2114142477439697336?s=20)
+
+Before finalizing the **Shipped prize bundle**, paste both links above, tick the corresponding checklist rows and press **Save**. Including these links here does not save them to the event form.
 
 ## Sources
 
