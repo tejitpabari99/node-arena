@@ -48,7 +48,7 @@ Separately, the owner-provided validation report records 398 web unit tests, 19 
 
 ## Limitations
 
-Autonomous gameplay demonstration targets the dedicated Kane Arena level through test-build DOM controls.
+The current demo shows Kane playing one dedicated level.
 
 ## Run the normal game
 

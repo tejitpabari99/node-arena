@@ -151,7 +151,7 @@
       }
     },
     "github_actions": "Regular CI passed. Linked Kane workflow completed with artifacts uploaded, but credentialed setup/login/replay skipped for missing credentials; actual Kane execution evidence comes from local runs.",
-    "qualification_scope": "Autonomous gameplay demonstration targets the dedicated Kane Arena level through test-build DOM controls."
+    "qualification_scope": "The current demo shows Kane playing one dedicated level."
   },
   "event_reporting": {
     "status": "check_current_event_state_before_finalizing",
