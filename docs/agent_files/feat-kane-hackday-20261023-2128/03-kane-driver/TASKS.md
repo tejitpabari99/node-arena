@@ -1,6 +1,6 @@
 ---
-status: draft
-summary: 7 tasks to build tools/kane driver (pure libs, CDP/Chrome, loop, fallback), replay wrapper, one saved smoke test, README + rehearsal.
+status: done
+summary: All 7 tasks complete; driver, cached smoke, guarded rehearsals, full CI and final review passed.
 date: 2026-10-24
 ---
 # Tasks: 03 Kane driver and saved smoke tests
@@ -8,13 +8,13 @@ Source of truth: [PRD.md](PRD.md). Plain Node ESM, zero npm deps, under `tools/k
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Pure libs + unit tests | none | todo |
-| 2 | CDP client and Chrome management | none | todo |
-| 3 | Driver loop, CLI, scripts | 1, 2, 02 | todo |
-| 4 | Attach-failure fallback | 3 | todo |
-| 5 | Replay wrapper | none (needs 02 only to run a real test) | todo |
-| 6 | Author and commit the smoke test | 5, 01, 02 | todo |
-| 7 | README and rehearsal | 4, 6 | todo |
+| 1 | Pure libs + unit tests | none | done |
+| 2 | CDP client and Chrome management | none | done |
+| 3 | Driver loop, CLI, scripts | 1, 2, 02 | done |
+| 4 | Attach-failure fallback | 3 | done |
+| 5 | Replay wrapper | none (needs 02 only to run a real test) | done |
+| 6 | Author and commit the smoke test | 5, 01, 02 | done |
+| 7 | README and rehearsal | 4, 6 | done |
 
 ## Task 1 — Pure libs + unit tests
 What it is: the side-effect-free pieces (PRD R2, R3, R5, R7, Arch unit tests; Decisions 3, 4, 8).

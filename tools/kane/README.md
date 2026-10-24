@@ -97,7 +97,7 @@ present. Outer `run_end` is the driver's measured call; inner Kane `run_end` is
 its reported claim/charge. `claimMatches` compares a successful Kane claim with
 at least one accepted move; it does not mean Kane verified victory.
 
-`accepted` rows contain `{tick,type,from,to}` (building IDs); rejected rows contain
+`accepted` rows contain `{tick,type,from,to}` (numeric simulation building indices; map through `letters[].index` to `letters[].id`); rejected rows contain
 `{reason}`. The shipped game does not attach pair/tick identity to rejections.
 Use **`acceptedCount`**, derived from authoritative drawn/cut counters, for progress;
 `accepted.length` can be smaller when mixed submissions make attribution ambiguous.
