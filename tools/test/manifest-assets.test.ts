@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import type { ManifestV2 } from '@node-arena/content';
+import { Document, NodeIO } from '@gltf-transform/core';
 import { DEFAULT_EVENT_SFX, lightDirFromQuat, lightDirToDataFrame, mergeManifest, stringify, type Fragment } from '../src/assets-tw/manifest-fragment.js';
 import { loadArt, mergeFiles } from '../src/assets-tw/merge-cli.js';
 import { checkManifestAssets } from '../src/manifest-assets.js';
@@ -153,4 +154,102 @@ test('lightDirToDataFrame: raw Unity (x,z) -> data frame (z,-x) quarter turn; y 
   assert.deepEqual(lightDirToDataFrame([0, 0, 1]), [1, 0, 0]);
   const d = lightDirToDataFrame(lightDirFromQuat([0.5016, 0.3786, -0.2589, 0.7335]));
   assert.deepEqual(d, [-0.2101, 0.9319, 0.2957]);
+});
+
+// --- art rules (02-art-overrides Task 3) ---
+const png = (w: number, h: number): Buffer => { const b = Buffer.alloc(33); Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(b); b.writeUInt32BE(13, 8); b.write('IHDR', 12); b.writeUInt32BE(w, 16); b.writeUInt32BE(h, 20); return b; };
+function put(dir: string, rel: string, data: Uint8Array | string): void { mkdirSync(join(dir, rel, '..'), { recursive: true }); writeFileSync(join(dir, rel), data); }
+/** Write `art` into a copied assets dir, merge it into manifest.json (as assets:manifest would) and run the checks. */
+async function withArt(dir: string, art: unknown, files: Record<string, Uint8Array | string> = {}, merge = true): Promise<{ errors: string[]; warnings: string[] }> {
+  for (const [rel, data] of Object.entries(files)) put(dir, rel, data);
+  put(dir, 'manifest.art.json', JSON.stringify(art));
+  const fragment = JSON.parse(readFileSync(join(dir, 'manifest.tw.json'), 'utf8')) as Fragment;
+  const base = load(dir) as unknown as Record<string, unknown>;
+  const m = (merge ? mergeManifest(base, fragment, art as Record<string, unknown>) : base) as unknown as ManifestV2;
+  const warnings: string[] = [];
+  return { errors: await checkManifestAssets(m, dir, undefined, warnings), warnings };
+}
+async function bigGlb(tris: number): Promise<Uint8Array> {
+  const doc = new Document(); const buf = doc.createBuffer();
+  const pos = doc.createAccessor().setType('VEC3').setArray(new Float32Array(9)).setBuffer(buf);
+  const idx = doc.createAccessor().setType('SCALAR').setArray(new Uint32Array(tris * 3)).setBuffer(buf);
+  const mesh = doc.createMesh('m').addPrimitive(doc.createPrimitive().setAttribute('POSITION', pos).setIndices(idx));
+  doc.createScene().addChild(doc.createNode('body').setMesh(mesh));
+  return new NodeIO().writeBinary(doc);
+}
+
+test('art: a valid override passes with no warnings', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { visuals: { 'unit.soldier': { team: { textures: { blue: 'art/textures/soldier-blue.png' } } } }, fx: { 'capture-ring': { texture: 'art/fx/ring.png' } } }, { 'art/textures/soldier-blue.png': png(64, 64), 'art/fx/ring.png': png(128, 128) });
+    assert.deepEqual(r.errors, []);
+    assert.deepEqual(r.warnings, []);
+  } finally { done(); }
+});
+
+test('art: unknown key fails loudly', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { visuals: { 'unit.soldier': { kind: 'building' } } }, {}, false);
+    assert.match(r.errors.join('\n'), /manifest\.art\.json invalid: .*kind/);
+  } finally { done(); }
+});
+
+test('art: missing stage node, missing clip, over-budget tris and PNG >256px all fail', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, {
+      visuals: {
+        'building.tower': { stages: [{ mesh: 'nope' }] },
+        'unit.soldier': { anim: { clips: { run: 'Walk' } } },
+        'unit.tank': { model: { parts: 'art/models/big.glb' }, anim: { mode: 'none' } },
+      },
+      fx: { 'capture-ring': { texture: 'art/fx/huge.png' } },
+    }, { 'art/models/big.glb': await bigGlb(1200), 'art/fx/huge.png': png(512, 512) });
+    const e = r.errors.join('\n');
+    assert.match(e, /stage node "nope" not in models\/tw\/tower\.glb/);
+    assert.match(e, /clip "Walk" not in models\/tw\/soldier\.glb/);
+    assert.match(e, /visual unit\.tank: 1200 tris > unit budget 1100/);
+    assert.match(e, /fx capture-ring: art\/fx\/huge\.png is 512x512 > 256px/);
+  } finally { done(); }
+});
+
+test('art: a path into importer-owned models/tw fails', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { visuals: { 'unit.tank': { model: { parts: 'models/tw/soldier.glb' } } } });
+    assert.match(r.errors.join('\n'), /art: visuals\.unit\.tank\.model\.parts points into importer-owned models\/tw\/.*must live under art\//);
+  } finally { done(); }
+});
+
+test('art: stale target is an error naming the field', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { visuals: { 'unit.soldier': { team: { textures: { gray: 'art/textures/g.png' } } } } }, { 'art/textures/g.png': png(32, 32) });
+    assert.ok(r.errors.includes('art: visuals.unit.soldier.team.textures.gray targets a field the importer no longer produces'), r.errors.join('\n'));
+  } finally { done(); }
+});
+
+test('art: orphan file and oversized audio warn; bad audio extension fails', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { events: { Clash: { sfx: 'art/audio/big.ogg' } } }, { 'art/audio/big.ogg': Buffer.alloc(1024 * 1024 + 1), 'art/textures/orphan.png': png(8, 8) });
+    assert.deepEqual(r.errors, []);
+    assert.match(r.warnings.join('\n'), /event Clash sfx: art\/audio\/big\.ogg is over 1 MB/);
+    assert.match(r.warnings.join('\n'), /art: art\/textures\/orphan\.png is not referenced/);
+    const bad = await withArt(dir, { events: { Clash: { sfx: 'art/audio/boom.flac' } } }, { 'art/audio/boom.flac': 'x' });
+    assert.match(bad.errors.join('\n'), /event Clash sfx: art\/audio\/boom\.flac must be \.ogg\/\.mp3\/\.wav/);
+  } finally { done(); }
+});
+
+test('tintMask base and mask refs are size-checked (tolerant of the not-yet-typed mode)', async () => {
+  const { dir, done } = copy();
+  try {
+    put(dir, 'art/textures/base.png', png(64, 64)); put(dir, 'art/textures/mask.png', png(512, 512));
+    const m = load(dir) as any;
+    m.visuals['unit.soldier'].team = { mode: 'tintMask', base: 'art/textures/base.png', mask: 'art/textures/mask.png' };
+    const e = (await checkManifestAssets(m, dir)).join('\n');
+    assert.match(e, /visual unit\.soldier team\.mask: art\/textures\/mask\.png is 512x512 > 256px/);
+    assert.doesNotMatch(e, /team\.base/);
+  } finally { done(); }
 });

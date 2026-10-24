@@ -116,7 +116,9 @@ async function main(): Promise<void> {
     // Asset files, lock hashes of committed outputs (no TW_EXTRACT needed), budgets, textures, fragment merge. A custom --assets-dir skips the repo lock unless --lock is given.
     const assetsDir = resolve(opts['--assets-dir'] ?? resolve(root, 'apps/web/assets'));
     const lockPath = opts['--lock'] ? resolve(opts['--lock']) : opts['--assets-dir'] ? undefined : resolve(root, 'tools/assets/tw-extract.lock.json');
-    const assetIssues = await checkManifestAssets(manifest as Parameters<typeof checkManifestAssets>[0], assetsDir, lockPath);
+    const assetWarnings: string[] = [];
+    const assetIssues = await checkManifestAssets(manifest as Parameters<typeof checkManifestAssets>[0], assetsDir, lockPath, assetWarnings);
+    report.warnings.push(...assetWarnings.map(message => ({ file: manifestPath, pointer: '', message })));
     if (assetIssues.length) { report.errors.push(...assetIssues.map(message => ({ file: manifestPath, pointer: '', message }))); return; }
     // Default to the repository CREDITS.md (the default path may be absent; an explicit --credits must exist).
     const credits = opts['--credits'] ? await readText(resolve(opts['--credits'])) : await readText(resolve(root, 'docs/CREDITS.md')).catch(() => '');

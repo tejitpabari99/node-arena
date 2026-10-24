@@ -3,8 +3,8 @@
 // manifest equals its merge with manifest.tw.json. Pure over the file system; returns error strings (empty = ok).
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { readdir, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { readdir, readFile, stat } from 'node:fs/promises';
+import { extname, join } from 'node:path';
 import { NodeIO, type Document, type Node } from '@gltf-transform/core';
 import { BUDGET_CLASSES, type ManifestV2 } from '@node-arena/content';
 
@@ -12,6 +12,10 @@ import { loadArt } from './assets-tw/merge-cli.js';
 import { ART_PATH, FRAGMENT_PATH, mergeManifest, stringify, type Fragment } from './assets-tw/manifest-fragment.js';
 
 export const MAX_TEXTURE_PX = 256;
+export const AUDIO_EXTS = ['.ogg', '.mp3', '.wav'] as const;
+export const MAX_AUDIO_BYTES = 1024 * 1024;
+/** Art-owned manifest paths live under this prefix; exempt from the importer lock walk. */
+export const ART_DIR = 'art';
 /** Directories wholly produced by `assets:tw` (every file must be in the lock's `outputs`). */
 const OWNED = ['models/tw', 'textures/tw', 'fx'] as const;
 
@@ -42,23 +46,50 @@ const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const pngSize = (b: Buffer): [number, number] | null => (b.length >= 24 && b.subarray(0, 8).equals(PNG_SIG) ? [b.readUInt32BE(16), b.readUInt32BE(20)] : null);
 
 /** Collect every file path the manifest references, with where it came from. */
-function references(m: ManifestV2): Array<{ path: string; from: string; texture?: boolean }> {
-  const refs: Array<{ path: string; from: string; texture?: boolean }> = [];
+interface Ref { path: string; from: string; texture?: boolean; audio?: boolean }
+function references(m: ManifestV2): Ref[] {
+  const refs: Ref[] = [];
   for (const [id, v] of Object.entries(m.visuals)) {
     refs.push({ path: v.model.parts, from: `visual ${id} model.parts` });
     if (v.model.lod) refs.push({ path: v.model.lod, from: `visual ${id} model.lod` });
     for (const [team, t] of Object.entries(v.team?.textures ?? {})) refs.push({ path: t, from: `visual ${id} texture ${team}`, texture: true });
+    // tintMask (`team: { mode, base, mask }`) is not in the schema type yet; read tolerantly so it works once it lands.
+    const tint = (v.team ?? {}) as { base?: unknown; mask?: unknown };
+    for (const k of ['base', 'mask'] as const) { const p = tint[k]; if (typeof p === 'string') refs.push({ path: p, from: `visual ${id} team.${k}`, texture: true }); }
   }
   for (const [id, t] of Object.entries(m.themes)) {
     refs.push({ path: t.ground.mesh, from: `theme ${id} ground.mesh` }, { path: t.ground.texture, from: `theme ${id} ground.texture`, texture: true });
     refs.push({ path: split(t.obstacle.small).file, from: `theme ${id} obstacle.small` }, { path: split(t.obstacle.big).file, from: `theme ${id} obstacle.big` }, { path: t.obstacle.texture, from: `theme ${id} obstacle.texture`, texture: true });
   }
-  for (const [id, f] of Object.entries(m.fx)) refs.push({ path: f.texture, from: `fx ${id}` });
-  for (const [id, e] of Object.entries(m.events)) if (e.sfx) refs.push({ path: e.sfx, from: `event ${id} sfx` });
+  for (const [id, f] of Object.entries(m.fx)) refs.push({ path: f.texture, from: `fx ${id}`, texture: true });
+  for (const [id, e] of Object.entries(m.events)) if (e.sfx) refs.push({ path: e.sfx, from: `event ${id} sfx`, audio: true });
   return refs;
 }
 
-export async function checkManifestAssets(m: ManifestV2, assetsDir: string, lockPath?: string): Promise<string[]> {
+type Obj = Record<string, unknown>;
+const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
+/** Every leaf (scalar or array) of an art patch as a key path; objects recurse. */
+function leaves(v: unknown, at: string[] = []): Array<{ at: string[]; value: unknown }> {
+  if (!isObj(v)) return [{ at, value: v }];
+  return Object.entries(v).flatMap(([k, c]) => (at.length === 0 && (k === '$schema' || k === 'schemaVersion') ? [] : leaves(c, [...at, k])));
+}
+const hasPath = (root: unknown, at: string[]): boolean => at.every((k) => { if (!isObj(root) || !(k in root)) return false; root = root[k]; return true; });
+
+/** Art patch rules: no references into importer-owned dirs, and every patched field must still exist in the importer output. */
+function checkArt(art: Obj, fragment: Fragment, errors: string[]): void {
+  for (const { at, value } of leaves(art)) {
+    const name = at.join('.');
+    if (typeof value === 'string') {
+      const dir = OWNED.find((d) => value.startsWith(`${d}/`));
+      if (dir) errors.push(`art: ${name} points into importer-owned ${dir}/ (${value}); art files must live under ${ART_DIR}/`);
+    }
+    // events: only `sfx` is patchable and comes from importer defaults (art may add custom events), so there is no fragment target.
+    if (at[0] !== 'events' && !hasPath(fragment, at)) errors.push(`art: ${name} targets a field the importer no longer produces`);
+  }
+}
+
+/** Errors fail the gate; `warnings` (optional out-param) collects non-failing findings (orphan art files, big audio). */
+export async function checkManifestAssets(m: ManifestV2, assetsDir: string, lockPath?: string, warnings: string[] = []): Promise<string[]> {
   const errors: string[] = [];
   const io = new NodeIO();
   const docs = new Map<string, Document>();
@@ -72,6 +103,14 @@ export async function checkManifestAssets(m: ManifestV2, assetsDir: string, lock
   for (const r of references(m)) {
     if (existsSync(join(assetsDir, r.path))) present.add(r.path); else errors.push(`${r.from}: file ${r.path} missing`);
   }
+
+  for (const r of references(m)) {
+    if (!r.audio || !present.has(r.path)) continue;
+    if (!(AUDIO_EXTS as readonly string[]).includes(extname(r.path).toLowerCase())) errors.push(`${r.from}: ${r.path} must be ${AUDIO_EXTS.join('/')}`);
+    else if ((await stat(join(assetsDir, r.path))).size > MAX_AUDIO_BYTES) warnings.push(`${r.from}: ${r.path} is over ${MAX_AUDIO_BYTES / 1024 / 1024} MB`);
+  }
+  const referenced = new Set(references(m).flatMap((r) => [r.path]));
+  for (const f of await walk(assetsDir, ART_DIR)) if (!referenced.has(f)) warnings.push(`art: ${f} is not referenced by the manifest (orphan)`);
 
   // 2. committed outputs match the lock (no extract needed)
   if (lockPath) {
@@ -140,7 +179,9 @@ export async function checkManifestAssets(m: ManifestV2, assetsDir: string, lock
   else {
     const fragment = JSON.parse(await readFile(join(assetsDir, FRAGMENT_PATH), 'utf8')) as Fragment;
     try {
-      if (stringify(mergeManifest(m as unknown as Record<string, unknown>, fragment, loadArt(assetsDir))) !== stringify(m)) errors.push(`manifest.json is not the merge of itself, ${FRAGMENT_PATH} and ${ART_PATH} (run pnpm assets:manifest)`);
+      const art = loadArt(assetsDir);
+      if (art) checkArt(art, fragment, errors);
+      if (stringify(mergeManifest(m as unknown as Record<string, unknown>, fragment, art)) !== stringify(m)) errors.push(`manifest.json is not the merge of itself, ${FRAGMENT_PATH} and ${ART_PATH} (run pnpm assets:manifest)`);
     } catch (e) { errors.push((e as Error).message); }
   }
   return errors;
