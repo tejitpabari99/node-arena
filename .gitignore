@@ -12,3 +12,7 @@ docs/agent_files/*/ref/out/
 
 .testmuai/
 kane-runs/
+
+# Local assurance context and run scratch (excerpt and authored tests stay committed).
+/tools/kane/assure/.context/
+/tools/kane/assure/output-*/

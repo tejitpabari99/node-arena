@@ -1,6 +1,6 @@
-import { cp, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import { cp, mkdtemp, readdir, readFile, rm, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveChromeBinary } from './lib/chrome.mjs';
@@ -9,6 +9,21 @@ import { ensurePreviewServer, loopbackUrl } from './lib/server.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const infra = message => new Error(message);
+
+async function sessionDirectory(terminal, detail, env) {
+  const explicit = [terminal?.session_dir, detail.session_dir].filter(value => typeof value === 'string' && value);
+  const exists = async path => { try { return (await stat(path)).isDirectory(); } catch { return false; } };
+  for (const path of explicit) if (await exists(path)) return path;
+  // CLI 0.10 reports the durable session ID at file completion; run_end.run_dir
+  // points at scratch that is removed before the hook prints its evidence hint.
+  const id = terminal?.session_id;
+  if (typeof id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(id)) {
+    const path = join(env.HOME || env.USERPROFILE || homedir(), '.testmuai/kaneai/sessions', id);
+    if (await exists(path)) return path;
+  }
+  // Keep older CLI diagnostics when no durable session can be located.
+  return explicit[0] || detail.run_dir || 'unavailable';
+}
 
 /** A per-step run_end is never the test verdict. Unknown/missing terminals fail closed. */
 export function replayExitCode(code, terminal) {
@@ -122,6 +137,12 @@ export async function runReplay(argv = [], { root = ROOT, env = process.env, sig
   try {
     signal?.throwIfAborted();
     const { serve, files } = argsFor(argv);
+    const requestedTimeout = env.KANE_TIMEOUT || '120';
+    if (!/^\d+$/.test(requestedTimeout) || !Number.isSafeInteger(Number(requestedTimeout)) || Number(requestedTimeout) <= 0) {
+      throw infra('KANE_TIMEOUT must be a positive integer number of seconds');
+    }
+    // Killing a replay early still costs credits; never shorten the measured default.
+    const timeout = String(Math.max(120, Number(requestedTimeout)));
     const directory = join(root, 'tools/kane/tests');
     const selected = files.length ? files.map(file => resolve(root, file)) : (await readdir(directory)).filter(name => name.endsWith('_test.md')).sort().map(name => join(directory, name));
     if (!selected.length) throw infra(`No saved *_test.md recordings in ${directory}`);
@@ -152,7 +173,8 @@ export async function runReplay(argv = [], { root = ROOT, env = process.env, sig
             try {
               const event = JSON.parse(line);
               if (event.type === 'test_md_done') terminal = event;
-              if (event.session_dir || event.run_dir) detail.session_dir = event.session_dir || event.run_dir;
+              if (event.session_dir) detail.session_dir = event.session_dir;
+              if (event.run_dir) detail.run_dir = event.run_dir;
               const failureEvent = event.type === 'error' || (
                 ['run_end', 'test_md_done', 'test_md_summary'].includes(event.type) &&
                 ['failed', 'broken'].includes(event.overall_status || event.status)
@@ -163,11 +185,11 @@ export async function runReplay(argv = [], { root = ROOT, env = process.env, sig
             } catch { /* Kane banners are not NDJSON. */ }
           }
         };
-        const result = await runProcess(kaneCommand, ['testmd', 'run', copied, '--headless', '--agent', '--no-adaptive-heal', '--timeout', '120'], { cwd: temporary, env: childEnv, signal, onStdout: chunk => { stdout(chunk); consume(chunk); } });
+        const result = await runProcess(kaneCommand, ['testmd', 'run', copied, '--headless', '--agent', '--no-adaptive-heal', '--timeout', timeout], { cwd: temporary, env: childEnv, signal, onStdout: chunk => { stdout(chunk); consume(chunk); } });
         consume('\n');
         const status = replayExitCode(result.code, terminal);
         if (status !== 0) {
-          stderr(`${test.file}: status=${terminal?.overall_status || detail.status || 'infra'} reason=${detail.reason || result.stderr.trim() || (terminal ? `Kane exit ${result.code}` : 'Missing terminal test_md_done')} session_dir=${terminal?.session_dir || detail.session_dir || 'unavailable'}\n`);
+          stderr(`${test.file}: status=${terminal?.overall_status || detail.status || 'infra'} reason=${detail.reason || result.stderr.trim() || (terminal ? `Kane exit ${result.code}` : 'Missing terminal test_md_done')} session_dir=${await sessionDirectory(terminal, detail, env)}\n`);
           if (status === 2) return 2;
           exitCode = 1;
         }
