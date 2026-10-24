@@ -1,0 +1,77 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "na-trial",
+  "name": "First crossing",
+  "theme": "green",
+  "bounds": {
+    "minX": -6,
+    "maxX": 6,
+    "minZ": -3,
+    "maxZ": 6
+  },
+  "objective": "captureAll",
+  "timeLimitSec": null,
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "blue"
+    },
+    {
+      "id": "p2",
+      "kind": "ai",
+      "colorKey": "red",
+      "bot": {
+        "kind": "tw",
+        "actionDelayMs": 12000,
+        "behavior": "full",
+        "script": []
+      }
+    }
+  ],
+  "buildings": [
+    {
+      "id": "home",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -3,
+        "z": 0
+      },
+      "owner": "p1",
+      "level": 20,
+      "ignoreForWin": false
+    },
+    {
+      "id": "rival",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 3,
+        "z": 0
+      },
+      "owner": "p2",
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "crossing",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 0,
+        "z": 3
+      },
+      "owner": null,
+      "level": 2,
+      "ignoreForWin": false
+    }
+  ],
+  "elements": [],
+  "requires": [
+    "bot:tw",
+    "drawsLines",
+    "grows",
+    "level",
+    "objective:captureAll",
+    "spawns"
+  ]
+}

@@ -12,7 +12,7 @@ export const LOCK_DELAY = 2000;
 
 export interface LevelRunReport { seed: number; proxy: string; outcome: string; winner: number | null; won: boolean; truncated: boolean; ticks: number; finalHash: string; rejected: number }
 export interface LevelReport {
-  id: string; position: number; seeds: number; humanSeat: number;
+  id: string; position?: number; seeds: number; humanSeat: number;
   idleWins: number; wins: Record<string, number>; totalWins: number; runs: number; truncated: number;
   solvable: boolean; unsolved: UnsolvedEntry | null; deterministic: boolean;
   ok: boolean; errors: string[]; warnings: string[]; lock: LockEntry;
@@ -39,9 +39,10 @@ export function playProxy(level: CompiledLevel, seed: number, actionDelayMs: num
     ticks: result.ticks, finalHash: result.stats.finalHash, rejected: result.stats.rejected };
 }
 /** Validates one level against 06 R6 (a)-(c); `unsolved` is the allowlist entry for this level, if any. */
-export function validateLevel(level: CompiledLevel, position: number, seeds: number, unsolved: UnsolvedEntry | null, maxTicks = DEFAULT_MAX_TICKS, runProxy: typeof playProxy = playProxy): LevelReport {
+export function validateLevel(level: CompiledLevel, position: number | undefined = undefined, seeds = 4, unsolved: UnsolvedEntry | null = null, maxTicks = DEFAULT_MAX_TICKS, runProxy: typeof playProxy = playProxy): LevelReport {
+  if (position === undefined ? !level.id.startsWith('na-') : !Number.isSafeInteger(position) || position < 1) throw new RangeError('A positive campaign position is required for Common levels');
   const seat = humanSeat(level);
-  const report: LevelReport = { id: level.id, position, seeds, humanSeat: seat, idleWins: 0, wins: {}, totalWins: 0, runs: 0, truncated: 0, solvable: false, unsolved, deterministic: false, ok: false, errors: [], warnings: [], lock: { outcome: '', ticks: 0, finalHash: '' } };
+  const report: LevelReport = { id: level.id, ...(position === undefined ? {} : { position }), seeds, humanSeat: seat, idleWins: 0, wins: {}, totalWins: 0, runs: 0, truncated: 0, solvable: false, unsolved, deterministic: false, ok: false, errors: [], warnings: [], lock: { outcome: '', ticks: 0, finalHash: '' } };
   const fail = (what: string, error: unknown) => report.errors.push(`${what}: ${(error as Error).message}`);
   let first: LevelRunReport | undefined;
   for (let seed = 1; seed <= seeds; seed++) {
@@ -75,17 +76,20 @@ export function validateLevel(level: CompiledLevel, position: number, seeds: num
   report.ok = report.errors.length === 0; return report;
 }
 export interface CampaignLevel { id: string; position: number }
-/** The common campaign's level list; must match data/levels exactly. */
+/** Common only; every level file must be listed exactly once across Common and custom. */
 export function campaignLevels(data: ContentFiles): CampaignLevel[] {
   const loaded = loadContent(data);
   const entries = [...loaded.catalog.campaigns['common']!.entries].sort((a, b) => a.position - b.position).map(e => ({ id: e.level, position: e.position }));
   const files = Object.keys(data).filter(name => /^data\/levels\/[^/]+\.json$/.test(name)).map(name => name.slice('data/levels/'.length, -'.json'.length)).sort();
-  const listed = entries.map(e => e.id).sort();
-  if (canonicalJson(files) !== canonicalJson(listed)) throw new LocatedError('data/campaigns/common.json', `Campaign entries (${listed.length}) differ from data/levels files (${files.length})`);
+  const listed = [...entries.map(e => e.id), ...(loaded.catalog.campaigns['custom']?.entries ?? []).map(e => e.level)].sort();
+  if (canonicalJson(files) !== canonicalJson(listed)) throw new LocatedError('data/campaigns/common.json', `Common + custom campaign entries (${listed.length}) differ from data/levels files (${files.length})`);
   return entries;
 }
+export function customLevels(data: ContentFiles): CampaignLevel[] {
+  return [...(loadContent(data).catalog.campaigns['custom']?.entries ?? [])].sort((a, b) => a.position - b.position).map(e => ({ id: e.level, position: e.position }));
+}
 export function selectLevels(data: ContentFiles, selected = 'all'): { levels: CampaignLevel[]; compiled: Record<string, CompiledLevel> } {
-  const levels = campaignLevels(data);
+  const levels = [...campaignLevels(data), ...customLevels(data)];
   const chosen = selected === 'all' ? levels : levels.filter(l => l.id === selected);
   if (!chosen.length) throw new LocatedError('arguments', `Unknown or empty level selection: ${selected}`);
   return { levels: chosen, compiled: loadContent(data).compiled };
@@ -93,12 +97,12 @@ export function selectLevels(data: ContentFiles, selected = 'all'): { levels: Ca
 export function validateLevels(data: ContentFiles, unsolved: readonly UnsolvedEntry[], selected = 'all', seeds = 4, maxTicks = DEFAULT_MAX_TICKS): LevelReport[] {
   if (!Number.isSafeInteger(seeds) || seeds < 1) throw new RangeError('Seeds must be a positive integer');
   const { levels, compiled } = selectLevels(data, selected);
-  const known = new Set(campaignLevels(data).map(l => l.id));
+  const known = new Set([...campaignLevels(data), ...customLevels(data)].map(l => l.id));
   for (const entry of unsolved) if (!known.has(entry.id)) throw new LocatedError('tools/unsolved-by-proxy.json', `Unknown level ${entry.id}`);
   const byId = new Map(unsolved.map(e => [e.id, e]));
   return levels.map(l => validateLevel(compiled[l.id]!, l.position, seeds, byId.get(l.id) ?? null, maxTicks));
 }
-/** Seed-1 determinism lock over the whole campaign (levels:lock writes it, validate:levels checks it). */
+/** Seed-1 determinism lock over Common and custom levels (levels:lock writes it, validate:levels checks it). */
 export function buildLock(reports: readonly LevelReport[]): LevelsLock {
   return Object.fromEntries([...reports].sort((a, b) => a.id < b.id ? -1 : 1).map(r => [r.id, r.lock]));
 }
@@ -110,4 +114,16 @@ export function checkLevelsLock(reports: readonly LevelReport[], lock: LevelsLoc
     else if (canonicalJson(want) !== canonicalJson(r.lock)) errors.push(`${r.id}: seed-1 result ${JSON.stringify(r.lock)} differs from tools/levels-lock.json ${JSON.stringify(want)}; determinism broke or behaviour changed (bump versions, then pnpm levels:lock)`);
   }
   return errors;
+}
+
+/** A merge must refuse a missing/malformed baseline rather than silently erase untouched entries. */
+export function parseLevelsLock(value: unknown): LevelsLock {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new LocatedError('tools/levels-lock.json', 'Invalid levels lock: expected an object');
+  for (const [id, entry] of Object.entries(value)) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry) || Object.keys(entry).sort().join(',') !== 'finalHash,outcome,ticks' ||
+        !['won', 'draw', 'lost', 'truncated'].includes(entry.outcome) || !Number.isSafeInteger(entry.ticks) || entry.ticks < 0 || typeof entry.finalHash !== 'string' || !/^[0-9a-f]{16}$/.test(entry.finalHash)) {
+      throw new LocatedError('tools/levels-lock.json', `Invalid levels lock entry: ${id}`);
+    }
+  }
+  return value as LevelsLock;
 }

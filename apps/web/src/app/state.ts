@@ -8,7 +8,7 @@ export const RESULT_DELAY_MS = 1250;
 export type Screen = 'boot' | 'picker' | 'playing' | 'result' | 'error';
 export interface CampaignLevel { id: string; position: number; number: number; name: string }
 export interface AppSnapshot {
-  screen: Screen; loading: boolean; restartPopup: boolean; levels: readonly CampaignLevel[];
+  screen: Screen; loading: boolean; restartPopup: boolean; levels: readonly CampaignLevel[]; customLevels: readonly CampaignLevel[];
   levelId: string | null; save: SaveData; notices: readonly string[]; error: unknown;
   result: SimView['over']; remainingSeconds: number;
   /** Close camera zoom; reset to false per app load, kept across level restarts. */
@@ -25,14 +25,15 @@ export interface AppOptions {
   autoStart?: boolean; resultDelayMs?: number; createSim?: GameDriverOptions['createSim']; createBotDriver?: GameDriverOptions['createBotDriver'];
   environment?: GameDriverOptions['environment']; createRuntime?: (context: RuntimeContext) => LevelRuntime | Promise<LevelRuntime>;
 }
-export function isLevelUnlocked(state: Pick<AppSnapshot,'levels'|'save'>, id: string): boolean {
+export function isLevelUnlocked(state: Pick<AppSnapshot,'levels'|'customLevels'|'save'>, id: string): boolean {
+  if(state.customLevels.some(l=>l.id===id))return true;
   const i=state.levels.findIndex(l=>l.id===id);
   return i===0 || i>0 && Object.hasOwn(state.save.completed,state.levels[i-1]!.id);
 }
 /** Level resources have generation-scoped ownership, including asynchronous renderer construction. */
 export function createAppController(options: AppOptions) {
   const save=options.save??createSaveStore(), listeners=new Set<()=>void>(),events=new Set<(u:TickUpdate)=>void>();
-  let state: AppSnapshot={screen:'boot',loading:true,restartPopup:false,levels:[],levelId:null,save:save.snapshot(),notices:[],error:null,result:null,remainingSeconds:0,zoomed:false};
+  let state: AppSnapshot={screen:'boot',loading:true,restartPopup:false,levels:[],customLevels:[],levelId:null,save:save.snapshot(),notices:[],error:null,result:null,remainingSeconds:0,zoomed:false};
   let loaded: LoadedContent|undefined, manifest: ManifestV2|undefined,driver:GameDriver|null=null,runtime:LevelRuntime|undefined;
   let lastSeed=1;
   let finishing: ReturnType<typeof setTimeout>|null=null,finishingOn=false;
@@ -48,10 +49,11 @@ export function createAppController(options: AppOptions) {
     async boot(){const token=++generation;clear();state={...state,screen:'boot',loading:true,error:null};publish();try{
       const next=await(options.loadManifest??loadManifest)();if(disposed||token!==generation)return;
       const content=loadContent(options.files,{themes:Object.keys(next.themes),colorKeys:Object.keys(next.palettes)});
-      const campaign=content.catalog.campaigns[options.campaignId??'common'];if(!campaign)throw Error('Campaign not found');
+      const campaign=content.catalog.campaigns.common;if(!campaign||!content.catalog.campaigns[options.campaignId??'common'])throw Error('Campaign not found');
       const levels=[...campaign.entries].sort((a,b)=>a.position-b.position).map(e=>({id:e.level,position:e.position,number:e.position-3,name:`Level ${e.position-3}`}));
+      const customLevels=[...(content.catalog.campaigns.custom?.entries??[])].sort((a,b)=>a.position-b.position).map(e=>({id:e.level,position:e.position,number:e.position,name:content.levels[e.level]!.level.name}));
       if(!levels.length)throw Error('Empty campaign');loaded=content;manifest=next;
-      state={...state,screen:'picker',loading:false,levels,error:null};publish();
+      state={...state,screen:'picker',loading:false,levels,customLevels,error:null};publish();
     }catch(error){if(!disposed&&token===generation)fail(error);}},
     async startLevel(id:string,seed=1){if(disposed||!loaded||!manifest||!isLevelUnlocked(state,id))return;
       const level=loaded.compiled[id];if(!level)return;lastSeed=seed;const token=++generation;clear();
@@ -85,7 +87,7 @@ export function createAppController(options: AppOptions) {
     resume(){if(state.screen!=='playing'||!state.restartPopup)return;driver?.resume();if(driver&&!driver.paused){state={...state,restartPopup:false};runtime?.refresh();publish();}},
     escape(){if(finishingOn)return;if(state.restartPopup)api.resume();else if(state.screen==='playing'&&!runtime?.cancel())api.pause();},
     restart(){return state.levelId?api.startLevel(state.levelId,lastSeed):Promise.resolve();},
-    next(){const i=state.levels.findIndex(l=>l.id===state.levelId),next=state.levels[i+1];return next?api.startLevel(next.id):Promise.resolve();},
+    next(){const levels=state.customLevels.some(l=>l.id===state.levelId)?state.customLevels:state.levels;const i=levels.findIndex(l=>l.id===state.levelId),next=levels[i+1];return next?api.startLevel(next.id):Promise.resolve();},
     retry(){return state.levelId&&loaded?api.restart():api.boot();},
     toggleZoom(){state={...state,zoomed:!state.zoomed};runtime?.setZoom?.(state.zoomed);publish();},
     updateSettings(patch:Partial<SaveSettings>){save.updateSettings(patch);publish();},

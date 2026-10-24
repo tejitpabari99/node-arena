@@ -8,7 +8,7 @@ test('Pause button opens Paused menu; Resume resumes; Restart clears commands an
  await page.getByRole('button',{name:'Pause'}).click();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);
  await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Restart',exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>window.__na!.view?.tick)).toBe(0);expect(await page.evaluate(()=>window.__na!.commandLog)).toEqual([]);
- await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Levels',exact:true}).click();await expect(page.locator('.level-card')).toHaveCount(20);
+ await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Levels',exact:true}).click();await expect(page.locator('.level-grid.campaign .level-card')).toHaveCount(20);
 });
 test('ownership uses building levels rather than in-flight units and updates after a real capture',async({page})=>{
  await openLevel(page);await draw(page);

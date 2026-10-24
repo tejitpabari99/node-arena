@@ -46,13 +46,16 @@ pnpm replay:verify packages/sim/test/golden --format json
 
 ### Levels and balance
 
-`pnpm validate:levels --levels all --seeds 4 --max-ticks 20000` checks the Common campaign against exactly the 20 committed level files. Each seed in 1..N runs the human seat as a fresh TW proxy with full behaviour at action delays 500/1000/2000 ms, versus authored AI. Rejected commands and invariant errors fail; seed 1 at delay 2000 is rerun for hash equality. An idle human must never win. An untimed stalemate hitting the cap appears as **Capped**, not a safety failure or a victory.
+Balance defaults and `--levels all` retain the Common campaign only; an explicit `--levels na-...` selects a custom level.
 
-Solvable means at least one proxy victory across delays/seeds. `tools/unsolved-by-proxy.json` records id, campaign position, reason and owner sign-off. An unsolved level absent from this allowlist fails; listed unsolved levels warn, and solved stale entries also warn. Proxy success is evidence only; owner manual playthrough remains acceptance. `tools/levels-lock.json` pins each level's delay-2000 seed-1 outcome, tick and final hash. `pnpm levels:lock` rewrites it; first make the rules/content/bot version changes required by the identity change. CI checks four seeds.
+`pnpm validate:levels --levels all --seeds 4 --max-ticks 20000` checks the 20 Common campaign levels plus the optional custom list against all committed level files. Common positions and numbering stay unchanged; custom positions only order the custom picker. Each seed in 1..N runs the human seat as a fresh TW proxy with full behaviour at action delays 500/1000/2000 ms, versus authored AI. Rejected commands and invariant errors fail; seed 1 at delay 2000 is rerun for hash equality. An idle human must never win. An untimed stalemate hitting the cap appears as **Capped**, not a safety failure or a victory.
+
+Solvable means at least one proxy victory across delays/seeds. `tools/unsolved-by-proxy.json` records id, position, reason and owner sign-off. Position is required for Common levels and optional reporting metadata for `na-*` levels. An unsolved level absent from this allowlist fails; listed unsolved levels warn, and solved stale entries also warn. Proxy success is evidence only; owner manual playthrough remains acceptance. `tools/levels-lock.json` pins each level's delay-2000 seed-1 outcome, tick and final hash. `pnpm levels:lock` rewrites it for Common plus custom. `pnpm levels:lock --levels <id>` reruns only that level and merges its entry, preserving all other entries; this mode refuses a missing or malformed lock. `--levels all` performs a full rewrite; first make the rules/content/bot version changes required by the identity change. CI checks four seeds.
 
 ```sh
 pnpm validate:levels --levels levelview-1 --seeds 1 --format json
 pnpm levels:lock
+pnpm levels:lock --levels na-trial
 pnpm balance --levels all --proxy 1000,2000,4000,idle --seeds 20 --jobs 2
 pnpm balance --mode arena --proxy 1000,2000 --seeds 20 --format json
 ```

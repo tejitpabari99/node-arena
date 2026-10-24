@@ -1,15 +1,15 @@
 ---
-status: draft
+status: in-progress
 summary: 12 tasks, P0 custom-list contract first (unblocks 02), then editor viewer/Save, editing tools, Play/Solvable/Finalize, Edit buttons and docs.
 date: 2026-10-24
 ---
 # Tasks: Level editor
-Source of truth: docs/agent_files/docs-kane-cli-and-agent-files-consolidation-20261024-0050/01-level-editor/PRD.md. Dev-only editor page plus a `custom` campaign list shown below the 20 Common levels. Tasks 1-2 are the self-contained P0 contract; sibling 02-art-overrides can start after them.
+Source of truth: docs/agent_files/level-editor-art-overwrite/01-level-editor/PRD.md. Dev-only editor page plus a `custom` campaign list shown below the 20 Common levels. Tasks 1-2 are the self-contained P0 contract; sibling 02-art-overrides can start after them.
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Custom list: app state, picker, unlock, next | - | todo |
-| 2 | Custom list: tooling union, lock merge mode, trial level | 1 | todo |
+| 1 | Custom list: app state, picker, unlock, next | - | done |
+| 2 | Custom list: tooling union, lock merge mode, trial level | 1 | done |
 | 3 | Editor shell, dev gate, read-only middleware | 2 | todo |
 | 4 | Edit viewport and picking | 3 | todo |
 | 5 | Save: canonical write, checks, round-trip | 3, 4 | todo |

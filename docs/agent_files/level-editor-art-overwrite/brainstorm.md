@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 summary: Two dev-only tools — an in-app level editor (edit/play/save/finalize na-* levels) and an art-override layer (manifest.art.json + showcase levels).
 date: 2026-10-24
 ---
