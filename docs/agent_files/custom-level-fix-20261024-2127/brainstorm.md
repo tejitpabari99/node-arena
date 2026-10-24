@@ -39,6 +39,9 @@ Current editor (see `before/`) is a narrow dark page: stacked status text, boxed
 | Multi-select: "N selected", Select all, Clear, Copy, Paste, Delete (multi-delete new) | Separate Layout section | Single place |
 | Top bar: left ← Game, level name, Undo/Redo; right save chip, Check (Solvable?), Finalize (spinner, log popover), Play, Save (green) | Current toolbar | Canva-like |
 | Remove mirror tools, auto-fit button, pointer coordinates, render-time status | Keep | YAGNI |
+| Bounds grow-only: expand to include items (2-unit margin), never shrink | Full auto-fit (grow + shrink) | Existing/copied levels keep their bounds unless items move past the edge |
+| Browser "Leave page?" prompt when unsaved changes | No prompt | Autosave only starts after first manual Save |
+| Canva screenshots saved to ref/ for visual iteration | No references | Visual checks need a target |
 | Shortcuts: Del/Backspace, Ctrl+C/V, Ctrl+Z / Ctrl+Shift+Z, Ctrl+S, Space pan, Esc clear | None | Cheap, Canva-like |
 | All apply/submit buttons green | Blue | Owner preference |
 
@@ -51,7 +54,7 @@ Current editor (see `before/`) is a narrow dark page: stacked status text, boxed
 | LeftPanel › Level | Level props + player cards |
 | LeftPanel › Library | Offscreen thumbnails; drag to place |
 | LeftPanel › Selection | Item dropdown, property groups, copy/paste/delete, multi-select |
-| Canvas (viewport-engine) | Buildable-area outline, clamp, auto-fit bounds, pan/zoom limits, grid overlay, controls, shortcuts |
+| Canvas (viewport-engine) | Buildable-area outline, clamp, grow-only bounds, pan/zoom limits, grid overlay, controls, shortcuts |
 | Autosave | 5s timer, dirty+valid, post-first-save |
 
 Sub-projects (sequential): 1) Shell + TopBar + FileModal + theme + autosave; 2) LeftPanel sections; 3) Canvas.
@@ -64,7 +67,7 @@ Phone/tablet layout; resize/rotate handles on canvas; new objectives or >1 human
 ## Open risks
 | Risk | Cheapest test |
 |---|---|
-| Auto-fit bounds changes bounds of copied imported levels → may alter play | Diff bounds before/after auto-fit on a copy of each campaign level |
+| Grow-only bounds still changes a copied level's bounds when items move past its edge | e2e: copy campaign level, move inside → bounds unchanged |
 | Offscreen thumbnail render cost at load | Time it |
 | Autosave racing a running Finalize | Pause autosave while Finalize/Check runs |
 | Canvas pan/zoom conflicts with marquee/drag gestures | e2e covering each gesture |
