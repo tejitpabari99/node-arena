@@ -19,15 +19,15 @@ async function fixture(t, options = {}) {
   const publicDir = await mkdtemp(join(tmpdir(), 'kane-stream-http-'));
   for (const [file, value] of [['index.html', '<h1>Viewer</h1>'], ['app.js', 'hello()'], ['style.css', 'body{}']]) await writeFile(join(publicDir, file), value);
   const run = new EventEmitter(), cast = new EventEmitter(), clients = new Set();
-  let snapshot = { state: 'idle', runId: null, startedAt: null, endsAtMax: null }, next = 1;
+  let snapshot = { state: 'idle', runId: null, attemptId: null, startedAt: null, endsAtMax: null }, next = 1;
   const starts = [], calls = [];
   run.snapshot = viewers => ({ ...snapshot, viewers });
   run.change = value => { snapshot = { ...snapshot, ...value }; run.emit('state', run.snapshot(0)); };
-  run.start = async ip => {
+  run.start = async (ip, attemptId) => {
     starts.push(ip);
     if (options.start) return options.start(ip, run);
     if (snapshot.state !== 'idle') return { status: 409 };
-    run.change({ state: 'starting', runId: `run-${next++}` });
+    run.change({ state: 'starting', runId: `run-${next++}`, attemptId });
     return { status: 202, runId: snapshot.runId };
   };
   run.close = async () => calls.push('run.close');
@@ -214,4 +214,135 @@ test('WS heartbeat terminates a viewer that stops answering pings', async t => {
   await once(ws, 'open');
   await once(ws, 'close', { signal: AbortSignal.timeout(1000) });
   await until(() => h.app.connectionCounts().ws === 0 && h.clients.size === 0);
+});
+
+test('Stop and Reset routes share exact guards, bounded bodies, public responses and generic failures', async t => {
+  const h = await fixture(t); const controls = [];
+  h.run.stop = async () => { controls.push('stop'); return { status: 200, private: '/root/secret', credits: 99 }; };
+  h.run.reset = async () => { controls.push('reset'); return { status: 200 }; };
+  for (const route of ['/stop', '/reset']) {
+    assert.equal((await h.send(route, { method: 'GET' })).status, 405);
+    assert.equal((await h.send(route + '?x=1', { method: 'POST' })).status, 404);
+    for (const origin of [null, 'https://evil.test']) assert.equal((await h.send(route, { method: 'POST', origin })).status, 403);
+    assert.equal((await h.send(route, { method: 'POST', headers: { Host: 'evil.test' } })).status, 403);
+    assert.equal((await h.send(route, { method: 'POST', body: 'x'.repeat(1025) })).status, 413);
+    assert.equal((await h.send(route, { method: 'POST', body: 'x'.repeat(1025), headers: { 'Transfer-Encoding': 'chunked' } })).status, 413);
+    assert.equal(controls.length, route === '/stop' ? 0 : 1);
+    const response = await h.send(route, { method: 'POST', body: 'x'.repeat(1024) });
+    assert.equal(response.status, 200); assert.deepEqual(JSON.parse(response.text), h.run.snapshot(0));
+    for (const status of [409, 503, 500]) {
+      const method = route.slice(1), original = h.run[method];
+      h.run[method] = async () => ({ status, message: 'secret /root/key', credits: 123 });
+      const failed = await h.send(route, { method: 'POST' });
+      assert.equal(failed.status, status === 500 ? 503 : status); assert.equal(failed.text, '{"message":"unavailable"}');
+      h.run[method] = original;
+    }
+    const method = route.slice(1), original = h.run[method];
+    h.run[method] = async () => { throw new Error('/root/secret'); };
+    assert.equal((await h.send(route, { method: 'POST' })).text, '{"message":"unavailable"}'); h.run[method] = original;
+  }
+  assert.deepEqual(controls, ['stop', 'reset']); assert.equal(h.starts.length, 0);
+});
+
+test('Reset clears relay and frame cache before shared reset/state and reconnect replay', async t => {
+  const h = await fixture(t); let frame = Buffer.from('old-frame');
+  h.cast.addClient = ws => { h.clients.add(ws); if (frame) ws.send(frame); return true; };
+  h.cast.stop = async () => { frame = null; h.calls.push('cast.stop'); };
+  h.run.change({ state: 'cooldown', runId: 'old', outcome: 'stopped' });
+  h.run.emit('line', '{"seq":91,"type":"warn","code":"old"}');
+  const first = await h.events(); await until(() => first.text.includes('id: 91'));
+  h.run.reset = async () => {
+    h.run.snapshot = viewers => ({ state: 'cooldown', runId: null, attemptId: null, startedAt: null, endsAtMax: null, viewers });
+    h.run.emit('reset', h.run.snapshot(0));
+    assert.equal(frame, null, 'cache cleared synchronously inside reset event');
+    h.run.emit('state', h.run.snapshot(0));
+    return { status: 200 };
+  };
+  assert.equal((await h.send('/reset', { method: 'POST' })).status, 200);
+  await until(() => first.text.includes('event: reset'));
+  const after = first.text.slice(first.text.indexOf('event: reset'));
+  assert.match(after, /event: reset\ndata: .*"runId":null/); assert.match(after, /event: state/);
+  const second = await h.events({ 'Last-Event-ID': '1' }); await turn();
+  assert.doesNotMatch(second.text, /id: 91/); assert.match(second.text, /"runId":null/);
+  const { ws } = await h.connect(); const frames = []; ws.on('message', data => frames.push(data)); await turn();
+  assert.equal(frames.length, 0); first.req.destroy(); second.req.destroy(); ws.terminate();
+});
+
+test('boot, GET/reload, WS/SSE and Reset invoke no preflight or driver; only explicit Start spawns', async t => {
+  const spawned = []; let pid = 8000;
+  const processes = {
+    identity: async pid => ({ pid, pgid: pid, starttime: '1', cmdline: ['node', 'fixture'] }),
+    load: async () => null, acquire: async () => {}, release: async () => {}, checkPorts: async () => {},
+    persist: async () => {}, clear: async () => {}, descendants: async () => [], matches: async () => false,
+    signal: async () => {}, removeProfile: async () => {},
+  };
+  const spawn = (_command, args) => {
+    const child = Object.assign(new EventEmitter(), { pid: pid++, stdout: new PassThrough(), stderr: new PassThrough() }); spawned.push({ args, child });
+    if (args.includes('--credits-only')) queueMicrotask(() => { child.stdout.end('{"credits":500}'); child.emit('close', 0); }); return child;
+  };
+  const run = await createRunController({ env: {}, deps: { spawn, processes }, handleSignals: false });
+  const h = await fixture(t, { runController: run });
+  assert.equal(spawned.length, 0);
+  for (const route of ['/', '/', '/api/state', '/app.js']) assert.equal((await h.send(route)).status, 200);
+  const first = await h.events(), second = await h.events(); const { ws } = await h.connect();
+  assert.equal((await h.send('/reset', { method: 'POST' })).status, 200);
+  assert.equal((await h.send('/stop', { method: 'POST' })).status, 409); assert.equal(spawned.length, 0);
+  assert.equal((await h.send('/start', { method: 'POST' })).status, 202); assert.equal(spawned.length, 2);
+  assert.equal((await h.send('/reset', { method: 'POST' })).status, 409);
+  const stop = await h.send('/stop', { method: 'POST' }); assert.equal(stop.status, 200); assert.equal(JSON.parse(stop.text).outcome, 'stopped');
+  assert.equal((await h.send('/reset', { method: 'POST' })).status, 200); assert.equal(spawned.length, 2);
+  first.req.destroy(); second.req.destroy(); ws.terminate();
+});
+
+test('attempt header validates canonical single UUIDs before controls, generates legacy Start IDs and forwards conditional Stop', async t => {
+  const h = await fixture(t), id = '12345678-1234-4234-8234-123456789abc';
+  const starts = [], stops = [];
+  h.run.start = async (ip, attemptId) => { starts.push([ip, attemptId]); h.run.change({ state: 'starting', runId: 'A', attemptId }); return { status: 202, runId: 'A' }; };
+  h.run.stop = async expected => { stops.push(expected); return { status: 200 }; };
+  for (const route of ['/start', '/stop']) for (const value of ['', 'bad', id.toUpperCase(), `${id},${id}`, [id, id]]) {
+    const response = await h.send(route, { method: 'POST', headers: { 'X-Kane-Attempt-Id': value } });
+    assert.equal(response.status, 400); assert.equal(response.text, '{"message":"request rejected"}');
+  }
+  assert.equal(starts.length, 0); assert.equal(stops.length, 0); assert.deepEqual(h.calls, []);
+  assert.equal((await h.send('/start', { method: 'POST', headers: { 'X-Kane-Attempt-Id': id } })).status, 202);
+  assert.equal(starts[0][1], id); assert.equal(h.run.snapshot(0).attemptId, id);
+  assert.equal((await h.send('/stop', { method: 'POST', headers: { 'X-Kane-Attempt-Id': id } })).status, 200);
+  assert.deepEqual(stops, [id]);
+  assert.equal((await h.send('/start', { method: 'POST' })).status, 202);
+  assert.match(starts[1][1], /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.notEqual(starts[1][1], id);
+  assert.equal((await h.send('/stop', { method: 'POST' })).status, 200); assert.equal(stops[1], undefined);
+});
+
+test('conditional HTTP Stop arriving after a fresh attempt returns 409 without ending its run or stopping cast', async t => {
+  let pid = 9000;
+  const spawned = [], processes = {
+    identity: async pid => ({ pid, pgid: pid, starttime: '1', cmdline: ['node', 'fixture'] }),
+    load: async () => null, acquire: async () => {}, release: async () => {}, checkPorts: async () => {},
+    persist: async () => {}, clear: async () => {}, descendants: async () => [], matches: async () => false,
+    signal: async () => {}, removeProfile: async () => {},
+  };
+  const spawn = (_command, args) => {
+    const child = Object.assign(new EventEmitter(), { pid: pid++, stdout: new PassThrough(), stderr: new PassThrough() }); spawned.push({ args, child });
+    if (args.includes('--credits-only')) queueMicrotask(() => { child.stdout.end('{"credits":500}'); child.emit('close', 0); }); return child;
+  };
+  const run = await createRunController({ env: { KANE_STREAM_COOLDOWN_S: '0', KANE_IP_COOLDOWN_S: '0' }, deps: { spawn, processes }, handleSignals: false });
+  const h = await fixture(t, { runController: run });
+  for (const path of ['/start', '/stop']) {
+    assert.equal((await h.send(path, { method: 'POST', headers: { 'X-Kane-Attempt-Id': 'malformed' } })).status, 400);
+    assert.equal(spawned.length, 0); assert.deepEqual(h.calls, []);
+  }
+  const a = '12345678-1234-4234-8234-123456789abc', b = '22345678-1234-4234-8234-123456789abc';
+  const post = (path, id) => h.send(path, { method: 'POST', headers: { 'X-Kane-Attempt-Id': id } });
+  assert.equal((await post('/start', a)).status, 202); assert.equal((await post('/stop', a)).status, 200);
+  await until(() => run.snapshot().state === 'idle');
+  assert.equal((await post('/start', b)).status, 202);
+  spawned.at(-1).child.stdout.write('{"type":"chrome_ready","port":9222}\n');
+  await until(() => run.snapshot().state === 'live');
+  const before = run.snapshot(), calls = h.calls.length;
+  assert.equal((await post('/stop', a)).status, 409);
+  assert.deepEqual(run.snapshot(), before); assert.equal(h.calls.length, calls);
+  assert.equal(run.snapshot().attemptId, b); assert.equal(spawned.length, 4);
+  const event = await h.events(); await until(() => event.text.includes(b)); event.req.destroy();
+  assert.equal((await post('/stop', b)).status, 200);
 });

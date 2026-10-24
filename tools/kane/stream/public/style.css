@@ -11,7 +11,11 @@ h1 { font-size: clamp(21px, 3vw, 30px); letter-spacing: -.04em; margin: 0; font-
 canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
 #video-message { position: absolute; inset: auto 0 12px; margin: 0; text-align: center; font-size: 14px; color: #bcc9d1; pointer-events: none; background: #080d10c9; padding: 8px; }
 #video-message[hidden], [hidden] { display: none; }
-.controls { padding: 20px 0 24px; }
+.controls { padding: 20px 0 24px; flex-wrap: wrap; }
+.buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+#stop { background: #f2b3a5; color: #32150e; }
+#stop:hover:enabled { background: #ffd0c6; }
+#status[data-state="stopped"] { color: #f2d1a5; border-color: #806d51; }
 .run-status { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; }
 #status { border: 1px solid #42515b; border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 650; letter-spacing: .03em; }
 #status[data-state="live"] { color: #9ee8c4; background: #15382a; border-color: #387759; }
