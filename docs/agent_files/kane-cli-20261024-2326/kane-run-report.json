@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "report_kind": "private_local_submission_evidence",
+  "prepared_at_utc": "2026-10-24T23:26:46Z",
+  "project": {
+    "name": "Node Arena",
+    "event_project_id": 43,
+    "repository_url": "https://github.com/tejitpabari99/node-arena",
+    "repository_private": true,
+    "branch": "kane-cli",
+    "code_reviewed_commit": "244f9b7bf2369a9658b6c7e1fa190343a7804ae3",
+    "redistribution": "Extracted art and level data are private and not redistributable; no public game deployment.",
+    "source_snapshot_note": "Documentation commit may be newer; re-read git rev-parse HEAD after later commits or pushes before reporting latest branch head."
+  },
+  "historical_execution": {
+    "application_commit": "8fe61961fb1cc6f3c77eded71d2a3b9b1f6507ed",
+    "date_utc": "2026-10-24",
+    "approximate_window_utc": "23:01-23:07",
+    "driver_run_id": "dd9b2cb1-276c-43e5-bc4d-1c64760136da",
+    "objective_summary": "Play the dedicated Kane Arena level through live route buttons using bounded capture, attack and cut objectives; choose moves from the visible page.",
+    "kane_calls": [
+      {
+        "ordinal": 1,
+        "session_id": "fe740f58-2a43-4735-9019-08b1d37088c2",
+        "status": "passed",
+        "process_exit_code": 0,
+        "duration_seconds": 51.4,
+        "reported_credits": 18.5885175
+      },
+      {
+        "ordinal": 2,
+        "session_id": "33cf0064-e9d6-438f-90de-3c85e1a550b7",
+        "status": "passed",
+        "process_exit_code": 0,
+        "duration_seconds": 41.1,
+        "reported_credits": 16.5201325
+      },
+      {
+        "ordinal": 3,
+        "session_id": "4037a6df-e8e5-4454-8466-43b5edb1537e",
+        "status": "passed",
+        "process_exit_code": 0,
+        "duration_seconds": 58.3,
+        "reported_credits": 16.956895
+      },
+      {
+        "ordinal": 4,
+        "session_id": "cc9394a7-271a-4e50-aeac-e61ea61859af",
+        "status": "passed",
+        "process_exit_code": 0,
+        "duration_seconds": 64.4,
+        "reported_credits": 20.12984,
+        "evidence_pack_sha256": "85542ff3ce31c478749b49c04bf4e5191d6f425d90e1efc1160d57efc971990a"
+      }
+    ],
+    "event_reporting_candidate_session_id": "cc9394a7-271a-4e50-aeac-e61ea61859af",
+    "independent_game_result": {
+      "outcome": "won",
+      "winner": 0,
+      "tick": 1027
+    },
+    "driver_terminal": {
+      "outcome": "won",
+      "exit_code": 0,
+      "completed_kane_calls": 4,
+      "wall_seconds": 375.948
+    },
+    "public_observer": {
+      "jpeg_frames": 965,
+      "sse_chunks": 105,
+      "websocket_closes": 0,
+      "shell_exit_code": 143,
+      "shell_exit_note": "Successful report written before browser teardown; do not claim an unqualified zero shell exit."
+    },
+    "credits": {
+      "attributable_kane_reported_total": 72.195385,
+      "account_balance_delta": 79.8455,
+      "account_delta_caveat": "May include other workers; not attributed entirely to this match."
+    },
+    "private_evidence_references": [
+      "kane-runs/stream-dd9b2cb1-276c-43e5-bc4d-1c64760136da/driver.ndjson",
+      "kane-runs/host-ngrok/real-private-report.json"
+    ],
+    "committed_execution_record": "docs/agent_files/feat-kane-hackday-20261023-2128/05-hosted-stream/code-2026-10-24-2309.md",
+    "evidence_handling": "Raw packs, logs and screenshots remain private and uncommitted."
+  },
+  "workflow_status": {
+    "live_gameplay_and_spectator": "Implemented; historical hosted win verified; recorded owner-requested shutdown stopped and boot-disabled services. No current service check performed for this draft.",
+    "stop_hook": "Implemented and directly rehearsed with pass/fail/pass; installed agent-session use not verified in available evidence.",
+    "assurance": {
+      "generated_tests": 9,
+      "executed_generated_tests": 0,
+      "proven_coverage_percent": 0,
+      "approved_use_cases": 3,
+      "extracted_use_cases": 4,
+      "designed_criteria": 23,
+      "total_criteria": 42,
+      "next_checkpoint": "Second human review before browser authoring/execution."
+    },
+    "github_actions": "Implemented and linted; first cloud execution not verified in available evidence; CLI pinned to 0.9.0.",
+    "qualification_scope": "Dedicated Kane level and a two-step saved DOM smoke; no full-campaign qualification claimed."
+  },
+  "event_reporting": {
+    "status": "check_current_event_state_before_finalizing",
+    "consent_at_preparation": "unset; root requested user authorization separately",
+    "event_report_id": null,
+    "project_link_status": "check_current_event_state",
+    "note": "Local report prepared. This artifact does not grant reporting consent, submit an event report or establish project linkage. No event-server verification is claimed."
+  },
+  "submission_handoff": {
+    "text_fields": "User must paste pitch, harness description, Kane feature selections and limitations; no event text-field tool.",
+    "shipped_prize_bundle": "Paste both live video and Substack blog links, tick their checklist rows and press Save before finalizing."
+  }
+}
