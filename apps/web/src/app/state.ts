@@ -73,19 +73,19 @@ export function createAppController(options: AppOptions) {
               if(delay<=0)show();else{finishingOn=true;finishing=setTimeout(show,delay);publish();}}
             else if(update.tick-lastPublication>=TICK_RATE/10){lastPublication=update.tick;publish();}
           }catch(error){fail(error);}},
-          onPauseChange:reason=>{if(reason&&token===generation&&state.screen==='playing'&&!finishingOn){state={...state,restartPopup:true};runtime?.cancel();publish();}},
+          onPauseChange:reason=>{if(reason&&token===generation&&state.screen==='playing'&&!finishingOn){state={...state,restartPopup:state.restartPopup||!(api.kaneMode&&reason==='hidden')};runtime?.cancel();publish();}},
         });
         driver=owned;
         created=await options.createRuntime?.({level,manifest,driver:owned,enabled:()=>state.screen==='playing'&&!state.restartPopup&&!finishingOn,zoomed:state.zoomed});
         if(disposed||token!==generation){created?.dispose();owned.dispose();return;}
         runtime=created;lastPublication=-Infinity;save.setLastLevel(id);
-        state={...state,screen:'playing',loading:false,restartPopup:owned.paused,remainingSeconds:Math.ceil(owned.sim.view.timeLimitTicks/TICK_RATE)};
+        state={...state,screen:'playing',loading:false,restartPopup:owned.paused&&!(api.kaneMode&&owned.pauseReason==='hidden'),remainingSeconds:Math.ceil(owned.sim.view.timeLimitTicks/TICK_RATE)};
         runtime?.frame({sim:owned.sim,alpha:0,steps:0,paused:owned.paused});publish();if(options.autoStart!==false)owned.start();
       }catch(error){created?.dispose();owned?.dispose();if(!disposed&&token===generation)fail(error);}
     },
     openPicker(){if(disposed)return;++generation;clear();state={...state,screen:loaded?'picker':'error',loading:false,restartPopup:false,result:null};publish();},
     pause(){if(state.screen!=='playing'||finishingOn)return;runtime?.cancel();driver?.pause();},
-    resume(){if(state.screen!=='playing'||!state.restartPopup)return;driver?.resume();if(driver&&!driver.paused){state={...state,restartPopup:false};runtime?.refresh();publish();}},
+    resume(){if(state.screen!=='playing'||(!state.restartPopup&&!(api.kaneMode&&driver?.pauseReason==='hidden')))return;driver?.resume();if(driver&&!driver.paused){state={...state,restartPopup:false};runtime?.refresh();publish();}},
     escape(){if(finishingOn)return;if(state.restartPopup)api.resume();else if(state.screen==='playing'&&!runtime?.cancel())api.pause();},
     restart(){return state.levelId?api.startLevel(state.levelId,lastSeed):Promise.resolve();},
     next(){const levels=state.customLevels.some(l=>l.id===state.levelId)?state.customLevels:state.levels;const i=levels.findIndex(l=>l.id===state.levelId),next=levels[i+1];return next?api.startLevel(next.id):Promise.resolve();},

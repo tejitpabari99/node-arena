@@ -27,7 +27,7 @@ async function main(){
     return controls?.wrapInput?.(input,ctx,stage)??input;
   },controls?{padding:controls.padding}:{})});
   const unsubscribe=app.subscribe(()=>{const state=app.snapshot();arena.hidden=state.screen!=='playing'&&state.screen!=='result'&&!app.driver;});
-  if(harness)window.__na=harness.connect(app);
+  if(harness)window.__na=harness.connect(app,()=>controls?.snapshot());
   if(kane&&window.__na)controls=kane.createKaneOverlay(app,window.__na);
   const unmount=mountApp(app,root,controls?.overlay),audio=connectAppAudio(app);
   await app.boot();await harness?.autoLoad(app);

@@ -19,7 +19,7 @@ it('?kane=1 boots na-kane on the kane campaign with isolated save and real-time 
  expect(harness.options).toMatchObject({campaignId:'kane',autoStart:true});expect(harness.options.save).toBeDefined();
  const app=createAppController({files,...harness.options,loadManifest:async()=>manifest,createBotDriver:()=>({commands:()=>[]})});
  const api=harness.connect(app);await app.boot();await harness.autoLoad(app);
- expect(api.kane).toBe(true);expect(app.snapshot().levelId).toBe('na-kane');expect(app.snapshot().screen).toBe('playing');api.dispose();app.dispose();
+ expect(api.kane).toEqual({summary:expect.any(Function)});expect(app.snapshot().levelId).toBe('na-kane');expect(app.snapshot().screen).toBe('playing');api.dispose();app.dispose();
  expect(createTestHarness(files,testHookRequest('',true)).options.campaignId).toBeUndefined();
 });
 it('driver ownership is pure passthrough and accelerated frames preserve hashes at equal ticks',()=>{

@@ -65,6 +65,13 @@ export function createKaneController(app: AppController) {
     }
     refresh();
   });
+  const visibility = () => {
+    if (!document.hidden && app.kaneMode && app.driver?.pauseReason === 'hidden'
+      && !app.snapshot().restartPopup && !app.driver.sim.view.over) app.resume();
+    refresh();
+  };
+  const visibilityTarget = typeof document === 'undefined' ? undefined : document;
+  visibilityTarget?.addEventListener('visibilitychange', visibility);
   return {
     snapshot: () => snapshot,
     subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
@@ -93,7 +100,7 @@ export function createKaneController(app: AppController) {
       }
       refresh();
     },
-    dispose() { if (disposed) return; disposed = true; unsubscribe(); unsubscribeEvents(); clearTimer(); listeners.clear(); },
+    dispose() { if (disposed) return; disposed = true; visibilityTarget?.removeEventListener('visibilitychange', visibility); unsubscribe(); unsubscribeEvents(); clearTimer(); listeners.clear(); },
   };
 }
 export type KaneController = ReturnType<typeof createKaneController>;

@@ -6,6 +6,8 @@ import { createSaveStore, defaultSave, SAVE_KEY } from '../save';
 import { createFixtureSim } from './fixtures';
 import { buildVisualProbe, projectAnchor } from './probe';
 import type { TestHookRequest } from './gate';
+import type { KaneSnapshot } from '../kane/controller';
+import { kaneSummary } from '../kane/summary';
 /** The module is imported only behind the literal DEV / VITE_TEST_HOOKS build gate. */
 export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
   const content=loadContent(files),entries=[...content.catalog.campaigns.common!.entries].sort((a,b)=>a.position-b.position);
@@ -18,15 +20,17 @@ export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
   const save=isolated?createSaveStore({storage:{getItem:k=>memory.get(k)??null,setItem:(k,v)=>{memory.set(k,v);}}}):undefined;
   return {
     options:{autoStart:!request.testing,...(request.kane?{campaignId:'kane'}:{}),...(request.testing?{resultDelayMs:0}:{}),...(save?{save}:{}),...(request.fixture?{createSim:createFixtureSim(request.fixture),createBotDriver:()=>({commands:()=>[]})}:{})},
-    connect(app:AppController){
+    connect(app:AppController,kaneSnapshot?:()=>KaneSnapshot|undefined){
       const events:SimEvent[]=[],commandLog:CommandSubmission[]=[];
       let driver=app.driver,currentSpeed=request.speed;
+      const lineOwners=()=>new Map(driver?.sim.view.lines.map(line=>[`${line.from}>${line.to}`,line.owner]));
+      let initialOwners=lineOwners();
       driver?.setSpeed(currentSpeed);
-      const unsubscribe=app.subscribe(()=>{if(driver!==app.driver){driver=app.driver;events.length=0;commandLog.length=0;driver?.setSpeed(currentSpeed);}});
+      const unsubscribe=app.subscribe(()=>{if(driver!==app.driver){driver=app.driver;events.length=0;commandLog.length=0;initialOwners=lineOwners();driver?.setSpeed(currentSpeed);}});
       const unsubscribeEvents=app.subscribeEvents(update=>{events.push(...update.events);commandLog.push(...update.submissions);});
       const inspect=()=>app.runtime?.inspection as ReturnType<typeof import('../render/scene').createLevelScene>|undefined;
       const api={
-        kane:request.kane,
+        kane:request.kane?{summary:()=>kaneSummary(app.driver?.sim.view,app.driver?.speed??currentSpeed,kaneSnapshot?.(),events,commandLog,initialOwners)}:false as const,
         setSpeed(speed:Speed){app.driver?.setSpeed(speed);currentSpeed=speed;},
         step:(n=1)=>app.step(n),hash:()=>app.driver?.sim.hash(),get view(){return app.driver?.sim.snapshot();},
         get events(){return events;},get commandLog(){return commandLog;},get screen(){return app.snapshot().screen;},
