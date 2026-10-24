@@ -28,7 +28,7 @@ test('property forms commit once, update the preview, and deletion banners undo 
   await page.getByLabel('p2 action delay (ms)').fill('2500');
   await page.getByLabel('p2 behavior').selectOption('attackOnly');
   await page.getByRole('button', { name: 'Apply level properties' }).click();
-  await expect(page.getByTestId('draft-summary')).toContainText('snow');
+  await expect(page.getByLabel('Level theme', { exact: true })).toHaveValue('snow');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(page.getByLabel('Level name', { exact: true })).toHaveValue('LevelView 1');
@@ -42,7 +42,7 @@ test('property forms commit once, update the preview, and deletion banners undo 
   await page.getByRole('button', { name: 'Apply building properties' }).click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await page.getByLabel('Building level', { exact: true }).press('Delete');
-  await expect(page.getByTestId('draft-summary')).toContainText('buildings');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', /^\d+$/);
   await page.getByLabel('Building level', { exact: true }).fill('5');
   await page.getByLabel('Selected item', { exact: true }).selectOption('obstacle:e0');
   await page.getByLabel('Obstacle variant').selectOption('big');

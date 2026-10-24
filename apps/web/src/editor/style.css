@@ -1,41 +1,35 @@
-:root { font-family: system-ui, sans-serif; color: #e8edf6; background: #111827; color-scheme: dark; }
-body { margin: 0; }
-.editor-shell { max-width: 1200px; margin: auto; padding: 24px; }
-.editor-shell header, .editor-toolbar { display: flex; align-items: center; gap: 24px; }
-.editor-shell header a { margin-left: auto; color: #9dc7ff; }
+.editor-shell.ed-start { max-width: 1200px; margin: auto; padding: 24px; }
+.editor-shell header { display: flex; align-items: center; gap: 24px; }
+.editor-shell header a { margin-left: auto; color: #fff; }
 .editor-shell h1 { margin: 0; }
-.editor-shell header span, .editor-hint { color: #a7b5c9; }
+.editor-shell header span, .editor-hint { color: #4a6572; }
 .editor-start-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 24px; }
-.editor-start-grid section { padding: 20px; background: #1e293b; border: 1px solid #475569; border-radius: 10px; }
+.editor-start-grid section { padding: 20px; background: var(--ed-panel); border: 1px solid var(--ed-border); border-radius: 10px; }
 .editor-shell label { display: grid; gap: 8px; margin: 16px 0; }
-.editor-shell input, .editor-shell select, .editor-shell button { font: inherit; padding: 10px; border: 1px solid #64748b; border-radius: 5px; }
-.editor-shell button { cursor: pointer; background: #244f88; }
+.editor-shell input, .editor-shell select, .editor-shell button { font: inherit; padding: 10px; border: 1px solid var(--ed-border); border-radius: 5px; }
+.editor-shell button { cursor: pointer; background: var(--ed-green); color: #fff; }
 .editor-shell button:disabled { opacity: .5; cursor: default; }
-.editor-shell [role=alert] { padding: 12px; border: 1px solid #fb7185; color: #fecdd3; }
+.editor-shell [role=alert] { padding: 12px; border: 1px solid #c0394d; background: #fde7ea; color: #7a1626; }
 
-.editor-view-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; }
-.editor-view-tools { padding: 12px; background: #1e293b; overflow-wrap: anywhere; }
+.editor-view-tools { padding: 12px; background: var(--ed-panel); overflow-wrap: anywhere; }
 .editor-view-tools h3 { margin-top: 0; }
 .editor-view-tools p { font-size: 13px; }
-.editor-workspace { position: relative; height: min(68vh, 760px); min-height: 360px; overflow: hidden; background: #1e293b; border: 1px solid #475569; }
+.editor-workspace { position: relative; height: min(68vh, 760px); min-height: 360px; overflow: hidden; background: var(--ed-panel); border: 1px solid var(--ed-border); }
 .editor-workspace canvas { touch-action: none; }
 .editor-marquee { position: absolute; z-index: 1; pointer-events: none; border: 1px solid #b8e0ff; background: #6cbcff33; }
-@media (max-width: 700px) { .editor-shell { padding: 12px; } .editor-view-layout { grid-template-columns: 150px minmax(0, 1fr); gap: 8px; } }
+@media (max-width: 700px) { .editor-shell.ed-start { padding: 12px; } }
 .editor-library-item { display: block; width: 100%; margin-bottom: 6px; touch-action: none; }
 .editor-ghost { position: absolute; z-index: 2; transform: translate(-50%, -50%); min-width: 44px; min-height: 32px; padding: 6px; box-sizing: border-box; border: 2px solid #c4e8ff; background: #78bdff66; color: white; font-size: 11px; pointer-events: none; }
 
-.editor-properties { margin: 16px 0; padding: 12px; background: #1e293b; border: 1px solid #475569; border-radius: 6px; }
+.editor-properties { margin: 16px 0; padding: 12px; background: var(--ed-panel); border: 1px solid var(--ed-border); border-radius: 6px; }
 .editor-properties summary { cursor: pointer; }
-.editor-properties fieldset { min-width: 0; border: 1px solid #475569; }
-.editor-script-banner { padding: 12px; border: 1px solid #fbbf24; background: #713f12; }
+.editor-properties fieldset { min-width: 0; border: 1px solid var(--ed-border); }
+.editor-script-banner { padding: 12px; border: 1px solid #be8225; background: #fff1c9; color: #5a3a07; }
 
 .editor-layout-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
 .editor-bounds { fill: none; stroke: #cbd5e1; stroke-width: 1.5; stroke-dasharray: 6 4; }
 .editor-selection-ring { fill: #7dd3fc22; stroke: #7dd3fc; stroke-width: 2; }
-.editor-view-tools { max-height: 76vh; overflow-y: auto; }
 
-body { background: #111827; }
-.editor-shell { font-family: system-ui, sans-serif; }
 .editor-play-overlay { position: fixed; inset: 0; z-index: 10; overflow: hidden; font-family: Coiny, system-ui, sans-serif; background: #73c7e6; color-scheme: light; }
 .editor-play-arena { position: absolute; inset: 0; }
 .editor-play-arena canvas { width: 100%; height: 100%; touch-action: none; }
@@ -44,3 +38,27 @@ body { background: #111827; }
 .editor-play-bar { position: absolute; z-index: 1; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 12px; padding: 8px; background: #111827dd; border-radius: 8px; font: 13px system-ui, sans-serif; }
 .editor-play-bar button { background: #244f88; padding: 10px; border-radius: 5px; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* Editor theme: main-menu look. Greens sampled from .level-card in ../style.css. */
+.ed-shell, .editor-shell { --ed-sky-top: #73c7e6; --ed-sky-bottom: #ccecf2; --ed-green: #43af4d; --ed-green-light: #8bdf62; --ed-green-dark: #24813e; --ed-panel: #ffffffee; --ed-ink: #1b3a4b; --ed-border: #9ec3d1; color: var(--ed-ink); font-family: system-ui, sans-serif; }
+.ed-shell h1, .ed-shell h2, .ed-shell h3, .editor-shell h1, .editor-shell h2, .editor-shell h3, .ed-btn, .ed-chip, .ed-modal-title, .ed-shell button, .editor-shell button { font-family: Coiny, system-ui, sans-serif; font-weight: 400; }
+.ed-shell input, .ed-shell select, .ed-shell label, .editor-shell input, .editor-shell select, .editor-shell label { font-family: system-ui, sans-serif; }
+.ed-btn, .ed-shell button, .editor-shell button { padding: 8px 14px; border-radius: 12px; border: 0; color: var(--ed-ink); background: #fff; box-shadow: 0 3px var(--ed-border); }
+.ed-btn-primary, .ed-shell button.ed-btn-primary { color: #fff; background: linear-gradient(var(--ed-green-light), var(--ed-green)); box-shadow: 0 3px var(--ed-green-dark), inset 0 2px #c7f9a8; text-shadow: 0 2px var(--ed-green-dark); }
+.ed-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: var(--ed-panel); border: 1px solid var(--ed-border); color: var(--ed-ink); }
+.ed-popover { position: absolute; z-index: 5; padding: 12px; border-radius: 14px; background: var(--ed-panel); border: 1px solid var(--ed-border); box-shadow: 0 8px 24px #1b3a4b33; color: var(--ed-ink); }
+.ed-modal { position: fixed; z-index: 20; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: min(560px, 92vw); padding: 24px; border-radius: 20px; background: var(--ed-panel); border: 1px solid var(--ed-border); box-shadow: 0 16px 48px #1b3a4b55; color: var(--ed-ink); }
+.ed-panel { padding: 12px; border-radius: 14px; background: var(--ed-panel); border: 1px solid var(--ed-border); color: var(--ed-ink); }
+
+/* Shell grid: no page scroll; left slot scrolls alone; canvas fills the rest. */
+html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
+.ed-shell { display: grid; grid-template-rows: 56px minmax(0, 1fr); grid-template-columns: 300px minmax(0, 1fr); width: 100vw; height: 100vh; overflow: hidden; }
+.ed-top { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 0 12px; overflow-x: auto; background: var(--ed-panel); border-bottom: 1px solid var(--ed-border); }
+.ed-top h2 { margin: 0; font-size: 18px; }
+.ed-top a { color: var(--ed-ink); }
+.ed-top button { flex: none; padding: 6px 12px; }
+.ed-left { grid-row: 2; grid-column: 1; overflow-y: auto; min-height: 0; padding: 12px; background: var(--ed-panel); border-right: 1px solid var(--ed-border); }
+.ed-canvas { grid-row: 2; grid-column: 2; position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.ed-canvas .editor-workspace { height: 100%; min-height: 0; border: 0; background: transparent; }
+.ed-left .editor-view-tools { padding: 0; background: none; }
+.ed-left .editor-properties { background: #fff; }

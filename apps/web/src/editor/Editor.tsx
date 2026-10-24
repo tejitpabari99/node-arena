@@ -5,6 +5,7 @@ import { loadManifest } from '../manifest/load.js';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { PlayOverlay } from './PlayOverlay.js';
 import { LegacyPanel } from './LegacyPanel.js';
+import { Shell } from './Shell.js';
 import { Viewport } from './Viewport.js';
 import { EditorCtx, type EditorContext } from './EditorContext.js';
 import type { EditorViewport, ViewportStatus } from './viewport-engine.js';
@@ -158,30 +159,28 @@ export function Editor() {
     paste() { if (!clipboard) return; pasteCount.current++; dispatch({ type: 'edit', op: { type: 'paste', clipboard, offset: { x: .5 * pasteCount.current, z: .5 * pasteCount.current } }, area }); },
     save, saveState: busy ? 'saving' : saved ? 'saved' : 'unsaved', dirty: !saved,
   } : null;
-  return <><main class="editor-shell" inert={playing}>
-    <header><h1>Level editor</h1><span>Local development</span><a href="/">Game</a></header>
+  const alerts = <>
     {error && <p role="alert">{error}</p>}
-    {doc && ctx ? <section aria-label="Working level">
-      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => setPlaying(true)}>Play</button><button disabled={busy} onClick={() => void solvable()}>Solvable?</button><button disabled={busy || !saved} onClick={() => void finalize()}>Finalize</button>{proxyAbort.current && <button onClick={() => proxyAbort.current?.abort()}>Cancel check</button>}<button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
-      {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
-      {issues.length > 0 && <ul role="alert" aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
-      {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
-      <p role="status" data-testid="finalize-status">{!saved ? 'Unsaved changes. Save before Finalize. ' : ''}{lockStatus === 'unfinalized' ? 'Unfinalized changes on disk.' : lockStatus === 'current' ? 'Content locks current on disk.' : lockStatus === 'checking' ? 'Content status stale; checking…' : 'Content status unavailable; retry after saving or running a job.'}</p>
-      {lockOutput && <details><summary>Content status details</summary><pre>{lockOutput}</pre></details>}
-      {finalizeEvents.length > 0 && <section aria-label="Finalize output" aria-live="polite"><pre>{finalizeEvents.map(event => event.type === 'step' ? `→ ${event.step}\n` : event.type === 'output' ? event.output : event.type === 'error' ? `${event.error}\n` : event.type === 'result' ? 'Finalize complete. Review git diff and commit when ready.\n' : '').join('')}</pre></section>}
-      {saved && <p role="status">Saved. Run Finalize when ready to update content locks.</p>}
-      {proxyEvents.length > 0 && <section aria-label="Proxy evidence" aria-live="polite">
-        <p>Evidence only. Proxy wins do not prove solvability; no wins do not prove impossibility. Owner play and sign-off remain required.</p>
-        <p role="status">{proxyReport?.type === 'result' ? `Proxy wins: ${proxyReport.report.totalWins}/${proxyReport.report.runs}. Validation: ${proxyReport.report.ok ? 'passed' : 'failed'}.` : proxyAbort.current ? 'Checking proxy matches…' : 'Proxy check stopped.'}</p>
-        <pre>{proxyEvents.map(event => event.type === 'progress' ? `${event.run.proxy} seed ${event.run.seed}: ${event.run.outcome}, winner ${event.run.winner ?? 'none'}, ${event.run.ticks} ticks` : event.type === 'error' ? event.error : '').filter(Boolean).join('\n')}</pre>
-        {proxyReport?.type === 'result' && <details><summary>Full proxy report</summary><pre>{JSON.stringify(proxyReport.report, null, 2)}</pre></details>}
-      </section>}
-      <p>{doc.name}</p>
-      <p data-testid="draft-summary">{doc.theme} · {doc.players.length} players · {doc.buildings.length} buildings · {doc.elements.length} obstacles</p>
-      <EditorCtx.Provider value={ctx}><LegacyPanel pointer={pointer}>
-        <Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} onPointer={setPointer} />
-      </LegacyPanel></EditorCtx.Provider>
-    </section> : <>
+    {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
+    {issues.length > 0 && <ul role="alert" aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
+    {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
+    <p role="status" data-testid="finalize-status">{!saved ? 'Unsaved changes. Save before Finalize. ' : ''}{lockStatus === 'unfinalized' ? 'Unfinalized changes on disk.' : lockStatus === 'current' ? 'Content locks current on disk.' : lockStatus === 'checking' ? 'Content status stale; checking…' : 'Content status unavailable; retry after saving or running a job.'}</p>
+    {lockOutput && <details><summary>Content status details</summary><pre>{lockOutput}</pre></details>}
+    {finalizeEvents.length > 0 && <section aria-label="Finalize output" aria-live="polite"><pre>{finalizeEvents.map(event => event.type === 'step' ? `→ ${event.step}\n` : event.type === 'output' ? event.output : event.type === 'error' ? `${event.error}\n` : event.type === 'result' ? 'Finalize complete. Review git diff and commit when ready.\n' : '').join('')}</pre></section>}
+    {saved && <p role="status">Saved. Run Finalize when ready to update content locks.</p>}
+    {proxyEvents.length > 0 && <section aria-label="Proxy evidence" aria-live="polite">
+      <p>Evidence only. Proxy wins do not prove solvability; no wins do not prove impossibility. Owner play and sign-off remain required.</p>
+      <p role="status">{proxyReport?.type === 'result' ? `Proxy wins: ${proxyReport.report.totalWins}/${proxyReport.report.runs}. Validation: ${proxyReport.report.ok ? 'passed' : 'failed'}.` : proxyAbort.current ? 'Checking proxy matches…' : 'Proxy check stopped.'}</p>
+      <pre>{proxyEvents.map(event => event.type === 'progress' ? `${event.run.proxy} seed ${event.run.seed}: ${event.run.outcome}, winner ${event.run.winner ?? 'none'}, ${event.run.ticks} ticks` : event.type === 'error' ? event.error : '').filter(Boolean).join('\n')}</pre>
+      {proxyReport?.type === 'result' && <details><summary>Full proxy report</summary><pre>{JSON.stringify(proxyReport.report, null, 2)}</pre></details>}
+    </section>}
+  </>;
+  const toolbar = doc && <><a href="/">Game</a><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => setPlaying(true)}>Play</button><button disabled={busy} onClick={() => void solvable()}>Solvable?</button><button disabled={busy || !saved} onClick={() => void finalize()}>Finalize</button>{proxyAbort.current && <button onClick={() => proxyAbort.current?.abort()}>Cancel check</button>}<button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></>;
+  return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<>{alerts}<EditorCtx.Provider value={ctx}><LegacyPanel pointer={pointer} /></EditorCtx.Provider></>}>
+    <EditorCtx.Provider value={ctx}><Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} onPointer={setPointer} /></EditorCtx.Provider>
+  </Shell> : <main class="editor-shell ed-start" inert={playing}>
+    <header><h1>Level editor</h1><a href="/">Game</a></header>
+    {error && <p role="alert">{error}</p>}
       <p>Create a blank level, copy an existing level, or reopen a custom level.</p>
       <label>New level id<input value={id} onInput={event => setId(event.currentTarget.value)} placeholder="na-my-level" /></label>
       <p class="editor-hint">Blank levels and copies need a new na- id. Copies drop imported source metadata.</p>
@@ -202,6 +201,5 @@ export function Editor() {
         </section>
       </div>
       {loading && <p role="status">Loading levels…</p>}
-    </>}
-  </main>{playing && doc && <PlayOverlay doc={doc} onExit={() => setPlaying(false)} />}</>;
+  </main>}{playing && doc && <PlayOverlay doc={doc} onExit={() => setPlaying(false)} />}</>;
 }

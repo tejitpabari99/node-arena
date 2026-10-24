@@ -41,9 +41,9 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('23');
   await page.getByRole('button', { name: 'Copy selected', exact: true }).click();
   await page.getByRole('button', { name: 'Paste', exact: true }).click();
-  await expect(page.getByTestId('draft-summary')).toContainText('2 obstacles');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '2');
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(page.getByTestId('draft-summary')).toContainText('1 obstacles');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '1');
   await page.getByRole('button', { name: 'Select all', exact: true }).click();
   await page.getByLabel('Mirror axis').selectOption('horizontal');
   await page.getByLabel('Mirror centre').fill('1');

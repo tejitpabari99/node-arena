@@ -27,14 +27,13 @@ test('Custom → Create custom level from template → place → Save → appear
     await expect(draft).toHaveText(/^na-custom-\d+$/);
     createdId = (await draft.textContent())!;
     expect(createdId).not.toBe('na-trial');
-    const summary = (await page.getByTestId('draft-summary').textContent())!;
-    const before = Number(/(\d+) buildings/.exec(summary)![1]);
+    const before = Number(await page.locator('.ed-shell').getAttribute('data-buildings'));
     const host = page.getByLabel('Edit viewport'), box = (await host.boundingBox())!;
     const item = page.getByRole('button', { name: 'Place house-wt1', exact: true }), source = (await item.boundingBox())!;
     await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
     await page.mouse.down(); await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 8 });
     await page.mouse.up();
-    await expect(page.getByTestId('draft-summary')).toContainText(`${before + 1} buildings`);
+    await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(before + 1));
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByText('Saved. Run Finalize')).toBeVisible();
     // Dev server picks up the new level file via its watcher and may reload the page: retry the whole navigation.

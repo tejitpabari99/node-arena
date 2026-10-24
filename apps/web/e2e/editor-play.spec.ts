@@ -35,7 +35,7 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
     const source = (await button.boundingBox())!, target = (await page.getByLabel('Edit viewport', { exact: true }).boundingBox())!;
     await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
     await page.mouse.move(target.x + target.width * fraction!, target.y + target.height / 2, { steps: 8 }); await page.mouse.up();
-    await expect(page.getByTestId('draft-summary')).toContainText(`${index! + 1} buildings`);
+    await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(index! + 1));
     await expect(page.getByTestId('viewport-status')).toContainText('Ready');
     await page.getByLabel('Selected item', { exact: true }).selectOption(`building:b${index}`);
     await page.getByLabel('Building owner', { exact: true }).selectOption('p2');
@@ -55,12 +55,12 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
   await expect(page.getByLabel('Building owner', { exact: true })).toHaveValue('');
   await page.getByRole('button', { name: 'Redo', exact: true }).click();
   await expect(page.getByLabel('Building owner', { exact: true })).toHaveValue('p2');
-  await expect(page.getByTestId('draft-summary')).toContainText('2 buildings');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '2');
   expect(await page.evaluate(() => JSON.stringify({ ...localStorage }))).toBe(baseline);
   await page.reload();
   await page.getByLabel('Reopen level').selectOption('na-play-browser');
   await page.getByRole('button', { name: 'Reopen level', exact: true }).click();
-  await expect(page.getByTestId('draft-summary')).toContainText('2 buildings');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '2');
   await page.goto('/');
   await page.getByRole('button', { name: 'Campaign', exact: true }).click();
   await expect(page.locator('.level-grid.campaign .level-card')).toHaveCount(20);

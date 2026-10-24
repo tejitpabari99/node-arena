@@ -19,10 +19,10 @@ test('library drops, deletion, and undo/redo persist through real preview rebuil
   await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
   await page.mouse.down(); await page.mouse.move(centre.x, centre.y, { steps: 8 });
   await expect(host.locator('.editor-ghost')).toBeVisible();
-  await expect(page.getByTestId('draft-summary')).toContainText('0 buildings');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '0');
   await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
   await page.mouse.up();
-  await expect(page.getByTestId('draft-summary')).toContainText('1 buildings');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '1');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await expect(host.locator('canvas')).toBeVisible();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
@@ -30,13 +30,13 @@ test('library drops, deletion, and undo/redo persist through real preview rebuil
   expect(saved!.buildings[0]).toMatchObject({ owner: null, level: 1, pos: { x: 0, z: 0 } });
   await expect(page.getByTestId('viewport-selection')).toContainText('b0');
   await page.getByRole('button', { name: 'Delete selected', exact: true }).click();
-  await expect(page.getByTestId('draft-summary')).toContainText('0 buildings');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '0');
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(page.getByTestId('draft-summary')).toContainText('1 buildings');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '1');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   // One undo for the original drop proves its pointer moves were coalesced.
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(page.getByTestId('draft-summary')).toContainText('0 buildings');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '0');
   await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
   expect(errors).toEqual([]);
 });
@@ -110,15 +110,15 @@ test('all library archetypes populate blank drafts and persist after compilation
     await page.mouse.move(r.x + r.width / 2 + dx, r.y + r.height / 2 + dy, { steps: 5 }); await page.mouse.up();
   }
   await drop('obstacle-small', 0, 0);
-  await expect(page.getByTestId('draft-summary')).toContainText('1 obstacles');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '1');
   await drop('obstacle-big', 60, 30);
-  await expect(page.getByTestId('draft-summary')).toContainText('2 obstacles');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '2');
   await drop('house-wt1', -80, -20);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await drop('house-wt2', 30, -20);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await drop('tower', 90, 40);
-  await expect(page.getByTestId('draft-summary')).toContainText('3 buildings');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '3');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect.poll(() => saved?.buildings.length).toBe(3);
@@ -128,5 +128,5 @@ test('all library archetypes populate blank drafts and persist after compilation
   // Releasing over the library is cancellation, leaving the committed document intact.
   const source = (await page.getByRole('button', { name: 'Place tower', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + 20, source.y + 10); await page.mouse.down(); await page.mouse.move(20, 20); await page.mouse.up();
-  await expect(page.getByTestId('draft-summary')).toContainText('3 buildings');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '3');
 });
