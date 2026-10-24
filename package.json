@@ -64,7 +64,8 @@
     "assets:ui:check": "node --import tsx tools/assets/ui-sprites.mjs --check",
     "assets:capture:web": "node tools/assets/capture/sp08.mjs",
     "campaign:verify": "pnpm --filter @node-arena/web campaign:verify",
-    "check:docs": "pnpm --filter @node-arena/tools check:docs"
+    "check:docs": "pnpm --filter @node-arena/tools check:docs",
+    "check:kane-bundle": "node scripts/check-kane-bundle.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
