@@ -19,7 +19,11 @@
     </section>
     <div class="controls">
       <div class="run-status"><span id="status" role="status" data-state="starting">starting</span><p id="message" aria-live="polite">Connecting…</p><a id="backup" href="/backup.mp4" hidden>Watch recorded run</a></div>
-      <button id="start" type="button" disabled>Start</button>
+      <div class="buttons" aria-label="Run controls">
+        <button id="start" type="button" disabled>Start</button>
+        <button id="stop" type="button" hidden>Stop</button>
+        <button id="reset" type="button" disabled hidden>Reset</button>
+      </div>
     </div>
     <section class="activity" aria-labelledby="activity-title">
       <h2 id="activity-title">Kane's activity</h2>

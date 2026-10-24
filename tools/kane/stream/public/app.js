@@ -1,19 +1,21 @@
 (() => {
   'use strict';
   const element = id => document.getElementById(id);
-  const start = element('start'), status = element('status'), message = element('message');
+  const start = element('start'), stop = element('stop'), reset = element('reset'), status = element('status'), message = element('message');
   const log = element('log'), viewers = element('viewers'), backup = element('backup');
   const canvas = element('screen'), videoMessage = element('video-message');
   const context = canvas.getContext('2d');
   const abort = new AbortController();
   let disposed = false, source, socket, reconnectTimer;
-  let currentState, currentRunId = null, lastSeq = -1, posting = false;
+  let currentState, serverState, currentRunId = null, lastSeq = -1;
+  let stateRevision = 0, requestGeneration = 0, stopped = false, resetting = false;
+  let localStart = null, stopRequest = null, stopQueued = false;
   let sseErrors = 0, wsAttempts = 0, generation = 0, decoding = false, pendingFrame = null;
   let hasFrame = false, backupAvailable = false, failed = false;
   const failureOutcomes = new Set(['failed', 'unavailable', 'timeout']);
   const texts = {
     idle: 'Ready for a run', starting: 'Starting the run…', live: 'Kane is playing',
-    finished: 'Run finished', failed: 'Live run unavailable', cooldown: 'Waiting for the next run',
+    finished: 'Run finished', stopping: 'Stopping…', stopped: 'Run stopped', failed: 'Live run unavailable', cooldown: 'Waiting for the next run',
   };
 
   function render(state, isFailure = false) {
@@ -22,43 +24,62 @@
     status.textContent = state;
     status.dataset.state = state;
     message.textContent = failed ? texts.failed : texts[state];
-    start.disabled = posting || state !== 'idle';
+    start.disabled = state !== 'idle';
+    stop.hidden = stopped || !['starting', 'live'].includes(state);
+    stop.disabled = stop.hidden;
+    reset.hidden = !stopped;
+    reset.disabled = resetting || !!stopRequest || stopQueued || !['idle', 'cooldown'].includes(serverState);
     backup.hidden = !(failed && backupAvailable);
     if (!hasFrame) {
       videoMessage.hidden = false;
-      videoMessage.textContent = state === 'live' ? 'Waiting for video…' : state === 'starting' ? 'Starting the run…' : failed ? texts.failed : 'Waiting for a run';
+      videoMessage.textContent = state === 'live' ? 'Waiting for video…' : state === 'starting' ? 'Starting the run…' : state === 'stopping' ? texts.stopping : state === 'stopped' ? texts.stopped : failed ? texts.failed : 'Waiting for a run';
     }
   }
 
   function resetRun() {
     generation++;
+    clearTimeout(reconnectTimer); reconnectTimer = null;
+    const previous = socket; socket = null; previous?.close();
     pendingFrame = null;
     lastSeq = -1;
     log.replaceChildren();
     hasFrame = false;
+    canvas.width = 1280; canvas.height = 720;
     context.clearRect?.(0, 0, canvas.width, canvas.height);
     sseErrors = 0;
     wsAttempts = 0;
   }
 
-  function applyState(snapshot) {
+  function applyState(snapshot, explicitReset = false) {
     if (disposed || !snapshot || typeof snapshot.state !== 'string') return;
     const nextRun = typeof snapshot.runId === 'string' ? snapshot.runId : null;
-    // Starting is announced before the server allocates its new run identifier.
-    const enteringStart = snapshot.state === 'starting' && currentState !== 'starting';
-    if (enteringStart) resetRun();
-    const changedRun = nextRun !== null && nextRun !== currentRunId;
-    if (changedRun) {
-      if (!enteringStart) resetRun();
-      currentRunId = nextRun;
+    const changedRun = nextRun !== currentRunId;
+    if (explicitReset || (currentRunId !== null && nextRun === null && snapshot.state !== 'starting')) {
+      stopQueued = false; localStart = null; stopRequest = null;
+      requestGeneration++;
     }
-    if (Number.isSafeInteger(snapshot.viewers) && snapshot.viewers >= 0) viewers.textContent = String(snapshot.viewers);
     const isFailure = failureOutcomes.has(snapshot.outcome);
-    const state = snapshot.state === 'ending' ? (isFailure ? 'failed' : 'finished') : snapshot.state;
+    const nextStopped = snapshot.outcome === 'stopped';
+    const queuedStopReady = stopQueued && ['starting', 'live'].includes(snapshot.state);
+    const state = stopQueued || (nextStopped && snapshot.state === 'ending') ? 'stopping' : nextStopped ? 'stopped' : snapshot.state === 'ending' ? (isFailure ? 'failed' : 'finished') : snapshot.state;
     if (!Object.hasOwn(texts, state)) return;
+    stateRevision++;
+    // Starting can precede allocation of an identifier; null -> null is not a reset.
+    const enteringStart = snapshot.state === 'starting' && serverState !== 'starting';
+    const clear = explicitReset || changedRun || enteringStart;
+    if (clear) resetRun();
+    currentRunId = nextRun;
+    serverState = snapshot.state;
+    stopped = nextStopped || stopQueued;
+    if (nextStopped && ['idle', 'cooldown'].includes(serverState)) localStart = null;
+    if (queuedStopReady) { stopQueued = false; serverState = 'ending'; }
+    resetting = false;
+    if (Number.isSafeInteger(snapshot.viewers) && snapshot.viewers >= 0) viewers.textContent = String(snapshot.viewers);
     render(state, isFailure);
-    if (changedRun && source) connectEvents(); // Fresh instance clears the previous run's Last-Event-ID.
+    // A new instance drops Last-Event-ID and rejects already queued old callbacks.
+    if ((explicitReset || changedRun) && source) connectEvents();
     if (!socket && !reconnectTimer) connectVideo();
+    if (queuedStopReady) sendStop();
   }
 
   function appendLog(event) {
@@ -85,6 +106,7 @@
     const connection = new EventSource('/events');
     source = connection;
     connection.addEventListener('state', event => { if (source === connection) applyState(parse(event.data)); });
+    connection.addEventListener('reset', event => { if (source === connection) applyState(parse(event.data), true); });
     connection.addEventListener('video_lost', () => {
       if (source !== connection) return;
       videoMessage.textContent = 'Video lost'; videoMessage.hidden = false;
@@ -149,24 +171,74 @@
   }
 
   async function refreshState() {
+    const revision = stateRevision, request = requestGeneration;
     try {
       const response = await fetch('/api/state', { signal: abort.signal });
       if (!response.ok) throw new Error();
-      applyState(await response.json());
-    } catch { if (!disposed) render('failed', true); }
+      const snapshot = await response.json();
+      if (revision === stateRevision && request === requestGeneration) { applyState(snapshot); return snapshot; }
+    } catch { if (!disposed && revision === stateRevision && request === requestGeneration) render('failed', true); }
   }
 
-  start.addEventListener('click', async () => {
-    if (posting || currentState !== 'idle' || disposed) return;
-    posting = true; render('starting');
+  async function postControl(path) {
+    const request = ++requestGeneration, revision = stateRevision;
+    const current = () => !disposed && request === requestGeneration && revision === stateRevision;
     try {
-      const response = await fetch('/start', { method: 'POST', signal: abort.signal });
-      if (!response.ok) {
-        if (response.status === 409) await refreshState();
+      const response = await fetch(path, { method: 'POST', signal: abort.signal });
+      // SSE is authoritative. An HTTP snapshot can predate another viewer's Reset/Start.
+      if (!response.ok && current()) {
+        if (response.status === 409 || path !== '/start') await refreshState();
         else render('failed', true);
       }
-    } catch { if (!disposed) render('failed', true); }
-    finally { posting = false; if (!disposed) start.disabled = currentState !== 'idle'; }
+      return response;
+    } catch { if (current()) await refreshState(); }
+  }
+
+  function sendStop() {
+    const request = {}; stopRequest = request;
+    render(currentState, failed);
+    void postControl('/stop').finally(() => {
+      if (disposed || stopRequest !== request) return;
+      stopRequest = null; render(currentState, failed);
+    });
+  }
+
+  start.addEventListener('click', () => {
+    if (currentState !== 'idle' || disposed) return;
+    stopped = false;
+    render('starting');
+    const attempt = {}; localStart = attempt;
+    void postControl('/start').then(async response => {
+      if (disposed || localStart !== attempt) return;
+      localStart = null;
+      if (!stopQueued) return;
+      if (response?.ok) {
+        const snapshot = await refreshState();
+        // If startup and termination were both missed, a settled Start plus a
+        // fresh quiescent snapshot proves this intent cannot belong to a later run.
+        if (snapshot && stopQueued && !localStart && ['idle', 'cooldown'].includes(serverState)) {
+          stopQueued = false; stopped = snapshot.outcome === 'stopped';
+          render(stopped ? 'stopped' : serverState, failureOutcomes.has(snapshot.outcome));
+        }
+      } else { stopQueued = false; render('stopped'); }
+    });
+  });
+  stop.addEventListener('click', () => {
+    if (!['starting', 'live'].includes(currentState) || disposed) return;
+    stopped = true;
+    // A local Start click can precede its reservation on the server. Wait for
+    // authoritative starting/live before sending Stop, so a premature 409 cannot
+    // leave that pending Start free to launch after the viewer reports Stopped.
+    stopQueued = !!localStart && !['starting', 'live'].includes(serverState);
+    if (!stopQueued) serverState = 'ending';
+    requestGeneration++;
+    render('stopping');
+    if (!stopQueued) sendStop();
+  });
+  reset.addEventListener('click', () => {
+    if (reset.disabled || disposed) return;
+    resetting = true; render(currentState);
+    void postControl('/reset');
   });
 
   window.addEventListener('pagehide', () => {

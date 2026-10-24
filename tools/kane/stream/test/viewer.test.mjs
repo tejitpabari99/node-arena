@@ -11,7 +11,7 @@ const { chromium } = require('@playwright/test');
 async function fixture(t) {
   const run = new EventEmitter();
   let current = { state: 'idle', runId: null, viewers: 0 };
-  let starts = 0, response = 202;
+  let starts = 0, response = 202, settleStop;
   run.snapshot = viewers => ({ ...current, viewers });
   run.start = async () => {
     starts++;
@@ -19,9 +19,25 @@ async function fixture(t) {
     current = { state: 'starting', runId: null };
     run.emit('state', current);
     await new Promise(resolve => setTimeout(resolve, 20));
+    if (current.outcome === 'stopped') return { status: 503 };
     current = { state: 'starting', runId: `run-${starts}` };
     run.emit('state', current);
     return { status: 202, runId: current.runId };
+  };
+  run.stop = async () => {
+    if (!['starting', 'live'].includes(current.state)) return { status: 409 };
+    current = { ...current, state: 'ending', outcome: 'stopped' };
+    run.emit('state', current);
+    await new Promise(resolve => { settleStop = resolve; });
+    current = { ...current, state: 'cooldown' };
+    run.emit('state', current);
+    return { status: 200 };
+  };
+  run.reset = async () => {
+    if (!['idle', 'cooldown'].includes(current.state)) return { status: 409 };
+    current = { state: current.state, runId: null, startedAt: null, endsAtMax: null };
+    run.emit('reset', current); run.emit('state', current);
+    return { status: 200 };
   };
   run.close = async () => {};
   const cast = new EventEmitter();
@@ -41,7 +57,7 @@ async function fixture(t) {
   const base = `http://127.0.0.1:${app.server.address().port}`;
   return { page, base, errors, app, cast, clients, run,
     state(state, runId = current.runId, outcome) { current = { state, runId, outcome }; run.emit('state', current); },
-    reject(status) { response = status; }, get starts() { return starts; } };
+    finishStop() { settleStop(); }, reject(status) { response = status; }, get starts() { return starts; } };
 }
 
 const text = (page, id) => page.locator(`#${id}`).textContent();
@@ -168,5 +184,308 @@ test('viewer renders real JPEG frames on canvas and keeps a responsive 16:9 stag
   assert.ok(Math.abs(box.width / box.height - 16 / 9) < 0.01);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   if (process.env.KANE_VIEWER_SCREENSHOTS) await page.screenshot({ path: '/tmp/kane-viewer-mobile.png', fullPage: true });
+  assert.deepEqual(f.errors, []);
+});
+
+// Missing Stop/Reset controls or a local-only reset must fail this shared-browser flow.
+test('two viewers share explicit Stop, cleanup gating, Reset and cooldown without automatic Start', async t => {
+  const f = await fixture(t), { page } = f;
+  const posts = [];
+  page.context().on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); });
+  await page.goto(f.base);
+  await waitText(page, 'status', 'idle');
+  await page.reload();
+  await waitText(page, 'status', 'idle');
+  assert.deepEqual(posts, []);
+  await page.locator('#start').click();
+  await waitText(page, 'status', 'starting');
+  assert.equal(await page.locator('#stop').isVisible(), true);
+  await page.waitForTimeout(60);
+  f.state('live', 'run-1');
+  await waitText(page, 'status', 'live');
+  const other = await page.context().newPage();
+  await other.goto(f.base);
+  await waitText(other, 'status', 'live');
+  await other.reload();
+  await waitText(other, 'status', 'live');
+  assert.deepEqual(posts, ['/start']);
+  const jpeg = await page.evaluate(() => {
+    const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 90;
+    const context = canvas.getContext('2d'); context.fillStyle = '#408050'; context.fillRect(0, 0, 160, 90);
+    return canvas.toDataURL('image/jpeg').split(',')[1];
+  });
+  for (const client of f.clients) client.send(Buffer.from(jpeg, 'base64'));
+  for (const viewer of [page, other]) await viewer.waitForFunction(() => document.getElementById('video-message').hidden);
+  f.run.emit('line', JSON.stringify({ seq: 9, type: 'driver_start' }));
+  for (const viewer of [page, other]) await viewer.locator('#log li').waitFor();
+  await page.locator('#stop').click();
+  for (const viewer of [page, other]) {
+    await waitText(viewer, 'status', 'stopping');
+    assert.equal(await viewer.locator('#reset').isVisible(), true);
+    assert.equal(await viewer.locator('#reset').isDisabled(), true);
+    assert.equal(await viewer.locator('#stop').isHidden(), true);
+    assert.equal(await text(viewer, 'message'), 'Stopping…');
+  }
+  f.finishStop();
+  await page.waitForFunction(() => !document.getElementById('reset').disabled);
+  await waitText(page, 'status', 'stopped');
+  if (process.env.KANE_VIEWER_SCREENSHOTS) {
+    await page.screenshot({ path: '/tmp/kane-controls-stopped-desktop.png', fullPage: true });
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.screenshot({ path: '/tmp/kane-controls-stopped-mobile.png', fullPage: true });
+  }
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await other.locator('#reset').click();
+  for (const viewer of [page, other]) {
+    await waitText(viewer, 'status', 'cooldown');
+    assert.equal(await viewer.locator('#start').isDisabled(), true);
+    assert.equal(await viewer.locator('#reset').isHidden(), true);
+    assert.equal(await viewer.locator('#log li').count(), 0);
+    assert.equal(await text(viewer, 'video-message'), 'Waiting for a run');
+    assert.deepEqual(await viewer.locator('#screen').evaluate(canvas => [canvas.width, canvas.height, canvas.getContext('2d').getImageData(5, 5, 1, 1).data[3]]), [1280, 720, 0]);
+  }
+  assert.equal(f.starts, 1);
+  assert.deepEqual(posts, ['/start', '/stop', '/reset']);
+  f.state('idle', null);
+  for (const viewer of [page, other]) await waitText(viewer, 'status', 'idle');
+  await page.setViewportSize({ width: 375, height: 812 });
+  if (process.env.KANE_VIEWER_SCREENSHOTS) await page.screenshot({ path: '/tmp/kane-controls-ready-mobile.png', fullPage: true });
+  await other.locator('#start').click();
+  await waitText(page, 'status', 'starting');
+  await waitText(other, 'status', 'starting');
+  assert.equal(f.starts, 2);
+  await page.waitForTimeout(60);
+  f.state('live', 'run-2');
+  for (const viewer of [page, other]) await waitText(viewer, 'status', 'live');
+  f.run.emit('line', JSON.stringify({ seq: 1, type: 'driver_start', mode: 'fresh' }));
+  for (const viewer of [page, other]) {
+    await viewer.waitForFunction(() => document.querySelectorAll('#log li').length === 1);
+    assert.match(await text(viewer, 'log'), /fresh/);
+  }
+  assert.deepEqual(posts, ['/start', '/stop', '/reset', '/start']);
+  assert.deepEqual(f.errors, []);
+});
+
+// A cancelled preflight can finish after Stop/Reset: its old error cannot replace Ready/new live state.
+test('Stop works while Start HTTP is pending and late control responses cannot overwrite shared state', async t => {
+  const f = await fixture(t), { page } = f;
+  let releaseStart;
+  await page.route('**/start', async route => {
+    await new Promise(resolve => { releaseStart = resolve; });
+    await route.fulfill({ status: 503, body: '{}' });
+  });
+  await page.goto(f.base);
+  await waitText(page, 'status', 'idle');
+  await page.locator('#start').click();
+  await waitText(page, 'status', 'starting');
+  assert.equal(await page.locator('#stop').isEnabled(), true);
+  f.state('starting', null);
+  let releaseStop;
+  await page.route('**/stop', async route => {
+    await new Promise(resolve => { releaseStop = resolve; });
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ state: 'cooldown', runId: 'old', outcome: 'stopped', viewers: 1 }) });
+  });
+  await page.locator('#stop').click();
+  await waitText(page, 'status', 'stopping');
+  assert.equal(await page.locator('#reset').isVisible(), true);
+  assert.equal(await page.locator('#reset').isDisabled(), true);
+  f.state('cooldown', null, 'stopped');
+  await waitText(page, 'status', 'stopped');
+  assert.equal(await page.locator('#reset').isDisabled(), true);
+  const other = await page.context().newPage();
+  await other.goto(f.base);
+  await waitText(other, 'status', 'stopped');
+  await other.locator('#reset').click();
+  await waitText(page, 'status', 'cooldown');
+  f.state('idle', null);
+  await waitText(page, 'status', 'idle');
+  releaseStart();
+  await page.waitForTimeout(50);
+  assert.equal(await text(page, 'status'), 'idle');
+  f.state('starting', null);
+  f.state('live', 'fresh-run');
+  await waitText(page, 'status', 'live');
+  releaseStop();
+  await page.waitForTimeout(50);
+  assert.equal(await text(page, 'status'), 'live');
+  assert.equal(await page.locator('#stop').isEnabled(), true);
+  assert.deepEqual(f.errors, []);
+});
+
+// Transport doubles expose queued callbacks browsers normally hide; production viewer code remains real.
+async function transportProbe(page) {
+  await page.addInitScript(() => {
+    window.transports = { events: [], sockets: [], decoded: [], drawn: [], closed: [], releases: [], cleared: 0 };
+    window.EventSource = class {
+      constructor() { this.listeners = {}; window.transports.events.push(this); }
+      addEventListener(type, callback) { this.listeners[type] = callback; }
+      close() { this.closed = true; }
+      emit(type, data) { const event = { data: JSON.stringify(data) }; if (type === 'message') this.onmessage?.(event); else this.listeners[type]?.(event); }
+    };
+    window.WebSocket = class {
+      constructor() { window.transports.sockets.push(this); }
+      close() { this.closed = true; this.onclose?.(); }
+      frame(value) { this.onmessage?.({ data: new Blob([new Uint8Array([value])]) }); }
+      meta(w, h) { this.onmessage?.({ data: JSON.stringify({ type: 'meta', w, h }) }); }
+    };
+    window.createImageBitmap = async blob => {
+      const value = new Uint8Array(await blob.arrayBuffer())[0];
+      window.transports.decoded.push(value);
+      await new Promise(resolve => window.transports.releases.push(resolve));
+      return { value, width: 16, height: 9, close() { window.transports.closed.push(value); } };
+    };
+    HTMLCanvasElement.prototype.getContext = () => ({
+      drawImage(bitmap) { window.transports.drawn.push(bitmap.value); },
+      clearRect() { window.transports.cleared++; },
+    });
+  });
+}
+
+test('shared Reset invalidates JPEG work, queued old socket blobs, SSE replay cursor and metadata', async t => {
+  const f = await fixture(t), { page } = f;
+  await transportProbe(page);
+  await page.goto(f.base);
+  await page.waitForFunction(() => window.transports.events.length === 1);
+  await page.evaluate(() => {
+    const p = window.transports;
+    p.events.at(-1).emit('state', { state: 'live', runId: 'old-run', viewers: 2 });
+    p.oldEvents = p.events.at(-1); p.oldSocket = p.sockets.at(-1);
+    p.oldEvents.emit('message', { seq: 100, type: 'driver_start' });
+    p.oldSocket.meta(777, 333); p.oldSocket.frame(1);
+  });
+  await page.waitForFunction(() => window.transports.decoded.length === 1);
+  await page.evaluate(() => {
+    const p = window.transports;
+    p.oldSocket.frame(2);
+    p.oldEvents.emit('reset', { state: 'idle', runId: null, startedAt: null, endsAtMax: null, viewers: 2 });
+    p.oldSocket.frame(3); p.oldSocket.meta(444, 222);
+    p.oldEvents.emit('message', { seq: 101, type: 'stale_event' });
+    p.oldEvents.emit('state', { state: 'live', runId: 'old-run' });
+    p.releases.shift()();
+  });
+  await page.waitForFunction(() => window.transports.closed.length === 1);
+  assert.equal(await text(page, 'status'), 'idle');
+  assert.equal(await page.locator('#log li').count(), 0);
+  assert.deepEqual(await page.evaluate(() => window.transports.drawn), []);
+  assert.deepEqual(await page.evaluate(() => window.transports.decoded), [1]);
+  assert.deepEqual(await page.locator('#screen').evaluate(canvas => [canvas.width, canvas.height]), [1280, 720]);
+  assert.equal(await page.evaluate(() => window.transports.oldSocket.closed), true);
+  await page.evaluate(() => {
+    const p = window.transports;
+    p.events.at(-1).emit('state', { state: 'starting', runId: null });
+    p.events.at(-1).emit('state', { state: 'live', runId: 'new-run' });
+    p.events.at(-1).emit('message', { seq: 1, type: 'fresh_event' });
+    p.sockets.at(-1).frame(4);
+  });
+  await page.waitForFunction(() => window.transports.decoded.length === 2);
+  await page.evaluate(() => window.transports.releases.shift()());
+  await page.waitForFunction(() => window.transports.drawn.length === 1);
+  assert.deepEqual(await page.evaluate(() => window.transports.drawn), [4]);
+  assert.match(await text(page, 'log'), /fresh_event/);
+  assert.deepEqual(f.errors, []);
+});
+
+test('reconnect state detects a missed Reset and repeated null starting snapshots do not loop', async t => {
+  const f = await fixture(t), { page } = f;
+  await transportProbe(page);
+  await page.goto(f.base);
+  await page.waitForFunction(() => window.transports.events.length === 1);
+  await page.evaluate(() => {
+    const p = window.transports;
+    p.events.at(-1).emit('state', { state: 'live', runId: 'missed-reset' });
+    p.events.at(-1).emit('message', { seq: 50, type: 'old_event' });
+    p.oldSocket = p.sockets.at(-1);
+    p.events.at(-1).emit('state', { state: 'idle', runId: null, startedAt: null, endsAtMax: null });
+    p.oldSocket.frame(7);
+  });
+  assert.equal(await page.locator('#log li').count(), 0);
+  assert.deepEqual(await page.evaluate(() => window.transports.decoded), []);
+  const count = await page.evaluate(() => window.transports.events.length);
+  await page.evaluate(() => {
+    const p = window.transports;
+    for (let i = 0; i < 4; i++) p.events.at(-1).emit('state', { state: 'starting', runId: null });
+  });
+  assert.equal(await page.evaluate(() => window.transports.events.length), count);
+  assert.equal(await page.locator('#stop').isVisible(), true);
+  assert.deepEqual(f.errors, []);
+});
+
+// Stop must not be lost if its HTTP request could reach the server before Start reserves a run.
+test('Stop queued before Start reservation cancels that attempt without an unsafe early Reset', async t => {
+  const f = await fixture(t), { page } = f;
+  let releaseStart;
+  const posts = [];
+  page.on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); });
+  await page.route('**/start', async route => {
+    await new Promise(resolve => { releaseStart = resolve; });
+    await route.continue();
+  });
+  f.state('idle', 'previous-finished-run', 'won');
+  await page.goto(f.base);
+  await waitText(page, 'status', 'idle');
+  await page.locator('#start').click();
+  await page.locator('#stop').click();
+  await page.waitForTimeout(60);
+  assert.equal(await text(page, 'status'), 'stopping');
+  assert.equal(await page.locator('#reset').isVisible(), true);
+  assert.equal(await page.locator('#reset').isDisabled(), true);
+  assert.deepEqual(posts, ['/start']);
+  releaseStart();
+  await page.waitForFunction(() => document.getElementById('status').textContent === 'stopping');
+  await page.waitForTimeout(80);
+  assert.deepEqual(posts, ['/start', '/stop']);
+  f.finishStop();
+  await page.waitForFunction(() => !document.getElementById('reset').disabled);
+  await page.locator('#reset').click();
+  await waitText(page, 'status', 'cooldown');
+  assert.equal(f.starts, 1);
+  assert.deepEqual(f.errors, []);
+});
+
+test('another viewer Reset clears an unreserved Stop intent before an unrelated fresh run', async t => {
+  const f = await fixture(t), { page } = f;
+  let releaseStart;
+  const posts = [];
+  page.on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); });
+  await page.route('**/start', async route => {
+    await new Promise(resolve => { releaseStart = resolve; });
+    await route.fulfill({ status: 503, body: '{}' });
+  });
+  await page.goto(f.base);
+  await waitText(page, 'status', 'idle');
+  await page.locator('#start').click();
+  await page.locator('#stop').click();
+  await f.run.reset();
+  await waitText(page, 'status', 'idle');
+  f.state('starting', null);
+  f.state('live', 'unrelated-run');
+  await waitText(page, 'status', 'live');
+  releaseStart();
+  await page.waitForTimeout(80);
+  assert.equal(await text(page, 'status'), 'live');
+  assert.deepEqual(posts, ['/start']);
+  assert.deepEqual(f.errors, []);
+});
+
+test('a settled accepted Start with missed terminal events cannot carry a queued Stop into the next run', async t => {
+  const f = await fixture(t), { page } = f;
+  let releaseStart;
+  const posts = [];
+  page.on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); });
+  await page.route('**/start', async route => {
+    await new Promise(resolve => { releaseStart = resolve; });
+    // Model a completed attempt whose startup/terminal SSE events were missed.
+    await route.fulfill({ status: 202, contentType: 'application/json', body: '{"runId":"already-ended"}' });
+  });
+  await page.goto(f.base);
+  await waitText(page, 'status', 'idle');
+  await page.locator('#start').click();
+  await page.locator('#stop').click();
+  releaseStart();
+  await waitText(page, 'status', 'idle');
+  f.state('starting', null);
+  f.state('live', 'later-run');
+  await waitText(page, 'status', 'live');
+  assert.deepEqual(posts, ['/start']);
   assert.deepEqual(f.errors, []);
 });

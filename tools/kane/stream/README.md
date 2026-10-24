@@ -74,12 +74,58 @@ verify the session's driver, Chrome and preview exited without changing unrelate
 processes. For an authorized real run use the same lock/port procedure and omit
 `KANE_STREAM_DRIVER` and `KANE_STREAM_FAKE_DURATION_S`.
 
-Only fixed viewer files, `/backup.mp4`, `/api/state`, `/start`, `/events` and `/ws`
-are served. Start requires an Origin and no request body. The lifecycle includes
+Only fixed viewer files, `/backup.mp4`, `/api/state`, `/start`, `/stop`, `/reset`,
+`/events` and `/ws` are served. All three POST controls require a valid Origin;
+the viewer sends no request body. The lifecycle includes
 starting/live/ending/cooldown; default cooldown is 120 seconds. The credit floor is
 checked before spawn and again by the driver. Raw NDJSON/process records stay in
 ignored `kane-runs/`; never copy local paths, balances, credentials or raw driver
 output into public logs. Only the relay's default-deny filtered events are public.
+
+## Shared Start, Stop and Reset controls
+
+Opening/reloading the viewer, connecting streams and pressing Reset perform no
+credit preflight and never start a match. Only clicking **Start** sends `/start`.
+Late viewers join the same run. **Stop** is available during startup (including
+pending preflight) and live play; it ends the shared run and cleans its owned
+resources. Everyone sees **Stopping…** during cleanup, then **Stopped**. **Reset**
+appears as soon as Stop is requested and stays disabled until startup/control
+settlement and cleanup complete. A Stop clicked before the server reserves a
+Start waits for its starting/live announcement, so an early conflict cannot lose
+the cancellation. Shared Reset clears that queued intent before a later run.
+
+Reset clears the shared frame, queued JPEG work, activity, replay cursor and run
+metadata. A reconnecting viewer also clears its old display if it missed Reset.
+Reset returns to **Ready** after the original cooldown expires; during cooldown
+Start stays disabled. Reset never clears credit floors, daily/IP admission or the
+cooldown deadline. Click Start separately to launch a fresh match. Normal match
+completion retains its existing finished/failure behavior.
+
+Credit-free verification for this change uses ephemeral local HTTP servers,
+injected lifecycle operations, synthetic events and mocked JPEG/transport races:
+
+```sh
+node --test tools/kane/stream/test
+KANE_VIEWER_SCREENSHOTS=1 node --test tools/kane/stream/test/viewer.test.mjs
+pnpm check:docs
+```
+
+The browser suite checks two viewers, initial/reload/Reset with zero automatic
+`/start` requests, stopped cleanup gating, retained cooldown, fresh Start, stale
+HTTP responses, missed reset, old SSE/socket callbacks and in-flight decoding.
+Screenshots go to `/tmp/kane-controls-*.png` and `/tmp/kane-viewer-*.png`. These tests
+make no Kane calls and do not start the primary stream, ngrok or the private game.
+
+Keep primary hosting intentionally off. Do not deploy this feature before merge.
+An optional actual fake-driver Stop/Reset smoke needs a separately coordinated
+session: first verify `/tmp/node-arena-kane-stream.lock` has no active owner, take
+`/tmp/node-arena-kane-stream-controls-smoke.lock`, and reserve **8789/4176/9226**.
+Use the existing fake driver (synthetic credits 500), duration 60 seconds, cooldown
+1 second and IP cooldown 0; preserve primary **8787/4175/9225** and unrelated
+**4173/5173**. Build prerequisites and the test client in this feature worktree.
+Check two viewers share Stopped and Reset, then Start explicitly boots a fresh
+match; close the smoke and verify only its owned processes/profile were removed.
+Never invoke real Kane, start a tunnel or change services for these checks.
 
 ## Environment
 
