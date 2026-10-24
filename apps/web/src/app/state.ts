@@ -51,7 +51,7 @@ export function createAppController(options: AppOptions) {
       const content=loadContent(options.files,{themes:Object.keys(next.themes),colorKeys:Object.keys(next.palettes)});
       const campaign=content.catalog.campaigns[options.campaignId==='kane'?'kane':'common'];if(!campaign||!content.catalog.campaigns[options.campaignId??'common'])throw Error('Campaign not found');
       const levels=[...campaign.entries].sort((a,b)=>a.position-b.position).map(e=>({id:e.level,position:e.position,number:e.position-3,name:`Level ${e.position-3}`}));
-      const customLevels=[...(content.catalog.campaigns.custom?.entries??[])].sort((a,b)=>a.position-b.position).map(e=>({id:e.level,position:e.position,number:e.position,name:content.levels[e.level]!.level.name}));
+      const customLevels=[...(options.campaignId==='kane'?[]:content.catalog.campaigns.custom?.entries??[])].sort((a,b)=>a.position-b.position).map(e=>({id:e.level,position:e.position,number:e.position,name:content.levels[e.level]!.level.name}));
       if(!levels.length)throw Error('Empty campaign');loaded=content;manifest=next;
       state={...state,screen:'picker',loading:false,levels,customLevels,error:null};publish();
     }catch(error){if(!disposed&&token===generation)fail(error);}},

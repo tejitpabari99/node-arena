@@ -14,9 +14,12 @@ test('?kane=1 boots straight into na-kane; Levels shows a one-card kane picker, 
     .toEqual({ screen: 'playing', levelId: 'na-kane', kane: true });
   await page.getByRole('button', { name: 'Pause' }).click();
   await page.getByRole('button', { name: 'Levels', exact: true }).click();
-  await expect(page.locator('.level-grid.campaign .level-card')).toHaveCount(1);
+  await expect(page.locator('.level-card')).toHaveCount(1);
+  await expect(page.locator('.level-grid.custom .level-card')).toHaveCount(0);
   await expect(page.locator('.level-grid.campaign .level-card:not(:disabled)')).toHaveCount(1);
   expect(await page.evaluate(() => window.__na!.state().levels.map(l => l.id))).toEqual(['na-kane']);
+  await page.evaluate(() => window.__na!.load('na-trial'));
+  expect(await page.evaluate(() => window.__na!.screen)).toBe('picker');
   // The unlocked card starts the level again.
   await page.locator('.level-grid.campaign .level-card').first().click();
   await expect.poll(() => page.evaluate(() => window.__na!.state().levelId)).toBe('na-kane');
@@ -42,6 +45,7 @@ test('na-kane result dialog (fixture win) and returns to the one-card picker', a
   expect(await page.evaluate(() => window.__na!.state().result)).toEqual({ outcome: 'won', winner: 0 });
   expect(await page.evaluate(() => Object.keys(window.__na!.state().save.completed))).toContain('na-kane');
   await page.getByRole('button', { name: 'Levels', exact: true }).click();
-  await expect(page.locator('.level-grid.campaign .level-card')).toHaveCount(1);
+  await expect(page.locator('.level-card')).toHaveCount(1);
+  await expect(page.locator('.level-grid.custom .level-card')).toHaveCount(0);
   await expect(page.locator('.level-grid.campaign .level-card:not(:disabled)')).toHaveCount(1);
 });
