@@ -32,7 +32,7 @@ Non-goals: sim/tick/rules changes, new commands, touch UI, panel in production o
 
 ### R2 Pair panel (bottom, Kane mode only)
 - One group per source = building owned by human (player 0) with `buildingStatic.drawsLines`. Header `A (blue 20)` = letter, owner colourKey, level. Within a group one button per other building (own, neutral, enemy).
-- Hidden: geometry-impossible pairs (`canDraw` -> `blocked-obstacle|blocked-building`), remembered per level so they stay hidden when the source runs out of slots (see [OPEN] O3).
+- Hidden: geometry-impossible pairs, taken from a per-level geometry precompute (blocked list), NOT from the `canDraw` reason: `canDraw` returns `no-slot`/`duplicate` before `blocked-*`, so a reason filter would show blocked pairs once slots fill [RESOLVED: owner 2026-10-24 design change; probe: probes-20261024.md §P-LEVEL]. na-kane blocked list (letters by JSON order A=b0 B=b1 C=b2 D=b3 E=b4): A->B, A->D, B->A, C->D, C->E, D->A, D->C. Precompute computes `blocksLines` for every ordered pair with all buildings treated as owned (static geometry), once per level load.
 - States (colour + word, text is the contract):
 
 | State | Text | Colour | Click | Dblclick |
@@ -49,7 +49,7 @@ Non-goals: sim/tick/rules changes, new commands, touch UI, panel in production o
 - Press feedback: 400 ms pressed animation plus ripple on every click (human or Kane); colour flips on the next tick when the sim accepts (<=200 ms wall at 0.25x).
 - Game over (`screen==='result'`): all pair buttons `disabled`, banner `Game over`. While the restart popup is open the panel is under the scrim (not clickable).
 - Result element: the existing dialog title for a win on a single-entry campaign is `All levels complete!` (`ResultPopup.tsx`, `hasNext` false) [verified], not Victory. The overlay renders its own `kane-result` (Victory! / Defeat / Time up) above the scrim; production popup untouched.
-- Overflow: panel height fixed at `clamp(140px, 22vh, 220px)`; groups sit side by side, each group's buttons wrap in 2 columns; ready/active sort first; `overflow:auto` as last resort. Fixed height keeps the camera still as sources are captured.
+- Overflow: na-kane shows max 7 pair buttons (2 at start, 4 after capturing C, 7 with A, B, C owned) [probe: probes-20261024.md §P-LEVEL]; panel height fixed at `clamp(140px, 22vh, 220px)`; groups sit side by side, each group's buttons wrap in 2 columns; ready/active sort first; `overflow:auto` as last resort. Fixed height keeps the camera still as sources are captured.
 - Canvas drag keeps working; the panel container is `pointer-events:none`, only buttons capture.
 
 ### R3 Building tags
@@ -73,7 +73,7 @@ See Architecture. Everything is `data-testid` plus data-attributes; Kane reads t
 | Unit | File | Role |
 |---|---|---|
 | Speed accumulator | `driver/index.ts` | Widen type only; the existing loop is already fractional |
-| Pairs model | `kane/pairs.ts` (pure, node-testable) | `derivePairs(view, canDraw, memo) -> Group[]`, labels, reason words, letters |
+| Pairs model | `kane/pairs.ts` (pure, node-testable) | `derivePairs(view, canDraw, blocked) -> Group[]`, `computeBlocked(sim/state) -> Set<from>>to>` (static geometry, once per level), labels, reason words, letters |
 | Panel + tags + banner + speed button + result | `kane/Overlay.tsx`, `kane/tags.ts`, `kane/kane.css` | Preact overlay + imperative tag layer |
 | Wiring | `main.tsx` (inside gated block) | Dynamic-imports `kane/`, passes overlay to `mountApp`, wraps `attachInput` so tag refresh rides `input.refresh()` (called each frame by `runtime.frame`) |
 | Harness | `test-harness/{gate,index}.ts` | `request.kane`, speed parsing, owned `currentSpeed`, `api.kane` |
@@ -103,11 +103,14 @@ Existing `window.__na` already exposes `commandLog` (all submissions incl. bots,
 `{tick, speed, over:{outcome,winner}|null, result:'won'|'lost'|'timeout'|null, letters:[{letter,index,id,owner,level}], human:{commands:[{tick,cmd}], drawn:n, cut:n, rejected:[{command,reason}]}, banner:{text,reason}|null, pairs:[{from,to,state,reason,text}]}`.
 Human rows = `player===0`. Drawn/cut/rejected come from `events`. Resets when the driver changes (existing behaviour). The driver (03) must key off `summary().result`, never Kane's claim or dialog text.
 
+### Visibility / background tab (Kane mode)
+Facts [probe: probes-20261024.md §P-INFRA-Q3]: when another tab is frontmost `document.hidden=true`, the driver pauses ('hidden') and does NOT auto-resume (needs `__na.resume()`); focus emulation keeps `hidden=false` but rAF throttles to ~5 ticks/s; Chromium throttle flags do not help. Proposal (minimal): in `kaneMode`, auto-resume the driver on `visibilitychange` -> visible (and do not open the restart popup for a hidden pause). Driver (03) additionally keeps a single tab and calls `Page.bringToFront`. Never set `?test=1` for Kane: it makes the driver manual (ticks stay 0); the kane boot URL has no `test=1` (01).
+
 ### Cross-SP assumptions
 - A1 (from 01): `?kane=1` yields `AppOptions.campaignId='kane'` and test-build gate; 02 defines `app.kaneMode = options.campaignId==='kane'` and adds `request.kane` to `gate.ts` if 01 has not. Both edit `gate.ts`; 01 lands first.
 - A2 (from 01): na-kane human is player 0, building order in JSON is final before 03 authors tests.
 - A3 (to 03/04/05): they use only the contract above plus `window.__na`; letters are read from `summary().letters` at runtime, not hard-coded in code (objective text may name letters after 01 freezes the map).
-- A4 (to 05): hosted build needs `VITE_TEST_HOOKS=1`; panel adds no network calls.
+- A4 (to 05): hosted build needs `VITE_TEST_HOOKS=1`; panel adds no network calls. Headless rendering works with swiftshader flags (`--headless=new --use-angle=swiftshader --enable-unsafe-swiftshader`) [probe: probes-20261024.md §P-RENDER].
 
 ## Decisions
 | # | Decision | Choice | Alternatives considered | Why |
@@ -117,18 +120,18 @@ Human rows = `player===0`. Drawn/cut/rejected come from `events`. Resets when th
 | D3 | Speed button visibility | Kane mode only | All builds/levels | `hud.spec` asserts 2 HUD buttons; production unchanged |
 | D4 | Re-render trigger | Per-tick events, signature diff, rAF coalesce | `app.subscribe` (every 2 ticks) | Colour flip must land inside the 400 ms press |
 | D5 | Double-fire guard | Pending set + 700 ms cut guard | Debounce | Deterministic; handles human slow dblclick |
-| D6 | Geometry hiding | `canDraw` reason + per-level memo | Own geometry code | No sim change; reuses sim legality |
+| D6 | Geometry hiding | Per-level geometry precompute (blocked list, static ownership-independent) | `canDraw` reason + memo | `canDraw` returns no-slot/duplicate before blocked-*; memo shows blocked pairs when slots are full (owner 2026-10-24) |
 | D7 | Letters | Index in `view.ids.buildings` | By x/y sort; random | Stable, trivial, survives restarts |
 | D8 | Result text | Own `kane-result` element | Edit `ResultPopup` | Dialog says "All levels complete!" on single-level win; avoids production edit |
 | D9 | Panel size | Fixed height `clamp(140,22vh,220)` | Auto height + ResizeObserver | Camera would zoom while sources change |
 | D10 | Banner lifetime | Sticky to next click or 12 s | 3 s toast | Kane reads ~5 s after the click |
 
 ## Risks / Open Questions
-- [OPEN] O1 Hidden-tab pause: `document.hidden` pauses the driver and opens the restart popup (`driver/index.ts` visibility handler). A persistent CDP-attached Chrome that is backgrounded/minimised would freeze the match. Cheapest test: 03's first rehearsal with Chrome unfocused; fallback is a Kane-mode `environment.isHidden=()=>false` override.
-- [OPEN] O2 Real button count on na-kane: worst case (3-4 sources x 9 targets) needs ~4 x 5 rows of 2 columns inside 220 px; untested until 01's map exists. Cheapest test: screenshot at 1600x900 and 1366x768 after 01; fall back to scroll plus ready-first sort.
-- [OPEN] O3 Memo hides a blocked pair only after seeing it with a free slot; a source with 0 slots shows an unseen blocked pair as `no free route`. Acceptable unless na-kane has blocked pairs from freshly captured full sources; check in rehearsal.
-- [OPEN] O4 Tag placement vs the number sprite (`labelPos`) overlap; decide via screenshot against the building footprint.
-- [OPEN] O5 Can Kane click a button that scrolled out of the panel? Moot if O2 holds (<= no overflow).
+- [RESOLVED: confirmed: hidden pauses and never auto-resumes; focus emulation + flags do not give full speed off-front [probe: probes-20261024.md §P-INFRA-Q3]] O1 Hidden-tab pause. Requirement: Kane mode auto-resumes on visibilitychange->visible (see Visibility section); 03 keeps a single front tab (`Page.bringToFront`) and may call `__na.resume()`. [DEFERRED: verify at runtime in rehearsal that auto-resume leaves no stuck restart popup].
+- [RESOLVED: max 7 pair buttons on na-kane (2 start, 4 after C, 7 max) [probe: probes-20261024.md §P-LEVEL]] O2 Overflow: fits in 220 px without scroll. [DEFERRED: verify at runtime in rehearsal: screenshot at 1600x900 and 1366x768].
+- [RESOLVED: design change: hidden pairs come from a per-level geometry precompute, not a `canDraw` memo [probe: probes-20261024.md §P-LEVEL]] O3 Memo gap. Supersedes D6.
+- [DEFERRED: verify at runtime in rehearsal; screenshots of na-kane in 01-kane-level/ref/ show the map small and centred] O4 Tag placement vs the number sprite (`labelPos`) overlap; decide via screenshot against the building footprint.
+- [RESOLVED: moot, no overflow (max 7 buttons) [probe: probes-20261024.md §P-LEVEL]] O5 Scrolled-out button.
 - [RESOLVED: driver tests] Tab-hidden/pause/resume at 0.25: accumulator reset, no catch-up.
 - [RESOLVED: verified] Replays/goldens unaffected; bot delay is game-time.
 - [DEFERRED] Keyboard shortcuts; panel on `common` levels; speed button persistence across reloads.
@@ -139,4 +142,5 @@ Human rows = `player===0`. Drawn/cut/rejected come from `events`. Resets when th
 - Existing e2e unchanged and green (`#game-hud button` count 2 on common).
 - `pnpm build` then grep of the production `dist` for `kane-pair`, `kane-panel` -> 0 matches; grep -i 'tower war' over `apps/web/{src,e2e,assets,index.html}` -> 0.
 - `pnpm sim:golden`, `pnpm replay:verify golden`, `pnpm bots:golden`, `pnpm check:rules` pass unchanged (no RULES_VERSION/BOT_VERSION diff).
+- Hidden pairs: test that a source with 0 free slots still hides blocked pairs (A->B, A->D on na-kane) and shows only `no free route` for non-blocked pairs.
 - Screenshot at 1600x900 and 1366x768 shows the whole map above the panel, no overlap of tags with the panel.
