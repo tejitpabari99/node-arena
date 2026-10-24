@@ -5,6 +5,7 @@ import { uncreditedAssets } from './credits.js';
 import { checkLock, splitFiles } from './content.js';
 import { checkManifest } from './manifest.js';
 import { checkManifestAssets } from './manifest-assets.js';
+import { artErrors } from './assets-tw/art-patch.js';
 import { checkRules } from './rules.js';
 import { emitReport, type GateReport } from './output.js';
 import { writeFile } from 'node:fs/promises';
@@ -112,9 +113,13 @@ async function main(): Promise<void> {
     const manifestPath = resolve(opts['--manifest'] ?? resolve(root, manifestFile));
     const manifest = await readJson(manifestPath);
     const issues = checkManifest(manifest, result.content!);
-    if (issues.length) { report.errors.push(...issues.map(issue => ({ ...issue, file: manifestPath }))); return; }
-    // Asset files, lock hashes of committed outputs (no TW_EXTRACT needed), budgets, textures, fragment merge. A custom --assets-dir skips the repo lock unless --lock is given.
     const assetsDir = resolve(opts['--assets-dir'] ?? resolve(root, 'apps/web/assets'));
+    if (issues.length) {
+      // Art patch errors are the likelier cause of schema issues; report them too (checkManifestAssets below would otherwise be skipped).
+      report.errors.push(...issues.map(issue => ({ ...issue, file: manifestPath })), ...artErrors(assetsDir).map(message => ({ file: manifestPath, pointer: '', message })));
+      return;
+    }
+    // Asset files, lock hashes of committed outputs (no TW_EXTRACT needed), budgets, textures, fragment merge. A custom --assets-dir skips the repo lock unless --lock is given.
     const lockPath = opts['--lock'] ? resolve(opts['--lock']) : opts['--assets-dir'] ? undefined : resolve(root, 'tools/assets/tw-extract.lock.json');
     const assetWarnings: string[] = [];
     const assetIssues = await checkManifestAssets(manifest as Parameters<typeof checkManifestAssets>[0], assetsDir, lockPath, assetWarnings);

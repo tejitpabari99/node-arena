@@ -8,7 +8,7 @@ import type { ManifestV2 } from '@node-arena/content';
 import { Document, NodeIO } from '@gltf-transform/core';
 import { DEFAULT_EVENT_SFX, lightDirFromQuat, lightDirToDataFrame, mergeManifest, stringify, type Fragment } from '../src/assets-tw/manifest-fragment.js';
 import { loadArt } from '../src/assets-tw/art-patch.js';
-import { mergeFiles } from '../src/assets-tw/merge-cli.js';
+import { main as mergeMain, mergeFiles } from '../src/assets-tw/merge-cli.js';
 import { checkManifestAssets } from '../src/manifest-assets.js';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -240,6 +240,26 @@ test('art: stale target is an error naming the field', async () => {
   try {
     const r = await withArt(dir, { visuals: { 'unit.soldier': { team: { textures: { gray: 'art/textures/g.png' } } } } }, { 'art/textures/g.png': png(32, 32) });
     assert.ok(r.errors.includes('art: visuals.unit.soldier.team.textures.gray targets a field the importer no longer produces'), r.errors.join('\n'));
+  } finally { done(); }
+});
+
+test('art: unknown visual id names the art patch (checkManifestAssets); assets:manifest refuses and writes nothing; check:manifest reports it', async () => {
+  const { dir, done } = copy();
+  try {
+    const art = { visuals: { 'unit.ghost': { scale: 2 } } };
+    const r = await withArt(dir, art, {}, false); // unmerged: a merged partial visual is rejected by the schema, not this check
+    assert.ok(r.errors.includes('art: visuals.unit.ghost is not a visual the importer produces (manifest.art.json)'), r.errors.join('\n'));
+    const before = readFileSync(join(dir, 'manifest.json'), 'utf8');
+    const err: string[] = []; const orig = process.stderr.write;
+    process.stderr.write = ((s: string) => { err.push(String(s)); return true; }) as typeof process.stderr.write;
+    try { assert.equal(mergeMain([], dir), 1); assert.equal(mergeMain(['--check'], dir), 1); } finally { process.stderr.write = orig; }
+    assert.match(err.join(''), /visuals\.unit\.ghost is not a visual the importer produces \(manifest\.art\.json\)/);
+    assert.equal(readFileSync(join(dir, 'manifest.json'), 'utf8'), before);
+    // merged (partial visual) manifest fails schema; the CLI still names the art patch
+    writeFileSync(join(dir, 'manifest.json'), stringify(mergeManifest(JSON.parse(before), JSON.parse(readFileSync(join(dir, 'manifest.tw.json'), 'utf8')) as Fragment, art)));
+    const c = spawnSync(process.execPath, ['--import', 'tsx', 'tools/src/cli.ts', 'check:manifest', '--format', 'json', '--manifest', join(dir, 'manifest.json'), '--assets-dir', dir], { cwd: root, encoding: 'utf8' });
+    assert.notEqual(c.status, 0);
+    assert.match(c.stdout, /visuals\.unit\.ghost is not a visual the importer produces \(manifest\.art\.json\)/);
   } finally { done(); }
 });
 

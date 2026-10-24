@@ -3,7 +3,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadArt } from './art-patch.js';
+import { artErrors, loadArt } from './art-patch.js';
 import { FRAGMENT_PATH, mergeManifest, stringify, type Fragment } from './manifest-fragment.js';
 
 const ASSETS = join(resolve(dirname(fileURLToPath(import.meta.url)), '../../..'), 'apps/web/assets');
@@ -20,6 +20,8 @@ export function main(args: readonly string[], assetsRoot: string = ASSETS): numb
   const check = args.includes('--check');
   for (const a of args) if (a !== '--check') { process.stderr.write(`Unknown option ${a}\n`); return 2; }
   if (!existsSync(join(assetsRoot, FRAGMENT_PATH))) { process.stderr.write(`assets:manifest: ${FRAGMENT_PATH} missing (run \`pnpm assets:tw\` with TW_EXTRACT)\n`); return 1; }
+  const bad = artErrors(assetsRoot); // never write a manifest from an invalid art patch
+  if (bad.length) { process.stderr.write(`${bad.join('\n')}\n`); return 1; }
   const world = mergeFiles(assetsRoot);
   // SP08 has a separate presentation namespace: the closed world manifest schema has no UI fields.
   const uiFragment = join(assetsRoot, 'manifest.ui.json');
