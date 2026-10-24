@@ -1,0 +1,11 @@
+{
+  "$schema": "../../schemas/campaign.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "kane",
+  "entries": [
+    {
+      "level": "na-kane",
+      "position": 4
+    }
+  ]
+}
