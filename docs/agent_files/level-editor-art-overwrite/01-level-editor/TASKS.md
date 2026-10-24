@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 summary: 12 tasks, P0 custom-list contract first (unblocks 02), then editor viewer/Save, editing tools, Play/Solvable/Finalize, Edit buttons and docs.
 date: 2026-10-24
 ---
@@ -10,16 +10,16 @@ Source of truth: docs/agent_files/level-editor-art-overwrite/01-level-editor/PRD
 |---|---|---|---|
 | 1 | Custom list: app state, picker, unlock, next | - | done |
 | 2 | Custom list: tooling union, lock merge mode, trial level | 1 | done |
-| 3 | Editor shell, dev gate, read-only middleware | 2 | todo |
-| 4 | Edit viewport and picking | 3 | todo |
-| 5 | Save: canonical write, checks, round-trip | 3, 4 | todo |
-| 6 | Doc model, undo/redo, library drag-drop | 4, 5 | todo |
-| 7 | Forms and script-removal banner | 6 | todo |
-| 8 | Editing tools: select, copy, mirror, snap, fit, LOS | 6 | todo |
-| 9 | Play overlay via real runtime | 5, 6 | todo |
-| 10 | Solvable? | 5 | todo |
-| 11 | Finalize | 2, 5 | todo |
-| 12 | Edit buttons and docs | 9, 11 | todo |
+| 3 | Editor shell, dev gate, read-only middleware | 2 | done |
+| 4 | Edit viewport and picking | 3 | done |
+| 5 | Save: canonical write, checks, round-trip | 3, 4 | done |
+| 6 | Doc model, undo/redo, library drag-drop | 4, 5 | done |
+| 7 | Forms and script-removal banner | 6 | done |
+| 8 | Editing tools: select, copy, mirror, snap, fit, LOS | 6 | done |
+| 9 | Play overlay via real runtime | 5, 6 | done |
+| 10 | Solvable? | 5 | done |
+| 11 | Finalize | 2, 5 | done |
+| 12 | Edit buttons and docs | 9, 11 | done |
 
 ## Task 1 — Custom list: app state, picker, unlock, next
 What it is / what it means: R6 app-side contract (D3). `data/campaigns/custom.json` (campaign schema, id `custom`) lists custom levels; absent file means none. 02 relies on this exactly.
