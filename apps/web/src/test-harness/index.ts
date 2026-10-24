@@ -9,7 +9,7 @@ import type { TestHookRequest } from './gate';
 /** The module is imported only behind the literal DEV / VITE_TEST_HOOKS build gate. */
 export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
   const content=loadContent(files),entries=[...content.catalog.campaigns.common!.entries].sort((a,b)=>a.position-b.position);
-  const isolated=request.level!==null||request.fixture!==null;
+  const isolated=request.level!==null||request.fixture!==null||request.kane;
   const initial=defaultSave(),memory=new Map<string,string>();
   const resolve=(id:string)=>entries.find(e=>e.level===id||String(e.position-3)===id)?.level??id;
   const grant=(id:string)=>{const index=entries.findIndex(e=>e.level===resolve(id));for(let i=0;i<index;i++)initial.completed[entries[i]!.level]={firstAt:'2026-01-01T00:00:00.000Z'};};
@@ -17,7 +17,7 @@ export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
   memory.set(SAVE_KEY,JSON.stringify(initial));
   const save=isolated?createSaveStore({storage:{getItem:k=>memory.get(k)??null,setItem:(k,v)=>{memory.set(k,v);}}}):undefined;
   return {
-    options:{autoStart:!request.testing,...(request.testing?{resultDelayMs:0}:{}),...(save?{save}:{}),...(request.fixture?{createSim:createFixtureSim(request.fixture),createBotDriver:()=>({commands:()=>[]})}:{})},
+    options:{autoStart:!request.testing,...(request.kane?{campaignId:'kane'}:{}),...(request.testing?{resultDelayMs:0}:{}),...(save?{save}:{}),...(request.fixture?{createSim:createFixtureSim(request.fixture),createBotDriver:()=>({commands:()=>[]})}:{})},
     connect(app:AppController){
       const events:SimEvent[]=[],commandLog:CommandSubmission[]=[];
       let driver=app.driver;
@@ -25,6 +25,7 @@ export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
       const unsubscribeEvents=app.subscribeEvents(update=>{events.push(...update.events);commandLog.push(...update.submissions);});
       const inspect=()=>app.runtime?.inspection as ReturnType<typeof import('../render/scene').createLevelScene>|undefined;
       const api={
+        kane:request.kane,
         step:(n=1)=>app.step(n),hash:()=>app.driver?.sim.hash(),get view(){return app.driver?.sim.snapshot();},
         get events(){return events;},get commandLog(){return commandLog;},get screen(){return app.snapshot().screen;},
         state:()=>app.snapshot(),hud:()=>({state:app.snapshot(),ownership:app.driver?.ownership??[],tick:app.driver?.sim.view.tick??null}),
@@ -41,7 +42,7 @@ export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
       };
       return api;
     },
-    async autoLoad(app:AppController){if(request.level)await app.startLevel(resolve(request.level),request.seed);},
+    async autoLoad(app:AppController){if(request.kane)await app.startLevel('na-kane',request.seed);else if(request.level)await app.startLevel(resolve(request.level),request.seed);},
   };
 }
 export type TestApi=ReturnType<ReturnType<typeof createTestHarness>['connect']>;

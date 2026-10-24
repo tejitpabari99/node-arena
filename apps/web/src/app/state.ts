@@ -49,7 +49,7 @@ export function createAppController(options: AppOptions) {
     async boot(){const token=++generation;clear();state={...state,screen:'boot',loading:true,error:null};publish();try{
       const next=await(options.loadManifest??loadManifest)();if(disposed||token!==generation)return;
       const content=loadContent(options.files,{themes:Object.keys(next.themes),colorKeys:Object.keys(next.palettes)});
-      const campaign=content.catalog.campaigns.common;if(!campaign||!content.catalog.campaigns[options.campaignId??'common'])throw Error('Campaign not found');
+      const campaign=content.catalog.campaigns[options.campaignId==='kane'?'kane':'common'];if(!campaign||!content.catalog.campaigns[options.campaignId??'common'])throw Error('Campaign not found');
       const levels=[...campaign.entries].sort((a,b)=>a.position-b.position).map(e=>({id:e.level,position:e.position,number:e.position-3,name:`Level ${e.position-3}`}));
       const customLevels=[...(content.catalog.campaigns.custom?.entries??[])].sort((a,b)=>a.position-b.position).map(e=>({id:e.level,position:e.position,number:e.position,name:content.levels[e.level]!.level.name}));
       if(!levels.length)throw Error('Empty campaign');loaded=content;manifest=next;
