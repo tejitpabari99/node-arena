@@ -5,12 +5,16 @@ import { loadManifest } from '../manifest/load.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Viewport } from './Viewport.js';
 import { EditorApiError, listLevels, readLevel, saveLevel, type LevelListing } from './api.js';
+import { createHistory, historyReducer, type DocHistory, type HistoryAction } from './model.js';
 import { blankDocument, copyDocument, type LevelDoc, type SizePreset } from './document.js';
 
-/** Owns the working document; reducer, forms and Play attach here in later tasks. */
+/** Owns immutable working-copy snapshots; forms and Play attach here. */
 export function Editor() {
   const [levels, setLevels] = useState<LevelListing[]>([]);
-  const [doc, setDoc] = useState<LevelDoc | null>(null);
+  const [history, setHistory] = useState<DocHistory | null>(null);
+  const doc = history?.present ?? null;
+  function setDoc(next: LevelDoc | null) { setHistory(next ? createHistory(next) : null); }
+  function dispatch(action: HistoryAction) { clearSave(); setHistory(state => state ? historyReducer(state, action) : state); }
   const [id, setId] = useState('');
   const [theme, setTheme] = useState('green');
   const [size, setSize] = useState<SizePreset>('medium');
@@ -31,7 +35,7 @@ export function Editor() {
       catalog.current ??= loadManifest().then(manifest => loadCatalog(contentFiles(), { themes: Object.keys(manifest.themes), colorKeys: Object.keys(manifest.palettes) }));
       const checked = validateEditorDocument(await catalog.current, doc, doc.id);
       const result = await saveLevel(checked.level);
-      setDoc(result.level); setWarnings(result.warnings); setSaved(true);
+      setHistory(state => state ? { ...state, present: result.level } : state); setWarnings(result.warnings); setSaved(true);
       const items = await listLevels(); setLevels(items); setReopenId(result.level.id);
     } catch (reason) {
       if (reason instanceof ContentLoadError) setIssues(reason.errors);
@@ -71,13 +75,13 @@ export function Editor() {
     <header><h1>Level editor</h1><span>Local development</span><a href="/">Game</a></header>
     {error && <p role="alert">{error}</p>}
     {doc ? <section aria-label="Working level">
-      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
+      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
       {issues.length > 0 && <ul role="alert" aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
       {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
       {saved && <p role="status">Saved. Run Finalize when ready to update content locks.</p>}
       <p>{doc.name}</p>
       <p data-testid="draft-summary">{doc.theme} · {doc.players.length} players · {doc.buildings.length} buildings · {doc.elements.length} obstacles</p>
-      <Viewport doc={doc} />
+      <Viewport doc={doc} disabled={busy} onEdit={op => dispatch({ type: 'edit', op })} />
     </section> : <>
       <p>Create a blank level, copy an existing level, or reopen a custom level.</p>
       <label>New level id<input value={id} onInput={event => setId(event.currentTarget.value)} placeholder="na-my-level" /></label>
