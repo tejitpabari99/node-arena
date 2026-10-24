@@ -5,7 +5,7 @@ date: 2026-10-24
 ---
 # PRD: Art overrides
 
-Repo/branch: node-arena, `docs/kane-cli-and-agent-files-consolidation` · Depends on: 01-level-editor (soft: custom-levels list; see Interface assumption) · Feeds: none
+Repo/branch: node-arena, `feat/custom-level-contract` · Depends on: 01-level-editor (soft: custom-levels list; see Interface assumption) · Feeds: none
 Owns: `apps/web/assets/art/**`, `apps/web/assets/manifest.art.json`, `tools/src/assets-tw/{manifest-fragment,merge-cli}.ts` (art merge), `tools/src/manifest-assets.ts` (art checks), `tools/src/credits.ts` + the credits call in `tools/src/cli.ts`, new `tools/src/art-status.ts`, `packages/defs/src/visual.ts` (`TEAM_MODES`), manifest TypeBox source in `packages/content/src/manifest.schema.ts` (+ generated schema), `apps/web/src/render/{materials,unit-renderer,building}.ts` (tintMask only), `packages/content/data/levels/na-showcase-{green,snow}.json`, `docs/CONTENT_GUIDE.md` art section.
 Shared with 01 (coordinate): custom list file + loader + level-select section, `tools/unsolved-by-proxy.json`, `hashes.lock.json`, `content.json`, `packages/bots/src/version.ts`, 20-level test exclusions, `tools/README.md`.
 

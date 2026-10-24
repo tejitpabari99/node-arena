@@ -1,19 +1,21 @@
 ---
 status: approved
-summary: Level editor + art overrides — brief + 2 PRDs (draft)
+summary: Approved level editor and art overrides designs and task lists
 date: 2026-10-24
 ---
-# Level editor + art overrides (docs/kane-cli-and-agent-files-consolidation)
+# Level editor + art overrides
 
 ## Goal
-Two dev-only tools: in-app level editor and art-override layer. Design only.
+Two approved dev-only tools: in-app level editor and art-override layer. Current implementation scope: 01-level-editor Tasks 1–2 (P0 custom-list contract).
 
 ## Contents
 | File | Purpose | Status |
 |---|---|---|
-| [brainstorm.md](brainstorm.md) | Decision log + design brief for both projects | draft |
-| [01-level-editor/PRD.md](01-level-editor/PRD.md) | Dev-only editor.html, `/__editor/*` middleware, Play/Solvable?/Finalize, custom-level list | draft |
-| [02-art-overrides/PRD.md](02-art-overrides/PRD.md) | `assets/art/` override layer, tintMask, relaxed credits check, `art:status`, showcase levels | draft |
+| [brainstorm.md](brainstorm.md) | Decision log + design brief for both projects | approved |
+| [01-level-editor/PRD.md](01-level-editor/PRD.md) | Dev-only editor.html, `/__editor/*` middleware, Play/Solvable?/Finalize, custom-level list | approved |
+| [01-level-editor/TASKS.md](01-level-editor/TASKS.md) | Approved implementation tasks; current scope Tasks 1–2 | approved |
+| [02-art-overrides/PRD.md](02-art-overrides/PRD.md) | `assets/art/` override layer, tintMask, relaxed credits check, `art:status`, showcase levels | approved |
+| [02-art-overrides/TASKS.md](02-art-overrides/TASKS.md) | Approved implementation tasks; implementation deferred | approved |
 
 ## Sub-projects
 | # | Name | Scope | Depends on | Phase |
@@ -57,4 +59,4 @@ c) [RESOLVED] `BOT_VERSION` bump required for new levels with AI seats (CONTENT_
 d) All PRD open questions resolved/deferred (2026-10-24).
 
 ## Next step
-Owner reviews PRDs, tags Open Questions [RESOLVED]/[DEFERRED] in each PRD, then run dev-tasks per PRD.
+Implement and review 01-level-editor Tasks 1–2 only. Remaining level-editor tasks and art-overrides implementation stay deferred; approved plans and task statuses remain the source of truth.

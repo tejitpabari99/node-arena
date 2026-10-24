@@ -5,7 +5,7 @@ date: 2026-10-24
 ---
 # PRD: Level editor
 
-Repo/branch: node-arena, `docs/kane-cli-and-agent-files-consolidation` · Depends on: none (sibling 02 depends on this PRD's §Custom-list contract)
+Repo/branch: node-arena, `feat/custom-level-contract` · Depends on: none (sibling 02 depends on this PRD's §Custom-list contract)
 Owns: `apps/web/editor.html`, `apps/web/src/editor/**`, `apps/web/vite.config.ts` (editor entry + middleware plugin), `apps/web/src/dev/editor-middleware.ts` (new), custom-list wiring in `apps/web/src/app/{boot,state}.ts` + `ui/Picker.tsx` + `ui/App.tsx` (Edit buttons), `tools/src/levels.ts` (`campaignLevels` union), `tools/src/editor-ops.ts` (new: save/finalize helpers), tests that hard-code 20 cards, `docs/LEVELS_GUIDE.md` §4/§6 + `tools/README.md` + `docs/FUTURES.md` entry
 Does not own: sim/bots/rules, level schema, renderer internals (read-only reuse), art pipeline (02)
 

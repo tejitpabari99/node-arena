@@ -4,7 +4,7 @@ summary: 12 tasks, P0 custom-list contract first (unblocks 02), then editor view
 date: 2026-10-24
 ---
 # Tasks: Level editor
-Source of truth: docs/agent_files/docs-kane-cli-and-agent-files-consolidation-20261024-0050/01-level-editor/PRD.md. Dev-only editor page plus a `custom` campaign list shown below the 20 Common levels. Tasks 1-2 are the self-contained P0 contract; sibling 02-art-overrides can start after them.
+Source of truth: docs/agent_files/level-editor-art-overwrite/01-level-editor/PRD.md. Dev-only editor page plus a `custom` campaign list shown below the 20 Common levels. Tasks 1-2 are the self-contained P0 contract; sibling 02-art-overrides can start after them.
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
