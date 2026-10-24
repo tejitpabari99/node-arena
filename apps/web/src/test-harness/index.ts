@@ -1,7 +1,7 @@
 import { loadContent, type ContentFiles } from '@node-arena/content';
 import type { Command, SimEvent } from '@node-arena/sim';
 import type { AppController } from '../app/state';
-import type { CommandSubmission } from '../driver';
+import type { CommandSubmission, Speed } from '../driver';
 import { createSaveStore, defaultSave, SAVE_KEY } from '../save';
 import { createFixtureSim } from './fixtures';
 import { buildVisualProbe, projectAnchor } from './probe';
@@ -20,12 +20,14 @@ export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
     options:{autoStart:!request.testing,...(request.kane?{campaignId:'kane'}:{}),...(request.testing?{resultDelayMs:0}:{}),...(save?{save}:{}),...(request.fixture?{createSim:createFixtureSim(request.fixture),createBotDriver:()=>({commands:()=>[]})}:{})},
     connect(app:AppController){
       const events:SimEvent[]=[],commandLog:CommandSubmission[]=[];
-      let driver=app.driver;
-      const unsubscribe=app.subscribe(()=>{if(driver!==app.driver){driver=app.driver;events.length=0;commandLog.length=0;driver?.setSpeed(request.speed);}});
+      let driver=app.driver,currentSpeed=request.speed;
+      driver?.setSpeed(currentSpeed);
+      const unsubscribe=app.subscribe(()=>{if(driver!==app.driver){driver=app.driver;events.length=0;commandLog.length=0;driver?.setSpeed(currentSpeed);}});
       const unsubscribeEvents=app.subscribeEvents(update=>{events.push(...update.events);commandLog.push(...update.submissions);});
       const inspect=()=>app.runtime?.inspection as ReturnType<typeof import('../render/scene').createLevelScene>|undefined;
       const api={
         kane:request.kane,
+        setSpeed(speed:Speed){app.driver?.setSpeed(speed);currentSpeed=speed;},
         step:(n=1)=>app.step(n),hash:()=>app.driver?.sim.hash(),get view(){return app.driver?.sim.snapshot();},
         get events(){return events;},get commandLog(){return commandLog;},get screen(){return app.snapshot().screen;},
         state:()=>app.snapshot(),hud:()=>({state:app.snapshot(),ownership:app.driver?.ownership??[],tick:app.driver?.sim.view.tick??null}),

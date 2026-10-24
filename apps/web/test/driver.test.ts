@@ -65,6 +65,58 @@ describe('fixed-step GameDriver', () => {
     expect(game.alpha).toBe(0.5);
   });
 
+  it('runs 50 ticks over ten seconds of 16.67ms frames at quarter speed', () => {
+    const game = driver(); game.setSpeed(0.25); game.advanceFrame(0);
+    for (let frame = 1; frame <= 600; frame++) game.advanceFrame(frame * 16.67);
+    expect(game.sim.view.tick).toBe(50);
+    expect(game.alpha).toBeCloseTo(0.01);
+  });
+
+  it('keeps quarter-speed tick counts equal across frame splits up to 250ms', () => {
+    const fine = driver(), coarse = driver();
+    for (const game of [fine, coarse]) { game.setSpeed(0.25); game.advanceFrame(0); }
+    for (let time = 10; time <= 10_000; time += 10) fine.advanceFrame(time);
+    for (let time = 250; time <= 10_000; time += 250) coarse.advanceFrame(time);
+    expect(fine.sim.view.tick).toBe(50); expect(coarse.sim.view.tick).toBe(50);
+    expect(fine.sim.hash()).toBe(coarse.sim.hash());
+  });
+
+  it.each([0, -1, 0.3, 3, NaN, Infinity, '0.25', null])('rejects invalid speed %s without changing the current speed', speed => {
+    const game = driver();
+    expect(() => game.setSpeed(speed as Parameters<GameDriver['setSpeed']>[0])).toThrow(RangeError);
+    expect(game.speed).toBe(1);
+  });
+
+  it('preserves accrued game time and the frame baseline when speed changes mid-run', () => {
+    const game = driver(); game.setSpeed(0.25); game.advanceFrame(0); game.advanceFrame(100);
+    expect(game.sim.view.tick).toBe(0); expect(game.alpha).toBe(0.5);
+    game.setSpeed(0.5); game.advanceFrame(150);
+    expect(game.sim.view.tick).toBe(1); expect(game.alpha).toBe(0);
+    game.setSpeed(2); game.advanceFrame(175);
+    expect(game.sim.view.tick).toBe(2);
+  });
+
+  it('preserves simulation hashes at equal ticks across all four speeds', () => {
+    const hashes: string[] = [];
+    for (const speed of [0.25, 0.5, 1, 2] as const) {
+      const game = driver(); game.setSpeed(speed); game.submit(draw); game.advanceFrame(0);
+      for (let time = 50; time <= 1000 / speed; time += 50) game.advanceFrame(time);
+      expect(game.sim.view.tick).toBe(20); hashes.push(game.sim.hash());
+    }
+    expect(new Set(hashes).size).toBe(1);
+  });
+
+  it('drops fractional quarter-speed time on pause and hidden-tab resume without catchup', () => {
+    const env = new Environment(), game = driver({ environment: env });
+    game.setSpeed(0.25); game.advanceFrame(0); game.advanceFrame(100);
+    game.pause(); game.resume(); game.advanceFrame(10_000); game.advanceFrame(10_100);
+    expect(game.sim.view.tick).toBe(0); expect(game.alpha).toBe(0.5);
+    env.visibility(true); env.visibility(false); game.resume();
+    game.advanceFrame(20_000); game.advanceFrame(20_100);
+    expect(game.sim.view.tick).toBe(0); expect(game.alpha).toBe(0.5);
+    game.advanceFrame(20_200); expect(game.sim.view.tick).toBe(1);
+  });
+
   it('copies and stamps queued submissions and consumes each exactly once', () => {
     const ticks: TickUpdate[] = [];
     const game = driver({ onTick: tick => ticks.push(tick) });

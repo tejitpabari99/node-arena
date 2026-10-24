@@ -64,3 +64,34 @@ it('outcome fixture forwards live authoritative rejection diagnostics',()=>{
  sim.step([{type:'DrawLine',player:0,from:-1,to:1}]);
  expect(sim.rejected).toBe(1);expect(sim.rejected).toBe(sim.snapshot().rejected);
 });
+
+it.each([
+ ['', 1], ['?kane=1', 0.25],
+ ['?speed=0.25', 0.25], ['?speed=0.5', 0.5], ['?speed=1', 1], ['?speed=2', 2],
+ ['?kane=1&speed=0.5', 0.5], ['?kane=1&speed=1', 1], ['?kane=1&speed=2', 2],
+])('selects the exact speed or mode default for %s', (search, speed) => {
+ expect(testHookRequest(search as string, true).speed).toBe(speed);
+});
+it.each(['0', '-1', '0.3', '4', 'NaN', 'Infinity', '0.250', '0.50', '1.0', '02', '2e0', ' 2', ''])('ignores noncanonical speed query %s', speed => {
+ const query = '?speed=' + encodeURIComponent(speed);
+ expect(testHookRequest(query, true).speed).toBe(1);
+ expect(testHookRequest(query + '&kane=1', true).speed).toBe(0.25);
+});
+it('keeps the selected speed through restart and changes while no driver is loaded', async () => {
+ const harness=createTestHarness(files,testHookRequest('?test=1&level=1&speed=2',true));
+ const app=createAppController({files,...harness.options,loadManifest:async()=>manifest,createBotDriver:()=>({commands:()=>[]})});
+ const api=harness.connect(app);
+ try {
+  await app.boot();await harness.autoLoad(app);expect(app.driver!.speed).toBe(2);
+  api.setSpeed(0.5);expect(app.driver!.speed).toBe(0.5);
+  await api.restart();expect(app.driver!.speed).toBe(0.5);
+  api.menu();api.setSpeed(2);await api.load(1);expect(app.driver!.speed).toBe(2);
+ } finally {api.dispose();app.dispose();}
+});
+it('applies the requested speed when connecting to an already loaded driver', async () => {
+ const harness=createTestHarness(files,testHookRequest('?test=1&speed=0.25',true));
+ const app=createAppController({files,...harness.options,loadManifest:async()=>manifest,createBotDriver:()=>({commands:()=>[]})});
+ await app.boot();await app.startLevel(app.snapshot().levels[0]!.id);
+ const api=harness.connect(app);
+ try {expect(app.driver!.speed).toBe(0.25);} finally {api.dispose();app.dispose();}
+});
