@@ -1,0 +1,26 @@
+{
+  "commit_id": "c357ba6e-ab4f-4aff-a326-54a792ade5bf",
+  "test_id": "89be5bae-e10a-46c1-bf99-f7ffd46408e3",
+  "testcase_id": "01M5R12E53KBMP30GDZ2E4HH5Q",
+  "project_id": "01M5N386K77DRC6DEG49C3PJ4R",
+  "folder_id": "01M5N38EJSH5GDEH3Y5S401NCW",
+  "org_id": "3396190",
+  "session_name": "draw-a-ready-owned-house-route-once",
+  "executions": [
+    {
+      "execution_id": "000f8297-4688-40f5-afb8-dc0a1d6d1d32",
+      "run_kind": "author",
+      "status": "passed",
+      "valid": true,
+      "at": "2026-10-24T22:58:36.746Z"
+    },
+    {
+      "execution_id": "748f2b7c-9446-437a-a605-a4108e9a9cd3",
+      "run_kind": "replay",
+      "status": "failed",
+      "valid": true,
+      "uploaded": true,
+      "at": "2026-10-24T23:15:02.243Z"
+    }
+  ]
+}

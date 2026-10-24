@@ -1,0 +1,8 @@
+{
+  "reason": "Root-authorized code-backed stable accessible region/group/heading identity; same ac14 oracle, Step2 byte-identical",
+  "app_patch": "52159493",
+  "app_head": "9f452afec9b9ca15c869c69dbee6e4d26d7cf4e8",
+  "before_sha256": "a54841e71249b332762d2440a47d7696f51673854e39fee99382e8e853aeefb8",
+  "edited_sha256": "3c1e3dafbf49f30fc7e257bacbeb8bd873fcd587c8e5e49423444ac2bb48b046",
+  "step2_sha256": "50346342afa933e866b29eeb261eea61646193520a1341e6d8e4fb5b2064808b"
+}

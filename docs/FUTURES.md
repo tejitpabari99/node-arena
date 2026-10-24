@@ -2,7 +2,7 @@
 
 Ideas deferred from current work. Not scheduled.
 
-## From Tower War port PRD resolution (2026-10-22)
+## From Node Arena PRD resolution (2026-10-22)
 - **Port TW resource piles (AI pile targets).** Dropped from 06; shifts weakest-first order on 412 levels.
 - **`validate:content --fix-requires`.** Auto-fill level `requires`; manual until then.
 - **Optional campaign `loop`.**
@@ -36,7 +36,7 @@ Source facts below describe Tower War; they are deferred in Node Arena. Research
 - **Cargo.** Source crates/drops exist; all shipped imported levels drop cargo. [Source objects](research/tower-wars/02-levels.md), [meta](research/tower-wars/05-meta-modes-ux.md), [current fidelity ledger](LEVELS_GUIDE.md).
 - **Levels 24+ and generated coverage census.** Use the static tracker in [LEVELS_GUIDE.md](LEVELS_GUIDE.md) and [source feature curve](research/tower-wars/02-levels.md); the snapshot is not a recomputed census.
 - **Portrait/mobile and new themes beyond Green/Snow.** Source UI is portrait 1080×1920; source environments include Lava, Mine, Jungle and DarkMine. Landscape is current scope. [UX](research/tower-wars/05-meta-modes-ux.md), [environments](research/tower-wars/02-levels.md).
-- **Hosting/deploy.** Local-only scope; any future deployment first needs owner approval and replacement/appropriate rights for private derived data/art. [Source provenance](research/tower-wars/README.md), [credits](CREDITS.md).
+- **Hosting/deploy.** Deployment setup remains deferred. [Source provenance](research/tower-wars/README.md), [credits](CREDITS.md).
 - **CrossingSource seam.** SP04 used direct geometry/crossing handling; a generic crossing-source abstraction was deferred. Revisit when new path modifiers demand it. [Source crossing/rivers/gates](research/tower-wars/03-core-mechanics.md), [SP04 settled design](agent_files/feat-tower-war-port-20261022-0321/04-geometry-shooters/PRD.md).
 - **Web bundle budget gate.** Still deferred beyond asset triangle/texture budgets (earlier port entry above); size the gate from actual client output. [Asset/architecture evidence](research/tower-wars/06-gap-map-and-architecture.md), [SP09 gate scope](agent_files/feat-tower-war-port-20261022-0321/09-gates-tooling-docs/PRD.md).
 

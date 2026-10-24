@@ -2,7 +2,7 @@
 
 Source: `/root/projects/tower-war` (Tower War - Tactical Conquest 1.29.3, `games.vaveda.militaryoverturn`, Unity 6000.0.82f1 IL2CPP).
 
-Local-only artefacts (never committed):
+Local research artefacts:
 - `/root/projects/tower-war/_extract`: `INDEX.md`, `CLASS_MAP.md`, il2cpp dump, assets, `decomp/`, `converted/` levels, `catalog/`.
 - `/root/projects/tower-war/_tools`: Il2CppDumper, UnityPy venv, Ghidra 12.1.4 + JDK21, `decomp.sh`, `p2_tw2na.py` (level converter), `p2_prefab_levels.py`, GLB prototype writers.
 
@@ -46,7 +46,7 @@ Note: the remote-config defaults file was renamed by an exporter fix from `sayki
 
 ## Open decisions for owner (06#5)
 
-- D1 Where imported TW content lives (repo / private pack / generate locally).
+- D1 Where imported TW content lives (repo / separate pack / generate locally).
 - D2 Fidelity target: exact feel numbers + native units vs gameplay-equivalent retune.
 - D3 One ruleset or two (opt-in profiles vs replace v1).
 - D4 Fate of NA-native game (`na-core` pack kept or retired).

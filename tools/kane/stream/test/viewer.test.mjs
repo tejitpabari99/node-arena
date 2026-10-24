@@ -162,9 +162,9 @@ test('viewer decodes only one frame plus latest pending, closes bitmaps and clea
   assert.deepEqual(f.app.connectionCounts(), { ws: 0, sse: 0 });
 });
 
-test('public assets have no original game title or unsafe HTML insertion', async () => {
+test('public assets have no unsafe HTML insertion', async () => {
   const assets = await Promise.all(['index.html', 'app.js', 'style.css'].map(file => readFile(new URL(`../public/${file}`, import.meta.url), 'utf8')));
-  for (const asset of assets) assert.doesNotMatch(asset, /tower war|innerHTML|insertAdjacentHTML/i);
+  for (const asset of assets) assert.doesNotMatch(asset, /innerHTML|insertAdjacentHTML/i);
 });
 
 

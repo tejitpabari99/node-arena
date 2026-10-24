@@ -1,0 +1,60 @@
+{
+  "body_config_cache_checks": [
+    {
+      "test": "t-3",
+      "step": 1,
+      "md5": "c810a4267f61a8ead1e478c088e52418",
+      "definition_sha256": "53675594b58b336e36b6bd0de0d9aca86ece447c1dd540b84db1a94ffe2d2161"
+    },
+    {
+      "test": "t-3",
+      "step": 2,
+      "md5": "1d531a2b31efcff7f4dfbe566675d363",
+      "definition_sha256": "53675594b58b336e36b6bd0de0d9aca86ece447c1dd540b84db1a94ffe2d2161"
+    },
+    {
+      "test": "t-5",
+      "step": 1,
+      "md5": "c0f3e3deac8dd99832683e0a5ea14c54",
+      "definition_sha256": "c5e8e9b41294dddc775f9bf1dc05ea3de0ed5847eea1efbc675fb7c1a379527c"
+    },
+    {
+      "test": "t-5",
+      "step": 2,
+      "md5": "6ea24c80b526555b8d0405a1f082ebf7",
+      "definition_sha256": "c5e8e9b41294dddc775f9bf1dc05ea3de0ed5847eea1efbc675fb7c1a379527c"
+    },
+    {
+      "test": "t-5",
+      "step": 3,
+      "md5": "a059dad0aa9755d2e468906ccaa73c9e",
+      "definition_sha256": "c5e8e9b41294dddc775f9bf1dc05ea3de0ed5847eea1efbc675fb7c1a379527c"
+    }
+  ],
+  "dry_run": "valid exact two current file paths, no variables/warnings",
+  "app_patch": "52159493",
+  "app_head": "9f452afec9b9ca15c869c69dbee6e4d26d7cf4e8",
+  "verified_build": {
+    "listener_pids": [
+      1634411
+    ],
+    "listener_cwd": "/root/projects/node-arena/.worktrees/test-kane-assurance-runtime/apps/web",
+    "index_sha256": "097913d24248865e400742143fdbd0d5f6f2d790ccf7cc71930f8a574719e0a7",
+    "assets": {
+      "/assets/main-2K9Jfvz4.js": "09cbf36d05de3671ecf67f947dcd2918886c6416e3f485be0ce37b82f00db0ab",
+      "/assets/src-BPtne6bM.js": "aa5e869440e5b20ce232c9ba6f8ae962a4adcddf15b6f66113449f7706028535",
+      "/assets/three.core-BQuSjASy.js": "7244742e004beaf3af0124676ce055405888f8d4cf7b9c99a010a9a13d25bd60",
+      "/assets/style-C42WyRKS.js": "e560726ecbcd461d4202435cd5469463e79e9ab02c8037abedf9a741013ed026",
+      "/assets/style-i65a0nvK.css": "58795f063df89fb8be3fc70be863c8f4021b41256bf8c97ea9f447ba38444a3b"
+    },
+    "aria_labels_present": true
+  },
+  "no_author_guard": true,
+  "parallel": 1,
+  "flags": [
+    "--agent",
+    "--headless",
+    "--no-adaptive-heal"
+  ],
+  "final_listener_status": "State Recv-Q Send-Q Local Address:Port Peer Address:PortProcess\n"
+}

@@ -65,7 +65,7 @@ What changes at a high level: Using 08's harness, Playwright loads each of 20 le
 Done when: 20/20 load and run clean; grid saved; negative fixture (injected console error) fails.
 
 ## Task 7 — CI workflow updates
-What it is / what it means: Keep CI shape; make private/local-only checks non-blocking (req 8, Decision 7).
+What it is / what it means: Keep CI shape; make checks requiring the local extract non-blocking (req 8, Decision 7).
 What changes at a high level: `ci.yml` keeps Node 22+24 matrix and Chromium; `check:import` / `assets:tw:check` print `skipped (TW_EXTRACT unset)`, exit 0, surfaced as `::notice::` in ci.sh, never required; `check:manifest` validates committed asset hashes against the lock without extract; Playwright job keeps `test:web:all` with `timeout-minutes`; `balance.yml` uses new proxy flags. Plain git, no LFS.
 Done when: workflow files updated and lint-clean; ci with `TW_EXTRACT` unset shows skips and passes.
 Status note (2026-10-22): balance.yml part done by 06 Task 8 (c16aa54; new proxy flags); remaining: ci.yml/env-skip surfacing (::notice::), check:manifest without extract (SP07), Playwright job timeout.
@@ -79,7 +79,7 @@ Status note (2026-10-23): detector, CLI/root registration and late CI step compl
 
 ## Task 9 — Docs refresh
 What it is / what it means: Phase D; docs match code.
-What changes at a high level: Rewrite README (contents, TW scope, 20 levels, local-only, `TW_EXTRACT`, TW screenshots copied to `docs/img/`, delete v1 images); rewrite `tools/README.md` (gate semantics, env skips, `levels:lock`, parked pointer); merge into FUTURES (never replace 04/06 entries): walls, mines, water, rocket towers, fortress, trolley, railway, unit modules, boosters (facts recorded), tutorials, meta, PvP, skins, cargo, deploy, levels 24+, portrait/mobile, level editor, new themes, `CrossingSource` note, bundle-size gate; update AGENTS project section only; research index; trim `apps/web/README.md`; cross-links in CONTENT_GUIDE; verify CREDITS header (Vaveda art, private, non-redistributable, CC0 rows).
+What changes at a high level: Rewrite README (contents, TW scope, 20 levels, asset acknowledgment, `TW_EXTRACT`, TW screenshots copied to `docs/img/`, delete v1 images); rewrite `tools/README.md` (gate semantics, env skips, `levels:lock`, parked pointer); merge into FUTURES (never replace 04/06 entries): walls, mines, water, rocket towers, fortress, trolley, railway, unit modules, boosters (facts recorded), tutorials, meta, PvP, skins, cargo, deploy, levels 24+, portrait/mobile, level editor, new themes, `CrossingSource` note, bundle-size gate; update AGENTS project section only; research index; trim `apps/web/README.md`; cross-links in CONTENT_GUIDE; verify CREDITS header ("Assets based on / motivated by Tower War.", CC0 rows).
 Done when: `check:docs` green; no edits to Style/Orchestrator sections.
 
 Status note (2026-10-23): refreshed current Tower War docs, all 57 root scripts, research index and deferred-feature evidence; copied/resized three real campaign captures and removed v1 images. `pnpm check:docs --format json` passed with zero drift; `pnpm check:manifest --format json` passed (17 existing outside-bounds warnings). AGENTS protected sections and earlier FUTURES entries preserved; docs parking entry removed after green check. Source filenames in credits and concrete guide paths normalized for the new checker.

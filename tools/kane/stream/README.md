@@ -1,11 +1,11 @@
 # Hosted Kane stream
 
-Private Node Arena operator runbook. Run from the repository root with Node
+Node Arena operator runbook. Run from the repository root with Node
 >=22.13, pnpm 10.34.6 and the existing Chromium setup. The service exposes a viewer,
 JPEG frames over WebSocket and allowlist-filtered driver events over SSE. The test
-build, CDP, repository, extracted art and raw logs stay private. Never proxy the
-preview server or CDP; keep the repository private and do not redistribute its
-art/assets. Only the approved viewer and captured frames leave this box.
+build, CDP and raw logs stay private. Never proxy the preview server or CDP.
+The stream exposes only the viewer, captured frames and filtered events.
+Assets based on / motivated by Tower War.
 
 **Before any paid Kane run or public exposure:** pass the security audit with no
 unresolved High findings, set the Kane portal spend cap and complete the owner's
@@ -358,8 +358,8 @@ full WS + SSE. No tunnel is started by this task.
 
 Owner may place a recorded winning run at `public/backup.mp4` relative to this
 folder. It is git-ignored; `/backup.mp4` serves it only when present and the failure
-UI can link to it. Keep the recording local until intended sharing is approved;
-do not commit extracted assets or raw evidence. No recording is bundled.
+UI can link to it. Keep sensitive raw evidence outside git and redact credentials,
+private paths and account details before sharing evidence. No recording is bundled.
 
 ## Checks and dependency
 

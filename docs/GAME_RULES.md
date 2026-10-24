@@ -2,7 +2,7 @@
 
 RULES_VERSION: 3.0.0
 
-This is the mechanics contract for the Tower War (APK 1.29.3) port. It is a full rewrite; there are no profiles and no v1 compatibility. Rules own **structure and formulas**; every tunable number (speeds, coefficients, caps, radii, thresholds) lives in authored content under a named parameter, and rules only name the resolved parameter. The simulation must follow these rules; presentation, bots and tools consume the same mechanics. Tower War defaults appear only in the §7 glossary and in the §5 worked examples.
+This is the mechanics contract for Node Arena, motivated by Tower War (APK 1.29.3). It is a full rewrite; there are no profiles and no v1 compatibility. Rules own **structure and formulas**; every tunable number (speeds, coefficients, caps, radii, thresholds) lives in authored content under a named parameter, and rules only name the resolved parameter. The simulation must follow these rules; presentation, bots and tools consume the same mechanics. Tower War defaults appear only in the §7 glossary and in the §5 worked examples.
 
 ## 1. Conventions
 

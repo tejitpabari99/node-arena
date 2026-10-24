@@ -1,6 +1,6 @@
 ---
 status: draft
-summary: Slow speeds (0.25/0.5/1/2), one-click pair-button panel, DOM building tags, camera room and "Tower War" text removal so Kane can play and an audience can watch na-kane.
+summary: Slow speeds (0.25/0.5/1/2), one-click pair-button panel, DOM building tags, camera room and asset acknowledgment so Kane can play and an audience can watch na-kane.
 date: 2026-10-24
 ---
 # PRD: 02 Play controls (speed, pair panel, tags, layout)
@@ -16,7 +16,7 @@ In `?kane=1` test builds the game gets: a top-bar speed button (default 0.25x), 
 - Kane cannot drag on the canvas; it clicks DOM text reliably. The game is drag-only, with no slow speed and no readable building names [brief; verified: driver speed type `1|2` at `driver/index.ts:75,104,106`, `gate.ts:1`].
 - Kane needs ~5-6 s per click, so one move must be one click on a self-describing button.
 - Camera reserves only 64 px at the bottom (`render/camera.ts:9`).
-- A CSS comment names the original game (`style.css:4`) [verified: grep -i 'tower war' in apps/web/{src,e2e,assets,index.html} -> 1 match, style.css:4].
+- Assets based on / motivated by Tower War.
 
 ## Goals / Non-Goals
 Goals: items 1-6 of the scope below; stable DOM/test-hook contract for 03/04/05; existing e2e (`#game-hud button` count 2 on common levels) stays green.
@@ -61,8 +61,8 @@ Non-goals: sim/tick/rules changes, new commands, touch UI, panel in production o
 - Kane mode passes `padding = {…HUD_PADDING, bottom: panelHeight + 12}` into `createLevelScene`. `fitCamera` already dolly-fits inside the padded rect via `setViewOffset` [verified: camera.ts], so the map shifts up and zooms out only when the shorter free height forces it. No camera algorithm change.
 - `panelHeight(viewportH)` is one pure function used for both CSS (`--kane-panel-h`) and the padding getter. `SceneOptions.padding` accepts a getter so window resize recomputes.
 
-### R5 Remove original-game name
-- Reword `style.css:4` to drop the name. After the edit: grep -i 'tower war' over `apps/web/{src,e2e,assets,index.html}` returns 0.
+### R5 Asset acknowledgment
+- Assets based on / motivated by Tower War.
 
 ### R6 DOM + hook contract (cited by 03/04/05)
 See Architecture. Everything is `data-testid` plus data-attributes; Kane reads text, scripts read attributes.
@@ -140,7 +140,7 @@ Facts [probe: probes-20261024.md §P-INFRA-Q3]: when another tab is frontmost `d
 - `pnpm --filter @node-arena/web test`: new driver tests (R1) and `kane/pairs` tests (labels, states, reason words, hidden geometry, pending/cut guard logic, letters AA after Z) pass.
 - `pnpm --filter @node-arena/web test:e2e` (new `kane-panel.spec.ts` on `?kane=1`): default `data-speed=0.25`; speed button cycles 0.25/0.5/1/2 and `__na.view.tick` rate scales; ready click -> `commandLog` has human DrawLine and button becomes `data-state=active` within 1 s; one click on a ready button yields exactly one DrawLine; dblclick active -> `LineCut` event; click on a grey button -> banner text matches reason and no command logged; MatchOver -> every pair `disabled`, banner `Game over`, `kane-result` has `data-outcome`; canvas drag still draws; letters equal across two page loads; panel and tags absent without `?kane=1`.
 - Existing e2e unchanged and green (`#game-hud button` count 2 on common).
-- `pnpm build` then grep of the production `dist` for `kane-pair`, `kane-panel` -> 0 matches; grep -i 'tower war' over `apps/web/{src,e2e,assets,index.html}` -> 0.
+- `pnpm build` then grep of the production `dist` for `kane-pair`, `kane-panel` -> 0 matches.
 - `pnpm sim:golden`, `pnpm replay:verify golden`, `pnpm bots:golden`, `pnpm check:rules` pass unchanged (no RULES_VERSION/BOT_VERSION diff).
 - Hidden pairs: test that a source with 0 free slots still hides blocked pairs (A->B, A->D on na-kane) and shows only `no free route` for non-blocked pairs.
 - Screenshot at 1600x900 and 1366x768 shows the whole map above the panel, no overlap of tags with the panel.

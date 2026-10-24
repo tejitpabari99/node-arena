@@ -55,4 +55,3 @@ Done when: one real `pnpm kane:play` ends `driver_end.outcome` `won` with `game_
 - `kane-cli login` on any new machine; top up credits, confirm hack-day allotment, track budget.
 - Record the backup winning video (outside git), used on exit 20/22/23.
 - CI only (04): set `LT_USERNAME`/`LT_ACCESS_KEY` secrets.
-- Never make the repo public while `output-<stem>/` (tenant/user IDs) is committed.
