@@ -52,11 +52,15 @@ Add exact POST `/stop` and POST `/reset` routes. Apply the same Origin/Host vali
 
 Broadcast reset/state to every viewer. Clear relay/cache before that broadcast and any subsequent replay. A reconnecting client that missed the reset event must detect prior non-null run ID becoming null and clear stale canvas/log/cursor itself; the existing null-ID `starting` transition must not cause reset/reconnect loops. Keep generation invalidation so an older in-flight JPEG decode cannot redraw after Reset. SSE and WebSocket delivery are unordered: an old socket can deliver a blob after Reset even when no decode was in flight. Close/replace the video connection on reset/run-ID change and reject callbacks from an old socket identity, or use a provably equivalent mechanism. A fresh connection receives only the current cached frame. Controls and disabled states follow shared server state, including two simultaneous viewers.
 
+### R6 Explicit Start only
+
+Server boot, viewer open/reload, WS/SSE connection and Reset must never spawn a paid-capable driver or run credit preflight. Only an explicit POST `/start` from the Start button launches a fresh match. Late join/reload may join an existing run but cannot spawn another. Reset returns to Ready and never automatically starts.
+
 ## Architecture
 
 Changes stay in `tools/kane/stream/run.mjs`, `server.mjs`, `public/**`, stream tests and runbook. The controller owns reusable cancellation, explicit stopped outcome, quiescent reset and unchanged admission/cooldown accounting. Server routes use the existing bounded decoder and guards, clear shared relay/screencast cache, and broadcast state/reset. Viewer controls map these states to Stop/Reset and invalidate old display work. Existing driver ownership and public relay/CDP contracts remain unchanged.
 
-Delivery remains two dependent implementation units: lifecycle/HTTP plus TDD, then viewer controls/two-viewer verification/runbook. This is sequencing only; `TASKS.md` is generated separately after principal review. Review/fix the result, then open a PR against `kane-cli`. Keep hosted primary unchanged until the feature is merged.
+Delivery remains two dependent implementation units: lifecycle/HTTP plus TDD, then viewer controls/two-viewer verification/runbook. This is sequencing only; `TASKS.md` is generated separately after principal review. Review/fix the result, then open a PR against `kane-cli`. The user explicitly requests a PR against `kane-cli`. Primary hosting is intentionally off (units inactive/disabled); keep it off and unchanged. Do not host this feature before merge.
 
 ## Decisions
 
@@ -65,12 +69,12 @@ Delivery remains two dependent implementation units: lifecycle/HTTP plus TDD, th
 | 1 | Reset behavior | Return to Ready; Start starts a fresh match | Explicit user confirmation |
 | 2 | Stop semantics | End all play and clean owned resources | Requested Stop, not pause |
 | 3 | Admission/cooldown | Preserve original limits and deadline | Reset cannot bypass spending controls |
-| 4 | Workspace | New linked feature worktree | Primary checkout serves the current real run |
-| 5 | Validation | Ephemeral mock/injected services and Node-only fixtures | Protect active production browser/resources |
+| 4 | Workspace | New linked feature worktree | Primary hosting remains intentionally off and unchanged |
+| 5 | Validation | Ephemeral mock/injected services and Node-only fixtures | Preserve stopped primary and unrelated shared resources |
 
 ## Manual steps
 
-No owner setup is required for this bounded change. Deployment waits for merge and a separate hosting instruction; implementation/review must not change the running primary checkout or its uncommitted deployment documentation.
+No owner setup is required for this bounded change. Deployment waits for merge and a separate hosting instruction; implementation/review must not change the primary checkout, its intentionally stopped services or its separate deployment documentation.
 
 ## Risks / Open Questions
 
@@ -87,4 +91,5 @@ No owner setup is required for this bounded change. Deployment waits for merge a
 - Reset conflicts while unsafe, is idempotent when quiescent, clears metadata/cache/relay, and cannot bypass original cooldown, IP/daily admission or credit floor.
 - HTTP tests cover 403/405/409/413, route/body limits and privacy. Existing natural completion remains unchanged.
 - Two-viewer UI tests verify Stop/Reset visibility/disabled states, shared Stopped, shared Reset, stale SSE replay/cursor, in-flight JPEG decode invalidation and old-socket blobs arriving after Reset, reconnect-after-missed-reset behavior and fresh Start behavior.
-- New tests use ephemeral HTTP, injected process operations, mocked JPEGs and Node-only fixtures. User permits Playwright checks against a mock backend only. No production 8787/4175/9225, other 4173/5173, active global runtime lock, actual Chrome/preview or paid calls are touched.
+- Backend tests prove boot, viewer GET/reload, WS/SSE connections and Reset perform zero driver/preflight spawns; browser tests prove initial load, reload and Reset issue zero POST `/start`. Only clicking Start launches a match; reconnect/late join cannot create another.
+- Required tests use ephemeral HTTP, injected process operations, mocked JPEGs and Node-only fixtures. Optional credit-free actual fake-driver Stop/Reset browser smoke may use 4176/9226/8789 under a dedicated smoke lock after verifying the global SP05 runtime lock is free. Preserve intentionally off primary 8787/4175/9225 and unrelated SP04 ports 4173/5173. No paid Kane calls or feature hosting before merge.
