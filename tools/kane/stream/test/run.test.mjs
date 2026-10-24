@@ -206,10 +206,15 @@ test('credit-free fake driver emits realistic events and launches only injected 
   const lines = [], calls = []; let now = 0;
   const summary = { tick: 1, result: null, letters: [], speed: 0.25 };
   const code = await fakeMain(['--serve', '--port', '9225', '--url', 'http://127.0.0.1:4175/?kane=1'], {
-    env: { KANE_STREAM_FAKE_DURATION_S: '2' }, now: () => now, write: line => lines.push(JSON.parse(line)),
+    env: { KANE_STREAM_FAKE_DURATION_S: '2', KANE_CLI_CHROME_PATH: '/fixture/chrome' }, now: () => now, write: line => lines.push(JSON.parse(line)),
     sleep: async () => { now += 1000; },
     ensurePreviewServer: async options => { calls.push(['preview', options.url]); return async () => calls.push(['preview_close']); },
+    resolveChromeBinary: async options => {
+      assert.deepEqual(options, { chrome: '/fixture/chrome', preferPlaywright: true });
+      return '/fixture/resolved-chromium';
+    },
     launchChrome: async options => {
+      assert.equal(options.chrome, '/fixture/resolved-chromium');
       calls.push(['chrome', options.port, options.headless]);
       return { port: options.port, pid: 555, summary: async () => summary, prepare: async () => {}, close: async () => calls.push(['chrome_close']) };
     },

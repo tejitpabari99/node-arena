@@ -4,7 +4,7 @@ import { appendFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import { launchChrome } from '../../lib/chrome.mjs';
+import { launchChrome, resolveChromeBinary } from '../../lib/chrome.mjs';
 import { ensurePreviewServer } from '../../lib/server.mjs';
 import { createEventEncoder } from '../../lib/events.mjs';
 
@@ -14,6 +14,7 @@ export async function main(argv = process.argv.slice(2), deps = {}) {
   const now = deps.now ?? Date.now;
   const write = deps.write ?? (line => process.stdout.write(line));
   const startChrome = deps.launchChrome ?? launchChrome;
+  const findChrome = deps.resolveChromeBinary ?? (deps.launchChrome ? async () => undefined : resolveChromeBinary);
   const startPreview = deps.ensurePreviewServer ?? ensurePreviewServer;
   const sleep = deps.sleep ?? ((ms, signal) => delay(ms, undefined, { signal }));
   if (argv.includes('--credits-only')) {
@@ -40,7 +41,8 @@ export async function main(argv = process.argv.slice(2), deps = {}) {
         emit('driver_start', { mode: 'attach' });
         emit('credits', { balance: 500, floor: Number(value('--min-credits', '200')), ok: true });
         stopPreview = await startPreview({ url, serve: argv.includes('--serve'), cwd, env, signal: abort.signal });
-        page = await startChrome({ url, port, headless: true, softwareGl: true, signal: abort.signal, handleSignals: false });
+        const chrome = await findChrome({ chrome: env.KANE_CLI_CHROME_PATH, preferPlaywright: true });
+        page = await startChrome({ url, port, chrome, headless: true, softwareGl: true, signal: abort.signal, handleSignals: false });
         emit('chrome_ready', { mode: 'attach', port: page.port, pid: page.pid, headless: true });
         const initial = await page.summary();
         emit('page_ready', { levelId: 'na-kane', speed: initial.speed ?? 0.25, letters: initial.letters });
