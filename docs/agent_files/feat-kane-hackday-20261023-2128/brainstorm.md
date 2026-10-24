@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 summary: Kane CLI hack-day integration — playtester mode (DOM panel, slow game, hidden Kane level, hosted live stream), Stop-hook verify loop, assurance on rules, CI replay
 date: 2026-10-23
 ---
@@ -10,7 +10,7 @@ For Kane CLI Hack Day (2026-10-24) Node Arena becomes a game an AI tester plays 
 
 ## Problem
 Hack-day rule: Kane CLI must verify the app, judged higher when Kane is inside the agent workflow; integration must be built on the day. Spikes (see [research](../../research/kane-cli.md)) showed Kane cannot drag on the Three.js canvas (silent false PASS) but clicks DOM buttons reliably, and runs ~10 s per authored step. The game is real-time and drag-only, so Kane cannot play it as-is. Audience: hack-day judges and attendees; secondarily the owner's dev workflow.
-Probe 2 (2026-10-23, 121 credits) results: see scratch notes summarized in decision log; `--cdp-endpoint` works, double-click + banner reading verified.
+Probe 2 (2026-10-23, 121 credits): `--cdp-endpoint` attach works and keeps game state across runs; double-click → CutLine and red-banner reading verified; results folded into the decision log below.
 
 ## Licensing (owner decision)
 Owner confirmed (legal check) that using the current artwork and levels is fine for this demo; assets will change later. No licensing restriction applies to this work, including the public hosted demo. The UI, web page and game must not mention "Tower War" anywhere (today only a CSS comment in `apps/web/src/style.css` does; UI text is clean). Carry this decision into design, tasks and code.
@@ -51,6 +51,10 @@ Owner confirmed (legal check) that using the current artwork and levels is fine 
 | Speed levers: unambiguous button text; persistent browser via `--cdp-endpoint`; one-click pair buttons ('A → C'); batch 2–3 moves per objective (1 click each; amortise ~20 s fixed run overhead) with `--max-steps` ≤8; Probe 3 (2026-10-23): TUI chaining gives no gain (per-objective upload ~10 s still happens; TUI stalls on a 'Rate this session' prompt; its own Chrome lacks WebGL without SwiftShader flags). Overlap not tested; with 1 concurrent session on the plan, runs are sequential: one `kane-cli run --cdp-endpoint` per 2–3-move batch. | Minimal-checking flags (`--mode action`, `--bug-detection off`, …) | Probe P4: flags gave no measurable gain (41 s vs 39 s; noise larger). Measured per run: ~8 s startup + ~5–6 s per step + ~10–13 s finalize/upload; old 2-click move ≈ 40 s, 5–13 credits |
 | Panel locks on game over (buttons disabled, banner 'Game over') | Leave enabled | Probe: Kane 'passed' clicks after loss; panel log said accepted after game over |
 | Ground truth for win/loss and moves = game command log / result dialog read by the driver over CDP, never Kane's claim | Trust Kane run_end | False PASS seen in spikes A and probe P1 |
+| Saved Kane smoke tests are an explicit deliverable: author panel smoke test(s) once with Kane (costs credits), save them, then Stop hook and CI replay them (0 credits) | Assume saved tests exist | Stop hook and CI both depend on them; nothing else creates them |
+| Speed 0.25x/0.5x implemented in the web driver as fractional tick accumulation (fewer sim ticks per wall-clock second); sim tick logic, determinism and RULES_VERSION untouched. Widen `1 \| 2` type in `apps/web/src/driver/index.ts` and `TestHookRequest.speed` in `apps/web/src/test-harness/gate.ts` | Change sim tick length | Keeps replays/goldens valid; no rules bump |
+| Hosted demo serves a test build (`VITE_TEST_HOOKS`) publicly, since Kane mode is test-build-only; this exposes test hooks on the public link → run dev-security-review on the hosted-stream part | Production build with Kane mode | Kane mode must stay out of production bundle |
+| na-kane excluded from `levels:lock` / `validate:levels` determinism lock (only common campaign is locked) | Separate lock for kane campaign | Owner: keep excluded; demo-only level |
 
 ## Design
 | Part | Does | Depends on |
@@ -58,15 +62,16 @@ Owner confirmed (legal check) that using the current artwork and levels is fine 
 | Kane level content | `packages/content/data/levels/na-kane.json` (from `levelview-1.json`; ≤10 buildings, obstacles, several neutrals, easy bot) + `campaigns/kane.json` (single entry); content version bump 2.0.1 → 2.0.2 + locks | — |
 | Level gate fix | `tools/src/levels.ts` mismatch check excludes levels in non-common campaigns | content |
 | Kane boot | `?kane=1` → `campaignId: 'kane'` (`apps/web/src/main.tsx`), auto-start `na-kane`; test-build only | content |
-| Speed control | Driver speed set {0.25, 0.5, 1, 2}; top-bar cycle button; default 0.25 in Kane mode | driver |
+| Speed control | Driver speed set {0.25, 0.5, 1, 2}; top-bar cycle button; default 0.25 in Kane mode; fractional tick accumulation in driver, sim untouched | driver |
 | Control panel | Bottom row of pair buttons grouped by source building; pairs built at runtime from sim (owned sources → other-building targets, geometry-impossible pairs hidden); states ready/active/unavailable-with-reason (colour + word); click ready = DrawLine, dblclick active = CutLine, click grey → red banner (from `CommandRejected` events / `legality`); press animations | harness/app controller |
 | Building tags | DOM tags positioned over buildings each frame via scene projection | renderer inspection |
 | Layout | Camera framing: bottom margin = panel height, map shifted up under top bar | camera fit |
 | Kane driver | Script: persistent Chrome attached via `--cdp-endpoint`; short `kane-cli run` objectives of 2–3 moves, 1 click each (`--max-steps` ≤8), Kane picks every move from pair-button text; runs sequential (1 concurrent session; probe 3: no overlap); stops on Victory/Defeat dialog; objective text forbids speed button | probe result |
-| Stop hook | `kane-verify.sh` replays panel smoke test; exit 2 feeds failure to Claude; `stop_hook_active` guard | panel |
+| Kane smoke tests | Author 1–2 panel smoke tests with Kane (draw via ready button, cut via double-click, grey click → banner), save for replay | panel |
+| Stop hook | `kane-verify.sh` replays saved Kane smoke tests; exit 2 feeds failure to Claude; `stop_hook_active` guard | Kane smoke tests |
 | Assurance | ingest excerpt → extract → review → design → testrun → `cover` | panel |
-| CI | Actions workflow replaying saved tests | saved tests, owner secrets |
-| Hosted stream | Node server: Start → spawn Chrome + Kane; CDP `Page.startScreencast` frames over WebSocket; NDJSON via SSE; single-run lock; credit floor; keys server-side; exposed via cloudflared/nginx | Kane driver |
+| CI | Actions workflow replaying saved tests | Kane smoke tests, owner secrets |
+| Hosted stream | Node server: Start → spawn Chrome + Kane; CDP `Page.startScreencast` frames over WebSocket; NDJSON via SSE; single-run lock; credit floor; keys server-side; exposed via cloudflared/nginx; serves test build (security review required) | Kane driver |
 
 Failure handling: Kane false PASS → verify via Victory dialog / panel log (never Kane's claim alone); Kane stalls → recording; credits low → server refuses Start; `--cdp-endpoint` attach fails → fresh Kane-launched browser per run (game restarts from URL) and fewer, longer runs.
 
