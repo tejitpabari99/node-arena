@@ -1,0 +1,75 @@
+{
+  "included": [
+    "t-3",
+    "t-5"
+  ],
+  "excluded": {
+    "t-2": "Third recorded step failed; no no-author guarantee"
+  },
+  "cli_plan_limitation": "CLI0.10.0-rc.3 dry-run gives path/test_id/valid, not replay/author classification; cache must additionally be checked.",
+  "steps": [
+    {
+      "test": "t-3",
+      "step": 1,
+      "current_file_sha256": "da5f24cb63c1c4fa23092aeadb2d8c0ae5d81300b7cd677a772efddfdf275b13",
+      "current_definition_pin": "sha256:7ce15b72b7028037c4c60c294be7cb7173b11e4c46955db33bcd0f849d022752",
+      "body_config_md5": "6aebd51218c4f0c0f84d07f93b221ffb",
+      "passed_recording": true,
+      "config": {
+        "optional": false
+      }
+    },
+    {
+      "test": "t-3",
+      "step": 2,
+      "current_file_sha256": "da5f24cb63c1c4fa23092aeadb2d8c0ae5d81300b7cd677a772efddfdf275b13",
+      "current_definition_pin": "sha256:7ce15b72b7028037c4c60c294be7cb7173b11e4c46955db33bcd0f849d022752",
+      "body_config_md5": "1d531a2b31efcff7f4dfbe566675d363",
+      "passed_recording": true,
+      "config": {
+        "optional": false
+      }
+    },
+    {
+      "test": "t-5",
+      "step": 1,
+      "current_file_sha256": "c5e8e9b41294dddc775f9bf1dc05ea3de0ed5847eea1efbc675fb7c1a379527c",
+      "current_definition_pin": "sha256:695d0cc1b4aed001d25c366e7e045dfa7f49d867759113f1d975c431e5341d33",
+      "body_config_md5": "c0f3e3deac8dd99832683e0a5ea14c54",
+      "passed_recording": true,
+      "config": {
+        "optional": false
+      }
+    },
+    {
+      "test": "t-5",
+      "step": 2,
+      "current_file_sha256": "c5e8e9b41294dddc775f9bf1dc05ea3de0ed5847eea1efbc675fb7c1a379527c",
+      "current_definition_pin": "sha256:695d0cc1b4aed001d25c366e7e045dfa7f49d867759113f1d975c431e5341d33",
+      "body_config_md5": "6ea24c80b526555b8d0405a1f082ebf7",
+      "passed_recording": true,
+      "config": {
+        "optional": false
+      }
+    },
+    {
+      "test": "t-5",
+      "step": 3,
+      "current_file_sha256": "c5e8e9b41294dddc775f9bf1dc05ea3de0ed5847eea1efbc675fb7c1a379527c",
+      "current_definition_pin": "sha256:695d0cc1b4aed001d25c366e7e045dfa7f49d867759113f1d975c431e5341d33",
+      "body_config_md5": "a059dad0aa9755d2e468906ccaa73c9e",
+      "passed_recording": true,
+      "config": {
+        "optional": false
+      }
+    }
+  ],
+  "historical_scope": "This guard authorized the completed two-test suite before the later T3 stable-group edit; it does not authorize the final current T3 cache.",
+  "final_guard": "Current T3 Step1 numeric heading/page-text locators persisted; see stable-group-selector-audit.json. No final replay.",
+  "selector_limitations": {
+    "runner_logical_alias": "Adopted successors appear as CID ids; old logical alias was not fresh reviewed.",
+    "cli_exact_cid": "--from-context current CID had no minted test file.",
+    "free_refusal_debit": "0.0000",
+    "authorized_fallback": "Exact current file paths, same approved cases, successful fresh dry-run, no author/healing suite."
+  }
+}

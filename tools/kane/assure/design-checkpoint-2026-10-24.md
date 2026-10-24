@@ -5,6 +5,8 @@ date: 2026-10-24
 ---
 # SP04 Task 5 — Design checkpoint
 
+Historical snapshot before the second approval. Latest approvals and runtime results: [runtime-2026-10-24.md](runtime-2026-10-24.md).
+
 The first human checkpoint passed with the user's exact instruction: **“Approve uc-1, uc-2, uc-3; leave uc-4”**. The runner promoted exactly those three use-cases; uc-4 remains derived and undesigned. Each approved use-case was designed sequentially using `run.sh design <ref>` (`--max 3`); all three commands completed with exit 0, no retries and no pause questions.
 
 **Second human checkpoint pending:** all newly generated criteria, scenarios and tests remain derived. No designed test has been authored or replayed; coverage is **0% proven**, not a test failure. The dated [cover snapshot](cover-2026-10-24.txt) reports **3 of 4 use-cases designed**, satisfying `designed > 0`. This checkpoint does not approve its own tests or authorize execution.

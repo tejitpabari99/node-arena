@@ -1,0 +1,150 @@
+[
+  {
+    "attempt": "t-3-original",
+    "evidence_id": "c4a58d4d-2482-4ce9-9f89-c584e75ce1d8",
+    "local_pack": "tools/kane/assure/.testmuai/evidence/c4a58d4d-2482-4ce9-9f89-c584e75ce1d8.evidence",
+    "sha256": "048ffc80c152b361abcba322c340def3f0f0f4285bdd06ae06385517349dab59",
+    "bytes": 5395823,
+    "status": "failed",
+    "recorded_actions": 14,
+    "passed_actions": 13,
+    "failed_actions": 1,
+    "definition_id": "sha256:a4eb682ecbf2c453b6c253a536cccd12bc84001af5c00d5db89a196bd231d6aa",
+    "assurance_base_at_run": "sha256:a4eb682ecbf2c453b6c253a536cccd12bc84001af5c00d5db89a196bd231d6aa",
+    "validation": {
+      "valid": true,
+      "status": "finalized",
+      "diagnostics": [
+        {
+          "code": "l1.failure.status_disagrees",
+          "severity": "warning",
+          "location": "tests/draw-a-ready-owned-house-route-once-26660acb/steps/14-1-4/failure.yaml",
+          "message": "failure record status \"broken\" disagrees with result.yaml step status \"failed\""
+        }
+      ]
+    }
+  },
+  {
+    "attempt": "t-2-original",
+    "evidence_id": "eced9ee5-dbd6-4473-aa2e-32a7dd1d59ed",
+    "local_pack": "tools/kane/assure/.testmuai/evidence/eced9ee5-dbd6-4473-aa2e-32a7dd1d59ed.evidence",
+    "sha256": "5c274d4540c257041c321dbd737c195386d0eadc68b0d238b680760e19fed8a5",
+    "bytes": 5567904,
+    "status": "failed",
+    "recorded_actions": 15,
+    "passed_actions": 14,
+    "failed_actions": 1,
+    "definition_id": "sha256:53dad30fe1108211fe9094631f70bafdec91e775e8ec5f2c4248bba4c83b76ff",
+    "assurance_base_at_run": "sha256:53dad30fe1108211fe9094631f70bafdec91e775e8ec5f2c4248bba4c83b76ff",
+    "validation": {
+      "valid": true,
+      "status": "finalized",
+      "diagnostics": [
+        {
+          "code": "l1.failure.status_disagrees",
+          "severity": "warning",
+          "location": "tests/unavailable-no-free-route-alerts-without-a0d28dc7/steps/15-2-6/failure.yaml",
+          "message": "failure record status \"broken\" disagrees with result.yaml step status \"failed\""
+        }
+      ]
+    }
+  },
+  {
+    "attempt": "t-5-clarified",
+    "evidence_id": "37086366-1d3b-4583-9c24-d4a748e2f1d7",
+    "local_pack": "tools/kane/assure/.testmuai/evidence/37086366-1d3b-4583-9c24-d4a748e2f1d7.evidence",
+    "sha256": "158d0890333fd1452e6c96f752bb08a25188139797838fe017d0c08f82498def",
+    "bytes": 2221752,
+    "status": "passed",
+    "recorded_actions": 11,
+    "passed_actions": 11,
+    "failed_actions": 0,
+    "definition_id": "sha256:695d0cc1b4aed001d25c366e7e045dfa7f49d867759113f1d975c431e5341d33",
+    "assurance_base_at_run": "sha256:55da62e4eb027c33abfdbb9b27341aef7d84d991944fc4eaca6e956aea68d787",
+    "validation": {
+      "valid": true,
+      "status": "finalized",
+      "diagnostics": []
+    }
+  },
+  {
+    "attempt": "t-3-clarified",
+    "evidence_id": "000f8297-4688-40f5-afb8-dc0a1d6d1d32",
+    "local_pack": "tools/kane/assure/.testmuai/evidence/000f8297-4688-40f5-afb8-dc0a1d6d1d32.evidence",
+    "sha256": "cf52ee19fd08935d2e39e1b9a9031c2a054133dd02c8abb00792bc7a242e819e",
+    "bytes": 1459988,
+    "status": "passed",
+    "recorded_actions": 9,
+    "passed_actions": 9,
+    "failed_actions": 0,
+    "definition_id": "sha256:7ce15b72b7028037c4c60c294be7cb7173b11e4c46955db33bcd0f849d022752",
+    "assurance_base_at_run": "sha256:a4eb682ecbf2c453b6c253a536cccd12bc84001af5c00d5db89a196bd231d6aa",
+    "validation": {
+      "valid": true,
+      "status": "finalized",
+      "diagnostics": []
+    }
+  },
+  {
+    "attempt": "recorded-suite",
+    "evidence_id": "748f2b7c-9446-437a-a605-a4108e9a9cd3",
+    "local_pack": "tools/kane/assure/.testmuai/evidence/748f2b7c-9446-437a-a605-a4108e9a9cd3.evidence",
+    "sha256": "46b8fdaf5709d64a7b8674a9af6077dfa3bae008e744a4e5e2927e52c7c68f91",
+    "bytes": 2341116,
+    "tests": [
+      {
+        "test": "draw-a-ready-owned-house-route-once-26660acb",
+        "status": "broken",
+        "definition_id": "sha256:7ce15b72b7028037c4c60c294be7cb7173b11e4c46955db33bcd0f849d022752",
+        "assurance_base_at_run": null,
+        "actions": 10,
+        "passed_actions": 2,
+        "failed_actions": 1
+      },
+      {
+        "test": "keep-an-active-route-after-one-click-9c4724d1",
+        "status": "passed",
+        "definition_id": "sha256:695d0cc1b4aed001d25c366e7e045dfa7f49d867759113f1d975c431e5341d33",
+        "assurance_base_at_run": null,
+        "actions": 12,
+        "passed_actions": 12,
+        "failed_actions": 0
+      }
+    ],
+    "validation": {
+      "valid": true,
+      "status": "finalized",
+      "diagnostics": [
+        {
+          "code": "l1.failure.status_disagrees",
+          "severity": "warning",
+          "location": "tests/draw-a-ready-owned-house-route-once-26660acb/steps/3-0-3/failure.yaml",
+          "message": "failure record status \"broken\" disagrees with result.yaml step status \"failed\""
+        }
+      ]
+    }
+  },
+  {
+    "attempt": "t-3-stable-group",
+    "evidence_id": "b5c9887a-69ba-450b-a393-ffb09807ab86",
+    "local_pack": "tools/kane/assure/.testmuai/evidence/b5c9887a-69ba-450b-a393-ffb09807ab86.evidence",
+    "sha256": "21de527b34034156699d35d5af32fa2c28ef06cde918aab64b28f3b3f4eb6ab4",
+    "bytes": 1375914,
+    "tests": [
+      {
+        "test": "draw-a-ready-owned-house-route-once-26660acb",
+        "status": "passed",
+        "definition_id": "sha256:1c13a6fc5a12673b79e0495e172ca5a842b559e3922d74c41593e079ca2ee941",
+        "assurance_base_at_run": "sha256:7ce15b72b7028037c4c60c294be7cb7173b11e4c46955db33bcd0f849d022752",
+        "actions": 9,
+        "passed_actions": 9,
+        "failed_actions": 0
+      }
+    ],
+    "validation": {
+      "valid": true,
+      "status": "finalized",
+      "diagnostics": []
+    }
+  }
+]

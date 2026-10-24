@@ -90,3 +90,7 @@ No paid extraction/design/browser run is part of the runner's unit verification.
 node --test tools/kane/assure/test/*.test.mjs
 bash -n tools/kane/assure/run.sh
 ```
+
+## Measured runtime evidence
+
+[2026-10-24 runtime report](runtime-2026-10-24.md) records approved scope, per-call credits, current-version coverage, replay outcomes and remaining debt. T5 passed recording-only replay; T3 generated volatile heading selectors even after its semantic assertions passed. Post-edit CID/alias selection refused on CLI0.10.0-rc.3; the report documents the authorized direct-file fallback for the same approved current cases. Full evidence packs and the local context store remain ignored.

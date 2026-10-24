@@ -1,0 +1,100 @@
+{
+  "initial_budget": 200,
+  "user_corrected_total_budget": 500,
+  "minimum_account_balance_floor": 200,
+  "currency": "Kane credits",
+  "stages": [
+    {
+      "stage": "extract",
+      "before": "100200.7113",
+      "after": "100194.9731",
+      "debit": "5.7382"
+    },
+    {
+      "stage": "design_uc_1",
+      "before": "100194.9731",
+      "after": "100175.6136",
+      "debit": "19.3595"
+    },
+    {
+      "stage": "design_uc_2",
+      "before": "100175.6136",
+      "after": "100160.1303",
+      "debit": "15.4833"
+    },
+    {
+      "stage": "design_uc_3",
+      "before": "100160.1303",
+      "after": "100143.3148",
+      "debit": "16.8155"
+    },
+    {
+      "stage": "t_3_original",
+      "before": "100143.3148",
+      "after": "100083.7465",
+      "debit": "59.5683"
+    },
+    {
+      "stage": "t_2_original",
+      "before": "100083.7465",
+      "after": "100018.5142",
+      "debit": "65.2323"
+    },
+    {
+      "stage": "t_5_clarified",
+      "before": "100018.5142",
+      "after": "99966.2405",
+      "debit": "52.2737"
+    },
+    {
+      "stage": "t_3_clarified",
+      "before": "99966.2405",
+      "after": "99923.6503",
+      "debit": "42.5902"
+    }
+  ],
+  "zero_debit_aborted_attempt": {
+    "session": "3554e664-7420-4048-bfe5-b2be04052541",
+    "completed_steps": 0,
+    "debit": "0.0000",
+    "sealed_evidence": false
+  },
+  "known_total_before_other_owner": "277.0610",
+  "remaining_before_replay": "222.9390",
+  "recording_only_replay": {
+    "members": [
+      "t-3",
+      "t-5"
+    ],
+    "before": "99843.8048",
+    "after": "99833.1617",
+    "debit": "10.6431",
+    "total_own_spend": "287.7041",
+    "external_wallet_decrease_excluded": "79.8455",
+    "outcomes": {
+      "t-3": "failed analyzer at heading",
+      "t-5": "passed"
+    },
+    "authored": 0,
+    "suite_seconds": 125.11,
+    "evidence_id": "748f2b7c-9446-437a-a605-a4108e9a9cd3"
+  },
+  "remaining_after_replay": "212.2959",
+  "stable_group_authoring": {
+    "test": "t-3",
+    "before": "99833.1617",
+    "after": "99796.0139",
+    "debit": "37.1478",
+    "outcome": "passed authoring; cached numeric selector guard failed; final replay not run",
+    "high_level_steps": {
+      "total": 2,
+      "passed": 2
+    },
+    "seconds": 102,
+    "evidence_id": "b5c9887a-69ba-450b-a393-ffb09807ab86"
+  },
+  "total_own_spend": "324.8519",
+  "final_remaining": "175.1481",
+  "last_wallet_after_own_paid_call": "99796.0139",
+  "external_wallet_decrease_excluded": "79.8455"
+}
