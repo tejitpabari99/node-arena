@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 9 tasks, DocOp reformat first, then lifted EditorContext, shell/theme, save model + top bar chip, Check/Finalize popovers, File modal, autosave, toasts, verification.
 date: 2026-10-24
 ---
@@ -8,15 +8,15 @@ Source of truth: docs/agent_files/custom-level-fix-20261024-2127/01-shell-topbar
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Mechanical DocOp reformat | - | todo |
-| 2 | Lift EditorContext, LegacyPanel, canvas-only Viewport | 1 | todo |
-| 3 | Shell layout, theme tokens, root data attrs | 2 | todo |
-| 4 | Dirty/saved model and top bar with save chip | 3 | todo |
-| 5 | Check and Finalize popovers | 4 | todo |
-| 6 | File modal and URL flows | 4 | todo |
-| 7 | Autosave and beforeunload | 4, 5 | todo |
-| 8 | Toasts for banner and misc errors | 4 | todo |
-| 9 | Visual and e2e verification | 5, 6, 7, 8 | todo |
+| 1 | Mechanical DocOp reformat | - | done |
+| 2 | Lift EditorContext, LegacyPanel, canvas-only Viewport | 1 | done |
+| 3 | Shell layout, theme tokens, root data attrs | 2 | done |
+| 4 | Dirty/saved model and top bar with save chip | 3 | done |
+| 5 | Check and Finalize popovers | 4 | done |
+| 6 | File modal and URL flows | 4 | done |
+| 7 | Autosave and beforeunload | 4, 5 | done |
+| 8 | Toasts for banner and misc errors | 4 | done |
+| 9 | Visual and e2e verification | 5, 6, 7, 8 | done |
 
 ## Task 1 — Mechanical DocOp reformat
 What it is / what it means: R11(a), the first SP01 commit. SP02 then SP03 build on it sequentially, so the shared union must be diff-friendly.
