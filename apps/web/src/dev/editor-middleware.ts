@@ -4,6 +4,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Connect, Plugin } from 'vite';
 import { ContentLoadError } from '@node-arena/content';
 import { EditorSaveError, saveEditorLevel } from '../../../../tools/src/editor-ops.js';
+import { prepareEditorProxy, runEditorProxy, type EditorProxyRunner, type EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
 
 const MAX_BYTES = 1024 * 1024;
 const WRITABLE_ID = /^na-[a-z0-9-]{1,40}$/;
@@ -66,7 +67,17 @@ function json(res: ServerResponse, status: number, value: unknown): void {
   res.end(JSON.stringify(value));
 }
 
-export function createEditorMiddleware(levelsDir: string): Connect.NextHandleFunction {
+/** Shared with Finalize: acquire synchronously before any awaited preparation. */
+export function createEditorJobGate() {
+  let busy = false;
+  return { acquire() {
+    if (busy) throw new EditorHttpError(409, 'An editor job is already running');
+    busy = true;
+    return () => { busy = false; };
+  } };
+}
+const editorJobs = createEditorJobGate();
+export function createEditorMiddleware(levelsDir: string, options: { runProxy?: EditorProxyRunner; jobs?: ReturnType<typeof createEditorJobGate> } = {}): Connect.NextHandleFunction {
   async function readLevel(id: string): Promise<{ id: string; name: string }> {
     const path = await editorLevelPath(levelsDir, id);
     if ((await stat(path)).size > MAX_BYTES) throw new EditorHttpError(413, 'Level exceeds 1 MiB');
@@ -81,6 +92,30 @@ export function createEditorMiddleware(levelsDir: string): Connect.NextHandleFun
       checkEditorRequest(req);
       if (req.method === 'POST') {
         const body = await readEditorBody(req);
+        if (path === '/__editor/solvable') {
+          let value: { id?: unknown; level?: unknown };
+          try { value = JSON.parse(body) as typeof value; }
+          catch { throw new EditorHttpError(400, 'Invalid JSON'); }
+          if (!value || typeof value.id !== 'string') throw new EditorHttpError(400, 'Solvable requires an id and level');
+          await editorLevelPath(levelsDir, value.id, true);
+          const release = (options.jobs ?? editorJobs).acquire();
+          const controller = new AbortController();
+          const cancel = () => { if (!res.writableEnded) controller.abort(); };
+          res.on('close', cancel);
+          const emit = (event: EditorProxyEvent) => { if (!res.destroyed) res.write(JSON.stringify(event) + '\n'); };
+          try {
+            const input = await prepareEditorProxy(resolve(levelsDir, '../..'), value.id, value.level);
+            if (controller.signal.aborted) return;
+            res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+            res.setHeader('Cache-Control', 'no-store');
+            res.setHeader('X-Accel-Buffering', 'no');
+            emit({ type: 'started', id: value.id });
+            try { await (options.runProxy ?? runEditorProxy)(input, emit, controller.signal); }
+            catch { if (!controller.signal.aborted) emit({ type: 'error', error: 'Proxy check failed' }); }
+            res.end();
+          } finally { res.off('close', cancel); release(); }
+          return;
+        }
         if (path === '/__editor/save') {
           let value: { id?: unknown; level?: unknown; copy?: unknown };
           try { value = JSON.parse(body) as typeof value; }

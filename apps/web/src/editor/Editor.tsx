@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { PlayOverlay } from './PlayOverlay.js';
 import { LevelPropertiesForm } from './Properties.js';
 import { Viewport } from './Viewport.js';
-import { EditorApiError, listLevels, readLevel, saveLevel, type LevelListing } from './api.js';
+import type { EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
+import { checkSolvable, EditorApiError, listLevels, readLevel, saveLevel, type LevelListing } from './api.js';
 import { createHistory, historyReducer, scriptRemovalMessages, type DocHistory, type HistoryAction } from './model.js';
 import { blankDocument, copyDocument, type LevelDoc, type SizePreset } from './document.js';
 
@@ -30,8 +31,12 @@ export function Editor() {
   const [issues, setIssues] = useState<ContentIssue[]>([]);
   const [warnings, setWarnings] = useState<ContentIssue[]>([]);
   const [saved, setSaved] = useState(false);
+  const [proxyEvents, setProxyEvents] = useState<EditorProxyEvent[]>([]);
+  const proxyAbort = useRef<AbortController | null>(null);
+  useEffect(() => () => proxyAbort.current?.abort(), []);
+  const proxyReport = proxyEvents.find(event => event.type === 'result');
   const catalog = useRef<Promise<Catalog> | undefined>(undefined);
-  function clearSave() { setIssues([]); setWarnings([]); setSaved(false); }
+  function clearSave() { setProxyEvents([]); setIssues([]); setWarnings([]); setSaved(false); }
   async function save() {
     if (!doc) return;
     setBusy(true); setError(''); clearSave();
@@ -46,6 +51,17 @@ export function Editor() {
       else if (reason instanceof EditorApiError && reason.issues.length) setIssues(reason.issues);
       else setError(reason instanceof Error ? reason.message : String(reason));
     } finally { setBusy(false); }
+  }
+  async function solvable() {
+    if (!doc) return;
+    const controller = new AbortController(); proxyAbort.current = controller;
+    setBusy(true); setError(''); setIssues([]); setProxyEvents([]);
+    try { await checkSolvable(doc, event => setProxyEvents(events => [...events, event]), controller.signal); }
+    catch (reason) {
+      if (controller.signal.aborted) setError('Proxy check cancelled.');
+      else if (reason instanceof EditorApiError && reason.issues.length) setIssues(reason.issues);
+      else setError(reason instanceof Error ? reason.message : String(reason));
+    } finally { proxyAbort.current = null; setBusy(false); }
   }
   function issueLabel(issue: ContentIssue) {
     const match = /^\/(buildings|elements|players)\/(\d+)/.exec(issue.pointer);
@@ -80,11 +96,17 @@ export function Editor() {
     <header><h1>Level editor</h1><span>Local development</span><a href="/">Game</a></header>
     {error && <p role="alert">{error}</p>}
     {doc ? <section aria-label="Working level">
-      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => setPlaying(true)}>Play</button><button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
+      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => setPlaying(true)}>Play</button><button disabled={busy} onClick={() => void solvable()}>Solvable?</button>{proxyAbort.current && <button onClick={() => proxyAbort.current?.abort()}>Cancel check</button>}<button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
       {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
       {issues.length > 0 && <ul role="alert" aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
       {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
       {saved && <p role="status">Saved. Run Finalize when ready to update content locks.</p>}
+      {proxyEvents.length > 0 && <section aria-label="Proxy evidence" aria-live="polite">
+        <p>Evidence only. Proxy wins do not prove solvability; no wins do not prove impossibility. Owner play and sign-off remain required.</p>
+        <p role="status">{proxyReport?.type === 'result' ? `Proxy wins: ${proxyReport.report.totalWins}/${proxyReport.report.runs}. Validation: ${proxyReport.report.ok ? 'passed' : 'failed'}.` : proxyAbort.current ? 'Checking proxy matches…' : 'Proxy check stopped.'}</p>
+        <pre>{proxyEvents.map(event => event.type === 'progress' ? `${event.run.proxy} seed ${event.run.seed}: ${event.run.outcome}, winner ${event.run.winner ?? 'none'}, ${event.run.ticks} ticks` : event.type === 'error' ? event.error : '').filter(Boolean).join('\n')}</pre>
+        {proxyReport?.type === 'result' && <details><summary>Full proxy report</summary><pre>{JSON.stringify(proxyReport.report, null, 2)}</pre></details>}
+      </section>}
       <p>{doc.name}</p>
       <p data-testid="draft-summary">{doc.theme} · {doc.players.length} players · {doc.buildings.length} buildings · {doc.elements.length} obstacles</p>
       <LevelPropertiesForm doc={doc} onEdit={op => dispatch({ type: 'edit', op })} themes={choices.themes} colors={choices.colors} disabled={busy} />
