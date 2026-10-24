@@ -44,7 +44,7 @@ test('Finalize versions use actual AI identity map, preserve pre-bumps, and are 
     // An owner-provided higher version is retained, not bumped again.
     const higher = bumped.replace(readBotVersion(dir)!, '99.0.0');
     await writeFile(version, higher); await run('BOT_VERSION'); assert.equal(await readFile(version, 'utf8'), higher);
-    // Geometry changes alone need a content bump, without falsely bumping bots.
+    // Geometry does not change AI identities before its content envelope is versioned.
     const moved = JSON.parse(originalLevel) as NextLevel; moved.buildings[0]!.pos.x += .01;
     await writeFile(levelPath, JSON.stringify(moved));
     await cp(resolve(root, 'packages/bots/src/version.ts'), version);
@@ -53,5 +53,9 @@ test('Finalize versions use actual AI identity map, preserve pre-bumps, and are 
     await run('contentVersion'); const metadata = await readFile(resolve(content, 'content.json'), 'utf8');
     assert.notEqual(JSON.parse(metadata).contentVersion, JSON.parse(oldMetadata).contentVersion);
     await run('contentVersion'); assert.equal(await readFile(resolve(content, 'content.json'), 'utf8'), metadata);
+    // Every bot replay embeds contentVersion: even geometry-only edits need a guarded envelope refresh.
+    await run('BOT_VERSION'); assert.notEqual(readBotVersion(dir), before);
+    const envelopeVersion = await readFile(version, 'utf8');
+    await run('BOT_VERSION'); assert.equal(await readFile(version, 'utf8'), envelopeVersion);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });

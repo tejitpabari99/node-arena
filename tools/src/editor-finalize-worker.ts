@@ -7,6 +7,7 @@ import { readBaseline, splitFiles } from './content.js';
 import { prepareEditorProxy } from './editor-solvable.js';
 import { playProxy, validateLevel } from './levels.js';
 import { readUnsolved } from './unsolved.js';
+import { runEditorCommand } from './editor-finalize.js';
 
 const root = process.cwd(), contentDir = resolve(root, 'packages/content');
 const [step, id] = process.argv.slice(2);
@@ -22,6 +23,16 @@ try {
     });
     console.log(JSON.stringify(report, null, 2));
     if (!report.ok) process.exitCode = 1;
+  } else if (step === 'sim:golden' || step === 'bots:golden') {
+    // Authoring always compares with HEAD, independent of an enclosing CI baseline.
+    process.env.VERSION_GUARD_BASE = 'HEAD';
+    process.env.SIM_GOLDEN_BASE_REF = 'HEAD';
+    const output = (text: string) => process.stdout.write(text);
+    const checked = await runEditorCommand(root, 'pnpm', [step], output);
+    if (checked !== 0) {
+      const updated = await runEditorCommand(root, 'pnpm', [step, '--update'], output);
+      if (updated !== 0) process.exitCode = updated;
+    }
   } else {
     const { meta, data } = splitFiles(await loadFiles(contentDir));
     const metadata = parseContentMeta(meta), hashes = generateHashes(loadContent(data)), baseline = readBaseline(root, 'HEAD');
@@ -36,9 +47,14 @@ try {
       }
     } else if (step === 'BOT_VERSION') {
       const current = readBotVersion(root), previous = readBotVersion(root, 'HEAD');
-      try { checkBotVersion(hashes.bots, baseline?.hashes.bots, current, previous); console.log(`BOT_VERSION ${current}: no bump required vs HEAD`); }
+      const envelopeChanged = baseline && metadata.contentVersion !== baseline.metadata.contentVersion;
+      try {
+        checkBotVersion(hashes.bots, baseline?.hashes.bots, current, previous);
+        if (envelopeChanged && current === previous) throw new Error('Bot replay envelopes require a BOT_VERSION bump');
+        console.log(`BOT_VERSION ${current}: no bump required vs HEAD`);
+      }
       catch (error) {
-        if (!current || current !== previous || !baseline || canonicalJson(hashes.bots) === canonicalJson(baseline.hashes.bots)) throw error;
+        if (!current || current !== previous || !baseline || (!envelopeChanged && canonicalJson(hashes.bots) === canonicalJson(baseline.hashes.bots))) throw error;
         const next = bumpPatch(current);
         checkBotVersion(hashes.bots, baseline.hashes.bots, next, previous);
         const file = resolve(root, 'packages/bots/src/version.ts'), source = await readFile(file, 'utf8');

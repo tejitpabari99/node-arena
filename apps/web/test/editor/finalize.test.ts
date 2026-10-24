@@ -76,3 +76,21 @@ it('disconnect does not advance the pipeline until the active command exits', as
   expect(commands).toBe(1); complete(); await job;
   expect(commands).toBe(1); expect(events.some(event => event.type === 'result')).toBe(false);
 });
+
+it('refreshes versioned replay envelopes after locks before verification, stopping on refresh failure', async () => {
+  for (const fail of [false, true]) {
+    const events: EditorFinalizeEvent[] = [];
+    await finalizeEditorLevel('/unused', 'na-finalize', event => events.push(event), new AbortController().signal, async (_root, _command, args) => {
+      return fail && args.at(-2) === 'bots:golden' ? 23 : 0;
+    });
+    const steps = events.filter(event => event.type === 'step').map(event => event.step);
+    expect(steps.slice(0, 8)).toEqual(['validate', 'contentVersion', 'BOT_VERSION', 'content:lock', 'levels:lock', 'build:bots', 'sim:golden', 'bots:golden']);
+    if (fail) {
+      expect(steps).toHaveLength(8);
+      expect(events.at(-1)).toEqual({ type: 'error', step: 'bots:golden', exitCode: 23, error: 'bots:golden failed (exit 23)' });
+    } else {
+      expect(steps.slice(8)).toEqual(['validate:content', 'check:content', 'git diff --stat']);
+      expect(events.at(-1)).toEqual({ type: 'result' });
+    }
+  }
+});
