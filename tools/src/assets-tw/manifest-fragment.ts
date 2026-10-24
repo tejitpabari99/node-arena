@@ -148,7 +148,7 @@ function deepMerge(a: unknown, b: unknown): unknown {
   for (const k of Object.keys(b)) {
     // A `team` patch that switches `mode` replaces the whole object (no stray `textures` beside tintMask `base`/`mask`).
     const modeSwitch = k === 'team' && isObj(a[k]) && isObj(b[k]) && 'mode' in b[k] && b[k]['mode'] !== a[k]['mode'];
-    out[k] = k in a && !modeSwitch ? deepMerge(a[k], b[k]) : b[k];
+    out[k] = Object.hasOwn(a, k) && !modeSwitch ? deepMerge(a[k], b[k]) : b[k];
   }
   return out;
 }

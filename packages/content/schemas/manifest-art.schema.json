@@ -12,7 +12,7 @@
     "visuals": {
       "type": "object",
       "patternProperties": {
-        "^.*$": {
+        "^(?!(?:__proto__|constructor|prototype)$).+$": {
           "type": "object",
           "properties": {
             "model": {
@@ -174,7 +174,7 @@
     "themes": {
       "type": "object",
       "patternProperties": {
-        "^.*$": {
+        "^(?!(?:__proto__|constructor|prototype)$).+$": {
           "type": "object",
           "properties": {
             "ground": {
@@ -258,7 +258,7 @@
     "fx": {
       "type": "object",
       "patternProperties": {
-        "^.*$": {
+        "^(?!(?:__proto__|constructor|prototype)$).+$": {
           "type": "object",
           "properties": {
             "texture": {
@@ -268,7 +268,7 @@
             "params": {
               "type": "object",
               "patternProperties": {
-                "^.*$": {
+                "^(?!(?:__proto__|constructor|prototype)$).+$": {
                   "type": "number"
                 }
               },
@@ -283,7 +283,7 @@
     "events": {
       "type": "object",
       "patternProperties": {
-        "^.*$": {
+        "^(?!(?:__proto__|constructor|prototype)$).+$": {
           "type": "object",
           "properties": {
             "sfx": {

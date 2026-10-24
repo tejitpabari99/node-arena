@@ -9,7 +9,9 @@ const key = () => Type.String({ minLength: 1 });
 const path = key;
 const color = () => Type.String({ pattern: '^#[0-9a-fA-F]{6}$' });
 const vector = () => Type.Array(Type.Number(), { minItems: 3, maxItems: 3 });
-const map = <T extends Type.TSchema>(schema: T) => Type.Record(Type.String({ minLength: 1 }), schema, closed);
+// Map keys exclude prototype-polluting names (`__proto__`, `constructor`, `prototype`); unmatched keys fail via additionalProperties: false.
+const SAFE_KEY = '^(?!(?:__proto__|constructor|prototype)$).+$';
+const map = <T extends Type.TSchema>(schema: T) => Type.Record(Type.String({ pattern: SAFE_KEY }), schema, closed);
 const opt = Type.Optional;
 
 const stage = Type.Union([

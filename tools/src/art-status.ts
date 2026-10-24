@@ -1,6 +1,7 @@
 // art:status — report-only to-do list of manifest file fields still pointing at original (non-`art/`) assets.
 import { readFile } from 'node:fs/promises';
 import type { ManifestV2 } from '@node-arena/content';
+import { fileFields } from './manifest-assets.js';
 
 export interface ArtField { owner: string; field: string; path: string; label: 'TW' | 'stock' }
 export interface ArtStatus { total: number; onArt: number; original: ArtField[] }
@@ -8,30 +9,8 @@ export interface ArtStatus { total: number; onArt: number; original: ArtField[] 
 const isArt = (p: string): boolean => p === 'art' || p.startsWith('art/');
 const labelOf = (p: string): 'TW' | 'stock' => (p.startsWith('models/tw/') || p.startsWith('textures/tw/') ? 'TW' : 'stock');
 
-/** Every file-valued field (scalars like sky/light colours excluded), mirroring manifest-assets references(). */
-function fields(m: ManifestV2): Array<{ owner: string; field: string; path: string }> {
-  const out: Array<{ owner: string; field: string; path: string }> = [];
-  const add = (owner: string, field: string, path: unknown): void => { if (typeof path === 'string') out.push({ owner, field, path }); };
-  for (const [id, v] of Object.entries(m.visuals ?? {})) {
-    add(id, 'model.parts', v.model?.parts);
-    add(id, 'model.lod', v.model?.lod);
-    const team = (v.team ?? {}) as { textures?: Record<string, unknown> };
-    for (const [k, t] of Object.entries(team.textures ?? {})) add(id, `team.${k}`, t);
-    const tint = (v.team ?? {}) as { base?: unknown; mask?: unknown };
-    add(id, 'team.base', tint.base); add(id, 'team.mask', tint.mask);
-  }
-  for (const [id, t] of Object.entries(m.themes ?? {})) {
-    const o = `theme ${id}`;
-    add(o, 'ground.mesh', t.ground?.mesh); add(o, 'ground.texture', t.ground?.texture);
-    add(o, 'obstacle.small', t.obstacle?.small); add(o, 'obstacle.big', t.obstacle?.big); add(o, 'obstacle.texture', t.obstacle?.texture);
-  }
-  for (const [id, f] of Object.entries(m.fx ?? {})) add(`fx ${id}`, 'texture', f.texture);
-  for (const [id, e] of Object.entries(m.events ?? {})) add(`event ${id}`, 'sfx', e.sfx);
-  return out;
-}
-
 export function artStatus(m: ManifestV2): ArtStatus {
-  const all = fields(m);
+  const all = fileFields(m).map(({ owner, field, path }) => ({ owner, field, path }));
   const original = all.filter(f => !isArt(f.path)).map(f => ({ ...f, label: labelOf(f.path) }));
   return { total: all.length, onArt: all.length - original.length, original };
 }

@@ -8,7 +8,7 @@ import { extname, join } from 'node:path';
 import { NodeIO, type Document, type Node } from '@gltf-transform/core';
 import { BUDGET_CLASSES, type ManifestV2 } from '@node-arena/content';
 
-import { loadArt } from './assets-tw/merge-cli.js';
+import { loadArt } from './assets-tw/art-patch.js';
 import { ART_PATH, FRAGMENT_PATH, mergeManifest, stringify, type Fragment } from './assets-tw/manifest-fragment.js';
 
 export const MAX_TEXTURE_PX = 256;
@@ -45,24 +45,35 @@ const own = (n: Node): number => nodeTris(n) - n.listChildren().reduce((s, c) =>
 const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const pngSize = (b: Buffer): [number, number] | null => (b.length >= 24 && b.subarray(0, 8).equals(PNG_SIG) ? [b.readUInt32BE(16), b.readUInt32BE(20)] : null);
 
+/** One file-valued manifest field. `from` is the error label; `ref` = a model ref that may carry a `#node` suffix. */
+export interface FileField { owner: string; field: string; path: string; from: string; texture?: boolean; audio?: boolean; ref?: boolean }
+/** Every file-valued field of the manifest (scalars such as colours excluded). Shared by the checks and `art:status` so they cannot drift. */
+export function fileFields(m: ManifestV2): FileField[] {
+  const out: FileField[] = [];
+  const add = (owner: string, field: string, path: unknown, o: { from?: string; texture?: boolean; audio?: boolean; ref?: boolean } = {}): void => {
+    if (typeof path === 'string') out.push({ owner, field, path, from: o.from ?? `${owner} ${field}`, ...(o.texture ? { texture: true } : {}), ...(o.audio ? { audio: true } : {}), ...(o.ref ? { ref: true } : {}) });
+  };
+  for (const [id, v] of Object.entries(m.visuals ?? {})) {
+    add(id, 'model.parts', v.model?.parts, { from: `visual ${id} model.parts`, ref: true });
+    add(id, 'model.lod', v.model?.lod, { from: `visual ${id} model.lod`, ref: true });
+    const team = (v.team ?? {}) as { textures?: Record<string, unknown>; base?: unknown; mask?: unknown };
+    for (const [k, t] of Object.entries(team.textures ?? {})) add(id, `team.${k}`, t, { from: `visual ${id} texture ${k}`, texture: true });
+    for (const k of ['base', 'mask'] as const) add(id, `team.${k}`, team[k], { from: `visual ${id} team.${k}`, texture: true }); // tintMask
+  }
+  for (const [id, t] of Object.entries(m.themes ?? {})) {
+    const o = `theme ${id}`;
+    add(o, 'ground.mesh', t.ground?.mesh, { ref: true }); add(o, 'ground.texture', t.ground?.texture, { texture: true });
+    add(o, 'obstacle.small', t.obstacle?.small, { ref: true }); add(o, 'obstacle.big', t.obstacle?.big, { ref: true }); add(o, 'obstacle.texture', t.obstacle?.texture, { texture: true });
+  }
+  for (const [id, f] of Object.entries(m.fx ?? {})) add(`fx ${id}`, 'texture', f.texture, { from: `fx ${id}`, texture: true });
+  for (const [id, e] of Object.entries(m.events ?? {})) add(`event ${id}`, 'sfx', e.sfx, { audio: true });
+  return out;
+}
+
 /** Collect every file path the manifest references, with where it came from. */
 interface Ref { path: string; from: string; texture?: boolean; audio?: boolean }
 function references(m: ManifestV2): Ref[] {
-  const refs: Ref[] = [];
-  for (const [id, v] of Object.entries(m.visuals)) {
-    refs.push({ path: v.model.parts, from: `visual ${id} model.parts` });
-    if (v.model.lod) refs.push({ path: v.model.lod, from: `visual ${id} model.lod` });
-    if (v.team?.mode === 'textureSwap') for (const [team, t] of Object.entries(v.team.textures)) refs.push({ path: t, from: `visual ${id} texture ${team}`, texture: true });
-    const tint = (v.team ?? {}) as { base?: unknown; mask?: unknown }; // tintMask `base` + `mask`
-    for (const k of ['base', 'mask'] as const) { const p = tint[k]; if (typeof p === 'string') refs.push({ path: p, from: `visual ${id} team.${k}`, texture: true }); }
-  }
-  for (const [id, t] of Object.entries(m.themes)) {
-    refs.push({ path: t.ground.mesh, from: `theme ${id} ground.mesh` }, { path: t.ground.texture, from: `theme ${id} ground.texture`, texture: true });
-    refs.push({ path: split(t.obstacle.small).file, from: `theme ${id} obstacle.small` }, { path: split(t.obstacle.big).file, from: `theme ${id} obstacle.big` }, { path: t.obstacle.texture, from: `theme ${id} obstacle.texture`, texture: true });
-  }
-  for (const [id, f] of Object.entries(m.fx)) refs.push({ path: f.texture, from: `fx ${id}`, texture: true });
-  for (const [id, e] of Object.entries(m.events)) if (e.sfx) refs.push({ path: e.sfx, from: `event ${id} sfx`, audio: true });
-  return refs;
+  return fileFields(m).map((f) => ({ path: f.ref ? split(f.path).file : f.path, from: f.from, ...(f.texture ? { texture: true } : {}), ...(f.audio ? { audio: true } : {}) }));
 }
 
 type Obj = Record<string, unknown>;
@@ -72,17 +83,39 @@ function leaves(v: unknown, at: string[] = []): Array<{ at: string[]; value: unk
   if (!isObj(v)) return [{ at, value: v }];
   return Object.entries(v).flatMap(([k, c]) => (at.length === 0 && (k === '$schema' || k === 'schemaVersion') ? [] : leaves(c, [...at, k])));
 }
-const hasPath = (root: unknown, at: string[]): boolean => at.every((k) => { if (!isObj(root) || !(k in root)) return false; root = root[k]; return true; });
+const hasPath = (root: unknown, at: string[]): boolean => at.every((k) => { if (!isObj(root) || !Object.hasOwn(root, k)) return false; root = root[k]; return true; });
 
-/** Art patch rules: no references into importer-owned dirs, and every patched field must still exist in the importer output. */
+const PATH_KEYS = new Set(['parts', 'lod', 'base', 'mask', 'texture', 'mesh', 'small', 'big', 'sfx']);
+const MODEL_REF_KEYS = new Set(['parts', 'lod', 'mesh', 'small', 'big']);
+/** Mirrors apps/web assertAssetPath: a safe relative path (no `..`/`.`/empty segment, leading `/`, `\\`, `:?#%` or control chars). */
+const unsafePath = (p: string): boolean => !p || p.startsWith('/') || p.includes('\\') || /[:?#%\x00-\x1f]/.test(p) || p.split('/').some((part) => !part || part === '.' || part === '..');
+
+/** Art patch rules: safe paths, no references into importer-owned dirs, and every patched field must still exist in the importer output. */
 function checkArt(art: Obj, fragment: Fragment, errors: string[]): void {
+  // A `visuals.<id>.team` patch whose `mode` differs from the importer's replaces the whole team object (see deepMerge), so the target is
+  // `team` itself and its leaves (e.g. tintMask `base`/`mask`) have no importer counterpart.
+  const switched: string[][] = [];
+  for (const [id, v] of Object.entries((art['visuals'] ?? {}) as Obj)) {
+    const team = isObj(v) ? v['team'] : undefined;
+    const base = (fragment.visuals as Record<string, unknown>)[id];
+    const baseTeam = isObj(base) ? base['team'] : undefined;
+    if (isObj(team) && typeof team['mode'] === 'string' && (!isObj(baseTeam) || team['mode'] !== baseTeam['mode'])) switched.push(['visuals', id, 'team']);
+  }
+  const under = (at: string[], prefix: string[]): boolean => prefix.every((k, i) => at[i] === k);
+  for (const prefix of switched) if (!hasPath(fragment, prefix)) errors.push(`art: ${prefix.join('.')} targets a field the importer no longer produces`);
   for (const { at, value } of leaves(art)) {
     const name = at.join('.');
+    const last = at[at.length - 1] ?? '';
+    if (typeof value === 'string' && (PATH_KEYS.has(last) || at.includes('textures'))) {
+      const file = MODEL_REF_KEYS.has(last) ? value.split('#')[0]! : value;
+      if (unsafePath(file)) { errors.push(`art: ${name} is not a safe relative path (${value})`); continue; }
+    }
     if (typeof value === 'string') {
       const dir = OWNED.find((d) => value.startsWith(`${d}/`));
       if (dir) errors.push(`art: ${name} points into importer-owned ${dir}/ (${value}); art files must live under ${ART_DIR}/`);
     }
     // events: only `sfx` is patchable and comes from importer defaults (art may add custom events), so there is no fragment target.
+    if (switched.some((p) => under(at, p))) continue;
     if (at[0] !== 'events' && !hasPath(fragment, at)) errors.push(`art: ${name} targets a field the importer no longer produces`);
   }
 }

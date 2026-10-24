@@ -7,7 +7,8 @@ import { test } from 'node:test';
 import type { ManifestV2 } from '@node-arena/content';
 import { Document, NodeIO } from '@gltf-transform/core';
 import { DEFAULT_EVENT_SFX, lightDirFromQuat, lightDirToDataFrame, mergeManifest, stringify, type Fragment } from '../src/assets-tw/manifest-fragment.js';
-import { loadArt, mergeFiles } from '../src/assets-tw/merge-cli.js';
+import { loadArt } from '../src/assets-tw/art-patch.js';
+import { mergeFiles } from '../src/assets-tw/merge-cli.js';
 import { checkManifestAssets } from '../src/manifest-assets.js';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -142,7 +143,7 @@ test('loadArt / assets:manifest: absent = undefined; fixture patch validates and
     const tint = { visuals: { 'unit.tank': { team: { mode: 'tintMask', base: 'art/b.png', mask: 'art/m.png' } } } };
     writeFileSync(join(dir, 'manifest.art.json'), JSON.stringify(tint));
     assert.deepEqual(loadArt(dir), tint); // tintMask patch validates
-    for (const bad of [{ visuals: { 'unit.tank': { kind: 'building' } } }, { visuals: { 'unit.tank': { model: { budget: 'unit' } } } }, { visuals: { 'unit.tank': { scale: null } } }, { palettes: {} }, { camera: { fov: 1 } }, { events: { Clash: { fx: 'x' } } }, { bogus: 1 }]) {
+    for (const bad of [{ visuals: { 'unit.tank': { kind: 'building' } } }, { visuals: { 'unit.tank': { model: { budget: 'unit' } } } }, { visuals: { 'unit.tank': { scale: null } } }, { visuals: JSON.parse('{"__proto__":{"scale":2}}') }, { visuals: { constructor: { scale: 2 } } }, { palettes: {} }, { camera: { fov: 1 } }, { events: { Clash: { fx: 'x' } } }, { bogus: 1 }]) {
       writeFileSync(join(dir, 'manifest.art.json'), JSON.stringify(bad));
       assert.throws(() => loadArt(dir), /manifest\.art\.json invalid/, JSON.stringify(bad));
     }
@@ -239,6 +240,26 @@ test('art: stale target is an error naming the field', async () => {
   try {
     const r = await withArt(dir, { visuals: { 'unit.soldier': { team: { textures: { gray: 'art/textures/g.png' } } } } }, { 'art/textures/g.png': png(32, 32) });
     assert.ok(r.errors.includes('art: visuals.unit.soldier.team.textures.gray targets a field the importer no longer produces'), r.errors.join('\n'));
+  } finally { done(); }
+});
+
+test('art: switching a textureSwap team to tintMask passes (team is the target)', async () => {
+  const { dir, done } = copy();
+  try {
+    const art = { visuals: { 'unit.soldier': { team: { mode: 'tintMask', base: 'art/textures/base.png', mask: 'art/textures/mask.png' } } } };
+    const r = await withArt(dir, art, { 'art/textures/base.png': png(64, 64), 'art/textures/mask.png': png(64, 64) });
+    assert.deepEqual(r.errors, []);
+    assert.deepEqual(r.warnings, []);
+  } finally { done(); }
+});
+
+test('art: unsafe relative paths (.. / absolute / backslash) fail even when they start with art/', async () => {
+  const { dir, done } = copy();
+  try {
+    for (const p of ['art/../textures/tw/x.png', '/art/x.png', 'art\\x.png', 'art/./x.png']) {
+      const r = await withArt(dir, { fx: { 'capture-ring': { texture: p } } });
+      assert.match(r.errors.join('\n'), /art: fx\.capture-ring\.texture is not a safe relative path/, p);
+    }
   } finally { done(); }
 });
 
