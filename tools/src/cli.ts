@@ -115,8 +115,9 @@ async function main(): Promise<void> {
     // Default to the repository CREDITS.md (the default path may be absent; an explicit --credits must exist).
     const credits = opts['--credits'] ? await readText(resolve(opts['--credits'])) : await readText(resolve(root, 'docs/CREDITS.md')).catch(() => '');
     const missing = await uncreditedAssets(assetsDir, credits);
-    if (missing.length) throw new LocatedError(manifestPath, `Asset files missing from CREDITS.md: ${missing.join(', ')}`);
-    report.summary = 'Manifest schema, content cross-checks, asset files/hashes/budgets and credits valid.';
+    // Owner-made art needs no credit (R6/D8): uncredited files warn, never fail.
+    if (missing.length) report.warnings.push({ file: manifestPath, pointer: '', message: `Asset files missing from CREDITS.md: ${missing.join(', ')}` });
+    report.summary = 'Manifest schema, content cross-checks, asset files/hashes/budgets valid (credits warn only).';
   }
   report.ok = true;
 }
