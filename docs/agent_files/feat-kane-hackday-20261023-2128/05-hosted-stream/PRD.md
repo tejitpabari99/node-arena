@@ -1,6 +1,6 @@
 ---
 status: in-progress
-summary: Public no-password page on this Linux box where anyone presses Start and watches Kane play live (CDP screencast over WS + sanitized driver log over SSE), single-run lock, credit floor 200, game never exposed (loopback only), nginx-on-this-box behind Cloudflare-proxied DNS (cloudflared fallback), security-review surface listed.
+summary: Hosted stream implemented; 9 tasks done, local smoke and security review pass; public paid rehearsal blocked on owner proxy/DNS setup
 date: 2026-10-24
 ---
 # PRD: 05 Hosted live stream

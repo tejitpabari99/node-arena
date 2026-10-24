@@ -1,6 +1,6 @@
 ---
 status: in-progress
-summary: 10 tasks to build the hosted Kane live stream (guards, allowlist relay, run lock, screencast, server, viewer, smoke, nginx docs, security review, rehearsal)
+summary: 9 tasks done; local stream and security review pass; public paid rehearsal blocked on owner proxy/DNS setup
 date: 2026-10-24
 ---
 # Tasks: 05 Hosted live stream
@@ -16,8 +16,8 @@ Source of truth: [PRD.md](PRD.md). Builds `tools/kane/stream/**` plus root scrip
 | 6 | Viewer page | 5 | done |
 | 7 | Credit-free smoke and acceptance greps | 6 | done |
 | 8 | README, nginx/ufw and cloudflared docs | 5 | done |
-| 9 | dev-security-review gate | 7, 8 | in-progress |
-| 10 | Real rehearsal through the proxy | 9 | todo |
+| 9 | dev-security-review gate | 7, 8 | done |
+| 10 | Real rehearsal through the proxy | 9 | blocked |
 
 ## Task 1 — Scaffold, `ws` pin, abuse-guard module
 What it is / what it means: Foundation for the stream package (PRD Owns, R4, Architecture dependency note, Decision 3).
@@ -65,6 +65,8 @@ What changes at a high level: Run the `dev-security-review` skill over the 05 di
 Done when: a security-review artifact exists with no unresolved High. The link must not be shared before this.
 
 ## Task 10 — Real rehearsal through the proxy
+Execution status (2026-10-24): **blocked** on owner proxy/DNS setup. No nginx or named-tunnel configuration is available; [official Quick Tunnel limitations](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/#limitations) exclude SSE. Follow the [exposure runbook](../../../../tools/kane/stream/README.md#owner-deployment-nginx--cloudflare) with nginx or a separately validated named tunnel before the public paid rehearsal. No paid credits or public exposure this run.
+
 What it is / what it means: Live validation with real credits (Acceptance: rehearsal, exposure checks).
 What changes at a high level: With the owner's nginx/Cloudflare (or cloudflared) in place, perform one real Start through the public path. Verify `driver_end.outcome` matches the game result, credits spent within 03's budget, SSE and WS stay up over 120 s through the proxy, `:4173/:9222/:8787` unreachable externally, direct non-Cloudflare :80 blocked, `ss -ltnp` shows only nginx public. Record results and tune caps if needed.
 Done when: rehearsal results are recorded and all exposure acceptance items pass; failures documented with the recorded-video fallback noted.
