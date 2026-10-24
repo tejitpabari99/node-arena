@@ -26,6 +26,12 @@ if (kind==='pnpm') {
 }
 if (args[0]==='context' && args[1]==='list') {
  for (const row of JSON.parse(process.env.ROWS ?? '[]')) console.log(JSON.stringify(row));
+} else if (args[0]==='context' && args[1]==='view') {
+ const rows=JSON.parse(process.env.ROWS ?? '[]');
+ const nodes=rows.map(row=>({...row,cid:row.cid ?? 'cid-'+row.id,slug:row.id}));
+ console.log(process.env.VIEW ?? JSON.stringify({nodes,edges:[],contentHtml:Object.fromEntries(nodes.map(row=>[row.cid,'<div><span class="k">description</span><span class="v">Full description for '+row.slug+'</span></div>']))}));
+} else if (args[0]==='context' && args[1]==='explain') {
+ console.log(JSON.stringify({events:[{kind:'minted',seq:2}]}));
 } else {
  console.log(JSON.stringify({type:process.env.PAUSE ? 'session_paused' : 'done',resume:'kane-cli context extract --resume session-42 --mode agent',pending_questions:[{text:'Which requirement?'}]}));
  process.exit(Number(process.env.KANE_EXIT ?? 0));
@@ -198,4 +204,31 @@ test('rechecks the floor for every usecase and stops before the second paid call
     assert.equal(call.stdin, '');
     assert.equal(call.agent, 'codex');
   }
+});
+
+test('review prints graph descriptions, criteria and citation anchors rather than explain history', async t => {
+  const f = await fixture(t, { VIEW: JSON.stringify({
+    nodes: [{ cid: 'source', slug: 'excerpt', label: 'source' }, { cid: 'cut', slug: 'uc-2', label: 'usecase' }, { cid: 'test', slug: 't-2', label: 'test' }],
+    edges: [{ type: 'DERIVES', src: 'source', dst: 'cut', anchors: ['L57-L57', 'L116-L116', 'L57-L57'] }],
+    contentHtml: {
+      cut: '<div class="kv"><span class="k">description</span><span class="v">Owner&#39;s double-click cuts after &gt;= 700 ms.</span></div><ul class="crit"><li>In-flight troops continue.</li><li>Single click does not cut.</li></ul>',
+      test: '<div class="kv"><span class="k">steps</span><span class="v">Observe the route remains active after one click.</span></div>',
+    },
+  }) });
+  assert.equal(await f.run(['review']), 0);
+  assert.match(f.logs, /Owner's double-click cuts after >= 700 ms/);
+  assert.match(f.logs, /In-flight troops continue/);
+  assert.match(f.logs, /Single click does not cut/);
+  assert.match(f.logs, /excerpt.*L57-L57.*L116-L116/);
+  assert.match(f.logs, /Observe the route remains active/);
+  assert.doesNotMatch(f.logs, /<span|class="|"minted"/);
+  const calls = await f.calls();
+  assert.deepEqual(calls.map(call => call.args), [['context', 'list', '--json'], ['context', 'view', '--json']]);
+});
+
+test('review fails closed when graph lacks the current derived item content', async t => {
+  const f = await fixture(t, { VIEW: JSON.stringify({ nodes: [], edges: [], contentHtml: {} }) });
+  assert.equal(await f.run(['review']), 2);
+  assert.match(f.logs, /content.*uc-2|uc-2.*content/i);
+  assert.equal((await f.calls()).some(call => call.args.includes('--approve')), false);
 });

@@ -52,6 +52,40 @@ function select(rows, refs, label) {
   return [...new Map(selected.map(row => [row.id, row])).values()];
 }
 
+/** Decode the CLI's escaped content fragments as plain text, never executable HTML. */
+function contentText(html) {
+  const entities = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+  return html
+    .replace(/<span\b[^>]*class=["']k["'][^>]*>([\s\S]*?)<\/span>/gi, '$1: ')
+    .replace(/<span\b[^>]*class=["']chip["'][^>]*>/gi, '\n')
+    .replace(/<li\b[^>]*>/gi, '\n- ')
+    .replace(/<\/(?:div|li|p|pre|ul|ol|h[1-6])>|<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi, (match, entity) => {
+      if (!entity.startsWith('#')) return entities[entity.toLowerCase()];
+      const code = entity[1].toLowerCase() === 'x' ? parseInt(entity.slice(2), 16) : Number(entity.slice(1));
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+    })
+    .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function reviewContent(rows, graph) {
+  if (!Array.isArray(graph.nodes) || !Array.isArray(graph.edges) || !graph.contentHtml || typeof graph.contentHtml !== 'object') {
+    throw new Error('Invalid context view --json payload; full review content unavailable');
+  }
+  const nameOf = cid => graph.nodes.find(node => node.cid === cid)?.slug || cid;
+  return rows.map(row => {
+    const node = graph.nodes.find(item => row.cid ? item.cid === row.cid : item.slug === row.id);
+    const html = node && graph.contentHtml[node.cid];
+    if (typeof html !== 'string' || !html.trim()) throw new Error(`Full review content missing for ${row.id}`);
+    const relations = graph.edges.filter(edge => edge.src === node.cid || edge.dst === node.cid).map(edge => {
+      const anchors = [...new Set(edge.anchors || [])];
+      return `${edge.type}: ${nameOf(edge.src)} → ${nameOf(edge.dst)}${anchors.length ? ` (${anchors.join(', ')})` : ''}`;
+    });
+    return `${row.id} — ${row.title || node.title || row.label} [${row.trust}; ${row.fresh}]\n${contentText(html)}\nCitations / relations:\n${relations.length ? relations.map(value => `- ${value}`).join('\n') : '- No citation relations recorded.'}\n`;
+  }).join('\n');
+}
+
 /** Each invocation performs exactly one stage; no automatic paid retry or approval. */
 export async function runAssure(argv, {
   root = ROOT, env = process.env, signal,
@@ -125,12 +159,13 @@ export async function runAssure(argv, {
         return (await kane(['context', 'review', '--approve', ...refs, '--mode', 'agent'])).code ?? 2;
       }
       const derived = rows.filter(row => row.trust === 'derived');
-      stdout(`${JSON.stringify(derived, null, 2)}\n`);
-      // Include complete content and citations, so both human checkpoints are reviewable.
-      for (const row of derived) {
-        const result = await kane(['context', 'explain', row.id, '--json']);
+      if (derived.length) {
+        // explain --json is history-only on CLI 0.10; the view export contains
+        // full descriptions/criteria plus citation anchors on graph edges.
+        const result = await kane(['context', 'view', '--json'], { capture: true });
         if (result.code !== 0) return result.code ?? 2;
-      }
+        stdout(reviewContent(derived, JSON.parse(result.stdout)));
+      } else stdout('No derived items awaiting review.\n');
       stderr('Human review required: approve only chosen refs with run.sh review --approve <refs...>. No items promoted.\n');
       return 0;
     }

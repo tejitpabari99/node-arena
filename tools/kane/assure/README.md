@@ -24,8 +24,8 @@ tools/kane/assure/run.sh cover
 ```
 
 The refs above are examples, not a preapproved list. Use the exact refs from the
-current `review` output. Bare `review` lists all derived nodes and explains each
-with its full content/citations; it promotes nothing. `--approve` accepts only
+current `review` output. Bare `review` lists all derived nodes with full descriptions,
+criteria and citation relations/line anchors from `context view --json`; it promotes nothing. `--approve` accepts only
 explicit current derived refs. Repeat this human checkpoint after extraction and
 after design. `design` accepts only fresh trusted use-cases; `testrun` accepts only
 fresh trusted tests. Omitting refs selects all eligible items of that kind.
@@ -37,7 +37,7 @@ forcing a redesign. No unreviewed bypass, force, automatic approval or paid retr
 | excerpt | `node build-excerpt.mjs` → `excerpt.md` | Free |
 | ingest | `context ingest excerpt.md --mode ci` | Free: local snapshot only, no extraction |
 | extract | `context extract --mode agent` | Paid |
-| review | `context list --json`, `context explain <ref> --json`; explicit `context review --approve <refs...> --mode agent` | Free |
+| review | `context list --json`, `context view --json`; explicit `context review --approve <refs...> --mode agent` | Free |
 | design | `design tests --use-case <uc> --mode agent --max 3`, sequentially per selected use-case | Paid |
 | testrun | `testrun run --from-context <trusted-test-refs> --agent --no-adaptive-heal --headless` | Paid authoring/replay |
 | cover | `cover gaps`, then `cover --mode agent` | Free |
@@ -82,6 +82,8 @@ under the shared resource lock. Never delete Kane's store locks or edit `.contex
 CLI forms verified locally against `0.10.0-rc.3` using command help on 2026-10-24.
 Ingest help explicitly says `--mode ci` only adds files; agent ingest would also
 extract and spend credits. CI replay remains independently pinned to `0.9.0`.
+`context explain --json` is history-only in this release; the review stage uses
+the graph view export for full content and provenance instead.
 No paid extraction/design/browser run is part of the runner's unit verification.
 
 ```sh
