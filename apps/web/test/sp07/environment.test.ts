@@ -120,13 +120,13 @@ describe('lanes', () => {
   const palettes = manifest.palettes;
   const mesh = (r: ReturnType<typeof createLaneRenderer>, i: number) => r.root.children[i] as Mesh;
 
-  it('ribbon geometry: width 0.46, centred, yaw along from->to, UV tiles = length/width', () => {
+  it('ribbon geometry: width 0.6, centred, yaw along from->to, UV tiles = length/width', () => {
     const r = createLaneRenderer(ctx('lane'), { palettes });
     r.update(view([line(0, 1, 0), line(0, 2, 1)]), 0);
     const a = mesh(r, 1); // index 0 = preview
-    expect(a.position.x).toBeCloseTo(2); expect(a.scale.x).toBeCloseTo(4); expect(a.scale.z).toBeCloseTo(0.46); expect(a.rotation.y).toBeCloseTo(0);
+    expect(a.position.x).toBeCloseTo(2); expect(a.scale.x).toBeCloseTo(4); expect(a.scale.z).toBeCloseTo(0.6); expect(a.rotation.y).toBeCloseTo(0);
     const uv = a.geometry.getAttribute('uv'); const us = [...Array(uv.count).keys()].map(i => uv.getX(i));
-    expect(Math.max(...us)).toBeCloseTo(laneTiles(4, 0.46, 1)); expect(Math.min(...us)).toBe(0);
+    expect(Math.max(...us)).toBeCloseTo(laneTiles(4, 0.6, 1)); expect(Math.min(...us)).toBe(0);
     const b = mesh(r, 2); expect(b.scale.x).toBeCloseTo(3); expect(new Vector3(1, 0, 0).applyEuler(b.rotation).z).toBeCloseTo(1); // +x local -> +z
   });
   it('per-team colour (palette) at LANE_ALPHA, texture is the lane-wave beam', () => {
@@ -135,7 +135,7 @@ describe('lanes', () => {
     const mat = (i: number) => mesh(r, i).material as MeshBasicMaterial;
     expect(mat(1).color.getHexString()).toBe(new (mat(1).color.constructor as typeof import('three').Color)(LANE_COLORS['blue']!).getHexString());
     expect(mat(2).color.getHexString()).not.toBe(mat(1).color.getHexString());
-    expect(mat(1)).toBe(mat(3)); expect(mat(1).opacity).toBeCloseTo(0.85); expect(mat(1).transparent).toBe(true);
+    expect(mat(1)).toBe(mat(3)); expect(mat(1).opacity).toBeCloseTo(0.9); expect(mat(1).transparent).toBe(true);
   });
   it('UV scroll advances toward `to` (offset decreases mod 1) and wraps', () => {
     const c = ctx('lane'), r = createLaneRenderer(c, { palettes });
