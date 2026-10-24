@@ -1,0 +1,30 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; color: #edf2f5; background: #10171b; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { width: min(1080px, 100% - 40px); margin: 32px auto; }
+header, .controls { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+header { margin-bottom: 22px; }
+h1 { font-size: clamp(21px, 3vw, 30px); letter-spacing: -.04em; margin: 0; font-weight: 650; }
+.presence { display: flex; gap: 6px; align-items: center; color: #afc0ca; font-size: 13px; white-space: nowrap; }
+.presence-dot { width: 7px; height: 7px; background: #85d8b2; border-radius: 50%; margin-right: 3px; }
+.stage { position: relative; aspect-ratio: 16 / 9; background: #080d10; border: 1px solid #2d3a43; border-radius: 12px; overflow: hidden; }
+canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+#video-message { position: absolute; inset: auto 0 12px; margin: 0; text-align: center; font-size: 14px; color: #bcc9d1; pointer-events: none; background: #080d10c9; padding: 8px; }
+#video-message[hidden], [hidden] { display: none; }
+.controls { padding: 20px 0 24px; }
+.run-status { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; }
+#status { border: 1px solid #42515b; border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 650; letter-spacing: .03em; }
+#status[data-state="live"] { color: #9ee8c4; background: #15382a; border-color: #387759; }
+#status[data-state="failed"] { color: #ffb8ad; border-color: #85564f; }
+#message { margin: 0; font-size: 14px; color: #b6c5ce; }
+a { color: #a5d6ff; font-size: 14px; text-underline-offset: 3px; }
+button { border: 0; border-radius: 8px; min-width: 112px; padding: 12px 24px; font: inherit; font-weight: 650; color: #082216; background: #93e3b7; cursor: pointer; }
+button:hover:enabled { background: #b2f0cf; }
+button:disabled { cursor: default; background: #2b393f; color: #82959f; }
+button:focus-visible, a:focus-visible { outline: 3px solid #c5e4ff; outline-offset: 4px; }
+.activity { border: 1px solid #2d3a43; border-radius: 10px; overflow: hidden; background: #131e24; }
+h2 { margin: 0; padding: 13px 18px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #2d3a43; }
+#log { margin: 0; height: 210px; padding: 12px 18px; list-style: none; overflow: auto; font: 12px/1.8 ui-monospace, monospace; color: #c9d5dc; overflow-wrap: anywhere; }
+#log:empty::before { content: 'Run activity appears here'; color: #8196a3; }
+#log li + li { border-top: 1px solid #223139; padding-top: 5px; margin-top: 5px; }
+@media (max-width: 600px) { main { width: calc(100% - 24px); margin: 20px auto; } header { align-items: flex-start; gap: 12px; } .presence { font-size: 11px; padding-top: 5px; } .controls { align-items: flex-start; gap: 12px; } .run-status { gap: 8px; } #message, a { font-size: 12px; } button { min-width: 84px; padding: 11px 16px; } #log { height: 190px; } }

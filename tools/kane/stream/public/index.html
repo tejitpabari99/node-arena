@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kane plays Node Arena</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Kane plays Node Arena</h1>
+      <div class="presence"><span class="presence-dot" aria-hidden="true"></span><span id="viewers">0</span> watching</div>
+    </header>
+    <section class="stage" aria-label="Live game stream">
+      <canvas id="screen" width="1280" height="720" aria-label="Kane's live game"></canvas>
+      <p id="video-message">Waiting for a run</p>
+    </section>
+    <div class="controls">
+      <div class="run-status"><span id="status" role="status" data-state="starting">starting</span><p id="message" aria-live="polite">Connecting…</p><a id="backup" href="/backup.mp4" hidden>Watch recorded run</a></div>
+      <button id="start" type="button" disabled>Start</button>
+    </div>
+    <section class="activity" aria-labelledby="activity-title">
+      <h2 id="activity-title">Kane's activity</h2>
+      <ol id="log" aria-label="Run activity"></ol>
+    </section>
+    <noscript>Enable JavaScript to watch the live run.</noscript>
+  </main>
+</body>
+</html>
