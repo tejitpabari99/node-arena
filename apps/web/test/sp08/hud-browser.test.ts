@@ -4,8 +4,11 @@ import { createServer } from 'vite';
 import { mkdirSync,readFileSync } from 'node:fs';
 const output='../../docs/agent_files/feat-tower-war-port-20261022-0321/08-web-client/ref/out';
 it('runs HUD pause, restart, mute, victory/next/replay and defeat/retry flows in Chromium',async()=>{
-  const server=await createServer({server:{host:'127.0.0.1',port:0},plugins:[{name:'hud-fixture',configureServer(s){s.middlewares.use('/__hud',async(_req,res)=>{res.setHeader('Content-Type','text/html');res.end(await s.transformIndexHtml('/__hud','<!doctype html><html><body><main id="app"></main><script type="module" src="/test/sp08/hud-fixture.tsx"></script></body></html>'));});}}]});
-  await server.listen();const browser=await chromium.launch({headless:true});
+  const server=await createServer({cacheDir:'node_modules/.vite-test-hud',server:{host:'127.0.0.1',port:0},plugins:[{name:'hud-fixture',configureServer(s){s.middlewares.use('/__hud',async(_req,res)=>{res.setHeader('Content-Type','text/html');res.end(await s.transformIndexHtml('/__hud','<!doctype html><html><body><main id="app"></main><script type="module" src="/test/sp08/hud-fixture.tsx"></script></body></html>'));});}}]});
+  await server.listen();
+  // Fixture plugin sets differ: isolate optimizer output and finish cold compilation before interaction timers.
+  await server.warmupRequest('/test/sp08/hud-fixture.tsx');await server.waitForRequestsIdle();
+  const browser=await chromium.launch({headless:true});
   try{
     const page=await browser.newPage({viewport:{width:1600,height:900}}),errors:string[]=[];
     page.on('pageerror',error=>errors.push(error.message));

@@ -1,0 +1,49 @@
+import { test, expect as browserExpect, expect } from '@playwright/test';
+
+const development = process.env.WEB_TEST_SERVER === 'dev';
+test('starts blank drafts and copies without retaining source identity', async ({ page }) => {
+  test.skip(!development, 'Editor filesystem API is dev-only');
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/editor.html');
+  await browserExpect(page.getByRole('heading', { name: 'Level editor', exact: true })).toBeVisible();
+  await page.getByLabel('New level id').fill('bad-id');
+  await page.getByRole('button', { name: 'Create blank' }).click();
+  await browserExpect(page.getByRole('alert')).toContainText('na-');
+  await page.getByLabel('New level id').fill('na-blank');
+  await page.getByLabel('Theme').selectOption('snow');
+  await page.getByLabel('Size').selectOption('large');
+  await page.getByRole('button', { name: 'Create blank' }).click();
+  await browserExpect(page.getByTestId('draft-id')).toHaveText('na-blank');
+  await browserExpect(page.getByTestId('draft-summary')).toContainText('snow');
+  await browserExpect(page.getByTestId('draft-summary')).toContainText('2 players');
+  await page.getByRole('button', { name: 'Start screen' }).click();
+  await page.getByLabel('Copy level').selectOption('levelview-1');
+  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await browserExpect(page.getByRole('alert')).toContainText('new id');
+  await page.getByLabel('New level id').fill('na-copy');
+  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await browserExpect(page.getByTestId('draft-id')).toHaveText('na-copy');
+  await browserExpect(page.getByTestId('draft-summary')).toContainText('buildings');
+  await page.getByRole('button', { name: 'Start screen' }).click();
+  await page.getByLabel('Reopen level').selectOption('na-trial');
+  await page.getByRole('button', { name: 'Reopen level', exact: true }).click();
+  await browserExpect(page.getByTestId('draft-id')).toHaveText('na-trial');
+  await page.getByRole('button', { name: 'Start screen' }).click();
+  await page.getByLabel('Copy level').selectOption('na-trial');
+  await page.getByLabel('New level id').fill('na-trial');
+  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await browserExpect(page.getByRole('alert')).toContainText('new id');
+  await page.getByLabel('New level id').fill('na-trial-copy');
+  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await browserExpect(page.getByTestId('draft-id')).toHaveText('na-trial-copy');
+  expect(errors).toEqual([]);
+});
+
+test('test-hooks preview includes the editor shell without filesystem middleware', async ({ page, request }) => {
+  test.skip(development, 'Preview gate check');
+  await page.goto('/editor.html');
+  await expect(page.getByRole('heading', { name: 'Level editor', exact: true })).toBeVisible();
+  const api = await request.get('/__editor/levels');
+  expect(api.headers()['content-type']).not.toContain('application/json');
+});
