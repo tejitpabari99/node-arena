@@ -20,6 +20,8 @@
     "levelview-5": "1b5ad20b32837ea4a40d62fbc1b24f5946da82037bce443daacb4c3aa4f4a242",
     "levelview-6": "f212c74a0d4e9d08db2585558454fccd12a7b1e3212079c501bf16725753b28e",
     "levelview-8-es": "fc94a04a75706bb85fb8ae8e4acd7c8b0a2f91d4fa36f9198db8a605783af4a1",
+    "na-showcase-green": "9eaef428eddb40573867f64aae9547ad37a706132525633f75a80c0972106730",
+    "na-showcase-snow": "25ea88a8b845eb883e568a7a3fb0ad02eaf4ed4ce9cb4cd687e508ed5dc56647",
     "na-trial": "2caea16022996554b8bf4010cc9d27558966537759f44b936b1e0b2e54b284b3"
   },
   "bots": {
@@ -53,6 +55,12 @@
     "levelview-5#p2": "20ecc1011d231f85fb40584a9d21313ad62ae9cec4071961949b4e2b0ca5a976",
     "levelview-6#p2": "e69bf21fd81aecaacc8e5f72ecd82da974a7f1dae18e89c98f6f5a6bd3e52acf",
     "levelview-8-es#p2": "b6d9e05a1ec6a55d89dd495a7d7643c7a461fbd76e33b537fe8f9a7c31a5d374",
+    "na-showcase-green#p2": "4b058bbe708138570f6412c957b938695976c0c7fe38ceed7c1a91121ffc4849",
+    "na-showcase-green#p3": "589dec0bc5739cf83785030af088ae12eece843b91e9fb11f277dcee29565f92",
+    "na-showcase-green#p4": "5e3857aea4fcb3a3edb575dfb9770141e8d4ba0342ac94f59b1885d9f6880e83",
+    "na-showcase-snow#p2": "8e9953bf007226c7f64b63cbf2978f7f3ae25db7a15beacd1fd130dddf13e0e6",
+    "na-showcase-snow#p3": "24b5d54bf5d0233358b6125f506c7d600ced4658651b6ca949ea4c19750b59fe",
+    "na-showcase-snow#p4": "4dbff2b3289ef72ab7c101731b771ef5382dfbf0b77bc5f4d6e05a425313f6bb",
     "na-trial#p2": "55a3d733a52db15054d035279c17bae033908bebe2c765754db384ed8d5432c7"
   }
 }
