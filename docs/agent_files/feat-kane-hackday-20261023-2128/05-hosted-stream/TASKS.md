@@ -14,9 +14,9 @@ Source of truth: [PRD.md](PRD.md). Builds `tools/kane/stream/**` plus root scrip
 | 4 | Screencast and CDP method allowlist | 1 | done |
 | 5 | HTTP, SSE and WebSocket server | 2, 3, 4 | done |
 | 6 | Viewer page | 5 | done |
-| 7 | Credit-free smoke and acceptance greps | 6 | in-progress |
+| 7 | Credit-free smoke and acceptance greps | 6 | done |
 | 8 | README, nginx/ufw and cloudflared docs | 5 | done |
-| 9 | dev-security-review gate | 7, 8 | todo |
+| 9 | dev-security-review gate | 7, 8 | in-progress |
 | 10 | Real rehearsal through the proxy | 9 | todo |
 
 ## Task 1 — Scaffold, `ws` pin, abuse-guard module
