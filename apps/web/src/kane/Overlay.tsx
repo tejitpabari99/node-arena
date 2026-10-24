@@ -42,9 +42,9 @@ export function Overlay({ controller, api }: { controller: KaneController; api: 
   };
   return <div class="kane-overlay" style={{ '--kane-panel-h': `${height}px` }} data-testid="kane-overlay" data-speed={state.speed} data-phase={state.phase}>
     <button class="kane-speed" data-testid="kane-speed" data-speed={state.speed} onClick={cycle}>Speed {state.speed}x</button>
-    <section class="kane-panel" data-testid="kane-panel" data-locked={String(state.locked)}>
-      {state.groups.map(group => <section class="kane-group" data-testid="kane-group" data-source={group.letter} key={group.from}>
-        <h2>{group.text}</h2><div class="kane-pairs">{group.pairs.map(pair => <PairButton key={pair.to} pair={pair} locked={state.locked} controller={controller}/>)}</div>
+    <section class="kane-panel" data-testid="kane-panel" data-locked={String(state.locked)} aria-label="Outgoing routes">
+      {state.groups.map(group => <section class="kane-group" data-testid="kane-group" data-source={group.letter} key={group.from} role="group" aria-label={`House ${group.letter} outgoing routes`}>
+        <h2 aria-label={`House ${group.letter} routes`} aria-description={group.text}>{group.text}</h2><div class="kane-pairs">{group.pairs.map(pair => <PairButton key={pair.to} pair={pair} locked={state.locked} controller={controller}/>)}</div>
       </section>)}
     </section>
     <div class="kane-banner" data-testid="kane-banner" role="alert" data-kind={state.banner?.kind ?? 'error'} data-reason={state.banner?.reason ?? ''} hidden={!state.banner}>{state.banner?.text}</div>
