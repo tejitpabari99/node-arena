@@ -54,7 +54,13 @@
     if (disposed || !snapshot || typeof snapshot.state !== 'string') return;
     const nextRun = typeof snapshot.runId === 'string' ? snapshot.runId : null;
     const changedRun = nextRun !== currentRunId;
-    if (explicitReset || (currentRunId !== null && nextRun === null && snapshot.state !== 'starting')) {
+    // Startup/live can be missed while the Start HTTP reply is still pending.
+    // A different completed run retires this attempt's cancellation; replay of
+    // the baseline completed run must leave it queued for its own reservation.
+    const queuedAttemptEnded = stopQueued && nextRun !== null && nextRun !== stopQueued.baselineRunId
+      && ['ending', 'cooldown', 'idle'].includes(snapshot.state)
+      && ['won', 'lost', 'timeout', 'unavailable', 'failed', 'stopped'].includes(snapshot.outcome);
+    if (explicitReset || queuedAttemptEnded || (currentRunId !== null && nextRun === null && snapshot.state !== 'starting')) {
       stopQueued = false; localStart = null; stopRequest = null;
       requestGeneration++;
     }
@@ -229,7 +235,7 @@
     // A local Start click can precede its reservation on the server. Wait for
     // authoritative starting/live before sending Stop, so a premature 409 cannot
     // leave that pending Start free to launch after the viewer reports Stopped.
-    stopQueued = !!localStart && !['starting', 'live'].includes(serverState);
+    stopQueued = localStart && !['starting', 'live'].includes(serverState) ? { baselineRunId: currentRunId } : false;
     if (!stopQueued) serverState = 'ending';
     requestGeneration++;
     render('stopping');

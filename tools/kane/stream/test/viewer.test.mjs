@@ -489,3 +489,53 @@ test('a settled accepted Start with missed terminal events cannot carry a queued
   assert.deepEqual(posts, ['/start']);
   assert.deepEqual(f.errors, []);
 });
+
+// Terminal SSE can precede a delayed Start reply when startup/live events were missed.
+// The queued cancellation belongs to that completed attempt, never the next viewer's run.
+for (const { baseline, terminalState, outcome, reply, replayOutcome } of [
+  { baseline: null, terminalState: 'cooldown', outcome: 'won', reply: 202 },
+  { baseline: 'previous-finished', terminalState: 'ending', outcome: 'won', reply: 503 },
+  { baseline: 'previous-finished', terminalState: 'idle', outcome: 'won', reply: 202 },
+  { baseline: 'previous-finished', terminalState: 'cooldown', outcome: 'stopped', reply: 503, replayOutcome: 'stopped' },
+]) {
+  test(`queued Stop retires on ${terminalState}/${outcome} after ${baseline ?? 'null'} baseline before delayed ${reply}`, async t => {
+    const f = await fixture(t), { page } = f;
+    let releaseStart;
+    const posts = [];
+    page.on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); });
+    await page.route('**/start', async route => {
+      await new Promise(resolve => { releaseStart = resolve; });
+      await route.fulfill({ status: reply, contentType: 'application/json', body: reply === 202 ? '{"runId":"run-A"}' : '{}' });
+    });
+    f.state('idle', baseline, baseline ? 'won' : undefined);
+    await page.goto(f.base);
+    await waitText(page, 'status', 'idle');
+    await page.locator('#start').click();
+    await page.locator('#stop').click();
+    // Repeated previous-run metadata or plain idle/null cannot retire this intent.
+    f.state('idle', baseline, replayOutcome ?? (baseline ? 'won' : undefined));
+    await page.waitForTimeout(40);
+    assert.equal(await text(page, 'status'), 'stopping');
+    assert.equal(await page.locator('#reset').isDisabled(), true);
+    assert.deepEqual(posts, ['/start']);
+    // Reconnection sees only this attempt's terminal state, never startup/live.
+    f.state(terminalState, 'run-A', outcome);
+    await waitText(page, 'status', outcome === 'stopped' ? 'stopped' : terminalState === 'ending' ? 'finished' : terminalState);
+    f.state('idle', 'run-A', outcome);
+    await page.waitForTimeout(40);
+    // A different viewer explicitly starts B while A's HTTP reply remains held.
+    f.state('starting', null);
+    f.state('live', 'run-B');
+    await page.waitForTimeout(80);
+    assert.deepEqual(posts, ['/start'], 'a completed attempt must never Stop the next run');
+    await waitText(page, 'status', 'live');
+    const response = page.waitForResponse(value => value.request().method() === 'POST' && new URL(value.url()).pathname === '/start');
+    releaseStart();
+    await response;
+    await page.waitForTimeout(60);
+    assert.equal(await text(page, 'status'), 'live');
+    assert.equal(await page.locator('#stop').isEnabled(), true);
+    assert.deepEqual(posts, ['/start'], 'the delayed reply cannot revive old cancellation');
+    assert.deepEqual(f.errors, []);
+  });
+}
