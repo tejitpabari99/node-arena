@@ -1,5 +1,5 @@
 ---
-status: draft
+status: in-progress
 summary: 12 tasks, P0 custom-list contract first (unblocks 02), then editor viewer/Save, editing tools, Play/Solvable/Finalize, Edit buttons and docs.
 date: 2026-10-24
 ---
@@ -8,8 +8,8 @@ Source of truth: docs/agent_files/level-editor-art-overwrite/01-level-editor/PRD
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Custom list: app state, picker, unlock, next | - | todo |
-| 2 | Custom list: tooling union, lock merge mode, trial level | 1 | todo |
+| 1 | Custom list: app state, picker, unlock, next | - | done |
+| 2 | Custom list: tooling union, lock merge mode, trial level | 1 | done |
 | 3 | Editor shell, dev gate, read-only middleware | 2 | todo |
 | 4 | Edit viewport and picking | 3 | todo |
 | 5 | Save: canonical write, checks, round-trip | 3, 4 | todo |
