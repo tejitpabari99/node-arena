@@ -10,7 +10,7 @@ async function openKane(page: import('@playwright/test').Page, extra = '') {
 test('?kane=1 boots straight into na-kane; Levels shows a one-card kane picker, unlocked', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(String(e)));
   await openKane(page);
-  expect(await page.evaluate(() => ({ screen: window.__na!.screen, levelId: window.__na!.state().levelId, kane: window.__na!.kane })))
+  expect(await page.evaluate(() => ({ screen: window.__na!.screen, levelId: window.__na!.state().levelId, kane: !!window.__na!.kane && typeof window.__na!.kane.summary === 'function' })))
     .toEqual({ screen: 'playing', levelId: 'na-kane', kane: true });
   await page.getByRole('button', { name: 'Pause' }).click();
   await page.getByRole('button', { name: 'Levels', exact: true }).click();

@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 9 tasks — widen speed, pure pairs model, gated Kane overlay shell, pair panel, tags, camera room, summary hook + auto-resume, text removal, e2e + gates.
 date: 2026-10-24
 ---
@@ -8,15 +8,15 @@ Source of truth: [PRD.md](PRD.md). All Kane UI lives in `apps/web/src/kane/`, im
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Speed type + driver tests | — | todo |
-| 2 | Pairs model (pure) | — | todo |
-| 3 | Kane overlay shell + gated wiring + speed button | 1, 01 | todo |
-| 4 | Pair panel, banner, result, game over | 2, 3 | todo |
-| 5 | Building tags | 3 | todo |
-| 6 | Camera room for panel | 3 | todo |
-| 7 | `__na.kane.summary()` + visibility auto-resume | 4, 5 | todo |
-| 8 | Remove original-game name | — | todo |
-| 9 | Kane panel e2e + final gates | 4–8 | todo |
+| 1 | Speed type + driver tests | — | done |
+| 2 | Pairs model (pure) | — | done |
+| 3 | Kane overlay shell + gated wiring + speed button | 1, 01 | done |
+| 4 | Pair panel, banner, result, game over | 2, 3 | done |
+| 5 | Building tags | 3 | done |
+| 6 | Camera room for panel | 3 | done |
+| 7 | `__na.kane.summary()` + visibility auto-resume | 4, 5 | done |
+| 8 | Remove original-game name | — | done |
+| 9 | Kane panel e2e + final gates | 4–8 | done |
 
 ## Task 1 — Speed type + driver tests
 What it is: slow speeds so a human and an audience can follow (R1, D1).

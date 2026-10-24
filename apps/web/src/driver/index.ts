@@ -7,6 +7,7 @@ export { createBotDriver, type BotDriver, type CreateBotDriver } from './bot';
 export const STEP_MS = 1000 / TICK_RATE;
 export const MAX_FRAME_MS = 250;
 export const MAX_FRAME_STEPS = 5;
+export type Speed = 0.25 | 0.5 | 1 | 2;
 export type PauseReason = 'manual' | 'hidden' | null;
 export interface CommandSubmission { readonly tick: number; readonly cmd: Readonly<Command> }
 export interface TickUpdate {
@@ -72,7 +73,7 @@ export class GameDriver {
   private queued: CommandSubmission[] = [];
   private accumulator = 0;
   private previousTimestamp: number | null = null;
-  private multiplier: 1 | 2 = 1;
+  private multiplier: Speed = 1;
   private reason: PauseReason = null;
   private running = false;
   private disposed = false;
@@ -101,10 +102,10 @@ export class GameDriver {
   get alpha(): number { return this.accumulator / STEP_MS; }
   get paused(): boolean { return this.reason !== null; }
   get pauseReason(): PauseReason { return this.reason; }
-  get speed(): 1 | 2 { return this.multiplier; }
+  get speed(): Speed { return this.multiplier; }
 
-  setSpeed(speed: 1 | 2): void {
-    if (speed !== 1 && speed !== 2) throw new RangeError('Speed must be 1 or 2');
+  setSpeed(speed: Speed): void {
+    if (speed !== 0.25 && speed !== 0.5 && speed !== 1 && speed !== 2) throw new RangeError('Speed must be 0.25, 0.5, 1 or 2');
     this.multiplier = speed;
   }
 
