@@ -46,12 +46,12 @@ Done when: endpoint tests cover status codes, Last-Event-ID resume, origin rejec
 
 ## Task 6 — Viewer page
 What it is / what it means: Static public UI (R1).
-What changes at a high level: `public/index.html`, `app.js`, `style.css`: title "Kane plays Node Arena", Start button enabled only in `idle`, status pill, 16:9 canvas drawn through `createImageBitmap`, log pane with `textContent` only and auto-scroll, viewer count, late-join auto-attach, and the `failed` state showing "Live run unavailable" with a link to `/backup.mp4` when present. No original-game name anywhere.
-Done when: page renders all six states against the server; `grep -rniE 'tower war' tools/kane/stream/public` returns 0.
+What changes at a high level: `public/index.html`, `app.js`, `style.css`: title "Kane plays Node Arena", Start button enabled only in `idle`, status pill, 16:9 canvas drawn through `createImageBitmap`, log pane with `textContent` only and auto-scroll, viewer count, late-join auto-attach, and the `failed` state showing "Live run unavailable" with a link to `/backup.mp4` when present. Assets based on / motivated by Tower War.
+Done when: page renders all six states against the server.
 
 ## Task 7 — Credit-free smoke and acceptance greps
 What it is / what it means: End-to-end local verification without spending credits (Acceptance Criteria).
-What changes at a high level: Run the stack with the fake driver, press Start in two browsers, check both see the same frames and logs, Start disabled while live, extra viewer beyond cap gets 429/close, run ends and cleanup leaves zero chrome/vite/driver processes, state returns to `idle` after cooldown; force `KANE_STREAM_MIN_CREDITS` high and confirm 503 with no spawn. Run the `Input.` and "tower war" greps. Fix defects found.
+What changes at a high level: Run the stack with the fake driver, press Start in two browsers, check both see the same frames and logs, Start disabled while live, extra viewer beyond cap gets 429/close, run ends and cleanup leaves zero chrome/vite/driver processes, state returns to `idle` after cooldown; force `KANE_STREAM_MIN_CREDITS` high and confirm 503 with no spawn. Run the `Input.` grep. Fix defects found.
 Done when: all credit-free acceptance items pass and the full `node --test tools/kane/stream/test` suite is green.
 
 ## Task 8 — README, nginx/ufw and cloudflared docs

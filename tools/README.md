@@ -79,13 +79,13 @@ Finalize runs, in order: saved-level validation → content patch bump → condi
 
 ### Local extract and assets
 
-`TW_EXTRACT` names the private local Tower War extract directory; CI never downloads it. Unset extract: `pnpm check:import` skips (exit 0); `pnpm import:tw` refuses (exit 2). Art generation and checks skip when the directory is unset or absent. CI surfaces skipped extract checks as notices. Committed output validation stays active.
+`TW_EXTRACT` names the Tower War extract directory; CI never downloads it. Unset extract: `pnpm check:import` skips (exit 0); `pnpm import:tw` refuses (exit 2). Art generation and checks skip when the directory is unset or absent. CI surfaces skipped extract checks as notices. Committed output validation stays active.
 
 `pnpm import:tw` defaults to Common positions 4–23; `pnpm check:import` covers the committed imported campaign. Import merges by position and never edits metadata/locks. Read [the levels guide](../docs/LEVELS_GUIDE.md) before changing ranges or feature policy. `pnpm assets:tw` writes models/textures/FX plus the extract lock. `pnpm assets:manifest` merges the world fragment and optional owner-art patch into the world manifest and copies the optional UI fragment to its presentation namespace; `--check` checks without writing and needs no extract. It rejects an invalid art patch (e.g. unknown visual id) without writing. `pnpm assets:ui` generates UI sprites and its lock.
 
 Owner-art folders, patch whitelist/merge rules, export limits and playable showcases are documented in the [art authoring workflow](../docs/CONTENT_GUIDE.md#owner-art-overrides).
 
-`pnpm assets:capture` renders named SP07 scenes (options include --scene, --compare, --out); `pnpm assets:capture:web` captures the real SP08 client. `pnpm assets:validate` compares prototype/RAW importer geometry and optionally renders turntables; it skips without the private prototype extract. These are local development tools. `pnpm campaign:verify` builds the test client, loads all 20 campaign levels for five seconds, checks browser errors and writes screenshots, grid and JSON in the generated directory test-results/campaign/.
+`pnpm assets:capture` renders named SP07 scenes (options include --scene, --compare, --out); `pnpm assets:capture:web` captures the real SP08 client. `pnpm assets:validate` compares prototype/RAW importer geometry and optionally renders turntables; it skips without the prototype extract. These are local development tools. `pnpm campaign:verify` builds the test client, loads all 20 campaign levels for five seconds, checks browser errors and writes screenshots, grid and JSON in the generated directory test-results/campaign/.
 
 ## CI and version baselines
 

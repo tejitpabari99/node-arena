@@ -9,11 +9,11 @@
 - Do not trust assumptions when verifiable information exists. Assess confidence before acting.
 
 ## Project
-Node Arena: local browser Tower War game, 20 Common campaign positions 4–23. Private repository; extracted Vaveda art/data are not redistributable; no public deploy. pnpm monorepo. Read `README.md` first.
+Node Arena: browser tower-strategy game, 20 Common campaign positions 4–23. Assets based on / motivated by Tower War. pnpm monorepo. Read `README.md` first.
 - `packages/defs` pure module/bot/command/objective/event/phase registries
 - `packages/content` schemas, loader/compiler, balance/building/unit/element/level JSON and locks
 - `packages/sim` deterministic rules engine
-- `packages/bots` Tower War AI, scripts and human proxy
+- `packages/bots` AI, scripts and human proxy
 - `apps/web` Vite + Three.js + Preact client
 - `tools/` import/asset/content/version/manifest/docs gates, level lock and report-only balance matrix
 
@@ -23,7 +23,7 @@ Main scripts (root `package.json`; Node >=22.13, pnpm 10.34.6):
 - `pnpm dev`, `pnpm test:web:e2e`, `pnpm test:web:all`, `pnpm campaign:verify` (20-level browser smoke)
 - `pnpm check:rules`, `pnpm validate:content --base HEAD`, `pnpm check:content --base HEAD`, `pnpm check:manifest`
 - `pnpm content:schemas`, `pnpm check:schemas`, `pnpm content:lock`
-- `pnpm import:tw`, `pnpm check:import`, `pnpm assets:tw`, `pnpm assets:tw:check` (`TW_EXTRACT` is local-only; checks skip without it)
+- `pnpm import:tw`, `pnpm check:import`, `pnpm assets:tw`, `pnpm assets:tw:check` (`TW_EXTRACT` points to the source extract; checks skip without it)
 - `pnpm validate:levels`, `pnpm levels:lock`, `pnpm sim:golden`, `pnpm replay:verify golden`, `pnpm bots:golden`
 - `pnpm bench:sim`, `pnpm bench:bots`, `pnpm balance` (report-only)
 - `pnpm check:docs`, `pnpm check:parked`, `pnpm check:parked --strict`

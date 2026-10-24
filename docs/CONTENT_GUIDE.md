@@ -105,7 +105,7 @@ Elements (such as `obstacle`) carry module bags and optional `variants` (`small`
 
 ## Owner art overrides
 
-Art remains private and local-only; replacing selected files does not make the extracted assets redistributable. No public deploy. The importer owns its outputs; author replacements separately:
+Assets based on / motivated by Tower War. The importer owns its outputs; author replacements separately:
 
 ```text
 apps/web/assets/

@@ -12,7 +12,7 @@ import { OWNED_DIRS, REPO, diffResult, main, writeResult } from '../src/assets-t
 import { twExtractRoot } from '../src/import-tw/env.js';
 
 const EXTRACT = twExtractRoot();
-const needExtract = EXTRACT === null || !existsSync(join(EXTRACT, 'catalog/glb_proto')) ? 'TW_EXTRACT not set (private Tower War extract)' : false;
+const needExtract = EXTRACT === null || !existsSync(join(EXTRACT, 'catalog/glb_proto')) ? 'TW_EXTRACT not set (Tower War extract)' : false;
 
 // ---- pure unit tests (no extract) -------------------------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ test('assets:tw and assets:tw:check skip cleanly (exit 0) without TW_EXTRACT', a
   assert.equal(await main(['--bogus'], {}), 2);
 });
 
-// ---- oracle tests against the Python prototype GLBs (need the private extract) ----------------------------------------------
+// ---- oracle tests against the Python prototype GLBs (need the source extract) ----------------------------------------------
 
 const r5 = (n: number) => Math.round(n * 1e4) / 1e4;
 interface Sig { name: string; tris: number; bbox: string }

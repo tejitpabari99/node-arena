@@ -14,7 +14,7 @@ Owner drops own GLB/PNG/OGG into `apps/web/assets/art/` and declares field-level
 
 ## Problem
 - Visuals/themes/fx are wholly fragment-owned: `mergeManifest` sets `visuals: fragment.visuals, themes: ..., fx: ...` [verified: manifest-fragment.ts:143-ish]. Hand edits fail the merge check [verified: manifest-assets.ts "manifest.json is not the merge of itself"]; files under `models/tw`, `textures/tw`, `fx` fail the lock ("not an importer output (stale or hand-added)") [verified: manifest-assets.ts:15,84].
-- No legal path to replace Vaveda art, which must go before anything goes public. Credits check hard-fails on any uncredited asset [verified: cli.ts `Asset files missing from CREDITS.md`], wrong for owner-made art.
+- No supported override path for art. Credits check hard-fails on any uncredited asset [verified: cli.ts `Asset files missing from CREDITS.md`], wrong for owner-made art.
 - No way to see all art together: stages, 5 colours, obstacles per theme.
 
 ## Goals
@@ -25,7 +25,7 @@ Owner drops own GLB/PNG/OGG into `apps/web/assets/art/` and declares field-level
 5. Know what is still TW (`art:status`).
 
 ## Non-Goals
-UI images (own pipeline: `assets:ui`) · new unit/building/obstacle types · live hot-swap · preview/turntable page · licensing beyond a warning · editing `models/tw`/`textures/tw`/`fx` in place · new renderer features beyond `tintMask`.
+UI images (own pipeline: `assets:ui`) · new unit/building/obstacle types · live hot-swap · preview/turntable page · editing `models/tw`/`textures/tw`/`fx` in place · new renderer features beyond `tintMask`.
 
 ## Requirements
 | # | Requirement |
@@ -99,7 +99,7 @@ theme snow          ground.mesh   models/tw/ground-snow.glb      TW
 event Clash         sfx           audio/clash.ogg                stock
 12 of 41 fields on art/ (29 original)
 ```
-`--strict` exits 1 if any remain (pre-public gate; mirrors `check:parked --strict`). Scalars (sky, light) not listed.
+`--strict` exits 1 if any remain (optional override-completeness check). Scalars (sky, light) not listed.
 
 ## Decisions
 | # | Decision | Choice | Alternatives considered | Why |

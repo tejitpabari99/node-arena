@@ -28,7 +28,7 @@ Max 2 concurrent agents.
 ## Locked decisions (owner)
 - Replace, not extend: RULES_VERSION 2.0.0, BOT_VERSION 2.0.0, no compat; old content/bots/visuals deleted.
 - Exact TW numbers; flat unit stats; 20 Hz deterministic + seeded streams; stage thresholds 10/30.
-- Repo private; TW assets committed (owner).
+- TW assets committed. Assets based on / motivated by Tower War.
 - Red/parked window during rebuild accepted; all gates green before merge (owner).
 - Towers shoot neutral houses (`hitsNeutralHouses=true`) (owner).
 - Reference images = frames from owner's YouTube level walkthrough playlist, `BF/ref/tw-yt/` (INDEX.md maps files to levels) (owner).
@@ -41,7 +41,6 @@ Max 2 concurrent agents.
 - Refs portrait; adapt to landscape (owner).
 - Neutral towers FIRE (`neutralFires=true`).
 - Unwinnable-by-proxy levels -> `tools/unsolved-by-proxy.json` allowlist + owner playtest.
-- Local only, no deploy.
 - Trust decomp on contradictions.
 - LEVELS_GUIDE + coverage snapshot for future levels.
 - No Git LFS: plain git for TW art (~3 MB) and reference frames.
@@ -62,7 +61,7 @@ Max 2 concurrent agents.
 ## Owner manual steps
 - 05: mirror check and theme boundary: verify against `BF/ref/tw-yt` frames (no owner screenshots needed).
 - 08: final visual approval of HUD vs refs.
-- Resolved: parked window accepted; neutral-house targeting; video refs; repo private + TW art committed.
+- Resolved: parked window accepted; neutral-house targeting; video refs; TW art committed.
 - 09: run `TW_EXTRACT=... pnpm check:import && pnpm assets:tw:check` locally before merge (CI cannot).
 - 09: play levels 1–20 (positions 4–23); fill `09-gates-tooling-docs/owner-pass.md`; visual approval.
 - 01, 02, 03, 06: none.
