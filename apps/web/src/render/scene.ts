@@ -13,7 +13,7 @@ export interface SceneOptions {
   manifest: ManifestV2;
   parent: HTMLElement;
   scope?: Disposables;
-  padding?: HudPadding;
+  padding?: HudPadding | (() => HudPadding);
   zoomed?: boolean;
   worldOptions?: Omit<WorldRendererOptions, 'worldRoot'>;
 }
@@ -41,7 +41,7 @@ export function createLevelScene(options: SceneOptions) {
     const width = Math.max(1,parent.clientWidth), height = Math.max(1,parent.clientHeight);
     renderer.setPixelRatio(Math.min(2,Math.max(1,window.devicePixelRatio || 1)));
     renderer.setSize(width,height);
-    fitCamera(camera,bounds,manifest.camera,width/height,{width,height,padding: options.padding ?? HUD_PADDING},zoomFraming(zoomed));
+    fitCamera(camera,bounds,manifest.camera,width/height,{width,height,padding: (typeof options.padding === 'function' ? options.padding() : options.padding) ?? HUD_PADDING},zoomFraming(zoomed));
     render();
   };
   const observer = new ResizeObserver(resize); observer.observe(parent);

@@ -10,6 +10,14 @@ export function projectAnchor(stage:LevelScene,id:string,label=false) {
   const rect=stage.canvas.getBoundingClientRect();
   return {x:rect.left+(p.x+1)*rect.width/2,y:rect.top+(1-p.y)*rect.height/2};
 }
+function mapRect(stage:LevelScene) {
+  const rect=stage.canvas.getBoundingClientRect(),projected=new Box3(),point=new Vector3(),bounds=stage.bounds;
+  for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z]) {
+    point.set(x,y,z).project(stage.camera);
+    projected.expandByPoint(new Vector3(rect.left+(point.x+1)*rect.width/2,rect.top+(1-point.y)*rect.height/2,0));
+  }
+  return {x:projected.min.x,y:projected.min.y,w:projected.max.x-projected.min.x,h:projected.max.y-projected.min.y};
+}
 /** Debug-only projected bounds of actual visible meshes and camera-facing label sprites. */
 function buildingRects(stage:LevelScene,index:number,id:string) {
   const rect=stage.canvas.getBoundingClientRect(),model=new Box3(),point=new Vector3();
@@ -41,6 +49,7 @@ export function buildVisualProbe(app:AppController,stage:LevelScene|undefined) {
   stage?.scene.updateMatrixWorld(true);stage?.camera.updateMatrixWorld(true);
   return {viewport:{w:window.innerWidth,h:window.innerHeight},screen:state.screen,popup:state.restartPopup?'restart':state.result?'result':null,
     hud:{remainingSeconds:state.remainingSeconds,ownership:app.driver?.ownership??[],levelId:state.levelId},
+    mapRect:stage?mapRect(stage):null,
     buildings:stage&&view?view.ids.buildings.map((id,index)=>({id,index,owner:view.buildings.owner[index],level:view.buildings.level[index],point:projectAnchor(stage,id),label:projectAnchor(stage,id,true),...buildingRects(stage,index,id)})):[],
     lines:view?.lines.map(line=>({...line}))??[],
   };

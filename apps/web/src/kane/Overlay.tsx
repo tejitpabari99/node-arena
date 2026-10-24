@@ -3,6 +3,7 @@ import type { Speed } from '../driver';
 import type { TestApi } from '../test-harness';
 import type { KaneController } from './controller';
 import type { Pair } from './pairs';
+import { panelHeight } from './layout';
 
 const speeds: readonly Speed[] = [0.25, 0.5, 1, 2];
 
@@ -21,6 +22,12 @@ function PairButton({ pair, locked, controller }: { pair: Pair; locked: boolean;
 
 export function Overlay({ controller, api }: { controller: KaneController; api: TestApi }) {
   const [state, setState] = useState(controller.snapshot);
+  const [height, setHeight] = useState(() => panelHeight(window.innerHeight));
+  useLayoutEffect(() => {
+    const resize = () => setHeight(panelHeight(window.innerHeight));
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, []);
   useLayoutEffect(() => {
     let frame: number | null = null;
     const schedule = () => {
@@ -33,7 +40,7 @@ export function Overlay({ controller, api }: { controller: KaneController; api: 
   const cycle = () => {
     api.setSpeed(speeds[(speeds.indexOf(state.speed) + 1) % speeds.length]!); controller.refresh();
   };
-  return <div class="kane-overlay" data-testid="kane-overlay" data-speed={state.speed} data-phase={state.phase}>
+  return <div class="kane-overlay" style={{ '--kane-panel-h': `${height}px` }} data-testid="kane-overlay" data-speed={state.speed} data-phase={state.phase}>
     <button class="kane-speed" data-testid="kane-speed" data-speed={state.speed} onClick={cycle}>Speed {state.speed}x</button>
     <section class="kane-panel" data-testid="kane-panel" data-locked={String(state.locked)}>
       {state.groups.map(group => <section class="kane-group" data-testid="kane-group" data-source={group.letter} key={group.from}>

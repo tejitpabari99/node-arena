@@ -25,7 +25,7 @@ async function main(){
   const app=createAppController({files,...harness?.options,createRuntime:context=>createBrowserRuntime(context,arena,(ctx,stage)=>{
     const input=createInputController({canvas:stage.canvas,sim:ctx.driver.sim,camera:stage.camera,world:stage.world,worldRoot:stage.worldRoot,scene:stage.scene,driver:ctx.driver,isEnabled:()=>ctx.enabled()&&!ctx.driver.paused});
     return controls?.wrapInput?.(input,ctx,stage)??input;
-  })});
+  },controls?{padding:controls.padding}:{})});
   const unsubscribe=app.subscribe(()=>{const state=app.snapshot();arena.hidden=state.screen!=='playing'&&state.screen!=='result'&&!app.driver;});
   if(harness)window.__na=harness.connect(app);
   if(kane&&window.__na)controls=kane.createKaneOverlay(app,window.__na);

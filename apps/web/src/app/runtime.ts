@@ -1,13 +1,13 @@
 import { createTroopBuffer, type SimEvent } from '@node-arena/sim';
 import type { LevelRuntime, RuntimeContext } from './state';
-import { createLevelScene } from '../render/scene';
+import { createLevelScene, type SceneOptions } from '../render/scene';
 import type { WorldFrame } from '../render/world';
 export interface RuntimeInput { refresh(): void; cancel(): boolean; dispose(): void }
 export type AttachInput = (context: RuntimeContext, scene: ReturnType<typeof createLevelScene>) => RuntimeInput;
 /** Async asset readiness belongs to the level generation; callers dispose a superseded result. */
-export async function createBrowserRuntime(context: RuntimeContext,parent: HTMLElement,attachInput?: AttachInput): Promise<LevelRuntime> {
+export async function createBrowserRuntime(context: RuntimeContext,parent: HTMLElement,attachInput?: AttachInput,options: Pick<SceneOptions, 'padding'> = {}): Promise<LevelRuntime> {
   const {level,manifest,driver}=context;
-  const scene=createLevelScene({level,manifest,view:driver.sim.view,parent,zoomed:context.zoomed});
+  const scene=createLevelScene({level,manifest,view:driver.sim.view,parent,zoomed:context.zoomed,...options});
   let input:RuntimeInput|undefined,disposed=false;
   const dispose=()=>{if(disposed)return;disposed=true;input?.dispose();scene.dispose();};
   try {
