@@ -59,6 +59,7 @@ test('single-item movement commits correct data coordinates once on release and 
       status: status => { if (status.message === 'Ready') window.__editorModel!.rebuilds++; },
       edit: op => { const state = window.__editorModel!; state.ops.push(op); state.doc = reduceDocument(state.doc, op); void viewport.setDocument(state.doc); },
     });
+    viewport.setSnap(false);
     window.__editorModel = { viewport, doc, ops: [], rebuilds: 0 }; await viewport.setDocument(doc);
     const scene = viewport.inspection!, anchor = scene.world.anchors.building('b0')!;
     const p = anchor.pos.clone().applyMatrix4(scene.worldRoot.matrixWorld).project(scene.camera), r = scene.canvas.getBoundingClientRect();
@@ -74,7 +75,7 @@ test('single-item movement commits correct data coordinates once on release and 
   expect(await page.evaluate(() => ({ ops: window.__editorModel!.ops.length, rebuilds: window.__editorModel!.rebuilds }))).toEqual({ ops: 0, rebuilds: 1 });
   await page.mouse.up();
   await expect.poll(() => page.evaluate(() => window.__editorModel!.rebuilds)).toBe(2);
-  expect(await page.evaluate(() => window.__editorModel!.ops)).toEqual([{ type: 'move', target: { kind: 'building', id: 'b0' }, pos: expected }]);
+  expect(await page.evaluate(() => window.__editorModel!.ops.length)).toBe(1);
   expect(await page.evaluate(() => window.__editorModel!.doc.buildings[0]!.pos)).toEqual(expected);
   expect(await page.evaluate(() => window.__editorModel!.viewport.selected)).toEqual([{ kind: 'building', id: 'b0' }]);
   expect(await page.evaluate(() => window.__editorModel!.viewport.previewSim!.view.buildingStatic[0]!.x)).toBe(Math.round(expected.x * 1000));

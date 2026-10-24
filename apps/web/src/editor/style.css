@@ -28,3 +28,8 @@ body { margin: 0; }
 .editor-properties summary { cursor: pointer; }
 .editor-properties fieldset { min-width: 0; border: 1px solid #475569; }
 .editor-script-banner { padding: 12px; border: 1px solid #fbbf24; background: #713f12; }
+
+.editor-layout-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
+.editor-bounds { fill: none; stroke: #cbd5e1; stroke-width: 1.5; stroke-dasharray: 6 4; }
+.editor-selection-ring { fill: #7dd3fc22; stroke: #7dd3fc; stroke-width: 2; }
+.editor-view-tools { max-height: 76vh; overflow-y: auto; }

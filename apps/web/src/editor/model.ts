@@ -1,14 +1,37 @@
+import { boundsFromPositions } from '@node-arena/content';
 import type { SeatBot } from '@node-arena/content';
 import type { LevelDoc } from './document.js';
 import { roundCoordinate, type Point, type Selection } from './picking.js';
 export type LibraryItem = 'house-wt1' | 'house-wt2' | 'tower' | 'obstacle-small' | 'obstacle-big';
 export type LevelProperties = Pick<LevelDoc, 'name' | 'theme' | 'timeLimitSec' | 'players'>;
-export type DocOp = { type: 'level-properties'; value: LevelProperties } | { type: 'building-properties'; id: string; value: Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined } } | { type: 'obstacle-properties'; id: string; value: { variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined } } | { type: 'place'; item: LibraryItem; pos: Point } | { type: 'move'; target: Selection; pos: Point } | { type: 'delete'; target: Selection };
+export type Clipboard = Pick<LevelDoc, 'buildings' | 'elements'>;
+export type DocOp = { type: 'move-selection'; targets: Selection[]; delta: Point } | { type: 'mirror'; targets: Selection[]; axis: 'vertical' | 'horizontal'; center: number; swapOwners: boolean } | { type: 'paste'; clipboard: Clipboard; offset: Point } | { type: 'auto-fit' } | { type: 'level-properties'; value: LevelProperties } | { type: 'building-properties'; id: string; value: Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined } } | { type: 'obstacle-properties'; id: string; value: { variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined } } | { type: 'place'; item: LibraryItem; pos: Point } | { type: 'move'; target: Selection; pos: Point } | { type: 'delete'; target: Selection };
 export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[] }
 export type HistoryAction = { type: 'edit'; op: DocOp } | { type: 'undo' } | { type: 'redo' };
 export const createHistory = (present: LevelDoc): DocHistory => ({ past: [], present, future: [] });
 /** Pure structural edits; drag previews never enter this reducer. */
 export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
+  if (op.type === 'auto-fit') {
+    const points = [...doc.buildings, ...doc.elements].map(item => item.pos);
+    return points.length ? { ...doc, bounds: boundsFromPositions(points) } : doc;
+  }
+  if (op.type === 'paste') {
+    const ids = new Set([...doc.buildings, ...doc.elements].map(item => item.id));
+    const clone = <T extends { id: string; pos: Point }>(item: T, prefix: string): T => {
+      let i = 0; while (ids.has(`${prefix}${i}`)) i++;
+      const id = `${prefix}${i}`; ids.add(id);
+      return { ...structuredClone(item), id, pos: { x: roundCoordinate(item.pos.x + op.offset.x), z: roundCoordinate(item.pos.z + op.offset.z) } };
+    };
+    return { ...doc, buildings: [...doc.buildings, ...op.clipboard.buildings.map(item => clone(item, 'b'))], elements: [...doc.elements, ...op.clipboard.elements.map(item => clone(item, 'e'))] };
+  }
+  if (op.type === 'mirror' || op.type === 'move-selection') {
+    const selected = (kind: Selection['kind'], id: string) => (op.type === 'mirror' && !op.targets.length) || op.targets.some(target => target.kind === kind && target.id === id);
+    const position = (pos: Point): Point => op.type === 'move-selection' ? { x: roundCoordinate(pos.x + op.delta.x), z: roundCoordinate(pos.z + op.delta.z) } : op.axis === 'vertical' ? { x: roundCoordinate(2 * op.center - pos.x), z: pos.z } : { x: pos.x, z: roundCoordinate(2 * op.center - pos.z) };
+    return { ...doc,
+      buildings: doc.buildings.map(item => selected('building', item.id) ? { ...item, pos: position(item.pos), owner: op.type === 'mirror' && op.swapOwners ? item.owner === 'p1' ? 'p2' : item.owner === 'p2' ? 'p1' : item.owner : item.owner } : item),
+      elements: doc.elements.map(item => selected('obstacle', item.id) ? { ...item, pos: position(item.pos), yawDeg: op.type === 'mirror' ? normalizeYaw(op.axis === 'vertical' ? 180 - item.yawDeg : -item.yawDeg) : item.yawDeg } : item),
+    };
+  }
   if (op.type === 'level-properties') return { ...doc, ...op.value };
   if (op.type === 'building-properties') return { ...doc, buildings: doc.buildings.map(item => item.id === op.id ? cleanOptional({ ...item, ...op.value }) as LevelDoc['buildings'][number] : item) };
   if (op.type === 'obstacle-properties') return { ...doc, elements: doc.elements.map(item => item.id === op.id ? cleanOptional({ ...item, ...op.value }) as LevelDoc['elements'][number] : item) };
@@ -66,4 +89,16 @@ export function scriptRemovalMessages(state: DocHistory): string[] {
 function cleanOptional<T extends object>(value: T): T {
   for (const key of Object.keys(value) as (keyof T)[]) if (value[key] === undefined) delete value[key];
   return value;
+}
+
+export function copySelection(doc: LevelDoc, targets: Selection[]): Clipboard {
+  return structuredClone({ buildings: doc.buildings.filter(item => targets.some(t => t.kind === 'building' && t.id === item.id)), elements: doc.elements.filter(item => targets.some(t => t.kind === 'obstacle' && t.id === item.id)) });
+}
+const normalizeYaw = (value: number) => roundCoordinate(((roundCoordinate(value) % 360) + 360) % 360);
+export function snapPosition(point: Point, enabled = true): Point {
+  const snap = (n: number) => roundCoordinate(enabled ? Math.round(n / .25) * .25 : n);
+  return { x: snap(point.x), z: snap(point.z) };
+}
+export function snapYaw(value: number, enabled = true): number {
+  return normalizeYaw(enabled ? Math.round(value / 15) * 15 : value);
 }
