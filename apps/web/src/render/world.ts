@@ -119,7 +119,7 @@ export function createWorldRenderer(scene: Object3D, manifest: ManifestV2, opts:
   const tl = opts.textureLoader ? null : new TextureLoader();
   const texLoad: TextureLoadFn = opts.textureLoader ?? (p => tl!.load(`${base.replace(/\/$/, '')}/${p}`));
   let gltfLoad: GltfLoadFn | null = opts.gltfLoader ?? null;
-  const materials = opts.materials ?? new MaterialCache(texLoad);
+  const materials = opts.materials ?? new MaterialCache(texLoad, manifest.palettes);
   const models = opts.models ?? new ModelCache(f => gltfLoad!(f));
   const ready = (async () => {
     if (!opts.models) gltfLoad ??= await createBrowserGltfLoader(base);

@@ -8,12 +8,12 @@ Source of truth: [PRD.md](PRD.md). Order: merge layer first (R2-R4), then checks
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Art patch schema + three-way merge + default sfx move | none | todo |
-| 2 | Importer scope guard (art/ never touched) | 1 | todo |
-| 3 | check:manifest art rules | 1 | todo |
-| 4 | Credits check becomes a warning | none | todo |
-| 5 | tintMask team mode (schema + renderer) | 1 | todo |
-| 6 | art:status command | 1 | todo |
+| 1 | Art patch schema + three-way merge + default sfx move | none | done |
+| 2 | Importer scope guard (art/ never touched) | 1 | done |
+| 3 | check:manifest art rules | 1 | done |
+| 4 | Credits check becomes a warning | none | done |
+| 5 | tintMask team mode (schema + renderer) | 1 | done |
+| 6 | art:status command | 1 | done |
 | 7 | Showcase levels (green, snow) | 5, 01 P0 (custom list) | todo |
 | 8 | Docs | 1-7 | todo |
 

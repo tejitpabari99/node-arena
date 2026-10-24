@@ -19,6 +19,10 @@ const teamSet = <T extends Type.TSchema>(schema: T) => Type.Object(Object.fromEn
 /** Per-visual textures: blue/green/red/yellow required; `gray` (neutral) only where the family has one (buildings, projectile). Units never are neutral; `crossCheckManifest` rejects a level colorKey with no texture. */
 const textureSet = () => Type.Object({ blue: path(), green: path(), red: path(), yellow: path(), gray: Type.Optional(path()) }, closed);
 
+const teamDef = Type.Union([
+  Type.Object({ mode: Type.Literal('textureSwap'), textures: textureSet() }, closed),
+  Type.Object({ mode: Type.Literal('tintMask'), base: path(), mask: path() }, closed),
+]);
 const stage = Type.Union([
   Type.Object({ mesh: key() }, closed),
   Type.Object({ enable: Type.Array(key(), { minItems: 1 }) }, closed),
@@ -42,7 +46,8 @@ export const ManifestSchema = Type.Object({
     /** `lod`: optional simplified sibling GLB with the same part nodes (unit renderer swaps geometry when many troops are alive). */
     model: Type.Object({ parts: path(), budget: literals(Object.keys(BUDGET_CLASSES) as Array<keyof typeof BUDGET_CLASSES>), lod: Type.Optional(path()) }, closed),
     stages: Type.Optional(Type.Array(stage, { minItems: 1 })),
-    team: Type.Optional(Type.Object({ mode: literals(TEAM_MODES), textures: textureSet() }, closed)),
+    /** `textureSwap` (default): one skin per team. `tintMask`: one skin + grey mask (R channel, white = recolour) tinted by `palettes[team]`. */
+    team: Type.Optional(teamDef),
     anim: Type.Optional(anim),
     scale: positive(), yOffset: Type.Optional(Type.Number()),
     label: Type.Optional(Type.Object({ height: Type.Number({ minimum: 0 }) }, closed)),
@@ -97,7 +102,7 @@ export function crossCheckManifest(m: ManifestV2, c: ManifestCatalog): string[] 
     for (const ck of lv.colorKeys) {
       if (!has(m.palettes, ck)) errors.push(`level ${lv.id}: colorKey "${ck}" has no palette entry`);
       for (const [vid, v] of Object.entries(m.visuals)) {
-        if (v.team && !has(v.team.textures, ck)) errors.push(`level ${lv.id}: colorKey "${ck}" has no texture in visual "${vid}"`);
+        if (v.team?.mode === 'textureSwap' && !has(v.team.textures, ck)) errors.push(`level ${lv.id}: colorKey "${ck}" has no texture in visual "${vid}"`);
       }
     }
   }

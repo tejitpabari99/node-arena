@@ -48,7 +48,7 @@ const vis = (r: BuildingRenderer, ...names: string[]) => names.map(n => (r.root.
 describe('building renderer: team textures', () => {
   it('captures swap the per-team texture on every mesh, neutral = gray', async () => {
     const { make, visual } = setup('building.house-wt1'); const r = await make(); r.setBuildings(inits);
-    const tex = (visual.team!.textures as Record<string, string>);
+    const tex = ((visual.team as { textures: Record<string, string> }).textures);
     const mapOf = () => (r.pickMeshes[0]!.material as MeshLambertMaterial).map;
     r.update(frame(5, -1), [], 16); expect(mapOf()).toBe(loaded[tex['gray']!]);
     r.update(frame(5, 0), [], 16); expect(mapOf()).toBe(loaded[tex['blue']!]);
@@ -114,7 +114,7 @@ describe('building renderer: labels, anchors, ring, shots', () => {
     const ev = { type: 'TowerShot', tower: 0, target: { kind: 'troop' }, x: 5000, z: 0 } as unknown as SimEvent;
     r.update(frame(5, 0), [ev], 0, sim);
     const shot = r.root.children.find(c => c.name !== 'b0')!; expect(shot).toBeDefined();
-    const sm = shot.children[0] as Mesh; expect((sm.material as MeshLambertMaterial).map).toBe(loaded[(proj.team!.textures as Record<string, string>)['blue']!]);
+    const sm = shot.children[0] as Mesh; expect((sm.material as MeshLambertMaterial).map).toBe(loaded[((proj.team as { textures: Record<string, string> }).textures)['blue']!]);
     r.update(frame(5, 0), [], PROJECTILE_MS / 2, sim); expect(shot.position.x).toBeGreaterThan(2); expect(shot.position.x).toBeLessThan(5);
     r.update(frame(5, 0), [], PROJECTILE_MS, sim); expect(r.root.children.filter(c => c.name !== 'b0')).toHaveLength(0);
   });

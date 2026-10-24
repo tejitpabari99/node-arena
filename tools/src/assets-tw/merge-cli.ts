@@ -3,6 +3,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { artErrors, loadArt } from './art-patch.js';
 import { FRAGMENT_PATH, mergeManifest, stringify, type Fragment } from './manifest-fragment.js';
 
 const ASSETS = join(resolve(dirname(fileURLToPath(import.meta.url)), '../../..'), 'apps/web/assets');
@@ -11,7 +12,7 @@ const ASSETS = join(resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
 export function mergeFiles(assetsRoot: string): { text: string; current: boolean } {
   const base = JSON.parse(readFileSync(join(assetsRoot, 'manifest.json'), 'utf8')) as Record<string, unknown>;
   const fragment = JSON.parse(readFileSync(join(assetsRoot, FRAGMENT_PATH), 'utf8')) as Fragment;
-  const text = stringify(mergeManifest(base, fragment));
+  const text = stringify(mergeManifest(base, fragment, loadArt(assetsRoot)));
   return { text, current: text === readFileSync(join(assetsRoot, 'manifest.json'), 'utf8') };
 }
 
@@ -19,6 +20,8 @@ export function main(args: readonly string[], assetsRoot: string = ASSETS): numb
   const check = args.includes('--check');
   for (const a of args) if (a !== '--check') { process.stderr.write(`Unknown option ${a}\n`); return 2; }
   if (!existsSync(join(assetsRoot, FRAGMENT_PATH))) { process.stderr.write(`assets:manifest: ${FRAGMENT_PATH} missing (run \`pnpm assets:tw\` with TW_EXTRACT)\n`); return 1; }
+  const bad = artErrors(assetsRoot); // never write a manifest from an invalid art patch
+  if (bad.length) { process.stderr.write(`${bad.join('\n')}\n`); return 1; }
   const world = mergeFiles(assetsRoot);
   // SP08 has a separate presentation namespace: the closed world manifest schema has no UI fields.
   const uiFragment = join(assetsRoot, 'manifest.ui.json');

@@ -50,6 +50,15 @@ test('row: stages length must equal thresholds + 1 (cross-check)', () => {
   assert.deepEqual(content.crossCheckManifest(fixture() as any, { ...catalog(), stageThresholds: [10, 30, 60] }).length, 1);
 });
 
+test('row: team tintMask {base, mask}; no stray textures; palette keys cover levels', () => {
+  const tint = mutate((m) => { m.visuals.soldier.team = { mode: 'tintMask', base: 'a.png', mask: 'm.png' }; });
+  assert.equal(ok(tint), true, JSON.stringify(validate.errors));
+  assert.deepEqual(content.crossCheckManifest(tint, catalog()), []);
+  assert.equal(ok(mutate((m) => { m.visuals.soldier.team = { mode: 'tintMask', base: 'a.png' }; })), false);
+  assert.equal(ok(mutate((m) => { m.visuals.soldier.team = { mode: 'tintMask', base: 'a.png', mask: 'm.png', textures: tex('s') }; })), false);
+  assert.equal(ok(mutate((m) => { m.visuals.soldier.team = { mode: 'textureSwap', base: 'a.png', mask: 'm.png' }; })), false);
+});
+
 test('row: team textureSwap with blue/green/red/yellow/gray', () => {
   assert.equal(ok(mutate((m) => { m.visuals.soldier.team.mode = 'tint'; })), false);
   assert.equal(ok(mutate((m) => { delete m.visuals.soldier.team.textures.blue; })), false);

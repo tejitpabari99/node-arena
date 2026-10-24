@@ -30,6 +30,7 @@
     "validate:content": "pnpm --filter @node-arena/tools validate:content",
     "check:manifest": "pnpm --filter @node-arena/tools check:manifest",
     "check:rules": "tsx tools/src/cli.ts check:rules",
+    "art:status": "tsx tools/src/cli.ts art:status",
     "check:parked": "tsx tools/src/cli.ts check:parked",
     "assets:capture": "node tools/assets/capture/capture.mjs",
     "assets:validate": "tsx tools/assets/validate/run.mjs",

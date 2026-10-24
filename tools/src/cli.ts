@@ -5,6 +5,7 @@ import { uncreditedAssets } from './credits.js';
 import { checkLock, splitFiles } from './content.js';
 import { checkManifest } from './manifest.js';
 import { checkManifestAssets } from './manifest-assets.js';
+import { artErrors } from './assets-tw/art-patch.js';
 import { checkRules } from './rules.js';
 import { emitReport, type GateReport } from './output.js';
 import { writeFile } from 'node:fs/promises';
@@ -15,6 +16,12 @@ const args = process.argv.slice(2); const command = args.shift() ?? '';
 if (command === 'check:parked') {
   const { runParked } = await import('./parked.js');
   try { process.exitCode = await runParked(args, resolve(root, 'scripts/ci.sh')); }
+  catch (error) { console.error((error as Error).message); process.exitCode = 2; }
+  process.exit();
+}
+if (command === 'art:status') {
+  const { runArtStatusFile } = await import('./art-status.js');
+  try { process.exitCode = await runArtStatusFile(resolve(root, 'apps/web/assets/manifest.json'), args); }
   catch (error) { console.error((error as Error).message); process.exitCode = 2; }
   process.exit();
 }
@@ -106,17 +113,24 @@ async function main(): Promise<void> {
     const manifestPath = resolve(opts['--manifest'] ?? resolve(root, manifestFile));
     const manifest = await readJson(manifestPath);
     const issues = checkManifest(manifest, result.content!);
-    if (issues.length) { report.errors.push(...issues.map(issue => ({ ...issue, file: manifestPath }))); return; }
-    // Asset files, lock hashes of committed outputs (no TW_EXTRACT needed), budgets, textures, fragment merge. A custom --assets-dir skips the repo lock unless --lock is given.
     const assetsDir = resolve(opts['--assets-dir'] ?? resolve(root, 'apps/web/assets'));
+    if (issues.length) {
+      // Art patch errors are the likelier cause of schema issues; report them too (checkManifestAssets below would otherwise be skipped).
+      report.errors.push(...issues.map(issue => ({ ...issue, file: manifestPath })), ...artErrors(assetsDir).map(message => ({ file: manifestPath, pointer: '', message })));
+      return;
+    }
+    // Asset files, lock hashes of committed outputs (no TW_EXTRACT needed), budgets, textures, fragment merge. A custom --assets-dir skips the repo lock unless --lock is given.
     const lockPath = opts['--lock'] ? resolve(opts['--lock']) : opts['--assets-dir'] ? undefined : resolve(root, 'tools/assets/tw-extract.lock.json');
-    const assetIssues = await checkManifestAssets(manifest as Parameters<typeof checkManifestAssets>[0], assetsDir, lockPath);
+    const assetWarnings: string[] = [];
+    const assetIssues = await checkManifestAssets(manifest as Parameters<typeof checkManifestAssets>[0], assetsDir, lockPath, assetWarnings);
+    report.warnings.push(...assetWarnings.map(message => ({ file: manifestPath, pointer: '', message })));
     if (assetIssues.length) { report.errors.push(...assetIssues.map(message => ({ file: manifestPath, pointer: '', message }))); return; }
     // Default to the repository CREDITS.md (the default path may be absent; an explicit --credits must exist).
     const credits = opts['--credits'] ? await readText(resolve(opts['--credits'])) : await readText(resolve(root, 'docs/CREDITS.md')).catch(() => '');
     const missing = await uncreditedAssets(assetsDir, credits);
-    if (missing.length) throw new LocatedError(manifestPath, `Asset files missing from CREDITS.md: ${missing.join(', ')}`);
-    report.summary = 'Manifest schema, content cross-checks, asset files/hashes/budgets and credits valid.';
+    // Owner-made art needs no credit (R6/D8): uncredited files warn, never fail.
+    if (missing.length) report.warnings.push({ file: manifestPath, pointer: '', message: `Asset files missing from CREDITS.md: ${missing.join(', ')}` });
+    report.summary = 'Manifest schema, content cross-checks, asset files/hashes/budgets valid (credits warn only).';
   }
   report.ok = true;
 }

@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { NodeIO, type Document, type Node } from '@gltf-transform/core';
 import { Extract, parseJsonExact } from '../src/assets-tw/extract.js';
 import { parseObj } from '../src/assets-tw/obj.js';
@@ -316,4 +316,24 @@ test('manifest fragment: deterministic, equals the committed manifest.tw.json, t
   const f = JSON.parse(committed.toString('utf8')) as { themes: Record<string, unknown>; visuals: Record<string, { stages?: unknown[] }> };
   assert.deepEqual(Object.keys(f.themes), ['green', 'snow']);
   for (const id of ['building.house-wt1', 'building.house-wt2', 'building.tower']) assert.equal(f.visuals[id]!.stages!.length, 3, id);
+});
+
+// ---- importer scope guard (02-art-overrides Task 2) ---------------------------------------------------------------------
+
+test('writeResult(prune): stale cleanup never touches art/ or manifest.art.json', () => {
+  const root = mkdtempSync(join(tmpdir(), 'tw-scope-'));
+  try {
+    const put = (p: string, s: string) => { mkdirSync(dirname(join(root, p)), { recursive: true }); writeFileSync(join(root, p), s); };
+    const art = ['art/models/x.glb', 'art/textures/x.png', 'art/fx/x.json', 'art/audio/x.ogg', 'manifest.art.json', 'manifest.json'];
+    for (const p of art) put(p, `keep ${p}`);
+    put('models/tw/stale.glb', 'stale');
+    put('textures/tw/stale.png', 'stale');
+    const r: ImportResult = { files: new Map([['models/tw/fresh.glb', new Uint8Array([1])]]), lock: '{}\n' };
+    writeResult(r, root, join(root, 'lock.json'), true);
+    assert.equal(existsSync(join(root, 'models/tw/stale.glb')), false, 'owned stale file pruned');
+    assert.equal(existsSync(join(root, 'textures/tw/stale.png')), false);
+    assert.equal(existsSync(join(root, 'models/tw/fresh.glb')), true);
+    for (const p of art) assert.equal(readFileSync(join(root, p), 'utf8'), `keep ${p}`, `${p} intact`);
+    assert.deepEqual(diffResult(r, root, join(root, 'lock.json')), [], 'diffResult ignores art files');
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

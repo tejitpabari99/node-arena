@@ -149,7 +149,7 @@ class BuildingRendererImpl implements BuildingRenderer {
   }
 
   private applyTeam(i: Instance, team: string): void {
-    const m = this.ctx.materials.teamMaterial(this.ctx.visualId, team, this.ctx.visual.team?.textures ?? {});
+    const m = this.ctx.materials.visualTeamMaterial(this.ctx.visualId, team, this.ctx.visual.team);
     for (const mesh of i.meshes) mesh.material = m;
     i.team = team;
   }
@@ -183,7 +183,7 @@ class BuildingRendererImpl implements BuildingRenderer {
     if (!t || !t.bullet || !p || !this.projTpl) return;
     const owner = view.buildings.owner[e.tower]!, team = owner < 0 ? NEUTRAL_TEAM : view.players[owner]!.colorKey;
     const g = this.projTpl.clone(true); g.scale.multiplyScalar(p.visual.scale ?? 1);
-    const m = this.ctx.materials.teamMaterial(p.visualId, team, p.visual.team?.textures ?? {});
+    const m = this.ctx.materials.visualTeamMaterial(p.visualId, team, p.visual.team);
     g.traverse(o => { if ((o as Mesh).isMesh) (o as Mesh).material = m as Material; });
     const from = t.bullet.clone().add(t.group.position), to = new Vector3(e.x / MILLI, from.y * 0.5, e.z / MILLI);
     g.position.copy(from); g.lookAt(to); this.root.add(g);

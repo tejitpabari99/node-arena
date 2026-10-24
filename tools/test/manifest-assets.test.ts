@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import type { ManifestV2 } from '@node-arena/content';
-import { lightDirFromQuat, lightDirToDataFrame, mergeManifest, stringify, type Fragment } from '../src/assets-tw/manifest-fragment.js';
-import { mergeFiles } from '../src/assets-tw/merge-cli.js';
+import { Document, NodeIO } from '@gltf-transform/core';
+import { DEFAULT_EVENT_SFX, lightDirFromQuat, lightDirToDataFrame, mergeManifest, stringify, type Fragment } from '../src/assets-tw/manifest-fragment.js';
+import { loadArt } from '../src/assets-tw/art-patch.js';
+import { main as mergeMain, mergeFiles } from '../src/assets-tw/merge-cli.js';
 import { checkManifestAssets } from '../src/manifest-assets.js';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -77,13 +79,75 @@ test('texture size above 256px is rejected', async () => {
   } finally { done(); }
 });
 
-test('mergeManifest: idempotent, keeps hand-owned parts (sfx, palettes, camera), fragment wins its parts, drops stale fx', () => {
-  const frag: Fragment = { visuals: { v: { a: 1 } }, themes: { t: {} }, fx: { f: {} }, events: { Clash: { fx: 'f' } } };
-  const base = { $schema: 's', schemaVersion: '2.0.0', palettes: { gray: '#888888' }, visuals: { old: 1 }, events: { Clash: { sfx: 'audio/clash.ogg', fx: 'stale' }, LineCut: { sfx: 'audio/cut.ogg' }, Gone: { fx: 'x' } }, camera: { fov: 21 } };
-  const once = mergeManifest(base, frag);
-  assert.deepEqual(once, { $schema: 's', schemaVersion: '2.0.0', palettes: { gray: '#888888' }, visuals: { v: { a: 1 } }, themes: { t: {} }, fx: { f: {} }, events: { Clash: { sfx: 'audio/clash.ogg', fx: 'f' }, LineCut: { sfx: 'audio/cut.ogg' } }, camera: { fov: 21 } });
+const FRAG: Fragment = { visuals: { v: { scale: 1, model: { parts: 'a.glb', budget: 'unit' }, stages: [{ mesh: 'x' }, { mesh: 'y' }] } }, themes: { t: { sky: '#000000' } }, fx: { f: { texture: 'f.png', params: { a: 1, b: 2 } } }, events: { Clash: { fx: 'f' } } };
+const BASE = { $schema: 's', schemaVersion: '2.0.0', palettes: { gray: '#888888' }, visuals: { old: 1 }, events: { Clash: { sfx: 'stale.ogg', fx: 'stale' }, Gone: { fx: 'x' } }, camera: { fov: 21 } };
+
+test('mergeManifest: idempotent, keeps hand-owned palettes/camera, fragment wins its parts, default sfx replace base sfx, drops stale events', () => {
+  const once = mergeManifest(BASE, FRAG);
   assert.deepEqual(Object.keys(once), ['$schema', 'schemaVersion', 'palettes', 'visuals', 'themes', 'fx', 'events', 'camera']);
-  assert.equal(stringify(mergeManifest(once, frag)), stringify(once));
+  assert.deepEqual(once['palettes'], { gray: '#888888' });
+  assert.deepEqual(once['camera'], { fov: 21 });
+  assert.deepEqual(once['visuals'], FRAG.visuals);
+  assert.deepEqual((once['events'] as Record<string, unknown>)['Clash'], { sfx: DEFAULT_EVENT_SFX.Clash, fx: 'f' });
+  assert.equal('Gone' in (once['events'] as object), false);
+  assert.equal(stringify(mergeManifest(once, FRAG)), stringify(once));
+});
+
+test('mergeManifest: no art / empty art is a no-op', () => {
+  assert.equal(stringify(mergeManifest(BASE, FRAG, undefined)), stringify(mergeManifest(BASE, FRAG)));
+  assert.equal(stringify(mergeManifest(BASE, FRAG, {})), stringify(mergeManifest(BASE, FRAG)));
+});
+
+test('mergeManifest: art applies after fragment; objects deep-merge, arrays and scalars replace; inputs untouched', () => {
+  const art = { visuals: { v: { scale: 2, model: { parts: 'b.glb' }, stages: [{ mesh: 'z' }] } }, themes: { t: { sky: '#ffffff' } }, fx: { f: { params: { a: 9 } } } };
+  const before = JSON.stringify(FRAG);
+  const m = mergeManifest(BASE, FRAG, art) as any;
+  assert.deepEqual(m.visuals.v.model, { parts: 'b.glb', budget: 'unit' }); // object merge keeps budget
+  assert.equal(m.visuals.v.scale, 2); // scalar replace
+  assert.deepEqual(m.visuals.v.stages, [{ mesh: 'z' }]); // array replace
+  assert.equal(m.themes.t.sky, '#ffffff');
+  assert.deepEqual(m.fx.f, { texture: 'f.png', params: { a: 9, b: 2 } });
+  assert.equal(JSON.stringify(FRAG), before);
+  assert.equal(stringify(mergeManifest(m, FRAG, art)), stringify(m)); // idempotent over its own output
+});
+
+test('mergeManifest: art team patch switching mode to tintMask replaces team (no stray textures); same-mode patch deep-merges', () => {
+  const frag = { ...FRAG, visuals: { v: { ...(FRAG.visuals as any).v, team: { mode: 'textureSwap', textures: { blue: 'b.png', green: 'g.png', red: 'r.png', yellow: 'y.png' } } } } } as unknown as Fragment;
+  const sw = mergeManifest(BASE, frag, { visuals: { v: { team: { mode: 'tintMask', base: 'art/b.png', mask: 'art/m.png' } } } }) as any;
+  assert.deepEqual(sw.visuals.v.team, { mode: 'tintMask', base: 'art/b.png', mask: 'art/m.png' });
+  const same = mergeManifest(BASE, frag, { visuals: { v: { team: { mode: 'textureSwap', textures: { red: 'art/r.png' } } } } }) as any;
+  assert.equal(same.visuals.v.team.textures.red, 'art/r.png'); assert.equal(same.visuals.v.team.textures.blue, 'b.png');
+  assert.equal(stringify(mergeManifest(sw, frag, { visuals: { v: { team: { mode: 'tintMask', base: 'art/b.png', mask: 'art/m.png' } } } })), stringify(sw));
+});
+
+test('mergeManifest: art sfx overrides the default; removing it restores the default', () => {
+  const withArt = mergeManifest(BASE, FRAG, { events: { Clash: { sfx: 'art/audio/boom.ogg' }, Custom: { sfx: 'art/audio/c.ogg' } } }) as any;
+  assert.equal(withArt.events.Clash.sfx, 'art/audio/boom.ogg');
+  assert.equal(withArt.events.Clash.fx, 'f');
+  assert.equal(withArt.events.Custom.sfx, 'art/audio/c.ogg');
+  const restored = mergeManifest(withArt, FRAG) as any;
+  assert.equal(restored.events.Clash.sfx, DEFAULT_EVENT_SFX.Clash);
+  assert.equal('Custom' in restored.events, false);
+});
+
+test('loadArt / assets:manifest: absent = undefined; fixture patch validates and merge stays a fixed point; bad keys rejected', () => {
+  const { dir, done } = copy();
+  try {
+    assert.equal(loadArt(dir), undefined);
+    const art = { visuals: { 'unit.tank': { scale: 1.5 } }, events: { Clash: { sfx: 'art/audio/boom.ogg' } } };
+    writeFileSync(join(dir, 'manifest.art.json'), JSON.stringify(art));
+    assert.deepEqual(loadArt(dir), art);
+    assert.equal(mergeFiles(dir).current, false); // manifest.json lacks the patch
+    writeFileSync(join(dir, 'manifest.json'), mergeFiles(dir).text);
+    assert.equal(mergeFiles(dir).current, true);
+    const tint = { visuals: { 'unit.tank': { team: { mode: 'tintMask', base: 'art/b.png', mask: 'art/m.png' } } } };
+    writeFileSync(join(dir, 'manifest.art.json'), JSON.stringify(tint));
+    assert.deepEqual(loadArt(dir), tint); // tintMask patch validates
+    for (const bad of [{ visuals: { 'unit.tank': { kind: 'building' } } }, { visuals: { 'unit.tank': { model: { budget: 'unit' } } } }, { visuals: { 'unit.tank': { scale: null } } }, { visuals: JSON.parse('{"__proto__":{"scale":2}}') }, { visuals: { constructor: { scale: 2 } } }, { palettes: {} }, { camera: { fov: 1 } }, { events: { Clash: { fx: 'x' } } }, { bogus: 1 }]) {
+      writeFileSync(join(dir, 'manifest.art.json'), JSON.stringify(bad));
+      assert.throws(() => loadArt(dir), /manifest\.art\.json invalid/, JSON.stringify(bad));
+    }
+  } finally { done(); }
 });
 
 test('committed manifest.json is a fixed point of its merge with manifest.tw.json', () => {
@@ -103,4 +167,142 @@ test('lightDirToDataFrame: raw Unity (x,z) -> data frame (z,-x) quarter turn; y 
   assert.deepEqual(lightDirToDataFrame([0, 0, 1]), [1, 0, 0]);
   const d = lightDirToDataFrame(lightDirFromQuat([0.5016, 0.3786, -0.2589, 0.7335]));
   assert.deepEqual(d, [-0.2101, 0.9319, 0.2957]);
+});
+
+// --- art rules (02-art-overrides Task 3) ---
+const png = (w: number, h: number): Buffer => { const b = Buffer.alloc(33); Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(b); b.writeUInt32BE(13, 8); b.write('IHDR', 12); b.writeUInt32BE(w, 16); b.writeUInt32BE(h, 20); return b; };
+function put(dir: string, rel: string, data: Uint8Array | string): void { mkdirSync(join(dir, rel, '..'), { recursive: true }); writeFileSync(join(dir, rel), data); }
+/** Write `art` into a copied assets dir, merge it into manifest.json (as assets:manifest would) and run the checks. */
+async function withArt(dir: string, art: unknown, files: Record<string, Uint8Array | string> = {}, merge = true): Promise<{ errors: string[]; warnings: string[] }> {
+  for (const [rel, data] of Object.entries(files)) put(dir, rel, data);
+  put(dir, 'manifest.art.json', JSON.stringify(art));
+  const fragment = JSON.parse(readFileSync(join(dir, 'manifest.tw.json'), 'utf8')) as Fragment;
+  const base = load(dir) as unknown as Record<string, unknown>;
+  const m = (merge ? mergeManifest(base, fragment, art as Record<string, unknown>) : base) as unknown as ManifestV2;
+  const warnings: string[] = [];
+  return { errors: await checkManifestAssets(m, dir, undefined, warnings), warnings };
+}
+async function bigGlb(tris: number): Promise<Uint8Array> {
+  const doc = new Document(); const buf = doc.createBuffer();
+  const pos = doc.createAccessor().setType('VEC3').setArray(new Float32Array(9)).setBuffer(buf);
+  const idx = doc.createAccessor().setType('SCALAR').setArray(new Uint32Array(tris * 3)).setBuffer(buf);
+  const mesh = doc.createMesh('m').addPrimitive(doc.createPrimitive().setAttribute('POSITION', pos).setIndices(idx));
+  doc.createScene().addChild(doc.createNode('body').setMesh(mesh));
+  return new NodeIO().writeBinary(doc);
+}
+
+test('art: a valid override passes with no warnings', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { visuals: { 'unit.soldier': { team: { textures: { blue: 'art/textures/soldier-blue.png' } } } }, fx: { 'capture-ring': { texture: 'art/fx/ring.png' } } }, { 'art/textures/soldier-blue.png': png(64, 64), 'art/fx/ring.png': png(128, 128) });
+    assert.deepEqual(r.errors, []);
+    assert.deepEqual(r.warnings, []);
+  } finally { done(); }
+});
+
+test('art: unknown key fails loudly', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { visuals: { 'unit.soldier': { kind: 'building' } } }, {}, false);
+    assert.match(r.errors.join('\n'), /manifest\.art\.json invalid: .*kind/);
+  } finally { done(); }
+});
+
+test('art: missing stage node, missing clip, over-budget tris and PNG >256px all fail', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, {
+      visuals: {
+        'building.tower': { stages: [{ mesh: 'nope' }] },
+        'unit.soldier': { anim: { clips: { run: 'Walk' } } },
+        'unit.tank': { model: { parts: 'art/models/big.glb' }, anim: { mode: 'none' } },
+      },
+      fx: { 'capture-ring': { texture: 'art/fx/huge.png' } },
+    }, { 'art/models/big.glb': await bigGlb(1200), 'art/fx/huge.png': png(512, 512) });
+    const e = r.errors.join('\n');
+    assert.match(e, /stage node "nope" not in models\/tw\/tower\.glb/);
+    assert.match(e, /clip "Walk" not in models\/tw\/soldier\.glb/);
+    assert.match(e, /visual unit\.tank: 1200 tris > unit budget 1100/);
+    assert.match(e, /fx capture-ring: art\/fx\/huge\.png is 512x512 > 256px/);
+  } finally { done(); }
+});
+
+test('art: a path into importer-owned models/tw fails', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { visuals: { 'unit.tank': { model: { parts: 'models/tw/soldier.glb' } } } });
+    assert.match(r.errors.join('\n'), /art: visuals\.unit\.tank\.model\.parts points into importer-owned models\/tw\/.*must live under art\//);
+  } finally { done(); }
+});
+
+test('art: stale target is an error naming the field', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { visuals: { 'unit.soldier': { team: { textures: { gray: 'art/textures/g.png' } } } } }, { 'art/textures/g.png': png(32, 32) });
+    assert.ok(r.errors.includes('art: visuals.unit.soldier.team.textures.gray targets a field the importer no longer produces'), r.errors.join('\n'));
+  } finally { done(); }
+});
+
+test('art: unknown visual id names the art patch (checkManifestAssets); assets:manifest refuses and writes nothing; check:manifest reports it', async () => {
+  const { dir, done } = copy();
+  try {
+    const art = { visuals: { 'unit.ghost': { scale: 2 } } };
+    const r = await withArt(dir, art, {}, false); // unmerged: a merged partial visual is rejected by the schema, not this check
+    assert.ok(r.errors.includes('art: visuals.unit.ghost is not a visual the importer produces (manifest.art.json)'), r.errors.join('\n'));
+    const before = readFileSync(join(dir, 'manifest.json'), 'utf8');
+    const err: string[] = []; const orig = process.stderr.write;
+    process.stderr.write = ((s: string) => { err.push(String(s)); return true; }) as typeof process.stderr.write;
+    try { assert.equal(mergeMain([], dir), 1); assert.equal(mergeMain(['--check'], dir), 1); } finally { process.stderr.write = orig; }
+    assert.match(err.join(''), /visuals\.unit\.ghost is not a visual the importer produces \(manifest\.art\.json\)/);
+    assert.equal(readFileSync(join(dir, 'manifest.json'), 'utf8'), before);
+    // merged (partial visual) manifest fails schema; the CLI still names the art patch
+    writeFileSync(join(dir, 'manifest.json'), stringify(mergeManifest(JSON.parse(before), JSON.parse(readFileSync(join(dir, 'manifest.tw.json'), 'utf8')) as Fragment, art)));
+    const c = spawnSync(process.execPath, ['--import', 'tsx', 'tools/src/cli.ts', 'check:manifest', '--format', 'json', '--manifest', join(dir, 'manifest.json'), '--assets-dir', dir], { cwd: root, encoding: 'utf8' });
+    assert.notEqual(c.status, 0);
+    assert.match(c.stdout, /visuals\.unit\.ghost is not a visual the importer produces \(manifest\.art\.json\)/);
+  } finally { done(); }
+});
+
+test('art: switching a textureSwap team to tintMask passes (team is the target)', async () => {
+  const { dir, done } = copy();
+  try {
+    const art = { visuals: { 'unit.soldier': { team: { mode: 'tintMask', base: 'art/textures/base.png', mask: 'art/textures/mask.png' } } } };
+    const r = await withArt(dir, art, { 'art/textures/base.png': png(64, 64), 'art/textures/mask.png': png(64, 64) });
+    assert.deepEqual(r.errors, []);
+    assert.deepEqual(r.warnings, []);
+  } finally { done(); }
+});
+
+test('art: unsafe relative paths (.. / absolute / backslash) fail even when they start with art/', async () => {
+  const { dir, done } = copy();
+  try {
+    for (const p of ['art/../textures/tw/x.png', '/art/x.png', 'art\\x.png', 'art/./x.png']) {
+      const r = await withArt(dir, { fx: { 'capture-ring': { texture: p } } });
+      assert.match(r.errors.join('\n'), /art: fx\.capture-ring\.texture is not a safe relative path/, p);
+    }
+  } finally { done(); }
+});
+
+test('art: orphan file and oversized audio warn; bad audio extension fails', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { events: { Clash: { sfx: 'art/audio/big.ogg' } } }, { 'art/audio/big.ogg': Buffer.alloc(1024 * 1024 + 1), 'art/textures/orphan.png': png(8, 8) });
+    assert.deepEqual(r.errors, []);
+    assert.match(r.warnings.join('\n'), /event Clash sfx: art\/audio\/big\.ogg is over 1 MB/);
+    assert.match(r.warnings.join('\n'), /art: art\/textures\/orphan\.png is not referenced/);
+    const bad = await withArt(dir, { events: { Clash: { sfx: 'art/audio/boom.flac' } } }, { 'art/audio/boom.flac': 'x' });
+    assert.match(bad.errors.join('\n'), /event Clash sfx: art\/audio\/boom\.flac must be \.ogg\/\.mp3\/\.wav/);
+  } finally { done(); }
+});
+
+test('tintMask base and mask refs are size-checked (tolerant of the not-yet-typed mode)', async () => {
+  const { dir, done } = copy();
+  try {
+    put(dir, 'art/textures/base.png', png(64, 64)); put(dir, 'art/textures/mask.png', png(512, 512));
+    const m = load(dir) as any;
+    m.visuals['unit.soldier'].team = { mode: 'tintMask', base: 'art/textures/base.png', mask: 'art/textures/mask.png' };
+    const e = (await checkManifestAssets(m, dir)).join('\n');
+    assert.match(e, /visual unit\.soldier team\.mask: art\/textures\/mask\.png is 512x512 > 256px/);
+    assert.doesNotMatch(e, /team\.base/);
+  } finally { done(); }
 });
