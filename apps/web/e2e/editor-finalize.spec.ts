@@ -5,6 +5,8 @@ test('Finalize requires saved draft, streams steps, and refreshes disk status wi
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev editor');
   let current = false, statusRequests = 0, finalizes = 0;
   await page.route('**/__editor/status', async route => {
+    expect(route.request().method()).toBe('POST');
+    expect(route.request().headers()['x-na-editor']).toBe('1');
     statusRequests++;
     await new Promise(done => setTimeout(done, 300));
     await route.fulfill({ json: { unfinalized: !current, exitCode: current ? 0 : 1, output: 'content guard' } });

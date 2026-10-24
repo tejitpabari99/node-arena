@@ -58,7 +58,14 @@ export async function checkSolvable(level: LevelDoc, onEvent: (event: import('..
 }
 
 export interface FinalizeStatus { unfinalized: boolean; exitCode: number; output: string }
-export const readFinalizeStatus = (): Promise<FinalizeStatus> => get('status');
+export async function readFinalizeStatus(): Promise<FinalizeStatus> {
+  const response = await fetch('/__editor/status', {
+    method: 'POST', cache: 'no-store', headers: { 'Content-Type': 'application/json', 'X-NA-Editor': '1' }, body: '{}',
+  });
+  const body = await response.json() as FinalizeStatus & { error?: string };
+  if (!response.ok) throw new EditorApiError(body.error ?? `Content status failed (${response.status})`);
+  return body;
+}
 
 export async function finalizeLevel(level: LevelDoc, onEvent: (event: import('../../../../tools/src/editor-finalize.js').EditorFinalizeEvent) => void): Promise<void> {
   const response = await fetch('/__editor/finalize', {

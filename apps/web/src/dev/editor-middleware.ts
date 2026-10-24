@@ -84,7 +84,8 @@ export function createEditorJobGate() {
   }, snapshot() { return { busy: busy || saves > 0, revision }; } };
 }
 const editorJobs = createEditorJobGate();
-export function createEditorMiddleware(levelsDir: string, options: { runProxy?: EditorProxyRunner; runFinalize?: EditorFinalizeRunner; jobs?: ReturnType<typeof createEditorJobGate> } = {}): Connect.NextHandleFunction {
+export function createEditorMiddleware(levelsDir: string, options: { runProxy?: EditorProxyRunner; runFinalize?: EditorFinalizeRunner; runStatus?: typeof editorFinalizeStatus; jobs?: ReturnType<typeof createEditorJobGate> } = {}): Connect.NextHandleFunction {
+  let statusInFlight: { revision: number; promise: ReturnType<typeof editorFinalizeStatus> } | undefined;
   async function readLevel(id: string): Promise<{ id: string; name: string }> {
     const path = await editorLevelPath(levelsDir, id);
     if ((await stat(path)).size > MAX_BYTES) throw new EditorHttpError(413, 'Level exceeds 1 MiB');
@@ -99,6 +100,19 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
       checkEditorRequest(req);
       if (req.method === 'POST') {
         const body = await readEditorBody(req);
+        if (path === '/__editor/status') {
+          const gate = options.jobs ?? editorJobs, before = gate.snapshot();
+          if (before.busy || (statusInFlight && statusInFlight.revision !== before.revision)) throw new EditorHttpError(409, 'Editor status is stale while content changes; retry');
+          if (!statusInFlight) {
+            const pending = { revision: before.revision, promise: Promise.resolve().then(() => (options.runStatus ?? editorFinalizeStatus)(resolve(levelsDir, '../../../..'))) };
+            statusInFlight = pending;
+            pending.promise = pending.promise.finally(() => { if (statusInFlight === pending) statusInFlight = undefined; });
+          }
+          const pending = statusInFlight, status = await pending.promise;
+          if (gate.snapshot().revision !== pending.revision) throw new EditorHttpError(409, 'Editor content changed during status check; retry');
+          json(res, 200, status);
+          return;
+        }
         if (path === '/__editor/finalize') {
           let value: { id?: unknown; level?: unknown };
           try { value = JSON.parse(body) as typeof value; }
@@ -157,13 +171,8 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
         }
       }
       if (req.method !== 'GET') throw new EditorHttpError(405, 'Editor endpoint is read-only');
-      if (path === '/__editor/status') {
-        const gate = options.jobs ?? editorJobs, before = gate.snapshot();
-        if (before.busy) throw new EditorHttpError(409, 'Editor status is stale while a job runs');
-        const status = await editorFinalizeStatus(resolve(levelsDir, '../../../..'));
-        if (gate.snapshot().revision !== before.revision) throw new EditorHttpError(409, 'Editor content changed during status check; retry');
-        json(res, 200, status);
-      } else if (path === '/__editor/levels') {
+      if (path === '/__editor/status') throw new EditorHttpError(405, 'Editor status requires a protected POST');
+      if (path === '/__editor/levels') {
         const files = (await readdir(levelsDir)).filter(file => file.endsWith('.json') && READABLE_ID.test(file.slice(0, -5))).sort();
         const levels = await Promise.all(files.map(async file => {
           const { id, name } = await readLevel(file.slice(0, -5));
