@@ -1,0 +1,104 @@
+import { boundsFromPositions } from '@node-arena/content';
+import type { SeatBot } from '@node-arena/content';
+import type { LevelDoc } from './document.js';
+import { roundCoordinate, type Point, type Selection } from './picking.js';
+export type LibraryItem = 'house-wt1' | 'house-wt2' | 'tower' | 'obstacle-small' | 'obstacle-big';
+export type LevelProperties = Pick<LevelDoc, 'name' | 'theme' | 'timeLimitSec' | 'players'>;
+export type Clipboard = Pick<LevelDoc, 'buildings' | 'elements'>;
+export type DocOp = { type: 'move-selection'; targets: Selection[]; delta: Point } | { type: 'mirror'; targets: Selection[]; axis: 'vertical' | 'horizontal'; center: number; swapOwners: boolean } | { type: 'paste'; clipboard: Clipboard; offset: Point } | { type: 'auto-fit' } | { type: 'level-properties'; value: LevelProperties } | { type: 'building-properties'; id: string; value: Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined } } | { type: 'obstacle-properties'; id: string; value: { variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined } } | { type: 'place'; item: LibraryItem; pos: Point } | { type: 'move'; target: Selection; pos: Point } | { type: 'delete'; target: Selection };
+export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[] }
+export type HistoryAction = { type: 'edit'; op: DocOp } | { type: 'undo' } | { type: 'redo' };
+export const createHistory = (present: LevelDoc): DocHistory => ({ past: [], present, future: [] });
+/** Pure structural edits; drag previews never enter this reducer. */
+export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
+  if (op.type === 'auto-fit') {
+    const points = [...doc.buildings, ...doc.elements].map(item => item.pos);
+    return points.length ? { ...doc, bounds: boundsFromPositions(points) } : doc;
+  }
+  if (op.type === 'paste') {
+    const ids = new Set([...doc.buildings, ...doc.elements].map(item => item.id));
+    const clone = <T extends { id: string; pos: Point }>(item: T, prefix: string): T => {
+      let i = 0; while (ids.has(`${prefix}${i}`)) i++;
+      const id = `${prefix}${i}`; ids.add(id);
+      return { ...structuredClone(item), id, pos: { x: roundCoordinate(item.pos.x + op.offset.x), z: roundCoordinate(item.pos.z + op.offset.z) } };
+    };
+    return { ...doc, buildings: [...doc.buildings, ...op.clipboard.buildings.map(item => clone(item, 'b'))], elements: [...doc.elements, ...op.clipboard.elements.map(item => clone(item, 'e'))] };
+  }
+  if (op.type === 'mirror' || op.type === 'move-selection') {
+    const selected = (kind: Selection['kind'], id: string) => (op.type === 'mirror' && !op.targets.length) || op.targets.some(target => target.kind === kind && target.id === id);
+    const position = (pos: Point): Point => op.type === 'move-selection' ? { x: roundCoordinate(pos.x + op.delta.x), z: roundCoordinate(pos.z + op.delta.z) } : op.axis === 'vertical' ? { x: roundCoordinate(2 * op.center - pos.x), z: pos.z } : { x: pos.x, z: roundCoordinate(2 * op.center - pos.z) };
+    return { ...doc,
+      buildings: doc.buildings.map(item => selected('building', item.id) ? { ...item, pos: position(item.pos), owner: op.type === 'mirror' && op.swapOwners ? item.owner === 'p1' ? 'p2' : item.owner === 'p2' ? 'p1' : item.owner : item.owner } : item),
+      elements: doc.elements.map(item => selected('obstacle', item.id) ? { ...item, pos: position(item.pos), yawDeg: op.type === 'mirror' ? normalizeYaw(op.axis === 'vertical' ? 180 - item.yawDeg : -item.yawDeg) : item.yawDeg } : item),
+    };
+  }
+  if (op.type === 'level-properties') return { ...doc, ...op.value };
+  if (op.type === 'building-properties') return { ...doc, buildings: doc.buildings.map(item => item.id === op.id ? cleanOptional({ ...item, ...op.value }) as LevelDoc['buildings'][number] : item) };
+  if (op.type === 'obstacle-properties') return { ...doc, elements: doc.elements.map(item => item.id === op.id ? cleanOptional({ ...item, ...op.value }) as LevelDoc['elements'][number] : item) };
+  if (op.type === 'place') {
+    const ids = new Set([...doc.buildings, ...doc.elements].map(item => item.id));
+    const obstacle = op.item.startsWith('obstacle-');
+    const prefix = obstacle ? 'e' : 'b';
+    let index = 0; while (ids.has(`${prefix}${index}`)) index++;
+    const id = `${prefix}${index}`, pos = { x: roundCoordinate(op.pos.x), z: roundCoordinate(op.pos.z) };
+    if (obstacle) return { ...doc, elements: [...doc.elements, { id, archetype: 'obstacle', variant: op.item === 'obstacle-big' ? 'big' : 'small', pos, yawDeg: 0 }] };
+    return { ...doc, buildings: [...doc.buildings, { id, archetype: op.item, pos, owner: null, level: 1, ignoreForWin: false }] };
+  }
+  const key = op.target.kind === 'building' ? 'buildings' : 'elements';
+  const entries = doc[key], index = entries.findIndex(item => item.id === op.target.id);
+  if (index < 0) return doc;
+  if (op.type === 'delete') {
+    const players = op.target.kind === 'building' ? doc.players.map(player => {
+      const sourceBot = player.bot as SeatBot | undefined;
+      if (!sourceBot?.script?.some(command => command.op === 'line' ? command.own === op.target.id || command.target === op.target.id : command.op === 'steps' && stepReferences(command.root, op.target.id))) return player;
+      const bot = { ...sourceBot }; delete bot.script;
+      return { ...player, bot };
+    }) : doc.players;
+    return { ...doc, players, [key]: entries.filter((_, i) => i !== index) };
+  }
+  const pos = { x: roundCoordinate(op.pos.x), z: roundCoordinate(op.pos.z) };
+  if (entries[index]!.pos.x === pos.x && entries[index]!.pos.z === pos.z) return doc;
+  return { ...doc, [key]: entries.map((item, i) => i === index ? { ...item, pos } : item) };
+}
+
+/** D8: at most 100 undo snapshots; immutable docs also make redo exact. */
+export function historyReducer(state: DocHistory, action: HistoryAction): DocHistory {
+  if (action.type === 'undo') {
+    const present = state.past.at(-1);
+    return present ? { past: state.past.slice(0, -1), present, future: [state.present, ...state.future].slice(0, 100) } : state;
+  }
+  if (action.type === 'redo') {
+    const present = state.future[0];
+    return present ? { past: [...state.past, state.present].slice(-100), present, future: state.future.slice(1) } : state;
+  }
+  const present = reduceDocument(state.present, action.op);
+  return present === state.present ? state : { past: [...state.past, state.present].slice(-100), present, future: [] };
+}
+
+function stepReferences(node: { own?: string | null; target?: string | null; then?: unknown[] }, id: string): boolean {
+  return node.own === id || node.target === id || !!node.then?.some(child => stepReferences(child as typeof node, id));
+}
+
+/** Derive notices from the same snapshots as undo: no UI state can outlive its edit. */
+export function scriptRemovalMessages(state: DocHistory): string[] {
+  const before = state.past.at(-1);
+  if (!before) return [];
+  return state.present.players.flatMap((player, index) => (before.players.find(p => p.id === player.id)?.bot as SeatBot | undefined)?.script?.length && player.bot && !(player.bot as SeatBot).script ? [`AI ${index + 1} script removed`] : []);
+}
+
+function cleanOptional<T extends object>(value: T): T {
+  for (const key of Object.keys(value) as (keyof T)[]) if (value[key] === undefined) delete value[key];
+  return value;
+}
+
+export function copySelection(doc: LevelDoc, targets: Selection[]): Clipboard {
+  return structuredClone({ buildings: doc.buildings.filter(item => targets.some(t => t.kind === 'building' && t.id === item.id)), elements: doc.elements.filter(item => targets.some(t => t.kind === 'obstacle' && t.id === item.id)) });
+}
+const normalizeYaw = (value: number) => roundCoordinate(((roundCoordinate(value) % 360) + 360) % 360);
+export function snapPosition(point: Point, enabled = true): Point {
+  const snap = (n: number) => roundCoordinate(enabled ? Math.round(n / .25) * .25 : n);
+  return { x: snap(point.x), z: snap(point.z) };
+}
+export function snapYaw(value: number, enabled = true): number {
+  return normalizeYaw(enabled ? Math.round(value / 15) * 15 : value);
+}
