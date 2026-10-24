@@ -71,6 +71,19 @@ console.log(JSON.stringify({type:'test_md_done',overall_status:'broken'}));proce
   assert.match(f.stderr(), /smoke_test.md.*broken.*action_failed.*\/tmp\/kane-session/);
 });
 
+test('informational coverage preserves step failure diagnostics and stderr fallback', async t => {
+  for (const stepReason of ['assertion_failed: @ step3', null]) {
+    const f = await fixture(t);
+    await f.fake(`console.log(JSON.stringify({type:'run_end',status:'failed',reason:${JSON.stringify(stepReason)},session_dir:'/tmp/kane-failed-step'}));
+console.log(JSON.stringify({type:'coverage',reason:'not_assurance_project'}));
+console.error('assertion_failed: @ step3');
+console.log(JSON.stringify({type:'test_md_done',overall_status:'failed'}));process.exitCode=1;`);
+    assert.equal(await runReplay([], f.options), 1);
+    assert.match(f.stderr(), /smoke_test.md.*status=failed.*reason=assertion_failed: @ step3.*session_dir=\/tmp\/kane-failed-step/);
+    assert.doesNotMatch(f.stderr(), /not_assurance_project/);
+  }
+});
+
 test('missing terminal event, Kane infra exits, missing executable map infra', async t => {
   const f = await fixture(t);
   for (const exit of [0, 2, 3]) {

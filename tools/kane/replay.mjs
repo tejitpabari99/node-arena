@@ -153,7 +153,12 @@ export async function runReplay(argv = [], { root = ROOT, env = process.env, sig
               const event = JSON.parse(line);
               if (event.type === 'test_md_done') terminal = event;
               if (event.session_dir || event.run_dir) detail.session_dir = event.session_dir || event.run_dir;
-              if (event.reason || event.reason_code || event.error) detail.reason = event.reason || event.reason_code || event.error;
+              const failureEvent = event.type === 'error' || (
+                ['run_end', 'test_md_done', 'test_md_summary'].includes(event.type) &&
+                ['failed', 'broken'].includes(event.overall_status || event.status)
+              );
+              // Keep the first failure; informational coverage reasons are unrelated.
+              if (failureEvent && !detail.reason) detail.reason = event.reason || event.reason_code || event.error;
               if (event.type === 'test_md_summary' && event.overall_status) detail.status = event.overall_status;
             } catch { /* Kane banners are not NDJSON. */ }
           }
