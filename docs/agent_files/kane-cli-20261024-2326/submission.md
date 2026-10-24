@@ -79,7 +79,7 @@ Expected completion is `stalled` / exit 20 with zero paid runs; that indicates a
 
 Paste the pitch, harness description, Kane feature selections and limitations into the event form; these text fields have no event tool. A local run report is prepared. Check current reporting consent, event report creation and project linkage before claiming event evidence is attached; see the mutable status fields in [kane-run-report.json](kane-run-report.json).
 
-Before finalizing the **Shipped prize bundle**, paste both live links—the user’s video and Substack blog—tick the corresponding checklist rows and press **Save**. Those external links are not supplied by this artifact. Do not substitute the offline spectator URL for either deliverable.
+Before finalizing the **Shipped prize bundle**, paste both live links—the user’s X post and Substack blog—tick the corresponding checklist rows and press **Save**. Those external links are not supplied by this artifact. Do not substitute the offline spectator URL for either deliverable.
 
 ## Sources
 

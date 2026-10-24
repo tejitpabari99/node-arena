@@ -7,4 +7,4 @@ Private submission materials prepared from `kane-cli` source commit `244f9b7bf23
 | [submission.md](submission.md) | Paste-ready pitch, four workflows, feature status, limitations, local game/Kane commands, sources and final handoff |
 | [kane-run-report.json](kane-run-report.json) | Safe local metadata: historical sessions, independent game result, attributable credit accounting and event-report status to check |
 
-No raw logs, evidence packs, screenshots, credentials or extracted art are included. The recorded hosted instance was intentionally stopped after rehearsal; no live state check was performed for these materials. Event reporting/linkage and the user's live video/blog links must be checked before finalization.
+No raw logs, evidence packs, screenshots, credentials or extracted art are included. The recorded hosted instance was intentionally stopped after rehearsal; no live state check was performed for these materials. Event reporting/linkage and the user's live X post/Substack blog links must be checked before finalization.
