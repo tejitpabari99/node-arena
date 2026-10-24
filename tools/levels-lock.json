@@ -98,5 +98,10 @@
     "outcome": "won",
     "ticks": 1228,
     "finalHash": "71e32bae24b9176c"
+  },
+  "na-trial": {
+    "outcome": "won",
+    "ticks": 218,
+    "finalHash": "076df6ca20233bc8"
   }
 }

@@ -74,8 +74,8 @@ Output is idempotent and deterministic (`JSON.stringify(obj, null, 2) + "\n"`, s
 3. `players`: exactly one human, first; 1..`aiMax` AI seats, each with a `bot` block (kind `tw` with `actionDelayMs`, `behavior`, optional `script`).
 4. `buildings` / `elements`: archetypes from `packages/content/data/buildings/` and `packages/content/data/elements/`.
 5. `requires` is filled **manually** (sorted set of modules used, `bot:<kind>` per seat kind, `objective:<id>`). A wrong list fails validation with the expected set; paste it. Automatic fill (`validate:content --fix-requires`) is deferred, see [FUTURES.md](FUTURES.md).
-6. Add `{ "level": "<your na- id>", "position": N }` to `packages/content/data/campaigns/common.json` (optional `loop` field is deferred, see FUTURES). The importer preserves non-imported (`na-`) campaign entries and level files: it merges its entries by position around them, never reports `na-` files as orphans, and refuses (error) to import a TW level onto a position they hold. Pick a position the import range will not reach, or an unused one.
-7. `pnpm content:lock`, bump versions, `pnpm validate:content --base HEAD`.
+6. Add `{ "level": "<your na- id>", "position": N }` to `packages/content/data/campaigns/custom.json`, with `id: "custom"`, `schemaVersion: "2.0.0"`, and `$schema: "../../schemas/campaign.schema.json"`. Create it on the first custom entry; remove the file when its last entry is removed. Use the next position (`max + 1`, starting at 1) for custom picker order. Keep Common positions 4–23 unchanged. The importer leaves `na-` files alone.
+7. Bump `contentVersion`; new or changed AI levels also require a `BOT_VERSION` bump. Run `pnpm content:lock`, `pnpm levels:lock --levels <your na- id>`, `pnpm validate:content --base HEAD`, `pnpm check:content --base HEAD`, and `pnpm validate:levels`. Selected lock generation merges into the existing lock; use `pnpm levels:lock` to create or regenerate the complete lock.
 
 ## 5. Coverage tracker
 

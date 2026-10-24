@@ -6,7 +6,7 @@ import { loadContent } from '@node-arena/content';
 import { runMatch } from '@node-arena/bots';
 import { loadFiles } from '../src/files.js';
 import { splitFiles } from '../src/content.js';
-import { buildLock, campaignLevels, checkLevelsLock, humanSeat, validateLevel, validateLevels, type playProxy } from '../src/levels.js';
+import { buildLock, campaignLevels, checkLevelsLock, humanSeat, selectLevels, validateLevel, validateLevels, type playProxy } from '../src/levels.js';
 import { levelsMarkdown } from '../src/levels-output.js';
 import { parseUnsolved, readUnsolved, type UnsolvedEntry } from '../src/unsolved.js';
 
@@ -15,7 +15,7 @@ const { data } = splitFiles(await loadFiles(resolve(root, 'packages/content')));
 const compiled = loadContent(data).compiled;
 const entry = (id: string): UnsolvedEntry => ({ id, position: 5, reason: 'test', ownerSignOff: null });
 
-test('campaign list is exactly the 20 level files, one human seat per level', () => {
+test('Common campaign stays exactly 20 levels, one human seat per level', () => {
   const levels = campaignLevels(data);
   assert.equal(levels.length, 20);
   for (const l of levels) assert.ok(humanSeat(compiled[l.id]!) >= 0);
@@ -102,7 +102,7 @@ test('levels lock: matching, stale and missing entries', () => {
 });
 test('unsolved-by-proxy.json schema: committed file is valid and ids exist; bad shapes fail', async () => {
   const list = await readUnsolved(resolve(root, 'tools/unsolved-by-proxy.json'));
-  const ids = new Set(campaignLevels(data).map(l => l.id));
+  const ids = new Set(selectLevels(data).levels.map(l => l.id));
   assert.ok(list.length > 0); for (const e of list) assert.ok(ids.has(e.id), e.id);
   assert.throws(() => parseUnsolved([{ id: 'a', position: 1, reason: 'x' }]), /Invalid/);
   assert.throws(() => parseUnsolved([{ id: 'a', position: 1, reason: 'x', ownerSignOff: null, extra: 1 }]), /Invalid/);

@@ -2,7 +2,7 @@ import { generateHashes, loadContent, parseContentMeta, type ContentFiles } from
 import { BOT_VERSION } from '@node-arena/bots';
 import { runBalancePool } from './balance-pool.js';
 import type { BalanceObservation, BalanceProfile, BalanceTask } from './balance-match.js';
-import { humanSeat, selectLevels } from './levels.js';
+import { campaignLevels, humanSeat, selectLevels } from './levels.js';
 import { LocatedError } from './files.js';
 export interface BalanceRow {
   level: string; position: number; profile: string; matches: number; observations: number;
@@ -35,7 +35,9 @@ export async function balance(data: ContentFiles, meta: string | object, options
   if (!Number.isSafeInteger(jobs) || jobs < 1) throw new LocatedError('arguments','--jobs must be a positive safe integer');
   if (mode !== 'campaign' && mode !== 'arena') throw new LocatedError('arguments','--mode must be campaign or arena');
   const profiles = parseProfiles(options.proxy ?? DEFAULT_PROXY);
-  const { levels, compiled } = selectLevels(data, options.levels ?? 'all');
+  const { levels, compiled } = !options.levels || options.levels === 'all'
+    ? { levels: campaignLevels(data), compiled: loadContent(data).compiled }
+    : selectLevels(data, options.levels);
   const tasks: BalanceTask[] = [];
   for (const entry of levels) {
     const level = compiled[entry.id]!;

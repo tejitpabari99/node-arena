@@ -1,0 +1,11 @@
+{
+  "$schema": "../../schemas/campaign.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "custom",
+  "entries": [
+    {
+      "level": "na-trial",
+      "position": 1
+    }
+  ]
+}

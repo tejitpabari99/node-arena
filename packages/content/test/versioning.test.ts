@@ -22,10 +22,15 @@ test('regenerating hashes still rejects a semantic edit without an increasing co
 });
 
 test('lock shape: levels keyed by id, bots keyed by "<levelId>#<playerId>"', () => {
-  const hashes = hashesOf(hashFixture());
+  const files = hashFixture();
+  const hashes = hashesOf(files);
   assert.ok('levelview-1' in hashes.levels);
   assert.ok(Object.keys(hashes.bots).length > 0);
-  for (const key of Object.keys(hashes.bots)) assert.match(key, /^levelview-[a-z0-9-]+#[a-z0-9-]+$/);
+  for (const key of Object.keys(hashes.bots)) {
+    assert.match(key, /^[a-z0-9-]+#[a-z0-9-]+$/);
+    const [level, player] = key.split('#');
+    assert.ok(files[`data/levels/${level}.json`].players.some((seat: { id: string; bot?: unknown }) => seat.id === player && seat.bot), key);
+  }
 });
 
 test('bot-only edits have separate lock identity and do not require a content version bump', () => {
