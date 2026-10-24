@@ -71,6 +71,44 @@ console.log(JSON.stringify({type:'test_md_done',overall_status:'broken'}));proce
   assert.match(f.stderr(), /smoke_test.md.*broken.*action_failed.*\/tmp\/kane-session/);
 });
 
+test('CLI 0.10 terminal session_id resolves existing evidence session instead of deleted run_dir', async t => {
+  const f = await fixture(t);
+  f.options.env.HOME = f.root;
+  const id = '53527345-c4e0-46e1-a1cd-bfe22f43c90a';
+  const session = join(f.root, '.testmuai/kaneai/sessions', id);
+  await mkdir(join(session, 'evidence'), { recursive: true });
+  await f.fake(`console.log(JSON.stringify({type:'run_end',status:'failed',reason:'assertion_failed: @ step 3',run_dir:${JSON.stringify(join(session, 'scratch/0/replay-test'))}}));
+console.log(JSON.stringify({type:'test_md_done',overall_status:'failed',session_id:${JSON.stringify(id)}}));process.exitCode=1;`);
+  assert.equal(await runReplay([], f.options), 1);
+  assert.ok(f.stderr().includes(`session_dir=${session}\n`), f.stderr());
+  assert.doesNotMatch(f.stderr(), /scratch\/0\/replay-test/);
+});
+
+test('session lookup retains existing explicit session', async t => {
+  for (const id of ['../escape', '/tmp/escape', 'missing-session']) {
+    const f = await fixture(t);
+    f.options.env.HOME = f.root;
+    const session = join(f.root, 'explicit-session');
+    await mkdir(session);
+    await f.fake(`console.log(JSON.stringify({type:'run_end',status:'failed',reason:'action_failed',session_dir:${JSON.stringify(session)},run_dir:'/tmp/legacy'}));
+console.log(JSON.stringify({type:'test_md_done',overall_status:'failed',session_id:${JSON.stringify(id)}}));process.exitCode=1;`);
+    assert.equal(await runReplay([], f.options), 1);
+    assert.ok(f.stderr().includes(`session_dir=${session}\n`), f.stderr());
+    assert.doesNotMatch(f.stderr(), /escape|missing-session/);
+  }
+});
+
+test('unsafe or absent terminal session IDs never become guessed session paths', async t => {
+  for (const id of ['../escape', 'missing-session']) {
+    const f = await fixture(t);
+    f.options.env.HOME = f.root;
+    await mkdir(join(f.root, '.testmuai/kaneai/escape'), { recursive: true });
+    await f.fake(`console.log(JSON.stringify({type:'test_md_done',overall_status:'failed',session_id:${JSON.stringify(id)}}));process.exitCode=1;`);
+    assert.equal(await runReplay([], f.options), 1);
+    assert.match(f.stderr(), /session_dir=unavailable\n/);
+  }
+});
+
 test('informational coverage preserves step failure diagnostics and stderr fallback', async t => {
   for (const stepReason of ['assertion_failed: @ step3', null]) {
     const f = await fixture(t);
