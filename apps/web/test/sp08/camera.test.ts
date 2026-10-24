@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Box3, PerspectiveCamera, Vector3 } from 'three';
-import { fitCamera, levelVisualBounds } from '../../src/render/camera.js';
+import { fitCamera, levelVisualBounds, zoomFraming, ZOOM_CLOSE, ZOOM_NEAR } from '../../src/render/camera.js';
 
 const settings = { fov: 21, pitchDeg: 55, margin: 3 };
 const padding = { left: 36, right: 52, top: 104, bottom: 64 };
@@ -47,5 +47,15 @@ describe('landscape camera', () => {
     fitCamera(camera,bounds,settings,16/9,{width:1600,height:900,padding});
     fitCamera(camera,bounds,settings,4/3);
     expect(camera.view?.enabled ?? false).toBe(false);
+  });
+  it('zoom framing: near tighter than 1, close tighter than near, stays centred and projects correctly', () => {
+    expect(zoomFraming(false)).toBe(ZOOM_NEAR); expect(zoomFraming(true)).toBe(ZOOM_CLOSE);
+    expect(ZOOM_NEAR).toBeLessThan(1); expect(ZOOM_CLOSE).toBeLessThan(ZOOM_NEAR);
+    const bounds = new Box3(new Vector3(-16,0,-7),new Vector3(19,8,12)), vp = {width:1600,height:900,padding};
+    const dist = (f: number) => { const c = new PerspectiveCamera(); fitCamera(c,bounds,settings,16/9,vp,f); return { d: c.position.distanceTo(bounds.getCenter(new Vector3())), c }; };
+    const full = dist(1), near = dist(ZOOM_NEAR), close = dist(ZOOM_CLOSE);
+    expect(near.d).toBeLessThan(full.d); expect(close.d).toBeLessThan(near.d);
+    const mid = bounds.getCenter(new Vector3()).project(close.c);
+    expect(Math.abs(mid.x)).toBeLessThan(0.1);
   });
 });

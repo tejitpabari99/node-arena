@@ -17,7 +17,7 @@ export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
   memory.set(SAVE_KEY,JSON.stringify(initial));
   const save=isolated?createSaveStore({storage:{getItem:k=>memory.get(k)??null,setItem:(k,v)=>{memory.set(k,v);}}}):undefined;
   return {
-    options:{autoStart:!request.testing,...(save?{save}:{}),...(request.fixture?{createSim:createFixtureSim(request.fixture),createBotDriver:()=>({commands:()=>[]})}:{})},
+    options:{autoStart:!request.testing,...(request.testing?{resultDelayMs:0}:{}),...(save?{save}:{}),...(request.fixture?{createSim:createFixtureSim(request.fixture),createBotDriver:()=>({commands:()=>[]})}:{})},
     connect(app:AppController){
       const events:SimEvent[]=[],commandLog:CommandSubmission[]=[];
       let driver=app.driver;

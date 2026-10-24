@@ -47,7 +47,7 @@ test('tampered checkpoints report the first divergence tick and final hashes rep
 });
 test('header identity, unknown levels, malformed JSON and empty directories fail', async t => {
   const {file, replay} = await replayFixture(t);
-  for (const patch of [{simHash: '0'.repeat(64)}, {rulesVersion: '3.0.0'}, {contentVersion: '9.0.0'}, {levelId: 'unknown'}]) {
+  for (const patch of [{simHash: '0'.repeat(64)}, {rulesVersion: '4.0.0'}, {contentVersion: '9.0.0'}, {levelId: 'unknown'}]) {
     await writeFile(file, JSON.stringify({...replay, header: {...replay.header, ...patch}}));
     const result = run('replay:verify', file, '--format', 'json'); assert.equal(result.status, 1); assert.equal(result.report.ok, false);
   }

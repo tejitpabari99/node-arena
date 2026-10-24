@@ -55,8 +55,8 @@ test('content.json is validated against the content schema; baselines only need 
 });
 
 test('rules header, exported constant and content metadata must agree', () => {
-  assert.doesNotThrow(() => content.checkRulesVersion('RULES_VERSION: 2.0.0\n', '2.0.0'));
+  assert.doesNotThrow(() => content.checkRulesVersion(`RULES_VERSION: ${content.RULES_VERSION}\n`, content.RULES_VERSION));
   assert.throws(() => content.checkRulesVersion('RULES_VERSION: 1.0.0\n', '1.0.0'), /RULES_VERSION/);
-  assert.throws(() => content.checkRulesVersion('RULES_VERSION: 2.0.0\n', '2.0.1'), /rulesVersion/);
+  assert.throws(() => content.checkRulesVersion(`RULES_VERSION: ${content.RULES_VERSION}\n`, '99.0.1'), /rulesVersion/);
   assert.throws(() => content.checkRulesVersion('no header', '1.0.0'), /RULES_VERSION/);
 });

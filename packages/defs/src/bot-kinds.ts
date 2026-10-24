@@ -23,6 +23,8 @@ const ScriptOp = Type.Union([
 export const TwBotParams = Type.Object({
   kind: Type.Literal('tw'),
   actionDelayMs: ms(50),
+  /** Optional: ms the seat idles before its first decision (default 0). */
+  startDelayMs: Type.Optional(ms()),
   behavior: Type.Union([Type.Literal('full'), Type.Literal('attackOnly')]),
   script: Type.Optional(Type.Array(ScriptOp)),
 }, { additionalProperties: false });

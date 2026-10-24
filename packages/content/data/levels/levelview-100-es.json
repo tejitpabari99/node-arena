@@ -37,7 +37,7 @@
       "colorKey": "red",
       "bot": {
         "kind": "tw",
-        "actionDelayMs": 20000,
+        "actionDelayMs": 12000,
         "behavior": "full",
         "script": []
       }
@@ -57,13 +57,13 @@
     },
     {
       "id": "b1",
-      "archetype": "house-wt1",
+      "archetype": "house-wt2",
       "pos": {
         "x": 4.97,
         "z": 3.22
       },
       "owner": "p2",
-      "level": 1,
+      "level": 8,
       "ignoreForWin": false
     },
     {

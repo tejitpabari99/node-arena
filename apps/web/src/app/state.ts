@@ -3,22 +3,26 @@ import { TICK_RATE, type SimView } from '@node-arena/sim';
 import { GameDriver, type FrameUpdate, type TickUpdate, type GameDriverOptions } from '../driver';
 import { loadManifest } from '../manifest/load';
 import { createSaveStore, type SaveData, type SaveSettings, type SaveStore } from '../save';
+/** Presentation-only pause between the sim reporting game over and showing the result popup. */
+export const RESULT_DELAY_MS = 1250;
 export type Screen = 'boot' | 'picker' | 'playing' | 'result' | 'error';
 export interface CampaignLevel { id: string; position: number; number: number; name: string }
 export interface AppSnapshot {
   screen: Screen; loading: boolean; restartPopup: boolean; levels: readonly CampaignLevel[];
   levelId: string | null; save: SaveData; notices: readonly string[]; error: unknown;
   result: SimView['over']; remainingSeconds: number;
+  /** Close camera zoom; reset to false per app load, kept across level restarts. */
+  zoomed: boolean;
 }
 export interface LevelRuntime {
   readonly inspection?: unknown;
   frame(update: FrameUpdate): void; tick(update: TickUpdate): void;
-  refresh(): void; cancel(): boolean; dispose(): void;
+  refresh(): void; cancel(): boolean; dispose(): void; setZoom?(zoomed: boolean): void;
 }
-export interface RuntimeContext { level: CompiledLevel; manifest: ManifestV2; driver: GameDriver; enabled(): boolean }
+export interface RuntimeContext { level: CompiledLevel; manifest: ManifestV2; driver: GameDriver; enabled(): boolean; zoomed: boolean }
 export interface AppOptions {
   files: ContentFiles; campaignId?: string; loadManifest?: () => Promise<ManifestV2>; save?: SaveStore;
-  autoStart?: boolean; createSim?: GameDriverOptions['createSim']; createBotDriver?: GameDriverOptions['createBotDriver'];
+  autoStart?: boolean; resultDelayMs?: number; createSim?: GameDriverOptions['createSim']; createBotDriver?: GameDriverOptions['createBotDriver'];
   environment?: GameDriverOptions['environment']; createRuntime?: (context: RuntimeContext) => LevelRuntime | Promise<LevelRuntime>;
 }
 export function isLevelUnlocked(state: Pick<AppSnapshot,'levels'|'save'>, id: string): boolean {
@@ -28,12 +32,13 @@ export function isLevelUnlocked(state: Pick<AppSnapshot,'levels'|'save'>, id: st
 /** Level resources have generation-scoped ownership, including asynchronous renderer construction. */
 export function createAppController(options: AppOptions) {
   const save=options.save??createSaveStore(), listeners=new Set<()=>void>(),events=new Set<(u:TickUpdate)=>void>();
-  let state: AppSnapshot={screen:'boot',loading:true,restartPopup:false,levels:[],levelId:null,save:save.snapshot(),notices:[],error:null,result:null,remainingSeconds:0};
+  let state: AppSnapshot={screen:'boot',loading:true,restartPopup:false,levels:[],levelId:null,save:save.snapshot(),notices:[],error:null,result:null,remainingSeconds:0,zoomed:false};
   let loaded: LoadedContent|undefined, manifest: ManifestV2|undefined,driver:GameDriver|null=null,runtime:LevelRuntime|undefined;
   let lastSeed=1;
+  let finishing: ReturnType<typeof setTimeout>|null=null,finishingOn=false;
   let generation=0,disposed=false,lastPublication=-Infinity;
   const publish=()=>{ if(disposed)return; const notices=[...state.notices];let notice;while((notice=save.consumeNotice()))notices.push(notice.message);state={...state,save:save.snapshot(),notices};listeners.forEach(fn=>fn()); };
-  const clear=()=>{const oldRuntime=runtime;runtime=undefined;driver?.dispose();driver=null;oldRuntime?.dispose();};
+  const clear=()=>{if(finishing!==null)clearTimeout(finishing);finishing=null;finishingOn=false;const oldRuntime=runtime;runtime=undefined;driver?.dispose();driver=null;oldRuntime?.dispose();};
   const fail=(error:unknown)=>{clear();state={...state,screen:'error',loading:false,restartPopup:false,error};publish();};
   const api={
     snapshot:()=>state,
@@ -59,13 +64,16 @@ export function createAppController(options: AppOptions) {
           onTick:update=>{if(token!==generation||disposed)return;try{
             runtime?.tick(update);events.forEach(fn=>fn(update));
             state={...state,remainingSeconds:Math.ceil(Math.max(0,update.sim.view.timeLimitTicks-update.tick)/TICK_RATE)};
-            if(update.sim.view.over){const result=update.sim.view.over;save.recordResult(id,{winner:result.winner,human:update.sim.view.players.findIndex(p=>p.kind==='human')});state={...state,screen:'result',restartPopup:false,result};runtime?.cancel();publish();}
+            if(update.sim.view.over){if(finishingOn)return;const result=update.sim.view.over;save.recordResult(id,{winner:result.winner,human:update.sim.view.players.findIndex(p=>p.kind==='human')});runtime?.cancel();
+              const show=()=>{finishing=null;finishingOn=false;if(token!==generation||disposed)return;state={...state,screen:'result',restartPopup:false,result};publish();};
+              const delay=options.resultDelayMs??RESULT_DELAY_MS;
+              if(delay<=0)show();else{finishingOn=true;finishing=setTimeout(show,delay);publish();}}
             else if(update.tick-lastPublication>=TICK_RATE/10){lastPublication=update.tick;publish();}
           }catch(error){fail(error);}},
-          onPauseChange:reason=>{if(reason&&token===generation&&state.screen==='playing'){state={...state,restartPopup:true};runtime?.cancel();publish();}},
+          onPauseChange:reason=>{if(reason&&token===generation&&state.screen==='playing'&&!finishingOn){state={...state,restartPopup:true};runtime?.cancel();publish();}},
         });
         driver=owned;
-        created=await options.createRuntime?.({level,manifest,driver:owned,enabled:()=>state.screen==='playing'&&!state.restartPopup});
+        created=await options.createRuntime?.({level,manifest,driver:owned,enabled:()=>state.screen==='playing'&&!state.restartPopup&&!finishingOn,zoomed:state.zoomed});
         if(disposed||token!==generation){created?.dispose();owned.dispose();return;}
         runtime=created;lastPublication=-Infinity;save.setLastLevel(id);
         state={...state,screen:'playing',loading:false,restartPopup:owned.paused,remainingSeconds:Math.ceil(owned.sim.view.timeLimitTicks/TICK_RATE)};
@@ -73,12 +81,13 @@ export function createAppController(options: AppOptions) {
       }catch(error){created?.dispose();owned?.dispose();if(!disposed&&token===generation)fail(error);}
     },
     openPicker(){if(disposed)return;++generation;clear();state={...state,screen:loaded?'picker':'error',loading:false,restartPopup:false,result:null};publish();},
-    pause(){if(state.screen!=='playing')return;runtime?.cancel();driver?.pause();},
+    pause(){if(state.screen!=='playing'||finishingOn)return;runtime?.cancel();driver?.pause();},
     resume(){if(state.screen!=='playing'||!state.restartPopup)return;driver?.resume();if(driver&&!driver.paused){state={...state,restartPopup:false};runtime?.refresh();publish();}},
-    escape(){if(state.restartPopup)api.resume();else if(state.screen==='playing'&&!runtime?.cancel())api.pause();},
+    escape(){if(finishingOn)return;if(state.restartPopup)api.resume();else if(state.screen==='playing'&&!runtime?.cancel())api.pause();},
     restart(){return state.levelId?api.startLevel(state.levelId,lastSeed):Promise.resolve();},
     next(){const i=state.levels.findIndex(l=>l.id===state.levelId),next=state.levels[i+1];return next?api.startLevel(next.id):Promise.resolve();},
     retry(){return state.levelId&&loaded?api.restart():api.boot();},
+    toggleZoom(){state={...state,zoomed:!state.zoomed};runtime?.setZoom?.(state.zoomed);publish();},
     updateSettings(patch:Partial<SaveSettings>){save.updateSettings(patch);publish();},
     dismissNotices(){state={...state,notices:[]};publish();},
     step(count=1){return driver?.step(count)??0;},

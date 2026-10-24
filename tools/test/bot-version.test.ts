@@ -13,7 +13,7 @@ test('validate-content adapter catches regenerated bot locks and locates the req
   const dir = join(root, 'packages/content'); const source = join(root, 'packages/bots/src/version.ts');
   try {
     await mkdir(dir, { recursive: true }); await mkdir(join(root, 'docs')); await mkdir(join(source, '..'), { recursive: true });
-    await writeFile(join(root, 'docs/GAME_RULES.md'), 'RULES_VERSION: 2.0.0\n');
+    await writeFile(join(root, 'docs/GAME_RULES.md'), 'RULES_VERSION: 3.0.0\n');
     await writeFile(source, "export const BOT_VERSION = '1.0.0';\n");
     const files = hashFixture();
     await writeFile(join(dir, 'content.json'), JSON.stringify(files['content.json']));

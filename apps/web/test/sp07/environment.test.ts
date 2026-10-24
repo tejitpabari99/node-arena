@@ -8,6 +8,7 @@ import { RENDER_KINDS } from '@node-arena/defs';
 import { MaterialCache } from '../../src/render/materials.js';
 import { ModelCache, type LoadedGltf } from '../../src/render/gltf-cache.js';
 import { registerWorldRenderers } from '../../src/render/world.js';
+import { LANE_COLORS } from '../../src/render/lane-renderer.js';
 import { RendererRegistry, defaultRegistry } from '../../src/render/registry.js';
 import { createGroundRenderer, planGround, readGroundPrefab, GROUND_MARGIN } from '../../src/render/ground-renderer.js';
 import { childIndex, createElementRenderer, placeObstacles, type ChildExtra, type ElementInstance } from '../../src/render/element-renderer.js';
@@ -128,13 +129,13 @@ describe('lanes', () => {
     expect(Math.max(...us)).toBeCloseTo(laneTiles(4, 0.6, 1)); expect(Math.min(...us)).toBe(0);
     const b = mesh(r, 2); expect(b.scale.x).toBeCloseTo(3); expect(new Vector3(1, 0, 0).applyEuler(b.rotation).z).toBeCloseTo(1); // +x local -> +z
   });
-  it('per-team colour (palette) at manifest alpha, texture is the lane-wave beam', () => {
+  it('per-team colour (palette) at LANE_ALPHA, texture is the lane-wave beam', () => {
     const r = createLaneRenderer(ctx('lane'), { palettes });
     r.update(view([line(0, 1, 0), line(2, 3, 1), line(0, 3, 0)]), 0);
     const mat = (i: number) => mesh(r, i).material as MeshBasicMaterial;
-    expect(mat(1).color.getHexString()).toBe(new (mat(1).color.constructor as typeof import('three').Color)(palettes.blue).getHexString());
+    expect(mat(1).color.getHexString()).toBe(new (mat(1).color.constructor as typeof import('three').Color)(LANE_COLORS['blue']!).getHexString());
     expect(mat(2).color.getHexString()).not.toBe(mat(1).color.getHexString());
-    expect(mat(1)).toBe(mat(3)); expect(mat(1).opacity).toBeCloseTo(0.502); expect(mat(1).transparent).toBe(true);
+    expect(mat(1)).toBe(mat(3)); expect(mat(1).opacity).toBeCloseTo(0.9); expect(mat(1).transparent).toBe(true);
   });
   it('UV scroll advances toward `to` (offset decreases mod 1) and wraps', () => {
     const c = ctx('lane'), r = createLaneRenderer(c, { palettes });
@@ -163,10 +164,10 @@ describe('lanes', () => {
     r.previewLane({ x: 1, z: 1 }, { x: 1, z: 4 }, 'blue');
     const p = mesh(r, 0);
     expect(r.stats.previewVisible).toBe(true); expect(p.visible).toBe(true); expect(p.scale.x).toBeCloseTo(3); expect(p.position.z).toBeCloseTo(2.5);
-    expect((p.material as MeshBasicMaterial).color.getHexString()).toBe('2e8bff');
+    expect((p.material as MeshBasicMaterial).color.getHexString()).toBe('0a3fd0');
     r.update(view([]), 16); expect(p.visible).toBe(true); expect(r.stats.created).toBe(0);
     r.previewLane({ x: 0, z: 0 }, { x: 0, z: 0 }, 'red'); expect(r.stats.previewVisible).toBe(false); // degenerate -> hidden
-    r.previewLane({ x: 0, z: 0 }, { x: 2, z: 0 }); expect((p.material as MeshBasicMaterial).color.getHexString()).toBe('8c8c8c');
+    r.previewLane({ x: 0, z: 0 }, { x: 2, z: 0 }); expect((p.material as MeshBasicMaterial).color.getHexString()).toBe('4a4a4a');
     r.clearPreview(); expect(p.visible).toBe(false);
   });
 });

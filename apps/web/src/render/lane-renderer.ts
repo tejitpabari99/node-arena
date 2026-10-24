@@ -5,13 +5,35 @@ import { MILLI_TO_WORLD } from './scale.js';
 
 /** `WayBaseStandard` (validation Task 2): LineRenderer width 0.6, Tile texture mode, half-alpha (0.502) team tint, flat. */
 export const LANE_WIDTH = 0.6;
-export const LANE_ALPHA = 0.502;
+/** Presentation override: manifest beam alpha 0.502 is ignored; near-opaque so the dark tint reads on grass. */
+export const LANE_ALPHA = 0.9;
+/** Texture alpha (~0.4) is lifted to at least this fraction so the dark tint stays strong while the road texture still shows. */
+export const LANE_TEX_ALPHA_MIN = 0.7;
 /** Height above the ground plane (y = 0); lanes draw under buildings/units. */
 export const LANE_Y = 0.05;
 /** Texture scroll speed in tiles per second along the lane (from -> to). */
 export const LANE_SCROLL = 0.5;
 export const LANE_TEXTURE = 'fx/lane-wave.png';
-const FALLBACK_COLOR = '#8C8C8C';
+const FALLBACK_COLOR = '#4A4A4A';
+/** Darker, higher-contrast line tints (lines only; building/unit team textures unchanged). Was (pre-266f55d) blue #2E8BFF, green #35B84A, red #F0313F, yellow #FDC534, gray #8C8C8C. */
+export const LANE_COLORS: Readonly<Record<string, string>> = {
+  blue: '#0A3FD0', green: '#0B6B1C', red: '#D0101E', yellow: '#E0A000', gray: '#4A4A4A',
+};
+const laneColor = (palettes: Readonly<Record<string, string>>, key: string): string =>
+  Object.hasOwn(LANE_COLORS, key) ? LANE_COLORS[key]! : palettes[key]!;
+
+/**
+ * End point of a drawn line. A line with an opposing reverse line (head-on clash, R-LIN-03/R-CMB-01) stops at the
+ * midpoint so the two owners' colours meet there; otherwise it runs to `b`. Writes into `out`.
+ */
+export function clashEnd(a: LanePoint, b: LanePoint, opposed: boolean, out: LanePoint): LanePoint {
+  out.x = opposed ? (a.x + b.x) / 2 : b.x; out.z = opposed ? (a.z + b.z) / 2 : b.z; return out;
+}
+export const hasOpposite = (lines: readonly { from: number; to: number }[], i: number): boolean => {
+  const l = lines[i]!;
+  for (let j = 0; j < lines.length; j++) if (j !== i && lines[j]!.from === l.to && lines[j]!.to === l.from) return true;
+  return false;
+};
 
 export interface LaneStyle {
   /** Asset path of a manifest `beam` fx texture (`fx/lane-{wave,arrow,waveArrow,trail}.png`). */
@@ -83,7 +105,11 @@ export function createLaneRenderer(ctx: RendererContext, initial: Partial<LaneSt
     const key = Object.hasOwn(style.palettes, colorKey) ? colorKey : '';
     let m = mats.get(key);
     if (!m) {
-      m = new MeshBasicMaterial({ map: texture(), color: key ? style.palettes[key]! : FALLBACK_COLOR, transparent: true, opacity: style.alpha, depthWrite: false, side: DoubleSide });
+      m = new MeshBasicMaterial({ map: texture(), color: key ? laneColor(style.palettes, key) : FALLBACK_COLOR, transparent: true, opacity: style.alpha, depthWrite: false, side: DoubleSide });
+      m.onBeforeCompile = (sh) => {
+        sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+          diffuseColor.a = opacity * mix(${LANE_TEX_ALPHA_MIN.toFixed(2)}, 1.0, sampledDiffuseColor.a);`);
+      };
       mats.set(key, m);
     }
     return m;
@@ -109,6 +135,7 @@ export function createLaneRenderer(ctx: RendererContext, initial: Partial<LaneSt
         let rib = pool[i];
         if (!rib) { rib = new Ribbon(material('')); pool.push(rib); root.add(rib.mesh); stats.created++; }
         A.x = a.x * MILLI_TO_WORLD; A.z = a.z * MILLI_TO_WORLD; B.x = b.x * MILLI_TO_WORLD; B.z = b.z * MILLI_TO_WORLD;
+        clashEnd(A, B, hasOpposite(lines, i), B);
         rib.set(A, B, style.width, tiles, material(view.players[l.owner]?.colorKey ?? ''));
       }
       for (let i = lines.length; i < pool.length; i++) pool[i]!.mesh.visible = false;

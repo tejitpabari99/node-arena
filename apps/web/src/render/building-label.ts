@@ -3,7 +3,7 @@ import { CanvasTexture, SRGBColorSpace, type Texture } from 'three';
 /** Produces the level-number label texture: white number, black outline, `stage` pips under it (validation.md). */
 export interface LabelPainter {
   /** `stageIndex` is 0-based (view stage - 1); pips drawn = stageIndex + 1. Textures are cached per (level, stageIndex). */
-  texture(level: number, stageIndex: number): Texture;
+  texture(level: number, stageIndex: number, isMax?: boolean): Texture;
   dispose(): void;
 }
 
@@ -28,17 +28,22 @@ export type CanvasFactory = () => HTMLCanvasElement;
 export function createCanvasLabelPainter(makeCanvas: CanvasFactory = () => document.createElement('canvas')): LabelPainter {
   const cache = new Map<string, CanvasTexture>();
   return {
-    texture(level, stageIndex) {
-      const key = `${level}:${stageIndex}`;
+    texture(level, stageIndex, isMax = false) {
+      const key = `${isMax ? 'max' : level}:${stageIndex}`;
       let t = cache.get(key);
-      if (!t) { t = new CanvasTexture(paint(makeCanvas(), level, stageIndex)); t.colorSpace = SRGBColorSpace; cache.set(key, t); }
+      if (!t) { t = new CanvasTexture(paint(makeCanvas(), labelText(level, isMax), stageIndex)); t.colorSpace = SRGBColorSpace; cache.set(key, t); }
       return t;
     },
     dispose() { for (const t of cache.values()) t.dispose(); cache.clear(); },
   };
 }
 
-function paint(canvas: HTMLCanvasElement, level: number, stageIndex: number): HTMLCanvasElement {
+/** Label text: "MAX" at the building's maxLevel, else the level number. */
+export const labelText = (level: number, isMax: boolean): string => (isMax ? 'MAX' : String(level));
+/** True when `level` has reached a positive `maxLevel`. */
+export const isMaxLevel = (level: number, maxLevel: number): boolean => maxLevel > 0 && level >= maxLevel;
+
+function paint(canvas: HTMLCanvasElement, text: string, stageIndex: number): HTMLCanvasElement {
   canvas.width = SIZE; canvas.height = SIZE;
   const g = canvas.getContext('2d');
   if (!g) return canvas;
@@ -47,7 +52,7 @@ function paint(canvas: HTMLCanvasElement, level: number, stageIndex: number): HT
   g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
   g.strokeStyle = LABEL_OUTLINE.color; g.lineWidth = LABEL_OUTLINE.width * FONT_PX; g.fillStyle = '#fff';
   const cy = SIZE * 0.44;
-  g.strokeText(String(level), SIZE / 2, cy); g.fillText(String(level), SIZE / 2, cy);
+  g.strokeText(text, SIZE / 2, cy); g.fillText(text, SIZE / 2, cy);
   const pips = stageIndex + 1, r = 6, gap = 18, y = SIZE * 0.82;
   for (let i = 0; i < pips; i++) {
     const x = SIZE / 2 + (i - (pips - 1) / 2) * gap;

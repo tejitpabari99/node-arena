@@ -35,7 +35,7 @@
       "colorKey": "yellow",
       "bot": {
         "kind": "tw",
-        "actionDelayMs": 9000,
+        "actionDelayMs": 6000,
         "behavior": "full",
         "script": [
           {
@@ -86,7 +86,7 @@
       "id": "b0",
       "archetype": "house-wt2",
       "pos": {
-        "x": -7.25,
+        "x": -3.25,
         "z": 0
       },
       "owner": null,
@@ -145,7 +145,7 @@
         "z": 4.27
       },
       "owner": "p2",
-      "level": 5,
+      "level": 8,
       "ignoreForWin": false
     }
   ],

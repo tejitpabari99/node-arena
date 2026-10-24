@@ -6,7 +6,7 @@ import type { SimEvent } from '@node-arena/defs';
 import type { SimView } from '@node-arena/sim';
 import type { RendererContext, RendererFactory, VisualDef, Renderer } from './registry.js';
 import { registerRenderer } from './registry.js';
-import type { LabelPainter } from './building-label.js';
+import { isMaxLevel, type LabelPainter } from './building-label.js';
 
 /** Sim coordinates are milli-units; scene units = milli / 1000. */
 export const MILLI = 1000;
@@ -140,7 +140,7 @@ class BuildingRendererImpl implements BuildingRenderer {
       const stage = Math.max(0, Math.min(this.stageSets.length - 1, b.stage[k]! - 1));
       if (stage !== i.stage) this.applyStage(i, stage);
       const level = b.level[k]!;
-      if (level !== i.level || i.label.userData['stage'] !== stage) this.applyLabel(i, level, stage);
+      if (level !== i.level || i.label.userData['stage'] !== stage) this.applyLabel(i, level, stage, isMaxLevel(level, (b.maxLevel?.[k] ?? 0)));
       this.updateRing(i, view, sim);
     }
     for (const e of events) if (e.type === 'TowerShot') this.spawnShot(e, view);
@@ -161,8 +161,8 @@ class BuildingRendererImpl implements BuildingRenderer {
     i.picks = i.meshes.filter(m => { for (let o: Object3D | null = m; o && o !== i.group; o = o.parent) if (!o.visible) return false; return true; });
   }
 
-  private applyLabel(i: Instance, level: number, stage: number): void {
-    (i.label.material as SpriteMaterial).map = this.deps.painter.texture(level, stage);
+  private applyLabel(i: Instance, level: number, stage: number, isMax: boolean): void {
+    (i.label.material as SpriteMaterial).map = this.deps.painter.texture(level, stage, isMax);
     i.label.material.needsUpdate = true; i.label.userData['stage'] = stage; i.label.visible = true; i.level = level;
   }
 

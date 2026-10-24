@@ -36,6 +36,7 @@
       "bot": {
         "kind": "tw",
         "actionDelayMs": 7000,
+        "startDelayMs": 4000,
         "behavior": "full",
         "script": []
       }
@@ -47,6 +48,7 @@
       "bot": {
         "kind": "tw",
         "actionDelayMs": 7000,
+        "startDelayMs": 4000,
         "behavior": "full",
         "script": []
       }
@@ -85,7 +87,7 @@
       "archetype": "tower",
       "pos": {
         "x": -0.39,
-        "z": 4.72
+        "z": 5.32
       },
       "owner": null,
       "level": 4,
@@ -134,7 +136,7 @@
       "archetype": "tower",
       "pos": {
         "x": -0.37,
-        "z": -4.48
+        "z": -5.08
       },
       "owner": null,
       "level": 4,
