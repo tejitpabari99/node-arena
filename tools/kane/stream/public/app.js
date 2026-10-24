@@ -9,7 +9,8 @@
   let disposed = false, source, socket, reconnectTimer;
   let currentState, serverState, currentRunId = null, currentAttemptId = null, lastSeq = -1;
   let stateRevision = 0, requestGeneration = 0, stopped = false, resetting = false;
-  let localStart = null, stopRequest = null, stopQueued = false;
+  let localStart = null, stopQueued = false;
+  const stopRequests = new Set();
   let sseErrors = 0, wsAttempts = 0, generation = 0, decoding = false, pendingFrame = null;
   let hasFrame = false, backupAvailable = false, failed = false;
   const failureOutcomes = new Set(['failed', 'unavailable', 'timeout']);
@@ -28,7 +29,7 @@
     stop.hidden = stopped || !['starting', 'live'].includes(state);
     stop.disabled = stop.hidden;
     reset.hidden = !stopped;
-    reset.disabled = resetting || !!stopRequest || stopQueued || !['idle', 'cooldown'].includes(serverState);
+    reset.disabled = resetting || stopRequests.size > 0 || stopQueued || !['idle', 'cooldown'].includes(serverState);
     backup.hidden = !(failed && backupAvailable);
     if (!hasFrame) {
       videoMessage.hidden = false;
@@ -58,10 +59,10 @@
     const isReset = explicitReset || (currentAttemptId !== null && nextAttempt === null);
     if (isReset) {
       // A reset of another attempt cannot cancel a not-yet-registered local Start.
-      if (!stopQueued || !localStart || currentAttemptId === stopQueued.id) {
+      if (!stopQueued || !localStart || localStart.settled || currentAttemptId === stopQueued.id) {
         stopQueued = false; localStart = null;
       }
-      stopRequest = null; requestGeneration++;
+      stopRequests.clear(); requestGeneration++;
     }
     const matchingQueued = stopQueued && nextAttempt === stopQueued.id;
     const queuedStopReady = matchingQueued && ['starting', 'live'].includes(snapshot.state);
@@ -205,11 +206,18 @@
   }
 
   function sendStop(attemptId) {
-    const request = {}; stopRequest = request;
+    const request = {}; stopRequests.add(request);
     render(currentState, failed);
-    void postControl('/stop', attemptId).finally(() => {
-      if (disposed || stopRequest !== request) return;
-      stopRequest = null; render(currentState, failed);
+    void postControl('/stop', attemptId).then(response => {
+      if (disposed || !stopRequests.has(request)) return;
+      if (response?.ok || response?.status === 409) {
+        // Acceptance proves registration. Its conditional Stop can safely settle
+        // even if every state of this attempt was missed and a later run is live.
+        if (localStart?.id === attemptId) localStart = null;
+      }
+    }).finally(() => {
+      if (disposed || !stopRequests.delete(request)) return;
+      render(currentState, failed);
     });
   }
 
@@ -222,7 +230,7 @@
       if (disposed || localStart !== attempt) return;
       attempt.settled = true;
       if (response?.ok) {
-        if (stopQueued?.id === attempt.id) await refreshState();
+        if (stopQueued?.id === attempt.id) { stopQueued = false; sendStop(attempt.id); }
         else if (currentAttemptId === attempt.id) localStart = null;
       } else {
         localStart = null;
@@ -236,11 +244,13 @@
     // An own Start can still be unregistered or obscured by another viewer's
     // attempt. Only its nonce can satisfy this queued cancellation.
     const target = ['starting', 'live'].includes(serverState) ? currentAttemptId : null;
-    stopQueued = localStart && localStart.id !== target ? { id: localStart.id } : false;
+    const accepted = localStart?.settled ? localStart.id : null;
+    stopQueued = localStart && !localStart.settled && localStart.id !== target ? { id: localStart.id } : false;
     requestGeneration++;
     if (target) serverState = 'ending';
     render('stopping');
     if (target) sendStop(target);
+    if (accepted && accepted !== target) sendStop(accepted);
   });
 
   reset.addEventListener('click', () => {

@@ -488,10 +488,11 @@ for (const reply of [202, 503]) {
 
 test('a settled accepted Start with missed terminal events cannot carry a queued Stop into the next run', async t => {
   const f = await fixture(t), { page } = f;
-  let releaseStart;
-  const posts = [];
-  page.on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); });
+  let releaseStart, ownAttempt;
+  const posts = [], stopTargets = [];
+  page.on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); if (new URL(request.url()).pathname === '/stop') stopTargets.push(request.headers()['x-kane-attempt-id']); });
   await page.route('**/start', async route => {
+    ownAttempt = route.request().headers()['x-kane-attempt-id'];
     await new Promise(resolve => { releaseStart = resolve; });
     f.state('idle', 'already-ended', 'won', route.request().headers()['x-kane-attempt-id'], false);
     // Model a completed attempt whose startup/terminal SSE events were missed.
@@ -506,7 +507,8 @@ test('a settled accepted Start with missed terminal events cannot carry a queued
   f.state('starting', null);
   f.state('live', 'later-run');
   await waitText(page, 'status', 'live');
-  assert.deepEqual(posts, ['/start']);
+  assert.deepEqual(posts, ['/start', '/stop']);
+  assert.deepEqual(stopTargets, [ownAttempt]);
   assert.deepEqual(f.errors, []);
 });
 
@@ -606,21 +608,21 @@ for (const terminal of ['preflight-failed', 'unrelated-starting']) {
   });
 }
 
-test('accepted Start retains its nonce until startup SSE arrives so an immediate Stop is not lost', async t => {
+test('accepted Start can be conditionally stopped before startup SSE arrives', async t => {
   const f = await fixture(t), { page } = f;
   let ownAttempt;
   const stops = [];
   page.on('request', request => { if (new URL(request.url()).pathname === '/stop') stops.push(request.headers()['x-kane-attempt-id']); });
   await page.route('**/start', async route => {
     ownAttempt = route.request().headers()['x-kane-attempt-id'];
+    f.state('starting', 'own', undefined, ownAttempt, false);
     await route.fulfill({ status: 202, contentType: 'application/json', body: '{"runId":"own"}' });
   });
   await page.goto(f.base); await waitText(page, 'status', 'idle');
   const accepted = page.waitForResponse(value => new URL(value.url()).pathname === '/start');
   await page.locator('#start').click(); await accepted; await page.waitForTimeout(40);
   await page.locator('#stop').click();
-  assert.equal(await page.locator('#reset').isDisabled(), true); assert.deepEqual(stops, []);
-  f.state('starting', null, undefined, ownAttempt);
+  assert.equal(await page.locator('#reset').isDisabled(), true);
   await page.waitForTimeout(80); assert.deepEqual(stops, [ownAttempt]);
   f.finishStop(); await page.waitForFunction(() => !document.getElementById('reset').disabled);
   await waitText(page, 'status', 'stopped'); assert.deepEqual(f.errors, []);
@@ -666,4 +668,56 @@ test('explicit Stop ends the displayed other attempt and retains cancellation of
   f.finishStop(); releaseStart();
   await page.waitForFunction(() => !document.getElementById('reset').disabled);
   await waitText(page, 'status', 'stopped'); assert.deepEqual(f.errors, []);
+});
+
+test('accepted unseen A cannot leave Reset blocked after an explicit Stop cleans displayed B', async t => {
+  const f = await fixture(t), { page } = f;
+  let a, releaseStaleStop;
+  const b = randomUUID(), c = randomUUID(), stops = [];
+  page.on('request', request => { if (new URL(request.url()).pathname === '/stop') stops.push(request.headers()['x-kane-attempt-id']); });
+  await page.route('**/start', async route => {
+    a = route.request().headers()['x-kane-attempt-id'];
+    await route.fulfill({ status: 202, contentType: 'application/json', body: '{"runId":"A"}' });
+  });
+  await page.route('**/stop', async route => {
+    if (route.request().headers()['x-kane-attempt-id'] === a) {
+      await new Promise(resolve => { releaseStaleStop = resolve; });
+      await route.fulfill({ status: 409, body: '{}' });
+    } else await route.continue();
+  });
+  await page.goto(f.base); await waitText(page, 'status', 'idle');
+  const accepted = page.waitForResponse(value => new URL(value.url()).pathname === '/start');
+  await page.locator('#start').click(); await accepted; await page.waitForTimeout(40);
+  // Every A state was missed. Reconnection first observes another viewer's B.
+  f.state('live', 'B', undefined, b); await waitText(page, 'status', 'live');
+  assert.deepEqual(stops, []);
+  await page.locator('#stop').click(); await page.waitForTimeout(80);
+  f.finishStop(); await waitText(page, 'status', 'stopped');
+  assert.deepEqual(stops, [b, a]);
+  assert.equal(await page.locator('#reset').isDisabled(), true, 'all conditional Stop replies must settle');
+  releaseStaleStop(); await page.waitForFunction(() => !document.getElementById('reset').disabled);
+  await page.locator('#reset').click(); await waitText(page, 'status', 'cooldown');
+  f.state('starting', null, undefined, c); f.state('live', 'C', undefined, c);
+  await waitText(page, 'status', 'live'); await page.waitForTimeout(50);
+  assert.deepEqual(stops, [b, a]); assert.equal(await page.locator('#stop').isEnabled(), true);
+  assert.deepEqual(f.errors, []);
+});
+
+test('queued cancellation sends only its accepted nonce when delayed HTTP202 arrives during another run', async t => {
+  const f = await fixture(t), { page } = f;
+  let a, releaseStart;
+  const b = randomUUID(), stops = [];
+  page.on('request', request => { if (new URL(request.url()).pathname === '/stop') stops.push(request.headers()['x-kane-attempt-id']); });
+  await page.route('**/start', async route => {
+    a = route.request().headers()['x-kane-attempt-id'];
+    await new Promise(resolve => { releaseStart = resolve; });
+    await route.fulfill({ status: 202, contentType: 'application/json', body: '{"runId":"A"}' });
+  });
+  await page.goto(f.base); await waitText(page, 'status', 'idle');
+  await page.locator('#start').click(); await page.locator('#stop').click();
+  f.state('live', 'B', undefined, b); await page.waitForTimeout(50);
+  assert.equal(await text(page, 'status'), 'stopping'); assert.deepEqual(stops, []);
+  releaseStart(); await page.waitForTimeout(80);
+  assert.deepEqual(stops, [a]); await waitText(page, 'status', 'live');
+  assert.equal(await page.locator('#reset').isHidden(), true); assert.deepEqual(f.errors, []);
 });
