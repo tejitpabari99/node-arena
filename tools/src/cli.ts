@@ -18,6 +18,12 @@ if (command === 'check:parked') {
   catch (error) { console.error((error as Error).message); process.exitCode = 2; }
   process.exit();
 }
+if (command === 'art:status') {
+  const { runArtStatusFile } = await import('./art-status.js');
+  try { process.exitCode = await runArtStatusFile(resolve(root, 'apps/web/assets/manifest.json'), args); }
+  catch (error) { console.error((error as Error).message); process.exitCode = 2; }
+  process.exit();
+}
 if (command === 'import:tw' || command === 'check:import') process.exit(await (await import('./import-tw/cli.js')).run(command, args));
 const report: GateReport = { command, ok: false, errors: [], warnings: [], summary: 'Validation failed.' };
 const manifestFile = 'apps/web/assets/manifest.json';

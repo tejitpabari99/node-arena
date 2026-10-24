@@ -34,6 +34,7 @@ Node-only tools run through the root pnpm scripts and `tools/src/cli.ts`. Run `p
 | `pnpm sim:golden` / `pnpm bots:golden` | Regenerate expected simulation/bot scenarios in memory and enforce golden identities/version guards |
 | `pnpm bench:sim` / `pnpm bench:bots` | Strict local performance budgets; `--ci` permits shared-runner budgets |
 | `pnpm check:docs` | Every root script is documented in this file or AGENTS; documented paths exist; removed tooling references fail |
+| `pnpm art:status [--strict]` | Report-only list of manifest file fields not yet in the art overrides dir; strict exits 1 while any remain |
 | `pnpm check:parked --strict` | No parked CI entries, refused commands or parked source/test directories remain |
 
 Content/manifest/replay/level/balance reports use `--format md|json` (default Markdown). Failures exit 1; malformed command arguments fail. Caller-supplied paths resolve from the working directory. Defaults resolve from the repository. Common content options: `--dir`, `--base`, `--manifest`, `--assets-dir`, `--credits`, `--lock`; supported options depend on the command. Manifest credits default to `docs/CREDITS.md`; committed assets are checked without the extract. A custom assets directory omits the repo asset lock unless an explicit lock is supplied.
