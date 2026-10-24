@@ -4,3 +4,4 @@ import './replay.test.mjs';
 import './cdp.test.mjs';
 import './chrome.test.mjs';
 import './chrome.integration.test.mjs';
+import './driver.test.mjs';

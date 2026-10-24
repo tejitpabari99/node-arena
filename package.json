@@ -66,7 +66,9 @@
     "campaign:verify": "pnpm --filter @node-arena/web campaign:verify",
     "check:docs": "pnpm --filter @node-arena/tools check:docs",
     "kane:replay": "node tools/kane/replay.mjs",
-    "check:kane-bundle": "node scripts/check-kane-bundle.mjs"
+    "check:kane-bundle": "node scripts/check-kane-bundle.mjs",
+    "kane:play": "node tools/kane/drive.mjs",
+    "kane:credits": "node tools/kane/drive.mjs --credits-only"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
