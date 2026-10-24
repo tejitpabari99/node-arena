@@ -1,15 +1,13 @@
 {
   "schema_version": 1,
-  "report_kind": "private_local_submission_evidence",
+  "report_kind": "sanitized_submission_evidence",
   "prepared_at_utc": "2026-10-24T23:26:46Z",
   "project": {
     "name": "Node Arena",
     "event_project_id": 43,
     "repository_url": "https://github.com/tejitpabari99/node-arena",
-    "repository_private": true,
     "branch": "kane-cli",
     "code_reviewed_commit": "244f9b7bf2369a9658b6c7e1fa190343a7804ae3",
-    "redistribution": "Extracted art and level data are private and not redistributable; no public game deployment.",
     "source_snapshot_note": "Documentation commit may be newer; re-read git rev-parse HEAD after later commits or pushes before reporting latest branch head."
   },
   "historical_execution": {
@@ -77,28 +75,83 @@
       "account_balance_delta": 79.8455,
       "account_delta_caveat": "May include other workers; not attributed entirely to this match."
     },
-    "private_evidence_references": [
-      "kane-runs/stream-dd9b2cb1-276c-43e5-bc4d-1c64760136da/driver.ndjson",
-      "kane-runs/host-ngrok/real-private-report.json"
-    ],
     "committed_execution_record": "docs/agent_files/feat-kane-hackday-20261023-2128/05-hosted-stream/code-2026-10-24-2309.md",
-    "evidence_handling": "Raw packs, logs and screenshots remain private and uncommitted."
+    "evidence_handling": "Raw logs, packs, screenshots and credentials are not included."
   },
   "workflow_status": {
-    "live_gameplay_and_spectator": "Implemented; historical hosted win verified; recorded owner-requested shutdown stopped and boot-disabled services. No current service check performed for this draft.",
-    "stop_hook": "Implemented and directly rehearsed with pass/fail/pass; installed agent-session use not verified in available evidence.",
+    "live_gameplay_and_spectator": "Implemented; historical hosted win and spectator transport verified.",
+    "stop_hook": {
+      "status": "Installed agent-session use verified by owner in another branch; direct authenticated rehearsal passed, detected deliberate label regression, then passed after restoration.",
+      "installation_confirmation_source": "owner",
+      "independent_rehearsal_exits": [
+        0,
+        2,
+        0
+      ]
+    },
     "assurance": {
       "generated_tests": 9,
-      "executed_generated_tests": 0,
-      "proven_coverage_percent": 0,
+      "executed_generated_tests": 3,
+      "proven_coverage_percent": 8.03921568627451,
       "approved_use_cases": 3,
       "extracted_use_cases": 4,
       "designed_criteria": 23,
       "total_criteria": 42,
-      "next_checkpoint": "Second human review before browser authoring/execution."
+      "executed_generated_tests_note": "Distinct cases with runtime authoring attempts: t-2, t-3 and t-5; this does not assert all nine designed cases executed.",
+      "coverage_percent_basis": "Tool-reported risk-weighted project score; not the arithmetic percentage of proven criterion count.",
+      "proven_criteria": 4,
+      "proven_criterion_ids": [
+        "ac-8",
+        "ac-14",
+        "ac-16",
+        "ac-23"
+      ],
+      "second_human_checkpoint": "approved by owner",
+      "latest_saved_replay": {
+        "execution_id": "a0861c18-3424-4fe4-b6ac-40fde262e9ca",
+        "completed_at_utc": "2026-10-24T23:37:00.128Z",
+        "status": "passed",
+        "tests": 2,
+        "passed": 2,
+        "failed": 0,
+        "broken": 0,
+        "skipped": 0,
+        "authored": 0,
+        "duration_seconds": 95.156,
+        "upload_status": "ok",
+        "cases": [
+          {
+            "case": "t-3 draw",
+            "session_id": "6afa155a-34d0-46df-830e-6cae4c752265",
+            "status": "passed",
+            "duration_seconds": 45
+          },
+          {
+            "case": "t-5 single click",
+            "session_id": "c8a23932-911c-4803-89ff-12b12a3a6e42",
+            "status": "passed",
+            "duration_seconds": 43
+          }
+        ],
+        "stable_selector_guard_passed": true,
+        "volatile_locators": 0
+      },
+      "coverage_scope_note": "Latest suite passed four criteria with zero failed criteria. Project coverage retains earlier rejection-case failures and criteria not run; no fully proven use-case claim.",
+      "historical_snapshot_note": "The earlier 0% snapshot was captured after design and before runtime execution.",
+      "validation_provenance": {
+        "kind": "local_validation_snapshot",
+        "source_branch": "feat/kane-workflow-integrations",
+        "initially_inspected_checkout_commit": "6ec72ec218b2084c80cfcb7e05e51400708467b1",
+        "commit_note": "Checkout baseline only; newer local validation artifacts were not included in this commit at inspection. This report copies allowlisted summary fields, not raw evidence.",
+        "application_commit": "9f452afec9b9ca15c869c69dbee6e4d26d7cf4e8",
+        "stable_name_patch_commit_prefix": "52159493",
+        "summary_artifact": "tools/kane/assure/runtime-evidence/final-recorded-suite/suite-summary.json",
+        "project_cover_artifact": "tools/kane/assure/cover-2026-10-24.txt",
+        "selector_audit_artifact": "tools/kane/assure/runtime-evidence/accessible-selector-audit.json"
+      }
     },
-    "github_actions": "Implemented and linted; first cloud execution not verified in available evidence; CLI pinned to 0.9.0.",
-    "qualification_scope": "Dedicated Kane level and a two-step saved DOM smoke; no full-campaign qualification claimed."
+    "github_actions": "Regular CI passed. Linked Kane workflow completed with artifacts uploaded, but credentialed setup/login/replay skipped for missing credentials; actual Kane execution evidence comes from local runs.",
+    "qualification_scope": "Autonomous gameplay demonstration targets the dedicated Kane Arena level through test-build DOM controls."
   },
   "event_reporting": {
     "status": "check_current_event_state_before_finalizing",
@@ -110,5 +163,52 @@
   "submission_handoff": {
     "text_fields": "User must paste pitch, harness description, Kane feature selections and limitations; no event text-field tool.",
     "shipped_prize_bundle": "Paste both live X post and Substack blog links, tick their checklist rows and press Save before finalizing."
+  },
+  "updated_at_utc": "2026-10-24T23:37:00.128Z",
+  "update_timestamp_note": "Completion time of the latest included local assurance validation; prepared_at_utc retains the original preparation time.",
+  "github_evidence": {
+    "regular_ci": {
+      "url": "https://github.com/tejitpabari99/node-arena/actions/runs/40139746008",
+      "status": "success",
+      "completed_at_utc": "2026-10-24T22:43:05Z",
+      "commit": "2078b9f1a0ed8d37b08d481f780f2ea0ac54375a"
+    },
+    "kane_workflow": {
+      "url": "https://github.com/tejitpabari99/node-arena/actions/runs/40139746004/job/121008775427",
+      "job_status": "success",
+      "credentialed_replay_status": "skipped",
+      "skip_reason": "no Kane credentials",
+      "artifacts_uploaded": true
+    },
+    "local_kane_execution_record": {
+      "url": "https://github.com/tejitpabari99/node-arena/blob/cf40d8f418df4d2b74942f6a306be07475d0a89c/docs/agent_files/feat-kane-hackday-20261023-2128/03-kane-driver/code-2026-10-24-2149.md",
+      "pull_request_url": "https://github.com/tejitpabari99/node-arena/pull/26",
+      "application_commit": "cf40d8f418df4d2b74942f6a306be07475d0a89c",
+      "game_result": "won",
+      "kane_calls": 3,
+      "wall_seconds": 262.785,
+      "reported_credits": 65.9541,
+      "accepted_moves": 5,
+      "rejected_moves": 0,
+      "saved_smoke_replay": {
+        "exit_code": 0,
+        "steps": 2,
+        "duration_seconds": 30.33
+      },
+      "note": "Separate local execution, not the four-call historical hosted run or a GitHub-hosted Kane replay."
+    }
+  },
+  "owner_provided_validation": {
+    "source": "owner-provided agent report",
+    "web_unit_tests_passed": 398,
+    "assurance_runner_unit_tests_passed": 19,
+    "checks_passed": [
+      "lint",
+      "builds",
+      "typechecks",
+      "docs",
+      "production exclusion"
+    ],
+    "scope_note": "Free unit/static/build checks, separate from generated browser-case executions."
   }
 }
