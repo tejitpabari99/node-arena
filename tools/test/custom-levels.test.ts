@@ -18,6 +18,7 @@ const customId = 'na-tooling-test';
 function fixture(): ContentFiles {
   const files = structuredClone(data);
   for (const file of Object.keys(files)) if (file.startsWith('data/levels/na-')) delete files[file];
+  delete files['data/campaigns/kane.json'];
   const source = files['data/levels/levelview-1.json']!;
   const level = typeof source === 'string' ? JSON.parse(source) : source;
   files[`data/levels/${customId}.json`] = { ...level, id: customId, name: 'Tooling test' };
@@ -83,6 +84,7 @@ async function cliFixture(run: (dir: string, lock: string, unsolved: string) => 
     await cp(join(root, 'packages/content/data'), join(dir, 'data'), { recursive: true });
     await cp(join(root, 'packages/content/content.json'), join(dir, 'content.json'));
     for (const name of await readdir(join(dir, 'data/levels'))) if (name.startsWith('na-')) await rm(join(dir, 'data/levels', name));
+    await rm(join(dir, 'data/campaigns/kane.json'), { force: true });
     const files = fixture();
     await writeFile(join(dir, `data/levels/${customId}.json`), JSON.stringify(files[`data/levels/${customId}.json`]));
     await writeFile(join(dir, 'data/campaigns/custom.json'), JSON.stringify(files['data/campaigns/custom.json']));
