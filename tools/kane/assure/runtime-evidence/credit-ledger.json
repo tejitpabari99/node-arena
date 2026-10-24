@@ -93,8 +93,44 @@
     "seconds": 102,
     "evidence_id": "b5c9887a-69ba-450b-a393-ffb09807ab86"
   },
-  "total_own_spend": "324.8519",
-  "final_remaining": "175.1481",
-  "last_wallet_after_own_paid_call": "99796.0139",
-  "external_wallet_decrease_excluded": "79.8455"
+  "total_own_spend": "362.7878",
+  "final_remaining": "137.2122",
+  "last_wallet_after_own_paid_call": "99758.0780",
+  "external_wallet_decrease_excluded": "79.8455",
+  "code_backed_authoring": {
+    "test": "t-3",
+    "app_patch": "52159493",
+    "app_head": "9f452afec9b9ca15c869c69dbee6e4d26d7cf4e8",
+    "before": "99796.0139",
+    "after": "99759.2647",
+    "debit": "36.7492",
+    "outcome": "passed; stable testid/static accessible heading selectors verified",
+    "high_level_steps": {
+      "total": 2,
+      "passed": 2
+    },
+    "seconds": 120,
+    "evidence_id": "b2b59ef7-da6b-489e-aeba-bfc55e1a29da"
+  },
+  "final_recording_only_replay": {
+    "members": [
+      "t-3",
+      "t-5"
+    ],
+    "before": "99759.2647",
+    "after": "99758.0780",
+    "debit": "1.1867",
+    "outcomes": {
+      "t-3": "passed",
+      "t-5": "passed"
+    },
+    "member_seconds": {
+      "t-3": 45,
+      "t-5": 43
+    },
+    "authored": 0,
+    "suite_seconds": 95.156,
+    "evidence_id": "a0861c18-3424-4fe4-b6ac-40fde262e9ca",
+    "per_member_credits": "Not separately exposed; exact locked-suite debit recorded."
+  }
 }

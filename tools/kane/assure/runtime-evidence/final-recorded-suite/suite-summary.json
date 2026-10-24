@@ -1,0 +1,118 @@
+[
+  {
+    "type": "testrun_plan",
+    "members": [
+      {
+        "path": "/root/projects/node-arena/.worktrees/feat-kane-workflow-integrations/tools/kane/assure/.testmuai/tests/draw-a-ready-owned-house-route-once_test.md",
+        "test_id": "89be5bae-e10a-46c1-bf99-f7ffd46408e3",
+        "tags": []
+      },
+      {
+        "path": "/root/projects/node-arena/.worktrees/feat-kane-workflow-integrations/tools/kane/assure/.testmuai/tests/keep-an-active-route-after-one-click_test.md",
+        "test_id": "ddab3e69-66a4-437c-b3b5-bec861e04276",
+        "tags": []
+      }
+    ],
+    "valid": true,
+    "parallel": 1,
+    "v": 1,
+    "ts": "2026-10-24T23:35:24.772Z"
+  },
+  {
+    "type": "testrun_member_end",
+    "path": "/root/projects/node-arena/.worktrees/feat-kane-workflow-integrations/tools/kane/assure/.testmuai/tests/draw-a-ready-owned-house-route-once_test.md",
+    "test_id": "89be5bae-e10a-46c1-bf99-f7ffd46408e3",
+    "status": "passed",
+    "duration_s": 45,
+    "session_id": "6afa155a-34d0-46df-830e-6cae4c752265",
+    "log_path": "/root/.testmuai/kaneai/sessions/6afa155a-34d0-46df-830e-6cae4c752265/events.ndjson",
+    "v": 1,
+    "ts": "2026-10-24T23:36:12.058Z"
+  },
+  {
+    "type": "testrun_member_end",
+    "path": "/root/projects/node-arena/.worktrees/feat-kane-workflow-integrations/tools/kane/assure/.testmuai/tests/keep-an-active-route-after-one-click_test.md",
+    "test_id": "ddab3e69-66a4-437c-b3b5-bec861e04276",
+    "status": "passed",
+    "duration_s": 43,
+    "session_id": "c8a23932-911c-4803-89ff-12b12a3a6e42",
+    "log_path": "/root/.testmuai/kaneai/sessions/c8a23932-911c-4803-89ff-12b12a3a6e42/events.ndjson",
+    "v": 1,
+    "ts": "2026-10-24T23:36:57.128Z"
+  },
+  {
+    "type": "coverage",
+    "status": "written",
+    "computed_by": "local",
+    "coverage_version": 2,
+    "scope": "run",
+    "pct": 8,
+    "usecases": {
+      "total": 4,
+      "proven": 0,
+      "partial": 2,
+      "failing": 0,
+      "not_run": 1,
+      "not_designed": 0,
+      "no_criteria": 1
+    },
+    "criteria": {
+      "total": 42,
+      "proven": 4
+    },
+    "this_run": {
+      "usecases": [
+        "uc-1",
+        "uc-2"
+      ],
+      "criteria_passed": [
+        "ac-8",
+        "ac-14",
+        "ac-16",
+        "ac-23"
+      ],
+      "criteria_failed": []
+    },
+    "flags": {
+      "stale_sources": 0,
+      "sources_not_fully_extracted": [],
+      "orphaned_usecases": 0
+    },
+    "pack": "/root/projects/node-arena/.worktrees/feat-kane-workflow-integrations/tools/kane/assure/.testmuai/evidence/a0861c18-3424-4fe4-b6ac-40fde262e9ca.evidence",
+    "v": 1,
+    "ts": "2026-10-24T23:37:00.121Z"
+  },
+  {
+    "type": "testrun_summary",
+    "execution": {
+      "id": "a0861c18-3424-4fe4-b6ac-40fde262e9ca",
+      "status": "passed",
+      "evidence_id": "a0861c18-3424-4fe4-b6ac-40fde262e9ca"
+    },
+    "authored": [],
+    "totals": {
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "broken": 0,
+      "skipped": 0,
+      "authored": 0
+    },
+    "duration_s": 95.156,
+    "upload": "ok",
+    "cancelled": false,
+    "v": 1,
+    "ts": "2026-10-24T23:37:00.128Z"
+  },
+  {
+    "type": "testrun_done",
+    "execution_id": "a0861c18-3424-4fe4-b6ac-40fde262e9ca",
+    "overall_status": "passed",
+    "coverage": {
+      "status": "written",
+      "pct": 8
+    },
+    "v": 1,
+    "ts": "2026-10-24T23:37:00.128Z"
+  }
+]

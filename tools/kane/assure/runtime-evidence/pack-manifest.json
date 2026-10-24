@@ -146,5 +146,62 @@
       "status": "finalized",
       "diagnostics": []
     }
+  },
+  {
+    "attempt": "t-3-code-backed-accessible-labels",
+    "evidence_id": "b2b59ef7-da6b-489e-aeba-bfc55e1a29da",
+    "local_pack": "tools/kane/assure/.testmuai/evidence/b2b59ef7-da6b-489e-aeba-bfc55e1a29da.evidence",
+    "sha256": "bf107a5c9204e1cbb7f9eb2782877981d552764b0bea35907dad299089994fff",
+    "bytes": 1377852,
+    "tests": [
+      {
+        "test": "draw-a-ready-owned-house-route-once-26660acb",
+        "status": "passed",
+        "definition_id": "sha256:da6c23c5904edb0bc961314d670a12e80cabc22426d6cee6f97fb0d1792bef0f",
+        "assurance_base_at_run": "sha256:1c13a6fc5a12673b79e0495e172ca5a842b559e3922d74c41593e079ca2ee941",
+        "actions": 9,
+        "passed_actions": 9,
+        "failed_actions": 0
+      }
+    ],
+    "validation": {
+      "valid": true,
+      "status": "finalized",
+      "diagnostics": []
+    }
+  },
+  {
+    "attempt": "final-recorded-suite",
+    "evidence_id": "a0861c18-3424-4fe4-b6ac-40fde262e9ca",
+    "local_pack": "tools/kane/assure/.testmuai/evidence/a0861c18-3424-4fe4-b6ac-40fde262e9ca.evidence",
+    "sha256": "d8541573be5523e39ffb7f4a258ddacd715deeed80aea8992a580838ba0f772a",
+    "bytes": 4099795,
+    "tests": [
+      {
+        "test": "draw-a-ready-owned-house-route-once-26660acb",
+        "status": "passed",
+        "duration_ms": 45688,
+        "definition_id": "sha256:da6c23c5904edb0bc961314d670a12e80cabc22426d6cee6f97fb0d1792bef0f",
+        "assurance_base_at_run": null,
+        "actions": 15,
+        "passed_actions": 15,
+        "failed_actions": 0
+      },
+      {
+        "test": "keep-an-active-route-after-one-click-9c4724d1",
+        "status": "passed",
+        "duration_ms": 43890,
+        "definition_id": "sha256:695d0cc1b4aed001d25c366e7e045dfa7f49d867759113f1d975c431e5341d33",
+        "assurance_base_at_run": null,
+        "actions": 12,
+        "passed_actions": 12,
+        "failed_actions": 0
+      }
+    ],
+    "validation": {
+      "valid": true,
+      "status": "finalized",
+      "diagnostics": []
+    }
   }
 ]

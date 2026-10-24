@@ -1,0 +1,62 @@
+{
+  "ledger_decimal_total": "362.7878",
+  "remaining": "137.2122",
+  "external_excluded": "79.8455",
+  "generated_copy_equality": [
+    {
+      "test": "draw-a-ready-owned-house-route-once",
+      "definition_sha256": "53675594b58b336e36b6bd0de0d9aca86ece447c1dd540b84db1a94ffe2d2161",
+      "cache_files": 5,
+      "exact_copy": true
+    },
+    {
+      "test": "keep-an-active-route-after-one-click",
+      "definition_sha256": "c5e8e9b41294dddc775f9bf1dc05ea3de0ed5847eea1efbc675fb7c1a379527c",
+      "cache_files": 6,
+      "exact_copy": true
+    }
+  ],
+  "step2_body_byte_identical": true,
+  "manifest_archives_hash_verified": 8,
+  "parseable_json_ndjson": 39,
+  "secret_scanned_text_files": 79,
+  "project_pct": 8.03921568627451,
+  "criteria_proven": 4,
+  "current_proof_run": "a0861c18-3424-4fe4-b6ac-40fde262e9ca",
+  "fsck_records": 28,
+  "changed_paths": [
+    "tools/kane/assure/README.md",
+    "tools/kane/assure/context-runtime-2026-10-24.html",
+    "tools/kane/assure/cover-2026-10-24.txt",
+    "tools/kane/assure/designed-tests/draw-a-ready-owned-house-route-once_test.md",
+    "tools/kane/assure/designed-tests/output-draw-a-ready-owned-house-route-once/.internal/execution.json",
+    "tools/kane/assure/designed-tests/output-draw-a-ready-owned-house-route-once/.internal/meta.json",
+    "tools/kane/assure/designed-tests/output-draw-a-ready-owned-house-route-once/.internal/steps/1-6aebd512/flows/0/actions.ndjson",
+    "tools/kane/assure/designed-tests/output-draw-a-ready-owned-house-route-once/.internal/steps/1-c810a426/flows/0/actions.ndjson",
+    "tools/kane/assure/designed-tests/output-draw-a-ready-owned-house-route-once/.internal/steps/2-1d531a2b/flows/0/actions.ndjson",
+    "tools/kane/assure/designed-tests/output-draw-a-ready-owned-house-route-once/Result.md",
+    "tools/kane/assure/designed-tests/output-keep-an-active-route-after-one-click/.internal/meta.json",
+    "tools/kane/assure/runtime-2026-10-24.md",
+    "tools/kane/assure/runtime-evidence/accessible-selector-audit.json",
+    "tools/kane/assure/runtime-evidence/clarifications.patch",
+    "tools/kane/assure/runtime-evidence/context-current-list.ndjson",
+    "tools/kane/assure/runtime-evidence/context-fsck.json",
+    "tools/kane/assure/runtime-evidence/credit-ledger.json",
+    "tools/kane/assure/runtime-evidence/final-artifact-checks.json",
+    "tools/kane/assure/runtime-evidence/final-recorded-suite/suite-summary.json",
+    "tools/kane/assure/runtime-evidence/final-recorded-suite/t-3-passed-final-state.jpg",
+    "tools/kane/assure/runtime-evidence/final-recorded-suite/t-5-passed-final-state.jpg",
+    "tools/kane/assure/runtime-evidence/final-replay-preflight.json",
+    "tools/kane/assure/runtime-evidence/pack-manifest.json",
+    "tools/kane/assure/runtime-evidence/t-3-accessible-labels/build-and-budget.json",
+    "tools/kane/assure/runtime-evidence/t-3-accessible-labels/definition.md",
+    "tools/kane/assure/runtime-evidence/t-3-accessible-labels/passed-final-state.jpg",
+    "tools/kane/assure/runtime-evidence/t-3-before-accessible-labels/change-mapping.json",
+    "tools/kane/assure/runtime-evidence/t-3-before-accessible-labels/definition.md",
+    "tools/kane/assure/runtime-evidence/t-3-before-accessible-labels/output-draw-a-ready-owned-house-route-once/.internal/execution.json",
+    "tools/kane/assure/runtime-evidence/t-3-before-accessible-labels/output-draw-a-ready-owned-house-route-once/.internal/meta.json",
+    "tools/kane/assure/runtime-evidence/t-3-before-accessible-labels/output-draw-a-ready-owned-house-route-once/.internal/steps/1-de58b57f/flows/0/actions.ndjson",
+    "tools/kane/assure/runtime-evidence/t-3-before-accessible-labels/output-draw-a-ready-owned-house-route-once/.internal/steps/2-1d531a2b/flows/0/actions.ndjson",
+    "tools/kane/assure/runtime-evidence/t-3-before-accessible-labels/output-draw-a-ready-owned-house-route-once/Result.md"
+  ]
+}
