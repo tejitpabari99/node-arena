@@ -42,7 +42,7 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
     await page.getByRole('button', { name: 'Apply building properties', exact: true }).click();
   }
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
+  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.locator('.editor-play-arena canvas')).toBeVisible();
   await expect(page.getByRole('dialog', { name: 'Defeat', exact: true })).toBeVisible({ timeout: 20000 });

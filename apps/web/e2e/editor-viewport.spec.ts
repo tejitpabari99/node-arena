@@ -8,7 +8,7 @@ test('working copy renders, reports blank drafts, and has editor camera controls
   await page.getByLabel('New level id').fill('na-viewport');
   await page.getByRole('button', { name: 'Create blank' }).click();
   await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
-  await page.getByRole('button', { name: 'Start screen' }).click();
+  await page.getByTestId('level-name').click();
   await page.getByLabel('New level id').fill('na-viewport');
   await page.getByLabel('Copy level').selectOption('levelview-1');
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();

@@ -22,7 +22,7 @@ export interface EditorContext {
   paste(): void;
   viewport: { current?: EditorViewport | undefined };
   locked: boolean;
-  save(): Promise<void>;
+  save(source?: 'manual' | 'auto'): Promise<void>;
   saveState: 'saved' | 'saving' | 'unsaved' | 'error';
   dirty: boolean;
   themes: string[];

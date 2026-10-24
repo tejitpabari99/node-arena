@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { PlayOverlay } from './PlayOverlay.js';
 import { LegacyPanel } from './LegacyPanel.js';
 import { Shell } from './Shell.js';
+import { TopBar } from './TopBar.js';
+import { createSaveQueue, isDirty, stableStringify } from './save-core.js';
 import { Viewport } from './Viewport.js';
 import { EditorCtx, type EditorContext } from './EditorContext.js';
 import type { EditorViewport, ViewportStatus } from './viewport-engine.js';
@@ -23,7 +25,20 @@ export function Editor() {
   const [history, setHistory] = useState<DocHistory | null>(null);
   const doc = history?.present ?? null;
   const openSeq = useRef(0);
-  function setDoc(next: LevelDoc | null) { openSeq.current++; setHistory(next ? createHistory(next) : null); }
+  const historyRef = useRef<DocHistory | null>(null);
+  historyRef.current = history;
+  // Last document known equal to disk. null for new blank/template/copy documents.
+  const savedRef = useRef<LevelDoc | null>(null);
+  const [savedDoc, setSavedDoc] = useState<LevelDoc | null>(null);
+  function markSaved(next: LevelDoc | null) { savedRef.current = next; setSavedDoc(next); }
+  const [attempted, setAttempted] = useState(false);
+  const [failure, setFailure] = useState<{ doc: LevelDoc; message: string } | null>(null);
+  const [validation, setValidation] = useState<{ issues: ContentIssue[]; warnings: ContentIssue[] }>({ issues: [], warnings: [] });
+  const [saving, setSaving] = useState(0);
+  function setDoc(next: LevelDoc | null) {
+    openSeq.current++; markSaved(null); setAttempted(false); setFailure(null); setValidation({ issues: [], warnings: [] });
+    setHistory(next ? createHistory(next) : null);
+  }
   function dispatch(action: HistoryAction) { if (busy) return; clearSave(); setHistory(state => state ? historyReducer(state, action) : state); }
   const [selection, setSelection] = useState<Selection[]>([]);
   const [clipboard, setClipboard] = useState<Clipboard>();
@@ -48,8 +63,6 @@ export function Editor() {
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [issues, setIssues] = useState<ContentIssue[]>([]);
-  const [warnings, setWarnings] = useState<ContentIssue[]>([]);
-  const [saved, setSaved] = useState(false);
   const [finalizeEvents, setFinalizeEvents] = useState<EditorFinalizeEvent[]>([]);
   const [lockStatus, setLockStatus] = useState<'checking' | 'current' | 'unfinalized' | 'unknown'>('checking');
   const [lockOutput, setLockOutput] = useState('');
@@ -58,22 +71,56 @@ export function Editor() {
   useEffect(() => () => proxyAbort.current?.abort(), []);
   const proxyReport = proxyEvents.find(event => event.type === 'result');
   const catalog = useRef<Promise<Catalog> | undefined>(undefined);
-  function clearSave() { setLockStatus('checking'); setFinalizeEvents([]); setProxyEvents([]); setIssues([]); setWarnings([]); setSaved(false); }
-  async function save() {
-    if (!doc) return;
-    setBusy(true); setError(''); clearSave();
+  function clearSave() { setLockStatus('checking'); setFinalizeEvents([]); setProxyEvents([]); setIssues([]); }
+  function getCatalog() {
+    catalog.current ??= loadManifest().then(manifest => loadCatalog(contentFiles(), { themes: Object.keys(manifest.themes), colorKeys: Object.keys(manifest.palettes) }));
+    return catalog.current;
+  }
+  async function runSave(source: 'manual' | 'auto') {
+    const current = historyRef.current;
+    if (!current) return;
+    const sent = current.present, seq = openSeq.current;
+    if (source === 'manual') { setBusy(true); setError(''); clearSave(); }
+    setSaving(count => count + 1);
     try {
-      catalog.current ??= loadManifest().then(manifest => loadCatalog(contentFiles(), { themes: Object.keys(manifest.themes), colorKeys: Object.keys(manifest.palettes) }));
-      const checked = validateEditorDocument(await catalog.current, doc, doc.id);
+      const checked = validateEditorDocument(await getCatalog(), sent, sent.id);
       const result = await saveLevel(checked.level);
-      setHistory(state => state ? { ...state, present: result.level } : state); setWarnings(result.warnings); setSaved(true);
+      if (openSeq.current !== seq) return;
+      markSaved(result.level); setFailure(null); setValidation({ issues: [], warnings: result.warnings });
+      // Swap in the normalized document only if nothing was edited during the request; no history entry.
+      setHistory(state => state && state.present === sent ? { ...state, present: result.level } : state);
       const items = await listLevels(); setLevels(items); setReopenId(result.level.id);
     } catch (reason) {
-      if (reason instanceof ContentLoadError) setIssues(reason.errors);
-      else if (reason instanceof EditorApiError && reason.issues.length) setIssues(reason.issues);
-      else setError(reason instanceof Error ? reason.message : String(reason));
-    } finally { setBusy(false); }
+      if (openSeq.current !== seq) return;
+      setAttempted(true);
+      if (reason instanceof ContentLoadError) { setValidation({ issues: reason.errors, warnings: [] }); setFailure({ doc: sent, message: '' }); }
+      else if (reason instanceof EditorApiError && reason.issues.length) { setValidation({ issues: reason.issues, warnings: [] }); setFailure({ doc: sent, message: '' }); }
+      else setFailure({ doc: sent, message: reason instanceof Error ? reason.message : String(reason) });
+    } finally { setSaving(count => count - 1); if (source === 'manual') setBusy(false); }
   }
+  const runSaveRef = useRef(runSave); runSaveRef.current = runSave;
+  const saveQueue = useRef<ReturnType<typeof createSaveQueue<'manual' | 'auto'>>>();
+  saveQueue.current ??= createSaveQueue<'manual' | 'auto'>(source => runSaveRef.current(source), () => !!historyRef.current && isDirty(historyRef.current.present, savedRef.current));
+  const doSave = (source: 'manual' | 'auto' = 'manual') => saveQueue.current!.enqueue(source);
+  // Client-side validation, debounced; chip only surfaces it once armed (see below).
+  useEffect(() => {
+    if (!doc) return;
+    let active = true;
+    const timer = setTimeout(() => {
+      void getCatalog().then(cat => {
+        let next: { issues: ContentIssue[]; warnings: ContentIssue[] };
+        try { next = { issues: [], warnings: validateEditorDocument(cat, doc, doc.id).warnings }; }
+        catch (reason) { next = { issues: reason instanceof ContentLoadError ? reason.errors : [], warnings: [] }; }
+        if (active) setValidation(next);
+      }).catch(() => undefined);
+    }, 300);
+    return () => { active = false; clearTimeout(timer); };
+  }, [doc]);
+  const dirty = !!doc && isDirty(doc, savedDoc);
+  const armed = savedDoc !== null || attempted;
+  const failureActive = !!failure && !!doc && (failure.doc === doc || stableStringify(failure.doc) === stableStringify(doc));
+  const saveMessage = failureActive ? failure!.message : '';
+  const saveState: EditorContext['saveState'] = saving > 0 ? 'saving' : (armed && validation.issues.length > 0) || saveMessage ? 'error' : dirty ? 'unsaved' : 'saved';
   // Each document/save/job transition invalidates old responses. This check never disables editing.
   useEffect(() => {
     let active = true;
@@ -87,7 +134,7 @@ export function Editor() {
     return () => { active = false; clearTimeout(timer); };
   }, [doc, busy]);
   async function finalize() {
-    if (!doc || !saved) return;
+    if (!doc || dirty) return;
     setBusy(true); setError(''); setFinalizeEvents([]); setLockStatus('checking');
     try { await finalizeLevel(doc, event => setFinalizeEvents(events => [...events, event])); }
     catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
@@ -122,7 +169,7 @@ export function Editor() {
         let n = 1; while (items.some(item => item.id === `na-custom-${n}`)) n++;
         const copy = copyDocument(await readLevel(template), `na-custom-${n}`);
         copy.name = `Custom ${n}`;
-        setCopyId(template); setDoc(copy); setSaved(false); return;
+        setCopyId(template); setDoc(copy); return;
       }
       const requested = params.get('level');
       if (requested === null) return;
@@ -130,7 +177,7 @@ export function Editor() {
       if (!items.some(item => item.id === requested)) throw new Error('Unknown level requested. Choose a level below.');
       setCopyId(requested);
       if (requested.startsWith('na-')) {
-        setReopenId(requested); setDoc(await readLevel(requested)); setSaved(true);
+        setReopenId(requested); const loaded = await readLevel(requested); setDoc(loaded); markSaved(loaded);
       }
     }).catch(reason => setError(String(reason))).finally(() => setLoading(false));
   }, []);
@@ -139,7 +186,7 @@ export function Editor() {
     try {
       const source = await readLevel(copy ? copyId : reopenId);
       if (copy && levels.some(level => level.id === id)) throw new Error('Choose a new id; that level already exists.');
-      setDoc(copy ? copyDocument(source, id) : source); setSaved(!copy);
+      const next = copy ? copyDocument(source, id) : source; setDoc(next); if (!copy) markSaved(next);
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
     finally { setBusy(false); }
   }
@@ -150,6 +197,7 @@ export function Editor() {
       setDoc(blankDocument(id, theme, size));
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
   }
+  useEffect(() => { (window as unknown as { __editorSave?: typeof doSave }).__editorSave = doSave; });
   const ctx: EditorContext | null = doc && history ? {
     doc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, viewportStatus, losStatus,
     edit: (op: DocOp) => dispatch({ type: 'edit', op, area }),
@@ -157,17 +205,15 @@ export function Editor() {
     select: next => { viewport.current?.select(next); },
     copy() { setClipboard(copySelection(doc, selection)); pasteCount.current = 0; },
     paste() { if (!clipboard) return; pasteCount.current++; dispatch({ type: 'edit', op: { type: 'paste', clipboard, offset: { x: .5 * pasteCount.current, z: .5 * pasteCount.current } }, area }); },
-    save, saveState: busy ? 'saving' : saved ? 'saved' : 'unsaved', dirty: !saved,
+    save: doSave, saveState, dirty,
   } : null;
   const alerts = <>
     {error && <p role="alert">{error}</p>}
     {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
-    {issues.length > 0 && <ul role="alert" aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
-    {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
-    <p role="status" data-testid="finalize-status">{!saved ? 'Unsaved changes. Save before Finalize. ' : ''}{lockStatus === 'unfinalized' ? 'Unfinalized changes on disk.' : lockStatus === 'current' ? 'Content locks current on disk.' : lockStatus === 'checking' ? 'Content status stale; checking…' : 'Content status unavailable; retry after saving or running a job.'}</p>
+    {issues.length > 0 && <ul role="alert" aria-label="Check errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
+    <p role="status" data-testid="finalize-status">{dirty ? 'Unsaved changes. Save before Finalize. ' : ''}{lockStatus === 'unfinalized' ? 'Unfinalized changes on disk.' : lockStatus === 'current' ? 'Content locks current on disk.' : lockStatus === 'checking' ? 'Content status stale; checking…' : 'Content status unavailable; retry after saving or running a job.'}</p>
     {lockOutput && <details><summary>Content status details</summary><pre>{lockOutput}</pre></details>}
     {finalizeEvents.length > 0 && <section aria-label="Finalize output" aria-live="polite"><pre>{finalizeEvents.map(event => event.type === 'step' ? `→ ${event.step}\n` : event.type === 'output' ? event.output : event.type === 'error' ? `${event.error}\n` : event.type === 'result' ? 'Finalize complete. Review git diff and commit when ready.\n' : '').join('')}</pre></section>}
-    {saved && <p role="status">Saved. Run Finalize when ready to update content locks.</p>}
     {proxyEvents.length > 0 && <section aria-label="Proxy evidence" aria-live="polite">
       <p>Evidence only. Proxy wins do not prove solvability; no wins do not prove impossibility. Owner play and sign-off remain required.</p>
       <p role="status">{proxyReport?.type === 'result' ? `Proxy wins: ${proxyReport.report.totalWins}/${proxyReport.report.runs}. Validation: ${proxyReport.report.ok ? 'passed' : 'failed'}.` : proxyAbort.current ? 'Checking proxy matches…' : 'Proxy check stopped.'}</p>
@@ -175,7 +221,8 @@ export function Editor() {
       {proxyReport?.type === 'result' && <details><summary>Full proxy report</summary><pre>{JSON.stringify(proxyReport.report, null, 2)}</pre></details>}
     </section>}
   </>;
-  const toolbar = doc && <><a href="/">Game</a><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => setPlaying(true)}>Play</button><button disabled={busy} onClick={() => void solvable()}>Solvable?</button><button disabled={busy || !saved} onClick={() => void finalize()}>Finalize</button>{proxyAbort.current && <button onClick={() => proxyAbort.current?.abort()}>Cancel check</button>}<button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></>;
+  const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar issues={validation.issues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel} onName={() => { setDoc(null); setId(''); setError(''); clearSave(); }} onPlay={() => setPlaying(true)}
+    extras={<><button disabled={busy} onClick={() => void solvable()}>Solvable?</button><button disabled={busy || dirty} onClick={() => void finalize()}>Finalize</button>{proxyAbort.current && <button onClick={() => proxyAbort.current?.abort()}>Cancel check</button>}</>} /></EditorCtx.Provider>;
   return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<>{alerts}<EditorCtx.Provider value={ctx}><LegacyPanel pointer={pointer} /></EditorCtx.Provider></>}>
     <EditorCtx.Provider value={ctx}><Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} onPointer={setPointer} /></EditorCtx.Provider>
   </Shell> : <main class="editor-shell ed-start" inert={playing}>
