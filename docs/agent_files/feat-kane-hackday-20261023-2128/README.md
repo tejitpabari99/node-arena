@@ -9,6 +9,8 @@ date: 2026-10-24
 Make Node Arena a game an AI tester (Kane CLI) plays live on a hidden Kane level via a test-build-only DOM control panel, and put Kane in the dev workflow (Stop-hook replay loop, assurance, non-blocking CI replay). Design only today; code is built on hack day 2026-10-24.
 
 ## Contents
+- [SP01 follow-up review](01-kane-level/review-2026-10-24-1903.md) — PASS; both prior findings resolved.
+- [SP01 review fix run](01-kane-level/code-2026-10-24-1903.md) — picker isolation, owned preview, CI gate, regression evidence.
 - [SP01 target integration](01-kane-level/code-2026-10-24-1856.md) — merge origin/kane-cli, combined version chain, targeted verification.
 - [brainstorm.md](brainstorm.md) — approved brief, decision log (locked), risks
 - [probes-20261024.md](probes-20261024.md) — 2026-10-24 probe evidence (infra, Kane CLI, replay, level, render); PRDs cite it as `[probe: ... §<id>]`
