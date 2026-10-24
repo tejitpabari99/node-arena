@@ -14,7 +14,7 @@ it('runs HUD pause, restart, mute, victory/next/replay and defeat/retry flows in
     page.on('pageerror',error=>errors.push(error.message));
     page.setDefaultTimeout(5000);
     const url=server.resolvedUrls!.local[0]+'__hud';
-    const start=async(outcome='')=>{await page.goto(url+(outcome?'?outcome='+outcome:''));await page.getByRole('button',{name:/^Level 1(?:, completed)?$/}).click();await browserExpect(page.getByRole('button',{name:'Pause'})).toBeVisible();};
+    const start=async(outcome='')=>{await page.goto(url+(outcome?'?outcome='+outcome:''));await page.getByRole('button',{name:'Campaign',exact:true}).click();await page.getByRole('button',{name:/^Level 1(?:, completed)?$/}).click();await browserExpect(page.getByRole('button',{name:'Pause'})).toBeVisible();};
     const step=async(count=1)=>page.evaluate(n=>Reflect.get(window,'hudTest').step(n),count);
     await start();
     const segments=page.locator('[data-ownership-player]');expect(await segments.count()).toBe(2);
@@ -34,14 +34,14 @@ it('runs HUD pause, restart, mute, victory/next/replay and defeat/retry flows in
     await browserExpect(page.getByRole('button',{name:'Pause'})).not.toBeFocused();
     await page.getByRole('button',{name:'Mute sound'}).click();expect(await page.evaluate(()=>Reflect.get(window,'hudTest').snapshot().save.settings)).toMatchObject({musicMute:true,sfxMute:true});
     await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Restart',exact:true}).click();await browserExpect(dialog).toHaveCount(0);expect(await page.evaluate(()=>Reflect.get(window,'hudTest').tick())).toBe(0);
-    await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Levels',exact:true}).click();await browserExpect(page.getByRole('region',{name:'Campaign levels'})).toBeVisible();
+    await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Levels',exact:true}).click();await browserExpect(page.getByRole('region',{name:'Campaign'})).toBeVisible();
     await start('win');await step();await browserExpect(page.getByRole('heading',{name:'Victory!'})).toBeVisible();await page.screenshot({path:output+'/task-5-victory.png'});
     expect(await page.evaluate(()=>Object.keys(Reflect.get(window,'hudTest').snapshot().save.completed))).toHaveLength(1);
     await page.getByRole('button',{name:'Replay',exact:true}).click();await browserExpect(dialog).toHaveCount(0);await step();await page.getByRole('button',{name:'Next level',exact:true}).click();await browserExpect(page.getByText('Level 2',{exact:true})).toBeVisible();
     await step();await page.getByRole('button',{name:'Levels',exact:true}).click();await browserExpect(page.getByRole('button',{name:'Level 2, completed'})).toBeEnabled();
     for(const outcome of ['loss','timeout','draw']){await start(outcome);await step();await browserExpect(page.getByRole('heading',{name:'Defeat'})).toBeVisible();await browserExpect(page.getByRole('button',{name:'Next level'})).toHaveCount(0);await browserExpect(page.getByRole('button',{name:'Replay',exact:true})).toHaveCount(0);if(outcome==='loss')await page.screenshot({path:output+'/task-5-defeat.png'});await page.getByRole('button',{name:'Retry',exact:true}).click();await browserExpect(dialog).toHaveCount(0);expect(await page.evaluate(()=>Reflect.get(window,'hudTest').tick())).toBe(0);}
     await page.evaluate(()=>{const save=JSON.parse(localStorage.getItem('nodearena:save')!);const levels=Reflect.get(window,'hudTest').snapshot().levels;for(const l of levels)save.completed[l.id]={firstAt:'2026-10-23'};localStorage.setItem('nodearena:save',JSON.stringify(save));});
-    await page.goto(url+'?outcome=win');await page.getByRole('button',{name:'Level 20, completed',exact:true}).click();await step();await browserExpect(page.getByRole('heading',{name:'All levels complete!'})).toBeVisible();await browserExpect(page.getByRole('button',{name:'Next level'})).toHaveCount(0);await browserExpect(page.getByRole('button',{name:'Replay',exact:true})).toBeVisible();await page.screenshot({path:output+'/task-5-complete.png'});
+    await page.goto(url+'?outcome=win');await page.getByRole('button',{name:'Campaign',exact:true}).click();await page.getByRole('button',{name:'Level 20, completed',exact:true}).click();await step();await browserExpect(page.getByRole('heading',{name:'All levels complete!'})).toBeVisible();await browserExpect(page.getByRole('button',{name:'Next level'})).toHaveCount(0);await browserExpect(page.getByRole('button',{name:'Replay',exact:true})).toBeVisible();await page.screenshot({path:output+'/task-5-complete.png'});
     for(const viewport of [{width:1280,height:720},{width:2560,height:1080}]){
       await page.setViewportSize(viewport);const box=await dialog.boundingBox();expect(box).not.toBeNull();expect(box!.x).toBeGreaterThanOrEqual(0);expect(box!.y).toBeGreaterThanOrEqual(0);expect(box!.x+box!.width).toBeLessThanOrEqual(viewport.width);expect(box!.y+box!.height).toBeLessThanOrEqual(viewport.height);
     }

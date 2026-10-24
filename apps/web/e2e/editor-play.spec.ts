@@ -62,7 +62,10 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
   await page.getByRole('button', { name: 'Reopen level', exact: true }).click();
   await expect(page.getByTestId('draft-summary')).toContainText('2 buildings');
   await page.goto('/');
+  await page.getByRole('button', { name: 'Campaign', exact: true }).click();
   await expect(page.locator('.level-grid.campaign .level-card')).toHaveCount(20);
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await page.getByRole('button', { name: 'Custom', exact: true }).click();
   await expect(page.locator('.level-grid.custom .level-card').filter({ hasText: 'na-play-browser' })).toBeEnabled();
   expect(errors).toEqual([]);
 });
@@ -126,7 +129,7 @@ test('overlay uses real input, identical initial hash, private completions/mute,
     const app = window.__editorPlayTest.play.app;
     for (let i = 0; i < 100 && !app.driver!.sim.view.over; i++) app.step(100);
   });
-  await expect(page.getByRole('dialog', { name: /All levels complete!|Defeat/ })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole('dialog', { name: /Victory!|Defeat/ })).toBeVisible({ timeout: 20000 });
   const state = await page.evaluate(() => window.__editorPlayTest.play.app.snapshot());
   expect(state.result).toEqual({ outcome: 'won', winner: 0 });
   expect(state.save.completed['na-runtime-browser']).toBeDefined();
