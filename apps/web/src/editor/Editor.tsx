@@ -97,7 +97,16 @@ export function Editor() {
     void listLevels().then(async items => {
       setLevels(items); setCopyId(items[0]?.id ?? '');
       setReopenId(items.find(item => item.id.startsWith('na-'))?.id ?? '');
-      const requested = new URLSearchParams(window.location.search).get('level');
+      const params = new URLSearchParams(window.location.search), template = params.get('template');
+      if (template !== null) {
+        // Create-custom flow: copy a template into a new unique custom level; never reuses the template id.
+        if (!items.some(item => item.id === template)) throw new Error('Unknown template requested. Choose a level below.');
+        let n = 1; while (items.some(item => item.id === `na-custom-${n}`)) n++;
+        const copy = copyDocument(await readLevel(template), `na-custom-${n}`);
+        copy.name = `Custom ${n}`;
+        setCopyId(template); setDoc(copy); setSaved(false); return;
+      }
+      const requested = params.get('level');
       if (requested === null) return;
       // Only server-listed ids reach the API. Imported levels always require a new copy id.
       if (!items.some(item => item.id === requested)) throw new Error('Unknown level requested. Choose a level below.');
