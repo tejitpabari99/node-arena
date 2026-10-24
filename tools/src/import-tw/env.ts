@@ -1,4 +1,4 @@
-// TW_EXTRACT handling: the extract is local-only (CI has none), so tools exit 2 with a one-line message.
+// TW_EXTRACT handling: the extract is an external input (CI has none), so tools exit 2 with a one-line message.
 import { join } from 'node:path';
 
 export const TEXTASSET_DIR = join('assets', 'defaultlocalgroup_assets', 'TextAsset');

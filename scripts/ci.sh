@@ -55,7 +55,7 @@ step() { # step <name> <command...>
   if owner=$(is_parked "$name"); then echo "PARKED($owner) $name"; return 0; fi
   echo "==> $name"
   "$@"
-  # The extract stays local-only. Keep the CLI's exit status authoritative and
+  # CI has no source extract. Keep the CLI's exit status authoritative and
   # annotate successful env-skips so Actions makes them visible in the run log.
   if [[ -z "${TW_EXTRACT:-}" && ( "$name" == check:import || "$name" == assets:tw:check ) ]]; then
     echo "::notice::$name skipped (TW_EXTRACT unset)"

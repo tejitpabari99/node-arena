@@ -44,7 +44,7 @@ try {
     if (errors.length) throw new Error(errors.join('\n'));
     console.log(`UI assets OK (${Object.keys(lock.outputs).length} locked outputs; ${extract ? 'source hashes checked' : 'committed-only, TW_EXTRACT unset'})`);
   } else {
-    if (!extract || !existsSync(extract)) throw new Error('TW_EXTRACT must point to the private Tower War extract to import UI sprites');
+    if (!extract || !existsSync(extract)) throw new Error('TW_EXTRACT must point to the Tower War extract to import UI sprites');
     const inputs = {}, outputs = {}, sprites = {};
     mkdirSync(join(assets, 'ui'), { recursive: true });
     const emit = (file, bytes) => { mkdirSync(dirname(join(assets, file)), { recursive: true }); writeFileSync(join(assets, file), bytes); outputs[file] = sha(bytes); };
