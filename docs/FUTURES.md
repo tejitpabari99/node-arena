@@ -36,7 +36,13 @@ Source facts below describe Tower War; they are deferred in Node Arena. Research
 - **Cargo.** Source crates/drops exist; all shipped imported levels drop cargo. [Source objects](research/tower-wars/02-levels.md), [meta](research/tower-wars/05-meta-modes-ux.md), [current fidelity ledger](LEVELS_GUIDE.md).
 - **Levels 24+ and generated coverage census.** Use the static tracker in [LEVELS_GUIDE.md](LEVELS_GUIDE.md) and [source feature curve](research/tower-wars/02-levels.md); the snapshot is not a recomputed census.
 - **Portrait/mobile and new themes beyond Green/Snow.** Source UI is portrait 1080×1920; source environments include Lava, Mine, Jungle and DarkMine. Landscape is current scope. [UX](research/tower-wars/05-meta-modes-ux.md), [environments](research/tower-wars/02-levels.md).
-- **Original-level editor.** Hand-authored levels already have a documented JSON workflow; a UI editor is a new product decision, not a source-game claim. [Current authoring](LEVELS_GUIDE.md), [data/architecture research](research/tower-wars/06-gap-map-and-architecture.md).
 - **Hosting/deploy.** Local-only scope; any future deployment first needs owner approval and replacement/appropriate rights for private derived data/art. [Source provenance](research/tower-wars/README.md), [credits](CREDITS.md).
 - **CrossingSource seam.** SP04 used direct geometry/crossing handling; a generic crossing-source abstraction was deferred. Revisit when new path modifiers demand it. [Source crossing/rivers/gates](research/tower-wars/03-core-mechanics.md), [SP04 settled design](agent_files/feat-tower-war-port-20261022-0321/04-geometry-shooters/PRD.md).
 - **Web bundle budget gate.** Still deferred beyond asset triangle/texture budgets (earlier port entry above); size the gate from actual client output. [Asset/architecture evidence](research/tower-wars/06-gap-map-and-architecture.md), [SP09 gate scope](agent_files/feat-tower-war-port-20261022-0321/09-gates-tooling-docs/PRD.md).
+
+## From level editor v1 (2026-10-24)
+
+- **Bot script editing.** Current editor removes a player's script when a referenced building is deleted; authoring scripts remains deferred.
+- **Level deletion UI (v1.1 or later).** No editor delete flow; future work must remove the `na-*` file and custom entry, removing `custom.json` when empty, then refresh versions/locks.
+- **Campaign/custom level reorder UI.** Positions remain authored data; no ordering tool in v1.
+- **Hot reload of external level edits.** No live reconciliation into an open draft; reload/reopen deliberately. [Current editor workflow](LEVELS_GUIDE.md#4-author-an-original-level).

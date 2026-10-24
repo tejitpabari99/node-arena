@@ -67,7 +67,23 @@ Output is idempotent and deterministic (`JSON.stringify(obj, null, 2) + "\n"`, s
 4. Re-run `pnpm import:tw --range ...`, then lock + bump + verify as in section 2. If an archetype's default module values change (retuning), re-import: param overrides are stored only when they differ from the archetype defaults, so they depend on them. `check:import` is local-only (needs the extract), so CI does not catch a forgotten re-import.
 5. Update the tracker snapshot (section 5) by hand.
 
-## 4. Hand-author an original level
+## 4. Author an original level
+
+Run `pnpm dev`, then open `http://127.0.0.1:5173/editor.html` (use the printed port if it differs). Development **Edit level** opens a blank start screen, or the active battle; each picker card has its own **Edit** link. `/editor.html?level=<id>` selects an imported level for copying or reopens a custom `na-*` level. These links and the editor page are absent from the ordinary production build.
+
+- **Start:** blank Green/Snow level with size preset and two players; copy any level using a new `na-[a-z0-9-]{1,40}` id; reopen custom levels using their existing id. Imported `levelview-*` files are never overwritten. Copies drop `source` metadata.
+- **Edit:** drag houses, towers and obstacles into the viewport; use forms for level, player and selected-item properties. Select/move, copy/paste, mirror (optional owner swap), snap, auto-fit, line-of-sight preview and undo/redo work on the draft. Deleting a building referenced by an AI script removes that player's script and shows an undoable banner; script authoring is deferred.
+- **Play:** runs the real game with the unsaved draft and a private in-memory save. Progress and sound changes do not affect the main game. Use **Back to editor**, or Esc → pause → **Levels**, to return with edits intact.
+- **Save:** validates, recomputes `requires`, canonicalizes coordinates/key order and writes only `packages/content/data/levels/na-*.json` plus an upsert in `packages/content/data/campaigns/custom.json`. Inline errors block writing; overlap/element-bound warnings remain advisory. Save does not bump versions or regenerate locks. The **Unfinalized changes on disk** banner reports a read-only content check against HEAD; inspect its details on failure.
+- **Solvable?:** streams proxy-match results for the current draft, one job at a time. Proxy wins are evidence only; no wins do not prove impossibility. Owner playthrough/sign-off remains required.
+- **Finalize:** save first. Validates the saved level, bumps `contentVersion` patch and `BOT_VERSION` when the bot hash map changes (skipping bumps already made against HEAD), generates the content lock, merges the selected custom level into the level lock, verifies both content gates against HEAD and prints `git diff --stat`. Stops at the first failed step. It never commits: review the diff, play the level and commit manually.
+
+The authoring API runs only in Vite development, bound to `127.0.0.1`; keep this local binding. Host/Origin checks, the editor request header, a 1 MiB body cap and validated ids protect filesystem writes. No editor filesystem/process middleware runs in builds or preview.
+
+Custom levels live only in `packages/content/data/campaigns/custom.json`, never `packages/content/data/campaigns/common.json`; this supersedes the older instruction to append original levels to Common. Custom positions determine display order, starting at 1, and all custom levels are unlocked. Common remains exactly 20 entries at positions 4–23. Save/Finalize may require reloading the game picker to see the updated content.
+
+### Manual JSON alternative
+
 
 1. Copy `packages/content/data/levels/levelview-1.json` (the golden) to a new file in the same folder named `na-` plus your level name and `.json`; `id` must equal the file name and carry the `na-` prefix (importer ids are `levelview-*`).
 2. Omit `source` (optional; `campaignPosition`/`dialect` only describe TW origin). Set `theme`, `bounds`, `objective`, `timeLimitSec`.
@@ -120,7 +136,7 @@ Totals: 13 obstacle levels (5, 6, 7, 10, 11, 12, 13, 16, 17, 19, 20, 22, 23), 10
 
 ## 6. Fidelity ledger
 
-Computed from `source.dropped` in `packages/content/data/levels/*.json`.
+Computed from `source.dropped` in the imported `levelview-*` files under `packages/content/data/levels/`. Custom `na-*` copies omit `source`; they do not extend this imported-fidelity ledger.
 
 | Dropped token | Levels | Notes |
 |---|---|---|
@@ -129,7 +145,7 @@ Computed from `source.dropped` in `packages/content/data/levels/*.json`.
 | `tutorial-script` | `levelview-182-nb` (10), `levelview-100-es` (23) | prefab levels, scripted components |
 | `wall` | `levelview-100-es` (23) | one wall; level plays without it |
 
-No level drops anything else. Inactive obstacle children are not in `source.dropped` (they are logged by the importer only).
+No imported campaign level drops anything else. Inactive obstacle children are not in `source.dropped` (they are logged by the importer only).
 
 ## 7. Gotchas
 

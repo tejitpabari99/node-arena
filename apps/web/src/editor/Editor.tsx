@@ -94,9 +94,17 @@ export function Editor() {
   }
   useEffect(() => {
     void loadManifest().then(manifest => setChoices({ themes: Object.keys(manifest.themes), colors: Object.keys(manifest.palettes) })).catch(reason => setError(String(reason)));
-    void listLevels().then(items => {
+    void listLevels().then(async items => {
       setLevels(items); setCopyId(items[0]?.id ?? '');
       setReopenId(items.find(item => item.id.startsWith('na-'))?.id ?? '');
+      const requested = new URLSearchParams(window.location.search).get('level');
+      if (requested === null) return;
+      // Only server-listed ids reach the API. Imported levels always require a new copy id.
+      if (!items.some(item => item.id === requested)) throw new Error('Unknown level requested. Choose a level below.');
+      setCopyId(requested);
+      if (requested.startsWith('na-')) {
+        setReopenId(requested); setDoc(await readLevel(requested)); setSaved(true);
+      }
     }).catch(reason => setError(String(reason))).finally(() => setLoading(false));
   }, []);
   async function open(copy: boolean) {
