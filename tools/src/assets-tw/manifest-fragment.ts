@@ -1,12 +1,13 @@
 // Manifest fragment (PRD 07 R3/R4): `apps/web/assets/manifest.tw.json` is derived from the importer's own outputs (GLB extras, node/clip
 // names, textures) and merged into the single `manifest.json` by `mergeManifest` (`pnpm assets:manifest`). The fragment owns
-// `visuals`, `themes`, `fx` and the `fx` field of `events`; everything else in manifest.json (palettes, sfx, camera) is hand-owned.
+// `visuals`, `themes`, `fx` and the `fx` field of `events`; default event sfx live in `DEFAULT_EVENT_SFX`; everything else in manifest.json (palettes, camera) is hand-owned. `manifest.art.json` is an optional sparse patch applied last.
 // Deterministic: fixed key order, no timestamps. Numeric fx `params` tuned in Task 12 against ref/tw-yt.
 import { NodeIO, type Document, type Node } from '@gltf-transform/core';
 import sharp from 'sharp';
 import type { Output } from './output.js';
 
 export const FRAGMENT_PATH = 'manifest.tw.json';
+export const ART_PATH = 'manifest.art.json';
 export const TEAMS = ['blue', 'green', 'red', 'yellow', 'gray'] as const;
 export const THEME_IDS = ['green', 'snow'] as const;
 
@@ -69,6 +70,9 @@ export const FX_ENTRIES = {
 } as const;
 /** Event id -> fx id. */
 export const EVENT_FX = { BuildingCaptured: 'capture-ring', Clash: 'clash-spark', TroopDied: 'death-smoke', TowerShot: 'tower-shot' } as const;
+
+/** Default event sfx (moved from the hand-owned manifest.json): merge = base <- TW fragment (+ these defaults) <- art patch, so dropping an art sfx restores these. */
+export const DEFAULT_EVENT_SFX = { BuildingCaptured: 'audio/capture.ogg', Clash: 'audio/clash.ogg', LineCut: 'audio/cut.ogg', LineDrawn: 'audio/ui-click.ogg', MatchOver: 'audio/gameover.ogg' } as const;
 
 export interface Fragment { visuals: Record<string, unknown>; themes: Record<string, unknown>; fx: Record<string, unknown>; events: Record<string, { fx: string }> }
 
@@ -135,25 +139,36 @@ export async function fragmentOutputs(files: ReadonlyMap<string, Uint8Array>): P
 const TOP_ORDER = ['$schema', 'schemaVersion', 'palettes', 'visuals', 'themes', 'fx', 'events', 'camera'] as const;
 type Json = Record<string, unknown>;
 
+type Obj = Record<string, unknown>;
+const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
+/** Objects deep-merge; arrays and scalars replace. Pure (inputs untouched). */
+function deepMerge(a: unknown, b: unknown): unknown {
+  if (!isObj(a) || !isObj(b)) return b;
+  const out: Obj = { ...a };
+  for (const k of Object.keys(b)) out[k] = k in a ? deepMerge(a[k], b[k]) : b[k];
+  return out;
+}
+
 /**
- * Merge the fragment into the single manifest. Fragment-owned: `visuals`, `themes`, `fx` (replaced wholesale) and `events.<id>.fx`
- * (events keep their hand-owned `sfx`; an event with no fragment fx loses a stale `fx`; sfx-less empty events are dropped).
- * Pure, idempotent, key order canonical (top level fixed, other keys sorted).
+ * Merge base <- fragment <- art. Fragment-owned: `visuals`, `themes`, `fx` (replaced wholesale) and `events.<id>.fx`; event `sfx` comes from
+ * `DEFAULT_EVENT_SFX` (never from base, so removing an art sfx restores the default). Optional `art` patch deep-merges last (objects merge,
+ * arrays/scalars replace); missing art is a no-op. Pure, idempotent, key order canonical (top level fixed, other keys sorted).
  */
-export function mergeManifest(base: Json, fragment: Fragment): Json {
+export function mergeManifest(base: Json, fragment: Fragment, art?: Json): Json {
   const out: Json = { ...base, visuals: fragment.visuals, themes: fragment.themes, fx: fragment.fx };
   const events: Record<string, Json> = {};
-  const prev = (base['events'] ?? {}) as Record<string, Json>;
-  for (const id of new Set([...Object.keys(prev), ...Object.keys(fragment.events)])) {
-    const { fx: _stale, ...rest } = prev[id] ?? {};
-    const fx = fragment.events[id]?.fx;
-    const e: Json = { ...rest, ...(fx ? { fx } : {}) };
+  const sfxOf = DEFAULT_EVENT_SFX as Record<string, string>;
+  for (const id of new Set([...Object.keys(sfxOf), ...Object.keys(fragment.events)])) {
+    const sfx = sfxOf[id], fx = fragment.events[id]?.fx;
+    const e: Json = { ...(sfx ? { sfx } : {}), ...(fx ? { fx } : {}) };
     if (Object.keys(e).length) events[id] = e;
   }
   out['events'] = events;
+  if (art) for (const k of Object.keys(art)) if (k !== '$schema' && k !== 'schemaVersion') out[k] = deepMerge(out[k], art[k]);
+  const merged = out['events'] as Record<string, Json>;
   const sortKeys = (o: Json): Json => Object.fromEntries(Object.keys(o).sort().map((k) => [k, o[k]]));
   const result: Json = {};
-  for (const k of TOP_ORDER) if (k in out) result[k] = k === 'events' ? sortKeys(events) : out[k];
+  for (const k of TOP_ORDER) if (k in out) result[k] = k === 'events' ? sortKeys(merged) : out[k];
   for (const k of Object.keys(out).sort()) if (!(k in result)) result[k] = out[k];
   return result;
 }

@@ -1,5 +1,6 @@
 import Type, { type TObject, type TSchema } from 'typebox';
 import { ManifestSchema } from './manifest.schema.js';
+import { ManifestArtSchema } from './manifest-art.schema.js';
 import { BOT_KINDS, MODULES, OBJECTIVES, count, fx3, type ModuleId } from '@node-arena/defs';
 
 /** Content v2 schemas live beside v1 (`../core.schema.ts`); nothing here replaces the old game's data model. */
@@ -147,5 +148,5 @@ export type NextLevel = Type.Static<typeof LevelSchema>;
 /** Generated to `schemas/<name>.schema.json` by `scripts/generate-schemas.ts`. */
 export const NextSchemas = {
   content: ContentSchema, unit: UnitSchema, building: BuildingSchema, element: ElementSchema,
-  level: LevelSchema, campaign: CampaignSchema, balance: BalanceSchema, manifest: ManifestSchema,
+  level: LevelSchema, campaign: CampaignSchema, balance: BalanceSchema, manifest: ManifestSchema, 'manifest-art': ManifestArtSchema,
 };

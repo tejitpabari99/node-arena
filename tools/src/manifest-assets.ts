@@ -8,7 +8,8 @@ import { join } from 'node:path';
 import { NodeIO, type Document, type Node } from '@gltf-transform/core';
 import { BUDGET_CLASSES, type ManifestV2 } from '@node-arena/content';
 
-import { FRAGMENT_PATH, mergeManifest, stringify, type Fragment } from './assets-tw/manifest-fragment.js';
+import { loadArt } from './assets-tw/merge-cli.js';
+import { ART_PATH, FRAGMENT_PATH, mergeManifest, stringify, type Fragment } from './assets-tw/manifest-fragment.js';
 
 export const MAX_TEXTURE_PX = 256;
 /** Directories wholly produced by `assets:tw` (every file must be in the lock's `outputs`). */
@@ -138,7 +139,9 @@ export async function checkManifestAssets(m: ManifestV2, assetsDir: string, lock
   if (!existsSync(join(assetsDir, FRAGMENT_PATH))) errors.push(`${FRAGMENT_PATH} missing`);
   else {
     const fragment = JSON.parse(await readFile(join(assetsDir, FRAGMENT_PATH), 'utf8')) as Fragment;
-    if (stringify(mergeManifest(m as unknown as Record<string, unknown>, fragment)) !== stringify(m)) errors.push(`manifest.json is not the merge of itself and ${FRAGMENT_PATH} (run pnpm assets:manifest)`);
+    try {
+      if (stringify(mergeManifest(m as unknown as Record<string, unknown>, fragment, loadArt(assetsDir))) !== stringify(m)) errors.push(`manifest.json is not the merge of itself, ${FRAGMENT_PATH} and ${ART_PATH} (run pnpm assets:manifest)`);
+    } catch (e) { errors.push((e as Error).message); }
   }
   return errors;
 }

@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import type { ManifestV2 } from '@node-arena/content';
-import { lightDirFromQuat, lightDirToDataFrame, mergeManifest, stringify, type Fragment } from '../src/assets-tw/manifest-fragment.js';
-import { mergeFiles } from '../src/assets-tw/merge-cli.js';
+import { DEFAULT_EVENT_SFX, lightDirFromQuat, lightDirToDataFrame, mergeManifest, stringify, type Fragment } from '../src/assets-tw/manifest-fragment.js';
+import { loadArt, mergeFiles } from '../src/assets-tw/merge-cli.js';
 import { checkManifestAssets } from '../src/manifest-assets.js';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -77,13 +77,63 @@ test('texture size above 256px is rejected', async () => {
   } finally { done(); }
 });
 
-test('mergeManifest: idempotent, keeps hand-owned parts (sfx, palettes, camera), fragment wins its parts, drops stale fx', () => {
-  const frag: Fragment = { visuals: { v: { a: 1 } }, themes: { t: {} }, fx: { f: {} }, events: { Clash: { fx: 'f' } } };
-  const base = { $schema: 's', schemaVersion: '2.0.0', palettes: { gray: '#888888' }, visuals: { old: 1 }, events: { Clash: { sfx: 'audio/clash.ogg', fx: 'stale' }, LineCut: { sfx: 'audio/cut.ogg' }, Gone: { fx: 'x' } }, camera: { fov: 21 } };
-  const once = mergeManifest(base, frag);
-  assert.deepEqual(once, { $schema: 's', schemaVersion: '2.0.0', palettes: { gray: '#888888' }, visuals: { v: { a: 1 } }, themes: { t: {} }, fx: { f: {} }, events: { Clash: { sfx: 'audio/clash.ogg', fx: 'f' }, LineCut: { sfx: 'audio/cut.ogg' } }, camera: { fov: 21 } });
+const FRAG: Fragment = { visuals: { v: { scale: 1, model: { parts: 'a.glb', budget: 'unit' }, stages: [{ mesh: 'x' }, { mesh: 'y' }] } }, themes: { t: { sky: '#000000' } }, fx: { f: { texture: 'f.png', params: { a: 1, b: 2 } } }, events: { Clash: { fx: 'f' } } };
+const BASE = { $schema: 's', schemaVersion: '2.0.0', palettes: { gray: '#888888' }, visuals: { old: 1 }, events: { Clash: { sfx: 'stale.ogg', fx: 'stale' }, Gone: { fx: 'x' } }, camera: { fov: 21 } };
+
+test('mergeManifest: idempotent, keeps hand-owned palettes/camera, fragment wins its parts, default sfx replace base sfx, drops stale events', () => {
+  const once = mergeManifest(BASE, FRAG);
   assert.deepEqual(Object.keys(once), ['$schema', 'schemaVersion', 'palettes', 'visuals', 'themes', 'fx', 'events', 'camera']);
-  assert.equal(stringify(mergeManifest(once, frag)), stringify(once));
+  assert.deepEqual(once['palettes'], { gray: '#888888' });
+  assert.deepEqual(once['camera'], { fov: 21 });
+  assert.deepEqual(once['visuals'], FRAG.visuals);
+  assert.deepEqual((once['events'] as Record<string, unknown>)['Clash'], { sfx: DEFAULT_EVENT_SFX.Clash, fx: 'f' });
+  assert.equal('Gone' in (once['events'] as object), false);
+  assert.equal(stringify(mergeManifest(once, FRAG)), stringify(once));
+});
+
+test('mergeManifest: no art / empty art is a no-op', () => {
+  assert.equal(stringify(mergeManifest(BASE, FRAG, undefined)), stringify(mergeManifest(BASE, FRAG)));
+  assert.equal(stringify(mergeManifest(BASE, FRAG, {})), stringify(mergeManifest(BASE, FRAG)));
+});
+
+test('mergeManifest: art applies after fragment; objects deep-merge, arrays and scalars replace; inputs untouched', () => {
+  const art = { visuals: { v: { scale: 2, model: { parts: 'b.glb' }, stages: [{ mesh: 'z' }] } }, themes: { t: { sky: '#ffffff' } }, fx: { f: { params: { a: 9 } } } };
+  const before = JSON.stringify(FRAG);
+  const m = mergeManifest(BASE, FRAG, art) as any;
+  assert.deepEqual(m.visuals.v.model, { parts: 'b.glb', budget: 'unit' }); // object merge keeps budget
+  assert.equal(m.visuals.v.scale, 2); // scalar replace
+  assert.deepEqual(m.visuals.v.stages, [{ mesh: 'z' }]); // array replace
+  assert.equal(m.themes.t.sky, '#ffffff');
+  assert.deepEqual(m.fx.f, { texture: 'f.png', params: { a: 9, b: 2 } });
+  assert.equal(JSON.stringify(FRAG), before);
+  assert.equal(stringify(mergeManifest(m, FRAG, art)), stringify(m)); // idempotent over its own output
+});
+
+test('mergeManifest: art sfx overrides the default; removing it restores the default', () => {
+  const withArt = mergeManifest(BASE, FRAG, { events: { Clash: { sfx: 'art/audio/boom.ogg' }, Custom: { sfx: 'art/audio/c.ogg' } } }) as any;
+  assert.equal(withArt.events.Clash.sfx, 'art/audio/boom.ogg');
+  assert.equal(withArt.events.Clash.fx, 'f');
+  assert.equal(withArt.events.Custom.sfx, 'art/audio/c.ogg');
+  const restored = mergeManifest(withArt, FRAG) as any;
+  assert.equal(restored.events.Clash.sfx, DEFAULT_EVENT_SFX.Clash);
+  assert.equal('Custom' in restored.events, false);
+});
+
+test('loadArt / assets:manifest: absent = undefined; fixture patch validates and merge stays a fixed point; bad keys rejected', () => {
+  const { dir, done } = copy();
+  try {
+    assert.equal(loadArt(dir), undefined);
+    const art = { visuals: { 'unit.tank': { scale: 1.5 } }, events: { Clash: { sfx: 'art/audio/boom.ogg' } } };
+    writeFileSync(join(dir, 'manifest.art.json'), JSON.stringify(art));
+    assert.deepEqual(loadArt(dir), art);
+    assert.equal(mergeFiles(dir).current, false); // manifest.json lacks the patch
+    writeFileSync(join(dir, 'manifest.json'), mergeFiles(dir).text);
+    assert.equal(mergeFiles(dir).current, true);
+    for (const bad of [{ visuals: { 'unit.tank': { kind: 'building' } } }, { visuals: { 'unit.tank': { model: { budget: 'unit' } } } }, { visuals: { 'unit.tank': { scale: null } } }, { palettes: {} }, { camera: { fov: 1 } }, { events: { Clash: { fx: 'x' } } }, { bogus: 1 }]) {
+      writeFileSync(join(dir, 'manifest.art.json'), JSON.stringify(bad));
+      assert.throws(() => loadArt(dir), /manifest\.art\.json invalid/, JSON.stringify(bad));
+    }
+  } finally { done(); }
 });
 
 test('committed manifest.json is a fixed point of its merge with manifest.tw.json', () => {
