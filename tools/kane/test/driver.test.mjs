@@ -1,0 +1,239 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { initial, mixed } from './fixtures.mjs';
+import { parseArgs, runDriver } from '../drive.mjs';
+import { kaneRunArgs, readCredits, runKane } from '../lib/kane.mjs';
+
+function harness({ summaries = [initial], balances = [695], claim = 'passed', onRun, sleep } = {}) {
+  let reads = 0, credits = 0, runs = 0, closed = 0, stopped = 0, prepared = 0;
+  const events = [];
+  const page = { port: 9222, pid: 123, headless: true,
+    summary: async () => structuredClone(summaries[Math.min(reads++, summaries.length - 1)]),
+    prepare: async () => { prepared++; }, close: async () => { closed++; } };
+  return { events, stats: () => ({ runs, closed, stopped, prepared }), deps: {
+    emit: (type, fields) => events.push({ type, ...fields }),
+    readCredits: async () => balances[Math.min(credits++, balances.length - 1)],
+    ensurePreviewServer: async () => async () => { stopped++; },
+    launchChrome: async () => page,
+    runKane: async (objective, options) => { runs++; await onRun?.(options); options.onEvent({ step: 1, status: 'done' }); return { code: 0, end: { status: claim, credits_consumed: 9 }, durationMs: 10, stderr: '' }; },
+    sleep: sleep ?? (async () => {}),
+  } };
+}
+const opts = extra => ({ ...parseArgs([]), ...extra });
+
+test('CLI parses full defaults, pnpm separator, seed/speed and validates bounds', () => {
+  const args = parseArgs(['--', '--headless', '--seed', '7', '--speed', '0.5', '--moves', '2']);
+  assert.equal(new URL(args.url).searchParams.get('seed'), '7');
+  assert.equal(new URL(args.url).searchParams.get('speed'), '0.5');
+  assert.equal(args.softwareGl, true); assert.equal(args.moves, 2); assert.equal(args.runTimeout, 150);
+  assert.equal(args.mode, 'attach'); assert.equal(args.maxRuns, 20); assert.equal(args.stallRuns, 3);
+  for (const list of [['--run-timeout', '119'], ['--moves', '0'], ['--port', '99999'], ['--speed', 'NaN'], ['--wat'], ['--url']]) assert.throws(() => parseArgs(list));
+});
+
+test('false PASS stalls from zero accepted moves; raw Kane step preserved and cleanup performed', async () => {
+  const h = harness(); const result = await runDriver(opts({ stallRuns: 2 }), h.deps);
+  assert.equal(result.exitCode, 20); assert.equal(h.stats().runs, 2);
+  assert.equal(h.stats().closed, 1); assert.equal(h.stats().stopped, 1);
+  assert.deepEqual(h.events.find(e => e.type === 'kane').event, { step: 1, status: 'done' });
+  assert.equal(h.events.filter(e => e.type === 'verify').every(e => e.claimMatches === false), true);
+  assert.equal(h.events.at(-1).type, 'driver_end');
+});
+
+test('accepted counter survives ambiguous rejected attribution and reaches max runs', async () => {
+  const h = harness({ summaries: [initial, initial, mixed] });
+  const result = await runDriver(opts({ maxRuns: 1, stallRuns: 1 }), h.deps);
+  assert.equal(result.exitCode, 30); assert.equal(h.events.find(e => e.type === 'verify').acceptedCount, 2);
+  assert.ok(h.events.some(e => e.code === 'ambiguous_delta'));
+});
+
+for (const [result, exitCode] of [['won', 0], ['lost', 10], ['timeout', 11]]) test(`ground truth ${result} beats Kane failure`, async () => {
+  const h = harness({ summaries: [initial, initial, { ...initial, result }], claim: 'failed' });
+  const outcome = await runDriver(opts(), h.deps);
+  assert.equal(outcome.exitCode, exitCode); assert.equal(h.stats().runs, 1);
+  assert.equal(h.events.find(e => e.type === 'game_over').result, result);
+});
+
+test('initial credit floor and auth failure prevent preview, Chrome and paid run', async () => {
+  for (const failure of [false, true]) {
+    const h = harness();
+    if (failure) h.deps.readCredits = async () => { throw new Error('unauthenticated'); };
+    const result = await runDriver(opts({ minCredits: 99999 }), h.deps);
+    assert.equal(result.exitCode, 21); assert.equal(h.stats().runs, 0); assert.equal(h.stats().stopped, 0);
+    assert.equal(h.events.at(-1).type, 'driver_end');
+  }
+});
+
+test('credit floor is checked again before every paid run', async () => {
+  const h = harness({ balances: [695, 695, 100] });
+  assert.equal((await runDriver(opts(), h.deps)).exitCode, 21); assert.equal(h.stats().runs, 1);
+});
+
+test('idle polling is local and bounded with zero paid runs', async () => {
+  const h = harness({ summaries: [{ ...initial, pairs: [] }] });
+  const result = await runDriver(opts({ idleMax: 4 }), h.deps);
+  assert.equal(result.exitCode, 20); assert.equal(h.stats().runs, 0);
+  assert.deepEqual(h.events.filter(e => e.type === 'idle').map(e => e.waitedS), [0, 2, 4]);
+});
+
+test('dry run emits required events and never calls Kane run', async () => {
+  const h = harness(); assert.equal((await runDriver(opts({ dryRun: true }), h.deps)).exitCode, 20);
+  for (const type of ['driver_start', 'chrome_ready', 'page_ready', 'state', 'run_start', 'driver_end']) assert.ok(h.events.some(e => e.type === type), type);
+  assert.equal(h.stats().runs, 0);
+});
+
+test('aborted paid run and event sink failures clean up all owned resources', async () => {
+  for (const failLog of [false, true]) {
+    const abort = new AbortController(); const h = harness({ onRun: async options => { abort.abort(new Error('SIGTERM')); options.signal.throwIfAborted(); } });
+    if (failLog) { const emit = h.deps.emit; h.deps.emit = (type, fields) => { if (type === 'run_start') throw new Error('EIO'); emit(type, fields); }; }
+    assert.equal((await runDriver(opts(), { ...h.deps, signal: abort.signal })).exitCode, 1);
+    assert.equal(h.stats().closed, 1); assert.equal(h.stats().stopped, 1); assert.equal(h.events.at(-1).type, 'driver_end');
+  }
+});
+
+test('unknown game results fail instead of masquerading as max runs', async () => {
+  const h = harness({ summaries: [{ ...initial, result: 'PASS' }] });
+  assert.equal((await runDriver(opts(), h.deps)).exitCode, 1); assert.equal(h.stats().runs, 0);
+});
+
+test('Kane arguments match bounded PRD contract and child has codex user agent', async () => {
+  const args = kaneRunArgs('strategy', opts());
+  assert.deepEqual(args, ['run', 'strategy', '--cdp-endpoint', 'http://127.0.0.1:9222', '--allow-missing-url', '--agent', '--max-steps', '8', '--timeout', '150', '--assertion-mode', 'dom', '--final-validation', 'off', '--bug-detection', 'off']);
+  let captured; const events = [];
+  const result = await runKane('strategy', { ...opts(), onEvent: e => events.push(e), runProcessImpl: async (cmd, argv, options) => {
+    captured = { cmd, argv, options }; options.onStdout('{"step":1,"sta'); options.onStdout('tus":"done"}\n{"type":"run_end","status":"passed","credits_consumed":9}');
+    return { code: 0, stdout: '', stderr: '' };
+  } });
+  assert.equal(captured.options.env.KANE_CLI_USER_AGENT, 'codex'); assert.equal(events.length, 2); assert.equal(result.end.credits_consumed, 9);
+  assert.equal(await readCredits({ runProcessImpl: async () => ({ code: 0, stdout: 'Available credits: 695.2', stderr: '' }) }), 695.2);
+  await assert.rejects(readCredits({ runProcessImpl: async () => ({ code: 1, stdout: '', stderr: 'auth' }) }), /auth/);
+});
+
+test('CDP read failure exits22 and not-ready preparation exits23 with cleanup', async () => {
+  for (const exitCode of [22, 23]) {
+    const h = harness();
+    h.deps.launchChrome = async () => ({ port: 9222, close: async () => { h.cleaned = true; }, summary: async () => structuredClone(initial), prepare: async () => { throw Object.assign(new Error('CDP/page failure'), exitCode === 23 ? { exitCode: 23 } : {}); } });
+    assert.equal((await runDriver(opts(), h.deps)).exitCode, exitCode); assert.equal(h.cleaned, true);
+  }
+});
+
+test('failure claiming CDP connection exits22, bounded with no-fallback', async () => {
+  const h = harness();
+  h.deps.runKane = async () => ({ code: 1, stderr: 'ECONNREFUSED endpoint', end: { status: 'failed' }, durationMs: 1 });
+  assert.equal((await runDriver(opts({ noFallback: true }), h.deps)).exitCode, 22);
+});
+
+test('game-over winner is read from shipped summary.over.winner', async () => {
+  const h = harness({ summaries: [{ ...initial, result: 'won', over: { winner: 0, reason: 'elimination' } }] });
+  assert.equal((await runDriver(opts(), h.deps)).exitCode, 0);
+  assert.equal(h.events.find(e => e.type === 'game_over').winner, 0);
+});
+
+test('explicit paid-run auth refusal maps21 while grounded win still wins', async () => {
+  for (const won of [false, true]) {
+    const h = harness({ summaries: won ? [initial, initial, { ...initial, result: 'won' }] : [initial] });
+    h.deps.runKane = async () => ({ code: 3, stderr: 'Unauthorized: token expired, please login', end: { status: 'failed', reason_code: 'AUTH_REQUIRED' }, durationMs: 1 });
+    assert.equal((await runDriver(opts(), h.deps)).exitCode, won ? 0 : 21);
+  }
+});
+
+test('Kane output sink error aborts the owned process immediately', async () => {
+  await assert.rejects(runKane('strategy', { ...opts(), onEvent: () => { throw new Error('log EIO'); }, runProcessImpl: async (cmd, argv, options) => {
+    options.onStdout('{"step":1,"status":"running"}\n');
+    assert.equal(options.signal.aborted, true);
+    options.signal.throwIfAborted();
+  } }), /log EIO/);
+});
+
+test('unavailable preview is page-not-ready23 before starting Chrome', async () => {
+  const h = harness(); h.deps.ensurePreviewServer = async () => { throw new Error('Preview unavailable'); };
+  assert.equal((await runDriver(opts(), h.deps)).exitCode, 23);
+  assert.equal(h.stats().runs, 0); assert.equal(h.stats().closed, 0);
+});
+
+for (const [name, balances, charge, expectedRuns, expectedSpend] of [
+  ['reported charges with lagging healthy balance', [100533], 75, 2, 150],
+  ['balance debit with small reported charge', [100533, 100533, 100380], 1, 1, 153],
+  ['pre-spend balance debit', [100533, 100380], 1, 0, 153],
+]) test(`150-credit match budget stops paid calls: ${name}`, async () => {
+  const h = harness({ balances }); let calls = 0;
+  h.deps.runKane = async () => { calls++; return { code: 0, end: { status: 'passed', credits_consumed: charge } }; };
+  const result = await runDriver(opts({ stallRuns: 20 }), h.deps);
+  assert.equal(result.exitCode, 21); assert.equal(calls, expectedRuns); assert.equal(result.creditsUsed, expectedSpend);
+  assert.ok(h.events.some(event => event.code === 'credit_budget' && /150/.test(event.msg)));
+});
+
+test('invalid reported charges cannot poison the budget and dry run spends nothing', async () => {
+  for (const charge of [-20, NaN, Infinity, '150', null]) {
+    const h = harness({ balances: [100533] }); let calls = 0;
+    h.deps.runKane = async () => { calls++; return { code: 0, end: { status: 'passed', credits_consumed: charge } }; };
+    const result = await runDriver(opts({ maxRuns: 2, stallRuns: 20 }), h.deps);
+    assert.equal(result.exitCode, 30); assert.equal(calls, 2); assert.equal(result.creditsUsed, 0);
+  }
+  const h = harness({ balances: [100533] });
+  const result = await runDriver(opts({ dryRun: true }), h.deps);
+  assert.equal(result.exitCode, 20); assert.equal(result.creditsUsed, 0); assert.equal(h.stats().runs, 0);
+});
+
+test('grounded win remains authoritative when the last run reaches credit budget', async () => {
+  const h = harness({ summaries: [initial, initial, { ...initial, result: 'won' }], balances: [100533] });
+  h.deps.runKane = async () => ({ code: 0, end: { status: 'failed', credits_consumed: 151 } });
+  const result = await runDriver(opts(), h.deps);
+  assert.equal(result.exitCode, 0); assert.equal(result.creditsUsed, 151);
+});
+
+test('launch mode shares the same between-call credit budget across fresh games', async () => {
+  const h = harness({ balances: [100533] }); let calls = 0;
+  h.deps.runLaunchKane = async () => { calls++; return { response: { code: 0, end: { status: 'passed', credits_consumed: 80 } }, before: structuredClone(initial), after: structuredClone(mixed) }; };
+  const result = await runDriver(opts({ mode: 'launch', stallRuns: 20 }), h.deps);
+  assert.equal(result.exitCode, 21); assert.equal(calls, 2); assert.equal(result.creditsUsed, 160);
+});
+
+// Rehearsal: strict action mode false-stopped on an imagined red banner even
+// though CDP showed two accepted routes and no rejection. R2 permits dropping it.
+test('rehearsal keeps attach and launch out of strict action mode after false banner stop', () => {
+  for (const mode of ['attach', 'launch']) {
+    const args = kaneRunArgs('strategy', opts({ mode }));
+    assert.equal(args.includes('--mode'), false);
+    assert.equal(args.includes('--agent'), true);
+    assert.equal(args[args.indexOf('--bug-detection') + 1], 'off');
+  }
+});
+
+const pendingCapture = () => ({ ...structuredClone(initial), pairs: [{ from: 'A', to: 'C', state: 'active' }] });
+const captureOpened = () => {
+  const value = structuredClone(initial);
+  value.letters.forEach(row => { if (row.owner < 0) row.owner = 0; });
+  value.letters[1].owner = 1;
+  value.pairs = [{ from: 'C', to: 'B', state: 'ready' }];
+  return value;
+};
+
+test('pending neutral capture settles freely, opens an attack and refreshes credits before spending', async () => {
+  const pending = pendingCapture(), opened = captureOpened(), waits = [];
+  const h = harness({ summaries: [pending, pending, opened, { ...opened, result: 'won' }], sleep: async ms => waits.push(ms) });
+  assert.equal((await runDriver(opts(), h.deps)).exitCode, 0);
+  assert.deepEqual(waits, [2000]);
+  assert.equal(h.events.find(e => e.type === 'run_start').phase, 'attack');
+  assert.equal(h.stats().runs, 1);
+  const paid = h.events.findIndex(e => e.type === 'run_start');
+  assert.equal(h.events.slice(0, paid).filter(e => e.type === 'credits').length, 3);
+});
+
+test('settling honors game result and a newly depleted credit floor without any paid call', async () => {
+  const pending = pendingCapture(), opened = captureOpened();
+  const won = harness({ summaries: [pending, pending, { ...pending, result: 'won' }] });
+  assert.equal((await runDriver(opts(), won.deps)).exitCode, 0);
+  assert.equal(won.stats().runs, 0);
+  const floor = harness({ summaries: [pending, pending, opened], balances: [695, 695, 100] });
+  assert.equal((await runDriver(opts(), floor.deps)).exitCode, 21);
+  assert.equal(floor.stats().runs, 0);
+});
+
+test('pending neutral settling is capped at thirty seconds or idle-max then preserves cut fallback', async () => {
+  for (const idleMax of [4, 100]) {
+    const waits = [], h = harness({ summaries: [pendingCapture()], sleep: async ms => waits.push(ms) });
+    assert.equal((await runDriver(opts({ idleMax, maxRuns: 1 }), h.deps)).exitCode, 30);
+    assert.equal(waits.reduce((sum, ms) => sum + ms, 0), Math.min(idleMax, 30) * 1000);
+    assert.equal(h.events.find(e => e.type === 'run_start').phase, 'cut');
+  }
+});

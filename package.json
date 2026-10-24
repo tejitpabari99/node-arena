@@ -65,7 +65,10 @@
     "assets:capture:web": "node tools/assets/capture/sp08.mjs",
     "campaign:verify": "pnpm --filter @node-arena/web campaign:verify",
     "check:docs": "pnpm --filter @node-arena/tools check:docs",
-    "check:kane-bundle": "node scripts/check-kane-bundle.mjs"
+    "kane:replay": "node tools/kane/replay.mjs",
+    "check:kane-bundle": "node scripts/check-kane-bundle.mjs",
+    "kane:play": "node tools/kane/drive.mjs",
+    "kane:credits": "node tools/kane/drive.mjs --credits-only"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
