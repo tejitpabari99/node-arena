@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { ItemProperties } from './Properties.js';
 import type { DocOp, LibraryItem } from './model.js';
 import type { LevelDoc } from './document.js';
 import type { Point, Selection } from './picking.js';
@@ -25,6 +26,10 @@ export function Viewport({ doc, onEdit, disabled = false }: { doc: LevelDoc; onE
       }}>{item.replace('obstacle-', 'Obstacle ')}</button>)}
       <p>Drag an item onto the view. Drag a selected item to move it.</p>
       <button disabled={disabled || selection.length !== 1} onClick={() => { if (selection[0]) onEdit?.({ type: 'delete', target: selection[0] }); }}>Delete selected</button>
+      <label>Selected item<select aria-label="Selected item" value={selection.length === 1 ? `${selection[0]!.kind}:${selection[0]!.id}` : ''} onChange={event => {
+        const [kind, id] = event.currentTarget.value.split(':');
+        viewport.current?.select(id ? [{ kind: kind as Selection['kind'], id }] : []);
+      }}><option value="">No single selection</option>{doc.buildings.map(item => <option key={item.id} value={`building:${item.id}`}>Building {item.id}</option>)}{doc.elements.map(item => <option key={item.id} value={`obstacle:${item.id}`}>Obstacle {item.id}</option>)}</select></label>
       <h3>View</h3>
       <button onClick={() => viewport.current?.zoomBy(1.2)} aria-label="Zoom in">+</button>{' '}
       <button onClick={() => viewport.current?.zoomBy(1 / 1.2)} aria-label="Zoom out">−</button>
@@ -35,6 +40,6 @@ export function Viewport({ doc, onEdit, disabled = false }: { doc: LevelDoc; onE
       <p aria-live="off">{pointer ? `x ${pointer.x.toFixed(2)} · z ${pointer.z.toFixed(2)}` : 'Ground coordinates'}</p>
       <p role="status" data-testid="viewport-status">{status.message}{status.rebuildMs !== undefined ? ` · ${status.rebuildMs.toFixed(1)} ms` : ''}</p>
     </aside>
-    <div ref={host} class="editor-workspace" aria-label="Edit viewport" />
+    <div><div ref={host} class="editor-workspace" aria-label="Edit viewport" /><ItemProperties doc={doc} selection={selection} onEdit={op => onEdit?.(op)} disabled={disabled} /></div>
   </div>;
 }

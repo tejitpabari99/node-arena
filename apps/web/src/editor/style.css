@@ -23,3 +23,8 @@ body { margin: 0; }
 @media (max-width: 700px) { .editor-shell { padding: 12px; } .editor-view-layout { grid-template-columns: 150px minmax(0, 1fr); gap: 8px; } }
 .editor-library-item { display: block; width: 100%; margin-bottom: 6px; touch-action: none; }
 .editor-ghost { position: absolute; z-index: 2; transform: translate(-50%, -50%); min-width: 44px; min-height: 32px; padding: 6px; box-sizing: border-box; border: 2px solid #c4e8ff; background: #78bdff66; color: white; font-size: 11px; pointer-events: none; }
+
+.editor-properties { margin: 16px 0; padding: 12px; background: #1e293b; border: 1px solid #475569; border-radius: 6px; }
+.editor-properties summary { cursor: pointer; }
+.editor-properties fieldset { min-width: 0; border: 1px solid #475569; }
+.editor-script-banner { padding: 12px; border: 1px solid #fbbf24; background: #713f12; }

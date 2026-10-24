@@ -3,13 +3,15 @@ import { validateEditorDocument } from '../../../../tools/src/editor-validation.
 import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { LevelPropertiesForm } from './Properties.js';
 import { Viewport } from './Viewport.js';
 import { EditorApiError, listLevels, readLevel, saveLevel, type LevelListing } from './api.js';
-import { createHistory, historyReducer, type DocHistory, type HistoryAction } from './model.js';
+import { createHistory, historyReducer, scriptRemovalMessages, type DocHistory, type HistoryAction } from './model.js';
 import { blankDocument, copyDocument, type LevelDoc, type SizePreset } from './document.js';
 
 /** Owns immutable working-copy snapshots; forms and Play attach here. */
 export function Editor() {
+  const [choices, setChoices] = useState<{ themes: string[]; colors: string[] }>({ themes: [], colors: [] });
   const [levels, setLevels] = useState<LevelListing[]>([]);
   const [history, setHistory] = useState<DocHistory | null>(null);
   const doc = history?.present ?? null;
@@ -50,6 +52,7 @@ export function Editor() {
     return `${match[1]} ${item?.id ?? match[2]} (${issue.pointer})`;
   }
   useEffect(() => {
+    void loadManifest().then(manifest => setChoices({ themes: Object.keys(manifest.themes), colors: Object.keys(manifest.palettes) })).catch(reason => setError(String(reason)));
     void listLevels().then(items => {
       setLevels(items); setCopyId(items[0]?.id ?? '');
       setReopenId(items.find(item => item.id.startsWith('na-'))?.id ?? '');
@@ -76,11 +79,13 @@ export function Editor() {
     {error && <p role="alert">{error}</p>}
     {doc ? <section aria-label="Working level">
       <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
+      {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
       {issues.length > 0 && <ul role="alert" aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
       {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
       {saved && <p role="status">Saved. Run Finalize when ready to update content locks.</p>}
       <p>{doc.name}</p>
       <p data-testid="draft-summary">{doc.theme} · {doc.players.length} players · {doc.buildings.length} buildings · {doc.elements.length} obstacles</p>
+      <LevelPropertiesForm doc={doc} onEdit={op => dispatch({ type: 'edit', op })} themes={choices.themes} colors={choices.colors} disabled={busy} />
       <Viewport doc={doc} disabled={busy} onEdit={op => dispatch({ type: 'edit', op })} />
     </section> : <>
       <p>Create a blank level, copy an existing level, or reopen a custom level.</p>

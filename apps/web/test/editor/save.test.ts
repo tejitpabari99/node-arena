@@ -111,3 +111,14 @@ it('refuses imported, traversal and arbitrary non-na write identities', async ()
   for (const id of ['levelview-1', '../escape', 'other', 'na-UPPER']) expect((await save(id, original)).status).toBe(400);
   expect(await disk('levelview-1')).toBe(before);
 });
+
+it('saves after deleting a script-referenced building, with undo restoring the script', async () => {
+  const { createHistory, historyReducer } = await import('../../src/editor/model.js');
+  const doc = structuredClone(original); doc.id = 'na-delete-script';
+  (doc.players[1]!.bot as SeatBot).script = [{ op: 'line', own: doc.buildings[0]!.id, target: doc.buildings[1]!.id, afterMs: 0 }];
+  const state = historyReducer(createHistory(doc), { type: 'edit', op: { type: 'delete', target: { kind: 'building', id: doc.buildings[0]!.id } } });
+  const result = await save(doc.id, state.present);
+  expect(result.status, await result.clone().text()).toBe(200);
+  expect((JSON.parse(await disk(doc.id)) as NextLevel).players[1]!.bot).not.toHaveProperty('script');
+  expect(historyReducer(state, { type: 'undo' }).present).toEqual(doc);
+});

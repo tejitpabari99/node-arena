@@ -1,12 +1,17 @@
+import type { SeatBot } from '@node-arena/content';
 import type { LevelDoc } from './document.js';
 import { roundCoordinate, type Point, type Selection } from './picking.js';
 export type LibraryItem = 'house-wt1' | 'house-wt2' | 'tower' | 'obstacle-small' | 'obstacle-big';
-export type DocOp = { type: 'place'; item: LibraryItem; pos: Point } | { type: 'move'; target: Selection; pos: Point } | { type: 'delete'; target: Selection };
+export type LevelProperties = Pick<LevelDoc, 'name' | 'theme' | 'timeLimitSec' | 'players'>;
+export type DocOp = { type: 'level-properties'; value: LevelProperties } | { type: 'building-properties'; id: string; value: Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined } } | { type: 'obstacle-properties'; id: string; value: { variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined } } | { type: 'place'; item: LibraryItem; pos: Point } | { type: 'move'; target: Selection; pos: Point } | { type: 'delete'; target: Selection };
 export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[] }
 export type HistoryAction = { type: 'edit'; op: DocOp } | { type: 'undo' } | { type: 'redo' };
 export const createHistory = (present: LevelDoc): DocHistory => ({ past: [], present, future: [] });
 /** Pure structural edits; drag previews never enter this reducer. */
 export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
+  if (op.type === 'level-properties') return { ...doc, ...op.value };
+  if (op.type === 'building-properties') return { ...doc, buildings: doc.buildings.map(item => item.id === op.id ? cleanOptional({ ...item, ...op.value }) as LevelDoc['buildings'][number] : item) };
+  if (op.type === 'obstacle-properties') return { ...doc, elements: doc.elements.map(item => item.id === op.id ? cleanOptional({ ...item, ...op.value }) as LevelDoc['elements'][number] : item) };
   if (op.type === 'place') {
     const ids = new Set([...doc.buildings, ...doc.elements].map(item => item.id));
     const obstacle = op.item.startsWith('obstacle-');
@@ -19,7 +24,15 @@ export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
   const key = op.target.kind === 'building' ? 'buildings' : 'elements';
   const entries = doc[key], index = entries.findIndex(item => item.id === op.target.id);
   if (index < 0) return doc;
-  if (op.type === 'delete') return { ...doc, [key]: entries.filter((_, i) => i !== index) };
+  if (op.type === 'delete') {
+    const players = op.target.kind === 'building' ? doc.players.map(player => {
+      const sourceBot = player.bot as SeatBot | undefined;
+      if (!sourceBot?.script?.some(command => command.op === 'line' ? command.own === op.target.id || command.target === op.target.id : command.op === 'steps' && stepReferences(command.root, op.target.id))) return player;
+      const bot = { ...sourceBot }; delete bot.script;
+      return { ...player, bot };
+    }) : doc.players;
+    return { ...doc, players, [key]: entries.filter((_, i) => i !== index) };
+  }
   const pos = { x: roundCoordinate(op.pos.x), z: roundCoordinate(op.pos.z) };
   if (entries[index]!.pos.x === pos.x && entries[index]!.pos.z === pos.z) return doc;
   return { ...doc, [key]: entries.map((item, i) => i === index ? { ...item, pos } : item) };
@@ -37,4 +50,20 @@ export function historyReducer(state: DocHistory, action: HistoryAction): DocHis
   }
   const present = reduceDocument(state.present, action.op);
   return present === state.present ? state : { past: [...state.past, state.present].slice(-100), present, future: [] };
+}
+
+function stepReferences(node: { own?: string | null; target?: string | null; then?: unknown[] }, id: string): boolean {
+  return node.own === id || node.target === id || !!node.then?.some(child => stepReferences(child as typeof node, id));
+}
+
+/** Derive notices from the same snapshots as undo: no UI state can outlive its edit. */
+export function scriptRemovalMessages(state: DocHistory): string[] {
+  const before = state.past.at(-1);
+  if (!before) return [];
+  return state.present.players.flatMap((player, index) => (before.players.find(p => p.id === player.id)?.bot as SeatBot | undefined)?.script?.length && player.bot && !(player.bot as SeatBot).script ? [`AI ${index + 1} script removed`] : []);
+}
+
+function cleanOptional<T extends object>(value: T): T {
+  for (const key of Object.keys(value) as (keyof T)[]) if (value[key] === undefined) delete value[key];
+  return value;
 }

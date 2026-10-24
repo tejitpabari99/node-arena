@@ -1,3 +1,4 @@
+import type { SeatBot } from '@node-arena/content';
 import { expect, it } from 'vitest';
 import { blankDocument } from '../../src/editor/document.js';
 import * as model from '../../src/editor/model.js';
@@ -48,4 +49,34 @@ it('avoids collision with reopened building and obstacle ids', () => {
   doc.elements = [{ id: 'b0', archetype: 'obstacle', variant: 'small', yawDeg: 0, pos: { x: 0, z: 0 } }];
   const next = model.reduceDocument(doc, { type: 'place', item: 'tower', pos: { x: 2, z: 2 } });
   expect(next.buildings[0]!.id).not.toBe('b0');
+});
+
+it('removes only scripts referencing deleted buildings including nested steps in one undo step', () => {
+  const doc = blankDocument('na-script', 'green', 'medium');
+  doc.buildings = [
+    { id: 'b0', archetype: 'house-wt1', pos: { x: 0, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
+    { id: 'b1', archetype: 'house-wt1', pos: { x: 4, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
+  ];
+  (doc.players[1]!.bot! as SeatBot).script = [{ op: 'delay', ms: 100 }, { op: 'steps', root: { goal: 'none', then: [{ goal: 'capture', target: 'b0' }] } }];
+  doc.players.push({ id: 'p3', kind: 'ai', colorKey: 'green', bot: { kind: 'tw', actionDelayMs: 4000, behavior: 'full', script: [{ op: 'line', own: 'b1', target: null, afterMs: 0 }] } });
+  let state = model.historyReducer(model.createHistory(doc), { type: 'edit', op: { type: 'delete', target: { kind: 'building', id: 'b0' } } });
+  expect((state.present.players[1]!.bot! as SeatBot).script).toBeUndefined();
+  expect(state.present.players[2]).toEqual(doc.players[2]);
+  expect(state.past).toHaveLength(1);
+  expect(model.scriptRemovalMessages(state)).toEqual(['AI 2 script removed']);
+  state = model.historyReducer(state, { type: 'undo' });
+  expect(state.present).toEqual(doc);
+  expect(model.scriptRemovalMessages(state)).toEqual([]);
+  state = model.historyReducer(state, { type: 'redo' });
+  expect(model.scriptRemovalMessages(state)).toEqual(['AI 2 script removed']);
+});
+
+it('removes line own/target scripts but ignores unrelated buildings and obstacle identities', () => {
+  for (const ref of ['own', 'target'] as const) {
+    const doc = blankDocument('na-script', 'green', 'medium');
+    doc.buildings = [{ id: 'b0', archetype: 'tower', pos: { x: 0, z: 0 }, owner: null, level: 1, ignoreForWin: false }];
+    (doc.players[1]!.bot! as SeatBot).script = [{ op: 'line', own: null, target: null, afterMs: 0, [ref]: 'b0' }];
+    expect((model.reduceDocument(doc, { type: 'delete', target: { kind: 'building', id: 'b0' } }).players[1]!.bot as SeatBot).script).toBeUndefined();
+    expect(model.reduceDocument(doc, { type: 'delete', target: { kind: 'building', id: 'absent' } })).toBe(doc);
+  }
 });

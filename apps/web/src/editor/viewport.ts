@@ -194,7 +194,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       level = next; sim = nextSim;
       scene.update({ view: sim.view, troops: createTroopBuffer(0), n: 0, alpha: 0, towerRadiusMilli: sim.towerRadiusMilli.bind(sim) }, [], 0);
       const rebuiltAt = performance.now();
-      frameCamera(); choose(nextSelection);
+      frameCamera(); choose(selection);
       report({ message: 'Ready', rebuildMs: rebuiltAt - start, compileMs: compiledAt - start, sceneMs: sceneAt - compiledAt, firstFrameMs: performance.now() - start });
     } catch (error) {
       if (disposed || token !== generation) return;
@@ -205,7 +205,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     /** Serializes asset rebuilds; superseded requests are skipped, and no stale result enables picking. */
     setDocument(doc: LevelDoc) { const token = ++generation; pending = pending.then(() => rebuild(doc, token)); return pending; },
     beginPlacement(item: LibraryItem, pointerId: number) { cancel(); placement = { item, id: pointerId }; },
-    zoomBy, gameCamera, pick, groundAt: at,
+    zoomBy, gameCamera, pick, groundAt: at, select: choose,
     get inspection() { return scene; },
     get previewSim() { return sim; },
     get selected() { return selection; },
