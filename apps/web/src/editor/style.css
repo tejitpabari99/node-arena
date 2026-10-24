@@ -43,3 +43,4 @@ body { background: #111827; }
 .editor-play-ui button, .editor-play-ui a { pointer-events: auto; }
 .editor-play-bar { position: absolute; z-index: 1; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 12px; padding: 8px; background: #111827dd; border-radius: 8px; font: 13px system-ui, sans-serif; }
 .editor-play-bar button { background: #244f88; padding: 10px; border-radius: 5px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

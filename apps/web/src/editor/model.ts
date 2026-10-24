@@ -17,7 +17,7 @@ export type DocOp =
   | { type: 'move'; target: Selection; pos: Point }
   | { type: 'delete'; target: Selection };
 export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[] }
-export type HistoryAction = { type: 'edit'; op: DocOp } | { type: 'undo' } | { type: 'redo' };
+export type HistoryAction = { type: 'edit'; op: DocOp; area?: { minX: number; maxX: number; minZ: number; maxZ: number } } | { type: 'undo' } | { type: 'redo' };
 export const createHistory = (present: LevelDoc): DocHistory => ({ past: [], present, future: [] });
 /** Pure structural edits; drag previews never enter this reducer. */
 export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {

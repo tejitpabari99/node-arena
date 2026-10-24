@@ -2,14 +2,17 @@ import { ContentLoadError, loadCatalog, type Catalog, type ContentIssue } from '
 import { validateEditorDocument } from '../../../../tools/src/editor-validation.js';
 import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { PlayOverlay } from './PlayOverlay.js';
-import { LevelPropertiesForm } from './Properties.js';
+import { LegacyPanel } from './LegacyPanel.js';
 import { Viewport } from './Viewport.js';
+import { EditorCtx, type EditorContext } from './EditorContext.js';
+import type { EditorViewport, ViewportStatus } from './viewport-engine.js';
+import type { Point, Selection } from './picking.js';
 import type { EditorFinalizeEvent } from '../../../../tools/src/editor-finalize.js';
 import type { EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
 import { finalizeLevel, readFinalizeStatus, checkSolvable, EditorApiError, listLevels, readLevel, saveLevel, type LevelListing } from './api.js';
-import { createHistory, historyReducer, scriptRemovalMessages, type DocHistory, type HistoryAction } from './model.js';
+import { copySelection, createHistory, historyReducer, scriptRemovalMessages, type Clipboard, type DocHistory, type DocOp, type HistoryAction } from './model.js';
 import { blankDocument, copyDocument, type LevelDoc, type SizePreset } from './document.js';
 
 /** Owns immutable working-copy snapshots; forms and Play attach here. */
@@ -18,8 +21,22 @@ export function Editor() {
   const [levels, setLevels] = useState<LevelListing[]>([]);
   const [history, setHistory] = useState<DocHistory | null>(null);
   const doc = history?.present ?? null;
-  function setDoc(next: LevelDoc | null) { setHistory(next ? createHistory(next) : null); }
-  function dispatch(action: HistoryAction) { clearSave(); setHistory(state => state ? historyReducer(state, action) : state); }
+  const openSeq = useRef(0);
+  function setDoc(next: LevelDoc | null) { openSeq.current++; setHistory(next ? createHistory(next) : null); }
+  function dispatch(action: HistoryAction) { if (busy) return; clearSave(); setHistory(state => state ? historyReducer(state, action) : state); }
+  const [selection, setSelection] = useState<Selection[]>([]);
+  const [clipboard, setClipboard] = useState<Clipboard>();
+  const pasteCount = useRef(0);
+  const viewport = useRef<EditorViewport>();
+  const [viewportStatus, setViewportStatus] = useState<ViewportStatus>({ message: 'Loading preview…' });
+  const [losStatus, setLosStatus] = useState('Choose two buildings to preview line of sight.');
+  const [pointer, setPointer] = useState<Point | null>(null);
+  useEffect(() => { setSelection([]); setClipboard(undefined); pasteCount.current = 0; }, [doc?.id]);
+  // 40x30 buildable area around the bounds centre, fixed for the lifetime of an opened document.
+  const area = useMemo(() => {
+    const b = doc?.bounds ?? { minX: 0, maxX: 0, minZ: 0, maxZ: 0 }, cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2;
+    return { minX: cx - 20, maxX: cx + 20, minZ: cz - 15, maxZ: cz + 15 };
+  }, [openSeq.current]);
   const [id, setId] = useState('');
   const [theme, setTheme] = useState('green');
   const [size, setSize] = useState<SizePreset>('medium');
@@ -132,10 +149,19 @@ export function Editor() {
       setDoc(blankDocument(id, theme, size));
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
   }
+  const ctx: EditorContext | null = doc && history ? {
+    doc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, viewportStatus, losStatus,
+    edit: (op: DocOp) => dispatch({ type: 'edit', op, area }),
+    deleteSelection() { if (selection.length === 1) dispatch({ type: 'edit', op: { type: 'delete', target: selection[0]! }, area }); },
+    select: next => { viewport.current?.select(next); },
+    copy() { setClipboard(copySelection(doc, selection)); pasteCount.current = 0; },
+    paste() { if (!clipboard) return; pasteCount.current++; dispatch({ type: 'edit', op: { type: 'paste', clipboard, offset: { x: .5 * pasteCount.current, z: .5 * pasteCount.current } }, area }); },
+    save, saveState: busy ? 'saving' : saved ? 'saved' : 'unsaved', dirty: !saved,
+  } : null;
   return <><main class="editor-shell" inert={playing}>
     <header><h1>Level editor</h1><span>Local development</span><a href="/">Game</a></header>
     {error && <p role="alert">{error}</p>}
-    {doc ? <section aria-label="Working level">
+    {doc && ctx ? <section aria-label="Working level">
       <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => setPlaying(true)}>Play</button><button disabled={busy} onClick={() => void solvable()}>Solvable?</button><button disabled={busy || !saved} onClick={() => void finalize()}>Finalize</button>{proxyAbort.current && <button onClick={() => proxyAbort.current?.abort()}>Cancel check</button>}<button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
       {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
       {issues.length > 0 && <ul role="alert" aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
@@ -152,8 +178,9 @@ export function Editor() {
       </section>}
       <p>{doc.name}</p>
       <p data-testid="draft-summary">{doc.theme} · {doc.players.length} players · {doc.buildings.length} buildings · {doc.elements.length} obstacles</p>
-      <LevelPropertiesForm doc={doc} onEdit={op => dispatch({ type: 'edit', op })} themes={choices.themes} colors={choices.colors} disabled={busy} />
-      <Viewport doc={doc} disabled={busy} onEdit={op => dispatch({ type: 'edit', op })} />
+      <EditorCtx.Provider value={ctx}><LegacyPanel pointer={pointer}>
+        <Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} onPointer={setPointer} />
+      </LegacyPanel></EditorCtx.Provider>
     </section> : <>
       <p>Create a blank level, copy an existing level, or reopen a custom level.</p>
       <label>New level id<input value={id} onInput={event => setId(event.currentTarget.value)} placeholder="na-my-level" /></label>
