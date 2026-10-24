@@ -3,6 +3,7 @@ import { validateEditorDocument } from '../../../../tools/src/editor-validation.
 import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { PlayOverlay } from './PlayOverlay.js';
 import { LevelPropertiesForm } from './Properties.js';
 import { Viewport } from './Viewport.js';
 import { EditorApiError, listLevels, readLevel, saveLevel, type LevelListing } from './api.js';
@@ -25,6 +26,7 @@ export function Editor() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [issues, setIssues] = useState<ContentIssue[]>([]);
   const [warnings, setWarnings] = useState<ContentIssue[]>([]);
   const [saved, setSaved] = useState(false);
@@ -74,11 +76,11 @@ export function Editor() {
       setDoc(blankDocument(id, theme, size));
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
   }
-  return <main class="editor-shell">
+  return <><main class="editor-shell" inert={playing}>
     <header><h1>Level editor</h1><span>Local development</span><a href="/">Game</a></header>
     {error && <p role="alert">{error}</p>}
     {doc ? <section aria-label="Working level">
-      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
+      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => setPlaying(true)}>Play</button><button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
       {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
       {issues.length > 0 && <ul role="alert" aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
       {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
@@ -109,5 +111,5 @@ export function Editor() {
       </div>
       {loading && <p role="status">Loading levels…</p>}
     </>}
-  </main>;
+  </main>{playing && doc && <PlayOverlay doc={doc} onExit={() => setPlaying(false)} />}</>;
 }
