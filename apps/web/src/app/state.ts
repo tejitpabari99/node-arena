@@ -78,6 +78,7 @@ export function createAppController(options: AppOptions) {
         driver=owned;
         created=await options.createRuntime?.({level,manifest,driver:owned,enabled:()=>state.screen==='playing'&&!state.restartPopup&&!finishingOn,zoomed:state.zoomed});
         if(disposed||token!==generation){created?.dispose();owned.dispose();return;}
+        if(api.kaneMode&&owned.pauseReason==='hidden'&&!owned.sim.view.over)owned.resume();
         runtime=created;lastPublication=-Infinity;save.setLastLevel(id);
         state={...state,screen:'playing',loading:false,restartPopup:owned.paused&&!(api.kaneMode&&owned.pauseReason==='hidden'),remainingSeconds:Math.ceil(owned.sim.view.timeLimitTicks/TICK_RATE)};
         runtime?.frame({sim:owned.sim,alpha:0,steps:0,paused:owned.paused});publish();if(options.autoStart!==false)owned.start();

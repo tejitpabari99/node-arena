@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { globSync, readFileSync } from 'node:fs';
 import { createAppController } from '../../src/app/state';
-import type { DriverEnvironment } from '../../src/driver';
+import type { DriverEnvironment, FrameUpdate } from '../../src/driver';
 import { createSaveStore } from '../../src/save';
 import { createKaneController } from '../../src/kane/controller';
 import { createFixtureSim } from '../../src/test-harness/fixtures';
@@ -17,16 +17,21 @@ function fakeDriverEnvironment(initialHidden = false) {
     onVisibilityChange(fn) { target.addEventListener('visibilitychange', fn); return () => target.removeEventListener('visibilitychange', fn); } };
   return { target, environment, visibility(hidden: boolean) { target.hidden = hidden; target.dispatchEvent(new Event('visibilitychange')); } };
 }
-async function setup(kane = true, hidden = false, win = false) {
+function prepare(kane = true, hidden = false, win = false, runtimeReady = async () => {}) {
   const env = fakeDriverEnvironment(hidden), cancel = vi.fn(() => false), refresh = vi.fn();
+  const frames: FrameUpdate[] = [];
   const app = createAppController({ files, ...(kane ? { campaignId: 'kane' } : {}), environment: env.environment,
     loadManifest: async () => manifest, save: createSaveStore({ storage: null }), autoStart: false, resultDelayMs: 60000,
     ...(win ? { createSim: createFixtureSim('win') } : {}), createBotDriver: () => ({ commands: () => [] }),
-    createRuntime: ctx => { controller.bindLevel(ctx.level, ctx.driver); return { frame() {}, tick() {}, refresh, cancel, dispose() {} }; } });
+    createRuntime: async ctx => { await runtimeReady(); controller.bindLevel(ctx.level, ctx.driver); return { frame(update) { frames.push(update); }, tick() {}, refresh, cancel, dispose() {} }; } });
   const controller = createKaneController(app);
   cleanup.push(() => { controller.dispose(); app.dispose(); });
-  await app.boot(); await app.startLevel(app.snapshot().levels[0]!.id);
-  return { app, controller, env, cancel, refresh };
+  return { app, controller, env, cancel, refresh, frames };
+}
+async function setup(kane = true, hidden = false, win = false) {
+  const result = prepare(kane, hidden, win);
+  await result.app.boot(); await result.app.startLevel(result.app.snapshot().levels[0]!.id);
+  return result;
 }
 
 it('Kane hidden pause cancels input without opening a popup, then resumes and publishes phase without a tick', async () => {
@@ -71,4 +76,43 @@ it('visibility never resumes an over match during the delayed result popup', asy
   app.driver!.submit({ type: 'DrawLine', player: 0, from: 0, to: 2 }); app.step();
   env.visibility(true); env.visibility(false);
   expect(app.driver!.pauseReason).toBe('hidden'); expect(app.driver!.sim.view.over?.outcome).toBe('won');
+});
+
+it.each([
+  { restart: false, initialHidden: false },
+  { restart: true, initialHidden: false },
+  { restart: false, initialHidden: true },
+  { restart: true, initialHidden: true },
+])('Kane resumes when visible before asynchronous runtime resolves (restart=$restart, initially hidden=$initialHidden)', async ({ restart, initialHidden }) => {
+  let waiting = false, resolveRuntime!: () => void;
+  const runtimeReady = new Promise<void>(resolve => { resolveRuntime = resolve; });
+  const { app, controller, env, frames } = prepare(true, false, false, async () => { if (waiting) await runtimeReady; });
+  await app.boot();
+  if (restart) await app.startLevel(app.snapshot().levels[0]!.id);
+  env.visibility(initialHidden); waiting = true;
+  const initialFrames = frames.length;
+  const loading = restart ? app.restart() : app.startLevel(app.snapshot().levels[0]!.id);
+  expect(app.snapshot().screen).toBe('boot'); expect(app.snapshot().loading).toBe(true);
+  env.visibility(true); env.visibility(false);
+  expect(app.driver!.pauseReason).toBe('hidden');
+  resolveRuntime(); await loading;
+  expect(app.driver!.paused).toBe(false);
+  expect(app.snapshot().screen).toBe('playing'); expect(app.snapshot().loading).toBe(false);
+  expect(app.snapshot().restartPopup).toBe(false); expect(controller.snapshot().phase).toBe('playing');
+  expect(frames[initialFrames]!.paused).toBe(false);
+  expect(app.driver!.sim.view.tick).toBe(0); expect(app.step()).toBe(1);
+});
+it('Kane stays paused when asynchronous runtime resolves while still hidden', async () => {
+  let resolveRuntime!: () => void;
+  const runtimeReady = new Promise<void>(resolve => { resolveRuntime = resolve; });
+  const { app, controller, env } = prepare(true, true, false, () => runtimeReady);
+  await app.boot();
+  const loading = app.startLevel(app.snapshot().levels[0]!.id);
+  expect(app.snapshot().screen).toBe('boot');
+  resolveRuntime(); await loading;
+  expect(app.driver!.pauseReason).toBe('hidden'); expect(app.step()).toBe(0);
+  expect(app.snapshot().restartPopup).toBe(false); expect(controller.snapshot().phase).toBe('paused');
+  env.visibility(false);
+  expect(app.driver!.paused).toBe(false); expect(controller.snapshot().phase).toBe('playing');
+  expect(app.step()).toBe(1);
 });
