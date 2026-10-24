@@ -56,3 +56,35 @@ export async function checkSolvable(level: LevelDoc, onEvent: (event: import('..
     if (!complete || pending.trim()) throw new Error('Proxy stream ended without a complete result');
   } finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
 }
+
+export interface FinalizeStatus { unfinalized: boolean; exitCode: number; output: string }
+export const readFinalizeStatus = (): Promise<FinalizeStatus> => get('status');
+
+export async function finalizeLevel(level: LevelDoc, onEvent: (event: import('../../../../tools/src/editor-finalize.js').EditorFinalizeEvent) => void): Promise<void> {
+  const response = await fetch('/__editor/finalize', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-NA-Editor': '1' },
+    body: JSON.stringify({ id: level.id, level }),
+  });
+  if (!response.ok) {
+    const body = await response.json() as { error?: string };
+    throw new EditorApiError(body.error ?? `Finalize failed (${response.status})`);
+  }
+  if (!response.body) throw new Error('Finalize response has no stream');
+  const reader = response.body.getReader(), decoder = new TextDecoder();
+  let pending = '', complete = false;
+  try {
+    for (;;) {
+      const { value, done } = await reader.read(); pending += decoder.decode(value, { stream: !done });
+      let newline: number;
+      while ((newline = pending.indexOf('\n')) >= 0) {
+        const line = pending.slice(0, newline); pending = pending.slice(newline + 1);
+        const event = JSON.parse(line) as import('../../../../tools/src/editor-finalize.js').EditorFinalizeEvent;
+        onEvent(event);
+        if (event.type === 'error') throw new Error(event.error);
+        if (event.type === 'result') complete = true;
+      }
+      if (done) break;
+    }
+    if (!complete || pending.trim()) throw new Error('Finalize stream ended without a complete result');
+  } finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
+}

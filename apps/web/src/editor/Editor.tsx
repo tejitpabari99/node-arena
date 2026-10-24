@@ -6,8 +6,9 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { PlayOverlay } from './PlayOverlay.js';
 import { LevelPropertiesForm } from './Properties.js';
 import { Viewport } from './Viewport.js';
+import type { EditorFinalizeEvent } from '../../../../tools/src/editor-finalize.js';
 import type { EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
-import { checkSolvable, EditorApiError, listLevels, readLevel, saveLevel, type LevelListing } from './api.js';
+import { finalizeLevel, readFinalizeStatus, checkSolvable, EditorApiError, listLevels, readLevel, saveLevel, type LevelListing } from './api.js';
 import { createHistory, historyReducer, scriptRemovalMessages, type DocHistory, type HistoryAction } from './model.js';
 import { blankDocument, copyDocument, type LevelDoc, type SizePreset } from './document.js';
 
@@ -31,12 +32,15 @@ export function Editor() {
   const [issues, setIssues] = useState<ContentIssue[]>([]);
   const [warnings, setWarnings] = useState<ContentIssue[]>([]);
   const [saved, setSaved] = useState(false);
+  const [finalizeEvents, setFinalizeEvents] = useState<EditorFinalizeEvent[]>([]);
+  const [lockStatus, setLockStatus] = useState<'checking' | 'current' | 'unfinalized' | 'unknown'>('checking');
+  const [lockOutput, setLockOutput] = useState('');
   const [proxyEvents, setProxyEvents] = useState<EditorProxyEvent[]>([]);
   const proxyAbort = useRef<AbortController | null>(null);
   useEffect(() => () => proxyAbort.current?.abort(), []);
   const proxyReport = proxyEvents.find(event => event.type === 'result');
   const catalog = useRef<Promise<Catalog> | undefined>(undefined);
-  function clearSave() { setProxyEvents([]); setIssues([]); setWarnings([]); setSaved(false); }
+  function clearSave() { setLockStatus('checking'); setFinalizeEvents([]); setProxyEvents([]); setIssues([]); setWarnings([]); setSaved(false); }
   async function save() {
     if (!doc) return;
     setBusy(true); setError(''); clearSave();
@@ -51,6 +55,25 @@ export function Editor() {
       else if (reason instanceof EditorApiError && reason.issues.length) setIssues(reason.issues);
       else setError(reason instanceof Error ? reason.message : String(reason));
     } finally { setBusy(false); }
+  }
+  // Each document/save/job transition invalidates old responses. This check never disables editing.
+  useEffect(() => {
+    let active = true;
+    setLockStatus('checking');
+    if (!doc || busy) return;
+    const timer = setTimeout(() => {
+      void readFinalizeStatus().then(status => {
+        if (active) { setLockStatus(status.unfinalized ? 'unfinalized' : 'current'); setLockOutput(status.output); }
+      }).catch(reason => { if (active) { setLockStatus('unknown'); setLockOutput(String(reason)); } });
+    }, 200);
+    return () => { active = false; clearTimeout(timer); };
+  }, [doc, busy]);
+  async function finalize() {
+    if (!doc || !saved) return;
+    setBusy(true); setError(''); setFinalizeEvents([]); setLockStatus('checking');
+    try { await finalizeLevel(doc, event => setFinalizeEvents(events => [...events, event])); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
+    finally { setBusy(false); }
   }
   async function solvable() {
     if (!doc) return;
@@ -81,7 +104,7 @@ export function Editor() {
     try {
       const source = await readLevel(copy ? copyId : reopenId);
       if (copy && levels.some(level => level.id === id)) throw new Error('Choose a new id; that level already exists.');
-      setDoc(copy ? copyDocument(source, id) : source);
+      setDoc(copy ? copyDocument(source, id) : source); setSaved(!copy);
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
     finally { setBusy(false); }
   }
@@ -96,10 +119,13 @@ export function Editor() {
     <header><h1>Level editor</h1><span>Local development</span><a href="/">Game</a></header>
     {error && <p role="alert">{error}</p>}
     {doc ? <section aria-label="Working level">
-      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => setPlaying(true)}>Play</button><button disabled={busy} onClick={() => void solvable()}>Solvable?</button>{proxyAbort.current && <button onClick={() => proxyAbort.current?.abort()}>Cancel check</button>}<button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
+      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => setPlaying(true)}>Play</button><button disabled={busy} onClick={() => void solvable()}>Solvable?</button><button disabled={busy || !saved} onClick={() => void finalize()}>Finalize</button>{proxyAbort.current && <button onClick={() => proxyAbort.current?.abort()}>Cancel check</button>}<button disabled={busy || !history?.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button><button disabled={busy || !history?.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
       {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
       {issues.length > 0 && <ul role="alert" aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
       {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
+      <p role="status" data-testid="finalize-status">{!saved ? 'Unsaved changes. Save before Finalize. ' : ''}{lockStatus === 'unfinalized' ? 'Unfinalized changes on disk.' : lockStatus === 'current' ? 'Content locks current on disk.' : lockStatus === 'checking' ? 'Content status stale; checking…' : 'Content status unavailable; retry after saving or running a job.'}</p>
+      {lockOutput && <details><summary>Content status details</summary><pre>{lockOutput}</pre></details>}
+      {finalizeEvents.length > 0 && <section aria-label="Finalize output" aria-live="polite"><pre>{finalizeEvents.map(event => event.type === 'step' ? `→ ${event.step}\n` : event.type === 'output' ? event.output : event.type === 'error' ? `${event.error}\n` : event.type === 'result' ? 'Finalize complete. Review git diff and commit when ready.\n' : '').join('')}</pre></section>}
       {saved && <p role="status">Saved. Run Finalize when ready to update content locks.</p>}
       {proxyEvents.length > 0 && <section aria-label="Proxy evidence" aria-live="polite">
         <p>Evidence only. Proxy wins do not prove solvability; no wins do not prove impossibility. Owner play and sign-off remain required.</p>

@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -5,6 +6,8 @@ import type { Connect, Plugin } from 'vite';
 import { ContentLoadError } from '@node-arena/content';
 import { EditorSaveError, saveEditorLevel } from '../../../../tools/src/editor-ops.js';
 import { prepareEditorProxy, runEditorProxy, type EditorProxyRunner, type EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
+
+import { editorFinalizeStatus, finalizeEditorLevel, type EditorFinalizeRunner } from '../../../../tools/src/editor-finalize.js';
 
 const MAX_BYTES = 1024 * 1024;
 const WRITABLE_ID = /^na-[a-z0-9-]{1,40}$/;
@@ -69,15 +72,19 @@ function json(res: ServerResponse, status: number, value: unknown): void {
 
 /** Shared with Finalize: acquire synchronously before any awaited preparation. */
 export function createEditorJobGate() {
-  let busy = false;
+  let busy = false, saves = 0, revision = 0;
   return { acquire() {
+    if (busy || saves) throw new EditorHttpError(409, 'An editor job is already running');
+    busy = true; revision++;
+    return () => { busy = false; revision++; };
+  }, acquireSave() {
     if (busy) throw new EditorHttpError(409, 'An editor job is already running');
-    busy = true;
-    return () => { busy = false; };
-  } };
+    saves++; revision++;
+    return () => { saves--; revision++; };
+  }, snapshot() { return { busy: busy || saves > 0, revision }; } };
 }
 const editorJobs = createEditorJobGate();
-export function createEditorMiddleware(levelsDir: string, options: { runProxy?: EditorProxyRunner; jobs?: ReturnType<typeof createEditorJobGate> } = {}): Connect.NextHandleFunction {
+export function createEditorMiddleware(levelsDir: string, options: { runProxy?: EditorProxyRunner; runFinalize?: EditorFinalizeRunner; jobs?: ReturnType<typeof createEditorJobGate> } = {}): Connect.NextHandleFunction {
   async function readLevel(id: string): Promise<{ id: string; name: string }> {
     const path = await editorLevelPath(levelsDir, id);
     if ((await stat(path)).size > MAX_BYTES) throw new EditorHttpError(413, 'Level exceeds 1 MiB');
@@ -92,6 +99,27 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
       checkEditorRequest(req);
       if (req.method === 'POST') {
         const body = await readEditorBody(req);
+        if (path === '/__editor/finalize') {
+          let value: { id?: unknown; level?: unknown };
+          try { value = JSON.parse(body) as typeof value; }
+          catch { throw new EditorHttpError(400, 'Invalid JSON'); }
+          if (!value || typeof value.id !== 'string' || !value.level) throw new EditorHttpError(400, 'Finalize requires an id and saved level');
+          await editorLevelPath(levelsDir, value.id, true);
+          const release = (options.jobs ?? editorJobs).acquire();
+          const controller = new AbortController();
+          const cancel = () => { if (!res.writableEnded) controller.abort(); };
+          res.on('close', cancel);
+          try {
+            if (!isDeepStrictEqual(await readLevel(value.id), value.level)) throw new EditorHttpError(409, 'Save changes before Finalize; disk does not match the draft');
+            if (controller.signal.aborted) return;
+            res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+            res.setHeader('Cache-Control', 'no-store');
+            res.setHeader('X-Accel-Buffering', 'no');
+            await (options.runFinalize ?? finalizeEditorLevel)(resolve(levelsDir, '../../../..'), value.id, event => { if (!res.destroyed) res.write(JSON.stringify(event) + '\n'); }, controller.signal);
+            res.end();
+          } finally { res.off('close', cancel); release(); }
+          return;
+        }
         if (path === '/__editor/solvable') {
           let value: { id?: unknown; level?: unknown };
           try { value = JSON.parse(body) as typeof value; }
@@ -122,12 +150,20 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
           catch { throw new EditorHttpError(400, 'Invalid JSON'); }
           if (!value || typeof value.id !== 'string' || (value.copy !== undefined && typeof value.copy !== 'boolean')) throw new EditorHttpError(400, 'Save requires an id, level and optional copy flag');
           await editorLevelPath(levelsDir, value.id, true);
-          json(res, 200, await saveEditorLevel(resolve(levelsDir, '../..'), value.id, value.level, value.copy === true));
+          const release = (options.jobs ?? editorJobs).acquireSave();
+          try { json(res, 200, await saveEditorLevel(resolve(levelsDir, '../..'), value.id, value.level, value.copy === true)); }
+          finally { release(); }
           return;
         }
       }
       if (req.method !== 'GET') throw new EditorHttpError(405, 'Editor endpoint is read-only');
-      if (path === '/__editor/levels') {
+      if (path === '/__editor/status') {
+        const gate = options.jobs ?? editorJobs, before = gate.snapshot();
+        if (before.busy) throw new EditorHttpError(409, 'Editor status is stale while a job runs');
+        const status = await editorFinalizeStatus(resolve(levelsDir, '../../../..'));
+        if (gate.snapshot().revision !== before.revision) throw new EditorHttpError(409, 'Editor content changed during status check; retry');
+        json(res, 200, status);
+      } else if (path === '/__editor/levels') {
         const files = (await readdir(levelsDir)).filter(file => file.endsWith('.json') && READABLE_ID.test(file.slice(0, -5))).sort();
         const levels = await Promise.all(files.map(async file => {
           const { id, name } = await readLevel(file.slice(0, -5));
