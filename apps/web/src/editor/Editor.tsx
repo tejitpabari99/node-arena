@@ -1,6 +1,10 @@
-import { useEffect, useState } from 'preact/hooks';
+import { ContentLoadError, loadCatalog, type Catalog, type ContentIssue } from '@node-arena/content';
+import { validateEditorDocument } from '../../../../tools/src/editor-validation.js';
+import { contentFiles } from '../app/boot.js';
+import { loadManifest } from '../manifest/load.js';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { Viewport } from './Viewport.js';
-import { listLevels, readLevel, type LevelListing } from './api.js';
+import { EditorApiError, listLevels, readLevel, saveLevel, type LevelListing } from './api.js';
 import { blankDocument, copyDocument, type LevelDoc, type SizePreset } from './document.js';
 
 /** Owns the working document; reducer, forms and Play attach here in later tasks. */
@@ -15,6 +19,32 @@ export function Editor() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [issues, setIssues] = useState<ContentIssue[]>([]);
+  const [warnings, setWarnings] = useState<ContentIssue[]>([]);
+  const [saved, setSaved] = useState(false);
+  const catalog = useRef<Promise<Catalog> | undefined>(undefined);
+  function clearSave() { setIssues([]); setWarnings([]); setSaved(false); }
+  async function save() {
+    if (!doc) return;
+    setBusy(true); setError(''); clearSave();
+    try {
+      catalog.current ??= loadManifest().then(manifest => loadCatalog(contentFiles(), { themes: Object.keys(manifest.themes), colorKeys: Object.keys(manifest.palettes) }));
+      const checked = validateEditorDocument(await catalog.current, doc, doc.id);
+      const result = await saveLevel(checked.level);
+      setDoc(result.level); setWarnings(result.warnings); setSaved(true);
+      const items = await listLevels(); setLevels(items); setReopenId(result.level.id);
+    } catch (reason) {
+      if (reason instanceof ContentLoadError) setIssues(reason.errors);
+      else if (reason instanceof EditorApiError && reason.issues.length) setIssues(reason.issues);
+      else setError(reason instanceof Error ? reason.message : String(reason));
+    } finally { setBusy(false); }
+  }
+  function issueLabel(issue: ContentIssue) {
+    const match = /^\/(buildings|elements|players)\/(\d+)/.exec(issue.pointer);
+    if (!match || !doc) return issue.pointer || 'Level';
+    const item = doc[match[1] as 'buildings' | 'elements' | 'players'][Number(match[2])];
+    return `${match[1]} ${item?.id ?? match[2]} (${issue.pointer})`;
+  }
   useEffect(() => {
     void listLevels().then(items => {
       setLevels(items); setCopyId(items[0]?.id ?? '');
@@ -22,7 +52,7 @@ export function Editor() {
     }).catch(reason => setError(String(reason))).finally(() => setLoading(false));
   }, []);
   async function open(copy: boolean) {
-    setBusy(true); setError('');
+    setBusy(true); setError(''); clearSave();
     try {
       const source = await readLevel(copy ? copyId : reopenId);
       if (copy && levels.some(level => level.id === id)) throw new Error('Choose a new id; that level already exists.');
@@ -31,7 +61,7 @@ export function Editor() {
     finally { setBusy(false); }
   }
   function blank() {
-    setError('');
+    setError(''); clearSave();
     try {
       if (levels.some(level => level.id === id)) throw new Error('Choose a new id; that level already exists.');
       setDoc(blankDocument(id, theme, size));
@@ -41,7 +71,10 @@ export function Editor() {
     <header><h1>Level editor</h1><span>Local development</span><a href="/">Game</a></header>
     {error && <p role="alert">{error}</p>}
     {doc ? <section aria-label="Working level">
-      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button onClick={() => { setDoc(null); setId(''); setError(''); }}>Start screen</button></div>
+      <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button disabled={busy} onClick={() => void save()}>Save</button><button disabled={busy} onClick={() => { setDoc(null); setId(''); setError(''); clearSave(); }}>Start screen</button></div>
+      {issues.length > 0 && <ul role="alert" aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
+      {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
+      {saved && <p role="status">Saved. Run Finalize when ready to update content locks.</p>}
       <p>{doc.name}</p>
       <p data-testid="draft-summary">{doc.theme} · {doc.players.length} players · {doc.buildings.length} buildings · {doc.elements.length} obstacles</p>
       <Viewport doc={doc} />

@@ -52,10 +52,10 @@ it.each(['bad', 'na-', 'na-UPPER', `na-${'a'.repeat(41)}`, '%2e%2e%2fcontent', '
   expect(response.status).toBe(400);
 });
 
-it('caps POST bodies at 1 MiB before dispatching unimplemented write operations', async () => {
+it('caps POST bodies at 1 MiB before parsing Save payloads', async () => {
   const headers = { 'X-NA-Editor': '1', Origin: base.slice(0, -1) };
   const oversized = await fetch(`${base}__editor/save`, { method: 'POST', headers, body: 'x'.repeat(1024 * 1024 + 1) });
   expect(oversized.status).toBe(413);
   const allowed = await fetch(`${base}__editor/save`, { method: 'POST', headers, body: '{}' });
-  expect(allowed.status).toBe(405);
+  expect(allowed.status).toBe(400);
 });

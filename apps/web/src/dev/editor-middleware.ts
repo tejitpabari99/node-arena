@@ -2,6 +2,8 @@ import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Connect, Plugin } from 'vite';
+import { ContentLoadError } from '@node-arena/content';
+import { EditorSaveError, saveEditorLevel } from '../../../../tools/src/editor-ops.js';
 
 const MAX_BYTES = 1024 * 1024;
 const WRITABLE_ID = /^na-[a-z0-9-]{1,40}$/;
@@ -77,7 +79,18 @@ export function createEditorMiddleware(levelsDir: string): Connect.NextHandleFun
     if (path !== '/__editor' && !path.startsWith('/__editor/')) { next(); return; }
     void (async () => {
       checkEditorRequest(req);
-      if (req.method === 'POST') await readEditorBody(req);
+      if (req.method === 'POST') {
+        const body = await readEditorBody(req);
+        if (path === '/__editor/save') {
+          let value: { id?: unknown; level?: unknown; copy?: unknown };
+          try { value = JSON.parse(body) as typeof value; }
+          catch { throw new EditorHttpError(400, 'Invalid JSON'); }
+          if (!value || typeof value.id !== 'string' || (value.copy !== undefined && typeof value.copy !== 'boolean')) throw new EditorHttpError(400, 'Save requires an id, level and optional copy flag');
+          await editorLevelPath(levelsDir, value.id, true);
+          json(res, 200, await saveEditorLevel(resolve(levelsDir, '../..'), value.id, value.level, value.copy === true));
+          return;
+        }
+      }
       if (req.method !== 'GET') throw new EditorHttpError(405, 'Editor endpoint is read-only');
       if (path === '/__editor/levels') {
         const files = (await readdir(levelsDir)).filter(file => file.endsWith('.json') && READABLE_ID.test(file.slice(0, -5))).sort();
@@ -93,7 +106,9 @@ export function createEditorMiddleware(levelsDir: string): Connect.NextHandleFun
         json(res, 200, await readLevel(id));
       } else throw new EditorHttpError(404, 'Unknown editor endpoint');
     })().catch((error: unknown) => {
-      if (error instanceof EditorHttpError) json(res, error.status, { error: error.message });
+      if (error instanceof ContentLoadError) json(res, 422, { error: 'Level validation failed', issues: error.errors });
+      else if (error instanceof EditorSaveError) json(res, error.status, { error: error.message, issues: error.issues });
+      else if (error instanceof EditorHttpError) json(res, error.status, { error: error.message });
       else if (error instanceof Error && 'code' in error && error.code === 'ENOENT') json(res, 404, { error: 'Level not found' });
       else json(res, 500, { error: 'Could not read editor levels' });
     });

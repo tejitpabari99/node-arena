@@ -75,12 +75,12 @@ it('enforces the cap for chunked POST bodies without losing the error response',
   expect(response.status).toBe(413);
   expect(JSON.parse(response.body)).toHaveProperty('error');
   const boundary = await raw('/__editor/save', { method: 'POST', headers: { 'X-NA-Editor': '1', Origin: base }, chunks: ['x'.repeat(1024 * 1024)] });
-  expect(boundary.status).toBe(405);
+  expect(boundary.status).toBe(400);
 });
-it('does not perform writes or leak filesystem paths in missing-file errors', async () => {
+it('rejects malformed saves without writes or filesystem path disclosure', async () => {
   expect((await raw('/__editor/level/na-missing')).status).toBe(404);
   expect((await raw('/__editor/level/na-missing')).body).not.toContain(dir);
   const response = await raw('/__editor/save', { method: 'POST', headers: { 'X-NA-Editor': '1', Origin: base }, chunks: ['{}'] });
-  expect(response.status).toBe(405);
+  expect(response.status).toBe(400);
   expect(await readFile(join(levels, 'na-local.json'), 'utf8')).toBe('{"id":"na-local","name":"Custom"}');
 });

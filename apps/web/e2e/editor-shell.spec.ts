@@ -17,6 +17,9 @@ test('starts blank drafts and copies without retaining source identity', async (
   await browserExpect(page.getByTestId('draft-id')).toHaveText('na-blank');
   await browserExpect(page.getByTestId('draft-summary')).toContainText('snow');
   await browserExpect(page.getByTestId('draft-summary')).toContainText('2 players');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await browserExpect(page.getByRole('alert')).toContainText('/buildings');
+  await browserExpect(page.getByRole('alert')).toContainText('must NOT have fewer than 1 items');
   await page.getByRole('button', { name: 'Start screen' }).click();
   await page.getByLabel('Copy level').selectOption('levelview-1');
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();
