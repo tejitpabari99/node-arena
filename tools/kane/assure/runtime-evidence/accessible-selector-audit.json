@@ -1,0 +1,69 @@
+{
+  "step_md5": "c810a4267f61a8ead1e478c088e52418",
+  "stable_replay_guard_passed": true,
+  "volatile_locators": [],
+  "actions": [
+    {
+      "instruction": "Counting outgoing source groups",
+      "locators": [
+        "internal:testid=[data-testid=\"kane-panel\"s]"
+      ],
+      "selectors": null,
+      "code_js": "el(4).querySelectorAll('section[data-testid=\"kane-group\"]').length"
+    },
+    {
+      "instruction": "Reading the House A group data source",
+      "locators": [
+        "internal:testid=[data-testid=\"kane-group\"s]"
+      ],
+      "selectors": null,
+      "code_js": "el(5).getAttribute('data-source')"
+    },
+    {
+      "instruction": "Reading the House A group role",
+      "locators": [
+        "internal:testid=[data-testid=\"kane-group\"s]"
+      ],
+      "selectors": null,
+      "code_js": "el(5).getAttribute('role')"
+    },
+    {
+      "instruction": "Reading the House A group accessible name",
+      "locators": [
+        "internal:testid=[data-testid=\"kane-group\"s]"
+      ],
+      "selectors": null,
+      "code_js": "el(5).getAttribute('aria-label')"
+    },
+    {
+      "instruction": "Checking whether the tower outgoing source group is present",
+      "locators": [
+        "internal:testid=[data-testid=\"kane-panel\"s]"
+      ],
+      "selectors": null,
+      "code_js": "!!el(4).querySelector('section[data-testid=\"kane-group\"][data-source=\"E\"]')"
+    },
+    {
+      "instruction": "Reading the House A routes heading text",
+      "locators": [
+        "internal:role=heading[name=\"House A routes\"i]"
+      ],
+      "selectors": null,
+      "code_js": "el(6).textContent"
+    },
+    {
+      "instruction": "Reading the A to C button text",
+      "locators": [
+        "internal:role=button[name=\"A \u2192 C \u00b7 ready \u00b7 C: grey\"i]"
+      ],
+      "selectors": null,
+      "code_js": "el(7).textContent"
+    }
+  ],
+  "audit_note": "Initial literal-name-only predicate was conservatively refused; root confirmed equivalent stable panel/group testids qualify. Only the one-off audit predicate changed. No cache/test/store mutation for guard.",
+  "approved_stable_identities": [
+    "kane-panel",
+    "kane-group",
+    "House A routes"
+  ]
+}

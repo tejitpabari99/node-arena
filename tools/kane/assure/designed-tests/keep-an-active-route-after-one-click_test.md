@@ -1,7 +1,7 @@
 ---
 assurance:
   id: t-5
-  base: sha256:55da62e4eb027c33abfdbb9b27341aef7d84d991944fc4eaca6e956aea68d787
+  base: sha256:695d0cc1b4aed001d25c366e7e045dfa7f49d867759113f1d975c431e5341d33
 ---
 # Keep an active route after one click
 
@@ -9,12 +9,10 @@ assurance:
 
 ## Step 1
 
-Open http://localhost:4173/?kane=1&seed=1 in the browser to enter Kane Arena at Speed 0.25x; identify a live green ready pair in the bottom outgoing-routes panel under a human-owned house.
-
+Open http://localhost:4173/?kane=1&seed=1 in the test build of Kane Arena at the default Speed 0.25x. Observe the bottom panel's human-owned house A group without clicking or activating any route. Assert that the A → C button's DOM text contains `ready`.
 ## Step 2
 
-Draw that ready pair and wait for the same outgoing-routes button to display active.
-
+In human-owned house A's bottom-panel outgoing group, click only the A → C ready button once. Wait for that same A → C button's DOM text to contain `active`, then assert that the A → C button's DOM text contains `active`. Take no actions on another source-target pair.
 ## Step 3 @verifies ac-23
 
-On the red active button for that same pair in the outgoing-routes panel, click once, then assert that the pair remains active.
+Single-click that same A → C active button exactly once. Assert that the same A → C button's DOM text still contains `active`. Take no actions on another source-target pair.

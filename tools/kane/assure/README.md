@@ -90,3 +90,7 @@ No paid extraction/design/browser run is part of the runner's unit verification.
 node --test tools/kane/assure/test/*.test.mjs
 bash -n tools/kane/assure/run.sh
 ```
+
+## Measured runtime evidence
+
+[2026-10-24 runtime report](runtime-2026-10-24.md) records approved scope, exact credits and remaining debt. Final recording-only T3/T5 suite passed, authored0; project coverage8.0392%,4/42 criteria proven. T2 rejection and full matches remain owed. Stable accessible identities require app patch52159493; CLI0.10.0-rc.3 alias limitations use the documented direct-file fallback. Full packs and the local context store remain ignored.

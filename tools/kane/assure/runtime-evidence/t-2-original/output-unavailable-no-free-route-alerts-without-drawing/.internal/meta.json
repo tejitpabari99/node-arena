@@ -1,0 +1,25 @@
+{
+  "test_id": "8fe34f4e-4c7e-4aa4-95c9-1f48342eb55b",
+  "project_id": "01M5N386K77DRC6DEG49C3PJ4R",
+  "folder_id": "01M5N38EJSH5GDEH3Y5S401NCW",
+  "org_id": "3396190",
+  "session_name": "unavailable-no-free-route-alerts-without-drawing",
+  "commit_id": "2be92bff-1de7-48f9-b486-c2ee4ce2788f",
+  "testcase_id": "01M5R1FES1HYNTE9JCMND4R1WB",
+  "executions": [
+    {
+      "execution_id": "2014b9f6-621a-47f3-9791-a91e0331d98b",
+      "run_kind": "author",
+      "status": "failed",
+      "valid": true,
+      "at": "2026-10-24T22:51:19.329Z"
+    },
+    {
+      "execution_id": "eced9ee5-dbd6-4473-aa2e-32a7dd1d59ed",
+      "run_kind": "author",
+      "status": "failed",
+      "at": "2026-10-24T22:51:23.708Z",
+      "uploaded": true
+    }
+  ]
+}

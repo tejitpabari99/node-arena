@@ -1,0 +1,86 @@
+{"id":"excerpt","cid":"sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363","label":"source","title":"excerpt","trust":"-","fresh":"fresh"}
+{"id":"uc-3","cid":"sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","label":"usecase","title":"Complete a Kane Arena level","trust":"trusted","fresh":"fresh"}
+{"id":"uc-4","cid":"sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6","label":"usecase","title":"Continue after a match result","trust":"derived","fresh":"fresh"}
+{"id":"uc-2","cid":"sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","label":"usecase","title":"Cut an owned outgoing route","trust":"trusted","fresh":"fresh"}
+{"id":"uc-1","cid":"sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","label":"usecase","title":"Draw a route from an owned house","trust":"trusted","fresh":"fresh"}
+{"id":"sc-2","cid":"sha256:e9cc4b7765ceca1f6f41a923a4ad9b5029ee2660c922d07039aa786fbfbe6928","label":"scenario","title":"Click an unavailable no-free route","trust":"trusted","fresh":"fresh"}
+{"id":"sc-4","cid":"sha256:1ad69efcf29eac2c63d36d86b6bb50b9dd2a896adbb677ae5d150f557ed1e449","label":"scenario","title":"Cut an active owned route after 700 ms","trust":"derived","fresh":"fresh"}
+{"id":"sc-6","cid":"sha256:ee40771cc0f517a314e825336a191bb051e32bc8a4763077ff55305c7ebe5fb1","label":"scenario","title":"Double-click a ready route","trust":"derived","fresh":"fresh"}
+{"id":"sc-3","cid":"sha256:088eeda657739f35bce63f35e84c2357688df79df0d926bcfd74ec7899aa59d3","label":"scenario","title":"Draw a live ready route","trust":"trusted","fresh":"fresh"}
+{"id":"sc-8","cid":"sha256:2ebcf13297ed52fcb2070c9ed92a16bd45103971ca70bc65c556912e2c304989","label":"scenario","title":"Lose after the last required human building falls with troops in transit","trust":"derived","fresh":"fresh"}
+{"id":"sc-1","cid":"sha256:f56ac66ebb8df1ce25abb37de09b71e7f9e299ea6329b524183e10486bb51b55","label":"scenario","title":"Replace a same-owner reverse route","trust":"derived","fresh":"fresh"}
+{"id":"sc-5","cid":"sha256:dc3d9b2fbde415e702634cbaadf11f47492990f930b3d8d9e7f74c5fa5f2a67e","label":"scenario","title":"Single-click an active route","trust":"trusted","fresh":"fresh"}
+{"id":"sc-9","cid":"sha256:22da15df85fc7fb7b00cb1c0099373cb17cfdc4db1acf00fd2a1da81f4560a4f","label":"scenario","title":"Time out a configured Kane level","trust":"derived","fresh":"fresh"}
+{"id":"sc-7","cid":"sha256:f17175812ba008a339fbb9fb01286a0ce80b4bbd765b7dcc39fb9f29d8e78b1a","label":"scenario","title":"Win by capturing every required Kane building","trust":"derived","fresh":"fresh"}
+{"id":"ac-18","cid":"sha256:bb2c762abf72bdeb8eaa84db3217309d30aaf4b31631249f1ea9769701099ef8","label":"ac","title":"A caller who does not own a line cannot cut that line.","trust":"derived","fresh":"fresh"}
+{"id":"ac-7","cid":"sha256:5a8c604b09e5c9af3c2b7b6db08bd7c7800d486f98e36eae362bcf7c9cbf13d4","label":"ac","title":"A draw blocked by an obstacle is rejected.","trust":"derived","fresh":"fresh"}
+{"id":"ac-5","cid":"sha256:c20eae4aeb286c1a61c96a2cd52162c1f6d289737eb7e563c4f4902b9018f2a7","label":"ac","title":"A draw for an ordered source–target pair already connected is rejected.","trust":"derived","fresh":"fresh"}
+{"id":"ac-2","cid":"sha256:da3422b492c97de47046327e614bd37725c50c55d76854151c7d44b5db5238f1","label":"ac","title":"A draw from a source the caller does not own is rejected.","trust":"derived","fresh":"fresh"}
+{"id":"ac-3","cid":"sha256:a990efbd9289c02b0b75a15585bc018a5bb79bf0b41669eddf564bd97683742c","label":"ac","title":"A draw from a tower source is rejected.","trust":"derived","fresh":"fresh"}
+{"id":"ac-4","cid":"sha256:a55685c7549f824aa5bd53b0bbcd8661fe088b58410083b4989a8b0444f670eb","label":"ac","title":"A draw to a nonexistent or identical target is rejected.","trust":"derived","fresh":"fresh"}
+{"id":"ac-6","cid":"sha256:46a27d7ad59aa8a869f209e75e17abf55aa7115c7d18ea2c582735e952305c55","label":"ac","title":"A draw when the source has no free slot after any same-owner reverse-line replacement is rejected.","trust":"trusted","fresh":"fresh"}
+{"id":"ac-11","cid":"sha256:4b361fa265cc60ff85b335cccc20baa7171af92eb496906bc1c09c052a4f0bdb","label":"ac","title":"A hostile reverse line coexists with a newly drawn line.","trust":"derived","fresh":"fresh"}
+{"id":"ac-28","cid":"sha256:c4c2b8881f06150e25804d3be656994b2344c9523e7e5452c67b41784ab9a43a","label":"ac","title":"A human win completes the campaign level.","trust":"derived","fresh":"fresh"}
+{"id":"ac-26","cid":"sha256:9d92850743b2aa6fddab47d79a1b868507014099f55fd637f49871a9716450ae","label":"ac","title":"A human win occurs when the human owns every non-ignored building, including neutral buildings.","trust":"derived","fresh":"fresh"}
+{"id":"ac-12","cid":"sha256:ecf9ba35d5657ce17cddc3b8d0fdee6412d09777b95631c20836414e6c29ce2b","label":"ac","title":"A level drop does not cut existing lines even if the line count exceeds the new slot count.","trust":"derived","fresh":"fresh"}
+{"id":"ac-30","cid":"sha256:5f5a574f5beb1f05e45bb83ba5a854715773856cea35d584a461bc3765de1528","label":"ac","title":"A loss or timeout does not complete the campaign level.","trust":"derived","fresh":"fresh"}
+{"id":"ac-42","cid":"sha256:01b8b015972d9b723113e0188ed2b31911c5f9d4a779768b03347bdc6ac16f80","label":"ac","title":"A match has no draw outcome.","trust":"derived","fresh":"fresh"}
+{"id":"ac-34","cid":"sha256:ba4fe05630dfd0a2ff51fd53755b77ada0b8c100e500ae405b7ff65886955a56","label":"ac","title":"A recorded match outcome remains final.","trust":"derived","fresh":"fresh"}
+{"id":"ac-1","cid":"sha256:17d18ddac3db81ee25ac429234fe75e464a731b5997a4dc361c3f417c56590ed","label":"ac","title":"A rejected DrawLine command leaves the match unchanged.","trust":"derived","fresh":"fresh"}
+{"id":"ac-9","cid":"sha256:e124f1f3610a19e483b466c727cfd63d13703a5b964d8757273ec5e0e67f7ab2","label":"ac","title":"A same-owner reverse line is removed when the new line replaces it.","trust":"derived","fresh":"fresh"}
+{"id":"ac-23","cid":"sha256:d48c4cd7239d5d889a69a473235136de228c363a782bf203a386a3570dfbc385","label":"ac","title":"A single click on an active route does not cut it.","trust":"trusted","fresh":"fresh"}
+{"id":"ac-8","cid":"sha256:81c71221ad00cacdf014fcb403fc871b192205dfdd760d0106f5e8b2a6b38142","label":"ac","title":"A valid draw creates the requested source-to-target line.","trust":"trusted","fresh":"fresh"}
+{"id":"ac-41","cid":"sha256:b8a0281cad2a37f476cfe48c227f7c96f6d809dca6db3ecd548e37d89e5433c6","label":"ac","title":"After a loss, the result dialog title reads `Defeat`.","trust":"derived","fresh":"fresh"}
+{"id":"ac-16","cid":"sha256:198cfcaca2242b62f7420985970ab5cb3ac293b4f0d0255fc1d586a3b22a007b","label":"ac","title":"After a ready route button is clicked once, that same pair shows active.","trust":"trusted","fresh":"fresh"}
+{"id":"ac-35","cid":"sha256:534c314773f382885f6e02c94a3b530ae038a77cf5e5a491bbd52ee38fb87993","label":"ac","title":"After the match, panel buttons are disabled.","trust":"derived","fresh":"fresh"}
+{"id":"ac-36","cid":"sha256:a180bc0037ec6e20f1e9bf300cad79f012e5fecd9d8389dea7ee7ce64d29bff3","label":"ac","title":"After the match, the feedback banner reads `Game over`.","trust":"derived","fresh":"fresh"}
+{"id":"ac-40","cid":"sha256:075ba7bbcbcb69f8669a4843bbdcd0b307f7850b50419601bc88596fe2d59ae0","label":"ac","title":"After the single Kane level is won, the result dialog title reads `All levels complete!`.","trust":"derived","fresh":"fresh"}
+{"id":"ac-31","cid":"sha256:886eccf6c0b1ba16609ed945920c190b0367ee87240634aab7a6dd230e84790a","label":"ac","title":"An absent timeLimitSec imposes no time limit.","trust":"derived","fresh":"fresh"}
+{"id":"ac-17","cid":"sha256:5fdb7444f02015cd6c05da8f157d6bc14773977ff86de537d9ba4a387ae4078f","label":"ac","title":"An unavailable no-free-route button remains clickable.","trust":"trusted","fresh":"fresh"}
+{"id":"ac-15","cid":"sha256:a49c149a531af74d5e9f049ad6287c167fb69febe865bed5c33e8797bd5ab845","label":"ac","title":"An unavailable no-free-route click displays `This building has no free routes.`","trust":"trusted","fresh":"fresh"}
+{"id":"ac-19","cid":"sha256:a167dd8d97ca78227d42e76179d6605a516471d72e568077e2e97dc65c4f7833","label":"ac","title":"Cutting an owned line removes that line.","trust":"derived","fresh":"fresh"}
+{"id":"ac-20","cid":"sha256:3b0cf1b4354cd3cc91789c0c5ca80829111b5c3cbde32ed7ba47c14b19924163","label":"ac","title":"Cutting an owned line stops its spawn timer.","trust":"derived","fresh":"fresh"}
+{"id":"ac-24","cid":"sha256:9512082a1785599fcdbc6f4a45934f781288fceaa7c4233e4290338dd523b224","label":"ac","title":"Double-clicking an owned active route at least 700 ms after drawing cuts that route.","trust":"derived","fresh":"fresh"}
+{"id":"ac-25","cid":"sha256:0d5a678c0d7e438e43d7918674a1d70f73c8407327a93433959ee42a1f80fce0","label":"ac","title":"Double-clicking an owned ready route draws it once rather than immediately cutting it.","trust":"derived","fresh":"fresh"}
+{"id":"ac-21","cid":"sha256:a649104ff92a22eb0709e0e8a383214c7d918c081d5b7de4754142a6d88f61ab","label":"ac","title":"No further troops depart on a cut line.","trust":"derived","fresh":"fresh"}
+{"id":"ac-27","cid":"sha256:04af09ac704b4aa69c891d2c1251b547e65463e3a2685f56a91a0a9055303dab","label":"ac","title":"On a human win, remaining ignored buildings become human-owned.","trust":"derived","fresh":"fresh"}
+{"id":"ac-38","cid":"sha256:6c5186acf8f78aa57d3f00ac2e1197008a06aeaeaaa3710c83bc7a1fb1d4b1b4","label":"ac","title":"On loss, the Kane result text reads `Defeat`.","trust":"derived","fresh":"fresh"}
+{"id":"ac-39","cid":"sha256:053f1412f3086a3bd30b7c1a4c5439157c7bb3ee088cccb5d149311c5adbda81","label":"ac","title":"On timeout, the Kane result text reads `Time up`.","trust":"derived","fresh":"fresh"}
+{"id":"ac-37","cid":"sha256:9472d2421f8e49600d11a164f2180bb46b0c96b710849289b62e9c14b57352b0","label":"ac","title":"On victory, the Kane result text reads `Victory!`.","trust":"derived","fresh":"fresh"}
+{"id":"ac-29","cid":"sha256:19190da90be2aa634cd1a72e60447f20c1e84957c62761f35b0f14480e04489a","label":"ac","title":"The human loses when they own no non-ignored building, even if their troops remain in transit.","trust":"derived","fresh":"fresh"}
+{"id":"ac-14","cid":"sha256:d79e8e8117ed09e534fd4239d0ff638ecc8dc35c29f85966bd9b38006cf418a3","label":"ac","title":"The panel groups outgoing routes by human-owned source house.","trust":"trusted","fresh":"fresh"}
+{"id":"ac-13","cid":"sha256:94d5aabc4fcf3a22a14ddd0c421c138504d10e8e0f9ca6aae18a9f6f737d48c8","label":"ac","title":"The ready route button describes its target's current colour and level.","trust":"derived","fresh":"fresh"}
+{"id":"ac-22","cid":"sha256:0377316efaa29c3fa09bcf1a604fe13377496843c38e50444be24163c3e84d93","label":"ac","title":"Troops already in flight on a cut line continue to their target.","trust":"derived","fresh":"fresh"}
+{"id":"ac-10","cid":"sha256:05b419ddd46af344ea9a3c16799ef6bef835cc9bc29c8a87f5c0eb77a3bd43b9","label":"ac","title":"Troops already in flight on a replaced same-owner reverse line continue toward their target.","trust":"derived","fresh":"fresh"}
+{"id":"ac-33","cid":"sha256:ea020ab84f7dbd32ad38c191d932cc6ba3ab8c7152d2038cf5ce2ff99b31fa53","label":"ac","title":"Victory on the final permitted tick takes precedence over timeout.","trust":"derived","fresh":"fresh"}
+{"id":"ac-32","cid":"sha256:e11b1e7cb176ac81c6a44bf27b04cae20f988ff864feb1ddde21265e8e0de782","label":"ac","title":"When timeLimitSec is set, reaching tick >= timeLimitSec × tickRate at phase 9 yields timeout loss if neither a win nor a loss was resolved first.","trust":"derived","fresh":"fresh"}
+{"id":"t-7","cid":"sha256:28bf0fc985422685a0851d127d39a3c75b129032c2e59fefede44ad789a28ad5","label":"test","title":"Capture required Kane buildings and see victory","trust":"derived","fresh":"fresh"}
+{"id":"t-4","cid":"sha256:8e67131f4a5cf387cf5a10fdca6fbce100f9bc575d7436607b9b53f671633326","label":"test","title":"Cut an owned active route while preserving in-flight troops","trust":"derived","fresh":"fresh"}
+{"id":"sha256:6069ba59f087","cid":"sha256:6069ba59f087cf17fe164f5c0b31a10f43c1c7532b217f08e223656022d199a1","label":"test","title":"Draw a ready owned-house route once","trust":"trusted","fresh":"fresh"}
+{"id":"t-6","cid":"sha256:f834faec6f3213dcb72b3312a44cc3a669995fc7ffca61a2d570cb2dc8c3902c","label":"test","title":"Draw a ready route once on double-click","trust":"derived","fresh":"fresh"}
+{"id":"sha256:560505fe5bf8","cid":"sha256:560505fe5bf877217a70424fc26684d62bbccf8afc1ae48e2a47e2192b970809","label":"test","title":"Keep an active route after one click","trust":"trusted","fresh":"fresh"}
+{"id":"t-8","cid":"sha256:5a48323442ca15aacddca37c7bd99a1a0860c28bae09771741a35c850c7c3558","label":"test","title":"Observe defeat despite human troops in flight","trust":"derived","fresh":"fresh"}
+{"id":"t-9","cid":"sha256:54242a0513eece785e7eef5f556c00047a8d142d796664b6f5ecba6f03575e73","label":"test","title":"Observe timeout on a configured Kane level","trust":"derived","fresh":"fresh"}
+{"id":"t-1","cid":"sha256:67f8d79567a75aa66baab73ddd5a506d071f6b5bd8bd313d0802c77d35d69466","label":"test","title":"Replace a same-owner reverse route without recalling troops","trust":"derived","fresh":"fresh"}
+{"id":"t-2","cid":"sha256:3ec9cfe25236070949439938e6850f015b9537580b03bbc8e4ad3019bdab15c6","label":"test","title":"Unavailable no-free route alerts without drawing","trust":"trusted","fresh":"fresh"}
+{"id":"gap-1","cid":"sha256:d155b7064823d597ca1a07ee28a406e86905c2eda857cf06a0c904badec853b6","label":"gap","title":"Blocked route omitted","trust":"derived","fresh":"fresh"}
+{"id":"gap-11","cid":"sha256:80343150e54a44dc17b06ce5852d9181e925666b4dae5284df8990ec4dd69607","label":"gap","title":"Duplicate pair","trust":"derived","fresh":"fresh"}
+{"id":"gap-2","cid":"sha256:1cccec6b9f710f23f6ff9154608f7f4d729aa81380026d0b11542e0aeee8cf17","label":"gap","title":"Duplicate route omitted","trust":"derived","fresh":"fresh"}
+{"id":"gap-14","cid":"sha256:cc237670daae620cf98149204400b30e897318c79b8ea01d2dd4db54077ad171","label":"gap","title":"Early double-click","trust":"derived","fresh":"fresh"}
+{"id":"gap-19","cid":"sha256:aff0fae84d3f72865139670529b0cbb7816cbd6250fd0f2802a4919577cef1ca","label":"gap","title":"Final-tick precedence","trust":"derived","fresh":"fresh"}
+{"id":"gap-17","cid":"sha256:c5163e02068e5d9f0553c32dd3b1cb924ee5e02b9f0f31276d9bb42e8526962e","label":"gap","title":"Final-tick victory path","trust":"derived","fresh":"fresh"}
+{"id":"gap-12","cid":"sha256:fcbbeb29348b8810fd002edba5976189a9124627eeab700d22497defd072d4d0","label":"gap","title":"Hostile reverse","trust":"derived","fresh":"fresh"}
+{"id":"gap-5","cid":"sha256:95ef2327aadb882ce87fe202dc9256089684c54ba03eaa00ececc949763f4a3d","label":"gap","title":"Hostile reverse omitted","trust":"derived","fresh":"fresh"}
+{"id":"gap-10","cid":"sha256:305e65a8ff581c892205b27dcab581fd5c97515c20b0fbc3f08cbbf2b27d21cc","label":"gap","title":"Invalid target","trust":"derived","fresh":"fresh"}
+{"id":"gap-3","cid":"sha256:93cd07ff4bb95f0a3fe924c2c385eec79897d57a3cef3de3ae332b0a02037c68","label":"gap","title":"Level drop omitted","trust":"derived","fresh":"fresh"}
+{"id":"gap-7","cid":"sha256:59a2282638a60eac2a06646518631bae4fabd5796d3063460a36ccaf7695f110","label":"gap","title":"Level-drop lines","trust":"derived","fresh":"fresh"}
+{"id":"gap-13","cid":"sha256:0f8cbfddec721a546c740089b1a8bc2c5f74c68d743829595c0ba81451f4aaf8","label":"gap","title":"Non-owner cut","trust":"derived","fresh":"fresh"}
+{"id":"gap-8","cid":"sha256:38b210736f3981693bd5112891529b4f7af9989af0811a6037a837683831b457","label":"gap","title":"Obstacle rejection","trust":"derived","fresh":"fresh"}
+{"id":"gap-4","cid":"sha256:71db5dd6f4510843230fcca9bf38f5a2d3a23495244c2c75c24ad6a105df27bc","label":"gap","title":"Ownership gate omitted","trust":"derived","fresh":"fresh"}
+{"id":"gap-15","cid":"sha256:018431355cc9bc19497314c7770239f7750460a5101ccd609e2d042c456e43ec","label":"gap","title":"Ownership surface","trust":"derived","fresh":"fresh"}
+{"id":"gap-20","cid":"sha256:c024190e4bd36afb789c12cab786ecff7845fd6735c1f05e44b88b66d77790ba","label":"gap","title":"Timed level URL","trust":"derived","fresh":"fresh"}
+{"id":"gap-16","cid":"sha256:4f20a54a8f6e3c30f64aaa1d44479922d2626eaaeb3f5ba69455c6cca07b6176","label":"gap","title":"Timer observability","trust":"derived","fresh":"fresh"}
+{"id":"gap-9","cid":"sha256:34ecec5ff1d1404addaa0ec757d3ffee17a104de7977017eb1b363a2adff6364","label":"gap","title":"Tower source","trust":"derived","fresh":"fresh"}
+{"id":"gap-21","cid":"sha256:7eaeb95ea8ec2c9fdc8c8eaebb02843984d732a1ee2961adb6d80f7525266d39","label":"gap","title":"Transit defeat fixture","trust":"derived","fresh":"fresh"}
+{"id":"gap-6","cid":"sha256:d1d9efd5c5b90876c050d7a3a86473908be9a0cfa20cb2ca13785172ed3ef3d9","label":"gap","title":"Unowned source","trust":"derived","fresh":"fresh"}
+{"id":"gap-18","cid":"sha256:e1ac4b844b0993423eae02f9c1d305486fd45bc87fa49d2be49ea2a9fc40f8e8","label":"gap","title":"Untimed duration path","trust":"derived","fresh":"fresh"}

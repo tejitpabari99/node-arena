@@ -1,0 +1,48 @@
+{
+  "current_step_md5": "de58b57f307c49e184b0a8a588c2a7aa",
+  "passed_authoring": true,
+  "stable_replay_guard_passed": false,
+  "reason": "Current group-count/no-E analyzers anchor whole-page text including A (blue17); heading analyzer still anchors full A (blue17). No further paid replay authorized under guard.",
+  "actions": [
+    {
+      "action": "analyze",
+      "locators": [
+        "internal:text=\"Speed 0.25xA (blue 17)A \u2192 C \u00b7 ready \u00b7 C: grey 15A \u2192 E \u00b7 ready \u00b7 E: grey 3Level\"i"
+      ],
+      "selectors": [],
+      "code_js": "el(1).querySelectorAll('section[data-testid=\"kane-group\"]').length"
+    },
+    {
+      "action": "analyze",
+      "locators": [
+        "internal:testid=[data-testid=\"kane-group\"s]"
+      ],
+      "selectors": [],
+      "code_js": "el(4).getAttribute('data-source')"
+    },
+    {
+      "action": "analyze",
+      "locators": [
+        "internal:text=\"Speed 0.25xA (blue 17)A \u2192 C \u00b7 ready \u00b7 C: grey 15A \u2192 E \u00b7 ready \u00b7 E: grey 3Level\"i"
+      ],
+      "selectors": [],
+      "code_js": "!!el(1).querySelector('section[data-testid=\"kane-group\"][data-source=\"E\"]')"
+    },
+    {
+      "action": "analyze",
+      "locators": [
+        "internal:role=heading[name=\"A (blue 17)\"i]"
+      ],
+      "selectors": [],
+      "code_js": "/^A \\(blue \\d+\\)/.test((el(5).textContent || '').trim())"
+    },
+    {
+      "action": "analyze",
+      "locators": [
+        "internal:role=button[name=\"A \u2192 C \u00b7 ready \u00b7 C: grey\"i]"
+      ],
+      "selectors": [],
+      "code_js": "(el(6).textContent || '').includes('ready')"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+--- runtime-evidence/t-3-original/draw-a-ready-owned-house-route-once_test.md
++++ designed-tests/draw-a-ready-owned-house-route-once_test.md
+@@ -4 +4 @@
+-  base: sha256:a4eb682ecbf2c453b6c253a536cccd12bc84001af5c00d5db89a196bd231d6aa
++  base: sha256:da6c23c5904edb0bc961314d670a12e80cabc22426d6cee6f97fb0d1792bef0f
+@@ -12 +12 @@
+-Open http://localhost:4173/?kane=1&seed=1 in the test build of Kane Arena; at the default 0.25x speed, locate the bottom panel's outgoing route groups, then assert these groups have human-owned house headings rather than tower source headings.
++Open http://localhost:4173/?kane=1&seed=1 in the test build of Kane Arena and keep the default Speed 0.25x. Remain completely read-only: do not click or activate any route or other map control. Inspect the region with accessible name `Outgoing routes`. Scope every outgoing-source-group count and tower-absence read inside that named region, never on whole-page text. Inside that region, assert exactly one outgoing source group identified by `section[data-testid="kane-group"]`; its `data-source` is `A` for the human-owned house, its role is `group`, and its accessible name is `House A outgoing routes`. Assert inside the same `Outgoing routes` region that no outgoing source group has `data-source="E"` for the tower. Within the named `House A outgoing routes` group, inspect its own h2 using the stable accessible name `House A routes`. Assert that this heading's current visible DOM text starts with `A (blue `, allowing any numeric suffix; the current count is dynamic and is also exposed as the accessible description, so do not use any exact numeric text as an identity or expected count. Assert that the A → C button within that same named A group has DOM text containing `ready`. Anchor aggregate reads on the named `Outgoing routes` region, source-A metadata reads on the named `House A outgoing routes` group, and the h2 read on `House A routes`.
+@@ -16 +16 @@
+-In a human-owned house's bottom-panel outgoing group, choose a pair whose live button says ready and displays the target's current colour and level; click that ready button once and wait for the same pair's button to show active, then assert the requested source-to-target pair is active.
++In human-owned house A's bottom-panel outgoing group, locate the A → C ready button using its live target colour and level description. Click that specific A → C ready button exactly once. Wait for the same A → C button's DOM text to contain `A → C · active`, then assert that the same A → C button's DOM text contains `A → C · active`. Do not choose, invert or click another source-target pair.
+--- runtime-evidence/t-5-original/keep-an-active-route-after-one-click_test.md
++++ designed-tests/keep-an-active-route-after-one-click_test.md
+@@ -4 +4 @@
+-  base: sha256:55da62e4eb027c33abfdbb9b27341aef7d84d991944fc4eaca6e956aea68d787
++  base: sha256:695d0cc1b4aed001d25c366e7e045dfa7f49d867759113f1d975c431e5341d33
+@@ -12,2 +12 @@
+-Open http://localhost:4173/?kane=1&seed=1 in the browser to enter Kane Arena at Speed 0.25x; identify a live green ready pair in the bottom outgoing-routes panel under a human-owned house.
+-
++Open http://localhost:4173/?kane=1&seed=1 in the test build of Kane Arena at the default Speed 0.25x. Observe the bottom panel's human-owned house A group without clicking or activating any route. Assert that the A → C button's DOM text contains `ready`.
+@@ -16,2 +15 @@
+-Draw that ready pair and wait for the same outgoing-routes button to display active.
+-
++In human-owned house A's bottom-panel outgoing group, click only the A → C ready button once. Wait for that same A → C button's DOM text to contain `active`, then assert that the A → C button's DOM text contains `active`. Take no actions on another source-target pair.
+@@ -20 +18 @@
+-On the red active button for that same pair in the outgoing-routes panel, click once, then assert that the pair remains active.
++Single-click that same A → C active button exactly once. Assert that the same A → C button's DOM text still contains `active`. Take no actions on another source-target pair.
