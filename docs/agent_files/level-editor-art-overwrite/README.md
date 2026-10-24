@@ -6,7 +6,7 @@ date: 2026-10-24
 # Level editor + art overrides
 
 ## Goal
-Two approved dev-only tools: in-app level editor and art-override layer. P0 custom-list contract (01-level-editor Tasks 1–2) is complete and reviewed; editor Tasks 3–12 and art implementation remain pending.
+Two approved dev-only tools: in-app level editor and art-override layer. P0 custom-list contract (01-level-editor Tasks 1–2) is complete and reviewed; editor Tasks 3–12 remain pending. Art Tasks 1–6 are done on feat/art-overrides; Tasks 7–8 pending.
 
 ## Contents
 | File | Purpose | Status |
@@ -15,9 +15,11 @@ Two approved dev-only tools: in-app level editor and art-override layer. P0 cust
 | [01-level-editor/PRD.md](01-level-editor/PRD.md) | Dev-only editor.html, `/__editor/*` middleware, Play/Solvable?/Finalize, custom-level list | approved |
 | [01-level-editor/TASKS.md](01-level-editor/TASKS.md) | P0 Tasks 1–2 done; Tasks 3–12 pending | in-progress |
 | [02-art-overrides/PRD.md](02-art-overrides/PRD.md) | `assets/art/` override layer, tintMask, relaxed credits check, `art:status`, showcase levels | approved |
-| [02-art-overrides/TASKS.md](02-art-overrides/TASKS.md) | Approved implementation tasks; implementation deferred | approved |
+| [02-art-overrides/TASKS.md](02-art-overrides/TASKS.md) | Tasks 1–6 done; 7–8 pending | in-progress |
 | [01-level-editor/code-2026-10-24-0627.md](01-level-editor/code-2026-10-24-0627.md) | P0 implementation, verification and cleanup record | done |
 | [01-level-editor/review-2026-10-24-0627.md](01-level-editor/review-2026-10-24-0627.md) | Three-persona P0 review: PASS, zero outstanding must-fix | done |
+| [02-art-overrides/code-2026-10-24-0800.md](02-art-overrides/code-2026-10-24-0800.md) | Art Tasks 1–6 implementation + review-fix record | done |
+| [02-art-overrides/review-2026-10-24-0800.md](02-art-overrides/review-2026-10-24-0800.md) | Three-persona review of Tasks 1–6: NEEDS_CHANGES (1 must-fix, fixed in 3c25d3c) | done |
 
 ## Sub-projects
 | # | Name | Scope | Depends on | Phase |
@@ -61,4 +63,4 @@ c) [RESOLVED] `BOT_VERSION` bump required for new levels with AI seats (CONTENT_
 d) All PRD open questions resolved/deferred (2026-10-24).
 
 ## Next step
-P0 Tasks 1–2 are complete with a PASS review. Publish this scoped branch for owner review; remaining level-editor tasks and art-overrides implementation stay deferred. Approved PRDs are preserved; task tables track remaining work.
+P0 Tasks 1–2 are complete with a PASS review. Art Tasks 1–6 are done on feat/art-overrides (review fixes applied; re-review pending); art Tasks 7–8 and remaining level-editor tasks stay pending. Approved PRDs are preserved; task tables track remaining work.
