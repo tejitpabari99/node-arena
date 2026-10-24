@@ -50,7 +50,7 @@ Ownership colours come from the main manifest palette. Four hardcoded sample seg
 
 Screenshots under branch `ref/out/`: `hud-mock.png`, `hud-mock.compare.png`, `restart-mock.png`, `restart-mock.compare.png`.
 
-Reproduce: `node tools/assets/capture/capture.mjs --scene hud-mock,restart-mock --compare --out docs/agent_files/feat-sp08-web-client-20261023-0124/ref/out`.
+Reproduce: `node tools/assets/capture/capture.mjs --scene hud-mock,restart-mock --compare --out docs/agent_files/feat-tower-war-port-20261022-0321/08-web-client/ref/out`.
 
 Compared against original `ref/tw-yt/d-hud-topbar-18.jpg`: curved white undo arrow, blue outline, white capsule border, bright team fills and rounded white display lettering retained. Level text moved beneath ownership bar per R3; mute occupies right corner. Landscape positions deliberately differ from portrait. First capture exposed white square edges on stretched bar backing; added pill clipping and recaptured. Both final mock screenshots inspected. Restart panel is a style proposal from extracted art and R3 wording; no original restart screenshot exists, so L07 comparison only establishes overall palette/style. Owner final visual approval remains.
 

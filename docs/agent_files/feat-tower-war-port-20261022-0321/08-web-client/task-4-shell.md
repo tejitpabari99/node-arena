@@ -10,6 +10,6 @@ Runtime awaits scene readiness, discards late generations safely, reuses the pub
 
 Verification: 16 targeted tests pass (save validation/persistence, human-only unlocks, restart overlay, generation cancellation/restart/disposal/failure, public driver ticks/events, publication throttle, troop capacity/frame reuse, picker states/focus, credits). `tsc -p tsconfig.sp08-shell.json`, scoped ESLint and `vite build` pass. Build retains existing Three.js dynamic import/chunk-size warnings.
 
-Actual Chromium at 1600×900: 20 cards, one enabled, first focused; first battle loads one canvas with zero page errors; reload restores last-played focus. Screenshot: `../ref/out/sp08-picker.png`.
+Actual Chromium at 1600×900: 20 cards, one enabled, first focused; first battle loads one canvas with zero page errors; reload restores last-played focus. Screenshot: `ref/out/sp08-picker.png`.
 
 Follow-on ownership: Task 5 replaces the minimal empty playing HUD slot; Task 8 reconnects audio to v2 assets/events and finalizes driver integration; Task 9 replaces stale legacy tests/harness. No legacy compatibility methods were retained. Full CI and review intentionally deferred until SP08 completion.

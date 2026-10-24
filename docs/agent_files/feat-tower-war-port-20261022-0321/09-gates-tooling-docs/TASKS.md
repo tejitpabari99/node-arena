@@ -1,25 +1,25 @@
 ---
-status: draft
-summary: SP09 tasks — Phase A parked-CI scaffold first, incremental gate rewires/deletions per SP, Phase D docs + check:docs, Phase C final acceptance
-date: 2026-10-22
+status: done
+summary: All 12 agent tasks complete; automated acceptance and owner handoff ready, manual approval pending
+date: 2026-10-23
 ---
 # Tasks: Gates, tooling, docs (SP09)
-Source of truth: docs/agent_files/feat-tower-war-port-20261022-0321/09-gates-tooling-docs/PRD.md. Task 0 runs first in the whole program (before SP01). Tasks 1-7 are incremental follow-ups that ride alongside other SPs; 8-9 are Phase D (docs); 10-11 are Phase C (final acceptance). Every rewritten gate ships with a failing-fixture test (PRD req 3).
+Source of truth: [PRD.md](PRD.md). Task 0 runs first in the whole program (before SP01). Tasks 1-7 are incremental follow-ups that ride alongside other SPs; 8-9 are Phase D (docs); 10-11 are Phase C (final acceptance). Every rewritten gate ships with a failing-fixture test (PRD req 3).
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
 | 0 | Phase A: parked-step CI runner, per-package scripts, VERSION_GUARD_BASE, check:parked | none (runs before SP01) | done |
 | 1 | Delete v1 tools-owned tooling (layout, v1 solutions, balance-targets) | 0, 02 CUT / 03#1 | done |
 | 2 | Adapt replay.ts to v2 header; restore tools:replay | 0, 03 | done |
-| 3 | Rewrite validate:levels + levels-lock + unsolved-by-proxy | 0, 03, 05, 06 (R6 follow-up) | partial |
+| 3 | Rewrite validate:levels + levels-lock + unsolved-by-proxy | 0, 03, 05, 06 (R6 follow-up) | done |
 | 4 | Rewrite balance (report-only) | 3, 06 | done |
-| 5 | Delete bots:churn, visual harness, slice:verify | 06, 08 | partial |
-| 6 | campaign:verify | 08, 5 | todo |
-| 7 | CI workflow updates + env-skip surfacing | 0, 05, 07, 3, 4 | todo |
-| 8 | check:docs gate | 0, 5 | todo |
-| 9 | Docs refresh (README, tools/README, FUTURES, AGENTS, CREDITS check, research index, web README) | 8, 07, 08, 5 | todo |
-| 10 | Final acceptance: full CI on Node 22 + 24, strict parked, perf | 1-9, all SPs | todo |
-| 11 | Campaign + owner pass hand-off | 10 | todo |
+| 5 | Delete bots:churn, visual harness, slice:verify | 06, 08 | done |
+| 6 | campaign:verify | 08, 5 | done |
+| 7 | CI workflow updates + env-skip surfacing | 0, 05, 07, 3, 4 | done |
+| 8 | check:docs gate | 0, 5 | done |
+| 9 | Docs refresh (README, tools/README, FUTURES, AGENTS, CREDITS check, research index, web README) | 8, 07, 08, 5 | done |
+| 10 | Final acceptance: full CI on Node 22 + 24, strict parked, perf | 1-9, all SPs | done |
+| 11 | Campaign + owner pass hand-off | 10 | done |
 
 ## Task 0 — Phase A: parked-step CI runner
 What it is / what it means: The scaffold that makes a long red window explicit instead of silent (Decisions 1, 2, 2b). Runs before SP01 so `pnpm run ci` is green at every later commit.
@@ -56,7 +56,7 @@ Status note (2026-10-22): done by 06 Task 8 (c16aa54); remaining: none (proxy AD
 What it is / what it means: Remove v1-only gates (Decisions 4, 8) once the owning SPs have replaced them.
 What changes at a high level: Delete `bots:churn`, `churn.mjs`, baseline; `visual:*` scripts and `apps/web/visual/**`; `slice:verify` and `slice.spec.ts`. Coordinate with 06/08 so nothing live references them.
 Done when: grep for `bots:churn`, `visual:`, `slice:verify` (excl. `agent_files`, research 06a) returns nothing; ci green.
-Status note (2026-10-22): partly done by 06 Task 8 (c16aa54; bots:churn removed); remaining: delete visual:* scripts and apps/web/visual/**, slice:verify and slice.spec.ts (SP08-coupled); clean remaining references (AGENTS.md, apps/web/README.md, apps/web/package.json).
+Status note (2026-10-23): partial. SP06 removed bots:churn; SP08 merge c41e415 deleted apps/web/visual/** and its scripts. Remaining: root and web slice:verify scripts, apps/web/e2e/slice.spec.ts, and live README/AGENTS references. Keep partial until those paths/references are removed.
 
 
 ## Task 6 — campaign:verify
@@ -75,11 +75,14 @@ Status note (2026-10-22): balance.yml part done by 06 Task 8 (c16aa54; new proxy
 What it is / what it means: Doc-drift gate (Decision 9, req 7); cheap, no network.
 What changes at a high level: `tools/src/docs-check.ts`: every root script is mentioned in `tools/README.md` or `AGENTS.md`; backticked repo paths in README, tools/README, CONTENT_GUIDE, LEVELS_GUIDE, CREDITS exist; no links to deleted names. Add to ci.sh as a late step (parked until Phase D docs land).
 Done when: passes on the refreshed docs; fixtures with a stale path / deleted name fail.
+Status note (2026-10-23): detector, CLI/root registration and late CI step complete; 13 focused docs/parked fixtures pass, focused ESLint and tools typecheck pass. `check:docs:SP09` intentionally remains parked pending Task 9 docs refresh; current docs drift is reported, never suppressed.
 
 ## Task 9 — Docs refresh
 What it is / what it means: Phase D; docs match code.
 What changes at a high level: Rewrite README (contents, TW scope, 20 levels, local-only, `TW_EXTRACT`, TW screenshots copied to `docs/img/`, delete v1 images); rewrite `tools/README.md` (gate semantics, env skips, `levels:lock`, parked pointer); merge into FUTURES (never replace 04/06 entries): walls, mines, water, rocket towers, fortress, trolley, railway, unit modules, boosters (facts recorded), tutorials, meta, PvP, skins, cargo, deploy, levels 24+, portrait/mobile, level editor, new themes, `CrossingSource` note, bundle-size gate; update AGENTS project section only; research index; trim `apps/web/README.md`; cross-links in CONTENT_GUIDE; verify CREDITS header (Vaveda art, private, non-redistributable, CC0 rows).
 Done when: `check:docs` green; no edits to Style/Orchestrator sections.
+
+Status note (2026-10-23): refreshed current Tower War docs, all 57 root scripts, research index and deferred-feature evidence; copied/resized three real campaign captures and removed v1 images. `pnpm check:docs --format json` passed with zero drift; `pnpm check:manifest --format json` passed (17 existing outside-bounds warnings). AGENTS protected sections and earlier FUTURES entries preserved; docs parking entry removed after green check. Source filenames in credits and concrete guide paths normalized for the new checker.
 
 ## Task 10 — Final acceptance (automated)
 What it is / what it means: Phase C proof the whole program is releasable.
@@ -92,5 +95,18 @@ What changes at a high level: Run `campaign:verify`; create `owner-pass.md` chec
 Done when: 20/20 campaign levels clean, grid saved, checklist file ready.
 
 ## Owner steps (not agent tasks)
-- Locally run `TW_EXTRACT=... pnpm check:import && pnpm assets:tw:check` before merge.
+- Local extract checks already completed by an agent: `check:import` (20 levels / 21 current files) and `assets:tw:check` (53 byte-identical files, identical lock). No remaining owner shell step.
 - Play levels 1-20 (positions 4-23) in browser; fill `owner-pass.md`; visual approval vs refs; record fps; sign off any `unsolved-by-proxy.json` entries.
+
+### Task 5 completion — 2026-10-23
+
+Removed the remaining web slice script/spec, AGENTS command and tools README layout entry. Other churn/visual/layout/targets artifacts were already removed. README and web README required no cleanup. Verified package JSON, zero live obsolete command/path references outside historical exclusions, `git diff --check`, `pnpm typecheck:web`, and browser test build. Full CI attempt stopped at a concurrent Task 3 restricted internal import; final full gates remain Task 10. Optional browser suite was interrupted before completion per orchestrator scope direction.
+
+### Task 10 completion — 2026-10-23
+
+Final release CI passed on clean local clones at `432d929`, Node 22.23.3 and 24.22.1, pnpm 10.34.6; extract and version overrides unset, strict parked empty. Both regenerated seed-1 locks match committed data. Strict sim/bot benchmarks, preview + development browser suites (16 + 16), and SP07 render budgets passed. See [automated acceptance record](code-2026-10-23-0728.md). Task 11 handoff is complete below; owner play/input/visual/GPU/proxy sign-offs remain.
+
+
+### Task 11 completion — 2026-10-23
+
+[Owner handoff](owner-pass.md) ready with 20 canonical UI/source mappings, manual play/readability/results/difficulty table, mouse/touch/visual/FPS checks and five pending proxy-warning decisions. Reused actual Task 6 browser proof (22 tests including 20 real levels and two injected-error fixtures); copied [grid](evidence/campaign-grid.png) and [results](evidence/campaign-results.json) byte-for-byte. Verified 1920×976 PNG, canonical IDs/order, tick 100 and positive triangles for all 20; local links and whitespace clean. No product changes or broad test rerun: executable campaign inputs unchanged. All five source `ownerSignOff` values remain JSON `null`; manual owner approval is pending. All 12 agent tasks complete.

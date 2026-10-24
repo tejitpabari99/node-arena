@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/ABS/PATH/TO/node-arena/docs/research/kane-cli/hook/kane-verify.sh",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}

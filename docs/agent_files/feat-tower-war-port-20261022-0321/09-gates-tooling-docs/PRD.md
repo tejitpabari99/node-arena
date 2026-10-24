@@ -1,7 +1,7 @@
 ---
-status: draft
+status: approved
 summary: Inventory every script/tool/gate/workflow (keep/rewrite/delete), redefine each gate for Tower War, land a "parking" scaffold in ci.sh before SP02's CUT so the red window is explicit and shrinking, then close it SP by SP; docs refresh; final 20-level acceptance (proxy playthrough, perf, Node 22/24 determinism, owner pass).
-date: 2026-10-22
+date: 2026-10-23
 ---
 # PRD: Gates, tooling, docs (SP09)
 

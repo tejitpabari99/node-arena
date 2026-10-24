@@ -70,7 +70,7 @@ These are the five current entries in [`tools/unsolved-by-proxy.json`](../../../
 - [ ] Pending — touch route drawing/selection/cancel/delete feels reliable on tested hardware; note device and input behavior.
 - [ ] Pending — building ownership, garrisons, paths, units, obstacles, labels and objectives remain readable in Green and Snow scenes.
 - [ ] Pending — level order/difficulty and win/loss/retry/continue results flow approved after the 20-level pass.
-- [ ] Pending — visually compare the [actual campaign grid](evidence/campaign-grid.png) and live client against the [owner reference index](../../feat-tower-war-port-20261022-0321/ref/tw-yt/INDEX.md) and [SP08 landscape reference notes](../../feat-sp08-web-client-20261023-0124/ref/README.md). Record specific accepted differences or remaining issues; screenshot availability is not visual approval.
+- [ ] Pending — visually compare the [actual campaign grid](evidence/campaign-grid.png) and live client against the [owner reference index](../ref/tw-yt/INDEX.md) and [SP08 landscape reference notes](../08-web-client/ref/README.md). Record specific accepted differences or remaining issues; screenshot availability is not visual approval.
 - [ ] Pending — measure FPS on the owner's actual GPU/browser, including a busy late campaign scene. Software GL smoke and automated triangle/draw-call budgets do not establish owner GPU performance.
 
 | FPS measurement field | Owner value |

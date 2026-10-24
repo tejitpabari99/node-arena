@@ -7,7 +7,7 @@ date: 2026-10-23
 
 ## Visual evidence
 
-`../ref/out/task-10-*` captures the actual application entrypoint: picker; original L04 (displayed Level 1) with HUD at 1280×720, 1600×900, 1920×1080, 1366×768 and 2560×1080; restart; victory; defeat. Result captures submit a legal public driver command to Task 8's test-only win/loss fixture; they do not prove a campaign playthrough. Three side-by-side sheets compare L04, `d-hud-topbar-18` and `d-victory` references. Capture completed with zero uncaught page errors.
+`ref/out/task-10-*` captures the actual application entrypoint: picker; original L04 (displayed Level 1) with HUD at 1280×720, 1600×900, 1920×1080, 1366×768 and 2560×1080; restart; victory; defeat. Result captures submit a legal public driver command to Task 8's test-only win/loss fixture; they do not prove a campaign playthrough. Three side-by-side sheets compare L04, `d-hud-topbar-18` and `d-victory` references. Capture completed with zero uncaught page errors.
 
 Inspected final screenshots against original references and Task 2's landscape layout: white curved back arrow, blue outline, white capsule ownership border, bright team colours, outlined rounded display lettering, readable unmirrored building labels, and top HUD margins retained. Popup uses the previously selected extracted panel and green/grey action sprites. Keyboard focus outline deliberately remains visible.
 
@@ -17,7 +17,7 @@ Reproduce: `pnpm assets:capture:web`.
 
 ## Performance evidence
 
-`../ref/out/perf-shell.{json,png}` uses the actual `createAppController`, `createLevelScene`, `mountApp` and HUD with SP07's synthetic public SimView/troop-buffer population. Simulation/bot throughput is outside this presentation measurement. The legacy standalone perf scene reuses the same fixture; its stage column now follows the real one-based view contract.
+`ref/out/perf-shell.{json,png}` uses the actual `createAppController`, `createLevelScene`, `mountApp` and HUD with SP07's synthetic public SimView/troop-buffer population. Simulation/bot throughput is outside this presentation measurement. The legacy standalone perf scene reuses the same fixture; its stage column now follows the real one-based view contract.
 
 | Measurement | Result |
 |---|---:|
@@ -35,7 +35,7 @@ Each HUD update includes two public controller ticks, snapshot publication, owne
 
 Renderer identifies itself as ANGLE Vulkan SwiftShader Device (Subzero): **software rasterization**, not evidence of hardware 60 fps. Retain SP07's LOD and dropped player quality setting; software timing alone cannot justify a new hardware quality control. Real GPU 60 fps remains an owner check.
 
-Reproduce: `pnpm assets:capture --scene perf-shell --out docs/agent_files/feat-sp08-web-client-20261023-0124/ref/out`. Capture asserts HUD median <1 ms and triangles ≤300,000.
+Reproduce: `pnpm assets:capture --scene perf-shell --out docs/agent_files/feat-tower-war-port-20261022-0321/08-web-client/ref/out`. Capture asserts HUD median <1 ms and triangles ≤300,000.
 
 ## Gate wiring
 

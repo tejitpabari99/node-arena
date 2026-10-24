@@ -22,7 +22,7 @@ From repository root:
 ```sh
 pnpm --filter @node-arena/web exec vitest run test/sp07 test/sp08
 pnpm --filter @node-arena/web exec tsc -p tsconfig.sp08.json
-node tools/assets/capture/check-frame.mjs docs/agent_files/feat-sp08-web-client-20261023-0124/ref/out
+node tools/assets/capture/check-frame.mjs docs/agent_files/feat-tower-war-port-20261022-0321/08-web-client/ref/out
 pnpm --filter @node-arena/web exec vite build --config ../../tools/assets/capture/vite.config.mjs --outDir /tmp/sp08-capture-build
 ```
 

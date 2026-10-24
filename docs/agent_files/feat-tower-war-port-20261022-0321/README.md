@@ -18,8 +18,8 @@ Copy Tower War 1.29.3 into Node Arena as a simplified browser game that replaces
 | 05 | Level importer | [PRD](05-level-importer/PRD.md) | `TW_EXTRACT` -> level v2 for positions 4–23, gating, LEVELS_GUIDE | 02 (soft 01, 04) | draft |
 | 06 | AI port | [PRD](06-ai-port/PRD.md) | Delete our bots; exact TW AI copy; TW-AI-as-proxy level validation | 03, 05 (soft 02, 04) | done |
 | 07 | Art pipeline | [PRD](07-art-pipeline/PRD.md) | TW art -> committed GLB/textures, instanced team-texture renderers | 02 (soft) | done |
-| 08 | Web client | [PRD](08-web-client/PRD.md) | Camera, HUD, input, screens, save v2; delete legacy UI | 03, 07 (soft 04, 05, 02) | draft |
-| 09 | Gates, tooling, docs | [PRD](09-gates-tooling-docs/PRD.md) | Gate inventory/redefinition, parked CI scaffold, docs, final acceptance | all (Phase A first) | draft |
+| 08 | Web client | [PRD](08-web-client/PRD.md) | Camera, HUD, input, screens, save v2; delete legacy UI | 03, 07 (soft 04, 05, 02) | done |
+| 09 | Gates, tooling, docs | [PRD](09-gates-tooling-docs/PRD.md) | Gate inventory/redefinition, parked CI scaffold, docs, final acceptance | all (Phase A first) | done |
 
 ## Execution order
 09 Phase A (task 0: PARKED runner + VERSION_GUARD_BASE) -> 01 -> 02 (steps 1–3 additive; step 4 CUT shared with 03 T1) -> 03 + 05 + 07 in parallel -> 04 -> 06 -> 08 -> 09 rest.
@@ -87,3 +87,22 @@ Max 2 concurrent agents.
 - 2 parked gates left: typecheck:web, test:web (SP08). New live gates: test:web:sp07, typecheck:web:sp07; check:manifest un-parked.
 - Perf: 233k tris / 52 unit draws / ~1.9 MB gzip.
 - Next: SP08 web client, then 09 rest.
+
+## SP08 completion (2026-10-23, PR #12)
+- All ten tasks done: camera/mirror, UI assets, ownership, save/picker/runtime, HUD/popups, gestures/previews, driver/harness, browser coverage, gate restoration.
+- Final three-persona review PASS after current-stage pointer-target fix `693d44d`.
+- Run: [08-web-client/code-2026-10-23-0208.md](08-web-client/code-2026-10-23-0208.md); [final review](08-web-client/review-2026-10-23-0210.md); [acceptance](08-web-client/task-10-acceptance.md); [e2e/legacy-purge evidence](08-web-client/code-2026-10-23-0156.md).
+- Docs: [UI layout](08-web-client/task-2-ui-layout.md), [HUD](08-web-client/task-5-hud.md), [harness API](08-web-client/harness-api.md), [ref + captures](08-web-client/ref/README.md).
+- CI before final fix: 734 passed, 19 source-dependent skips; 34 browser tests passed. Post-fix web suite: 195 passed.
+- Owner checks remain: visual scenery/coverage, pointer feel, real GPU perf.
+
+## SP09 completion (2026-10-23, PR #13)
+- All 12 tasks (0-11) done; Node 22/24 release acceptance passed.
+- [Acceptance](09-gates-tooling-docs/code-2026-10-23-0728.md); [final review PASS](09-gates-tooling-docs/review-2026-10-23-0711.md); [owner handoff](09-gates-tooling-docs/owner-pass.md).
+- Evidence: [campaign grid](09-gates-tooling-docs/evidence/campaign-grid.png), [results](09-gates-tooling-docs/evidence/campaign-results.json).
+- Owner checks remain: playthrough, visual approval, hardware fps, five proxy-unsolved sign-offs.
+
+## Review fixes (2026-10-23, PR #14)
+- Three audit fixes F1-F3: campaign level refs, rejected-command accounting, gradual cut activation.
+- Bug Hunter / Security / Architect PASS.
+- [Code](review-fixes/code-2026-10-23-1630.md); [review](review-fixes/review-2026-10-23-1614.md).

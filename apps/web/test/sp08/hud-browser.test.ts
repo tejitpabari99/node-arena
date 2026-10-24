@@ -2,7 +2,7 @@ import { expect,it } from 'vitest';
 import { chromium,expect as browserExpect } from '@playwright/test';
 import { createServer } from 'vite';
 import { mkdirSync,readFileSync } from 'node:fs';
-const output='../../docs/agent_files/feat-sp08-web-client-20261023-0124/ref/out';
+const output='../../docs/agent_files/feat-tower-war-port-20261022-0321/08-web-client/ref/out';
 it('runs HUD pause, restart, mute, victory/next/replay and defeat/retry flows in Chromium',async()=>{
   const server=await createServer({server:{host:'127.0.0.1',port:0},plugins:[{name:'hud-fixture',configureServer(s){s.middlewares.use('/__hud',async(_req,res)=>{res.setHeader('Content-Type','text/html');res.end(await s.transformIndexHtml('/__hud','<!doctype html><html><body><main id="app"></main><script type="module" src="/test/sp08/hud-fixture.tsx"></script></body></html>'));});}}]});
   await server.listen();const browser=await chromium.launch({headless:true});
