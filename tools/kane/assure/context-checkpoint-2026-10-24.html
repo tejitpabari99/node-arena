@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>kane-cli context</title>
+<style>
+:root{
+  --bg:#f7f8fa; --fg:#1b2430; --muted:#68727f; --panel:#ffffff; --line:#e2e6ec;
+  --accent:#2563eb; --n-source:#6b7280; --n-usecase:#2563eb; --n-scenario:#7c3aed;
+  --n-ac:#0d9488; --n-test:#d97706; --n-stylenote:#0891b2; --n-gap:#e11d48;
+  --f-derivation:#6b7280; --f-linkage:#d97706; --f-mesh:#94a3b8; --f-crosslink:#db2777; --f-annotation:#0891b2;
+  --trusted:#16a34a; --archived:#9ca3af; --stale:#d97706; --orphan:#dc2626;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0f1420; --fg:#e6ebf2; --muted:#94a3b8; --panel:#161b28; --line:#273246;
+    --n-source:#94a3b8; --n-usecase:#60a5fa; --n-scenario:#c084fc; --n-ac:#5eead4; --n-test:#fbbf24;
+    --n-stylenote:#67e8f9; --n-gap:#fb7185; --f-annotation:#67e8f9; }
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);
+  font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+#app{display:grid;grid-template-rows:auto 1fr auto;height:100vh}
+#header{display:flex;align-items:center;gap:14px;padding:8px 14px;border-bottom:1px solid var(--line);
+  flex-wrap:wrap}
+#header .title{font-weight:600}
+#header .stat{color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:5px}
+#header .stat:hover{background:var(--line);color:var(--fg)}
+#header .stat b{color:var(--fg)}
+#search{margin-left:auto;padding:5px 9px;border:1px solid var(--line);border-radius:7px;
+  background:var(--panel);color:var(--fg);min-width:180px}
+#main{position:relative;overflow:hidden}
+#graph{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+#graph.grabbing{cursor:grabbing}
+.laneband{fill:transparent}
+.laneband.alt{fill:rgba(127,127,127,0.05)}
+.lanelabel{fill:var(--muted);font-size:11px;font-weight:600}
+.lanelabel.undesigned{font-style:italic;opacity:0.7}
+.edge{fill:none;stroke-width:1.4}
+.edge.f-derivation{stroke:var(--f-derivation)}
+.edge.f-linkage{stroke:var(--f-linkage)}
+.edge.f-mesh{stroke:var(--f-mesh);opacity:0.10}
+.edge.f-crosslink{stroke:var(--f-crosslink);stroke-dasharray:5 4}
+.edge.f-annotation{stroke:var(--f-annotation);stroke-dasharray:2 3;opacity:0.7}
+.edge.inc{opacity:1 !important;stroke-width:2.2}
+.edge.trace{opacity:1 !important;stroke-width:2.4}
+.edge.hiddenfam{display:none}
+.node{cursor:pointer}
+.node rect{stroke:var(--line);stroke-width:1.4;rx:7}
+.node .box.n-source{fill:color-mix(in srgb,var(--n-source) 16%,var(--panel))}
+.node .box.n-usecase{fill:color-mix(in srgb,var(--n-usecase) 16%,var(--panel))}
+.node .box.n-scenario{fill:color-mix(in srgb,var(--n-scenario) 16%,var(--panel))}
+.node .box.n-ac{fill:color-mix(in srgb,var(--n-ac) 16%,var(--panel))}
+.node .box.n-test{fill:color-mix(in srgb,var(--n-test) 16%,var(--panel))}
+.node .box.n-stylenote{fill:color-mix(in srgb,var(--n-stylenote) 16%,var(--panel))}
+.node .box.n-gap{fill:color-mix(in srgb,var(--n-gap) 16%,var(--panel))}
+.node .slug{font-size:11px;font-weight:600;fill:var(--fg)}
+.node .ttl{font-size:10px;fill:var(--muted)}
+.node .bar{stroke-width:4}
+.node.trust-trusted .bar{stroke:var(--trusted)}
+.node.trust-archived .box{fill:url(#hatch);opacity:0.55}
+.node.trust-archived .slug{text-decoration:line-through}
+.node .badge{font-size:11px}
+.node.dim{opacity:0.12}
+.node.sel rect{stroke:var(--accent);stroke-width:2.4}
+.node.trace rect{stroke:var(--accent);stroke-width:2.2}
+.node.hiddennode{display:none}
+.elabel{font-size:9px;fill:var(--fg)}
+.elabel rect{fill:var(--panel);stroke:var(--line)}
+#panel{position:absolute;top:0;right:0;width:390px;max-width:92vw;height:100%;background:var(--panel);
+  border-left:1px solid var(--line);transform:translateX(100%);transition:transform .14s ease;
+  overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+#panel.open{transform:none}
+#panel h2{margin:0;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#panel .close{margin-left:auto;cursor:pointer;color:var(--muted);border:0;background:none;font-size:18px}
+.crumb{color:var(--muted);font-size:11px}
+.pill{font-size:10px;padding:1px 7px;border-radius:20px;border:1px solid var(--line)}
+.pill.trusted{color:var(--trusted);border-color:var(--trusted)}
+.pill.archived{color:var(--archived)}
+.pill.stale{color:var(--stale);border-color:var(--stale)}
+.pill.orphaned{color:var(--orphan);border-color:var(--orphan)}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line)}
+.tab{padding:5px 10px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent}
+.tab.on{color:var(--fg);border-color:var(--accent)}
+.chip{display:inline-block;font-size:10px;padding:1px 7px;margin:2px 3px 2px 0;border:1px solid var(--line);border-radius:20px;color:var(--muted)}
+.kv{display:flex;gap:8px;margin:3px 0}
+.kv .k{color:var(--muted);min-width:84px;text-transform:capitalize}
+.kv .v{flex:1;overflow-wrap:anywhere}
+.crit{margin:4px 0;padding-left:18px}
+.pred{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);border:1px solid var(--line);
+  border-radius:6px;padding:6px 8px;margin:4px 0;overflow-wrap:anywhere}
+pre.md{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:6px;
+  padding:8px;font-size:11px;max-height:280px;overflow:auto}
+.rel h3{font-size:11px;color:var(--muted);margin:10px 0 4px}
+.rel a{display:flex;gap:8px;padding:3px 5px;border-radius:5px;cursor:pointer;color:var(--fg);text-decoration:none}
+.rel a:hover{background:var(--bg)}
+.rel .et{color:var(--accent);font-size:10px;min-width:78px}
+.lin{border-left:2px solid var(--line);padding-left:10px;margin:4px 0}
+.lin .seq{color:var(--muted);font-size:10px}
+#rail{display:flex;gap:2px;align-items:stretch;padding:8px 12px;border-top:1px solid var(--line);overflow-x:auto}
+#rail .tick{border:1px solid var(--line);border-radius:6px;padding:5px 9px;cursor:pointer;white-space:nowrap;
+  background:var(--panel);font-size:11px}
+#rail .tick:hover{border-color:var(--accent)}
+#rail .tick.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel))}
+#rail .tick .k{color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:.5px}
+#legend{position:absolute;left:12px;bottom:12px;background:var(--panel);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;font-size:11px;max-width:230px}
+#legend .row{display:flex;align-items:center;gap:6px;cursor:pointer;padding:1px 0}
+#legend .sw{width:14px;height:0;border-top:3px solid}
+#legend label{cursor:pointer}
+.controls{position:absolute;right:12px;bottom:12px;display:flex;gap:6px}
+.controls button{background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:7px;
+  padding:6px 10px;cursor:pointer}
+#empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;
+  color:var(--muted);gap:8px;text-align:center}
+.dimmed .node:not(.sel):not(.adj):not(.trace){opacity:0.12}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header"></div>
+  <div id="main">
+    <svg id="graph"><defs>
+      <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="6" height="6" fill="var(--panel)"></rect>
+        <line x1="0" y1="0" x2="0" y2="6" stroke="var(--archived)" stroke-width="2"></line>
+      </pattern>
+      <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="var(--muted)"></path>
+      </marker>
+    </defs></svg>
+    <div id="empty"><div style="font-size:20px">No context yet</div>
+      <div>Run <code>kane-cli context ingest</code> then <code>kane-cli context extract</code>.</div></div>
+    <div id="legend"></div>
+    <div class="controls">
+      <button id="fit">Fit</button>
+      <button id="clear">Clear</button>
+    </div>
+    <aside id="panel"></aside>
+  </div>
+  <div id="rail"></div>
+</div>
+<script id="data" type="application/json">{"meta":{"fromSeq":1,"tipHash":"sha256:3643f1b6b7ce49894a10c86c10bcd3f8fa17af1cce2b99d668b8ca9f39fbf441","storePath":"/root/projects/node-arena/.worktrees/feat-kane-workflow-integrations/tools/kane/assure/.context","schema":"assurance/context@1","asOf":"2026-10-24T22:06:02.048Z"},"summary":{"nodes":5,"edges":23,"byLabel":{"source":1,"usecase":4},"trust":{"trusted":0,"derived":4,"archived":0},"fresh":{"fresh":5,"stale":0,"orphaned":0,"superseded":0},"usecases":4,"designed":0,"coverage":{"pct":0,"nothingRunYet":true}},"lanes":[{"ucCid":"sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","slug":"uc-1","designed":false,"y0":0,"y1":92},{"ucCid":"sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","slug":"uc-2","designed":false,"y0":92,"y1":184},{"ucCid":"sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","slug":"uc-3","designed":false,"y0":184,"y1":276},{"ucCid":"sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6","slug":"uc-4","designed":false,"y0":276,"y1":368}],"nodes":[{"cid":"sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","slug":"uc-1","label":"usecase","trust":"derived","fresh":"fresh","title":"Draw a route from an owned house","superseded":false,"lane":"sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","col":1,"x":260,"y":14},{"cid":"sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","slug":"uc-2","label":"usecase","trust":"derived","fresh":"fresh","title":"Cut an owned outgoing route","superseded":false,"lane":"sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","col":1,"x":260,"y":106},{"cid":"sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","slug":"uc-3","label":"usecase","trust":"derived","fresh":"fresh","title":"Complete a Kane Arena level","superseded":false,"lane":"sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","col":1,"x":260,"y":198},{"cid":"sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6","slug":"uc-4","label":"usecase","trust":"derived","fresh":"fresh","title":"Continue after a match result","superseded":false,"lane":"sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6","col":1,"x":260,"y":290},{"cid":"sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363","slug":"excerpt","label":"source","trust":"derived","fresh":"fresh","title":"excerpt","superseded":false,"lane":"__spine__","col":0,"x":0,"y":184}],"edges":[{"key":"DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","type":"DERIVES","family":"derivation","src":"sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363","dst":"sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","count":10,"anchors":["L3-L3","L31-L31","L3-L3","L17-L17","L31-L31","L43-L43","L111-L114","L115-L115","L117-L118","L113-L113"],"container":false},{"key":"DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","type":"DERIVES","family":"derivation","src":"sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363","dst":"sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","count":4,"anchors":["L57-L57","L116-L116","L57-L57","L116-L116"],"container":false},{"key":"DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","type":"DERIVES","family":"derivation","src":"sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363","dst":"sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","count":7,"anchors":["L69-L69","L83-L83","L69-L69","L83-L83","L97-L97","L119-L119","L119-L119"],"container":false},{"key":"DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6","type":"DERIVES","family":"derivation","src":"sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363","dst":"sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6","count":2,"anchors":["L119-L119","L119-L119"],"container":false}],"commits":[{"seq":1,"ts":"2026-10-24T22:03:39.010Z","kind":"ingest","label":"ingest · +1 nodes","mintedNodeCids":["sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363"],"mintedEdgeKeys":[],"reviewedNodeCids":[],"trustDelta":{"trusted":0,"archived":0,"reset":0}},{"seq":2,"ts":"2026-10-24T22:06:02.048Z","kind":"extract","label":"extract · +4 nodes","mintedNodeCids":["sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6"],"mintedEdgeKeys":["DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6","DERIVES|sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363|sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6"],"reviewedNodeCids":[],"trustDelta":{"trusted":0,"archived":0,"reset":0}}],"lineage":{"sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363":[{"seq":1,"ts":"2026-10-24T22:03:39.010Z","kind":"minted","detail":"minted here"}],"sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454":[{"seq":2,"ts":"2026-10-24T22:06:02.048Z","kind":"minted","detail":"minted here"},{"seq":0,"ts":"","kind":"derived_from","detail":"source lines L3-L3, L31-L31, L3-L3, L17-L17, L31-L31, L43-L43, L111-L114, L115-L115, L117-L118, L113-L113"}],"sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9":[{"seq":2,"ts":"2026-10-24T22:06:02.048Z","kind":"minted","detail":"minted here"},{"seq":0,"ts":"","kind":"derived_from","detail":"source lines L57-L57, L116-L116, L57-L57, L116-L116"}],"sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa":[{"seq":2,"ts":"2026-10-24T22:06:02.048Z","kind":"minted","detail":"minted here"},{"seq":0,"ts":"","kind":"derived_from","detail":"source lines L69-L69, L83-L83, L69-L69, L83-L83, L97-L97, L119-L119, L119-L119"}],"sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6":[{"seq":2,"ts":"2026-10-24T22:06:02.048Z","kind":"minted","detail":"minted here"},{"seq":0,"ts":"","kind":"derived_from","detail":"source lines L119-L119, L119-L119"}]},"contentHtml":{"sha256:b3fe1ad1f99f48b186210c61b6b5543fa9086231df69ae5e8551d6deb4a58363":"\u003cdiv class=\"kv\"\u003e\u003cspan class=\"k\"\u003esource_id\u003c/span\u003e\u003cspan class=\"v\"\u003eexcerpt\u003c/span\u003e\u003c/div\u003e\u003cdiv class=\"kv\"\u003e\u003cspan class=\"k\"\u003eblob\u003c/span\u003e\u003cspan class=\"v\"\u003esha256:140c86f39ab88b7b0ce1457e8cac730b188872a72444a6db08266a373dc7a081\u003c/span\u003e\u003c/div\u003e","sha256:4183075ebe40f1bf136c2817ef97f5bd42aa992b569ce2c3145cda4156f6e454":"\u003cdiv class=\"kv\"\u003e\u003cspan class=\"k\"\u003edescription\u003c/span\u003e\u003cspan class=\"v\"\u003eThe human player establishes an outgoing line from a house they own to a different existing building, provided no line already connects that ordered pair, a slot remains after any same-owner reverse-line replacement, and no obstacle blocks the route; drawing replaces a same-owner reverse line but can coexist with a hostile reverse line, while invalid commands leave the match unchanged and the panel shows the route\u0026#39;s live availability and feedback.\u003c/span\u003e\u003c/div\u003e\u003cdiv class=\"kv\"\u003e\u003cspan class=\"k\"\u003evalue\u003c/span\u003e\u003cspan class=\"v\"\u003eLets the player direct troops toward buildings to contest and capture them.\u003c/span\u003e\u003c/div\u003e\u003cspan class=\"chip\"\u003erisk: med\u003c/span\u003e\u003cspan class=\"chip\"\u003ehuman player\u003c/span\u003e\u003cul class=\"crit\"\u003e\u003cli\u003eOnly an owned house may source a draw; the target must exist and differ from the source, the ordered pair must not already have a line, a slot must be free after any same-owner reverse replacement, and the route must not be blocked; rejection changes nothing.\u003c/li\u003e\u003cli\u003eSlots equal stage(L); a level drop does not cut existing lines, even when lines exceed slots; free may be negative and drawing requires free \u0026gt; 0; spawning uses actual line count.\u003c/li\u003e\u003cli\u003eA same-owner reverse line is replaced, its troops continue in flight and the new line starts a fresh timer; a hostile reverse line coexists and causes head-on combat.\u003c/li\u003e\u003cli\u003eLines are straight centre-to-centre, cost nothing and have no length cap; crossings alone do nothing, with crossing combat and blocking governed by their respective rules.\u003c/li\u003e\u003cli\u003eOutgoing routes are grouped by human-owned source house; towers have no outgoing group, blocked routes are omitted, and displayed colours, levels and routes change during play.\u003c/li\u003e\u003cli\u003eA ready button shows the current target colour and level; one click draws, and the player waits for that button to show active before another action.\u003c/li\u003e\u003cli\u003eAn unavailable route remains clickable, shows its reason, and clicking gives an alert without drawing or cutting; no-free-slot feedback says `This building has no free routes.`, obstacles have their own message, and errors last up to 12 seconds or clear on the next pair click.\u003c/li\u003e\u003cli\u003eThe test-build panel opens with the Kane URL or seed-1 short URL; controls are unavailable in production, and speed defaults to 0.25x and cycles 0.25, 0.5, 1, 2.\u003c/li\u003e\u003c/ul\u003e","sha256:d0c23ab40e593171f422a9b10700e6b9da4c5881a8470d44c1391625fe5ab0b9":"\u003cdiv class=\"kv\"\u003e\u003cspan class=\"k\"\u003edescription\u003c/span\u003e\u003cspan class=\"v\"\u003eThe human player removes a line they own to stop its spawning timer and prevent further troop departures, while troops already in flight continue toward the target; in the panel an active route must be double-clicked at least 700 ms after drawing, whereas a single click does not cut and double-clicking a ready route draws once instead.\u003c/span\u003e\u003c/div\u003e\u003cdiv class=\"kv\"\u003e\u003cspan class=\"k\"\u003evalue\u003c/span\u003e\u003cspan class=\"v\"\u003eLets the player redirect future troop flow without erasing troops already committed.\u003c/span\u003e\u003c/div\u003e\u003cspan class=\"chip\"\u003erisk: med\u003c/span\u003e\u003cspan class=\"chip\"\u003ehuman player\u003c/span\u003e\u003cul class=\"crit\"\u003e\u003cli\u003eOnly the line owner can cut it; cutting removes the line and stops its timer and future departures, but troops already in flight continue to the target.\u003c/li\u003e\u003cli\u003eAn active route requires a double-click at least 700 ms after drawing to cut; a single click does not cut, and a ready-route double-click draws once rather than immediately cutting.\u003c/li\u003e\u003c/ul\u003e","sha256:e4197b787cafa390b0850fe23f67aa6fb42fcdb44b26cb8acd7aa10e49c22caa":"\u003cdiv class=\"kv\"\u003e\u003cspan class=\"k\"\u003edescription\u003c/span\u003e\u003cspan class=\"v\"\u003eThe human player wins by owning every non-ignored building, including neutral buildings, at which point remaining ignored buildings flip to human ownership and the campaign level is completed; the match otherwise ends in loss when no non-ignored building remains human-owned or in timeout loss if an optional time limit expires after win and loss checks, with no draw and a final outcome reflected in the result UI.\u003c/span\u003e\u003c/div\u003e\u003cdiv class=\"kv\"\u003e\u003cspan class=\"k\"\u003evalue\u003c/span\u003e\u003cspan class=\"v\"\u003eDetermines victory and campaign progression while giving a definitive result for losses or timeouts.\u003c/span\u003e\u003c/div\u003e\u003cspan class=\"chip\"\u003erisk: med\u003c/span\u003e\u003cspan class=\"chip\"\u003ehuman player\u003c/span\u003e\u003cul class=\"crit\"\u003e\u003cli\u003eVictory requires human ownership of every building with ignoreForWin=false, including neutral buildings; remaining ignored buildings flip to human ownership.\u003c/li\u003e\u003cli\u003eLoss occurs when no non-ignored building is human-owned; in-transit troops do not count, there is no draw, and only a win completes the campaign level.\u003c/li\u003e\u003cli\u003eWithout timeLimitSec there is no limit; when set, tick \u0026gt;= timeLimitSec × tickRate at phase 9 causes timeout loss after win and loss are evaluated, so final-tick victory wins; harness caps are not outcomes and recorded outcomes are final.\u003c/li\u003e\u003cli\u003eAfter a match, buttons are disabled, the banner shows `Game over`, and result text is `Victory!`, `Defeat`, or `Time up` for win, loss, or timeout respectively.\u003c/li\u003e\u003cli\u003eThe result dialog title is `Victory!` if another campaign level remains, `All levels complete!` after the single Kane level is won, and `Defeat` after loss.\u003c/li\u003e\u003c/ul\u003e","sha256:0464bf7dfcbd432cfeceddb5bf4b01ec1f22dc5df7bc76c500222f1b71beced6":"\u003cdiv class=\"kv\"\u003e\u003cspan class=\"k\"\u003edescription\u003c/span\u003e\u003cspan class=\"v\"\u003eAfter the match ends, the human player can use the result dialog\u0026#39;s outcome-dependent controls to replay a won level or retry a lost level, or choose Levels instead; the source specifies which choices are offered but does not describe the subsequent navigation or new match state.\u003c/span\u003e\u003c/div\u003e\u003cdiv class=\"kv\"\u003e\u003cspan class=\"k\"\u003evalue\u003c/span\u003e\u003cspan class=\"v\"\u003eGives the player a way to continue or leave the finished match.\u003c/span\u003e\u003c/div\u003e\u003cspan class=\"chip\"\u003erisk: low\u003c/span\u003e\u003cspan class=\"chip\"\u003ehuman player\u003c/span\u003e\u003cul class=\"crit\"\u003e\u003cli\u003eThe result dialog offers Replay on a win or Retry on a loss, together with Levels.\u003c/li\u003e\u003c/ul\u003e"},"width":1560,"height":368,"source":{}}</script>
+<script>
+(function(){
+  "use strict";
+  var D = JSON.parse(document.getElementById("data").textContent);
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var NODE_W = 220, NODE_H = 44;
+  var byCid = {}; for (var i=0;i<D.nodes.length;i++) byCid[D.nodes[i].cid] = D.nodes[i];
+  var famVisible = { derivation:true, linkage:true, mesh:true, crosslink:true };
+  var typeFilter = null, trustFilter = null;
+  var showSuperseded = false;
+  var selected = null;
+
+  function E(tag, attrs, txt){ var e=document.createElement(tag);
+    if(attrs) for(var k in attrs) e.setAttribute(k, attrs[k]);
+    if(txt!=null) e.textContent = txt; return e; }
+  function S(tag, attrs){ var e=document.createElementNS(SVGNS, tag);
+    if(attrs) for(var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  function esc(s){ return String(s==null?"":s); }
+
+  // ---------- header ----------
+  function buildHeader(){
+    var h = document.getElementById("header"); h.innerHTML="";
+    h.appendChild(E("span",{"class":"title"},"kane-cli context"));
+    var s = D.summary;
+    function stat(txt, kind, val){ var el=E("span",{"class":"stat"});
+      el.appendChild(E("b",{},String(val))); el.appendChild(document.createTextNode(" "+txt));
+      el.onclick=function(){ filterByStat(kind); }; return el; }
+    h.appendChild(stat("nodes","", s.nodes));
+    h.appendChild(stat("edges","", s.edges));
+    h.appendChild(stat("derived","derived", s.trust.derived));
+    h.appendChild(stat("trusted","trusted", s.trust.trusted));
+    h.appendChild(stat("archived","archived", s.trust.archived));
+    var stale = s.fresh.stale + s.fresh.orphaned;
+    h.appendChild(stat("stale","stale", stale));
+    h.appendChild(stat("designed", "", s.designed + "/" + s.usecases));
+    h.appendChild(stat(s.coverage.nothingRunYet ? "covered · nothing run yet" : "covered", "", Math.round(s.coverage.pct) + "%"));
+    var inp = E("input",{"id":"search","placeholder":"search slug/title"});
+    inp.oninput=function(){ applyFilters(); }; h.appendChild(inp);
+  }
+  function filterByStat(kind){
+    if(kind==="derived"||kind==="trusted"||kind==="archived"){ trustFilter = (trustFilter===kind?null:kind); }
+    else if(kind==="stale"){ trustFilter = (trustFilter==="stale"?null:"stale"); }
+    applyFilters();
+  }
+
+  // ---------- graph ----------
+  var g = document.getElementById("graph");
+  var root = S("g",{}); g.appendChild(root);
+  var edgesLayer = S("g",{}); var nodesLayer = S("g",{}); var labelLayer = S("g",{});
+  root.appendChild(edgesLayer); root.appendChild(nodesLayer); root.appendChild(labelLayer);
+  var edgeEls = {}; var nodeEls = {};
+
+  function port(n, side){ // side: 'r' or 'l'
+    return { x: n.x + (side==="r"?NODE_W:0), y: n.y + NODE_H/2 }; }
+  function edgePath(e){
+    var s = byCid[e.src], d = byCid[e.dst]; if(!s||!d) return "";
+    var forward = d.x >= s.x;
+    var a = port(s, forward?"r":"l"), b = port(d, forward?"l":"r");
+    // cubic S-curve with horizontal tangents: each connection gets its own arc
+    // (a shared-midpoint elbow stacked every edge in a gap into one thick line).
+    var dx = Math.max(40, Math.abs(b.x-a.x)*0.45) * (forward?1:-1);
+    return "M"+a.x+","+a.y+" C"+(a.x+dx)+","+a.y+" "+(b.x-dx)+","+b.y+" "+b.x+","+b.y;
+  }
+  function renderGraph(){
+    if(D.nodes.length===0){ document.getElementById("empty").style.display="flex"; return; }
+    // lane bands + labels
+    for(var i=0;i<D.lanes.length;i++){ var ln=D.lanes[i]; if(ln.ucCid==="__shared__"&&ln.y1<=ln.y0) continue;
+      var band=S("rect",{"class":"laneband"+(i%2?" alt":""),x:0,y:ln.y0,width:D.width,height:(ln.y1-ln.y0)});
+      root.insertBefore(band, edgesLayer);
+      var lab=S("text",{"class":"lanelabel"+(ln.designed?"":" undesigned"),x:6,y:ln.y0+16});
+      lab.textContent = ln.slug + (ln.designed?"":"  (not yet designed)");
+      labelLayer.appendChild(lab);
+    }
+    // edges (skip container; mesh ghosted via css)
+    for(var j=0;j<D.edges.length;j++){ var e=D.edges[j]; if(e.container) continue;
+      var p=S("path",{"class":"edge f-"+e.family,d:edgePath(e),"marker-end":"url(#arrow)"});
+      p.dataset.key=e.key; p.dataset.src=e.src; p.dataset.dst=e.dst; p.dataset.type=e.type; p.dataset.family=e.family;
+      edgesLayer.appendChild(p); edgeEls[e.key]=p; }
+    // nodes
+    for(var k=0;k<D.nodes.length;k++){ var n=D.nodes[k];
+      var grp=S("g",{"class":"node n-"+n.label+" trust-"+n.trust+" fresh-"+n.fresh}); grp.dataset.cid=n.cid;
+      grp.appendChild(S("rect",{"class":"box n-"+n.label,x:n.x,y:n.y,width:NODE_W,height:NODE_H,rx:7}));
+      if(n.trust==="trusted") grp.appendChild(S("line",{"class":"bar",x1:n.x+1,y1:n.y+2,x2:n.x+1,y2:n.y+NODE_H-2}));
+      var slug=S("text",{"class":"slug",x:n.x+10,y:n.y+18}); slug.textContent=trunc(n.slug,30); grp.appendChild(slug);
+      var ttl=S("text",{"class":"ttl",x:n.x+10,y:n.y+33}); ttl.textContent=trunc(n.title,34); grp.appendChild(ttl);
+      var badge = n.fresh==="stale"?"!":(n.fresh==="orphaned"?"x":(n.fresh==="superseded"?"~":""));
+      if(badge){ var bd=S("text",{"class":"badge",x:n.x+NODE_W-14,y:n.y+16,fill:"var(--stale)"}); bd.textContent=badge; grp.appendChild(bd); }
+      grp.onclick=function(ev){ ev.stopPropagation(); select(this.dataset.cid); };
+      grp.ondblclick=function(ev){ ev.stopPropagation(); trace(this.dataset.cid); };
+      nodesLayer.appendChild(grp); nodeEls[n.cid]=grp; }
+    fit();
+  }
+  function trunc(s,n){ s=esc(s); return s.length>n? s.slice(0,n-1)+"…" : s; }
+
+  // ---------- pan / zoom ----------
+  var vb = {x:0,y:0,w:1000,h:700};
+  function setVB(){ g.setAttribute("viewBox", vb.x+" "+vb.y+" "+vb.w+" "+vb.h); }
+  function fit(){ // fit the WHOLE graph (both dims) so the source spine + all lanes show
+    var pad=50; var cw=g.clientWidth||1200, ch=g.clientHeight||700;
+    var contentW=(D.width||1000)+pad*2, contentH=(D.height||700)+pad*2;
+    var vw=Math.max(contentW, contentH*cw/ch), vh=vw*ch/cw;
+    vb.x=-pad-(vw-contentW)/2; vb.y=-pad-(vh-contentH)/2; vb.w=vw; vb.h=vh; setVB(); }
+  document.getElementById("fit").onclick=fit;
+  var pan=null;
+  g.addEventListener("pointerdown", function(ev){ pan={x:ev.clientX,y:ev.clientY,vx:vb.x,vy:vb.y}; g.classList.add("grabbing"); });
+  window.addEventListener("pointerup", function(){ pan=null; g.classList.remove("grabbing"); });
+  window.addEventListener("pointermove", function(ev){ if(!pan) return;
+    var sx=vb.w/g.clientWidth, sy=vb.h/g.clientHeight;
+    vb.x = pan.vx-(ev.clientX-pan.x)*sx; vb.y=pan.vy-(ev.clientY-pan.y)*sy; setVB(); });
+  g.addEventListener("wheel", function(ev){ ev.preventDefault();
+    // gentle, magnitude-scaled zoom (trackpads fire many events per gesture, so a
+    // flat 10%/event compounds far too fast). Normalize line-mode deltas, clamp,
+    // then zoom toward the cursor.
+    var dy = ev.deltaY * (ev.deltaMode===1 ? 16 : 1);
+    dy = Math.max(-40, Math.min(40, dy));
+    var f = Math.exp(dy*0.0032);
+    var nw = vb.w*f; if(nw < 80 || nw > (D.width||1000)*8){ return; }
+    var rect = g.getBoundingClientRect();
+    var px = (ev.clientX-rect.left)/Math.max(1,rect.width), py = (ev.clientY-rect.top)/Math.max(1,rect.height);
+    var ax = vb.x+px*vb.w, ay = vb.y+py*vb.h;
+    vb.w = nw; vb.h *= f; vb.x = ax-px*vb.w; vb.y = ay-py*vb.h; setVB();
+  }, {passive:false});
+  g.addEventListener("click", function(){ clearSel(); });
+
+  // ---------- selection / highlight ----------
+  function neighbors(cid){ var ns={}, es=[];
+    for(var i=0;i<D.edges.length;i++){ var e=D.edges[i]; if(e.container) continue;
+      if(e.src===cid){ ns[e.dst]=1; es.push(e); } else if(e.dst===cid){ ns[e.src]=1; es.push(e); } }
+    return {ns:ns, es:es}; }
+  function clearSel(){ selected=null; g.classList.remove("dimmed");
+    for(var c in nodeEls){ nodeEls[c].classList.remove("sel","adj","trace"); }
+    for(var k in edgeEls){ edgeEls[k].classList.remove("inc","trace"); }
+    labelLayer.querySelectorAll(".elabel").forEach(function(x){x.remove();});
+    document.getElementById("panel").classList.remove("open");
+    if(location.hash) history.replaceState(null,"",location.pathname); }
+  function select(cid){ var n=byCid[cid]; if(!n) return; selected=cid;
+    for(var c in nodeEls){ nodeEls[c].classList.remove("sel","adj","trace"); }
+    for(var k in edgeEls){ edgeEls[k].classList.remove("inc","trace"); }
+    labelLayer.querySelectorAll(".elabel").forEach(function(x){x.remove();});
+    g.classList.add("dimmed"); nodeEls[cid].classList.add("sel");
+    var nb=neighbors(cid);
+    for(var d in nb.ns){ if(nodeEls[d]) nodeEls[d].classList.add("adj"); }
+    for(var i=0;i<nb.es.length;i++){ var e=nb.es[i]; var el=edgeEls[e.key]; if(el){ el.classList.add("inc"); edgeLabel(e); } }
+    buildPanel(cid);
+    location.hash = "node="+encodeURIComponent(n.slug);
+  }
+  function edgeLabel(e){ var s=byCid[e.src], d=byCid[e.dst]; if(!s||!d) return;
+    var mx=((s.x+NODE_W)+d.x)/2, my=(s.y+d.y)/2+NODE_H/2;
+    var w=e.type.length*6+10;
+    var box=S("g",{"class":"elabel"});
+    box.appendChild(S("rect",{x:mx-w/2,y:my-8,width:w,height:14,rx:3}));
+    var t=S("text",{x:mx,y:my+2,"text-anchor":"middle"}); t.setAttribute("class","elabel"); t.textContent=e.type+(e.count>1?" x"+e.count:"");
+    box.appendChild(t); labelLayer.appendChild(box); }
+
+  // ---------- trace to source ----------
+  function trace(cid){ // outgoing spine (incl. containment) + INCOMING derives to source (R5)
+    var keepN={}, keepE={}; var stack=[cid]; keepN[cid]=1;
+    while(stack.length){ var cur=stack.pop();
+      for(var i=0;i<D.edges.length;i++){ var e=D.edges[i];
+        var hit=null;
+        // climb the provenance spine: follow outgoing non-DERIVES (incl. the
+        // scoped_to/belongs_to containment that carries ac/scenario -> usecase),
+        // then reach the source via the usecase's INCOMING DERIVES.
+        if(e.src===cur && e.type!=="DERIVES"){ hit=e.dst; }
+        else if(e.dst===cur && e.type==="DERIVES"){ hit=e.src; }
+        if(hit){ if(!e.container) keepE[e.key]=1; if(!keepN[hit]){ keepN[hit]=1; stack.push(hit); } }
+      } }
+    g.classList.add("dimmed");
+    for(var c in nodeEls){ var on=keepN[c]; nodeEls[c].classList.toggle("trace",!!on); nodeEls[c].classList.toggle("sel", c===cid); }
+    for(var k in edgeEls){ edgeEls[k].classList.toggle("trace", !!keepE[k]); }
+    buildPanel(cid);
+    // no auto-zoom on interaction (owner directive) — the chain lights in place;
+    // use Fit to re-frame the whole traced path incl. the source.
+  }
+
+  // ---------- panel ----------
+  function buildPanel(cid){ var n=byCid[cid]; var p=document.getElementById("panel"); p.innerHTML="";
+    var h=E("h2"); var icon={source:"S",usecase:"U",scenario:"C",ac:"A",test:"T",stylenote:"N",gap:"G"}[n.label]||"?";
+    h.appendChild(E("span",{"class":"chip"},icon+" "+n.label));
+    var sl=E("span",{},n.slug); sl.style.cursor="copy"; sl.title="click to copy cid";
+    sl.onclick=function(){ if(navigator.clipboard) navigator.clipboard.writeText(n.cid); }; h.appendChild(sl);
+    if(n.trust) h.appendChild(E("span",{"class":"pill "+n.trust}, n.trust));
+    if(n.fresh && n.fresh!=="fresh") h.appendChild(E("span",{"class":"pill "+n.fresh}, n.fresh));
+    var close=E("button",{"class":"close"},"×"); close.onclick=clearSel; h.appendChild(close);
+    p.appendChild(h);
+    p.appendChild(E("div",{"class":"crumb"}, breadcrumb(n)));
+    if(n.title) p.appendChild(E("div",{},esc(n.title)));
+    // tabs
+    var tabs=E("div",{"class":"tabs"}); var body=E("div");
+    var tContent=E("div",{"class":"tab on"},"content"), tRel=E("div",{"class":"tab"},"links"), tLin=E("div",{"class":"tab"},"lineage");
+    tabs.appendChild(tContent); tabs.appendChild(tRel); tabs.appendChild(tLin); p.appendChild(tabs); p.appendChild(body);
+    function show(which){ [tContent,tRel,tLin].forEach(function(t){t.classList.remove("on");}); which.classList.add("on");
+      body.innerHTML="";
+      if(which===tContent){ var d=E("div"); d.innerHTML=D.contentHtml[cid]||""; body.appendChild(d); }
+      else if(which===tRel){ body.appendChild(relations(cid)); }
+      else { body.appendChild(lineageView(cid)); } }
+    tContent.onclick=function(){show(tContent);}; tRel.onclick=function(){show(tRel);}; tLin.onclick=function(){show(tLin);};
+    show(tContent);
+    // trace button
+    var tb=E("button",{"class":"tab"},"Trace to source"); tb.onclick=function(){ trace(cid); };
+    p.appendChild(tb);
+    p.classList.add("open");
+  }
+  function breadcrumb(n){ var order={source:0,usecase:1,scenario:2,ac:3,test:4};
+    if(order[n.label]===undefined) return "annotation (" + n.label + ")";
+    return "source ▸ usecase ▸ scenario ▸ ac ▸ test".split(" ▸ ")
+      .filter(function(x,i){return i<=order[n.label];}).join(" ▸ "); }
+  function relations(cid){ var wrap=E("div",{"class":"rel"}); var inc={}, out={};
+    for(var i=0;i<D.edges.length;i++){ var e=D.edges[i];
+      if(e.src===cid){ (out[e.type]=out[e.type]||[]).push(e.dst); }
+      if(e.dst===cid){ (inc[e.type]=inc[e.type]||[]).push(e.src); } }
+    function group(title, map){ var keys=Object.keys(map); if(!keys.length) return;
+      wrap.appendChild(E("h3",{},title));
+      keys.forEach(function(t){ map[t].forEach(function(other){ var o=byCid[other]; if(!o) return;
+        var a=E("a"); a.appendChild(E("span",{"class":"et"},t)); a.appendChild(E("span",{},o.slug||other.slice(7,19)));
+        a.onclick=function(){ select(other); }; wrap.appendChild(a); }); }); }
+    group("Incoming", inc); group("Outgoing", out);
+    if(!wrap.querySelector("a")) wrap.appendChild(E("div",{"class":"crumb"},"no drawn relationships"));
+    return wrap; }
+  function lineageView(cid){ var wrap=E("div"); var ents=D.lineage[cid]||[];
+    if(!ents.length){ wrap.appendChild(E("div",{"class":"crumb"},"no recorded lineage")); return wrap; }
+    ents.forEach(function(en){ var d=E("div",{"class":"lin"});
+      d.appendChild(E("div",{"class":"seq"}, (en.seq?("seq "+en.seq):en.kind)+(en.ts?("  "+en.ts.slice(0,10)):"")));
+      d.appendChild(E("div",{}, en.kind+": "+esc(en.detail)));
+      if(en.seq) d.style.cursor="pointer"; if(en.seq) d.onclick=function(){ railSelect(en.seq); };
+      wrap.appendChild(d); });
+    return wrap; }
+
+  // ---------- filters ----------
+  function applyFilters(){ var q=(document.getElementById("search").value||"").toLowerCase();
+    for(var c in nodeEls){ var n=byCid[c]; var show=true;
+      if(q && (n.slug+" "+n.title).toLowerCase().indexOf(q)<0) show=false;
+      if(typeFilter && n.label!==typeFilter) show=false;
+      if(trustFilter==="stale"){ if(n.fresh==="fresh") show=false; }
+      else if(trustFilter && n.trust!==trustFilter) show=false;
+      if(n.superseded && !showSuperseded) show=false;
+      nodeEls[c].classList.toggle("hiddennode", !show); }
+    for(var k in edgeEls){ var e2=edgeEls[k];
+      var famOff = !famVisible[e2.dataset.family];
+      var ns = nodeEls[e2.dataset.src], nd = nodeEls[e2.dataset.dst];
+      var hidden = famOff || (ns&&ns.classList.contains("hiddennode")) || (nd&&nd.classList.contains("hiddennode"));
+      e2.classList.toggle("hiddenfam", hidden); } }
+
+  // ---------- legend ----------
+  function buildLegend(){ var l=document.getElementById("legend"); l.innerHTML="";
+    l.appendChild(E("div",{"style":"font-weight:600;margin-bottom:4px"},"edges (click to toggle)"));
+    var fams=[["derivation","derives"],["linkage","automates"],["mesh","exercises/verifies"],["crosslink","depends/reuses"],["annotation","annotates"]];
+    fams.forEach(function(f){ var r=E("div",{"class":"row"});
+      var sw=E("span",{"class":"sw"}); sw.style.borderColor="var(--f-"+f[0]+")"; r.appendChild(sw);
+      r.appendChild(E("label",{}, f[1]));
+      r.onclick=function(){ famVisible[f[0]]=!famVisible[f[0]]; r.style.opacity=famVisible[f[0]]?"1":"0.4"; applyFilters(); };
+      l.appendChild(r); });
+    var ss=E("div",{"class":"row"}); var cb=E("input",{"type":"checkbox"});
+    cb.onchange=function(){ showSuperseded=cb.checked; applyFilters(); };
+    ss.appendChild(cb); ss.appendChild(E("label",{},"include superseded")); l.appendChild(ss);
+    l.appendChild(E("div",{"style":"margin-top:6px;color:var(--muted)"},"dbl-click a node = trace to source")); }
+
+  // ---------- rail ----------
+  function buildRail(){ var r=document.getElementById("rail"); r.innerHTML="";
+    D.commits.forEach(function(c){ var t=E("div",{"class":"tick"}); t.dataset.seq=c.seq;
+      t.appendChild(E("div",{"class":"k"}, "#"+c.seq+" "+c.kind));
+      t.appendChild(E("div",{}, c.label));
+      t.onclick=function(){ railSelect(c.seq); }; r.appendChild(t); }); }
+  function railSelect(seq){ var c=null; for(var i=0;i<D.commits.length;i++) if(D.commits[i].seq===seq) c=D.commits[i];
+    if(!c) return;
+    document.querySelectorAll("#rail .tick").forEach(function(t){ t.classList.toggle("on", t.dataset.seq==seq); });
+    // highlight born nodes + edges, plus reviewed nodes for review commits (R8)
+    var mark={}; c.mintedNodeCids.forEach(function(x){mark[x]=1;}); c.reviewedNodeCids.forEach(function(x){mark[x]=1;});
+    var emark={}; c.mintedEdgeKeys.forEach(function(k){emark[k]=1;});
+    g.classList.add("dimmed");
+    for(var cc in nodeEls){ nodeEls[cc].classList.toggle("adj", !!mark[cc]); nodeEls[cc].classList.remove("sel","trace"); }
+    for(var k in edgeEls){ edgeEls[k].classList.toggle("inc", !!emark[k]); }
+    location.hash = "seq="+seq;
+  }
+
+  // ---------- hash restore ----------
+  function restoreHash(){ var h=location.hash.replace(/^#/,""); if(!h) return;
+    var m=/node=([^&]+)/.exec(h); if(m){ var slug=decodeURIComponent(m[1]);
+      for(var c in byCid) if(byCid[c].slug===slug){ select(c); return; } }
+    var s=/seq=(d+)/.exec(h); if(s){ railSelect(parseInt(s[1],10)); } }
+
+  document.getElementById("clear").onclick=clearSel;
+
+  buildHeader(); buildLegend(); renderGraph(); buildRail();
+  applyFilters(); // hide superseded (and apply any default filters) on first paint
+  window.addEventListener("resize", function(){ /* keep viewBox; user can Fit */ });
+  restoreHash();
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 ---
-status: draft
-summary: 6 tasks - Stop hook, hook install/demo docs, assurance excerpt, assurance pipeline script, assurance run + cover snapshot, non-blocking CI replay workflow.
+status: in-progress
+summary: 5 tasks implemented; Task 5 has 9 generated tests and committed design evidence; second human checkpoint pending before browser authoring.
 date: 2026-10-24
 ---
 # Tasks: 04 Workflow integrations (Stop hook, assurance, CI)
@@ -8,12 +8,12 @@ Source of truth: docs/agent_files/feat-kane-hackday-20261023-2128/04-workflow-in
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Stop hook script | 03 | todo |
-| 2 | Hook install example + README/demo | 1 | todo |
-| 3 | Assurance excerpt + UI facts | 02 (final strings) | todo |
-| 4 | Assurance pipeline script | 3, 03 (kane:credits) | todo |
-| 5 | Assurance run + cover snapshot | 4, 03 (saved tests) | todo |
-| 6 | Non-blocking CI replay workflow | 03 | todo |
+| 1 | Stop hook script | 03 | done |
+| 2 | Hook install example + README/demo | 1 | done |
+| 3 | Assurance excerpt + UI facts | 02 (final strings) | done |
+| 4 | Assurance pipeline script | 3, 03 (kane:credits) | done |
+| 5 | Assurance run + cover snapshot | 4, 03 (saved tests) | in-progress |
+| 6 | Non-blocking CI replay workflow | 03 | done |
 
 ## Task 1 — Stop hook script
 What it is: opt-in hook that feeds Kane replay failures back to Claude (R1; Decisions 1-4).

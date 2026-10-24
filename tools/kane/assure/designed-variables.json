@@ -1,0 +1,7 @@
+{
+  "timed_level_url": {
+    "value": "",
+    "secret": false,
+    "description": "Browser entry URL for a test-build Kane Arena level configured with timeLimitSec and mixed ownership; no campaign level sets this parameter."
+  }
+}

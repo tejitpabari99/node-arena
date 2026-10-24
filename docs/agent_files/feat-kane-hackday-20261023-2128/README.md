@@ -9,6 +9,8 @@ date: 2026-10-24
 Make Node Arena a game an AI tester (Kane CLI) plays live on a hidden Kane level via a test-build-only DOM control panel, and put Kane in the dev workflow (Stop-hook replay loop, assurance, non-blocking CI replay). Design only today; code is built on hack day 2026-10-24.
 
 ## Contents
+- [SP04 code review](04-workflow-integrations/review-2026-10-24-2213.md) — PASS for code; three personas; Task 5 has nine generated tests; second human checkpoint pending.
+- [SP04 implementation and verification](04-workflow-integrations/code-2026-10-24-2213.md) — five tasks implemented; nine generated assurance tests, zero proven coverage; second checkpoint pending; affected CI rerun/remaining gates green after initial timeout.
 - [SP03 final review](03-kane-driver/review-2026-10-24-2149.md) — PASS; all three personas, no unresolved must-fix.
 - [SP03 implementation and verification](03-kane-driver/code-2026-10-24-2149.md) — seven tasks complete; actual attach win, cached replay, full CI; launch limitation documented.
 - [SP02 final review](02-play-controls/review-2026-10-24-2032.md) — PASS; three personas, startup race resolved.
@@ -26,7 +28,7 @@ Make Node Arena a game an AI tester (Kane CLI) plays live on a hidden Kane level
 | 01 | [Kane level and boot](01-kane-level/PRD.md) | `na-kane` = COPY of Level 7 (`levelview-182-nb`, untouched) + neutral tower b4 + middle/left obstacles (drafts: `01-kane-level/na-kane.draft.json`, `kane-campaign.draft.json`; screenshots `01-kane-level/ref/`) + `kane` campaign, content 2.0.2 + BOT_VERSION 2.0.1 + locks/goldens, `tools/src/levels.ts` gate fix, `?kane=1` boot, prod-bundle exclusion | none | 1 foundation |
 | 02 | [Play controls](02-play-controls/PRD.md) | Speed 0.25/0.5/1/2, pair-button panel, banner, DOM tags, camera room, `kane-result`, `summary()`, remove original-game name | 01 | 1 foundation |
 | 03 | [Kane driver + saved tests](03-kane-driver/PRD.md) | `tools/kane/drive.mjs` loop on persistent Chrome via CDP, NDJSON v1, credit floor, fallback; `replay.mjs`; one saved smoke test | 02 (01) | complete |
-| 04 | [Workflow integrations](04-workflow-integrations/PRD.md) | Opt-in Stop hook (replay, ~0.65-2.7 credits each, needs Kane login), assurance pipeline to `cover`, non-blocking CI replay | 03 | 3 workflow |
+| 04 | [Workflow integrations](04-workflow-integrations/PRD.md) | Opt-in Stop hook (replay, ~0.65-2.7 credits each, needs Kane login), assurance pipeline to `cover`, non-blocking CI replay | 03 | 5 tasks implemented; Task 5 design evidence committed; second checkpoint pending |
 | 05 | [Hosted live stream](05-hosted-stream/PRD.md) | Public Start page: CDP screencast over WS, filtered NDJSON over SSE, single-run lock, credit floor, loopback-only game | 03 | 3 showcase (first cut) |
 
 ## Dependency graph
