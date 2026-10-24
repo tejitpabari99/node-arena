@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 summary: Dev-only apps/web/editor.html level editor (drag-drop layout, forms, in-place Play via real runtime, Save/Solvable?/Finalize through a Vite dev middleware) plus a `campaigns/custom.json` custom-level list shown below the 20 campaign levels.
 date: 2026-10-24
 ---
@@ -56,7 +56,7 @@ Bot script editing (scripts only *removed* on delete); campaign ordering; new bu
 ### R4 Play
 - Editor mounts the real app controller (`createAppController` + `createBrowserRuntime` + real input) as a full-screen overlay with **options.files = shipped files + working copy overlaid as `data/levels/na-<id>.json` + a synthetic `data/campaigns/custom.json` containing it**, `campaignId:'custom'`, and an in-memory `SaveStore` (existing `options.save` seam [verified: state.ts:24]). No injection API, no new code path: identical load/compile/validate as shipping.
 - Pause menu (d2d674b) intercepts Esc; "Levels" (screen→`picker`) is the exit: editor listens to controller and tears down on `picker`. Plus an editor-bar "Back to editor" button. Edits intact (doc lives in editor state).
-- Cost: one `loadContent` of all files per Play; fallback if slow = cache catalog and compile only the draft (see [OPEN]).
+- Cost: one `loadContent` of all files per Play; fallback if slow = cache catalog and compile only the draft (see item 3: [RESOLVED]).
 
 ### R5 Finalize
 Sequence (each step's output shown; abort on first failure): `validate` level → bump `contentVersion` patch in `packages/content/content.json` → bump `BOT_VERSION` when the bots hash map in `hashes.lock.json` changes (any new/changed `na-*` level with AI seats) → `content:lock` → `levels:lock` → run `validate:content --base HEAD` + `check:content --base HEAD` as verification → print `git diff --stat`. Never commits. Version bumps are skipped if already bumped vs HEAD (idempotent).
@@ -133,11 +133,11 @@ editor.html → editor/ (Preact: Library, Forms, Toolbar, Banner) ── undo st
 
 ## Open Questions
 1. [RESOLVED: yes — docs/CONTENT_GUIDE.md "Verified: adding a second level ... needs a contentVersion bump and a BOT_VERSION bump" and BOT_VERSION rule "including adding or removing an AI seat via a new level"; Finalize bumps BOT_VERSION whenever the bots lock map changes, not only when seat count changes] Does `checkBotVersion` demand a `BOT_VERSION` bump when a *new* level adds `botHash` entries only (not changing existing)? Finalize must call it rather than guess; verify with one trial level in P0.
-2. [OPEN] `levels:lock` rewrites the whole lock (slow: 20 levels × proxies). Add `--levels <id>` merge mode, or accept full run? Measure in P0.
-3. [OPEN] Play cost of full `loadContent` per press; fall back to cached catalog + single-level compile if >~1 s.
-4. [OPEN] Grid snap default (0.5? 0.25?) and whether snapping applies to yaw; owner preference.
-5. [OPEN] `custom.json` entry `position` for new levels: auto = max+1; does anything outside Picker order read it (`number = position−3` is Common-only)?
-6. [OPEN] `levels:lock` position arg for custom levels (used for reporting only [verified: validateLevel `position`]); confirm no gating.
+2. [RESOLVED: add a `--levels <id>` merge mode to levels:lock (re-runs only the named levels, keeps other entries); Finalize uses it] `levels:lock` rewrites the whole lock (slow: 20 levels × proxies). Add `--levels <id>` merge mode, or accept full run? Measure in P0.
+3. [RESOLVED: keep full loadContent per Play; measure; only add cached catalog + single-level compile if >~1 s] Play cost of full `loadContent` per press; fall back to cached catalog + single-level compile if >~1 s.
+4. [RESOLVED: position snap 0.25 default (toggleable); yaw snap 15°] Grid snap default (0.5? 0.25?) and whether snapping applies to yaw; owner preference.
+5. [RESOLVED: auto = max+1 within custom.json; used only for custom picker order; implementer verifies nothing else reads it (number = position−3 stays Common-only)] `custom.json` entry `position` for new levels: auto = max+1; does anything outside Picker order read it (`number = position−3` is Common-only)?
+6. [RESOLVED: position becomes optional for custom levels in levels tooling and unsolved-by-proxy.json; reporting-only, no gating] `levels:lock` position arg for custom levels (used for reporting only [verified: validateLevel `position`]); confirm no gating.
 7. [RESOLVED: D9] Esc vs pause menu.
 8. [DEFERRED] Bot script editing, level delete UI beyond P3, campaign reorder, live-hot-reload of external file edits.
 

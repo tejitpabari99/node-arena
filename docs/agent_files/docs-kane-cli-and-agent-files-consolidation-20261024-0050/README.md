@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 summary: Level editor + art overrides — brief + 2 PRDs (draft)
 date: 2026-10-24
 ---
@@ -51,12 +51,10 @@ See [brainstorm.md decision log](brainstorm.md#decision-log); not duplicated.
 - `tools/README.md` (document new commands/gates)
 
 ## Cross-cutting Open Questions
-a) [OPEN] Do `validate:levels` / `levels:lock` cover custom `na-*` levels? `tools/src/levels.ts` uses `campaignLevels(data)` (Common-only today); the two PRDs read this differently. Decide during dev-tasks for 01 P0.
-b) [OPEN] `tools/unsolved-by-proxy.json` schema requires integer `position` (`tools/src/unsolved.ts:8`); custom levels have none. Needs schema decision (shared 01/02).
+a) [RESOLVED: yes, covered — 01 P0] Do `validate:levels` / `levels:lock` cover custom `na-*` levels? `tools/src/levels.ts` uses `campaignLevels(data)` (Common-only today); the two PRDs read this differently. Decide during dev-tasks for 01 P0.
+b) [RESOLVED: position optional — 01 P0] `tools/unsolved-by-proxy.json` schema requires integer `position` (`tools/src/unsolved.ts:8`); custom levels have none. Needs schema decision (shared 01/02).
 c) [RESOLVED] `BOT_VERSION` bump required for new levels with AI seats (CONTENT_GUIDE). 01 R5 wording updated.
-d) Remaining per-PRD [OPEN] items:
-   - [01 Open Questions](01-level-editor/PRD.md#open-questions): `levels:lock` full run vs `--levels <id>` merge; Play cost of full `loadContent`; grid snap default/yaw; `custom.json` `position` for new levels; `levels:lock` position arg for custom levels.
-   - [02 Risks/Open Questions](02-art-overrides/PRD.md#open-questions): unsolved `position` (= b); validate:levels glob (= a); sfx map ownership vs manifest-fragment; stage depends only on level?; `assets:tw` cleanup only touches OWNED dirs?; per-visual `tintStrength`; `gray` for non-neutral units.
+d) All PRD open questions resolved/deferred (2026-10-24).
 
 ## Next step
 Owner reviews PRDs, tags Open Questions [RESOLVED]/[DEFERRED] in each PRD, then run dev-tasks per PRD.

@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 summary: Owner-art override layer (assets/art/ + manifest.art.json merged after the TW fragment), tintMask team mode, relaxed credits check, art:status, and two playable showcase levels.
 date: 2026-10-24
 ---
@@ -87,7 +87,7 @@ manifest.json(base: palettes, camera, event sfx) <- manifest.tw.json (visuals/th
 - **Interface assumption (01):** 01 ships `packages/content/data/campaigns/custom.json` (or equivalent) + loader + level-select section, always unlocked, excluded from 20-level assertions; saves levels as `na-<id>.json` in `data/levels/`. **Fallback:** if 02 lands first, 02 adds a minimal `custom.json` + loader matching that contract; 01 then adopts it. Recommend 01 first.
 - Content: 15 buildings = 3 types (`house-wt1`, `house-wt2`, `tower`) x 5 owners (human blue; 3 AI green/red/yellow; neutral gray, `owner: null`), levels cycling 1 / 15 / 40 so each type shows stage0/1/2 (thresholds `[10,30]`, `maxLevel` 64 [verified: balance.json, buildings/*.json]). 2 small + 2 big obstacles. A few lines so troops, tower shots, clashes and capture fx occur.
 - Seats: human + 3 AI (`bot.kind: tw`, copy a stock block); AI seats are required to show 4 colours.
-- Version/lock consequences [verified: CONTENT_GUIDE:48,75,77]: new levels move `levels` and `bots` locks -> `pnpm content:lock`, `contentVersion` bump (2.3.1 -> next), `BOT_VERSION` bump (AI seats added), `pnpm levels:lock`. Add both ids to `tools/unsolved-by-proxy.json` unless proxy wins (3 AIs likely stalemate); `position` is required there [verified: unsolved.ts schema] -> see [OPEN].
+- Version/lock consequences [verified: CONTENT_GUIDE:48,75,77]: new levels move `levels` and `bots` locks -> `pnpm content:lock`, `contentVersion` bump (2.3.1 -> next), `BOT_VERSION` bump (AI seats added), `pnpm levels:lock`. Add both ids to `tools/unsolved-by-proxy.json` unless proxy wins (3 AIs likely stalemate); `position` is required there today [verified: unsolved.ts schema] -> made optional for custom levels (see [RESOLVED] in Risks; owned by 01 P0).
 - Ship both in one commit so versions bump once.
 
 ### `art:status`
@@ -129,13 +129,13 @@ event Clash         sfx           audio/clash.ogg                stock
 | Showcase fx depend on AI fighting | seed bots to engage early; verify visually |
 
 ## Open Questions
-- [OPEN] `unsolved-by-proxy.json` requires integer `position`; custom levels have none. 01 should decide (make optional, or exclude `na-*` from solvability). 02 follows.
-- [OPEN] Does `validate:levels`/`levels:lock` glob all of `data/levels/` (then showcase is included) or only campaign entries? Verify in `tools/src/levels.ts`; adjust if custom levels need an opt-out.
-- [OPEN] Event sfx are hand-owned in base `manifest.json`: removing an art sfx override would leave the art path stale. Proposed: move default sfx map into `manifest-fragment.ts` constants so merge = defaults <- art (small change); else owner restores manually.
-- [OPEN] Does stage depend only on level (no decay)? Confirm buildings seeded at level 40 stay stage2 and `maxLevel` is not exceeded by in-play growth.
-- [OPEN] Does `assets:tw` stale-file cleanup only touch `OWNED` dirs? Confirm in `output.ts`.
-- [OPEN] Whether the mask needs a per-visual `tintStrength`; first cut: no.
-- [OPEN] Whether `gray` is rendered for non-neutral units (soldier has no gray texture today; tintMask gives one for free).
+- [RESOLVED: `position` optional in unsolved-by-proxy.json schema for custom (na-*) levels; owned by 01 P0; 02 follows] `unsolved-by-proxy.json` requires integer `position`; custom levels have none. 01 should decide (make optional, or exclude `na-*` from solvability). 02 follows.
+- [RESOLVED: validate:levels and levels:lock cover custom levels (all custom levels have ≥1 AI seat); owned by 01 P0; showcase levels included, allowlisted in unsolved-by-proxy.json if proxy can't win] Does `validate:levels`/`levels:lock` glob all of `data/levels/` (then showcase is included) or only campaign entries? Verify in `tools/src/levels.ts`; adjust if custom levels need an opt-out.
+- [RESOLVED: move default event sfx map into the fragment/merge defaults so merge = base <- TW <- art; removing an art override restores the default] Event sfx are hand-owned in base `manifest.json`: removing an art sfx override would leave the art path stale. Proposed: move default sfx map into `manifest-fragment.ts` constants so merge = defaults <- art (small change); else owner restores manually.
+- [RESOLVED: implementer verifies stage thresholds in code and picks showcase levels so each stage is visible at start; in-play growth changing stage is acceptable] Does stage depend only on level (no decay)? Confirm buildings seeded at level 40 stay stage2 and `maxLevel` is not exceeded by in-play growth.
+- [RESOLVED: verify cleanup only touches OWNED dirs; if not, restrict it to OWNED so art/ is never touched] Does `assets:tw` stale-file cleanup only touch `OWNED` dirs? Confirm in `output.ts`.
+- [DEFERRED] Whether the mask needs a per-visual `tintStrength`; first cut: no.
+- [RESOLVED: not needed; neutral buildings don't spawn units, no gray unit skin] Whether `gray` is rendered for non-neutral units (soldier has no gray texture today; tintMask gives one for free).
 - [DEFERRED] Per-theme light/lane overrides beyond `sky`/`light`; UI images; hot-swap.
 - [RESOLVED: verified grep] Manifest is not part of `hashes.lock.json`; art-only change needs no version bumps.
 - [RESOLVED: brief] No preview page; reload to see changes.
