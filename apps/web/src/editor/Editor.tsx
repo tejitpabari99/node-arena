@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'preact/hooks';
+import { Viewport } from './Viewport.js';
 import { listLevels, readLevel, type LevelListing } from './api.js';
 import { blankDocument, copyDocument, type LevelDoc, type SizePreset } from './document.js';
 
-/** Owns the working document; viewport, reducer, forms and Play attach here in later tasks. */
+/** Owns the working document; reducer, forms and Play attach here in later tasks. */
 export function Editor() {
   const [levels, setLevels] = useState<LevelListing[]>([]);
   const [doc, setDoc] = useState<LevelDoc | null>(null);
@@ -43,7 +44,7 @@ export function Editor() {
       <div class="editor-toolbar"><h2 data-testid="draft-id">{doc.id}</h2><button onClick={() => { setDoc(null); setId(''); setError(''); }}>Start screen</button></div>
       <p>{doc.name}</p>
       <p data-testid="draft-summary">{doc.theme} · {doc.players.length} players · {doc.buildings.length} buildings · {doc.elements.length} obstacles</p>
-      <div class="editor-workspace" aria-label="Level workspace" />
+      <Viewport doc={doc} />
     </section> : <>
       <p>Create a blank level, copy an existing level, or reopen a custom level.</p>
       <label>New level id<input value={id} onInput={event => setId(event.currentTarget.value)} placeholder="na-my-level" /></label>

@@ -12,4 +12,12 @@ body { margin: 0; }
 .editor-shell button { cursor: pointer; background: #244f88; }
 .editor-shell button:disabled { opacity: .5; cursor: default; }
 .editor-shell [role=alert] { padding: 12px; border: 1px solid #fb7185; color: #fecdd3; }
-.editor-workspace { min-height: 55vh; background: #1e293b; border: 1px solid #475569; }
+
+.editor-view-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; }
+.editor-view-tools { padding: 12px; background: #1e293b; overflow-wrap: anywhere; }
+.editor-view-tools h3 { margin-top: 0; }
+.editor-view-tools p { font-size: 13px; }
+.editor-workspace { position: relative; height: min(68vh, 760px); min-height: 360px; overflow: hidden; background: #1e293b; border: 1px solid #475569; }
+.editor-workspace canvas { touch-action: none; }
+.editor-marquee { position: absolute; z-index: 1; pointer-events: none; border: 1px solid #b8e0ff; background: #6cbcff33; }
+@media (max-width: 700px) { .editor-shell { padding: 12px; } .editor-view-layout { grid-template-columns: 150px minmax(0, 1fr); gap: 8px; } }
