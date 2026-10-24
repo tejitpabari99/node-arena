@@ -4,6 +4,7 @@ import type { AppController } from '../app/state';
 import type { TestApi } from '../test-harness';
 import { Overlay } from './Overlay';
 import { createKaneController, type KaneSnapshot } from './controller';
+import { createBuildingTags } from './tags';
 import './kane.css';
 
 export interface KaneControls {
@@ -19,6 +20,14 @@ export function createKaneOverlay(app: AppController, api: TestApi): KaneControl
   return {
     overlay: <Overlay controller={controller} api={api}/>,
     snapshot: controller.snapshot,
-    wrapInput(input, context) { controller.bindLevel(context.level, context.driver); return input; },
+    wrapInput(input, context, scene) {
+      controller.bindLevel(context.level, context.driver);
+      const tags = createBuildingTags(context, scene);
+      return {
+        refresh() { input.refresh(); tags.refresh(); },
+        cancel() { return input.cancel(); },
+        dispose() { tags.dispose(); input.dispose(); },
+      };
+    },
   };
 }
