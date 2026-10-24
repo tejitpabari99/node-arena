@@ -1,6 +1,6 @@
 ---
-status: in-progress
-summary: Both tasks in progress for attempt-correlation correctness fix and review
+status: done
+summary: Both tasks done; 113 stream tests and independent correctness, architecture and security reviews pass
 date: 2026-10-24
 ---
 # Tasks: Stream Stop and Reset
@@ -9,8 +9,8 @@ Source of truth: [PRD.md](PRD.md). The approved design preserves original spendi
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Reusable lifecycle and guarded HTTP Stop/Reset | none | in-progress |
-| 2 | Shared viewer controls, verification and runbook | 1 | in-progress |
+| 1 | Reusable lifecycle and guarded HTTP Stop/Reset | none | done |
+| 2 | Shared viewer controls, verification and runbook | 1 | done |
 
 ## Task 1 — Reusable lifecycle and guarded HTTP Stop/Reset
 

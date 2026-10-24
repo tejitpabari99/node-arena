@@ -1,15 +1,15 @@
 ---
-status: approved
-summary: Approved shared stream Stop/Reset design; Reset returns to Ready and preserves spending controls
+status: done
+summary: Stop/Reset implemented; 113 stream tests and independent reviews pass; hosting remains off
 date: 2026-10-24
 ---
 # Stream controls
 
 | Sub-project | Design | Status | Depends on |
 |---|---|---|---|
-| 01 Stream controls | [PRD](01-stream-controls/PRD.md) | approved | Existing merged SP05 stream (`8fe6196`) |
+| 01 Stream controls | [PRD](01-stream-controls/PRD.md) | done | Existing merged SP05 stream (`8fe6196`) |
 
-One bounded sub-project. Planned order: lifecycle/HTTP and cancellation tests → viewer controls/two-viewer verification/runbook → reviews/fixes → PR targeting `kane-cli`. No task file yet; principal reviews the PRD first.
+Both implementation tasks complete. [Tasks](01-stream-controls/TASKS.md) · [Implementation](01-stream-controls/code-2026-10-24-2354.md) · [Review](01-stream-controls/review-2026-10-24-2354.md) · [Security audit](01-stream-controls/security-review-2026-10-24-2354.md). Final 113 stream tests and all independent reviews pass. Delivery: normal PR targeting `kane-cli`; not deployed.
 
 Locked: Stop ends all play; Reset appears after Stop and returns to Ready without launching a match; Start launches a fresh match. Preserve cooldown/deadline and daily/IP/credit controls. Reset cannot complete before cleanup. All viewers clear old run presentation, including reconnects and late JPEG decoding.
 

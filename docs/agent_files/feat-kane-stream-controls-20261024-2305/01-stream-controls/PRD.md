@@ -1,5 +1,5 @@
 ---
-status: approved
+status: done
 summary: Stop ends the shared run; Reset clears stopped presentation and returns to Ready without bypassing admission or cooldown
 date: 2026-10-24
 ---
