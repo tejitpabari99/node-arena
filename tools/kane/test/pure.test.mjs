@@ -29,7 +29,7 @@ test('objectives stay below 120 words, carry strategy and never select concrete 
   const cut = build({ ...captured, pairs: [{ state: 'active' }] });
   assert.match(capture, /2 moves/);
   assert.match(capture, /neutral.*lowest level/);
-  assert.match(attack, /red-owned/);
+  assert.match(attack, /enemy-owned.*yellow.*red/);
   assert.match(cut, /Double-click one red.*active/);
   assert.doesNotMatch(cut, /single click|green.*ready/);
   for (const text of [capture, attack, cut]) {
@@ -142,4 +142,24 @@ test('event encoder rejects non-ISO timestamp and invalid sequence values', () =
   const encode = api(events, 'encodeEvent');
   assert.throws(() => encode('state', {}, { seq: 0, ts: '2026-10-24T00:00:00Z' }), /seq/i);
   assert.throws(() => encode('state', {}, { seq: 1, ts: 'October 24, 2026' }), /ISO/i);
+});
+
+test('rehearsal objectives use shipped enemy colors and avoid conditional banner subflows', () => {
+  const attack = structuredClone(initial);
+  attack.letters.forEach(row => { if (row.owner < 0) row.owner = 0; });
+  attack.pairs = [{ state: 'ready', text: 'C → B · ready · B: yellow 3' }];
+  const captureText = objective.buildObjective(initial);
+  const attackText = objective.buildObjective(attack);
+  const cutText = objective.buildObjective({ ...attack, pairs: [{ state: 'active' }] });
+  assert.match(attackText, /enemy-owned.*yellow.*red/);
+  assert.match(attackText, /keep attacks supplied/);
+  assert.match(cutText, /less useful route.*keep attacks supplied/);
+  assert.doesNotMatch(attackText + cutText, /blue destination|no panel group|reverse friendly|already attacking/);
+  for (const text of [captureText, attackText, cutText]) {
+    assert.doesNotMatch(text, /\bif\b|\belse\b/i);
+    assert.match(text, /red banner/);
+    assert.match(text, /exact text/);
+    assert.ok(text.split(/\s+/).length < 120);
+  }
+  assert.match(attackText, /no suitable green button/);
 });

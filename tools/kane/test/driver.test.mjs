@@ -97,7 +97,7 @@ test('unknown game results fail instead of masquerading as max runs', async () =
 
 test('Kane arguments match bounded PRD contract and child has codex user agent', async () => {
   const args = kaneRunArgs('strategy', opts());
-  assert.deepEqual(args, ['run', 'strategy', '--cdp-endpoint', 'http://127.0.0.1:9222', '--allow-missing-url', '--agent', '--max-steps', '8', '--timeout', '150', '--mode', 'action', '--assertion-mode', 'dom', '--final-validation', 'off', '--bug-detection', 'off']);
+  assert.deepEqual(args, ['run', 'strategy', '--cdp-endpoint', 'http://127.0.0.1:9222', '--allow-missing-url', '--agent', '--max-steps', '8', '--timeout', '150', '--assertion-mode', 'dom', '--final-validation', 'off', '--bug-detection', 'off']);
   let captured; const events = [];
   const result = await runKane('strategy', { ...opts(), onEvent: e => events.push(e), runProcessImpl: async (cmd, argv, options) => {
     captured = { cmd, argv, options }; options.onStdout('{"step":1,"sta'); options.onStdout('tus":"done"}\n{"type":"run_end","status":"passed","credits_consumed":9}');
@@ -186,4 +186,54 @@ test('launch mode shares the same between-call credit budget across fresh games'
   h.deps.runLaunchKane = async () => { calls++; return { response: { code: 0, end: { status: 'passed', credits_consumed: 80 } }, before: structuredClone(initial), after: structuredClone(mixed) }; };
   const result = await runDriver(opts({ mode: 'launch', stallRuns: 20 }), h.deps);
   assert.equal(result.exitCode, 21); assert.equal(calls, 2); assert.equal(result.creditsUsed, 160);
+});
+
+// Rehearsal: strict action mode false-stopped on an imagined red banner even
+// though CDP showed two accepted routes and no rejection. R2 permits dropping it.
+test('rehearsal keeps attach and launch out of strict action mode after false banner stop', () => {
+  for (const mode of ['attach', 'launch']) {
+    const args = kaneRunArgs('strategy', opts({ mode }));
+    assert.equal(args.includes('--mode'), false);
+    assert.equal(args.includes('--agent'), true);
+    assert.equal(args[args.indexOf('--bug-detection') + 1], 'off');
+  }
+});
+
+const pendingCapture = () => ({ ...structuredClone(initial), pairs: [{ from: 'A', to: 'C', state: 'active' }] });
+const captureOpened = () => {
+  const value = structuredClone(initial);
+  value.letters.forEach(row => { if (row.owner < 0) row.owner = 0; });
+  value.letters[1].owner = 1;
+  value.pairs = [{ from: 'C', to: 'B', state: 'ready' }];
+  return value;
+};
+
+test('pending neutral capture settles freely, opens an attack and refreshes credits before spending', async () => {
+  const pending = pendingCapture(), opened = captureOpened(), waits = [];
+  const h = harness({ summaries: [pending, pending, opened, { ...opened, result: 'won' }], sleep: async ms => waits.push(ms) });
+  assert.equal((await runDriver(opts(), h.deps)).exitCode, 0);
+  assert.deepEqual(waits, [2000]);
+  assert.equal(h.events.find(e => e.type === 'run_start').phase, 'attack');
+  assert.equal(h.stats().runs, 1);
+  const paid = h.events.findIndex(e => e.type === 'run_start');
+  assert.equal(h.events.slice(0, paid).filter(e => e.type === 'credits').length, 3);
+});
+
+test('settling honors game result and a newly depleted credit floor without any paid call', async () => {
+  const pending = pendingCapture(), opened = captureOpened();
+  const won = harness({ summaries: [pending, pending, { ...pending, result: 'won' }] });
+  assert.equal((await runDriver(opts(), won.deps)).exitCode, 0);
+  assert.equal(won.stats().runs, 0);
+  const floor = harness({ summaries: [pending, pending, opened], balances: [695, 695, 100] });
+  assert.equal((await runDriver(opts(), floor.deps)).exitCode, 21);
+  assert.equal(floor.stats().runs, 0);
+});
+
+test('pending neutral settling is capped at thirty seconds or idle-max then preserves cut fallback', async () => {
+  for (const idleMax of [4, 100]) {
+    const waits = [], h = harness({ summaries: [pendingCapture()], sleep: async ms => waits.push(ms) });
+    assert.equal((await runDriver(opts({ idleMax, maxRuns: 1 }), h.deps)).exitCode, 30);
+    assert.equal(waits.reduce((sum, ms) => sum + ms, 0), Math.min(idleMax, 30) * 1000);
+    assert.equal(h.events.find(e => e.type === 'run_start').phase, 'cut');
+  }
 });

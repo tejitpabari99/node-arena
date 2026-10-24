@@ -136,10 +136,16 @@ export async function runDriver(options, deps = {}) {
           if (!enough) { outcome = 'credit_floor'; break; }
           if (runs >= options.maxRuns) { outcome = 'max_runs'; break; }
           let waitedS = 0;
-          while (!before.pairs.some(pair => ['ready', 'active'].includes(pair.state))) {
+          // A nearly captured neutral can open a new source without a paid cut.
+          // Wait only while no ready choice exists; keep the original cut fallback.
+          const settlingCapture = () => !before.pairs.some(pair => pair.state === 'ready')
+            && before.pairs.some(pair => pair.state === 'active'
+              && before.letters.some(row => row.letter === pair.to && row.owner < 0));
+          while (!before.pairs.some(pair => ['ready', 'active'].includes(pair.state)) || settlingCapture()) {
             emit('idle', { iter: runs + 1, waitedS });
-            if (waitedS >= options.idleMax) break;
-            const seconds = Math.min(2, options.idleMax - waitedS);
+            const limit = before.pairs.some(pair => pair.state === 'active') ? Math.min(30, options.idleMax) : options.idleMax;
+            if (waitedS >= limit) break;
+            const seconds = Math.min(2, limit - waitedS);
             await sleep(seconds * 1000, signal); waitedS += seconds;
             before = await pageCall('summary');
             emit('state', stateFields(before, runs + 1));

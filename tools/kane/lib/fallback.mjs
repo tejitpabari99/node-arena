@@ -51,7 +51,7 @@ async function launchOwned(objective, { signal, env = process.env, chrome, onEve
         page = await (deps.attachChrome ?? attachChrome)({ port, url: options.url, timeoutMs: 300, signal: observerSignal, waitForReady: false });
       }
       const summary = await page.summary();
-      if (!summary || !Array.isArray(summary.pairs) || !Array.isArray(summary.letters) || !summary.human || !Array.isArray(summary.human.commands)) return;
+      if (!summary || !Array.isArray(summary.pairs) || !Array.isArray(summary.letters) || summary.letters.length === 0 || !summary.human || !Array.isArray(summary.human.commands)) return;
       last = structuredClone(summary);
       if (!announced) {
         try { options.onReady?.({ port, headless: options.headless, summary: last }); announced = true; }

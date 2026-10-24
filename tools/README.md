@@ -36,6 +36,9 @@ Node-only tools run through the root pnpm scripts and `tools/src/cli.ts`. Run `p
 | `pnpm bench:sim` / `pnpm bench:bots` | Strict local performance budgets; `--ci` permits shared-runner budgets |
 | `pnpm check:docs` | Every root script is documented in this file or AGENTS; documented paths exist; removed tooling references fail |
 | `pnpm art:status [--strict]` | Report-only list of merged-manifest file fields outside the art prefix, with TW/stock labels and replacement totals; strict exits 1 while any remain |
+| `pnpm kane:play -- [flags]` | Run the local Kane game driver; [CLI, NDJSON, exits and rehearsal](kane/README.md) |
+| `pnpm kane:credits` | Read authenticated Kane credit balance without a paid run |
+| `pnpm kane:replay -- [--serve] [tests...]` | Replay committed Kane smoke recordings from temporary copies; needs authentication and credits |
 | `pnpm check:kane-bundle [--no-build]` | Builds web `dist` and `dist-test` (unless `--no-build`); production dist has 0 files matching `na-kane`/`Kane Arena`, test-hooks dist has >0; prod `/` and `/?kane=1` show the 20-card picker without `window.__na`. Runs after `test:web:all` in the GitHub browser job; excluded from the 38-step content/simulation `pnpm run ci` chain to avoid duplicate browser builds |
 | `pnpm check:parked --strict` | No parked CI entries, refused commands or parked source/test directories remain |
 

@@ -169,3 +169,28 @@ test('concurrent fallback drivers cannot share the observer port/profile', async
   try { await assert.rejects(runLaunchKane('objective', opts()), error => error.exitCode === 22); }
   finally { release(); await assert.rejects(first, error => error.exitCode === 22); }
 });
+
+test('launch observer ignores empty loading snapshots before and after a populated terminal game', async () => {
+  const loading = { ...structuredClone(initial), letters: [] };
+  const terminal = { ...structuredClone(mixed), result: 'won' };
+  let snapshot = loading;
+  const announced = [];
+  const result = await runLaunchKane('objective', { ...opts(), onReady: value => announced.push(value) }, {
+    resolveChromeBinary: async () => '/fake/chrome',
+    attachChrome: async () => ({ summary: async () => structuredClone(snapshot), close: async () => {} }),
+    runKane: async (objective, options) => {
+      await delay(70);
+      assert.equal(announced.length, 0, 'loading is not page readiness');
+      snapshot = terminal; options.onEvent({ step: 1, status: 'done' });
+      await delay(70);
+      assert.equal(announced.length, 1);
+      assert.equal(announced[0].summary.result, 'won');
+      snapshot = loading; options.onEvent({ step: 2, status: 'done' });
+      await delay(70);
+      return { code: 0, end: { status: 'passed' } };
+    },
+  });
+  assert.equal(result.after.result, 'won');
+  assert.equal(result.after.letters.length, terminal.letters.length);
+  assert.equal(announced.length, 1);
+});

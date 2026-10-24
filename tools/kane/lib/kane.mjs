@@ -11,7 +11,7 @@ export async function readCredits({ signal, env = process.env, runProcessImpl = 
 /** Attach reuses one browser; launch starts a fresh URL with a longer bounded objective. */
 export function kaneRunArgs(objective, { port = 9222, maxSteps = 8, runTimeout = 150, mode = 'attach', url, headless = false } = {}) {
   return ['run', objective, ...(mode === 'launch' ? ['--url', url, ...(headless ? ['--headless'] : [])] : ['--cdp-endpoint', `http://127.0.0.1:${port}`, '--allow-missing-url']), '--agent',
-    '--max-steps', String(mode === 'launch' ? 20 : maxSteps), '--timeout', String(runTimeout), '--mode', 'action',
+    '--max-steps', String(mode === 'launch' ? 20 : maxSteps), '--timeout', String(runTimeout),
     '--assertion-mode', 'dom', '--final-validation', 'off', '--bug-detection', 'off'];
 }
 
