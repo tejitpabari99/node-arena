@@ -8,10 +8,10 @@ export async function readCredits({ signal, env = process.env, runProcessImpl = 
   return parseBalance(result.stdout);
 }
 
-/** Task4 can supply a different argument builder for launch fallback. */
-export function kaneRunArgs(objective, { port = 9222, maxSteps = 8, runTimeout = 150 } = {}) {
-  return ['run', objective, '--cdp-endpoint', `http://127.0.0.1:${port}`, '--allow-missing-url', '--agent',
-    '--max-steps', String(maxSteps), '--timeout', String(runTimeout), '--mode', 'action',
+/** Attach reuses one browser; launch starts a fresh URL with a longer bounded objective. */
+export function kaneRunArgs(objective, { port = 9222, maxSteps = 8, runTimeout = 150, mode = 'attach', url, headless = false } = {}) {
+  return ['run', objective, ...(mode === 'launch' ? ['--url', url, ...(headless ? ['--headless'] : [])] : ['--cdp-endpoint', `http://127.0.0.1:${port}`, '--allow-missing-url']), '--agent',
+    '--max-steps', String(mode === 'launch' ? 20 : maxSteps), '--timeout', String(runTimeout), '--mode', 'action',
     '--assertion-mode', 'dom', '--final-validation', 'off', '--bug-detection', 'off'];
 }
 

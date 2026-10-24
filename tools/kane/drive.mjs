@@ -10,6 +10,7 @@ import { exitCodeFor } from './lib/outcomes.mjs';
 import { launchChrome, resolveChromeBinary } from './lib/chrome.mjs';
 import { ensurePreviewServer, loopbackUrl } from './lib/server.mjs';
 import { readCredits, runKane } from './lib/kane.mjs';
+import { runLaunchKane, launchObjective, isConnectionFailure } from './lib/fallback.mjs';
 
 const cwd = fileURLToPath(new URL('../../', import.meta.url));
 const booleanFlags = new Map([['serve', 'serve'], ['headless', 'headless'], ['software-gl', 'softwareGl'], ['no-fallback', 'noFallback'], ['dry-run', 'dryRun'], ['credits-only', 'creditsOnly'], ['help', 'help']]);
@@ -62,14 +63,14 @@ function gameResult(summary, emit) {
   return summary.result;
 }
 
-/** Injectable boundaries permit no-spend loop verification and Task4 launch support. */
+/** Injectable boundaries permit no-spend verification of attach and launch modes. */
 export async function runDriver(options, deps = {}) {
   const emit = deps.emit ?? (() => {}), signal = deps.signal;
   const balance = deps.readCredits ?? readCredits, startChrome = deps.launchChrome ?? launchChrome;
   const startServer = deps.ensurePreviewServer ?? ensurePreviewServer, run = deps.runKane ?? runKane;
   const sleep = deps.sleep ?? ((ms, signal) => delay(ms, undefined, { signal }));
   const started = Date.now();
-  let page, stopServer, runs = 0, noProgress = 0, initialCredits, currentCredits, outcome = 'error';
+  let page, stopServer, runs = 0, noProgress = 0, connectionFailures = 0, mode = options.mode, initialCredits, currentCredits, outcome = 'error';
   const warn = fields => emit('warn', fields);
   const pageCall = async method => {
     try { return await page[method](); }
@@ -90,49 +91,70 @@ export async function runDriver(options, deps = {}) {
     emit('driver_start', { args: options, mode: options.mode, url: options.url, credits: currentCredits });
     if (!enough) outcome = 'credit_floor';
     else {
-      if (options.mode !== 'attach' && !deps.launchMode) throw Object.assign(new Error('Launch mode requires the launch fallback adapter'), { exitCode: 22 });
       try { stopServer = await startServer({ url: options.url, serve: options.serve, cwd, signal }); }
       catch (error) { if (!signal?.aborted) error.exitCode ??= 23; throw error; }
-      const open = options.mode === 'launch' ? deps.launchMode : startChrome;
-      const chrome = deps.launchChrome || options.mode === 'launch' ? options.chrome : await resolveChromeBinary({ chrome: options.chrome, preferPlaywright: true });
-      page = await open({ ...options, chrome, signal, onWarn: warn, handleSignals: false });
-      emit('chrome_ready', { mode: options.mode, port: page.port, pid: page.pid, headless: page.headless });
-      const initial = await pageCall('summary');
-      emit('page_ready', { levelId: 'na-kane', speed: initial.speed ?? options.speed ?? 0.25, letters: initial.letters });
+      if (mode === 'attach') {
+        const chrome = deps.launchChrome ? options.chrome : await resolveChromeBinary({ chrome: options.chrome, preferPlaywright: true });
+        page = await startChrome({ ...options, chrome, signal, onWarn: warn, handleSignals: false });
+        emit('chrome_ready', { mode, port: page.port, pid: page.pid, headless: page.headless });
+        const initial = await pageCall('summary');
+        emit('page_ready', { levelId: 'na-kane', speed: initial.speed ?? options.speed ?? 0.25, letters: initial.letters });
+      }
       while (true) {
         signal?.throwIfAborted();
-        await pageCall('prepare');
-        const enough = await credits();
-        let before = await pageCall('summary');
-        emit('state', stateFields(before, runs + 1));
-        const terminal = gameResult(before, emit);
-        if (terminal) { outcome = terminal; break; }
-        if (!enough) { outcome = 'credit_floor'; break; }
-        if (runs >= options.maxRuns) { outcome = 'max_runs'; break; }
-        let waitedS = 0;
-        while (!before.pairs.some(pair => ['ready', 'active'].includes(pair.state))) {
-          emit('idle', { iter: runs + 1, waitedS });
-          if (waitedS >= options.idleMax) break;
-          const seconds = Math.min(2, options.idleMax - waitedS);
-          await sleep(seconds * 1000, signal); waitedS += seconds;
+        let before, after, response;
+        const iter = runs + 1;
+        if (mode === 'launch') {
+          if (!await credits()) { outcome = 'credit_floor'; break; }
+          if (runs >= options.maxRuns) { outcome = 'max_runs'; break; }
+          const objective = launchObjective();
+          emit('run_start', { iter, phase: 'capture', objective, maxSteps: 20 });
+          if (options.dryRun) { outcome = 'stalled'; break; }
+          runs++;
+          const launched = await (deps.runLaunchKane ?? runLaunchKane)(objective, { ...options, mode, maxSteps: 20, signal,
+            onEvent: event => emit('kane', { iter, event }), onWarn: warn,
+            onReady: ({ port, headless, summary }) => {
+              emit('chrome_ready', { mode, port, headless });
+              emit('page_ready', { levelId: 'na-kane', speed: summary.speed ?? options.speed ?? 0.25, letters: summary.letters });
+            } }, { runKane: run });
+          ({ before, after, response } = launched);
+          emit('state', stateFields(after, iter));
+        } else {
+          await pageCall('prepare');
+          const enough = await credits();
           before = await pageCall('summary');
           emit('state', stateFields(before, runs + 1));
-          if (before.result != null) break;
+          const terminal = gameResult(before, emit);
+          if (terminal) { outcome = terminal; break; }
+          if (!enough) { outcome = 'credit_floor'; break; }
+          if (runs >= options.maxRuns) { outcome = 'max_runs'; break; }
+          let waitedS = 0;
+          while (!before.pairs.some(pair => ['ready', 'active'].includes(pair.state))) {
+            emit('idle', { iter: runs + 1, waitedS });
+            if (waitedS >= options.idleMax) break;
+            const seconds = Math.min(2, options.idleMax - waitedS);
+            await sleep(seconds * 1000, signal); waitedS += seconds;
+            before = await pageCall('summary');
+            emit('state', stateFields(before, runs + 1));
+            if (before.result != null) break;
+          }
+          const idleTerminal = gameResult(before, emit);
+          if (idleTerminal) { outcome = idleTerminal; break; }
+          if (!before.pairs.some(pair => ['ready', 'active'].includes(pair.state))) { outcome = 'stalled'; break; }
+          // Long local idle must never bypass a fresh pre-spend credit floor.
+          if (waitedS > 0 && !await credits()) { outcome = 'credit_floor'; break; }
+          const objective = buildObjective(before, { moves: options.moves });
+          emit('run_start', { iter, phase: objectivePhase(before), objective, maxSteps: options.maxSteps });
+          if (options.dryRun) { outcome = 'stalled'; break; }
+          runs++;
+          response = await run(objective, { ...options, mode, port: page.port, signal,
+            onEvent: event => emit('kane', { iter, event }), onWarn: warn });
+          // Prefer observed terminal ground truth even if Kane reports a connection error.
+          after = await pageCall('summary');
         }
-        const idleTerminal = gameResult(before, emit);
-        if (idleTerminal) { outcome = idleTerminal; break; }
-        if (!before.pairs.some(pair => ['ready', 'active'].includes(pair.state))) { outcome = 'stalled'; break; }
-        // Long local idle must never bypass a fresh pre-spend credit floor.
-        if (waitedS > 0 && !await credits()) { outcome = 'credit_floor'; break; }
-        const objective = buildObjective(before, { moves: options.moves }), iter = runs + 1;
-        emit('run_start', { iter, phase: objectivePhase(before), objective, maxSteps: options.maxSteps });
-        if (options.dryRun) { outcome = 'stalled'; break; }
-        runs++;
-        const response = await run(objective, { ...options, port: page.port, signal,
-          onEvent: event => emit('kane', { iter, event }), onWarn: warn });
         emit('run_end', { iter, kaneExit: response.code, kaneStatus: response.end?.status ?? null,
           creditsRun: response.end?.credits_consumed ?? null, durationMs: response.durationMs, sessionDir: response.end?.session_dir ?? null });
-        const after = await pageCall('summary'), delta = acceptedMoveDelta(before, after);
+        const delta = acceptedMoveDelta(before, after);
         const claimed = /^(pass(?:ed)?|completed|success)$/i.test(response.end?.status ?? '');
         const claimMatches = claimed === (delta.acceptedCount > 0);
         emit('verify', { iter, ...delta, claimMatches });
@@ -149,9 +171,15 @@ export async function runDriver(options, deps = {}) {
           warn({ code: 'kane_auth', msg: 'Kane refused the run for authentication or credits' });
           outcome = 'credit_floor'; break;
         }
-        if (response.code !== 0 && /cdp|endpoint|connect|ECONN/i.test(`${response.stderr}\n${response.end?.reason ?? ''}`)) {
-          if (deps.onAttachFailure && !options.noFallback) { await deps.onAttachFailure({ response, page, options }); }
-          else { outcome = 'chrome'; break; }
+        if (isConnectionFailure(response)) {
+          connectionFailures++;
+          if (mode === 'launch' || options.noFallback) { outcome = 'chrome'; break; }
+          if (iter === 1 || connectionFailures >= 2) {
+            emit('fallback', { reason: failureText.trim(), to: 'launch' });
+            await page.close(); page = undefined;
+            mode = 'launch'; noProgress = 0;
+          }
+          continue;
         }
         noProgress = delta.acceptedCount === 0 ? noProgress + 1 : 0;
         if (delta.acceptedCount === 0) emit('stall', { iter, noProgress });

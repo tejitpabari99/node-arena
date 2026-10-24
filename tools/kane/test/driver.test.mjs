@@ -116,10 +116,10 @@ test('CDP read failure exits22 and not-ready preparation exits23 with cleanup', 
   }
 });
 
-test('failure claiming CDP connection exits22, bounded and without launch adapter', async () => {
+test('failure claiming CDP connection exits22, bounded with no-fallback', async () => {
   const h = harness();
   h.deps.runKane = async () => ({ code: 1, stderr: 'ECONNREFUSED endpoint', end: { status: 'failed' }, durationMs: 1 });
-  assert.equal((await runDriver(opts(), h.deps)).exitCode, 22);
+  assert.equal((await runDriver(opts({ noFallback: true }), h.deps)).exitCode, 22);
 });
 
 test('game-over winner is read from shipped summary.over.winner', async () => {
