@@ -78,3 +78,65 @@ test('an edit made during a stalled save survives and the chip stays Unsaved', a
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(before));
   await expect(chip).toHaveText('Saved ✓');
 });
+
+test('file modal is standalone with no document: all three paths create one, bad and existing ids alert', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('/editor.html');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(page.getByTestId('level-name')).toHaveCount(0);
+  await expect(page.locator('.ed-top')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeVisible();
+  await expect(page.getByLabel('New level id')).toHaveValue(/^na-custom-\d+$/);
+  const dir = process.env.SHOT_DIR; if (dir) { mkdirSync(dir, { recursive: true }); await page.screenshot({ path: `${dir}/file-modal-standalone-1280x720.png` }); }
+  await page.getByLabel('New level id').fill('bad id');
+  await page.getByRole('button', { name: 'Create blank' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('na-');
+  await page.getByLabel('New level id').fill('na-trial');
+  await page.getByRole('button', { name: 'Create blank' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('already exists');
+  await page.getByLabel('New level id').fill('na-modal-blank');
+  await page.getByRole('button', { name: 'Create blank' }).click();
+  await expect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-modal-blank');
+  await expect(dialog).toHaveCount(0);
+  await page.goto('/editor.html');
+  await page.getByLabel('Copy level').selectOption('levelview-1');
+  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await expect(page.getByTestId('level-name')).toHaveAttribute('title', /^na-custom-\d+$/);
+  await page.goto('/editor.html');
+  await page.getByLabel('Open level').selectOption('na-trial');
+  await page.getByRole('button', { name: 'Open level', exact: true }).click();
+  await expect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-trial');
+  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+});
+
+test('file modal over an open document: dirty replace prompts, Cancel keeps, Discard replaces, Esc dismisses', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('/editor.html?template=levelview-1');
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+  const name = page.getByTestId('level-name'), original = await name.getAttribute('title');
+  await name.click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  const dir = process.env.SHOT_DIR; if (dir) { mkdirSync(dir, { recursive: true }); await page.screenshot({ path: `${dir}/file-modal-dismissible-1280x720.png` }); }
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(name).toHaveAttribute('title', original!);
+  await name.click();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await name.click();
+  await page.getByLabel('New level id').fill('na-discard-test');
+  await page.getByRole('button', { name: 'Create blank' }).click();
+  await expect(page.getByText('Discard unsaved changes?')).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(page.getByText('Discard unsaved changes?')).toHaveCount(0);
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(name).toHaveAttribute('title', original!);
+  await page.getByRole('button', { name: 'Create blank' }).click();
+  await page.getByRole('button', { name: 'Discard and continue', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(name).toHaveAttribute('title', 'na-discard-test');
+});

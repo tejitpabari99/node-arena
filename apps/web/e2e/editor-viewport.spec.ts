@@ -12,6 +12,7 @@ test('working copy renders, reports blank drafts, and has editor camera controls
   await page.getByLabel('New level id').fill('na-viewport');
   await page.getByLabel('Copy level').selectOption('levelview-1');
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await page.getByRole('button', { name: 'Discard and continue', exact: true }).click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await expect(page.getByLabel('Edit viewport').locator('canvas')).toBeVisible();
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();

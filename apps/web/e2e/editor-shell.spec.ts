@@ -1,12 +1,18 @@
 import { test, expect as browserExpect, expect } from '@playwright/test';
 
 const development = process.env.WEB_TEST_SERVER === 'dev';
+/** Replacing a dirty document asks first; accept it when shown. */
+async function discardIfAsked(page: import('@playwright/test').Page) {
+  const discard = page.getByRole('button', { name: 'Discard and continue', exact: true });
+  if (await discard.waitFor({ timeout: 1500 }).then(() => true, () => false)) await discard.click();
+}
 test('starts blank drafts and copies without retaining source identity', async ({ page }) => {
   test.skip(!development, 'Editor filesystem API is dev-only');
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/editor.html');
-  await browserExpect(page.getByRole('heading', { name: 'Level editor', exact: true })).toBeVisible();
+  await browserExpect(page.getByRole('dialog')).toBeVisible();
+  await browserExpect(page.getByTestId('level-name')).toHaveCount(0);
   await page.getByLabel('New level id').fill('bad-id');
   await page.getByRole('button', { name: 'Create blank' }).click();
   await browserExpect(page.getByRole('alert')).toContainText('na-');
@@ -24,23 +30,27 @@ test('starts blank drafts and copies without retaining source identity', async (
   await browserExpect(page.getByTestId('save-popover')).toContainText('must NOT have fewer than 1 items');
   await page.getByTestId('level-name').click();
   await page.getByLabel('Copy level').selectOption('levelview-1');
+  await page.getByLabel('New level id').fill('levelview-1');
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();
-  await browserExpect(page.getByRole('alert')).toContainText('new id');
+  await browserExpect(page.getByRole('dialog').getByRole('alert')).toContainText('new id');
   await page.getByLabel('New level id').fill('na-copy');
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await discardIfAsked(page);
   await browserExpect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-copy');
   await browserExpect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', /^\d+$/);
   await page.getByTestId('level-name').click();
-  await page.getByLabel('Reopen level').selectOption('na-trial');
-  await page.getByRole('button', { name: 'Reopen level', exact: true }).click();
+  await page.getByLabel('Open level').selectOption('na-trial');
+  await page.getByRole('button', { name: 'Open level', exact: true }).click();
+  await discardIfAsked(page);
   await browserExpect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-trial');
   await page.getByTestId('level-name').click();
   await page.getByLabel('Copy level').selectOption('na-trial');
   await page.getByLabel('New level id').fill('na-trial');
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();
-  await browserExpect(page.getByRole('alert')).toContainText('new id');
+  await browserExpect(page.getByRole('dialog').getByRole('alert')).toContainText('new id');
   await page.getByLabel('New level id').fill('na-trial-copy');
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await discardIfAsked(page);
   await browserExpect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-trial-copy');
   expect(errors).toEqual([]);
 });
@@ -48,7 +58,7 @@ test('starts blank drafts and copies without retaining source identity', async (
 test('test-hooks preview includes the editor shell without filesystem middleware', async ({ page, request }) => {
   test.skip(development, 'Preview gate check');
   await page.goto('/editor.html');
-  await expect(page.getByRole('heading', { name: 'Level editor', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog')).toBeVisible();
   const api = await request.get('/__editor/levels');
   expect(api.headers()['content-type']).not.toContain('application/json');
 });

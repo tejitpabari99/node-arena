@@ -58,8 +58,8 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '2');
   expect(await page.evaluate(() => JSON.stringify({ ...localStorage }))).toBe(baseline);
   await page.reload();
-  await page.getByLabel('Reopen level').selectOption('na-play-browser');
-  await page.getByRole('button', { name: 'Reopen level', exact: true }).click();
+  await page.getByLabel('Open level').selectOption('na-play-browser');
+  await page.getByRole('button', { name: 'Open level', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '2');
   await page.goto('/');
   await page.getByRole('button', { name: 'Campaign', exact: true }).click();

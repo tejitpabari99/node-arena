@@ -15,14 +15,15 @@ import type { EditorViewport, ViewportStatus } from './viewport-engine.js';
 import type { Point, Selection } from './picking.js';
 import type { EditorFinalizeEvent } from '../../../../tools/src/editor-finalize.js';
 import type { EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
-import { finalizeLevel, readFinalizeStatus, checkSolvable, EditorApiError, listLevels, readLevel, saveLevel, type LevelListing } from './api.js';
+import { finalizeLevel, readFinalizeStatus, checkSolvable, EditorApiError, listLevels, saveLevel } from './api.js';
 import { copySelection, createHistory, historyReducer, scriptRemovalMessages, type Clipboard, type DocHistory, type DocOp, type HistoryAction } from './model.js';
-import { blankDocument, copyDocument, type LevelDoc, type SizePreset } from './document.js';
+import type { LevelDoc } from './document.js';
+import { FileModal } from './FileModal.js';
+import { useInitialLoad } from './useInitialLoad.js';
 
 /** Owns immutable working-copy snapshots; forms and Play attach here. */
 export function Editor() {
   const [choices, setChoices] = useState<{ themes: string[]; colors: string[] }>({ themes: [], colors: [] });
-  const [levels, setLevels] = useState<LevelListing[]>([]);
   const [history, setHistory] = useState<DocHistory | null>(null);
   const doc = history?.present ?? null;
   const openSeq = useRef(0);
@@ -54,13 +55,8 @@ export function Editor() {
     const b = doc?.bounds ?? { minX: 0, maxX: 0, minZ: 0, maxZ: 0 }, cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2;
     return { minX: cx - 20, maxX: cx + 20, minZ: cz - 15, maxZ: cz + 15 };
   }, [openSeq.current]);
-  const [id, setId] = useState('');
-  const [theme, setTheme] = useState('green');
-  const [size, setSize] = useState<SizePreset>('medium');
-  const [copyId, setCopyId] = useState('');
-  const [reopenId, setReopenId] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [fileOpen, setFileOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [issues, setIssues] = useState<ContentIssue[]>([]);
@@ -94,7 +90,7 @@ export function Editor() {
       markSaved(result.level); setFailure(null); setValidation({ issues: [], warnings: result.warnings });
       // Swap in the normalized document only if nothing was edited during the request; no history entry.
       setHistory(state => state && state.present === sent ? { ...state, present: result.level } : state);
-      const items = await listLevels(); setLevels(items); setReopenId(result.level.id);
+      setLevels(await listLevels());
     } catch (reason) {
       if (openSeq.current !== seq) return;
       setAttempted(true);
@@ -163,44 +159,13 @@ export function Editor() {
   }
   useEffect(() => {
     void loadManifest().then(manifest => setChoices({ themes: Object.keys(manifest.themes), colors: Object.keys(manifest.palettes) })).catch(reason => setError(String(reason)));
-    void listLevels().then(async items => {
-      setLevels(items); setCopyId(items[0]?.id ?? '');
-      setReopenId(items.find(item => item.id.startsWith('na-'))?.id ?? '');
-      const params = new URLSearchParams(window.location.search), template = params.get('template');
-      if (template !== null) {
-        // Create-custom flow: copy a template into a new unique custom level; never reuses the template id.
-        if (!items.some(item => item.id === template)) throw new Error('Unknown template requested. Choose a level below.');
-        let n = 1; while (items.some(item => item.id === `na-custom-${n}`)) n++;
-        const copy = copyDocument(await readLevel(template), `na-custom-${n}`);
-        copy.name = `Custom ${n}`;
-        setCopyId(template); setDoc(copy); return;
-      }
-      const requested = params.get('level');
-      if (requested === null) return;
-      // Only server-listed ids reach the API. Imported levels always require a new copy id.
-      if (!items.some(item => item.id === requested)) throw new Error('Unknown level requested. Choose a level below.');
-      setCopyId(requested);
-      if (requested.startsWith('na-')) {
-        setReopenId(requested); const loaded = await readLevel(requested); setDoc(loaded); markSaved(loaded);
-      }
-    }).catch(reason => setError(String(reason))).finally(() => setLoading(false));
   }, []);
-  async function open(copy: boolean) {
-    setBusy(true); setError(''); clearSave();
-    try {
-      const source = await readLevel(copy ? copyId : reopenId);
-      if (copy && levels.some(level => level.id === id)) throw new Error('Choose a new id; that level already exists.');
-      const next = copy ? copyDocument(source, id) : source; setDoc(next); if (!copy) markSaved(next);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
-    finally { setBusy(false); }
+  /** Replaces the working document: fresh history, selection and saved baseline. */
+  function replaceDoc(next: LevelDoc, saved: boolean) {
+    setDoc(next); if (saved) markSaved(next);
+    setSelection([]); setError(''); clearSave(); setFileOpen(false);
   }
-  function blank() {
-    setError(''); clearSave();
-    try {
-      if (levels.some(level => level.id === id)) throw new Error('Choose a new id; that level already exists.');
-      setDoc(blankDocument(id, theme, size));
-    } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
-  }
+  const { levels, setLevels, loading, error: startError, copyHint } = useInitialLoad(replaceDoc);
   useEffect(() => { (window as unknown as { __editorSave?: typeof doSave }).__editorSave = doSave; });
   const ctx: EditorContext | null = doc && history ? {
     doc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, viewportStatus, losStatus,
@@ -215,32 +180,10 @@ export function Editor() {
     {error && <p role="alert">{error}</p>}
     {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
   </>;
-  const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar issues={validation.issues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel} onName={() => { setDoc(null); setId(''); setError(''); clearSave(); }} onPlay={() => setPlaying(true)}
+  const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar issues={validation.issues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel} onName={() => setFileOpen(true)} onPlay={() => setPlaying(true)}
     extras={<JobPopovers open={popover} setOpen={setPopover} job={job} busy={busy} dirty={dirty} onCheck={() => void solvable()} onCancel={() => proxyAbort.current?.abort()} onFinalize={() => void finalize()} checkIssues={issues} issueLabel={issueLabel} checkError={checkError} proxyEvents={proxyEvents} finalizeEvents={finalizeEvents} finalizeError={finalizeError} lockStatus={lockStatus} lockOutput={lockOutput} />} /></EditorCtx.Provider>;
   return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<>{alerts}<EditorCtx.Provider value={ctx}><LegacyPanel pointer={pointer} /></EditorCtx.Provider></>}>
     <EditorCtx.Provider value={ctx}><Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} onPointer={setPointer} /></EditorCtx.Provider>
-  </Shell> : <main class="editor-shell ed-start" inert={playing}>
-    <header><h1>Level editor</h1><a href="/">Game</a></header>
-    {error && <p role="alert">{error}</p>}
-      <p>Create a blank level, copy an existing level, or reopen a custom level.</p>
-      <label>New level id<input value={id} onInput={event => setId(event.currentTarget.value)} placeholder="na-my-level" /></label>
-      <p class="editor-hint">Blank levels and copies need a new na- id. Copies drop imported source metadata.</p>
-      <div class="editor-start-grid">
-        <section><h2>Blank</h2>
-          <label>Theme<select value={theme} onChange={event => setTheme(event.currentTarget.value)}><option value="green">Green</option><option value="snow">Snow</option></select></label>
-          <label>Size<select value={size} onChange={event => setSize(event.currentTarget.value as SizePreset)}><option value="small">Small (12 × 12)</option><option value="medium">Medium (20 × 20)</option><option value="large">Large (30 × 30)</option></select></label>
-          <p>2 players: blue human, red AI</p><button disabled={loading || busy} onClick={blank}>Create blank</button>
-        </section>
-        <section><h2>Copy of any level</h2>
-          <label>Copy level<select value={copyId} onChange={event => setCopyId(event.currentTarget.value)}>{levels.map(level => <option key={level.id} value={level.id}>{level.name} ({level.id})</option>)}</select></label>
-          <button disabled={loading || busy || !copyId} onClick={() => void open(true)}>Copy level</button>
-        </section>
-        <section><h2>Reopen custom level</h2>
-          <label>Reopen level<select value={reopenId} onChange={event => setReopenId(event.currentTarget.value)}>{levels.filter(level => level.id.startsWith('na-')).map(level => <option key={level.id} value={level.id}>{level.name} ({level.id})</option>)}</select></label>
-          {!loading && !reopenId && <p>No custom levels yet.</p>}
-          <button disabled={loading || busy || !reopenId} onClick={() => void open(false)}>Reopen level</button>
-        </section>
-      </div>
-      {loading && <p role="status">Loading levels…</p>}
-  </main>}{playing && doc && <PlayOverlay doc={doc} onExit={() => setPlaying(false)} />}</>;
+  </Shell> : <FileModal standalone levels={levels} dirty={false} loading={loading} startError={startError} copyHint={copyHint} onClose={() => undefined} onReplace={replaceDoc} />}
+  {doc && fileOpen && <FileModal standalone={false} levels={levels} dirty={dirty} loading={loading} startError="" copyHint={copyHint} currentId={doc.id} onClose={() => setFileOpen(false)} onReplace={replaceDoc} />}{playing && doc && <PlayOverlay doc={doc} onExit={() => setPlaying(false)} />}</>;
 }
