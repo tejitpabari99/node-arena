@@ -15,7 +15,7 @@ Source of truth: [PRD.md](PRD.md). Builds `tools/kane/stream/**` plus root scrip
 | 5 | HTTP, SSE and WebSocket server | 2, 3, 4 | done |
 | 6 | Viewer page | 5 | done |
 | 7 | Credit-free smoke and acceptance greps | 6 | in-progress |
-| 8 | README, nginx/ufw and cloudflared docs | 5 | in-progress |
+| 8 | README, nginx/ufw and cloudflared docs | 5 | done |
 | 9 | dev-security-review gate | 7, 8 | todo |
 | 10 | Real rehearsal through the proxy | 9 | todo |
 
