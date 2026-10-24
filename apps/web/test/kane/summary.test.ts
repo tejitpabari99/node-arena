@@ -82,8 +82,8 @@ it('attributes cuts of initial live lines and excludes capture/replacement remov
 
 it.each(['won', 'lost', 'timeout'] as const)('reports authoritative %s immediately before the result popup', async outcome => {
   const { api, app, summary } = await setup({ resultDelayMs: 60000, createSim: outcome === 'timeout' ? (level, seed) => {
-    const sim = create(level, seed);
-    return { ...sim, step: () => { sim.view.over = { outcome: 'timeout', winner: null }; return []; } };
+    // Real timeout on the first 50ms tick, with both sides still owning buildings.
+    return create({ ...level, timeLimitSec: 0.05, rules: { ...level.rules, timeLimitSec: 0.05 } }, seed);
   } : createFixtureSim(outcome === 'won' ? 'win' : 'loss') });
   api.submit({ type: 'DrawLine', player: 0, from: 0, to: 2 }); api.step();
   expect(app.snapshot().result).toBeNull();
