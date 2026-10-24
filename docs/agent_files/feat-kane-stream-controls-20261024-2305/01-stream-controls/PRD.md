@@ -34,7 +34,11 @@ Non-goals: pause/resume, partial match carryover, budget/admission reset, automa
 
 Add controller `stop()` and `reset()`; allow terminal outcome `stopped`. Do not use permanent `close()` as Stop.
 
+Each explicit Start click generates a fresh UUID correlation ID. Install `attemptId` in the controller before emitting `starting`, expose it in public snapshots/SSE, retain it through failed-preflight idle even when `runId` is null, and clear it on Reset. This is correlation metadata, not authentication or a process argument/path.
+
 Create a per-start cancellation token/controller **before emitting `starting`**. Stop synchronously invalidates/aborts that attempt before its first await. Verify cancellation after every asynchronous boundary, including resource-lock acquisition, credit preflight, port validation, log-directory creation and PID identity/persistence, and before the paid-capable driver spawn. Stopping an inactive `starting` attempt must prevent any later driver appearance.
+
+Stop optionally accepts an expected `attemptId`; compare it synchronously before aborting or consulting a shared Stop promise. Mismatch returns 409 with no side effect; omitted ID preserves legacy unconditional Stop.
 
 Stop handles both pending start and active play. Reuse existing active `end` cleanup while adding safe inactive-start cancellation. Concurrent Stop, repeated Stop, close, driver exit and cleanup are idempotent; no subsequent start may proceed until cleanup is complete. Late driver exit must not overwrite `stopped`. Keep promise dependencies acyclic: a pending start must never await the Stop promise that itself awaits that pending start; cancellation settlement and cleanup must remain independently awaitable.
 
@@ -42,13 +46,17 @@ Retain bounded identity-based teardown of the actual driver, owned Chrome/previe
 
 ### R3 Reset and preserved controls
 
-Reset returns 409 while active, starting, ending, or a start attempt remains pending. When quiescent it is idempotent. Clear `runId`, `startedAt`, `endsAtMax` and `outcome`; clear relay and cached frame before broadcasting reset/state or serving replay. Preserve the original cooldown timer/deadline and daily/per-IP admission history, credit floor and all existing caps. Reset during cooldown clears presentation while staying in cooldown; it cannot make a later Start eligible early.
+Reset returns 409 while active, starting, ending, or a start attempt remains pending. When quiescent it is idempotent. Clear `attemptId`, `runId`, `startedAt`, `endsAtMax` and `outcome`; clear relay and cached frame before broadcasting reset/state or serving replay. Preserve the original cooldown timer/deadline and daily/per-IP admission history, credit floor and all existing caps. Reset during cooldown clears presentation while staying in cooldown; it cannot make a later Start eligible early.
 
 ### R4 HTTP boundary
 
 Add exact POST `/stop` and POST `/reset` routes. Apply the same Origin/Host validation, body limit <=1 KiB, header limits, request timeouts and generic errors as `/start`. Reject wrong methods with 405, invalid origins with 403, active reset conflicts with 409 and oversized bodies with 413. Keep responses free of private paths, balances, process details and raw driver output. Existing static allowlist, CSP, text-only log rendering, filtered events and read-only CDP method facade remain intact; no public browser-control or test-build exposure.
 
+Start and Stop accept optional `X-Kane-Attempt-Id`. Validate UUID format before side effects; malformed IDs return generic 400 without spawn. A missing Start header receives a server-generated UUID; a missing Stop header retains legacy unconditional behavior. A conditional Stop mismatch returns generic 409. IDs remain public correlation metadata only; never put them into process argv or paths. No token service, tombstone store, endpoint or dependency is added.
+
 ### R5 Viewer consistency
+
+The viewer queues only its own pending Start nonce and sends conditional Stop when that same attempt is observed starting/live. Retire that nonce on a matching settled state, including failed-preflight idle with null run ID and no outcome; ignore unrelated attempt states and stale HTTP responses. Stopping an already displayed active run targets that snapshot's attempt ID. Keep cancellation intent for a still-pending own Start until its own settlement; another viewer's reset/start must not consume it. An idle/null baseline heuristic cannot replace explicit correlation.
 
 Broadcast reset/state to every viewer. Clear relay/cache before that broadcast and any subsequent replay. A reconnecting client that missed the reset event must detect prior non-null run ID becoming null and clear stale canvas/log/cursor itself; the existing null-ID `starting` transition must not cause reset/reconnect loops. Keep generation invalidation so an older in-flight JPEG decode cannot redraw after Reset. SSE and WebSocket delivery are unordered: an old socket can deliver a blob after Reset even when no decode was in flight. Close/replace the video connection on reset/run-ID change and reject callbacks from an old socket identity, or use a provably equivalent mechanism. A fresh connection receives only the current cached frame. Controls and disabled states follow shared server state, including two simultaneous viewers.
 
@@ -89,7 +97,8 @@ No owner setup is required for this bounded change. Deployment waits for merge a
 - Meaningful TDD covers Stop during resource-lock wait, preflight, port checks, identity/persistence and live play; deferred boundaries cannot spawn after cancellation. Repeated Stop, late exits, concurrent close and cleanup preserve stopped semantics and prevent premature restart; pending-start/Stop promise dependencies cannot deadlock.
 - Node-only detached-process fixtures prove owned descendant/profile cleanup without touching foreign processes; no real Chrome/preview/Kane calls.
 - Reset conflicts while unsafe, is idempotent when quiescent, clears metadata/cache/relay, and cannot bypass original cooldown, IP/daily admission or credit floor.
-- HTTP tests cover 403/405/409/413, route/body limits and privacy. Existing natural completion remains unchanged.
+- HTTP tests cover 400/403/405/409/413, invalid UUID/no-spawn, missing-header compatibility, public correlation metadata/privacy and stale conditional Stop versus a newer attempt. Existing natural completion remains unchanged.
+- Correlation tests cover failed preflight returning idle/null before delayed 503, own pending cancellation surviving unrelated reset/start, matching settlement retiring intent, stale HTTP responses and conditional Stop mismatch causing no abort or shared-promise side effect.
 - Two-viewer UI tests verify Stop/Reset visibility/disabled states, shared Stopped, shared Reset, stale SSE replay/cursor, in-flight JPEG decode invalidation and old-socket blobs arriving after Reset, reconnect-after-missed-reset behavior and fresh Start behavior.
 - Backend tests prove boot, viewer GET/reload, WS/SSE connections and Reset perform zero driver/preflight spawns; browser tests prove initial load, reload and Reset issue zero POST `/start`. Only clicking Start launches a match; reconnect/late join cannot create another.
 - Required tests use ephemeral HTTP, injected process operations, mocked JPEGs and Node-only fixtures. Optional credit-free actual fake-driver Stop/Reset browser smoke may use 4176/9226/8789 under a dedicated smoke lock after verifying the global SP05 runtime lock is free. Preserve intentionally off primary 8787/4175/9225 and unrelated SP04 ports 4173/5173. No paid Kane calls or feature hosting before merge.
