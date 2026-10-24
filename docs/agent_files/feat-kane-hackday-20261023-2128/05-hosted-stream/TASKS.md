@@ -1,5 +1,5 @@
 ---
-status: draft
+status: in-progress
 summary: 10 tasks to build the hosted Kane live stream (guards, allowlist relay, run lock, screencast, server, viewer, smoke, nginx docs, security review, rehearsal)
 date: 2026-10-24
 ---
@@ -8,7 +8,7 @@ Source of truth: [PRD.md](PRD.md). Builds `tools/kane/stream/**` plus root scrip
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Scaffold, `ws` pin, abuse-guard module | 03 | todo |
+| 1 | Scaffold, `ws` pin, abuse-guard module | 03 | in-progress |
 | 2 | Log relay allowlist and replay buffer | 1 | todo |
 | 3 | Run lifecycle and fake driver | 1 | todo |
 | 4 | Screencast and CDP method allowlist | 1 | todo |
