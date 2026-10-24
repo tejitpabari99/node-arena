@@ -122,6 +122,12 @@ export async function runReplay(argv = [], { root = ROOT, env = process.env, sig
   try {
     signal?.throwIfAborted();
     const { serve, files } = argsFor(argv);
+    const requestedTimeout = env.KANE_TIMEOUT || '120';
+    if (!/^\d+$/.test(requestedTimeout) || !Number.isSafeInteger(Number(requestedTimeout)) || Number(requestedTimeout) <= 0) {
+      throw infra('KANE_TIMEOUT must be a positive integer number of seconds');
+    }
+    // Killing a replay early still costs credits; never shorten the measured default.
+    const timeout = String(Math.max(120, Number(requestedTimeout)));
     const directory = join(root, 'tools/kane/tests');
     const selected = files.length ? files.map(file => resolve(root, file)) : (await readdir(directory)).filter(name => name.endsWith('_test.md')).sort().map(name => join(directory, name));
     if (!selected.length) throw infra(`No saved *_test.md recordings in ${directory}`);
@@ -163,7 +169,7 @@ export async function runReplay(argv = [], { root = ROOT, env = process.env, sig
             } catch { /* Kane banners are not NDJSON. */ }
           }
         };
-        const result = await runProcess(kaneCommand, ['testmd', 'run', copied, '--headless', '--agent', '--no-adaptive-heal', '--timeout', '120'], { cwd: temporary, env: childEnv, signal, onStdout: chunk => { stdout(chunk); consume(chunk); } });
+        const result = await runProcess(kaneCommand, ['testmd', 'run', copied, '--headless', '--agent', '--no-adaptive-heal', '--timeout', timeout], { cwd: temporary, env: childEnv, signal, onStdout: chunk => { stdout(chunk); consume(chunk); } });
         consume('\n');
         const status = replayExitCode(result.code, terminal);
         if (status !== 0) {

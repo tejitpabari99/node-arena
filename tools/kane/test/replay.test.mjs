@@ -227,3 +227,20 @@ test('CLI SIGINT and SIGTERM exit infra and remove child groups/temp directories
     assert.throws(() => process.kill(info.pid, 0), { code: 'ESRCH' });
   }
 });
+
+for (const [requested, expected] of [['240', '240'], ['30', '120']]) test(`KANE_TIMEOUT=${requested} reaches replay with minimum120`, async t => {
+  const f = await fixture(t);
+  f.options.env.KANE_TIMEOUT = requested;
+  await f.fake(`import assert from 'node:assert/strict';assert.equal(process.argv.at(-1),${JSON.stringify(expected)});console.log(JSON.stringify({type:'test_md_done',overall_status:'passed'}));`);
+  assert.equal(await runReplay([], f.options), 0, f.stderr());
+});
+
+test('invalid KANE_TIMEOUT fails infra before any paid Kane call', async t => {
+  for (const value of ['bogus', '-1', '1.5', '0']) {
+    const f = await fixture(t);
+    f.options.env.KANE_TIMEOUT = value;
+    await f.fake(`throw new Error('MUST NOT RUN');`);
+    assert.equal(await runReplay([], f.options), 2);
+    assert.match(f.stderr(), /KANE_TIMEOUT/);
+  }
+});
