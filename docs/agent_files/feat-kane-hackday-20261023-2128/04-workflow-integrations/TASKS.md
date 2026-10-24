@@ -1,6 +1,6 @@
 ---
-status: in-progress
-summary: 5 tasks implemented; Task 5 has 9 generated tests and committed design evidence; second human checkpoint pending before browser authoring.
+status: done
+summary: All 6 tasks implemented and reviewed; two stable cases have saved replay proof; T2 remains unproven; total assurance spend 362.7878/500 credits.
 date: 2026-10-24
 ---
 # Tasks: 04 Workflow integrations (Stop hook, assurance, CI)
@@ -12,7 +12,7 @@ Source of truth: docs/agent_files/feat-kane-hackday-20261023-2128/04-workflow-in
 | 2 | Hook install example + README/demo | 1 | done |
 | 3 | Assurance excerpt + UI facts | 02 (final strings) | done |
 | 4 | Assurance pipeline script | 3, 03 (kane:credits) | done |
-| 5 | Assurance run + cover snapshot | 4, 03 (saved tests) | in-progress |
+| 5 | Assurance run + cover snapshot | 4, 03 (saved tests) | done |
 | 6 | Non-blocking CI replay workflow | 03 | done |
 
 ## Task 1 — Stop hook script
@@ -38,7 +38,7 @@ Done when: stages invoke the verified CLI forms; floor check blocks a simulated 
 ## Task 5 — Assurance run + cover snapshot
 What it is: execute pipeline through `cover` and commit evidence (R2 demo result; O3).
 What changes: run stages in order (~150 credits target, <= 200 total); confirm where `design tests` writes files and the `context list --json` ref format (deferred checks); run `cover gaps`; commit snapshot `cover-<date>.txt` and designed tests/context export. If budget tight, cut per brief: drop testrun, keep `cover gaps` from designed tests. "Owed" win/lose use-cases acceptable.
-Done when: `cover gaps` shows designed > 0; snapshot committed; credits spent <= 200 and floor respected.
+Done when: `cover gaps` shows designed > 0; snapshot committed; credits spent <= 500 (owner update 2026-10-24; supersedes 200) and floor respected.
 
 ## Task 6 — Non-blocking CI replay workflow
 What it is: `kane-replay.yml` proving replay on a clean runner (R3; Decisions 7, 8).
