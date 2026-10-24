@@ -131,7 +131,7 @@ export async function runReplay(argv = [], { root = ROOT, env = process.env, sig
     const urls = [...new Set(tests.map(test => test.url))];
     for (const url of urls) cleanups.push(await ensurePreviewServer({ url, serve, cwd: root, env, signal }));
     // Replay defaults to the Playwright cache, independent of system Chrome.
-    const chrome = await resolveChromeBinary({ env: env.KANE_CLI_CHROME_PATH ? env : { ...env, PATH: '' } });
+    const chrome = await resolveChromeBinary({ env, preferPlaywright: true });
     const childEnv = { ...env, KANE_CLI_CHROME_PATH: chrome, KANE_CLI_USER_AGENT: env.KANE_CLI_USER_AGENT || 'codex' };
     let exitCode = 0;
     for (const test of tests) {
