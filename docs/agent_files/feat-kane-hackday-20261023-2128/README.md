@@ -31,7 +31,7 @@ Make Node Arena a game an AI tester (Kane CLI) plays live on a hidden Kane level
 | 02 | [Play controls](02-play-controls/PRD.md) | Speed 0.25/0.5/1/2, pair-button panel, banner, DOM tags, camera room, `kane-result`, `summary()`, remove original-game name | 01 | 1 foundation |
 | 03 | [Kane driver + saved tests](03-kane-driver/PRD.md) | `tools/kane/drive.mjs` loop on persistent Chrome via CDP, NDJSON v1, credit floor, fallback; `replay.mjs`; one saved smoke test | 02 (01) | complete |
 | 04 | [Workflow integrations](04-workflow-integrations/PRD.md) | Opt-in Stop hook (replay, ~0.65-2.7 credits each, needs Kane login), assurance pipeline to `cover`, non-blocking CI replay | 03 | Complete; T3/T5 saved replay passed; T2 unproven; weighted project proof 8.03921568627451% |
-| 05 | [Hosted live stream](05-hosted-stream/PRD.md) | Public Start page: CDP screencast over WS, filtered NDJSON over SSE, single-run lock, credit floor, loopback-only game | 03 | Implemented; [local smoke](05-hosted-stream/code-2026-10-24-2230.md), [review PASS](05-hosted-stream/review-2026-10-24-2230.md), [security PASS](05-hosted-stream/security-review-2026-10-24-2230.md); public rehearsal pending |
+| 05 | [Hosted live stream](05-hosted-stream/PRD.md) | Public Start page: CDP screencast over WS, filtered NDJSON over SSE, single-run lock, credit floor, loopback-only game | 03 | All 10 tasks done; [configured ngrok URL](https://helene-unreconnoitred-overslowly.ngrok-free.dev), intentionally stopped after verification; [deployment + real win](05-hosted-stream/code-2026-10-24-2309.md), [operations security PASS + runtime proof](05-hosted-stream/security-review-2026-10-24-2256.md) |
 
 ## Dependency graph
 ```

@@ -1,6 +1,6 @@
 ---
-status: in-progress
-summary: Hosted stream implemented; 9 tasks done, local smoke and security review pass; public paid rehearsal blocked on owner proxy/DNS setup
+status: done
+summary: All 10 tasks complete; ngrok rehearsal verified, then services stopped at user request
 date: 2026-10-24
 ---
 # PRD: 05 Hosted live stream
@@ -11,6 +11,8 @@ Does not own: driver, NDJSON schema, credits parser, Chrome launch (03); game, D
 
 ## TL;DR
 `pnpm kane:stream` starts a Node server bound to **127.0.0.1:8787**. It serves a static viewer (Start button, live canvas, log pane). `POST /start` (guarded) spawns **one** `tools/kane/drive.mjs --headless --serve` process. The server reads the driver's stdout NDJSON (03 R7), allowlist-filters it to SSE, and opens a read-only CDP session to the driver's Chrome for `Page.startScreencast`, fanning JPEG frames out over WebSocket. Only frames and filtered logs are public. The test build (preview on 4173), Chrome CDP (9222), and all Kane credentials stay on loopback/server env. Exposure (owner decision 2026-10-24): nginx on this box (apt, nginx 1.24) listening on :80, reachable only from Cloudflare IPv4 ranges (ufw), Cloudflare-proxied DNS -> nginx:80 -> 127.0.0.1:8787; `cloudflared` is the fallback. Hosted link is first in the cut order; fallback is a pre-recorded win video.
+
+Deployment execution override (user, 2026-10-24): host the merged `kane-cli` branch from the primary checkout through ngrok; this supersedes the earlier nginx/Cloudflare owner setup blocker for Task 10. Only `127.0.0.1:8787` viewer traffic is tunneled; preview 4175 and CDP 9225 remain private. No firewall/nginx changes. Separate hosting credit budget is authorized without a portal-confirmation gate. Operations audit and runtime/public acceptance passed with the locked real driver. All 10 tasks are done. The user subsequently requested shutdown after seeing it work; both services are now inactive and boot-disabled, with configuration preserved. See [Task 10 execution status](TASKS.md#task-10--real-rehearsal-through-the-proxy). Historical design decisions below remain recorded.
 
 ## Problem
 Brief wants a public "press Start, watch Kane play" link with no password, hosted here, while Kane mode only exists in a test build with `window.__na` hooks [verified: apps/web/src/main.tsx:14 gate per shared context]. Public Start spends real Kane credits, so abuse and exposure are the whole risk.
@@ -121,7 +123,18 @@ Server sends `X-Accel-Buffering: no` on SSE itself. Cloudflare idle timeout ~100
 | 8 | Auth | none; abuse guards only | shared secret | brief: no password |
 | 9 | Exposure | nginx on this box, ufw :80 from Cloudflare IPv4 only, Cloudflare-proxied DNS (owner choice 2026-10-24); cloudflared fallback | cloudflared default | owner decision; firewall already scoped; no 443 rule so Cloudflare terminates TLS |
 
+## Actual deployment — 2026-10-24
+
+The user's later execution choice is the fixed [ngrok viewer](https://helene-unreconnoitred-overslowly.ngrok-free.dev), forwarding only to `127.0.0.1:8787`. It replaces the historical nginx/Cloudflare choice for this deployment. The merged `kane-cli` branch runs in the primary `/root/projects/node-arena` checkout, as requested; no deployment worktree was used. The separate hosting credit budget was authorized without an additional portal-cap confirmation gate. These are dated execution overrides, not changes to the earlier decision history.
+
+Dedicated systemd stream/ngrok units were verified active and boot enabled for the rehearsal, then intentionally stopped and boot-disabled at the user's request. The preserved real-driver configuration runs through an operator-local `flock` wrapper per command/run; preview 4175 and CDP 9225 (fallback 9223) stay loopback. ngrok strips client-supplied identity headers and injects its verified client IP; private runtime capture and forged-header admission tests passed. Production uses cooldown 120 s, wall limit 720 s, credit floor 200, max runs 20, daily cap 6 and per-IP Start cooldown 600 s. Only viewer files, frames and filtered events are public.
+
+The real public rehearsal won: `game_over.result=won`, winner 0, tick 1027; `driver_end.outcome=won`, exit 0. See [the completed Task 10 record](code-2026-10-24-2309.md) and [operations audit/runtime addendum](security-review-2026-10-24-2256.md). ngrok's free browser warning requires **Visit Site** on first normal-browser access. Stop/Reset is a separate follow-up, not part of this deployed acceptance.
+
 ## Manual steps
+
+The nginx/Cloudflare and portal-cap setup below records the earlier design; it is not a current deployment blocker after the user's execution overrides.
+
 - Owner: set Kane portal credit/spend cap (brief); optionally change daily cap (`KANE_DAILY_CAP`, default 6) / per-IP cooldown (`KANE_IP_COOLDOWN_S`, default 600); top up credits.
 - Owner: `kane-cli login` already valid on this box [verified in 03]; keep server env free of other secrets.
 - Owner: exposure chosen (nginx here). Owner creates the Cloudflare-proxied (orange-cloud) DNS record and picks the Cloudflare SSL mode (no 443 rule exists, so use a mode that works over port 80 to origin, e.g. Flexible, or add a 443 rule + origin cert for Full). Agent/owner `apt install nginx` (1.24; not installed today) and applies the README snippet. Fallback: cloudflared quick tunnel.

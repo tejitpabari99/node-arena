@@ -1,6 +1,6 @@
 ---
-status: in-progress
-summary: 9 tasks done; local stream and security review pass; public paid rehearsal blocked on owner proxy/DNS setup
+status: done
+summary: All 10 tasks done; real ngrok rehearsal passed, then hosting stopped at user request
 date: 2026-10-24
 ---
 # Tasks: 05 Hosted live stream
@@ -17,7 +17,7 @@ Source of truth: [PRD.md](PRD.md). Builds `tools/kane/stream/**` plus root scrip
 | 7 | Credit-free smoke and acceptance greps | 6 | done |
 | 8 | README, nginx/ufw and cloudflared docs | 5 | done |
 | 9 | dev-security-review gate | 7, 8 | done |
-| 10 | Real rehearsal through the proxy | 9 | blocked |
+| 10 | Real rehearsal through the proxy | 9 | done |
 
 ## Task 1 — Scaffold, `ws` pin, abuse-guard module
 What it is / what it means: Foundation for the stream package (PRD Owns, R4, Architecture dependency note, Decision 3).
@@ -65,13 +65,16 @@ What changes at a high level: Run the `dev-security-review` skill over the 05 di
 Done when: a security-review artifact exists with no unresolved High. The link must not be shared before this.
 
 ## Task 10 — Real rehearsal through the proxy
-Execution status (2026-10-24): **blocked** on owner proxy/DNS setup. No nginx or named-tunnel configuration is available; [official Quick Tunnel limitations](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/#limitations) exclude SSE. Follow the [exposure runbook](../../../../tools/kane/stream/README.md#owner-deployment-nginx--cloudflare) with nginx or a separately validated named tunnel before the public paid rehearsal. No paid credits or public exposure this run.
+Execution status (2026-10-24): **done**, accepted by the principal orchestrator. User authorized the primary `kane-cli` checkout after PR #28 merged at `8fe6196`, fixed ngrok hosting and a separate hosting credit budget. That execution override supersedes the earlier nginx/DNS and portal-confirmation blockers; the original task specification below remains historical contract context. Configured URL (currently stopped): [Kane plays Node Arena](https://helene-unreconnoitred-overslowly.ngrok-free.dev). [Operations audit](security-review-2026-10-24-2256.md): PASS before public startup, with runtime addendum. [Deployment and rehearsal record](code-2026-10-24-2309.md): public fake checks passed; production real wrapper/default limits verified; actual real game and driver both won, with 369.527 seconds of live WS/SSE. Services were verified active and boot enabled, then intentionally stopped and boot-disabled at the user's request after they saw the working stream. Configuration is preserved; private game/CDP listeners were cleaned after the run and all owned hosted listeners are now absent. Historical nginx/Cloudflare-specific acceptance is replaced by the verified ngrok path; no nginx/firewall change was applied.
 
 What it is / what it means: Live validation with real credits (Acceptance: rehearsal, exposure checks).
 What changes at a high level: With the owner's nginx/Cloudflare (or cloudflared) in place, perform one real Start through the public path. Verify `driver_end.outcome` matches the game result, credits spent within 03's budget, SSE and WS stay up over 120 s through the proxy, `:4173/:9222/:8787` unreachable externally, direct non-Cloudflare :80 blocked, `ss -ltnp` shows only nginx public. Record results and tune caps if needed.
 Done when: rehearsal results are recorded and all exposure acceptance items pass; failures documented with the recorded-video fallback noted.
 
 ## Owner-only steps
+
+Historical nginx/Cloudflare setup and portal-cap confirmation below do not block the user-authorized ngrok deployment. Keep credentials valid; optional backup recording remains optional.
+
 - Set Kane portal credit/spend cap; optionally change `KANE_DAILY_CAP` / `KANE_IP_COOLDOWN_S`; top up credits.
 - Keep `kane-cli login` valid; keep server env free of other secrets.
 - Create the Cloudflare-proxied (orange-cloud) DNS record; pick SSL mode (Flexible works over :80, or add 443 rule + origin cert for Full).
