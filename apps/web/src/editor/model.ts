@@ -5,7 +5,17 @@ import { roundCoordinate, type Point, type Selection } from './picking.js';
 export type LibraryItem = 'house-wt1' | 'house-wt2' | 'tower' | 'obstacle-small' | 'obstacle-big';
 export type LevelProperties = Pick<LevelDoc, 'name' | 'theme' | 'timeLimitSec' | 'players'>;
 export type Clipboard = Pick<LevelDoc, 'buildings' | 'elements'>;
-export type DocOp = { type: 'move-selection'; targets: Selection[]; delta: Point } | { type: 'mirror'; targets: Selection[]; axis: 'vertical' | 'horizontal'; center: number; swapOwners: boolean } | { type: 'paste'; clipboard: Clipboard; offset: Point } | { type: 'auto-fit' } | { type: 'level-properties'; value: LevelProperties } | { type: 'building-properties'; id: string; value: Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined } } | { type: 'obstacle-properties'; id: string; value: { variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined } } | { type: 'place'; item: LibraryItem; pos: Point } | { type: 'move'; target: Selection; pos: Point } | { type: 'delete'; target: Selection };
+export type DocOp =
+  | { type: 'move-selection'; targets: Selection[]; delta: Point }
+  | { type: 'mirror'; targets: Selection[]; axis: 'vertical' | 'horizontal'; center: number; swapOwners: boolean }
+  | { type: 'paste'; clipboard: Clipboard; offset: Point }
+  | { type: 'auto-fit' }
+  | { type: 'level-properties'; value: LevelProperties }
+  | { type: 'building-properties'; id: string; value: Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined } }
+  | { type: 'obstacle-properties'; id: string; value: { variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined } }
+  | { type: 'place'; item: LibraryItem; pos: Point }
+  | { type: 'move'; target: Selection; pos: Point }
+  | { type: 'delete'; target: Selection };
 export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[] }
 export type HistoryAction = { type: 'edit'; op: DocOp } | { type: 'undo' } | { type: 'redo' };
 export const createHistory = (present: LevelDoc): DocHistory => ({ past: [], present, future: [] });
