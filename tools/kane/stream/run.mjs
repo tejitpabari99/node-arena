@@ -176,12 +176,12 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
   const ops = deps.processes ?? createProcessOps(config);
   const owner = await ops.identity(process.pid);
   const controller = new EventEmitter();
-  let state = 'idle', runId = null, startedAt = null, endsAtMax = null, outcome;
+  let state = 'idle', runId = null, attemptId = null, startedAt = null, endsAtMax = null, outcome;
   let admission = createStartState(), owned = [], active = false, closed = false, closing, ending, pendingStart;
   let startAttempt, stopping, lockHeld = false;
   let wallTimer, cooldownTimer, scanTimer, scanPending, processReady;
   const handlers = new Map();
-  const snapshot = (viewers = 0) => ({ state, runId, startedAt, endsAtMax, viewers, ...(outcome ? { outcome } : {}) });
+  const snapshot = (viewers = 0) => ({ state, runId, attemptId, startedAt, endsAtMax, viewers, ...(outcome ? { outcome } : {}) });
   const change = next => { state = next; controller.emit('state', snapshot()); };
   const unavailable = () => ({ status: 503, message: 'unavailable' });
   const persist = () => ops.persist({ version: 1, owner, processes: owned });
@@ -302,12 +302,13 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
     return ending;
   }
 
-  function start(ip = 'unknown') {
+  function start(ip = 'unknown', requestedAttemptId) {
     if (closed) return Promise.resolve(unavailable());
     if (state !== 'idle' || pendingStart || stopping) return Promise.resolve({ status: 409, message: 'unavailable' });
     const checked = checkStart(admission, ip, now(), guardConfig);
     if (!checked.allowed) return Promise.resolve({ status: checked.status, message: 'unavailable', retryAfterSeconds: checked.retryAfterSeconds });
     runId = null; startedAt = null; endsAtMax = null; outcome = undefined; ending = undefined;
+    attemptId = requestedAttemptId ?? randomUUID();
     // Token AND settlement promise exist before a starting listener can call Stop.
     const attempt = { abort: new AbortController(), cleanupFailed: false };
     startAttempt = attempt;
@@ -388,7 +389,8 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
     return result;
   }
 
-  function stop() {
+  function stop(expectedAttemptId) {
+    if (expectedAttemptId !== undefined && expectedAttemptId !== attemptId) return Promise.resolve({ status: 409, message: 'unavailable' });
     if (stopping) return stopping;
     if (closed) return Promise.resolve(unavailable());
     if (!['starting', 'live'].includes(state)) return Promise.resolve({ status: 409, message: 'unavailable' });
@@ -413,7 +415,7 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
   function reset() {
     if (closed) return Promise.resolve(unavailable());
     if (active || pendingStart || stopping || !['idle', 'cooldown'].includes(state)) return Promise.resolve({ status: 409, message: 'unavailable' });
-    runId = null; startedAt = null; endsAtMax = null; outcome = undefined;
+    runId = null; attemptId = null; startedAt = null; endsAtMax = null; outcome = undefined;
     // Server clears relay and screencast cache synchronously before broadcasting.
     controller.emit('reset', snapshot()); controller.emit('state', snapshot());
     return Promise.resolve({ status: 200 });

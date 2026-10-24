@@ -7,7 +7,7 @@
   const context = canvas.getContext('2d');
   const abort = new AbortController();
   let disposed = false, source, socket, reconnectTimer;
-  let currentState, serverState, currentRunId = null, lastSeq = -1;
+  let currentState, serverState, currentRunId = null, currentAttemptId = null, lastSeq = -1;
   let stateRevision = 0, requestGeneration = 0, stopped = false, resetting = false;
   let localStart = null, stopRequest = null, stopQueued = false;
   let sseErrors = 0, wsAttempts = 0, generation = 0, decoding = false, pendingFrame = null;
@@ -54,19 +54,23 @@
     if (disposed || !snapshot || typeof snapshot.state !== 'string') return;
     const nextRun = typeof snapshot.runId === 'string' ? snapshot.runId : null;
     const changedRun = nextRun !== currentRunId;
-    // Startup/live can be missed while the Start HTTP reply is still pending.
-    // A different completed run retires this attempt's cancellation; replay of
-    // the baseline completed run must leave it queued for its own reservation.
-    const queuedAttemptEnded = stopQueued && nextRun !== null && nextRun !== stopQueued.baselineRunId
-      && ['ending', 'cooldown', 'idle'].includes(snapshot.state)
-      && ['won', 'lost', 'timeout', 'unavailable', 'failed', 'stopped'].includes(snapshot.outcome);
-    if (explicitReset || queuedAttemptEnded || (currentRunId !== null && nextRun === null && snapshot.state !== 'starting')) {
-      stopQueued = false; localStart = null; stopRequest = null;
-      requestGeneration++;
+    const nextAttempt = typeof snapshot.attemptId === 'string' ? snapshot.attemptId : null;
+    const isReset = explicitReset || (currentAttemptId !== null && nextAttempt === null);
+    if (isReset) {
+      // A reset of another attempt cannot cancel a not-yet-registered local Start.
+      if (!stopQueued || !localStart || currentAttemptId === stopQueued.id) {
+        stopQueued = false; localStart = null;
+      }
+      stopRequest = null; requestGeneration++;
+    }
+    const matchingQueued = stopQueued && nextAttempt === stopQueued.id;
+    const queuedStopReady = matchingQueued && ['starting', 'live'].includes(snapshot.state);
+    const queuedAttemptId = queuedStopReady ? stopQueued.id : null;
+    if (matchingQueued && ['ending', 'cooldown', 'idle'].includes(snapshot.state)) {
+      stopQueued = false; localStart = null; requestGeneration++;
     }
     const isFailure = failureOutcomes.has(snapshot.outcome);
     const nextStopped = snapshot.outcome === 'stopped';
-    const queuedStopReady = stopQueued && ['starting', 'live'].includes(snapshot.state);
     const state = stopQueued || (nextStopped && snapshot.state === 'ending') ? 'stopping' : nextStopped ? 'stopped' : snapshot.state === 'ending' ? (isFailure ? 'failed' : 'finished') : snapshot.state;
     if (!Object.hasOwn(texts, state)) return;
     stateRevision++;
@@ -74,10 +78,10 @@
     const enteringStart = snapshot.state === 'starting' && serverState !== 'starting';
     const clear = explicitReset || changedRun || enteringStart;
     if (clear) resetRun();
-    currentRunId = nextRun;
+    currentRunId = nextRun; currentAttemptId = nextAttempt;
     serverState = snapshot.state;
     stopped = nextStopped || stopQueued;
-    if (nextStopped && ['idle', 'cooldown'].includes(serverState)) localStart = null;
+    if (localStart?.id === nextAttempt && (['ending', 'idle', 'cooldown'].includes(serverState) || localStart.settled)) localStart = null;
     if (queuedStopReady) { stopQueued = false; serverState = 'ending'; }
     resetting = false;
     if (Number.isSafeInteger(snapshot.viewers) && snapshot.viewers >= 0) viewers.textContent = String(snapshot.viewers);
@@ -85,7 +89,7 @@
     // A new instance drops Last-Event-ID and rejects already queued old callbacks.
     if ((explicitReset || changedRun) && source) connectEvents();
     if (!socket && !reconnectTimer) connectVideo();
-    if (queuedStopReady) sendStop();
+    if (queuedStopReady) sendStop(queuedAttemptId);
   }
 
   function appendLog(event) {
@@ -186,11 +190,11 @@
     } catch { if (!disposed && revision === stateRevision && request === requestGeneration) render('failed', true); }
   }
 
-  async function postControl(path) {
+  async function postControl(path, attemptId) {
     const request = ++requestGeneration, revision = stateRevision;
     const current = () => !disposed && request === requestGeneration && revision === stateRevision;
     try {
-      const response = await fetch(path, { method: 'POST', signal: abort.signal });
+      const response = await fetch(path, { method: 'POST', signal: abort.signal, ...(attemptId ? { headers: { 'X-Kane-Attempt-Id': attemptId } } : {}) });
       // SSE is authoritative. An HTTP snapshot can predate another viewer's Reset/Start.
       if (!response.ok && current()) {
         if (response.status === 409 || path !== '/start') await refreshState();
@@ -200,10 +204,10 @@
     } catch { if (current()) await refreshState(); }
   }
 
-  function sendStop() {
+  function sendStop(attemptId) {
     const request = {}; stopRequest = request;
     render(currentState, failed);
-    void postControl('/stop').finally(() => {
+    void postControl('/stop', attemptId).finally(() => {
       if (disposed || stopRequest !== request) return;
       stopRequest = null; render(currentState, failed);
     });
@@ -213,34 +217,32 @@
     if (currentState !== 'idle' || disposed) return;
     stopped = false;
     render('starting');
-    const attempt = {}; localStart = attempt;
-    void postControl('/start').then(async response => {
+    const attempt = { id: crypto.randomUUID() }; localStart = attempt;
+    void postControl('/start', attempt.id).then(async response => {
       if (disposed || localStart !== attempt) return;
-      localStart = null;
-      if (!stopQueued) return;
+      attempt.settled = true;
       if (response?.ok) {
-        const snapshot = await refreshState();
-        // If startup and termination were both missed, a settled Start plus a
-        // fresh quiescent snapshot proves this intent cannot belong to a later run.
-        if (snapshot && stopQueued && !localStart && ['idle', 'cooldown'].includes(serverState)) {
-          stopQueued = false; stopped = snapshot.outcome === 'stopped';
-          render(stopped ? 'stopped' : serverState, failureOutcomes.has(snapshot.outcome));
-        }
-      } else { stopQueued = false; render('stopped'); }
+        if (stopQueued?.id === attempt.id) await refreshState();
+        else if (currentAttemptId === attempt.id) localStart = null;
+      } else {
+        localStart = null;
+        if (stopQueued?.id === attempt.id) { stopQueued = false; await refreshState(); }
+      }
     });
   });
   stop.addEventListener('click', () => {
     if (!['starting', 'live'].includes(currentState) || disposed) return;
     stopped = true;
-    // A local Start click can precede its reservation on the server. Wait for
-    // authoritative starting/live before sending Stop, so a premature 409 cannot
-    // leave that pending Start free to launch after the viewer reports Stopped.
-    stopQueued = localStart && !['starting', 'live'].includes(serverState) ? { baselineRunId: currentRunId } : false;
-    if (!stopQueued) serverState = 'ending';
+    // An own Start can still be unregistered or obscured by another viewer's
+    // attempt. Only its nonce can satisfy this queued cancellation.
+    const target = ['starting', 'live'].includes(serverState) ? currentAttemptId : null;
+    stopQueued = localStart && localStart.id !== target ? { id: localStart.id } : false;
     requestGeneration++;
+    if (target) serverState = 'ending';
     render('stopping');
-    if (!stopQueued) sendStop();
+    if (target) sendStop(target);
   });
+
   reset.addEventListener('click', () => {
     if (reset.disabled || disposed) return;
     resetting = true; render(currentState);

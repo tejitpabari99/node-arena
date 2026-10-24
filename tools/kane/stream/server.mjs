@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
@@ -29,6 +30,16 @@ function integer(value, fallback, min, max) {
   if (value === undefined || value === '') return fallback;
   if (!/^\d+$/.test(String(value)) || !Number.isSafeInteger(Number(value)) || Number(value) < min || Number(value) > max) throw new Error('Invalid server configuration');
   return Number(value);
+}
+
+// Correlation only: a public nonce is never an authorization capability.
+function readAttemptId(req) {
+  const values = [];
+  for (let i = 0; i < req.rawHeaders.length; i += 2) {
+    if (req.rawHeaders[i].toLowerCase() === 'x-kane-attempt-id') values.push(req.rawHeaders[i + 1]);
+  }
+  if (values.length === 0) return undefined;
+  return values.length === 1 && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(values[0]) ? values[0] : null;
 }
 
 /** Operator-only configuration: no request data is ever passed to the driver. */
@@ -131,7 +142,9 @@ export async function createStreamServer(options = {}) {
     if (!checkOrigin(req, guardConfig)) { req.resume(); error(res, 403); return; }
     try {
       if (closed || req.aborted || res.destroyed) return;
-      const result = await run.start(clientIp(req, guardConfig));
+      const attemptId = readAttemptId(req);
+      if (attemptId === null) { error(res, 400); return; }
+      const result = await run.start(clientIp(req, guardConfig), attemptId ?? randomUUID());
       if (result.status === 202 && typeof result.runId === 'string') json(res, 202, { runId: result.runId });
       else error(res, [409, 429, 503].includes(result.status) ? result.status : 503);
     } catch { if (!req.aborted) error(res, 503); }
@@ -140,7 +153,9 @@ export async function createStreamServer(options = {}) {
   async function control(req, res, method) {
     try {
       if (closed || req.aborted || res.destroyed) return;
-      const result = await run[method]();
+      const expectedAttemptId = method === 'stop' ? readAttemptId(req) : undefined;
+      if (expectedAttemptId === null) { error(res, 400); return; }
+      const result = await run[method](expectedAttemptId);
       if (result.status === 200) json(res, 200, snapshot());
       else error(res, [409, 503].includes(result.status) ? result.status : 503);
     } catch { if (!req.aborted) error(res, 503); }

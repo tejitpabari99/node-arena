@@ -61,7 +61,7 @@ test('fixed detached argv and public snapshot; raw lines and Chrome readiness tr
   driver.child.stdout.write('{"type":"chrome_ready","pid":999,"port":9225}\n');
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(run.snapshot().state, 'live'); assert.equal(lines.length, 1); assert.equal(ready.length, 1);
-  assert.deepEqual(Object.keys(run.snapshot()).sort(), ['endsAtMax', 'runId', 'startedAt', 'state', 'viewers']);
+  assert.deepEqual(Object.keys(run.snapshot()).sort(), ['attemptId', 'endsAtMax', 'runId', 'startedAt', 'state', 'viewers']);
   await run.close();
 });
 
@@ -362,7 +362,7 @@ test('Reset clears presentation and emits reset before state, retains original c
   const events = []; run.on('reset', () => events.push('reset')); run.on('state', () => events.push('state'));
   assert.equal((await run.reset()).status, 200);
   assert.deepEqual(events, ['reset', 'state']);
-  assert.deepEqual(run.snapshot(), { state: 'cooldown', runId: null, startedAt: null, endsAtMax: null, viewers: 0 });
+  assert.deepEqual(run.snapshot(), { state: 'cooldown', runId: null, attemptId: null, startedAt: null, endsAtMax: null, viewers: 0 });
   await run.reset(); assert.equal((await run.start('two')).status, 409);
   await h.advance(59999); assert.equal(run.snapshot().state, 'cooldown');
   await h.advance(1); assert.equal(run.snapshot().state, 'idle');
@@ -424,4 +424,39 @@ test('Stop reports actual cleanup failure generically and does not claim Stopped
     assert.equal(run.snapshot().outcome, 'failed');
     h.processes[operation] = original; await run.close();
   }
+});
+
+test('attemptId precedes starting, survives null-run preflight rejection, and Reset clears it without spawning', async () => {
+  const id = '12345678-1234-4234-8234-123456789abc';
+  const h = harness({ creditsOutput: '{"credits":199}' }), run = await h.create();
+  const states = []; run.on('state', state => states.push(state));
+  assert.equal(run.snapshot().attemptId, null);
+  const pending = run.start('one', id);
+  assert.equal(run.snapshot().attemptId, id);
+  assert.equal((await pending).status, 503);
+  assert.equal(run.snapshot().state, 'idle'); assert.equal(run.snapshot().runId, null);
+  assert.equal(run.snapshot().outcome, undefined); assert.equal(run.snapshot().attemptId, id);
+  assert.ok(states.every(state => state.attemptId === id));
+  assert.equal(h.spawned.length, 1);
+  await run.reset(); assert.equal(run.snapshot().attemptId, null); assert.equal(h.spawned.length, 1);
+  await run.close();
+});
+
+test('conditional Stop rejects stale attempts before abort or reuse of shared cleanup, including after a new Start', async () => {
+  const a = '12345678-1234-4234-8234-123456789abc', b = '22345678-1234-4234-8234-123456789abc';
+  const h = harness(), run = await h.create();
+  await run.start('one', a);
+  const before = run.snapshot(), signals = h.signals.length;
+  assert.equal((await run.stop(b)).status, 409);
+  assert.deepEqual(run.snapshot(), before); assert.equal(h.signals.length, signals);
+  const stop = run.stop(a);
+  assert.equal((await run.stop(b)).status, 409); assert.equal(run.stop(a), stop);
+  await stop; assert.equal(run.snapshot().attemptId, a);
+  await run.reset(); assert.equal(run.snapshot().attemptId, null); await h.advance(120000);
+  await run.start('two', b);
+  const next = run.snapshot(), nextSignals = h.signals.length;
+  assert.equal((await run.stop(a)).status, 409);
+  assert.deepEqual(run.snapshot(), next); assert.equal(h.signals.length, nextSignals);
+  assert.ok(h.spawned.every(child => !child.args.includes(a) && !child.args.includes(b)));
+  await run.stop(b); await run.close();
 });

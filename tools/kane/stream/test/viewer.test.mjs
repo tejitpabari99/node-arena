@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
@@ -10,21 +11,22 @@ const { chromium } = require('@playwright/test');
 
 async function fixture(t) {
   const run = new EventEmitter();
-  let current = { state: 'idle', runId: null, viewers: 0 };
+  let current = { state: 'idle', runId: null, attemptId: null, viewers: 0 }, lastStartAttempt;
   let starts = 0, response = 202, settleStop;
   run.snapshot = viewers => ({ ...current, viewers });
-  run.start = async () => {
+  run.start = async (_ip, attemptId) => {
     starts++;
     if (response !== 202) return { status: response };
-    current = { state: 'starting', runId: null };
+    current = { state: 'starting', runId: null, attemptId };
     run.emit('state', current);
     await new Promise(resolve => setTimeout(resolve, 20));
     if (current.outcome === 'stopped') return { status: 503 };
-    current = { state: 'starting', runId: `run-${starts}` };
+    current = { state: 'starting', runId: `run-${starts}`, attemptId };
     run.emit('state', current);
     return { status: 202, runId: current.runId };
   };
-  run.stop = async () => {
+  run.stop = async expectedAttemptId => {
+    if (expectedAttemptId !== undefined && expectedAttemptId !== current.attemptId) return { status: 409 };
     if (!['starting', 'live'].includes(current.state)) return { status: 409 };
     current = { ...current, state: 'ending', outcome: 'stopped' };
     run.emit('state', current);
@@ -35,7 +37,7 @@ async function fixture(t) {
   };
   run.reset = async () => {
     if (!['idle', 'cooldown'].includes(current.state)) return { status: 409 };
-    current = { state: current.state, runId: null, startedAt: null, endsAtMax: null };
+    current = { state: current.state, runId: null, attemptId: null, startedAt: null, endsAtMax: null };
     run.emit('reset', current); run.emit('state', current);
     return { status: 200 };
   };
@@ -50,13 +52,18 @@ async function fixture(t) {
   const browser = await chromium.launch({ headless: true });
   t.after(async () => { await browser.close(); await app.close(); });
   const context = await browser.newContext();
+  context.on('request', request => { if (new URL(request.url()).pathname === '/start') lastStartAttempt = request.headers()['x-kane-attempt-id']; });
   const page = await context.newPage();
   page.setDefaultTimeout(5000);
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   const base = `http://127.0.0.1:${app.server.address().port}`;
   return { page, base, errors, app, cast, clients, run,
-    state(state, runId = current.runId, outcome) { current = { state, runId, outcome }; run.emit('state', current); },
+    state(state, runId = current.runId, outcome,
+      attemptId = state === 'idle' && runId === null && !outcome ? null : state === 'starting' ? lastStartAttempt ?? randomUUID() : current.attemptId ?? lastStartAttempt ?? randomUUID(),
+      notify = true) {
+      current = { state, runId, outcome, attemptId }; if (notify) run.emit('state', current);
+    },
     finishStop() { settleStop(); }, reject(status) { response = status; }, get starts() { return starts; } };
 }
 
@@ -190,8 +197,8 @@ test('viewer renders real JPEG frames on canvas and keeps a responsive 16:9 stag
 // Missing Stop/Reset controls or a local-only reset must fail this shared-browser flow.
 test('two viewers share explicit Stop, cleanup gating, Reset and cooldown without automatic Start', async t => {
   const f = await fixture(t), { page } = f;
-  const posts = [];
-  page.context().on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); });
+  const posts = [], attempts = [];
+  page.context().on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); if (new URL(request.url()).pathname === '/start') attempts.push(request.headers()['x-kane-attempt-id']); });
   await page.goto(f.base);
   await waitText(page, 'status', 'idle');
   await page.reload();
@@ -254,6 +261,9 @@ test('two viewers share explicit Stop, cleanup gating, Reset and cooldown withou
   await waitText(page, 'status', 'starting');
   await waitText(other, 'status', 'starting');
   assert.equal(f.starts, 2);
+  assert.equal(attempts.length, 2);
+  assert.ok(attempts.every(id => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id)));
+  assert.notEqual(attempts[0], attempts[1]);
   await page.waitForTimeout(60);
   f.state('live', 'run-2');
   for (const viewer of [page, other]) await waitText(viewer, 'status', 'live');
@@ -315,7 +325,7 @@ test('Stop works while Start HTTP is pending and late control responses cannot o
 // Transport doubles expose queued callbacks browsers normally hide; production viewer code remains real.
 async function transportProbe(page) {
   await page.addInitScript(() => {
-    window.transports = { events: [], sockets: [], decoded: [], drawn: [], closed: [], releases: [], cleared: 0 };
+    window.transports = { oldAttempt: crypto.randomUUID(), newAttempt: crypto.randomUUID(), events: [], sockets: [], decoded: [], drawn: [], closed: [], releases: [], cleared: 0 };
     window.EventSource = class {
       constructor() { this.listeners = {}; window.transports.events.push(this); }
       addEventListener(type, callback) { this.listeners[type] = callback; }
@@ -348,7 +358,7 @@ test('shared Reset invalidates JPEG work, queued old socket blobs, SSE replay cu
   await page.waitForFunction(() => window.transports.events.length === 1);
   await page.evaluate(() => {
     const p = window.transports;
-    p.events.at(-1).emit('state', { state: 'live', runId: 'old-run', viewers: 2 });
+    p.events.at(-1).emit('state', { attemptId: p.oldAttempt, state: 'live', runId: 'old-run', viewers: 2 });
     p.oldEvents = p.events.at(-1); p.oldSocket = p.sockets.at(-1);
     p.oldEvents.emit('message', { seq: 100, type: 'driver_start' });
     p.oldSocket.meta(777, 333); p.oldSocket.frame(1);
@@ -357,10 +367,10 @@ test('shared Reset invalidates JPEG work, queued old socket blobs, SSE replay cu
   await page.evaluate(() => {
     const p = window.transports;
     p.oldSocket.frame(2);
-    p.oldEvents.emit('reset', { state: 'idle', runId: null, startedAt: null, endsAtMax: null, viewers: 2 });
+    p.oldEvents.emit('reset', { attemptId: null, state: 'idle', runId: null, startedAt: null, endsAtMax: null, viewers: 2 });
     p.oldSocket.frame(3); p.oldSocket.meta(444, 222);
     p.oldEvents.emit('message', { seq: 101, type: 'stale_event' });
-    p.oldEvents.emit('state', { state: 'live', runId: 'old-run' });
+    p.oldEvents.emit('state', { attemptId: p.oldAttempt, state: 'live', runId: 'old-run' });
     p.releases.shift()();
   });
   await page.waitForFunction(() => window.transports.closed.length === 1);
@@ -372,8 +382,8 @@ test('shared Reset invalidates JPEG work, queued old socket blobs, SSE replay cu
   assert.equal(await page.evaluate(() => window.transports.oldSocket.closed), true);
   await page.evaluate(() => {
     const p = window.transports;
-    p.events.at(-1).emit('state', { state: 'starting', runId: null });
-    p.events.at(-1).emit('state', { state: 'live', runId: 'new-run' });
+    p.events.at(-1).emit('state', { attemptId: p.newAttempt, state: 'starting', runId: null });
+    p.events.at(-1).emit('state', { attemptId: p.newAttempt, state: 'live', runId: 'new-run' });
     p.events.at(-1).emit('message', { seq: 1, type: 'fresh_event' });
     p.sockets.at(-1).frame(4);
   });
@@ -392,10 +402,10 @@ test('reconnect state detects a missed Reset and repeated null starting snapshot
   await page.waitForFunction(() => window.transports.events.length === 1);
   await page.evaluate(() => {
     const p = window.transports;
-    p.events.at(-1).emit('state', { state: 'live', runId: 'missed-reset' });
+    p.events.at(-1).emit('state', { attemptId: p.oldAttempt, state: 'live', runId: 'missed-reset' });
     p.events.at(-1).emit('message', { seq: 50, type: 'old_event' });
     p.oldSocket = p.sockets.at(-1);
-    p.events.at(-1).emit('state', { state: 'idle', runId: null, startedAt: null, endsAtMax: null });
+    p.events.at(-1).emit('state', { attemptId: null, state: 'idle', runId: null, startedAt: null, endsAtMax: null });
     p.oldSocket.frame(7);
   });
   assert.equal(await page.locator('#log li').count(), 0);
@@ -403,7 +413,7 @@ test('reconnect state detects a missed Reset and repeated null starting snapshot
   const count = await page.evaluate(() => window.transports.events.length);
   await page.evaluate(() => {
     const p = window.transports;
-    for (let i = 0; i < 4; i++) p.events.at(-1).emit('state', { state: 'starting', runId: null });
+    for (let i = 0; i < 4; i++) p.events.at(-1).emit('state', { attemptId: p.newAttempt, state: 'starting', runId: null });
   });
   assert.equal(await page.evaluate(() => window.transports.events.length), count);
   assert.equal(await page.locator('#stop').isVisible(), true);
@@ -442,30 +452,39 @@ test('Stop queued before Start reservation cancels that attempt without an unsaf
   assert.deepEqual(f.errors, []);
 });
 
-test('another viewer Reset clears an unreserved Stop intent before an unrelated fresh run', async t => {
-  const f = await fixture(t), { page } = f;
-  let releaseStart;
-  const posts = [];
-  page.on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); });
-  await page.route('**/start', async route => {
-    await new Promise(resolve => { releaseStart = resolve; });
-    await route.fulfill({ status: 503, body: '{}' });
+for (const reply of [202, 503]) {
+  test(`another viewer Reset retains an unregistered cancellation until its own attempt settles (${reply})`, async t => {
+    const f = await fixture(t), { page } = f;
+    let releaseStart, ownAttempt;
+    const stops = [];
+    page.on('request', request => { if (new URL(request.url()).pathname === '/stop') stops.push(request.headers()['x-kane-attempt-id']); });
+    await page.route('**/start', async route => {
+      ownAttempt = route.request().headers()['x-kane-attempt-id'] ?? randomUUID();
+      await new Promise(resolve => { releaseStart = resolve; });
+      await route.fulfill({ status: reply, contentType: 'application/json', body: reply === 202 ? '{"runId":"own-run"}' : '{}' });
+    });
+    await page.goto(f.base); await waitText(page, 'status', 'idle');
+    await page.locator('#start').click(); await page.locator('#stop').click();
+    await f.run.reset(); await page.waitForTimeout(50);
+    assert.equal(await text(page, 'status'), 'stopping');
+    assert.equal(await page.locator('#reset').isDisabled(), true);
+    const other = randomUUID();
+    f.state('starting', null, undefined, other); f.state('live', 'unrelated-run', undefined, other);
+    await page.waitForTimeout(50);
+    assert.equal(await text(page, 'status'), 'stopping'); assert.deepEqual(stops, []);
+    if (reply === 202) {
+      f.state('starting', null, undefined, ownAttempt);
+      await page.waitForTimeout(80); assert.deepEqual(stops, [ownAttempt]);
+      f.finishStop(); releaseStart();
+      await page.waitForFunction(() => !document.getElementById('reset').disabled);
+      await waitText(page, 'status', 'stopped');
+    } else {
+      releaseStart(); await waitText(page, 'status', 'live');
+      assert.deepEqual(stops, []);
+    }
+    assert.deepEqual(f.errors, []);
   });
-  await page.goto(f.base);
-  await waitText(page, 'status', 'idle');
-  await page.locator('#start').click();
-  await page.locator('#stop').click();
-  await f.run.reset();
-  await waitText(page, 'status', 'idle');
-  f.state('starting', null);
-  f.state('live', 'unrelated-run');
-  await waitText(page, 'status', 'live');
-  releaseStart();
-  await page.waitForTimeout(80);
-  assert.equal(await text(page, 'status'), 'live');
-  assert.deepEqual(posts, ['/start']);
-  assert.deepEqual(f.errors, []);
-});
+}
 
 test('a settled accepted Start with missed terminal events cannot carry a queued Stop into the next run', async t => {
   const f = await fixture(t), { page } = f;
@@ -474,6 +493,7 @@ test('a settled accepted Start with missed terminal events cannot carry a queued
   page.on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); });
   await page.route('**/start', async route => {
     await new Promise(resolve => { releaseStart = resolve; });
+    f.state('idle', 'already-ended', 'won', route.request().headers()['x-kane-attempt-id'], false);
     // Model a completed attempt whose startup/terminal SSE events were missed.
     await route.fulfill({ status: 202, contentType: 'application/json', body: '{"runId":"already-ended"}' });
   });
@@ -500,32 +520,35 @@ for (const { baseline, terminalState, outcome, reply, replayOutcome } of [
 ]) {
   test(`queued Stop retires on ${terminalState}/${outcome} after ${baseline ?? 'null'} baseline before delayed ${reply}`, async t => {
     const f = await fixture(t), { page } = f;
-    let releaseStart;
+    let releaseStart, ownAttempt;
+    const baselineAttempt = baseline ? randomUUID() : null;
     const posts = [];
     page.on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); });
     await page.route('**/start', async route => {
+      ownAttempt = route.request().headers()['x-kane-attempt-id'];
       await new Promise(resolve => { releaseStart = resolve; });
       await route.fulfill({ status: reply, contentType: 'application/json', body: reply === 202 ? '{"runId":"run-A"}' : '{}' });
     });
-    f.state('idle', baseline, baseline ? 'won' : undefined);
+    f.state('idle', baseline, baseline ? 'won' : undefined, baselineAttempt);
     await page.goto(f.base);
     await waitText(page, 'status', 'idle');
     await page.locator('#start').click();
     await page.locator('#stop').click();
     // Repeated previous-run metadata or plain idle/null cannot retire this intent.
-    f.state('idle', baseline, replayOutcome ?? (baseline ? 'won' : undefined));
+    f.state('idle', baseline, replayOutcome ?? (baseline ? 'won' : undefined), baselineAttempt);
     await page.waitForTimeout(40);
     assert.equal(await text(page, 'status'), 'stopping');
     assert.equal(await page.locator('#reset').isDisabled(), true);
     assert.deepEqual(posts, ['/start']);
     // Reconnection sees only this attempt's terminal state, never startup/live.
-    f.state(terminalState, 'run-A', outcome);
+    f.state(terminalState, 'run-A', outcome, ownAttempt);
     await waitText(page, 'status', outcome === 'stopped' ? 'stopped' : terminalState === 'ending' ? 'finished' : terminalState);
-    f.state('idle', 'run-A', outcome);
+    f.state('idle', 'run-A', outcome, ownAttempt);
     await page.waitForTimeout(40);
     // A different viewer explicitly starts B while A's HTTP reply remains held.
-    f.state('starting', null);
-    f.state('live', 'run-B');
+    const otherAttempt = randomUUID();
+    f.state('starting', null, undefined, otherAttempt);
+    f.state('live', 'run-B', undefined, otherAttempt);
     await page.waitForTimeout(80);
     assert.deepEqual(posts, ['/start'], 'a completed attempt must never Stop the next run');
     await waitText(page, 'status', 'live');
@@ -539,3 +562,108 @@ for (const { baseline, terminalState, outcome, reply, replayOutcome } of [
     assert.deepEqual(f.errors, []);
   });
 }
+
+for (const terminal of ['preflight-failed', 'unrelated-starting']) {
+  test(`attempt-correlated queued Stop handles ${terminal} before delayed Start HTTP settles`, async t => {
+    const f = await fixture(t), { page } = f;
+    let releaseStart, ownAttempt;
+    const stops = [];
+    page.on('request', request => { if (new URL(request.url()).pathname === '/stop') stops.push(request.headers()['x-kane-attempt-id']); });
+    await page.route('**/start', async route => {
+      ownAttempt = route.request().headers()['x-kane-attempt-id'] ?? randomUUID();
+      await new Promise(resolve => { releaseStart = resolve; });
+      await route.fulfill({ status: 503, body: '{}' });
+    });
+    await page.goto(f.base); await waitText(page, 'status', 'idle');
+    await page.locator('#start').click(); await page.locator('#stop').click();
+    assert.match(ownAttempt ?? '', /^[0-9a-f-]{36}$/);
+    const other = randomUUID();
+    if (terminal === 'preflight-failed') {
+      // Actual controller rejection: no run allocated and no terminal outcome.
+      f.state('idle', null, undefined, ownAttempt);
+      await page.waitForTimeout(40);
+      f.state('starting', null, undefined, other); f.state('live', 'B', undefined, other);
+      await page.waitForTimeout(80); assert.deepEqual(stops, []);
+      await waitText(page, 'status', 'live');
+      releaseStart(); await page.waitForTimeout(80);
+      assert.equal(await text(page, 'status'), 'live'); assert.deepEqual(stops, []);
+    } else {
+      // Another attempt must neither satisfy nor retire this pending cancellation.
+      f.state('starting', null, undefined, other); f.state('live', 'other', undefined, other);
+      await page.waitForTimeout(60);
+      assert.equal(await text(page, 'status'), 'stopping'); assert.deepEqual(stops, []);
+      assert.equal(await page.locator('#reset').isDisabled(), true);
+      f.state('idle', 'other', 'won', other);
+      await page.waitForTimeout(30); assert.equal(await text(page, 'status'), 'stopping');
+      f.state('starting', null, undefined, ownAttempt);
+      await page.waitForTimeout(80);
+      assert.deepEqual(stops, [ownAttempt]);
+      f.finishStop(); releaseStart();
+      await page.waitForFunction(() => !document.getElementById('reset').disabled);
+      await waitText(page, 'status', 'stopped');
+    }
+    assert.deepEqual(f.errors, []);
+  });
+}
+
+test('accepted Start retains its nonce until startup SSE arrives so an immediate Stop is not lost', async t => {
+  const f = await fixture(t), { page } = f;
+  let ownAttempt;
+  const stops = [];
+  page.on('request', request => { if (new URL(request.url()).pathname === '/stop') stops.push(request.headers()['x-kane-attempt-id']); });
+  await page.route('**/start', async route => {
+    ownAttempt = route.request().headers()['x-kane-attempt-id'];
+    await route.fulfill({ status: 202, contentType: 'application/json', body: '{"runId":"own"}' });
+  });
+  await page.goto(f.base); await waitText(page, 'status', 'idle');
+  const accepted = page.waitForResponse(value => new URL(value.url()).pathname === '/start');
+  await page.locator('#start').click(); await accepted; await page.waitForTimeout(40);
+  await page.locator('#stop').click();
+  assert.equal(await page.locator('#reset').isDisabled(), true); assert.deepEqual(stops, []);
+  f.state('starting', null, undefined, ownAttempt);
+  await page.waitForTimeout(80); assert.deepEqual(stops, [ownAttempt]);
+  f.finishStop(); await page.waitForFunction(() => !document.getElementById('reset').disabled);
+  await waitText(page, 'status', 'stopped'); assert.deepEqual(f.errors, []);
+});
+
+test('normal Stop targets its visible attempt and a delayed request cannot end another viewer fresh run', async t => {
+  const f = await fixture(t), { page } = f;
+  const a = randomUUID(), b = randomUUID(); let releaseStop, target;
+  f.state('live', 'A', undefined, a);
+  await page.route('**/stop', async route => {
+    target = route.request().headers()['x-kane-attempt-id'];
+    await new Promise(resolve => { releaseStop = resolve; }); await route.continue();
+  });
+  await page.goto(f.base); await waitText(page, 'status', 'live');
+  await page.locator('#stop').click(); assert.equal(target, a);
+  f.state('starting', null, undefined, b); f.state('live', 'B', undefined, b);
+  await waitText(page, 'status', 'live');
+  const rejected = page.waitForResponse(value => new URL(value.url()).pathname === '/stop');
+  releaseStop(); assert.equal((await rejected).status(), 409);
+  await page.waitForTimeout(50); assert.equal(await text(page, 'status'), 'live');
+  assert.equal(await page.locator('#stop').isEnabled(), true); assert.deepEqual(f.errors, []);
+});
+
+test('explicit Stop ends the displayed other attempt and retains cancellation of a pending own Start', async t => {
+  const f = await fixture(t), { page } = f;
+  let ownAttempt, releaseStart;
+  const other = randomUUID(), stops = [];
+  page.on('request', request => { if (new URL(request.url()).pathname === '/stop') stops.push(request.headers()['x-kane-attempt-id']); });
+  await page.route('**/start', async route => {
+    ownAttempt = route.request().headers()['x-kane-attempt-id'];
+    await new Promise(resolve => { releaseStart = resolve; }); await route.fulfill({ status: 503, body: '{}' });
+  });
+  await page.goto(f.base); await waitText(page, 'status', 'idle');
+  await page.locator('#start').click();
+  f.state('starting', null, undefined, other); f.state('live', 'other', undefined, other);
+  await waitText(page, 'status', 'live');
+  await page.locator('#stop').click(); await page.waitForTimeout(60);
+  assert.deepEqual(stops, [other]);
+  f.finishStop(); await page.waitForTimeout(50);
+  assert.equal(await text(page, 'status'), 'stopping'); assert.equal(await page.locator('#reset').isDisabled(), true);
+  f.state('starting', null, undefined, ownAttempt);
+  await page.waitForTimeout(80); assert.deepEqual(stops, [other, ownAttempt]);
+  f.finishStop(); releaseStart();
+  await page.waitForFunction(() => !document.getElementById('reset').disabled);
+  await waitText(page, 'status', 'stopped'); assert.deepEqual(f.errors, []);
+});

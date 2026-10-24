@@ -92,7 +92,11 @@ resources. Everyone sees **Stopping…** during cleanup, then **Stopped**. **Res
 appears as soon as Stop is requested and stays disabled until startup/control
 settlement and cleanup complete. A Stop clicked before the server reserves a
 Start waits for its starting/live announcement, so an early conflict cannot lose
-the cancellation. Shared Reset clears that queued intent before a later run.
+the cancellation. Cancellation targets the Start's UUID, so another viewer's
+run cannot satisfy it. Reset of another attempt clears presentation while keeping
+an unregistered local cancellation until its own Start settles. An explicit Stop
+also ends a different currently displayed run, while retaining cancellation for
+a pending local Start; queued cancellation alone never stops another attempt.
 
 Reset clears the shared frame, queued JPEG work, activity, replay cursor and run
 metadata. A reconnecting viewer also clears its old display if it missed Reset.
@@ -100,6 +104,17 @@ Reset returns to **Ready** after the original cooldown expires; during cooldown
 Start stays disabled. Reset never clears credit floors, daily/IP admission or the
 cooldown deadline. Click Start separately to launch a fresh match. Normal match
 completion retains its existing finished/failure behavior.
+
+Public state and SSE include `attemptId` (canonical UUID or null), set before
+`starting` and retained even when failed preflight returns idle with no `runId` or
+outcome. It remains through terminal/cooldown states; Reset clears it. Each Start
+click sends a fresh UUID in `X-Kane-Attempt-Id` on POST `/start`. The same optional
+header on POST `/stop` means “stop only this attempt”; a stale/mismatched UUID
+returns generic 409 before any cleanup or video change. Missing Start headers get
+a server-generated UUID; missing Stop headers retain legacy unconditional Stop.
+Malformed or duplicate headers return generic 400 without invoking a control.
+The public nonce provides correlation only, not authentication or game input; it
+never becomes a process argument, path, log filename or spending-policy override.
 
 Credit-free verification for this change uses ephemeral local HTTP servers,
 injected lifecycle operations, synthetic events and mocked JPEG/transport races:
