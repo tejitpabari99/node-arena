@@ -9,8 +9,18 @@ const level=Object.values(loadContent(files).compiled)[0]!;
 it('gates level, seed, speed and fixtures; only explicit test disables animation',()=>{
  expect(testHookRequest('?level=20&seed=7&speed=2',true)).toMatchObject({level:'20',seed:7,speed:2,testing:false});
  expect(testHookRequest('?test=1&fixture=win',true)).toMatchObject({testing:true,fixture:'win'});
- expect(testHookRequest('?test=1&level=20&seed=7&speed=2',false)).toEqual({testing:false,fixture:null,level:null,seed:1,speed:1});
+ expect(testHookRequest('?test=1&level=20&seed=7&speed=2',false)).toEqual({testing:false,fixture:null,level:null,seed:1,speed:1,kane:false});
  expect(testHookRequest('?seed=NaN&speed=5',true)).toMatchObject({seed:1,speed:1});
+ expect(testHookRequest('?kane=1',true)).toMatchObject({kane:true,testing:false});
+ expect(testHookRequest('?kane=1',false).kane).toBe(false);expect(testHookRequest('?kane=0',true).kane).toBe(false);
+});
+it('?kane=1 boots na-kane on the kane campaign with isolated save and real-time start',async()=>{
+ const harness=createTestHarness(files,testHookRequest('?kane=1',true));
+ expect(harness.options).toMatchObject({campaignId:'kane',autoStart:true});expect(harness.options.save).toBeDefined();
+ const app=createAppController({files,...harness.options,loadManifest:async()=>manifest,createBotDriver:()=>({commands:()=>[]})});
+ const api=harness.connect(app);await app.boot();await harness.autoLoad(app);
+ expect(api.kane).toBe(true);expect(app.snapshot().levelId).toBe('na-kane');expect(app.snapshot().screen).toBe('playing');api.dispose();app.dispose();
+ expect(createTestHarness(files,testHookRequest('',true)).options.campaignId).toBeUndefined();
 });
 it('driver ownership is pure passthrough and accelerated frames preserve hashes at equal ticks',()=>{
  const a=new GameDriver({level,matchSeed:1,autoStart:false,createBotDriver:()=>({commands:()=>[]})});

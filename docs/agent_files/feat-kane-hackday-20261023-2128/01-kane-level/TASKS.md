@@ -8,11 +8,11 @@ Source of truth: docs/agent_files/feat-kane-hackday-20261023-2128/01-kane-level/
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Levels gate tolerates non-common campaign levels | none | todo |
-| 2 | na-kane level, kane campaign, version bumps, locks, goldens | 1 | todo |
-| 3 | `?kane=1` boot with production exclusion | 2 | todo |
-| 4 | E2E specs and production-bundle exclusion gate | 3 | todo |
-| 5 | Final evidence run and rehearsal checks | 4 | todo |
+| 1 | Levels gate tolerates non-common campaign levels | none | done |
+| 2 | na-kane level, kane campaign, version bumps, locks, goldens | 1 | done |
+| 3 | `?kane=1` boot with production exclusion | 2 | done |
+| 4 | E2E specs and production-bundle exclusion gate | 3 | done |
+| 5 | Final evidence run and rehearsal checks | 4 | done |
 
 ## Task 1 — Levels gate fix
 What it is: `campaignLevels()` in the levels tooling currently throws when `data/levels` differs from the common campaign, so any new level file breaks `validate:levels`/`levels:lock` (PRD Decision 4, Gate fix).

@@ -20,6 +20,15 @@ test('Common campaign stays exactly 20 levels, one human seat per level', () => 
   assert.equal(levels.length, 20);
   for (const l of levels) assert.ok(humanSeat(compiled[l.id]!) >= 0);
 });
+test('campaignLevels tolerates a level file listed by a non-common campaign, still throws on unlisted extras', () => {
+  const trial = data['data/levels/na-trial.json']!;
+  const base = (typeof trial === 'string' ? JSON.parse(trial) : trial) as Record<string, unknown>;
+  const extra = (id: string) => JSON.stringify({ ...base, id });
+  const withKane = { ...data, 'data/levels/na-kane.json': extra('na-kane'), 'data/campaigns/kane.json': JSON.stringify({ $schema: '../../schemas/campaign.schema.json', schemaVersion: '2.0.0', id: 'kane', entries: [{ level: 'na-kane', position: 1 }] }) };
+  assert.deepEqual(campaignLevels(withKane), campaignLevels(data));
+  const orphan = { ...withKane, 'data/levels/na-orphan.json': extra('na-orphan') };
+  assert.throws(() => campaignLevels(orphan), /differ from data\/levels files/);
+});
 test('solvable level passes (a)-(c): no rejects, idle never wins, seed-1 rerun equal', () => {
   const report = validateLevel(compiled['levelview-1']!, 4, 2, null);
   assert.equal(report.ok, true, JSON.stringify(report.errors));

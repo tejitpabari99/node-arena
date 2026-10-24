@@ -60,3 +60,19 @@ it('last Common entry never advances into custom entries',async()=>{
   const app=setup({files:withCustomLevels(files),save});await app.boot();await app.startLevel('levelview-100-es');const driver=app.driver;
   await app.next();expect(app.snapshot().levelId).toBe('levelview-100-es');expect(app.driver).toBe(driver);app.dispose();
 });
+
+it('Kane campaign excludes custom levels and refuses direct custom loads',async()=>{
+  const app=setup({campaignId:'kane'});
+  try {
+    await app.boot();expect(app.snapshot().error).toBeNull();
+    expect(app.snapshot().levels.map(l=>l.id)).toEqual(['na-kane']);
+    for(const id of ['na-trial','na-showcase-green','na-showcase-snow']) {
+      await app.startLevel(id);expect(app.snapshot().screen).toBe('picker');expect(app.driver).toBeNull();
+      expect(isLevelUnlocked(app.snapshot(),id)).toBe(false);
+    }
+    expect(app.snapshot().customLevels).toEqual([]);
+    await app.startLevel('na-kane');expect(app.snapshot().screen).toBe('playing');
+    const driver=app.driver;
+    await app.startLevel('na-trial');expect(app.snapshot().levelId).toBe('na-kane');expect(app.driver).toBe(driver);
+  } finally {app.dispose();}
+});

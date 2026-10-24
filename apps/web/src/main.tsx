@@ -13,7 +13,9 @@ async function main(){
   // Literal build constants let Rollup remove both dynamic imports from production.
   if(import.meta.env.DEV||import.meta.env.VITE_TEST_HOOKS==='1'){
     const [{testHookRequest},{createTestHarness}]=await Promise.all([import('./test-harness/gate'),import('./test-harness')]);
-    harness=createTestHarness(files,testHookRequest(location.search,true));
+    const request=testHookRequest(location.search,true);
+    if(request.kane){Object.assign(files,(await import('./test-harness/kane-files')).kaneContentFiles());}
+    harness=createTestHarness(files,request);
   }
   const app=createAppController({files,...harness?.options,createRuntime:context=>createBrowserRuntime(context,arena,(ctx,stage)=>createInputController({canvas:stage.canvas,sim:ctx.driver.sim,camera:stage.camera,world:stage.world,worldRoot:stage.worldRoot,scene:stage.scene,driver:ctx.driver,isEnabled:()=>ctx.enabled()&&!ctx.driver.paused}))});
   const unsubscribe=app.subscribe(()=>{const state=app.snapshot();arena.hidden=state.screen!=='playing'&&state.screen!=='result'&&!app.driver;});
