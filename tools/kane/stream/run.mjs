@@ -163,7 +163,9 @@ export function createProcessOps(config) {
 
 /**
  * Internal-only events: line(raw NDJSON), chrome_ready(driver event),
- * state(public snapshot), end({runId,outcome}). Sanitize line via relay before SSE.
+ * state(public snapshot), end({runId,outcome}), reset(public snapshot).
+ * stop/reset resolve {status:200} or generic {status:409|503,message}; only start spawns.
+ * Sanitize line via relay before SSE.
  * Consumers stop screencast on state=ending, before process teardown begins.
  */
 export async function createRunController({ env = process.env, cwd = ROOT, guardConfig = readGuardConfig(env), deps = {}, handleSignals = true } = {}) {
@@ -176,7 +178,8 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
   const controller = new EventEmitter();
   let state = 'idle', runId = null, startedAt = null, endsAtMax = null, outcome;
   let admission = createStartState(), owned = [], active = false, closed = false, closing, ending, pendingStart;
-  let preflightAbort, wallTimer, cooldownTimer, scanTimer, scanPending, processReady;
+  let startAttempt, stopping, lockHeld = false;
+  let wallTimer, cooldownTimer, scanTimer, scanPending, processReady;
   const handlers = new Map();
   const snapshot = (viewers = 0) => ({ state, runId, startedAt, endsAtMax, viewers, ...(outcome ? { outcome } : {}) });
   const change = next => { state = next; controller.emit('state', snapshot()); };
@@ -212,6 +215,11 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
     await clean(previous.processes); await ops.clear();
   }
 
+  async function releaseOwnedLock() {
+    if (!lockHeld) return;
+    await ops.release(); lockHeld = false;
+  }
+
   async function collect() {
     if (!active) return;
     if (scanPending) return scanPending;
@@ -230,15 +238,16 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
     scanTimer = later(() => { void collect().then(() => { if (active) scheduleScan(); }, () => { void end('failed'); }); }, 100);
   }
 
-  function preflight(signal) {
+  function preflight(attempt) {
+    const signal = attempt.abort.signal;
     return new Promise(resolveResult => {
       let child, identity, identityPromise, output = '', settled = false, timer;
       const finish = async valid => {
         if (settled) return; settled = true;
         cancel(timer); signal.removeEventListener('abort', abort);
         try { await identityPromise; } catch { valid = false; }
-        try { if (identity) await clean([identity]); await ops.clear(); } catch { valid = false; }
-        resolveResult(valid);
+        try { if (identity) await clean([identity]); await ops.clear(); } catch { attempt.cleanupFailed = true; valid = false; }
+        resolveResult(valid && !signal.aborted);
       };
       const abort = () => { void finish(false); };
       if (signal.aborted) { resolveResult(false); return; }
@@ -259,53 +268,66 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
           } catch { /* Fail closed without exposing output. */ }
           void finish(valid);
         });
-        identityPromise = ops.identity(child.pid).then(async value => { identity = value; if (identity) await ops.persist({ version: 1, owner, processes: [identity] }); });
+        identityPromise = ops.identity(child.pid).then(async value => {
+          identity = value;
+          if (identity && !signal.aborted) await ops.persist({ version: 1, owner, processes: [identity] });
+        });
         void identityPromise.catch(abort);
       } catch { void finish(false); }
     });
   }
 
+  function cooldown() {
+    change('cooldown'); controller.emit('end', { runId, outcome });
+    if (!closed) cooldownTimer = later(() => { ending = undefined; change('idle'); }, config.cooldownMs);
+  }
+
   function end(finalOutcome = 'failed') {
     if (ending) return ending;
     if (!active) return Promise.resolve();
-    outcome = ['won', 'lost', 'timeout', 'unavailable', 'failed'].includes(finalOutcome) ? finalOutcome : 'failed';
-    change('ending'); cancel(wallTimer); cancel(scanTimer);
-    ending = (async () => {
+    outcome = ['won', 'lost', 'timeout', 'unavailable', 'failed', 'stopped'].includes(finalOutcome) ? finalOutcome : 'failed';
+    cancel(wallTimer); cancel(scanTimer);
+    // Reserve cleanup before publishing ending, including synchronous listeners.
+    ending = Promise.resolve().then(async () => {
       try {
         await processReady; await collect(); active = false;
         await clean(owned); await ops.clear();
       } catch { outcome = 'failed'; }
       finally {
-        active = false; try { await ops.release(); } catch { outcome = 'failed'; }
-        change('cooldown'); controller.emit('end', { runId, outcome });
-        if (!closed) cooldownTimer = later(() => { ending = undefined; change('idle'); }, config.cooldownMs);
+        active = false; try { await releaseOwnedLock(); } catch { outcome = 'failed'; }
+        cooldown();
       }
-    })();
+    });
+    change('ending');
     return ending;
   }
 
   function start(ip = 'unknown') {
     if (closed) return Promise.resolve(unavailable());
-    if (state !== 'idle') return Promise.resolve({ status: 409, message: 'unavailable' });
+    if (state !== 'idle' || pendingStart || stopping) return Promise.resolve({ status: 409, message: 'unavailable' });
     const checked = checkStart(admission, ip, now(), guardConfig);
     if (!checked.allowed) return Promise.resolve({ status: checked.status, message: 'unavailable', retryAfterSeconds: checked.retryAfterSeconds });
-    // Reserve BEFORE the first async boundary, including the credit subprocess.
     runId = null; startedAt = null; endsAtMax = null; outcome = undefined; ending = undefined;
-    change('starting'); preflightAbort = new AbortController();
-    pendingStart = (async () => {
+    // Token AND settlement promise exist before a starting listener can call Stop.
+    const attempt = { abort: new AbortController(), cleanupFailed: false };
+    startAttempt = attempt;
+    const cancelled = () => closed || attempt.abort.signal.aborted || startAttempt !== attempt;
+    const checkCancelled = () => { if (cancelled()) throw new Error('Start cancelled'); };
+    pendingStart = Promise.resolve().then(async () => {
       try {
-        // Lock before even the credit subprocess: two server instances must never
-        // overwrite each other's ownership record while one is running.
-        await ops.acquire();
-        if (closed) { await ops.release(); return unavailable(); }
-        if (!await preflight(preflightAbort.signal) || closed) { await ops.release(); if (!closed) change('idle'); return unavailable(); }
-        await ops.checkPorts();
-        if (closed) { await ops.release(); return unavailable(); }
+        checkCancelled();
+        // Lock before even the credit subprocess; check every async boundary.
+        await ops.acquire(); lockHeld = true; checkCancelled();
+        const eligible = await preflight(attempt); checkCancelled();
+        if (!eligible) throw new Error('Preflight unavailable');
+        await ops.checkPorts(); checkCancelled();
         runId = randomUUID(); startedAt = now(); endsAtMax = startedAt + config.maxRunMs;
         const log = resolve(cwd, 'kane-runs', `stream-${runId}`, 'driver.ndjson');
-        if (!deps.processes) await mkdir(dirname(log), { recursive: true });
+        if (deps.mkdir || !deps.processes) {
+          await (deps.mkdir ?? mkdir)(dirname(log), { recursive: true }); checkCancelled();
+        }
         const args = [config.driver, '--headless', '--software-gl', '--serve', '--min-credits', String(config.minCredits), '--max-runs', String(config.maxRuns), '--port', String(config.cdpPort), '--url', `http://${config.previewHost}:${config.previewPort}/?kane=1`, '--log', log];
-        // Consume abuse admission immediately before the one paid-capable spawn.
+        checkCancelled();
         const admitted = admitStart(admission, ip, now(), guardConfig);
         if (!admitted.allowed) throw new Error('Start admission changed');
         admission = admitted.state;
@@ -316,60 +338,99 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
         child.stderr?.resume();
         child.stdout?.setEncoding('utf8');
         child.stdout?.on('data', chunk => {
-          // Bound the unfinished line; malformed driver output never grows without limit.
           for (const part of chunk.toString().split(/(?<=\n)/)) {
             if (!dropping) remainder += part;
             if (Buffer.byteLength(remainder) > LINE_LIMIT) { dropping = true; remainder = ''; }
             if (!part.endsWith('\n')) continue;
-            if (!dropping && state !== 'ending' && state !== 'cooldown') {
+            if (!dropping && !cancelled() && !ending && active) {
               const line = remainder.trimEnd(); controller.emit('line', line);
               try {
                 const event = JSON.parse(line);
                 if (event.type === 'chrome_ready' && Number.isSafeInteger(event.port)
                   && (event.port === config.cdpPort || (event.mode === 'launch' && event.port === LAUNCH_CDP_PORT))) {
                   void collect().then(() => {
-                    if (!active || state === 'ending') return;
-                    change('live'); controller.emit('chrome_ready', event);
-                  }, () => { void end('failed'); });
+                    if (cancelled() || !active || ending) return;
+                    change('live');
+                    if (!cancelled() && !ending) controller.emit('chrome_ready', event);
+                  }, () => { if (!cancelled()) void end('failed'); });
                 }
-                if (event.type === 'driver_end') void end(outcomeForExit(event.exitCode));
+                if (event.type === 'driver_end' && !cancelled()) void end(outcomeForExit(event.exitCode));
               } catch { /* Relay drops malformed JSON; lifecycle ignores it. */ }
             }
             remainder = ''; dropping = false;
           }
         });
-        child.once('error', () => { void end('failed'); });
-        child.once('exit', code => { void end(outcomeForExit(code)); });
+        child.once('error', () => { if (!cancelled()) void end('failed'); });
+        child.once('exit', code => { if (!cancelled()) void end(outcomeForExit(code)); });
         let identity;
         try {
           identity = child.pid ? await ops.identity(child.pid) : null;
           if (identity) owned.push(identity);
-          await persist();
+          checkCancelled();
+          await persist(); checkCancelled();
         } finally { ready(); }
         if (!identity && !ending) { await end('failed'); return unavailable(); }
-        await collect();
-        if (closed) await end('failed');
+        await collect(); checkCancelled();
         if (active && !ending) { scheduleScan(); wallTimer = later(() => { void end('timeout'); }, Math.max(0, endsAtMax - now())); }
         return { status: 202, runId };
       } catch {
-        if (active) await end('failed');
-        else { await ops.release(); if (!closed) change('idle'); }
+        // end never waits on pendingStart, keeping Stop -> start -> end acyclic.
+        if (active) await end(attempt.abort.signal.aborted && stopping ? 'stopped' : 'failed');
+        else {
+          try { await releaseOwnedLock(); } catch { attempt.cleanupFailed = true; }
+          if (!closed && !attempt.abort.signal.aborted) change('idle');
+        }
         return unavailable();
-      } finally { preflightAbort = undefined; }
-    })();
-    return pendingStart;
+      } finally { pendingStart = undefined; }
+    });
+    const result = pendingStart;
+    change('starting');
+    return result;
+  }
+
+  function stop() {
+    if (stopping) return stopping;
+    if (closed) return Promise.resolve(unavailable());
+    if (!['starting', 'live'].includes(state)) return Promise.resolve({ status: 409, message: 'unavailable' });
+    const attempt = startAttempt;
+    // Abort synchronously before cleanup awaits. Reserve the shared Stop promise
+    // before emitting ending or invoking preflight abort listeners.
+    stopping = Promise.resolve().then(async () => {
+      await pendingStart;
+      if (active) await end('stopped');
+      else if (ending) await ending;
+      else {
+        if (attempt?.cleanupFailed) outcome = 'failed';
+        cooldown();
+      }
+      return outcome === 'failed' ? unavailable() : { status: 200 };
+    }).finally(() => { stopping = undefined; });
+    outcome = 'stopped'; attempt?.abort.abort();
+    if (active) void end('stopped'); else change('ending');
+    return stopping;
+  }
+
+  function reset() {
+    if (closed) return Promise.resolve(unavailable());
+    if (active || pendingStart || stopping || !['idle', 'cooldown'].includes(state)) return Promise.resolve({ status: 409, message: 'unavailable' });
+    runId = null; startedAt = null; endsAtMax = null; outcome = undefined;
+    // Server clears relay and screencast cache synchronously before broadcasting.
+    controller.emit('reset', snapshot()); controller.emit('state', snapshot());
+    return Promise.resolve({ status: 200 });
   }
 
   function close() {
     if (closing) return closing;
-    closed = true; preflightAbort?.abort(); cancel(cooldownTimer);
+    closed = true; startAttempt?.abort.abort(); cancel(cooldownTimer);
     for (const [name, handler] of handlers) process.removeListener(name, handler);
-    closing = (async () => { await pendingStart; await end('failed'); cancel(cooldownTimer); await ops.release(); })();
+    closing = Promise.resolve().then(async () => {
+      await pendingStart; await stopping; await end('failed'); cancel(cooldownTimer); await releaseOwnedLock();
+    });
     return closing;
   }
   if (handleSignals) for (const name of ['SIGTERM', 'SIGINT']) {
     const handler = () => { void close(); };
     handlers.set(name, handler); process.once(name, handler);
   }
-  return Object.assign(controller, { start, snapshot, end, close });
+  return Object.assign(controller, { start, snapshot, end, stop, reset, close });
 }

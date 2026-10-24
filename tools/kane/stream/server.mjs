@@ -19,7 +19,7 @@ const STATIC = new Map([
   ['/backup.mp4', ['backup.mp4', 'video/mp4']],
 ]);
 const METHODS = new Map([['/', ['GET']], ['/app.js', ['GET']], ['/style.css', ['GET']],
-  ['/backup.mp4', ['GET', 'HEAD']], ['/api/state', ['GET']], ['/events', ['GET']], ['/start', ['POST']], ['/ws', ['GET']]]);
+  ['/backup.mp4', ['GET', 'HEAD']], ['/api/state', ['GET']], ['/events', ['GET']], ['/start', ['POST']], ['/stop', ['POST']], ['/reset', ['POST']], ['/ws', ['GET']]]);
 const HEADERS = {
   'Content-Security-Policy': "default-src 'self'; img-src blob:; connect-src 'self'; frame-ancestors 'none'",
   'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'no-store',
@@ -96,6 +96,10 @@ export async function createStreamServer(options = {}) {
     if (state.state === 'ending') stopCast();
     publicState();
   };
+  const onReset = () => {
+    relay.reset(); stopCast();
+    named('reset', snapshot());
+  };
   const onLine = line => {
     let raw; try { raw = JSON.parse(line); } catch { return; }
     const event = relay.append(raw); if (event) broadcast(serializeSse(event));
@@ -104,7 +108,7 @@ export async function createStreamServer(options = {}) {
     if (closed) return;
     try { void Promise.resolve(cast.start(event.port)).catch(videoLost); } catch { videoLost(); }
   };
-  run.on('state', onState); run.on('line', onLine); run.on('chrome_ready', onChrome); cast.on('video_lost', videoLost);
+  run.on('reset', onReset); run.on('state', onState); run.on('line', onLine); run.on('chrome_ready', onChrome); cast.on('video_lost', videoLost);
 
   async function staticFile(req, res, entry) {
     let file;
@@ -132,6 +136,15 @@ export async function createStreamServer(options = {}) {
       else error(res, [409, 429, 503].includes(result.status) ? result.status : 503);
     } catch { if (!req.aborted) error(res, 503); }
   }
+  // Stop waits for owned cleanup; both controls return only the public snapshot.
+  async function control(req, res, method) {
+    try {
+      if (closed || req.aborted || res.destroyed) return;
+      const result = await run[method]();
+      if (result.status === 200) json(res, 200, snapshot());
+      else error(res, [409, 503].includes(result.status) ? result.status : 503);
+    } catch { if (!req.aborted) error(res, 503); }
+  }
   const server = createServer({ maxHeaderSize: 8192, headersTimeout: 10000, requestTimeout: 10000,
     keepAliveTimeout: 5000, connectionsCheckingInterval: 1000 }, async (req, res) => {
     res.on('error', () => {});
@@ -140,7 +153,7 @@ export async function createStreamServer(options = {}) {
     if (!methods) { req.resume(); error(res, 404); return; }
     if (!methods.includes(req.method)) { req.resume(); res.setHeader('Allow', methods.join(', ')); error(res, 405); return; }
     if (Number(req.headers['content-length'] ?? 0) > BODY_LIMIT) { req.resume(); error(res, 413); return; }
-    if (req.url === '/start' && !checkOrigin(req, guardConfig)) { req.resume(); error(res, 403); return; }
+    if (['/start', '/stop', '/reset'].includes(req.url) && !checkOrigin(req, guardConfig)) { req.resume(); error(res, 403); return; }
     // Read every accepted route through the same bounded decoder, including GET
     // bodies sent with chunked transfer coding. No headers/side effects precede it.
     let size = 0;
@@ -152,6 +165,7 @@ export async function createStreamServer(options = {}) {
     } catch { if (!req.aborted) error(res, 400); return; }
     if (closed || req.aborted || res.destroyed) return;
     if (req.url === '/start') { void start(req, res); return; }
+    if (req.url === '/stop' || req.url === '/reset') { void control(req, res, req.url.slice(1)); return; }
     if (STATIC.has(req.url)) { void staticFile(req, res, STATIC.get(req.url)); return; }
     if (req.url === '/api/state') { json(res, 200, snapshot()); return; }
     if (req.url === '/ws') { error(res, 426); return; }
@@ -212,7 +226,7 @@ export async function createStreamServer(options = {}) {
     if (closing) return closing;
     closed = true; clearInterval(heartbeat);
     for (const [signal, handler] of signalHandlers) process.removeListener(signal, handler);
-    run.off('state', onState); run.off('line', onLine); run.off('chrome_ready', onChrome); cast.off('video_lost', videoLost);
+    run.off('reset', onReset); run.off('state', onState); run.off('line', onLine); run.off('chrome_ready', onChrome); cast.off('video_lost', videoLost);
     closing = (async () => {
       const stopped = new Promise(resolveClose => server.close(() => resolveClose()));
       for (const res of sse) { dropSse(res); res.destroy(); }

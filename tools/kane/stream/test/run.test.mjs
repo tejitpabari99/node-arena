@@ -162,7 +162,8 @@ test('resource occupancy returns unavailable and does not spawn driver', async (
 });
 
 test('fallback readiness records PID-less detached descendants and cleanup kills only owned processes', { timeout: 15000 }, async () => {
-  const { mkdtemp, rm, readFile } = await import('node:fs/promises');
+  const { mkdtemp, rm, readFile, stat } = await import('node:fs/promises');
+  const { spawn } = await import('node:child_process');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
   const { fileURLToPath } = await import('node:url');
@@ -174,6 +175,8 @@ test('fallback readiness records PID-less detached descendants and cleanup kills
   ops.acquire = async () => {}; ops.release = async () => {}; ops.checkPorts = async () => {};
   const run = await createRunController({ cwd, env, deps: { processes: ops }, handleSignals: false });
   let identities = []; const ready = [];
+  const foreign = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });
+  const unrelatedProfile = await mkdtemp(join(tmpdir(), 'node-arena-chrome-unrelated-'));
   run.on('chrome_ready', event => ready.push(event));
   try {
     assert.equal((await run.start()).status, 202);
@@ -186,12 +189,21 @@ test('fallback readiness records PID-less detached descendants and cleanup kills
     assert.ok(identities.length >= 3, 'recorded driver, attach child and detached fallback descendant');
     assert.deepEqual(ready.map(event => [event.mode, event.port]), [['attach', 9222], ['launch', 9223]]);
     assert.equal(Object.hasOwn(ready[1], 'pid'), false);
+    const profiles = identities.flatMap(identity => identity.cmdline.filter(arg => arg.startsWith('--user-data-dir=')).map(arg => arg.slice('--user-data-dir='.length)));
+    assert.equal(profiles.length, 2, 'Node-only browser stand-ins own attach and fallback profiles');
+    assert.equal((await run.stop()).status, 200);
+    assert.equal(run.snapshot().outcome, 'stopped');
     await run.close();
     for (const identity of identities) assert.equal(await ops.identity(identity.pid), null, `PID ${identity.pid} remains`);
+    for (const profile of profiles) await assert.rejects(stat(profile), { code: 'ENOENT' });
+    assert.ok(await ops.identity(foreign.pid), 'foreign detached process survives Stop');
+    assert.ok((await stat(unrelatedProfile)).isDirectory());
     await assert.rejects(readFile(config.pidFile), { code: 'ENOENT' });
   } finally {
     await run.close();
     for (const identity of identities) await ops.signal(identity, 'SIGKILL');
+    foreign.kill('SIGKILL');
+    await rm(unrelatedProfile, { recursive: true, force: true });
     await rm(cwd, { recursive: true, force: true });
   }
 });
@@ -269,4 +281,147 @@ test('runtime owner lock excludes another controller and recovers a dead owner w
     await writeFile(join(config.lockDir, '11111111-1111-4111-8111-111111111111.json'), JSON.stringify({ owner: { pid: 2147483647, starttime: '1', pgid: 2147483647, cmdline: ['dead'] } }));
     await first.acquire(); await assert.rejects(second.acquire(), /unavailable/); await first.release();
   } finally { await first.release(); await second.release(); await rm(directory, { recursive: true, force: true }); }
+});
+
+const turn = () => new Promise(resolve => setImmediate(resolve));
+function deferred() {
+  let resolve;
+  const promise = new Promise(accept => { resolve = accept; });
+  return { promise, resolve };
+}
+
+for (const boundary of ['acquire', 'preflight', 'checkPorts', 'mkdir', 'identity', 'persist']) {
+  test(`Stop cancels ${boundary}, drains cleanup without a promise cycle, and never later becomes live`, { timeout: 3000 }, async () => {
+    const h = harness({ pendingCredits: boundary === 'preflight' });
+    const gate = deferred(), entered = deferred();
+    let releases = 0;
+    h.processes.release = async () => { releases++; };
+    if (['acquire', 'checkPorts'].includes(boundary)) h.processes[boundary] = async () => { entered.resolve(); await gate.promise; };
+    if (boundary === 'mkdir') h.deps.mkdir = async () => { entered.resolve(); await gate.promise; };
+    if (boundary === 'identity') {
+      const original = h.processes.identity;
+      h.processes.identity = async pid => { if (pid === 101) { entered.resolve(); await gate.promise; } return original(pid); };
+    }
+    if (boundary === 'persist') {
+      const original = h.processes.persist;
+      h.processes.persist = async record => { if (record.processes.some(row => row.pid === 101)) { entered.resolve(); await gate.promise; } return original(record); };
+    }
+    const run = await h.create();
+    assert.equal(typeof run.stop, 'function');
+    try {
+      const live = []; run.on('chrome_ready', value => live.push(value));
+      const pending = run.start('one');
+      if (boundary === 'preflight') await turn(); else await entered.promise;
+      const stopped = run.stop();
+      assert.equal(run.snapshot().outcome, 'stopped');
+      assert.equal(run.snapshot().state, 'ending');
+      assert.equal(run.stop(), stopped, 'repeated Stop shares cleanup');
+      assert.equal((await run.reset()).status, 409);
+      assert.equal((await run.start('two')).status, 409);
+      gate.resolve();
+      assert.equal((await stopped).status, 200);
+      assert.equal((await pending).status, 503);
+      assert.equal(run.snapshot().state, 'cooldown');
+      assert.equal(run.snapshot().outcome, 'stopped');
+      assert.equal(h.spawned.filter(row => !row.args.includes('--credits-only')).length, ['identity', 'persist'].includes(boundary) ? 1 : 0);
+      for (const row of h.spawned.filter(row => !row.child.stdout.writableEnded)) { row.child.stdout.write('{"type":"chrome_ready","port":9222}\n'); row.child.finish(0); }
+      await turn(); assert.equal(live.length, 0); assert.equal(run.snapshot().outcome, 'stopped');
+      assert.equal(releases, 1);
+    } finally { gate.resolve(); await run.close(); }
+  });
+}
+
+test('Stop from synchronous starting listener invalidates the reserved attempt before acquire/preflight', async () => {
+  const h = harness(); let acquisitions = 0; h.processes.acquire = async () => { acquisitions++; };
+  const run = await h.create(); let stopped;
+  run.on('state', value => { if (value.state === 'starting') stopped = run.stop(); });
+  const pending = run.start();
+  assert.equal((await stopped).status, 200); assert.equal((await pending).status, 503);
+  assert.equal(acquisitions, 0); assert.equal(h.spawned.length, 0);
+  await run.close();
+});
+
+test('live Stop preserves stopped through exits, repeated end and concurrent close; owned cleanup once', async () => {
+  const h = harness(), run = await h.create(); await run.start();
+  h.spawned[1].child.stdout.write('{"type":"chrome_ready","port":9222}\n'); await turn();
+  assert.equal(run.snapshot().state, 'live');
+  const gate = deferred(), entered = deferred(); let clears = 0;
+  h.processes.clear = async () => { clears++; entered.resolve(); await gate.promise; };
+  const stopped = run.stop(); await entered.promise;
+  h.spawned[1].child.finish(0);
+  assert.equal(run.stop(), stopped); const closing = run.close(); assert.equal(run.close(), closing);
+  gate.resolve(); await Promise.all([stopped, closing, run.end('won')]);
+  assert.equal(clears, 1); assert.equal(run.snapshot().outcome, 'stopped');
+  assert.equal((await run.stop()).status, 503); assert.equal((await run.reset()).status, 503);
+});
+
+test('Reset clears presentation and emits reset before state, retains original cooldown and admission history', async () => {
+  const h = harness(), run = await h.create({ KANE_IP_COOLDOWN_S: '600', KANE_DAILY_CAP: '2' });
+  assert.equal(h.spawned.length, 0); assert.equal((await run.reset()).status, 200); assert.equal(h.spawned.length, 0);
+  await run.start('one'); await run.stop(); await h.advance(60000);
+  const events = []; run.on('reset', () => events.push('reset')); run.on('state', () => events.push('state'));
+  assert.equal((await run.reset()).status, 200);
+  assert.deepEqual(events, ['reset', 'state']);
+  assert.deepEqual(run.snapshot(), { state: 'cooldown', runId: null, startedAt: null, endsAtMax: null, viewers: 0 });
+  await run.reset(); assert.equal((await run.start('two')).status, 409);
+  await h.advance(59999); assert.equal(run.snapshot().state, 'cooldown');
+  await h.advance(1); assert.equal(run.snapshot().state, 'idle');
+  assert.equal((await run.start('one')).status, 429); assert.equal(h.spawned.length, 2);
+  assert.equal((await run.start('two')).status, 202); await run.stop(); await run.reset(); await h.advance(120000);
+  assert.equal((await run.start('three')).status, 429); assert.equal(h.spawned.length, 4);
+  await run.close();
+});
+
+test('Reset cannot bypass credit floor and stale prior driver cannot end a fresh run', async () => {
+  const h = harness(), run = await h.create();
+  await run.start(); const stale = h.spawned[1].child; await run.stop(); await run.reset(); await h.advance(120000);
+  await run.start(); stale.finish(0); stale.stdout.write('{"type":"driver_end","exitCode":10}\n'); await turn();
+  assert.equal(run.snapshot().state, 'starting'); assert.equal(run.snapshot().outcome, undefined); await run.stop(); await run.close();
+  const low = harness({ creditsOutput: '{"credits":199}' }), floor = await low.create();
+  await floor.reset(); assert.equal((await floor.start()).status, 503); await floor.reset();
+  assert.equal((await floor.start()).status, 503); assert.equal(low.spawned.length, 2); await floor.close();
+});
+
+for (const boundary of ['identity', 'persist']) {
+  test(`Stop drains preflight ${boundary} before allowing Reset or restart`, { timeout: 3000 }, async () => {
+    const h = harness(), entered = deferred(), gate = deferred();
+    if (boundary === 'identity') {
+      const original = h.processes.identity;
+      h.processes.identity = async pid => { if (pid === 100) { entered.resolve(); await gate.promise; } return original(pid); };
+    } else {
+      const original = h.processes.persist;
+      h.processes.persist = async record => { if (record.processes.some(row => row.pid === 100)) { entered.resolve(); await gate.promise; } return original(record); };
+    }
+    const run = await h.create(), pending = run.start(); await entered.promise;
+    const stopped = run.stop(), closing = run.close();
+    assert.equal(run.snapshot().state, 'ending'); gate.resolve();
+    await Promise.all([pending, stopped, closing]);
+    assert.equal(h.spawned.length, 1); assert.equal(run.snapshot().outcome, 'stopped');
+    assert.ok(h.signals.some(([pid, signal]) => pid === 100 && signal === 'SIGKILL'));
+  });
+}
+
+test('Stop waits for live discovery; cancelled readiness cannot emit live after cleanup', async () => {
+  const h = harness(), run = await h.create(); await run.start();
+  const original = h.processes.descendants, entered = deferred(), gate = deferred(); let blocked = true;
+  h.processes.descendants = async roots => {
+    if (blocked) { blocked = false; entered.resolve(); await gate.promise; }
+    return original(roots);
+  };
+  const ready = []; run.on('chrome_ready', value => ready.push(value));
+  h.spawned[1].child.stdout.write('{"type":"chrome_ready","port":9222}\n'); await entered.promise;
+  const stopped = run.stop(); assert.equal(run.snapshot().state, 'ending');
+  assert.equal((await run.reset()).status, 409); gate.resolve(); await stopped; await turn();
+  assert.equal(ready.length, 0); assert.equal(run.snapshot().outcome, 'stopped'); await run.close();
+});
+
+test('Stop reports actual cleanup failure generically and does not claim Stopped', async () => {
+  for (const operation of ['signal', 'clear', 'release']) {
+    const h = harness(), run = await h.create(); await run.start();
+    const original = h.processes[operation];
+    h.processes[operation] = async () => { throw new Error('private cleanup path'); };
+    assert.deepEqual(await run.stop(), { status: 503, message: 'unavailable' });
+    assert.equal(run.snapshot().outcome, 'failed');
+    h.processes[operation] = original; await run.close();
+  }
 });
