@@ -99,6 +99,16 @@
     "ticks": 1228,
     "finalHash": "71e32bae24b9176c"
   },
+  "na-showcase-green": {
+    "outcome": "lost",
+    "ticks": 2277,
+    "finalHash": "26b03162615c7107"
+  },
+  "na-showcase-snow": {
+    "outcome": "lost",
+    "ticks": 2277,
+    "finalHash": "26b03162615c7107"
+  },
   "na-trial": {
     "outcome": "won",
     "ticks": 218,

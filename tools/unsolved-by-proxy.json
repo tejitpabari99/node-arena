@@ -4,5 +4,7 @@
   { "id": "levelview-14", "position": 16, "reason": "Proxy ends with 1 tower vs two 3-tower AIs; 0/12, cap hit every run", "ownerSignOff": null },
   { "id": "levelview-16", "position": 18, "reason": "Proxy eliminated by 3 AIs (incl. scripted p4 AD2000); 0/12 wins", "ownerSignOff": null },
   { "id": "levelview-17", "position": 19, "reason": "Proxy clears one AI, never removes last 1-2 enemy towers; 0/12, cap hit every run", "ownerSignOff": null },
-  { "id": "levelview-15", "position": 17, "reason": "Playtest retune (faster bot p2): proxy stalemates, 0/12 wins, cap hit every run", "ownerSignOff": "Tejit Pabari 2026-10-24: manual playtest, difficulty good" }
+  { "id": "levelview-15", "position": 17, "reason": "Playtest retune (faster bot p2): proxy stalemates, 0/12 wins, cap hit every run", "ownerSignOff": "Tejit Pabari 2026-10-24: manual playtest, difficulty good" },
+  { "id": "na-showcase-green", "reason": "Art showcase versus three AI seats: proxy eliminated, 0/12 wins across four seeds and action delays 500/1000/2000 ms; idle human never wins.", "ownerSignOff": null },
+  { "id": "na-showcase-snow", "reason": "Art showcase versus three AI seats: proxy eliminated, 0/12 wins across four seeds and action delays 500/1000/2000 ms; idle human never wins.", "ownerSignOff": null }
 ]
