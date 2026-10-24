@@ -70,3 +70,9 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-top .ed-btn { text-decoration: none; }
 .ed-save-popover { position: fixed; top: 60px; right: 12px; max-width: min(420px, 92vw); max-height: 60vh; overflow: auto; }
 .ed-save-popover ul { margin: 0; padding-left: 18px; }
+.ed-job-popover { position: fixed; top: 60px; width: min(420px, 92vw); max-height: 60vh; overflow: auto; }
+.ed-job-popover pre { white-space: pre-wrap; margin: 4px 0; }
+.ed-popover-close { float: right; padding: 2px 10px; }
+.ed-caret { padding: 6px 8px; }
+.ed-spinner { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border: 2px solid var(--ed-border); border-top-color: var(--ed-ink); border-radius: 50%; animation: ed-spin .8s linear infinite; vertical-align: -1px; }
+@keyframes ed-spin { to { transform: rotate(360deg); } }

@@ -7,6 +7,7 @@ import { PlayOverlay } from './PlayOverlay.js';
 import { LegacyPanel } from './LegacyPanel.js';
 import { Shell } from './Shell.js';
 import { TopBar } from './TopBar.js';
+import { JobPopovers, type JobPopover } from './JobPopovers.js';
 import { createSaveQueue, isDirty, stableStringify } from './save-core.js';
 import { Viewport } from './Viewport.js';
 import { EditorCtx, type EditorContext } from './EditorContext.js';
@@ -67,11 +68,15 @@ export function Editor() {
   const [lockStatus, setLockStatus] = useState<'checking' | 'current' | 'unfinalized' | 'unknown'>('checking');
   const [lockOutput, setLockOutput] = useState('');
   const [proxyEvents, setProxyEvents] = useState<EditorProxyEvent[]>([]);
+  const [job, setJob] = useState<'check' | 'finalize' | null>(null);
+  const [popover, setPopover] = useState<JobPopover>(null);
+  const [checkError, setCheckError] = useState('');
+  const [finalizeError, setFinalizeError] = useState('');
   const proxyAbort = useRef<AbortController | null>(null);
   useEffect(() => () => proxyAbort.current?.abort(), []);
   const proxyReport = proxyEvents.find(event => event.type === 'result');
   const catalog = useRef<Promise<Catalog> | undefined>(undefined);
-  function clearSave() { setLockStatus('checking'); setFinalizeEvents([]); setProxyEvents([]); setIssues([]); }
+  function clearSave() { setLockStatus('checking'); setFinalizeEvents([]); setProxyEvents([]); setIssues([]); setCheckError(''); setFinalizeError(''); }
   function getCatalog() {
     catalog.current ??= loadManifest().then(manifest => loadCatalog(contentFiles(), { themes: Object.keys(manifest.themes), colorKeys: Object.keys(manifest.palettes) }));
     return catalog.current;
@@ -121,35 +126,34 @@ export function Editor() {
   const failureActive = !!failure && !!doc && (failure.doc === doc || stableStringify(failure.doc) === stableStringify(doc));
   const saveMessage = failureActive ? failure!.message : '';
   const saveState: EditorContext['saveState'] = saving > 0 ? 'saving' : (armed && validation.issues.length > 0) || saveMessage ? 'error' : dirty ? 'unsaved' : 'saved';
-  // Each document/save/job transition invalidates old responses. This check never disables editing.
+  // Lock status is fetched lazily: when the Finalize popover opens and after a job finishes while it is open.
   useEffect(() => {
+    if (popover !== 'finalize' || busy) return;
     let active = true;
     setLockStatus('checking');
-    if (!doc || busy) return;
-    const timer = setTimeout(() => {
-      void readFinalizeStatus().then(status => {
-        if (active) { setLockStatus(status.unfinalized ? 'unfinalized' : 'current'); setLockOutput(status.output); }
-      }).catch(reason => { if (active) { setLockStatus('unknown'); setLockOutput(String(reason)); } });
-    }, 200);
-    return () => { active = false; clearTimeout(timer); };
-  }, [doc, busy]);
+    void readFinalizeStatus().then(status => {
+      if (active) { setLockStatus(status.unfinalized ? 'unfinalized' : 'current'); setLockOutput(status.output); }
+    }).catch(reason => { if (active) { setLockStatus('unknown'); setLockOutput(String(reason)); } });
+    return () => { active = false; };
+  }, [popover, busy]);
   async function finalize() {
-    if (!doc || dirty) return;
-    setBusy(true); setError(''); setFinalizeEvents([]); setLockStatus('checking');
-    try { await finalizeLevel(doc, event => setFinalizeEvents(events => [...events, event])); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
-    finally { setBusy(false); }
+    const sent = savedRef.current;
+    if (!doc || dirty || !sent || busy) return;
+    setBusy(true); setJob('finalize'); setPopover('finalize'); setError(''); setFinalizeError(''); setFinalizeEvents([]); setLockStatus('checking');
+    try { await finalizeLevel(sent, event => setFinalizeEvents(events => [...events, event])); }
+    catch (reason) { setFinalizeError(reason instanceof Error ? reason.message : String(reason)); }
+    finally { setJob(null); setBusy(false); }
   }
   async function solvable() {
-    if (!doc) return;
+    if (!doc || busy) return;
     const controller = new AbortController(); proxyAbort.current = controller;
-    setBusy(true); setError(''); setIssues([]); setProxyEvents([]);
+    setBusy(true); setJob('check'); setPopover('check'); setError(''); setCheckError(''); setIssues([]); setProxyEvents([]);
     try { await checkSolvable(doc, event => setProxyEvents(events => [...events, event]), controller.signal); }
     catch (reason) {
-      if (controller.signal.aborted) setError('Proxy check cancelled.');
+      if (controller.signal.aborted) setCheckError('Proxy check cancelled.');
       else if (reason instanceof EditorApiError && reason.issues.length) setIssues(reason.issues);
-      else setError(reason instanceof Error ? reason.message : String(reason));
-    } finally { proxyAbort.current = null; setBusy(false); }
+      else setCheckError(reason instanceof Error ? reason.message : String(reason));
+    } finally { proxyAbort.current = null; setJob(null); setBusy(false); }
   }
   function issueLabel(issue: ContentIssue) {
     const match = /^\/(buildings|elements|players)\/(\d+)/.exec(issue.pointer);
@@ -210,19 +214,9 @@ export function Editor() {
   const alerts = <>
     {error && <p role="alert">{error}</p>}
     {history && scriptRemovalMessages(history).map(message => <p key={message} role="status" class="editor-script-banner" data-testid="script-removal-banner">{message}</p>)}
-    {issues.length > 0 && <ul role="alert" aria-label="Check errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
-    <p role="status" data-testid="finalize-status">{dirty ? 'Unsaved changes. Save before Finalize. ' : ''}{lockStatus === 'unfinalized' ? 'Unfinalized changes on disk.' : lockStatus === 'current' ? 'Content locks current on disk.' : lockStatus === 'checking' ? 'Content status stale; checking…' : 'Content status unavailable; retry after saving or running a job.'}</p>
-    {lockOutput && <details><summary>Content status details</summary><pre>{lockOutput}</pre></details>}
-    {finalizeEvents.length > 0 && <section aria-label="Finalize output" aria-live="polite"><pre>{finalizeEvents.map(event => event.type === 'step' ? `→ ${event.step}\n` : event.type === 'output' ? event.output : event.type === 'error' ? `${event.error}\n` : event.type === 'result' ? 'Finalize complete. Review git diff and commit when ready.\n' : '').join('')}</pre></section>}
-    {proxyEvents.length > 0 && <section aria-label="Proxy evidence" aria-live="polite">
-      <p>Evidence only. Proxy wins do not prove solvability; no wins do not prove impossibility. Owner play and sign-off remain required.</p>
-      <p role="status">{proxyReport?.type === 'result' ? `Proxy wins: ${proxyReport.report.totalWins}/${proxyReport.report.runs}. Validation: ${proxyReport.report.ok ? 'passed' : 'failed'}.` : proxyAbort.current ? 'Checking proxy matches…' : 'Proxy check stopped.'}</p>
-      <pre>{proxyEvents.map(event => event.type === 'progress' ? `${event.run.proxy} seed ${event.run.seed}: ${event.run.outcome}, winner ${event.run.winner ?? 'none'}, ${event.run.ticks} ticks` : event.type === 'error' ? event.error : '').filter(Boolean).join('\n')}</pre>
-      {proxyReport?.type === 'result' && <details><summary>Full proxy report</summary><pre>{JSON.stringify(proxyReport.report, null, 2)}</pre></details>}
-    </section>}
   </>;
   const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar issues={validation.issues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel} onName={() => { setDoc(null); setId(''); setError(''); clearSave(); }} onPlay={() => setPlaying(true)}
-    extras={<><button disabled={busy} onClick={() => void solvable()}>Solvable?</button><button disabled={busy || dirty} onClick={() => void finalize()}>Finalize</button>{proxyAbort.current && <button onClick={() => proxyAbort.current?.abort()}>Cancel check</button>}</>} /></EditorCtx.Provider>;
+    extras={<JobPopovers open={popover} setOpen={setPopover} job={job} busy={busy} dirty={dirty} onCheck={() => void solvable()} onCancel={() => proxyAbort.current?.abort()} onFinalize={() => void finalize()} checkIssues={issues} issueLabel={issueLabel} checkError={checkError} proxyEvents={proxyEvents} finalizeEvents={finalizeEvents} finalizeError={finalizeError} lockStatus={lockStatus} lockOutput={lockOutput} />} /></EditorCtx.Provider>;
   return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<>{alerts}<EditorCtx.Provider value={ctx}><LegacyPanel pointer={pointer} /></EditorCtx.Provider></>}>
     <EditorCtx.Provider value={ctx}><Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} onPointer={setPointer} /></EditorCtx.Provider>
   </Shell> : <main class="editor-shell ed-start" inert={playing}>
