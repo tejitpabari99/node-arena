@@ -6,18 +6,22 @@ date: 2026-10-24
 # Level editor + art overrides
 
 ## Goal
-Two approved dev-only tools: in-app level editor and art-override layer. P0 custom-list contract (01-level-editor Tasks 1–2) is complete and reviewed; editor Tasks 3–12 remain pending. Art Tasks 1–6 are done on feat/art-overrides; Tasks 7–8 pending.
+Two approved dev-only tools: in-app level editor and art-override layer. Level editor Tasks 1–12 are complete; independent editor review PASS, full CI PASS. Art Tasks 1–6 are done on feat/art-overrides (review PASS after fix 3c25d3c); Tasks 7–8 pending.
 
 ## Contents
 | File | Purpose | Status |
 |---|---|---|
 | [brainstorm.md](brainstorm.md) | Decision log + design brief for both projects | approved |
 | [01-level-editor/PRD.md](01-level-editor/PRD.md) | Dev-only editor.html, `/__editor/*` middleware, Play/Solvable?/Finalize, custom-level list | approved |
-| [01-level-editor/TASKS.md](01-level-editor/TASKS.md) | P0 Tasks 1–2 done; Tasks 3–12 pending | in-progress |
+| [01-level-editor/TASKS.md](01-level-editor/TASKS.md) | Tasks 1–12 complete; full CI PASS | done |
 | [02-art-overrides/PRD.md](02-art-overrides/PRD.md) | `assets/art/` override layer, tintMask, relaxed credits check, `art:status`, showcase levels | approved |
 | [02-art-overrides/TASKS.md](02-art-overrides/TASKS.md) | Tasks 1–6 done; 7–8 pending | in-progress |
 | [01-level-editor/code-2026-10-24-0627.md](01-level-editor/code-2026-10-24-0627.md) | P0 implementation, verification and cleanup record | done |
 | [01-level-editor/review-2026-10-24-0627.md](01-level-editor/review-2026-10-24-0627.md) | Three-persona P0 review: PASS, zero outstanding must-fix | done |
+| [01-level-editor/code-2026-10-24-0829.md](01-level-editor/code-2026-10-24-0829.md) | Editor Tasks 3–12, review fix and final verification evidence | done |
+| [01-level-editor/review-2026-10-24-0851.md](01-level-editor/review-2026-10-24-0851.md) | Historical initial editor review: one security must-fix, subsequently resolved | done |
+| [01-level-editor/review-2026-10-24-0856.md](01-level-editor/review-2026-10-24-0856.md) | Status-fix review: PASS, zero outstanding must-fix | done |
+| [01-level-editor/review-2026-10-24-0910.md](01-level-editor/review-2026-10-24-0910.md) | Latest editor + CI amendment review: PASS, zero outstanding must-fix | done |
 | [02-art-overrides/code-2026-10-24-0800.md](02-art-overrides/code-2026-10-24-0800.md) | Art Tasks 1–6 implementation + review-fix record | done |
 | [02-art-overrides/review-2026-10-24-0800.md](02-art-overrides/review-2026-10-24-0800.md) | Three-persona review of Tasks 1–6: NEEDS_CHANGES (1 must-fix, fixed in 3c25d3c) | done |
 | [02-art-overrides/review-2026-10-24-0830.md](02-art-overrides/review-2026-10-24-0830.md) | Re-review of fix commit 3c25d3c: PASS (0 must-fix) | done |
@@ -25,7 +29,7 @@ Two approved dev-only tools: in-app level editor and art-override layer. P0 cust
 ## Sub-projects
 | # | Name | Scope | Depends on | Phase |
 |---|---|---|---|---|
-| 01 | Level editor | editor.html + dev middleware + custom list + Finalize | none | P0 done; P1 viewer+save, P2 editing, P3 play/solvable/finalize pending |
+| 01 | Level editor | editor.html + dev middleware + custom list + Finalize | none | P0–P3 complete; review PASS; full CI PASS |
 | 02 | Art overrides | art folder/manifest merge, tintMask, checks, `art:status`, 2 showcase levels | 01 P0 (custom-list contract) for showcase levels only; rest independent, parallel | single PRD, no phases defined |
 
 ## Dependency graph
@@ -64,4 +68,4 @@ c) [RESOLVED] `BOT_VERSION` bump required for new levels with AI seats (CONTENT_
 d) All PRD open questions resolved/deferred (2026-10-24).
 
 ## Next step
-P0 Tasks 1–2 are complete with a PASS review. Art Tasks 1–6 are done on feat/art-overrides (review fixes applied; re-review pending); art Tasks 7–8 and remaining level-editor tasks stay pending. Approved PRDs are preserved; task tables track remaining work.
+Level editor Tasks 1–12 complete (review PASS, full CI PASS). Art Tasks 1–6 done, re-review PASS; art Tasks 7–8 pending (Task 7 dependency on 01 P0 custom list now satisfied). Approved PRDs are preserved; task tables track remaining work.

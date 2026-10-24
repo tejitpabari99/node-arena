@@ -10,6 +10,7 @@ export function App({app}:{app:AppController}){
   useEffect(()=>{const key=(event:KeyboardEvent)=>{if(event.key==='Escape')app.escape();};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[app]);
   const mute=()=>{const muted=state.save.settings.musicMute&&state.save.settings.sfxMute;app.updateSettings({musicMute:!muted,sfxMute:!muted});};
   return <>
+    {import.meta.env.DEV&&<a class="editor-entry" aria-label="Edit level" href={state.levelId&&(state.screen==='playing'||state.screen==='result')?`/editor.html?level=${encodeURIComponent(state.levelId)}`:'/editor.html'}>Edit level</a>}
     {state.screen==='boot'&&<section class="panel loading" role="status">Loading battle…</section>}
     {state.screen==='picker'&&(credits?<Credits onBack={()=>setCredits(false)}/>:<Picker state={state} onStart={id=>{void app.startLevel(id);}} onMute={mute} onCredits={()=>setCredits(true)}/>)}
     {(state.screen==='playing'||state.screen==='result')&&<Hud state={state} app={app} onMute={mute}/>}

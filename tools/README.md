@@ -11,7 +11,8 @@ Node-only tools run through the root pnpm scripts and `tools/src/cli.ts`. Run `p
 | `tools/src/assets-tw/` | RAW GLB/textures/FX extraction and manifest fragment merge |
 | `tools/src/manifest.ts`, `tools/src/manifest-assets.ts`, `tools/src/credits.ts` | Manifest/schema references, safe asset files, budgets, hashes and attribution |
 | `tools/src/rules.ts`, `tools/src/replay.ts` | Rule/test coverage and standalone/bundled replay playback |
-| `tools/src/levels.ts`, `tools/src/levels-output.ts`, `tools/src/unsolved.ts` | Campaign proxy checks, level lock and unsolved allowlist |
+| `tools/src/levels.ts`, `tools/src/levels-output.ts`, `tools/src/unsolved.ts` | Common/custom union integrity, proxy checks, level lock and unsolved allowlist |
+| `tools/src/editor-ops.ts`, `tools/src/editor-validation.ts`, `tools/src/editor-solvable.ts`, `tools/src/editor-finalize.ts`, `tools/src/editor-finalize-worker.ts` | Node-only authoring Save, validation, proxy jobs and fixed-argv Finalize steps; no automatic commits |
 | `tools/src/balance*.ts`, `tools/src/balance-worker.mjs` | Match matrix, aggregation and deterministic worker pool |
 | `tools/src/parked.ts`, `tools/src/parked-commands.ts`, `tools/src/docs-check.ts` | Gate parking and documentation consistency |
 | `tools/assets/` | Extract/UI locks, scene and real-client capture tools, prototype validation |
@@ -47,7 +48,7 @@ pnpm replay:verify packages/sim/test/golden --format json
 
 ### Levels and balance
 
-Balance defaults and `--levels all` retain the Common campaign only; an explicit `--levels na-...` selects a custom level.
+`campaignLevels(data)` returns exactly Common; `customLevels(data)` returns the optional custom list. Their integrity check requires all level files to equal the union of Common and custom entries. `validate:levels` defaults to that union; `--levels all` explicitly selects it. Balance defaults and `--levels all` retain the Common campaign only; an explicit `--levels na-...` selects a custom level.
 
 `pnpm validate:levels --levels all --seeds 4 --max-ticks 20000` checks the 20 Common campaign levels plus the optional custom list against all committed level files. Common positions and numbering stay unchanged; custom positions only order the custom picker. Each seed in 1..N runs the human seat as a fresh TW proxy with full behaviour at action delays 500/1000/2000 ms, versus authored AI. Rejected commands and invariant errors fail; seed 1 at delay 2000 is rerun for hash equality. An idle human must never win. An untimed stalemate hitting the cap appears as **Capped**, not a safety failure or a victory.
 
@@ -62,6 +63,14 @@ pnpm balance --mode arena --proxy 1000,2000 --seeds 20 --format json
 ```
 
 Balance is report-only: statistical results do not fail a gate. It reports win percentage, median win time, timeout percentage (including capped runs) and median towers per level/proxy. Campaign mode replaces the human; arena mode rotates TW proxy profiles across every seat. Reports carry rules/content/bot versions and bot hashes; jobs 1 and 2 produce identical bytes for the same inputs. The nightly workflow uses 200 seeds/two workers and uploads Markdown/JSON.
+
+### Development editor operations
+
+Run `pnpm dev` and open `http://127.0.0.1:5173/editor.html` (or Vite's printed local port). The dev-only main/card Edit links select the level; imported levels require a new `na-*` copy id, while custom levels reopen in place. Keep the explicit `127.0.0.1` binding. The serve-only middleware rejects non-local Host, mismatched Origin, POSTs without `X-NA-Editor: 1`, invalid ids, oversized bodies and writes to imported files. Neither the editor entry nor write/process middleware ships in an ordinary production build.
+
+`editor-ops` saves validated canonical `na-*.json`, recomputes `requires` and upserts `packages/content/data/campaigns/custom.json` using `max(position)+1` for a new entry. No version or lock mutation happens on Save. The editor's unfinalized banner comes from a read-only `validate:content --base HEAD` check through protected `POST /__editor/status` (exact local Origin, `X-NA-Editor: 1`, 1 MiB body cap); GET never starts a process. Concurrent checks share one in-flight command. Content changes invalidate that command's revision, so stale callers receive 409 and can retry after it settles; checks do not hold the Save/job gate. Its Solvable? proxy results are evidence only and require owner play/sign-off.
+
+Finalize runs, in order: saved-level validation → content patch bump → conditional bot-version bump → `pnpm content:lock` → `pnpm levels:lock --levels <id>` → `pnpm build:bots` → guarded sim golden refresh → guarded bot golden refresh → `pnpm validate:content --base HEAD` → `pnpm check:content --base HEAD` → `git diff --stat`. The bot bump is required when the AI identity map or content replay version changes: bot golden envelopes embed `contentVersion` even for geometry/name-only edits. Each golden refresh runs its official check first, invoking the official `--update` command only when needed; both use HEAD explicitly, overriding inherited CI baseline variables, and retain all existing strict version guards. This extends PRD R5 to keep versioned replay fixtures CI-ready. Repeated Finalize leaves bytes unchanged. Version bumps already made against HEAD are retained, output streams to the UI, and the first failure stops the sequence. The selected lock mode merges other entries unchanged. Review the resulting content/custom list/versions/locks/golden replay envelopes diff and commit manually; tooling never commits. See [authoring workflow](../docs/LEVELS_GUIDE.md#4-author-an-original-level) for Play, forms and draft controls.
 
 ### Local extract and assets
 
