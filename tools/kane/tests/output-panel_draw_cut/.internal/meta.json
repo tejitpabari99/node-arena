@@ -1,0 +1,18 @@
+{
+  "test_id": "2c94e680-d6a1-4029-a7a3-85d09b6b1e0a",
+  "project_id": "01M5N386K77DRC6DEG49C3PJ4R",
+  "folder_id": "01M5N38EJSH5GDEH3Y5S401NCW",
+  "org_id": "3396190",
+  "session_name": "panel_draw_cut",
+  "commit_id": "8474fbad-f6b8-4ee4-bdab-de572d88b0bd",
+  "testcase_id": "01M5QTW1WSZ28RVT5MV109F4HR",
+  "executions": [
+    {
+      "execution_id": "eccb5976-13bb-4370-b601-efee5dd792c5",
+      "run_kind": "author",
+      "status": "passed",
+      "valid": true,
+      "at": "2026-10-24T20:52:01.509Z"
+    }
+  ]
+}
