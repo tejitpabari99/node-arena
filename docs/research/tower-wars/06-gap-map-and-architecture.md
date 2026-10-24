@@ -107,7 +107,7 @@ Goal: express every Tower War feature and the foreseeable additions (new tower t
 4. **Opt-in rules, v1 defaults frozen.** Every TW difference that conflicts with a v1 rule becomes a component param or a rules-profile entry whose default reproduces v1. Existing 20-level campaign, replays and goldens stay valid; TW parity is additive (RULES_VERSION minor).
 5. **Sim is blind to meta, art and AI.** Meta and difficulty reach the sim only as a resolved `MatchSetup` recorded in the replay header (section 3.9). Art reaches nothing but the web client through the visual manifest. AI uses the same command path as humans (R-ENT-04).
 6. **Closed enums become registries.** Commands, events, reject reasons, objectives, bot kinds, bot considerations, fx kinds, manifest visual kinds, theme/ground builders each get a definition type (section 3.14).
-7. **Packs.** Content is grouped in packs (the Tower War import is a pack; today's 20 levels become pack `na-core`). A pack declares which modules and rules it needs, so levels can be gated by capability and a pack can be kept out of a public repo (section 3.10).
+7. **Packs.** Content is grouped in packs (the Tower War import is a pack; today's 20 levels become pack `na-core`). A pack declares which modules and rules it needs, so levels can be gated by capability (section 3.10).
 
 ### 3.2 Module definitions and registration points
 
@@ -274,8 +274,8 @@ packages/content/
       balance.json                      defaults (time limit, theme) as today
     packs/
       na-core/                          today's 20 levels, 3 archetypes, 23 bot profiles (migrated, behaviour unchanged)
-      tower-war/                        imported pack (may live in a private repo or git submodule, D1)
-        pack.json                       { id, version, requires:{rules:'^1.x', modules:['spawns',...]}, licence:'personal-use', source:{game,version} }
+      tower-war/                        imported pack (repo or git submodule, D1)
+        pack.json                       { id, version, requires:{rules:'^1.x', modules:['spawns',...]}, source:{game,version} }
         units/*.json                    soldier, tank, artillery (+ ranged etc.)
         buildings/*.json                house-soldier, house-tank, house-artillery, tower, rocket-tower, selectable-fortress, fortress, flag, capture-rocket-tower, trolley, boss-tower, resource
         elements/*.json                 obstacle, wall, mine, river-line, sheep-pen, gate, cargo, ...
@@ -364,7 +364,7 @@ Campaign lists (`campaigns/common.json`): `{ id, entries: [{ level, tutorial?: t
 | `setupHash` | none | new: modifiers, power, seat power, boosters (replay header) |
 | `contentVersion` | one monotonic semver, bumped when any level hash moves (`versioning.ts:34-41`) | per pack `version` + global envelope version; `check:content --base` compares per pack; `na-core` unaffected by Tower War pack churn |
 | Lock | `packages/content/hashes.lock.json` per level and bot | `hashes.lock.json` per pack; importer regenerates only its pack |
-| Manifest gate | `check:manifest` (assets, budgets, credits) | per pack; credit entries per external model remain (`docs/CREDITS.md`); `licence` field per pack |
+| Manifest gate | `check:manifest` (assets, budgets, credits) | per pack; credit entries per external model remain (`docs/CREDITS.md`) |
 | Goldens | `sim:golden`, `bots:golden`, `replay:verify golden` | add `tw` profile goldens (hand-built TW-shaped levels per module); keep NA goldens untouched; importer levels covered by a sampled replay set, not 2,165 goldens |
 
 ### 3.14 Closed enums and literals to open
@@ -456,15 +456,15 @@ SP-H scale hardening runs after C and each E slice.
 - **Dependencies:** SP-A (v2, packs); SP-B for any level to be playable; starts in parallel with SP-B after A.
 - **Rules impact:** none.
 - **Acceptance:** all 2,195 assets import with zero loss into the archive form (`ext -> v2 -> ext` round trip; the 2,165 current-format files include 76 long-dialect ones, the 30 v0 legacy files are archive-only); `requires` histogram equals section 7.2; common campaign list resolves 1,024 entries; web lists all levels and plays those whose `requires` are met; boot loads index and list only (no eager 10 MB); `check:content` per pack within a time budget; na-core gates unaffected.
-- **Risks:** licence and repo placement (D1); level id stability (author tags, duplicated numbers, 02#2); the converter's scale choice (use native units, G02); the 14 prefab-only levels carry scripted tutorials that are not data (02#11); importer correctness without a reference implementation (sample-replay checks).
+- **Risks:** level id stability (author tags, duplicated numbers, 02#2); the converter's scale choice (use native units, G02); the 14 prefab-only levels carry scripted tutorials that are not data (02#11); importer correctness without a reference implementation (sample-replay checks).
 - **Size:** M-L, 8 tasks.
 
 ### SP-D: Art import pipeline (parallel track)
-- **Scope:** validate the prototype GLBs first (01#8.2 states they were never opened in a renderer): load 43 skins + 15 buildings in three.js, compare handedness/winding/UV against reference renders; productionise `tools/assets` (from `catalog/units_buildings.json`, `prefab_parts_*.json`, `glb_proto*`) to emit GLB + skin JSON + `visuals.json`; `team.mode: textureSwap` strategy (4 colours, gray for neutral buildings); building stage meshes by level; roof-count overlay for GLB buildings; rigid-part animation baking for instanced soldiers; per-visual budget classes; per-player skin selection in render buckets; credits and `licence` gates; rebuild VFX with sprites (particles are not extractable, 01#8.2).
+- **Scope:** validate the prototype GLBs first (01#8.2 states they were never opened in a renderer): load 43 skins + 15 buildings in three.js, compare handedness/winding/UV against reference renders; productionise `tools/assets` (from `catalog/units_buildings.json`, `prefab_parts_*.json`, `glb_proto*`) to emit GLB + skin JSON + `visuals.json`; `team.mode: textureSwap` strategy (4 colours, gray for neutral buildings); building stage meshes by level; roof-count overlay for GLB buildings; rigid-part animation baking for instanced soldiers; per-visual budget classes; per-player skin selection in render buckets; asset acknowledgments; rebuild VFX with sprites (particles are not extractable, 01#8.2).
 - **Dependencies:** SP-A (open visual kinds, per-pack manifest) is soft; no sim dependency.
 - **Rules impact:** none.
 - **Acceptance:** all 58 models load and render with correct orientation and team colour (screenshot comparison per the AGENTS.md visual workflow); `pnpm check:manifest` passes with named budgets; instanced scene of 270 units at 60 fps on the reference GPU (the existing Perf-open item, 06a#7 item 2, is tracked, not assumed); changing a skin changes no `simHash`.
-- **Risks:** prototype correctness; rigid-part animation under instancing; triangle budget growth (1.0-2.3k triangles per unit vs 300 today); garage models skipped (skinned, 01#8.2); texture colour-space and mip/size budgets; licensing.
+- **Risks:** prototype correctness; rigid-part animation under instancing; triangle budget growth (1.0-2.3k triangles per unit vs 300 today); garage models skipped (skinned, 01#8.2); texture colour-space and mip/size budgets.
 - **Size:** L, 8-10 tasks.
 
 ### SP-E: Map elements and shooters (five slices, ordered by the introduction curve, 02#5)
@@ -513,7 +513,7 @@ Recommended first target: M2 (about 14 percent faithful, tutorials and the early
 
 ## 5. Open decisions for the owner
 
-1. **D1 Where does imported Tower War content live?** Commit levels/art/skins in this repo, keep them in a private pack (separate repo or submodule), or generate locally from `_extract`. The pack design supports all three; credits and `licence` gates apply (approved for personal learning use).
+1. **D1 Where does imported Tower War content live?** Commit levels/art/skins in this repo, keep them in a separate pack (repo or submodule), or generate locally from `_extract`. The pack design supports all three. Assets based on / motivated by Tower War.
 2. **D2 Fidelity target and scale.** "Exactly like them" for feel numbers (speed 5 u/s, intervals, TW native units, scale 1) versus a gameplay-equivalent retune. Native units force a rescale of web camera, troop size and lane constants.
 3. **D3 One ruleset or two.** Opt-in profiles (`na-v1` + `tw-1.29`, all minor bumps, existing replays valid) versus TW rules replacing v1 defaults (major bump, re-balance the 20 NA levels).
 4. **D4 Fate of the NA-native game.** Keep `na-core` as a parallel pack, or retire it after M3.

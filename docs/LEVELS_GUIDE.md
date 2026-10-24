@@ -1,8 +1,8 @@
-# Levels guide (Tower War port)
+# Node Arena levels guide
 
 How Tower War (TW) levels become Node Arena level files, and how to add more. Goal: a later level is a data row, not an importer rewrite. Companion: [CONTENT_GUIDE.md](CONTENT_GUIDE.md) (lock, versions, schemas), [GAME_RULES.md](GAME_RULES.md) (mechanics), [FUTURES.md](FUTURES.md) (deferred work).
 
-> **Licensing notice.** Tower War (TW) derived data in this repository (imported levels, test fixtures, collider dump, frozen prefab files) is private. The repository must stay private; no public deploy of anything built from it.
+> Assets based on / motivated by Tower War. See [credits](CREDITS.md).
 
 Run everything from the repository root.
 
@@ -25,7 +25,7 @@ level --computeRequires--> serialize.ts --> packages/content/data/levels/*.json 
 | Importer tests | `tools/src/import-tw/test/` | yes |
 | Imported levels (20) and campaign | `packages/content/data/levels/`, `packages/content/data/campaigns/common.json` | yes |
 | Version + lock (importer never edits) | `packages/content/content.json`, `packages/content/hashes.lock.json` | yes |
-| TW extract (raw TextAssets, remote config) | `$TW_EXTRACT` | **local-only** |
+| TW extract (raw TextAssets, remote config) | `$TW_EXTRACT` | no (external input) |
 
 CI has no extract: `pnpm check:import` prints `check:import skipped (TW_EXTRACT unset)` and exits 0. Tests that need the extract skip. Without `TW_EXTRACT`, `pnpm import:tw` exits 2 with a one-line message.
 
@@ -64,7 +64,7 @@ Output is idempotent and deterministic (`JSON.stringify(obj, null, 2) + "\n"`, s
    - `drop` omits the construct and records it in `source.dropped` under `token` (default: the `tw` name; `Wall` records `wall`, `AiRM` records `ai-rail-move`). `record: false` drops without recording (MinRD/MaxRD). Optional `onlyLevels: [ids]` restricts the drop to those levels; any other level with the construct is blocked (used for `Wall`).
    - A construct with no row is a parse error (no silent loss); unknown building kinds need a `block` row (`fortess`, `speed_tower` have one).
    - Emitters and param tables live in the importer's mapper module; add a test in the importer test folder. The mapper's ledger counts what it emitted and fails when a list does not conserve (total = mapped + dropped + blocked + inactive).
-4. Re-run `pnpm import:tw --range ...`, then lock + bump + verify as in section 2. If an archetype's default module values change (retuning), re-import: param overrides are stored only when they differ from the archetype defaults, so they depend on them. `check:import` is local-only (needs the extract), so CI does not catch a forgotten re-import.
+4. Re-run `pnpm import:tw --range ...`, then lock + bump + verify as in section 2. If an archetype's default module values change (retuning), re-import: param overrides are stored only when they differ from the archetype defaults, so they depend on them. `check:import` needs the extract, so CI does not catch a forgotten re-import.
 5. Update the tracker snapshot (section 5) by hand.
 
 ## 4. Author an original level
@@ -156,5 +156,5 @@ No imported campaign level drops anything else. Inactive obstacle children are n
 - **Hash-suffix file names.** Raw extract files are `LevelView 1_<digits>.json` (numeric, sometimes negative id suffix). Lookup is anchored `^<asset>_-?\d+\.json$` because `LevelView 1_` is also a prefix of `LevelView 1_AB_<id>.json`. 0 or >1 matches is an error.
 - **Long / v0 dialects.** Only the v1-short dialect (and the two frozen prefab levels) is supported. Long-key (C# property names), v0 (`Player`/`AI`) and boss levels (`LevelViewBoss`) are refused explicitly.
 - **Bot scripts.** `AiDS`/`AiCWS`/`AiSC` merge into one `bot.script` by `I` across the three lists; gaps or duplicates are an error. Unresolvable refs become `null`.
-- **Param overrides depend on archetype defaults.** `params` on a building are written only when the TW value differs from the archetype's value in the catalog. Retuning an archetype changes which overrides are needed: re-import (`check:import` is local-only, so CI will not notice).
+- **Param overrides depend on archetype defaults.** `params` on a building are written only when the TW value differs from the archetype's value in the catalog. Retuning an archetype changes which overrides are needed: re-import (`check:import` needs the extract, so CI will not notice).
 - **Never hand-edit imported levels.** `pnpm check:import` diffs bytes against the importer output; change the importer or `tools/src/import-tw/feature-map.json` instead. Deliberate balance edits (bot `startDelayMs`/`actionDelayMs`, building positions/levels/archetypes; an archetype swap must leave no `params` that are invalid for the new archetype) go in `tools/src/import-tw/level-overrides.json`, applied after mapping (currently `levelview-14`, `-15`, `-16`, `-17`, `-49`, `-19`, `-20`, `-100-es`).

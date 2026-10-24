@@ -34,7 +34,7 @@ esac
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
-test('CI without the private extract runs both optional checks and surfaces two skip notices', () => {
+test('CI without the source extract runs both optional checks and surfaces two skip notices', () => {
   const r = runCi({ CI_RELEASE: '0' });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /::notice::check:import skipped \(TW_EXTRACT unset\)/);

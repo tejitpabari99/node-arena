@@ -1,15 +1,15 @@
 # Node Arena
 
-Local browser Tower War strategy game: draw persistent routes, capture buildings and complete a 20-level solo campaign. Landscape client with Green and Snow themes, soldiers, tanks, towers, obstacles and scripted AI.
+Browser tower-strategy game: draw persistent routes, capture buildings and complete a 20-level solo campaign. Landscape client with Green and Snow themes, soldiers, tanks, towers, obstacles and scripted AI.
 
-> Tower War 1.29.3 (Vaveda) extracted art and derived level data are private and not redistributable. Keep this repository private. Local use only; no public deploy. See [credits](docs/CREDITS.md).
+> Assets based on / motivated by Tower War. See [credits](docs/CREDITS.md).
 
 ## Contents
 
 - `packages/defs/` — pure registries for modules, bot kinds, commands, objectives, events and phases.
 - `packages/content/` — browser-safe schemas, validation, compilation, content data and hash locks.
 - `packages/sim/` — deterministic integer simulation, replay playback, goldens and benchmarks.
-- `packages/bots/` — Tower War default/scripted AI and human proxy.
+- `packages/bots/` — default/scripted AI and human proxy.
 - `apps/web/` — Vite + Preact + Three.js client, local progress/audio settings and browser tests.
 - `tools/` — importers, asset pipeline, gates, level determinism and balance reports; [commands and gate semantics](tools/README.md).
 - `docs/GAME_RULES.md` — mechanics contract, stable rule IDs and version history.
@@ -51,4 +51,4 @@ Chromium is also needed by content/sim browser parity checks; install it with th
 | `pnpm validate:levels` / `pnpm levels:lock` | Check / regenerate seed-1 campaign determinism lock |
 | `pnpm check:docs` / `pnpm check:parked --strict` | Documentation consistency / closing parked-gate check |
 
-Committed levels and assets work without the original extract. Set local-only `TW_EXTRACT` to the private extract directory for `pnpm import:tw`, `pnpm check:import`, `pnpm assets:tw` and `pnpm assets:tw:check`. Without it, import writes fail with an explanation; import verification and art regeneration/checks skip. CI never downloads the extract; `pnpm check:manifest` still checks committed asset hashes, budgets and credits. See the [levels guide](docs/LEVELS_GUIDE.md) and [tools guide](tools/README.md) before regenerating data.
+Committed levels and assets work without the original extract. Set `TW_EXTRACT` to the Tower War extract directory for `pnpm import:tw`, `pnpm check:import`, `pnpm assets:tw` and `pnpm assets:tw:check`. Without it, import writes fail with an explanation; import verification and art regeneration/checks skip. CI never downloads the extract; `pnpm check:manifest` still checks committed asset hashes, budgets and credits. See the [levels guide](docs/LEVELS_GUIDE.md) and [tools guide](tools/README.md) before regenerating data.

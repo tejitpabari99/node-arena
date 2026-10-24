@@ -43,7 +43,7 @@ A UnityPy script (Python allowed; output frozen like the prefab files, not repro
 | Level JSON | `assets/defaultlocalgroup_assets/TextAsset/<asset>_<signed int>.json` | asset -> file by regex `^<escaped asset>_-?\d+\.json$`; 0 or >1 match = error (`LevelView 1_` also prefixes `LevelView 1_AB_...`, so the regex anchors on digits) |
 | Prefab levels | committed `tools/src/import-tw/prefab/<slug>.ext.json` (tw-level-ext, copied from `converted/ext-prefab`) | positions 10 and 23 now; copy more as needed; flagged hand-data |
 - `TW_EXTRACT` unset: `import:tw` exits 2 with a one-line message; `check:import` **skips** (exit 0, "skipped") so CI without the extract stays green; committed level files are validated by `validate:content` regardless.
-- Fixtures committed for tests without the extract: raw `LevelView 1` (+ 2 more with scripts/obstacles) under `tools/src/import-tw/test/fixtures/` (private repo, allowed).
+- Fixtures committed for tests without the extract: raw `LevelView 1` (+ 2 more with scripts/obstacles) under `tools/src/import-tw/test/fixtures/`.
 
 ### R2 Mapping: TW -> level v2
 | TW | Level v2 | Rule |
@@ -146,7 +146,7 @@ Order of middle rows is a choice (06 §7.2 caveat). LEVELS_GUIDE §5 ships this 
 | 7 | Cargo / wall (pos 23) / tutorial scripts | drop + ledger | Block level 23; model cargo | Scope says cargo skipped; 20 levels needed |
 | 8 | Bounds | building AABB + 2.0 pad, integer outward | Fixed 18x12; include obstacles | Obstacle parents far outside camera; camera dollies (08) |
 | 9 | Tracker | Static snapshot table now; generated-from-census is a post-20-levels follow-up | Generate now | Census needs long/v0/boss dialect parsing (non-goal); nothing in the gates or the 20 levels needs it (N6) |
-| 10 | CI | `check:import` skips without extract | Require extract in CI | Extract is local-only |
+| 10 | CI | `check:import` skips without extract | Require extract in CI | Extract supplied through local `TW_EXTRACT` |
 
 ## Manual steps
 - Owner (Q2 [RESOLVED: owner]: cargo and wall(23) drops confirmed); optionally provide TW screenshots for mirror check (07 manual step) and theme boundary.

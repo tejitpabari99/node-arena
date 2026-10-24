@@ -28,7 +28,7 @@ Make Node Arena a game an AI tester (Kane CLI) plays live on a hidden Kane level
 | # | Sub-project | Scope | Depends on | Phase |
 |---|---|---|---|---|
 | 01 | [Kane level and boot](01-kane-level/PRD.md) | `na-kane` = COPY of Level 7 (`levelview-182-nb`, untouched) + neutral tower b4 + middle/left obstacles (drafts: `01-kane-level/na-kane.draft.json`, `kane-campaign.draft.json`; screenshots `01-kane-level/ref/`) + `kane` campaign, content 2.0.2 + BOT_VERSION 2.0.1 + locks/goldens, `tools/src/levels.ts` gate fix, `?kane=1` boot, prod-bundle exclusion | none | 1 foundation |
-| 02 | [Play controls](02-play-controls/PRD.md) | Speed 0.25/0.5/1/2, pair-button panel, banner, DOM tags, camera room, `kane-result`, `summary()`, remove original-game name | 01 | 1 foundation |
+| 02 | [Play controls](02-play-controls/PRD.md) | Speed 0.25/0.5/1/2, pair-button panel, banner, DOM tags, camera room, `kane-result`, `summary()`, asset acknowledgment | 01 | 1 foundation |
 | 03 | [Kane driver + saved tests](03-kane-driver/PRD.md) | `tools/kane/drive.mjs` loop on persistent Chrome via CDP, NDJSON v1, credit floor, fallback; `replay.mjs`; one saved smoke test | 02 (01) | complete |
 | 04 | [Workflow integrations](04-workflow-integrations/PRD.md) | Opt-in Stop hook (replay, ~0.65-2.7 credits each, needs Kane login), assurance pipeline to `cover`, non-blocking CI replay | 03 | Complete; T3/T5 saved replay passed; T2 unproven; weighted project proof 8.03921568627451% |
 | 05 | [Hosted live stream](05-hosted-stream/PRD.md) | Public Start page: CDP screencast over WS, filtered NDJSON over SSE, single-run lock, credit floor, loopback-only game | 03 | All 10 tasks done; [configured ngrok URL](https://helene-unreconnoitred-overslowly.ngrok-free.dev), intentionally stopped after verification; [deployment + real win](05-hosted-stream/code-2026-10-24-2309.md), [operations security PASS + runtime proof](05-hosted-stream/security-review-2026-10-24-2256.md) |
@@ -55,7 +55,7 @@ Brief decision log in [brainstorm.md](brainstorm.md) is authoritative. Interface
 | Scripts | `pnpm kane:play`, `kane:replay`, `kane:credits` (03); `kane:stream` (05); optional `kane:assure` (04) | 03/04/05 |
 | Versions | `contentVersion` 2.0.1 -> 2.0.2; `BOT_VERSION` 2.0.0 -> 2.0.1; no `RULES_VERSION` bump; na-kane excluded from `levels:lock` (owner) | 01 |
 | Bot pacing | `na-kane` bot `{kind:'tw', actionDelayMs:30000, behavior:'attackOnly'}`; delay is game-time | 01 |
-| Licensing | No "Tower War" text anywhere in UI/page (`style.css:4` reworded) | 02, 05 |
+| Asset acknowledgment | Assets based on / motivated by Tower War. | 02, 05 |
 | Exposure | Only frames + allowlisted log are public; preview 4173, CDP 9222 loopback; hosted build is a test build. Hosting = nginx on this box behind Cloudflare-proxied DNS (ufw allows :80 from Cloudflare IPv4 only, no 443). Abuse guards: daily start cap 6 (`KANE_DAILY_CAP`), per-IP 1 Start/10 min (`KANE_IP_COOLDOWN_S`), credit floor 200 | 05 |
 | Credits ledger | Probe budget 100: 67.49 spent, balance 695.35 (start 762.84); see probes-20261024.md | owner |
 

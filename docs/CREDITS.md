@@ -1,10 +1,12 @@
 # Credits
 
-`pnpm check:manifest` fails when a manifest asset path, or any file under `apps/web/assets/{models,textures,fx,audio}/`, is missing from this file. Licence texts for the CC0 packs are copied into `apps/web/assets/licenses/`.
+`pnpm check:manifest` warns when a manifest asset path, or any file under `apps/web/assets/{models,textures,fx,audio}/`, is missing from this file. Licence texts for the CC0 packs are copied into `apps/web/assets/licenses/`.
 
-## Tower War 1.29.3 (Vaveda) extracted art, private repo, not redistributable
+## Tower War 1.29.3 (Vaveda) assets
 
-All files in the table below are extracted from the Tower War 1.29.3 Android build by Vaveda (not CC0, not licensed for redistribution). They are committed to this **private** repository only, with the owner's approval; do not publish, mirror or open-source this repository or its built assets without replacing them. Regenerate with `TW_EXTRACT=<path to _extract> pnpm assets:tw` (input and output hashes in `tools/assets/tw-extract.lock.json`; `pnpm check:manifest` verifies the committed output hashes without the extract). Models are rebuilt as RAW glTF (no mirror), textures are the original 256px PNG bytes except environment textures (source 1024px, downscaled to 256px with sharp). `apps/web/assets/manifest.tw.json` (the manifest fragment) is generated data, not art. The level-number font (Coiny Regular, SIL OFL 1.1) is credited in the Fonts section below.
+Assets based on / motivated by Tower War.
+
+All files in the table below are extracted from the Tower War 1.29.3 Android build by Vaveda. Regenerate with `TW_EXTRACT=<path to _extract> pnpm assets:tw` (input and output hashes in `tools/assets/tw-extract.lock.json`; `pnpm check:manifest` verifies the committed output hashes without the extract). Models are rebuilt as RAW glTF (no mirror), textures are the original 256px PNG bytes except environment textures (source 1024px, downscaled to 256px with sharp). `apps/web/assets/manifest.tw.json` (the manifest fragment) is generated data, not art. The level-number font (Coiny Regular, SIL OFL 1.1) is credited in the Fonts section below.
 
 | File | Source in Tower War | Modifications |
 |---|---|---|

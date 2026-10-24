@@ -1,7 +1,8 @@
 # Kane driver
 
-Private, local Node Arena demo tooling. Node >=22.13, pnpm 10.34.6, authenticated
-`kane-cli`, and Chrome/Playwright Chromium are required. No npm runtime dependencies.
+Node Arena demo tooling. Assets based on / motivated by Tower War.
+Node >=22.13, pnpm 10.34.6, authenticated `kane-cli`, and Chrome/Playwright Chromium
+are required. No npm runtime dependencies.
 Use the **test build**, which supplies `window.__na`; production omits these hooks.
 All invocations identify themselves with `KANE_CLI_USER_AGENT=codex`.
 
@@ -283,5 +284,5 @@ and at least one player0 `DrawLine` in `window.__na.commandLog`; inspect every
 `verify.claimMatches`. Screen-record the full winning match. Retain the video,
 NDJSON and Kane evidence packs outside git; open a pack with
 `kane-cli evidence serve <pack-path>` when needed. Keep a local playable copy
-ready for exits20/22/23 at demo time. This repository and extracted art stay private;
-there is no public deploy. Physical focus and owner video capture remain owner steps.
+ready for exits20/22/23 at demo time. Assets based on / motivated by Tower War.
+Physical focus and owner video capture remain owner steps.
