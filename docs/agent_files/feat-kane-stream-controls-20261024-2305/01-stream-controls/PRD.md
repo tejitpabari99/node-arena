@@ -36,7 +36,7 @@ Add controller `stop()` and `reset()`; allow terminal outcome `stopped`. Do not 
 
 Create a per-start cancellation token/controller **before emitting `starting`**. Stop synchronously invalidates/aborts that attempt before its first await. Verify cancellation after every asynchronous boundary, including resource-lock acquisition, credit preflight, port validation, log-directory creation and PID identity/persistence, and before the paid-capable driver spawn. Stopping an inactive `starting` attempt must prevent any later driver appearance.
 
-Stop handles both pending start and active play. Reuse existing active `end` cleanup while adding safe inactive-start cancellation. Concurrent Stop, repeated Stop, close, driver exit and cleanup are idempotent; no subsequent start may proceed until cleanup is complete. Late driver exit must not overwrite `stopped`.
+Stop handles both pending start and active play. Reuse existing active `end` cleanup while adding safe inactive-start cancellation. Concurrent Stop, repeated Stop, close, driver exit and cleanup are idempotent; no subsequent start may proceed until cleanup is complete. Late driver exit must not overwrite `stopped`. Keep promise dependencies acyclic: a pending start must never await the Stop promise that itself awaits that pending start; cancellation settlement and cleanup must remain independently awaitable.
 
 Retain bounded identity-based teardown of the actual driver, owned Chrome/preview descendants and validated profiles, including fallback launch descendants. Never kill foreign processes or remove unrelated profiles. Snapshot/state broadcasts must represent the stopped run and cleanup progress consistently.
 
@@ -50,7 +50,7 @@ Add exact POST `/stop` and POST `/reset` routes. Apply the same Origin/Host vali
 
 ### R5 Viewer consistency
 
-Broadcast reset/state to every viewer. Clear relay/cache before that broadcast and any subsequent replay. A reconnecting client that missed the reset event must detect prior non-null run ID becoming null and clear stale canvas/log/cursor itself; the existing null-ID `starting` transition must not cause reset/reconnect loops. Keep generation invalidation so an older in-flight JPEG decode cannot redraw after Reset. Controls and disabled states follow shared server state, including two simultaneous viewers.
+Broadcast reset/state to every viewer. Clear relay/cache before that broadcast and any subsequent replay. A reconnecting client that missed the reset event must detect prior non-null run ID becoming null and clear stale canvas/log/cursor itself; the existing null-ID `starting` transition must not cause reset/reconnect loops. Keep generation invalidation so an older in-flight JPEG decode cannot redraw after Reset. SSE and WebSocket delivery are unordered: an old socket can deliver a blob after Reset even when no decode was in flight. Close/replace the video connection on reset/run-ID change and reject callbacks from an old socket identity, or use a provably equivalent mechanism. A fresh connection receives only the current cached frame. Controls and disabled states follow shared server state, including two simultaneous viewers.
 
 ## Architecture
 
@@ -82,9 +82,9 @@ No owner setup is required for this bounded change. Deployment waits for merge a
 
 ## Acceptance criteria
 
-- Meaningful TDD covers Stop during resource-lock wait, preflight, port checks, identity/persistence and live play; deferred boundaries cannot spawn after cancellation. Repeated Stop, late exits, concurrent close and cleanup preserve stopped semantics and prevent premature restart.
+- Meaningful TDD covers Stop during resource-lock wait, preflight, port checks, identity/persistence and live play; deferred boundaries cannot spawn after cancellation. Repeated Stop, late exits, concurrent close and cleanup preserve stopped semantics and prevent premature restart; pending-start/Stop promise dependencies cannot deadlock.
 - Node-only detached-process fixtures prove owned descendant/profile cleanup without touching foreign processes; no real Chrome/preview/Kane calls.
 - Reset conflicts while unsafe, is idempotent when quiescent, clears metadata/cache/relay, and cannot bypass original cooldown, IP/daily admission or credit floor.
 - HTTP tests cover 403/405/409/413, route/body limits and privacy. Existing natural completion remains unchanged.
-- Two-viewer UI tests verify Stop/Reset visibility/disabled states, shared Stopped, shared Reset, stale SSE replay/cursor and JPEG decode invalidation, reconnect-after-missed-reset behavior and fresh Start behavior.
+- Two-viewer UI tests verify Stop/Reset visibility/disabled states, shared Stopped, shared Reset, stale SSE replay/cursor, in-flight JPEG decode invalidation and old-socket blobs arriving after Reset, reconnect-after-missed-reset behavior and fresh Start behavior.
 - New tests use ephemeral HTTP, injected process operations, mocked JPEGs and Node-only fixtures. User permits Playwright checks against a mock backend only. No production 8787/4175/9225, other 4173/5173, active global runtime lock, actual Chrome/preview or paid calls are touched.
