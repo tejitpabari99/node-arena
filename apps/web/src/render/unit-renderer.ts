@@ -70,8 +70,8 @@ export async function createUnitRenderer(ctx: RendererContext, opts: UnitRendere
   const death: BakedClip = deathClip ? bakeClip(scene, deathClip, false) : proceduralDeath(rest, P);
 
   if (!visual.team) throw new Error(`Unit visual "${ctx.visualId}" has no team textures`);
-  const textures = visual.team.textures, teamKeys = Object.keys(textures), T = teamKeys.length, scale = visual.scale ?? 1;
-  const mats: Material[] = teamKeys.map(t => ctx.materials.teamMaterial(ctx.visualId, t, textures));
+  const teamKeys = ctx.materials.teamKeys(visual.team), T = teamKeys.length, scale = visual.scale ?? 1;
+  const mats: Material[] = teamKeys.map(t => ctx.materials.visualTeamMaterial(ctx.visualId, t, visual.team));
   const geoms: BufferGeometry[] = meshes.map(m => m.geometry);
   let lodGeoms: BufferGeometry[] | null = null;
   if (visual.model.lod) {

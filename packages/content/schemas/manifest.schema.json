@@ -168,54 +168,77 @@
               "minItems": 1
             },
             "team": {
-              "type": "object",
-              "required": [
-                "mode",
-                "textures"
-              ],
-              "properties": {
-                "mode": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "const": "textureSwap"
-                    }
-                  ]
-                },
-                "textures": {
+              "anyOf": [
+                {
                   "type": "object",
                   "required": [
-                    "blue",
-                    "green",
-                    "red",
-                    "yellow"
+                    "mode",
+                    "textures"
                   ],
                   "properties": {
-                    "blue": {
+                    "mode": {
+                      "type": "string",
+                      "const": "textureSwap"
+                    },
+                    "textures": {
+                      "type": "object",
+                      "required": [
+                        "blue",
+                        "green",
+                        "red",
+                        "yellow"
+                      ],
+                      "properties": {
+                        "blue": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "green": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "red": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "yellow": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "gray": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "mode",
+                    "base",
+                    "mask"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "const": "tintMask"
+                    },
+                    "base": {
                       "type": "string",
                       "minLength": 1
                     },
-                    "green": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "red": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "yellow": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "gray": {
+                    "mask": {
                       "type": "string",
                       "minLength": 1
                     }
                   },
                   "additionalProperties": false
                 }
-              },
-              "additionalProperties": false
+              ]
             },
             "anim": {
               "anyOf": [

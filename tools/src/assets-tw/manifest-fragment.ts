@@ -145,7 +145,11 @@ const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !
 function deepMerge(a: unknown, b: unknown): unknown {
   if (!isObj(a) || !isObj(b)) return b;
   const out: Obj = { ...a };
-  for (const k of Object.keys(b)) out[k] = k in a ? deepMerge(a[k], b[k]) : b[k];
+  for (const k of Object.keys(b)) {
+    // A `team` patch that switches `mode` replaces the whole object (no stray `textures` beside tintMask `base`/`mask`).
+    const modeSwitch = k === 'team' && isObj(a[k]) && isObj(b[k]) && 'mode' in b[k] && b[k]['mode'] !== a[k]['mode'];
+    out[k] = k in a && !modeSwitch ? deepMerge(a[k], b[k]) : b[k];
+  }
   return out;
 }
 

@@ -110,6 +110,15 @@ test('mergeManifest: art applies after fragment; objects deep-merge, arrays and 
   assert.equal(stringify(mergeManifest(m, FRAG, art)), stringify(m)); // idempotent over its own output
 });
 
+test('mergeManifest: art team patch switching mode to tintMask replaces team (no stray textures); same-mode patch deep-merges', () => {
+  const frag = { ...FRAG, visuals: { v: { ...(FRAG.visuals as any).v, team: { mode: 'textureSwap', textures: { blue: 'b.png', green: 'g.png', red: 'r.png', yellow: 'y.png' } } } } } as unknown as Fragment;
+  const sw = mergeManifest(BASE, frag, { visuals: { v: { team: { mode: 'tintMask', base: 'art/b.png', mask: 'art/m.png' } } } }) as any;
+  assert.deepEqual(sw.visuals.v.team, { mode: 'tintMask', base: 'art/b.png', mask: 'art/m.png' });
+  const same = mergeManifest(BASE, frag, { visuals: { v: { team: { mode: 'textureSwap', textures: { red: 'art/r.png' } } } } }) as any;
+  assert.equal(same.visuals.v.team.textures.red, 'art/r.png'); assert.equal(same.visuals.v.team.textures.blue, 'b.png');
+  assert.equal(stringify(mergeManifest(sw, frag, { visuals: { v: { team: { mode: 'tintMask', base: 'art/b.png', mask: 'art/m.png' } } } })), stringify(sw));
+});
+
 test('mergeManifest: art sfx overrides the default; removing it restores the default', () => {
   const withArt = mergeManifest(BASE, FRAG, { events: { Clash: { sfx: 'art/audio/boom.ogg' }, Custom: { sfx: 'art/audio/c.ogg' } } }) as any;
   assert.equal(withArt.events.Clash.sfx, 'art/audio/boom.ogg');
@@ -130,6 +139,9 @@ test('loadArt / assets:manifest: absent = undefined; fixture patch validates and
     assert.equal(mergeFiles(dir).current, false); // manifest.json lacks the patch
     writeFileSync(join(dir, 'manifest.json'), mergeFiles(dir).text);
     assert.equal(mergeFiles(dir).current, true);
+    const tint = { visuals: { 'unit.tank': { team: { mode: 'tintMask', base: 'art/b.png', mask: 'art/m.png' } } } };
+    writeFileSync(join(dir, 'manifest.art.json'), JSON.stringify(tint));
+    assert.deepEqual(loadArt(dir), tint); // tintMask patch validates
     for (const bad of [{ visuals: { 'unit.tank': { kind: 'building' } } }, { visuals: { 'unit.tank': { model: { budget: 'unit' } } } }, { visuals: { 'unit.tank': { scale: null } } }, { palettes: {} }, { camera: { fov: 1 } }, { events: { Clash: { fx: 'x' } } }, { bogus: 1 }]) {
       writeFileSync(join(dir, 'manifest.art.json'), JSON.stringify(bad));
       assert.throws(() => loadArt(dir), /manifest\.art\.json invalid/, JSON.stringify(bad));

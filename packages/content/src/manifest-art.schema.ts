@@ -30,6 +30,7 @@ export const ManifestArtSchema = Type.Object({
     team: opt(Type.Object({
       mode: opt(Type.Union(TEAM_MODES.map((m) => Type.Literal(m)))),
       textures: opt(Type.Object(Object.fromEntries(TEAM_KEYS.map((k) => [k, opt(path())])), closed)),
+      base: opt(path()), mask: opt(path()),
     }, closed)),
     label: opt(Type.Object({ height: opt(Type.Number({ minimum: 0 })) }, closed)),
   }, closed))),

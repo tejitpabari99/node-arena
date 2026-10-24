@@ -52,9 +52,8 @@ function references(m: ManifestV2): Ref[] {
   for (const [id, v] of Object.entries(m.visuals)) {
     refs.push({ path: v.model.parts, from: `visual ${id} model.parts` });
     if (v.model.lod) refs.push({ path: v.model.lod, from: `visual ${id} model.lod` });
-    for (const [team, t] of Object.entries(v.team?.textures ?? {})) refs.push({ path: t, from: `visual ${id} texture ${team}`, texture: true });
-    // tintMask (`team: { mode, base, mask }`) is not in the schema type yet; read tolerantly so it works once it lands.
-    const tint = (v.team ?? {}) as { base?: unknown; mask?: unknown };
+    if (v.team?.mode === 'textureSwap') for (const [team, t] of Object.entries(v.team.textures)) refs.push({ path: t, from: `visual ${id} texture ${team}`, texture: true });
+    const tint = (v.team ?? {}) as { base?: unknown; mask?: unknown }; // tintMask `base` + `mask`
     for (const k of ['base', 'mask'] as const) { const p = tint[k]; if (typeof p === 'string') refs.push({ path: p, from: `visual ${id} team.${k}`, texture: true }); }
   }
   for (const [id, t] of Object.entries(m.themes)) {

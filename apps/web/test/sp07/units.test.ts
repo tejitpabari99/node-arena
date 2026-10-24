@@ -167,4 +167,14 @@ describe('unit renderer (real soldier/tank GLB)', () => {
     r.update({ view, troops: buf, n: 1, alpha: 0 }, [{ type: 'TroopDied', channel: 12, seq: 3, owner: 2, kind: 'tank', cause: 'clash', x: 0, z: 0 } as unknown as SimEvent], 16);
     expect(r.drawCalls).toBe(8); expect(r.stats.ghosts).toBe(1); expect(r.maxDrawCalls).toBe(16);
   });
+  it('tintMask: team keys come from palette teams, one InstancedMesh per part x team (same draw budget)', async () => {
+    const visual = { ...manifest.visuals['unit.soldier']!, team: { mode: 'tintMask', base: 'textures/b.png', mask: 'textures/m.png' } } as ManifestV2['visuals'][string];
+    const materials = new MaterialCache(() => new Texture(), manifest.palettes);
+    const r = await createUnitRenderer({ visualId: 'unit.soldier', visual, materials, models: new ModelCache(loadGlb) });
+    const teams = Object.keys(manifest.palettes), ref = await createUnitRenderer(ctxFor('unit.soldier'));
+    expect(r.maxDrawCalls).toBe(9 * teams.length);
+    expect(r.maxDrawCalls).toBeGreaterThanOrEqual(ref.maxDrawCalls);
+    expect(materials.visualTeamMaterial('unit.soldier', 'red', visual.team)).toBe(materials.visualTeamMaterial('unit.soldier', 'red', visual.team));
+    expect(() => materials.visualTeamMaterial('unit.soldier', 'purple', visual.team)).toThrow(/no palette colour/);
+  });
 });

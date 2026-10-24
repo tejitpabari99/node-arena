@@ -15,8 +15,8 @@ function fields(m: ManifestV2): Array<{ owner: string; field: string; path: stri
   for (const [id, v] of Object.entries(m.visuals ?? {})) {
     add(id, 'model.parts', v.model?.parts);
     add(id, 'model.lod', v.model?.lod);
-    for (const [team, t] of Object.entries(v.team?.textures ?? {})) add(id, `team.${team}`, t);
-    // tintMask (`team: { mode, base, mask }`) is not in the schema type yet; read tolerantly.
+    const team = (v.team ?? {}) as { textures?: Record<string, unknown> };
+    for (const [k, t] of Object.entries(team.textures ?? {})) add(id, `team.${k}`, t);
     const tint = (v.team ?? {}) as { base?: unknown; mask?: unknown };
     add(id, 'team.base', tint.base); add(id, 'team.mask', tint.mask);
   }
