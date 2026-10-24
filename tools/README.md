@@ -25,7 +25,7 @@ Node-only tools run through the root pnpm scripts and `tools/src/cli.ts`. Run `p
 |---|---|
 | `pnpm check:schemas` | Generated JSON schemas match defs/content sources |
 | `pnpm check:content --base HEAD` / `pnpm validate:content --base HEAD` | Fresh sim/bot lock, valid v2 content, references and derived requires; content/rules/bot versions compared with committed baseline |
-| `pnpm check:manifest` | Manifest schema and visual/theme/palette references; safe files; unit/building/obstacle/ground triangle budgets 1100/1200/300/500, 256px texture limit; committed output hashes against `tools/assets/tw-extract.lock.json`; `docs/CREDITS.md` coverage |
+| `pnpm check:manifest` | Manifest schema and visual/theme/palette references; safe files; unit/building/obstacle/ground triangle budgets 1100/1200/300/500, 256px texture limit; committed output hashes against `tools/assets/tw-extract.lock.json`; `docs/CREDITS.md` coverage warns for all uncredited assets (does not fail) |
 | `pnpm check:rules` | Every active heading rule ID has a literal covers tag in an active test title; unknown tags fail; tombstones remain known and exempt |
 | `pnpm check:import` | Re-import bytes match committed importer-owned levels/campaign; orphan importer files fail; skips without local extract |
 | `pnpm assets:tw:check` | Regenerated model/texture/FX output and extract lock match committed bytes; skips without local extract |
@@ -35,7 +35,7 @@ Node-only tools run through the root pnpm scripts and `tools/src/cli.ts`. Run `p
 | `pnpm sim:golden` / `pnpm bots:golden` | Regenerate expected simulation/bot scenarios in memory and enforce golden identities/version guards |
 | `pnpm bench:sim` / `pnpm bench:bots` | Strict local performance budgets; `--ci` permits shared-runner budgets |
 | `pnpm check:docs` | Every root script is documented in this file or AGENTS; documented paths exist; removed tooling references fail |
-| `pnpm art:status [--strict]` | Report-only list of manifest file fields not yet in the art overrides dir; strict exits 1 while any remain |
+| `pnpm art:status [--strict]` | Report-only list of merged-manifest file fields outside the art prefix, with TW/stock labels and replacement totals; strict exits 1 while any remain |
 | `pnpm check:parked --strict` | No parked CI entries, refused commands or parked source/test directories remain |
 
 Content/manifest/replay/level/balance reports use `--format md|json` (default Markdown). Failures exit 1; malformed command arguments fail. Caller-supplied paths resolve from the working directory. Defaults resolve from the repository. Common content options: `--dir`, `--base`, `--manifest`, `--assets-dir`, `--credits`, `--lock`; supported options depend on the command. Manifest credits default to `docs/CREDITS.md`; committed assets are checked without the extract. A custom assets directory omits the repo asset lock unless an explicit lock is supplied.
@@ -76,7 +76,9 @@ Finalize runs, in order: saved-level validation → content patch bump → condi
 
 `TW_EXTRACT` names the private local Tower War extract directory; CI never downloads it. Unset extract: `pnpm check:import` skips (exit 0); `pnpm import:tw` refuses (exit 2). Art generation and checks skip when the directory is unset or absent. CI surfaces skipped extract checks as notices. Committed output validation stays active.
 
-`pnpm import:tw` defaults to Common positions 4–23; `pnpm check:import` covers the committed imported campaign. Import merges by position and never edits metadata/locks. Read [the levels guide](../docs/LEVELS_GUIDE.md) before changing ranges or feature policy. `pnpm assets:tw` writes models/textures/FX plus the extract lock. `pnpm assets:manifest` merges the world fragment into the world manifest and copies the optional UI fragment to its presentation namespace; `--check` checks without writing and needs no extract. It rejects an invalid art patch (e.g. unknown visual id) without writing. `pnpm assets:ui` generates UI sprites and its lock.
+`pnpm import:tw` defaults to Common positions 4–23; `pnpm check:import` covers the committed imported campaign. Import merges by position and never edits metadata/locks. Read [the levels guide](../docs/LEVELS_GUIDE.md) before changing ranges or feature policy. `pnpm assets:tw` writes models/textures/FX plus the extract lock. `pnpm assets:manifest` merges the world fragment and optional owner-art patch into the world manifest and copies the optional UI fragment to its presentation namespace; `--check` checks without writing and needs no extract. It rejects an invalid art patch (e.g. unknown visual id) without writing. `pnpm assets:ui` generates UI sprites and its lock.
+
+Owner-art folders, patch whitelist/merge rules, export limits and playable showcases are documented in the [art authoring workflow](../docs/CONTENT_GUIDE.md#owner-art-overrides).
 
 `pnpm assets:capture` renders named SP07 scenes (options include --scene, --compare, --out); `pnpm assets:capture:web` captures the real SP08 client. `pnpm assets:validate` compares prototype/RAW importer geometry and optionally renders turntables; it skips without the private prototype extract. These are local development tools. `pnpm campaign:verify` builds the test client, loads all 20 campaign levels for five seconds, checks browser errors and writes screenshots, grid and JSON in the generated directory test-results/campaign/.
 
