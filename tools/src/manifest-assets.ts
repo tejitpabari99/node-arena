@@ -36,8 +36,10 @@ function nodeTris(node: Node): number {
   for (const c of node.listChildren()) t += nodeTris(c);
   return t;
 }
-const named = (doc: Document, name: string): Node | undefined => doc.getRoot().listNodes().find((n) => n.getName() === name);
-const meshNodes = (doc: Document): Node[] => doc.getRoot().listNodes().filter((n) => n.getMesh());
+const descendants = (roots: Node[]): Node[] => roots.flatMap((n) => [n, ...descendants(n.listChildren())]);
+const sceneNodes = (doc: Document): Node[] => descendants((doc.getRoot().getDefaultScene() ?? doc.getRoot().listScenes()[0])?.listChildren() ?? []);
+const named = (nodes: Node[], name: string): Node | undefined => nodes.find((n) => n.getName() === name);
+const meshNodes = (nodes: Node[]): Node[] => nodes.filter((n) => n.getMesh());
 const own = (n: Node): number => nodeTris(n) - n.listChildren().reduce((s, c) => s + nodeTris(c), 0);
 const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const pngSize = (b: Buffer): [number, number] | null => (b.length >= 24 && b.subarray(0, 8).equals(PNG_SIG) ? [b.readUInt32BE(16), b.readUInt32BE(20)] : null);
@@ -109,26 +111,44 @@ export async function checkManifestAssets(m: ManifestV2, assetsDir: string, lock
     for (const dir of OWNED) for (const f of await walk(assetsDir, dir)) if (!(f in outputs)) errors.push(`lock: ${f} is not an importer output (stale or hand-added)`);
   }
 
-  // 3. budgets, textures, node and clip names
+  // 3. Match each renderer's reference semantics before checking its runtime scene/subtree.
+  const modelNodes = async (ref: string, from: string, suffix: boolean, unwrap = false): Promise<{ d: Document; nodes: Node[] } | undefined> => {
+    const { file, node } = split(ref);
+    if (node !== undefined && (!node || node.includes('#'))) errors.push(`${from}: invalid node suffix in ${ref}`);
+    else if (node !== undefined && !suffix) errors.push(`${from}: node suffix is not supported by this renderer (${ref})`);
+    if (!present.has(file)) return;
+    const d = await doc(file);
+    if (!d) return;
+    const scene = d.getRoot().getDefaultScene() ?? d.getRoot().listScenes()[0];
+    let roots = scene?.listChildren() ?? [];
+    if (node !== undefined && suffix) {
+      const selected = named(sceneNodes(d), node);
+      if (!selected) { errors.push(`${from}: node "${node}" not in ${file}`); return; }
+      // Building/projectile factory unwraps a resolved root with exactly one child.
+      roots = unwrap && selected.listChildren().length === 1 ? selected.listChildren() : [selected];
+    }
+    return { d, nodes: descendants(roots) };
+  };
   for (const [id, v] of Object.entries(m.visuals)) {
-    if (!present.has(v.model.parts)) continue;
-    const d = await doc(v.model.parts);
-    if (!d) continue;
+    const selected = await modelNodes(v.model.parts, `visual ${id} model.parts`, v.kind === 'building' || v.kind === 'fx', v.kind === 'building' || v.kind === 'fx');
+    if (!selected) continue;
+    const { d, nodes } = selected;
     const budget = BUDGET_CLASSES[v.model.budget];
     const staged = new Set((v.stages ?? []).flatMap((s) => ('mesh' in s ? [s.mesh] : s.enable)));
-    for (const n of staged) if (!named(d, n)) errors.push(`visual ${id}: stage node "${n}" not in ${v.model.parts}`);
-    const baseTris = meshNodes(d).filter((n) => !staged.has(n.getName())).reduce((s, n) => s + own(n), 0);
+    for (const n of staged) if (!named(nodes, n)) errors.push(`visual ${id}: stage node "${n}" not in ${v.model.parts}`);
+    if (id === 'building.tower' && !named(nodes, 'BulletPosition')) errors.push(`visual ${id}: required node "BulletPosition" not in ${v.model.parts}`);
+    const baseTris = meshNodes(nodes).filter((n) => !staged.has(n.getName())).reduce((s, n) => s + own(n), 0);
     const variants = v.stages ? v.stages.map((s) => ('mesh' in s ? [s.mesh] : s.enable)) : [[]];
     variants.forEach((names, i) => {
-      const tris = baseTris + names.reduce((s, n) => s + (named(d, n) ? nodeTris(named(d, n)!) : 0), 0);
+      const tris = baseTris + names.reduce((s, n) => s + (named(nodes, n) ? nodeTris(named(nodes, n)!) : 0), 0);
       if (tris > budget) errors.push(`visual ${id}${v.stages ? ` stage ${i}` : ''}: ${tris} tris > ${v.model.budget} budget ${budget}`);
     });
-    if (v.model.lod && present.has(v.model.lod)) {
-      const l = await doc(v.model.lod);
-      if (l) {
-        const names = (x: Document) => meshNodes(x).map((n) => n.getName()).join(',');
-        if (names(l) !== names(d)) errors.push(`visual ${id}: lod ${v.model.lod} part nodes differ from ${v.model.parts}`);
-        const lt = meshNodes(l).reduce((s, n) => s + own(n), 0), ft = meshNodes(d).reduce((s, n) => s + own(n), 0);
+    if (v.model.lod) {
+      const lod = await modelNodes(v.model.lod, `visual ${id} model.lod`, false);
+      if (lod) {
+        const names = (ns: Node[]) => meshNodes(ns).map((n) => n.getName()).join(',');
+        if (names(lod.nodes) !== names(nodes)) errors.push(`visual ${id}: lod ${v.model.lod} part nodes differ from ${v.model.parts}`);
+        const lt = meshNodes(lod.nodes).reduce((s, n) => s + own(n), 0), ft = meshNodes(nodes).reduce((s, n) => s + own(n), 0);
         if (lt >= ft) errors.push(`visual ${id}: lod has ${lt} tris, not fewer than ${ft}`);
       }
     }
@@ -138,15 +158,33 @@ export async function checkManifestAssets(m: ManifestV2, assetsDir: string, lock
     }
   }
   for (const [id, t] of Object.entries(m.themes)) {
-    if (present.has(t.ground.mesh)) {
-      const d = await doc(t.ground.mesh);
-      const tris = d ? meshNodes(d).reduce((s, n) => s + own(n), 0) : 0;
+    const ground = await modelNodes(t.ground.mesh, `theme ${id} ground.mesh`, false);
+    if (ground) {
+      const { d, nodes } = ground;
+      // readGroundPrefab traverses the default scene, taking the first mesh and first family=ground extras.
+      const mesh = meshNodes(nodes)[0];
+      const scene = d.getRoot().getDefaultScene() ?? d.getRoot().listScenes()[0];
+      const extras = [scene?.getExtras(), ...nodes.map((n) => n.getExtras())].find((e) => e?.['family'] === 'ground');
+      if (!mesh || !extras) errors.push(`theme ${id} ground: ${t.ground.mesh} has no mesh or ground extras (family="ground")`);
+      if (mesh && extras) {
+        const finite = (v: unknown) => Number.isFinite(Number(v));
+        const positive = (v: unknown) => finite(v) && Number(v) > 0;
+        const scale = mesh.getScale();
+        if (!positive(scale[0]) || !positive(scale[2])) errors.push(`theme ${id} ground: invalid mesh scale x/z (must be finite and positive)`);
+        if (!positive(extras['meshSize'] ?? 10)) errors.push(`theme ${id} ground: invalid meshSize (must be finite and positive)`);
+        for (const key of ['uvRepeat', 'uvOffset'] as const) {
+          const pair = extras[key];
+          // Malformed pairs use renderer defaults; two-element pairs are Number-coerced.
+          if (Array.isArray(pair) && pair.length === 2 && !pair.every(key === 'uvRepeat' ? positive : finite)) errors.push(`theme ${id} ground: invalid ${key} (must contain finite${key === 'uvRepeat' ? ' positive' : ''} values)`);
+        }
+      }
+      const tris = mesh ? own(mesh) : 0;
       if (tris > BUDGET_CLASSES.ground) errors.push(`theme ${id} ground: ${tris} tris > ground budget ${BUDGET_CLASSES.ground}`);
     }
     for (const which of ['small', 'big'] as const) {
       const { file, node } = split(t.obstacle[which]);
       if (!present.has(file)) continue;
-      const d = await doc(file), n = d && node ? named(d, node) : undefined;
+      const d = await doc(file), n = d && node ? named(sceneNodes(d), node) : undefined;
       if (!n) errors.push(`theme ${id} obstacle.${which}: node "${node ?? ''}" not in ${file}`);
       else if (nodeTris(n) > BUDGET_CLASSES.obstacle) errors.push(`theme ${id} obstacle.${which}: ${nodeTris(n)} tris > obstacle budget ${BUDGET_CLASSES.obstacle}`);
     }

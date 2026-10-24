@@ -306,3 +306,98 @@ test('tintMask base and mask refs are size-checked (tolerant of the not-yet-type
     assert.doesNotMatch(e, /team\.base/);
   } finally { done(); }
 });
+
+
+async function ownerModel(options: { ground?: boolean; extras?: Record<string, unknown>; scale?: [number, number, number]; marker?: boolean; tris?: number } = {}): Promise<Uint8Array> {
+  const doc = new Document(); const buf = doc.createBuffer();
+  const pos = doc.createAccessor().setType('VEC3').setArray(new Float32Array(9)).setBuffer(buf);
+  const idx = doc.createAccessor().setType('SCALAR').setArray(new Uint32Array((options.tris ?? 1) * 3)).setBuffer(buf);
+  const mesh = doc.createMesh().addPrimitive(doc.createPrimitive().setAttribute('POSITION', pos).setIndices(idx));
+  const root = doc.createNode('replacement'); doc.createScene().addChild(root);
+  if (options.ground) root.addChild(doc.createNode('plane').setMesh(mesh).setScale(options.scale ?? [1, 1, 1]));
+  else {
+    for (const name of ['stage0', 'stage1', 'stage2']) root.addChild(doc.createNode(name).setMesh(mesh));
+    if (options.marker) root.addChild(doc.createNode('BulletPosition'));
+  }
+  if (options.extras) root.setExtras(options.extras);
+  // A sibling must never satisfy selected-subtree node requirements or budgets.
+  doc.getRoot().listScenes()[0]!.addChild(doc.createNode('outside'));
+  return new NodeIO().writeBinary(doc);
+}
+
+test('art: selected building model nodes are required and stage checks stay inside the selected subtree', async () => {
+  const { dir, done } = copy();
+  try {
+    const files = { 'art/models/tower.glb': await ownerModel({ marker: true }) };
+    for (const suffix of ['#missing', '#', '#replacement#extra']) {
+      const r = await withArt(dir, { visuals: { 'building.tower': { model: { parts: `art/models/tower.glb${suffix}` } } } }, files);
+      assert.match(r.errors.join('\n'), /visual building.tower model.parts: .*node/i);
+    }
+    const good = await withArt(dir, { visuals: { 'building.tower': { model: { parts: 'art/models/tower.glb#replacement' } } } }, files);
+    assert.deepEqual(good.errors, []);
+    const outside = await withArt(dir, { visuals: { 'building.tower': { model: { parts: 'art/models/tower.glb#outside' } } } }, files);
+    assert.match(outside.errors.join('\n'), /stage node "stage0"/);
+    const over = await withArt(dir, { visuals: { 'building.tower': { model: { parts: 'art/models/tower.glb#replacement' } } } }, { 'art/models/tower.glb': await ownerModel({ marker: true, tris: 1201 }) });
+    assert.match(over.errors.join('\n'), /stage 0: 1201 tris > building budget 1200/);
+  } finally { done(); }
+});
+
+test('art: unit parts and LOD suffixes are rejected and cannot bypass full-scene budget, clip or LOD checks', async () => {
+  const { dir, done } = copy();
+  try {
+    const r = await withArt(dir, { visuals: { 'unit.soldier': { model: { parts: 'art/models/unit.glb#body', lod: 'art/models/lod.glb#body' } } } }, { 'art/models/unit.glb': await bigGlb(1200), 'art/models/lod.glb': await bigGlb(1200) });
+    const errors = r.errors.join('\n');
+    assert.match(errors, /visual unit.soldier model.parts: .*suffix/);
+    assert.match(errors, /visual unit.soldier model.lod: .*suffix/);
+    assert.match(errors, /1200 tris > unit budget 1100/);
+    assert.match(errors, /clip "Run"/);
+    assert.match(errors, /lod has 1200 tris, not fewer than 1200/);
+  } finally { done(); }
+});
+
+test('art: owner ground requires a mesh and ground family extras; valid Blender export passes', async () => {
+  const { dir, done } = copy();
+  try {
+    const art = { themes: { green: { ground: { mesh: 'art/models/ground.glb' } } } };
+    const missing = await withArt(dir, art, { 'art/models/ground.glb': await ownerModel({ ground: true }) });
+    assert.match(missing.errors.join('\n'), /theme green ground: .*ground extras/);
+    const good = await withArt(dir, art, { 'art/models/ground.glb': await ownerModel({ ground: true, extras: { family: 'ground' } }) });
+    assert.deepEqual(good.errors, []);
+    const noMeshDoc = new Document(); noMeshDoc.createScene().addChild(noMeshDoc.createNode().setExtras({ family: 'ground' }));
+    const noMesh = await withArt(dir, art, { 'art/models/ground.glb': await new NodeIO().writeBinary(noMeshDoc) });
+    assert.match(noMesh.errors.join('\n'), /theme green ground: .*mesh/);
+    const suffix = await withArt(dir, { themes: { green: { ground: { mesh: 'art/models/ground.glb#replacement' } } } }, { 'art/models/ground.glb': await ownerModel({ ground: true, extras: { family: 'ground' }, tris: 501 }) });
+    assert.match(suffix.errors.join('\n'), /theme green ground.mesh: .*suffix/);
+    assert.match(suffix.errors.join('\n'), /theme green ground: 501 tris > ground budget 500/);
+    const sized = await withArt(dir, art, { 'art/models/ground.glb': await ownerModel({ ground: true, scale: [6, 1, 10], extras: { family: 'ground', meshSize: 10, uvRepeat: [3, 3], uvOffset: [0.5, -0.5] } }) });
+    assert.deepEqual(sized.errors, []);
+  } finally { done(); }
+});
+
+test('art: ground sizing and UV metadata cannot yield nonfinite values or zero divisors', async () => {
+  const { dir, done } = copy();
+  try {
+    for (const options of [
+      { extras: { family: 'ground', meshSize: 0 } },
+      { extras: { family: 'ground', meshSize: 'bad' } },
+      { extras: { family: 'ground', uvRepeat: [0, 3] } },
+      { extras: { family: 'ground', uvRepeat: ['bad', 3] } },
+      { extras: { family: 'ground', uvOffset: [0, 'bad'] } },
+      { extras: { family: 'ground' }, scale: [0, 1, 1] as [number, number, number] },
+    ]) {
+      const r = await withArt(dir, { themes: { green: { ground: { mesh: 'art/models/ground.glb' } } } }, { 'art/models/ground.glb': await ownerModel({ ground: true, ...options }) });
+      assert.match(r.errors.join('\n'), /theme green ground: invalid .*scale|theme green ground: invalid .*meshSize|theme green ground: invalid .*uv/, JSON.stringify(options));
+    }
+  } finally { done(); }
+});
+
+test('art: tower replacement must preserve BulletPosition for shots and range', async () => {
+  const { dir, done } = copy();
+  try {
+    const art = { visuals: { 'building.tower': { model: { parts: 'art/models/tower.glb' } } } };
+    const bad = await withArt(dir, art, { 'art/models/tower.glb': await ownerModel() });
+    assert.match(bad.errors.join('\n'), /visual building.tower: .*BulletPosition/);
+    const good = await withArt(dir, art, { 'art/models/tower.glb': await ownerModel({ marker: true }) });
+    assert.deepEqual(good.errors, []);
+  } finally { done(); }
+});

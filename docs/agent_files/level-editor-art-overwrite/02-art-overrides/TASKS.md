@@ -1,10 +1,10 @@
 ---
-status: draft
-summary: 8 tasks - art patch schema + three-way merge, importer scope guard, check:manifest art rules, credits warning, tintMask, art:status, showcase levels, docs.
+status: done
+summary: Completed tasks 1–8 — art patch schema + three-way merge, importer scope guard, check:manifest art rules, credits warning, tintMask, art:status, showcase levels, docs.
 date: 2026-10-24
 ---
 # Tasks: Art overrides
-Source of truth: [PRD.md](PRD.md). Order: merge layer first (R2-R4), then checks (R5-R6), renderer (R7), reporting (R9), showcase levels (R8, only task needing 01), docs last. Tasks 1-7 do not depend on 01 and can be built first; no sim/rules/content version bump is needed until Task 7.
+Source of truth: [PRD.md](PRD.md). Order: merge layer first (R2-R4), then checks (R5-R6), renderer (R7), reporting (R9), showcase levels (R8, only task needing 01), docs last. Tasks 1-6 do not depend on 01; Task 7 depends on the custom-list contract. No sim/rules/content version bump is needed until Task 7.
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
@@ -14,8 +14,8 @@ Source of truth: [PRD.md](PRD.md). Order: merge layer first (R2-R4), then checks
 | 4 | Credits check becomes a warning | none | done |
 | 5 | tintMask team mode (schema + renderer) | 1 | done |
 | 6 | art:status command | 1 | done |
-| 7 | Showcase levels (green, snow) | 5, 01 P0 (custom list) | todo |
-| 8 | Docs | 1-7 | todo |
+| 7 | Showcase levels (green, snow) | 5, 01 P0 (custom list) | done |
+| 8 | Docs | 1-7 | done |
 
 ## Task 1 — Art patch schema + three-way merge + default sfx move
 What it is / what it means: The core override layer (R2, R3, R4, D2-D4, D10). `manifest.art.json` is a sparse, whitelisted patch applied after the TW fragment inside `assets:manifest`.
