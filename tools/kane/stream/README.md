@@ -12,6 +12,24 @@ unresolved High findings, set the Kane portal spend cap and complete the owner's
 exposure setup. These instructions are not evidence of deployment. nginx, ufw,
 DNS and tunnel changes are owner steps; do not apply them during a local smoke.
 
+## Configured ngrok deployment (currently stopped)
+
+As authorized on 2026-10-24, [Kane plays Node Arena](https://helene-unreconnoitred-overslowly.ngrok-free.dev) was verified running the merged `kane-cli` branch from the primary `/root/projects/node-arena` checkout. After the successful real rehearsal, the user requested shutdown: both services are now inactive and boot-disabled, and the URL is intentionally offline. Configuration is preserved. When hosting is authorized again, normal browsers first see ngrok's free warning; click **Visit Site**. The real winning public rehearsal and proxy checks are recorded in [SP05 Task 10](../../../docs/agent_files/feat-kane-hackday-20261023-2128/05-hosted-stream/code-2026-10-24-2309.md). The user's ngrok and separate credit-budget instructions supersede the historical nginx/DNS and portal-confirmation prerequisites for this deployment; the alternatives below remain reference material.
+
+Dedicated units (currently inactive and boot-disabled) are `node-arena-kane-stream.service` and `node-arena-kane-ngrok.service`. Private operator files live in `/root/.config/node-arena-kane-stream/`: `service.env`, `locked-driver.mjs`, `ngrok-policy.yml`; unit definitions live under `/etc/systemd/system/`. These configurations and credentials are outside git. Health checks and a restart example for a later authorized session:
+
+```sh
+systemctl is-active node-arena-kane-stream.service node-arena-kane-ngrok.service
+systemctl is-enabled node-arena-kane-stream.service node-arena-kane-ngrok.service
+curl --fail http://127.0.0.1:8787/api/state
+# Restart interrupts an active run; coordinate shared resources first.
+systemctl restart node-arena-kane-stream.service node-arena-kane-ngrok.service
+```
+
+ngrok forwards only to `127.0.0.1:8787`, preserves public Host/Origin and disables traffic inspection. Its private policy removes incoming `CF-Connecting-IP`, `X-Forwarded-For`, `X-Real-IP` and `Forwarded`, then sets `CF-Connecting-IP` from ngrok's verified `${conn.client_ip}`. This replacement is required for `KANE_STREAM_TRUST_PROXY=1`; appending an attacker-supplied XFF would not provide trusted visitor identity. Actual private upstream capture verified the injected IP and Host; differing forged headers could not bypass per-IP connection caps.
+
+Production runs the real driver through the fixed local wrapper, which takes `/tmp/node-arena-kane-resources.lock` for each credits command/run rather than the idle service lifetime. Busy resources return generic unavailable. Backend 8787, preview 4175 and CDP 9225 (fallback 9223) remain loopback; the game, CDP and raw files are not tunneled. Production retains floor 200, max runs 20, wall limit 720 s, cooldown 120 s, Start/IP 600 s, daily 6, WS/SSE totals 100/200 and per-IP 3/3; no extra origins are enabled. No fake driver remains configured. Stop/Reset is a separate follow-up and is not deployed here.
+
 ## Local operation and shared resources
 
 Build prerequisites follow the [root README](../../../README.md). The real driver
