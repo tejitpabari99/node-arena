@@ -1,0 +1,3 @@
+.kane-overlay{position:fixed;inset:0;pointer-events:none}
+.kane-speed{position:absolute;top:24px;right:100px;pointer-events:auto;min-width:132px;padding:10px 14px;border:2px solid #22547d;border-radius:20px;background:#fff;color:#16466c;font:bold 18px sans-serif;box-shadow:0 2px 3px #16466c55}
+.kane-speed:active{transform:translateY(2px)}

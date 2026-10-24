@@ -42,6 +42,7 @@ export function createAppController(options: AppOptions) {
   const clear=()=>{if(finishing!==null)clearTimeout(finishing);finishing=null;finishingOn=false;const oldRuntime=runtime;runtime=undefined;driver?.dispose();driver=null;oldRuntime?.dispose();};
   const fail=(error:unknown)=>{clear();state={...state,screen:'error',loading:false,restartPopup:false,error};publish();};
   const api={
+    kaneMode:options.campaignId==='kane',
     snapshot:()=>state,
     subscribe(fn:()=>void){listeners.add(fn);return()=>{listeners.delete(fn);};},
     subscribeEvents(fn:(u:TickUpdate)=>void){events.add(fn);return()=>{events.delete(fn);};},
