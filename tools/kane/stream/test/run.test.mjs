@@ -65,6 +65,25 @@ test('fixed detached argv and public snapshot; raw lines and Chrome readiness tr
   await run.close();
 });
 
+test('attach readiness switches to fixed launch fallback and rejects other port/mode combinations', async () => {
+  const h = harness(), run = await h.create({ KANE_STREAM_CDP_PORT: '9225' });
+  const ready = []; run.on('chrome_ready', event => ready.push(event));
+  try {
+    await run.start();
+    const emit = async event => {
+      h.spawned[1].child.stdout.write(JSON.stringify({ type: 'chrome_ready', ...event }) + '\n');
+      await new Promise(resolve => setImmediate(resolve));
+    };
+    await emit({ mode: 'attach', port: 9225, pid: 999 });
+    for (const event of [{ mode: 'attach', port: 9223 }, { port: 9223 }, { mode: 'invalid', port: 9223 },
+      { mode: 'launch', port: '9223' }, { mode: 'launch', port: 9224 }, { mode: 'launch', port: 0 }]) await emit(event);
+    assert.deepEqual(ready.map(event => event.port), [9225]);
+    await emit({ mode: 'launch', port: 9223, headless: true });
+    assert.deepEqual(ready.map(event => [event.mode, event.port]), [['attach', 9225], ['launch', 9223]]);
+    assert.equal(run.snapshot().state, 'live');
+  } finally { await run.close(); }
+});
+
 test('credit floor, invalid balance, output bounds and exit errors prevent driver spawn without leaks', async () => {
   for (const options of [{ creditsOutput: '{"credits":199}' }, { creditsOutput: '{"credits":-1}' }, { creditsOutput: 'secret 500' }, { creditsOutput: 'x'.repeat(8193) }, { creditExit: 21 }]) {
     const h = harness(options); const run = await h.create();
@@ -142,7 +161,7 @@ test('resource occupancy returns unavailable and does not spawn driver', async (
   assert.equal(h.spawned.length, 1); assert.equal(run.snapshot().state, 'idle'); await run.close();
 });
 
-test('real detached driver and detached grandchild are gone after forced cleanup', { timeout: 15000 }, async () => {
+test('fallback readiness records PID-less detached descendants and cleanup kills only owned processes', { timeout: 15000 }, async () => {
   const { mkdtemp, rm, readFile } = await import('node:fs/promises');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
@@ -154,16 +173,19 @@ test('real detached driver and detached grandchild are gone after forced cleanup
   // This fixture binds no ports and launches no browser. Do not touch shared runtime locks.
   ops.acquire = async () => {}; ops.release = async () => {}; ops.checkPorts = async () => {};
   const run = await createRunController({ cwd, env, deps: { processes: ops }, handleSignals: false });
-  let identities = [];
+  let identities = []; const ready = [];
+  run.on('chrome_ready', event => ready.push(event));
   try {
     assert.equal((await run.start()).status, 202);
     for (let attempt = 0; attempt < 100; attempt++) {
       const record = JSON.parse(await readFile(config.pidFile, 'utf8'));
       identities = record.processes;
-      if (identities.length >= 2) break;
+      if (identities.length >= 3 && ready.length >= 2) break;
       await new Promise(resolve => setTimeout(resolve, 20));
     }
-    assert.ok(identities.length >= 2, 'recorded driver and detached descendant');
+    assert.ok(identities.length >= 3, 'recorded driver, attach child and detached fallback descendant');
+    assert.deepEqual(ready.map(event => [event.mode, event.port]), [['attach', 9222], ['launch', 9223]]);
+    assert.equal(Object.hasOwn(ready[1], 'pid'), false);
     await run.close();
     for (const identity of identities) assert.equal(await ops.identity(identity.pid), null, `PID ${identity.pid} remains`);
     await assert.rejects(readFile(config.pidFile), { code: 'ENOENT' });
@@ -188,6 +210,7 @@ test('profile removal accepts only owned temp directories and refuses symlinks/o
   const { tmpdir } = await import('node:os'); const { join } = await import('node:path');
   const { createProcessOps } = await import('../run.mjs');
   const profile = await mkdtemp(join(tmpdir(), 'node-arena-chrome-profiletest-'));
+  const launchProfile = await mkdtemp(join(tmpdir(), 'node-arena-kane-launch-profiletest-'));
   const outside = await mkdtemp(join(tmpdir(), 'node-arena-nonprofile-'));
   const link = `${profile}-symlink`;
   const ops = createProcessOps(readRunConfig({}));
@@ -198,7 +221,8 @@ test('profile removal accepts only owned temp directories and refuses symlinks/o
     await ops.removeProfile(identity(outside)); assert.ok((await stat(outside)).isDirectory());
     await ops.removeProfile({ cmdline: ['/usr/bin/node', `--user-data-dir=${profile}`] }); assert.ok((await stat(profile)).isDirectory());
     await ops.removeProfile(identity(profile)); await assert.rejects(stat(profile), { code: 'ENOENT' });
-  } finally { await rm(profile, { recursive: true, force: true }); await rm(outside, { recursive: true, force: true }); await rm(link, { force: true }); }
+    await ops.removeProfile(identity(launchProfile)); await assert.rejects(stat(launchProfile), { code: 'ENOENT' });
+  } finally { await rm(launchProfile, { recursive: true, force: true }); await rm(profile, { recursive: true, force: true }); await rm(outside, { recursive: true, force: true }); await rm(link, { force: true }); }
 });
 
 

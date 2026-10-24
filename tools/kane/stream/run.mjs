@@ -14,6 +14,8 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 // Runtime lock uses a different inode; never unlink the operator's advisory lock.
 const LOCK = '/tmp/node-arena-kane-stream.lock';
 const LINE_LIMIT = 1024 * 1024;
+// 03 lib/fallback.mjs owns this fixed loopback port; never accept a client-selected port.
+const LAUNCH_CDP_PORT = 9223;
 
 function integer(env, key, fallback, min = 0, max = Number.MAX_SAFE_INTEGER) {
   const value = env[key] === undefined || env[key] === '' ? fallback : Number(env[key]);
@@ -64,7 +66,7 @@ function sameIdentity(a, b) {
 async function validatedProfile(identity) {
   if (!identity?.cmdline?.length || !/chrome|chromium/i.test(basename(identity.cmdline[0]))) return null;
   const profile = identity.cmdline.find(arg => arg.startsWith('--user-data-dir='))?.slice('--user-data-dir='.length);
-  if (!profile || dirname(profile) !== tmpdir() || !/^node-arena-chrome-[\w-]+$/.test(basename(profile))) return null;
+  if (!profile || dirname(profile) !== tmpdir() || !/^node-arena-(?:chrome|kane-launch)-[\w-]+$/.test(basename(profile))) return null;
   try {
     const stat = await lstat(profile);
     if (!stat.isDirectory() || stat.isSymbolicLink() || stat.uid !== process.getuid?.() || await realpath(profile) !== profile) return null;
@@ -323,7 +325,8 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
               const line = remainder.trimEnd(); controller.emit('line', line);
               try {
                 const event = JSON.parse(line);
-                if (event.type === 'chrome_ready' && event.port === config.cdpPort) {
+                if (event.type === 'chrome_ready' && Number.isSafeInteger(event.port)
+                  && (event.port === config.cdpPort || (event.mode === 'launch' && event.port === LAUNCH_CDP_PORT))) {
                   void collect().then(() => {
                     if (!active || state === 'ending') return;
                     change('live'); controller.emit('chrome_ready', event);

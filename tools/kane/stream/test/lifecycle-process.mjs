@@ -7,8 +7,13 @@ if (process.argv.includes('--credits-only')) {
   process.on('SIGTERM', () => {});
   if (!process.argv.includes('--child')) {
     const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--child'], { detached: true, stdio: 'ignore' });
-    process.stdout.write(JSON.stringify({ type: 'chrome_ready', port: 9222, pid: child.pid }) + '\n');
+    process.stdout.write(JSON.stringify({ type: 'chrome_ready', mode: 'attach', port: 9222, pid: child.pid }) + '\n');
     child.unref();
+    setTimeout(() => {
+      const fallback = spawn(process.execPath, [fileURLToPath(import.meta.url), '--child'], { detached: true, stdio: 'ignore' });
+      fallback.unref();
+      process.stdout.write(JSON.stringify({ type: 'chrome_ready', mode: 'launch', port: 9223, headless: true }) + '\n');
+    }, 100);
   }
   setInterval(() => {}, 1000);
 }

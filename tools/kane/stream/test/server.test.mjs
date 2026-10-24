@@ -183,11 +183,17 @@ test('HTTP integrates real lifecycle single lock, per-IP limit, daily budget and
     };
     return { run: await createRunController({ env, deps: { spawn, processes }, handleSignals: false }), children };
   }
-  const env = { KANE_STREAM_TRUST_PROXY: '1', KANE_DAILY_CAP: '2', KANE_STREAM_COOLDOWN_S: '0' };
+  const env = { KANE_STREAM_TRUST_PROXY: '1', KANE_DAILY_CAP: '2', KANE_STREAM_COOLDOWN_S: '0', KANE_STREAM_CDP_PORT: '9225' };
   const live = await actual(env);
   const h = await fixture(t, { env, runController: live.run });
   assert.equal((await h.send('/start', { method: 'POST' })).status, 202);
   assert.equal((await h.send('/start', { method: 'POST' })).status, 409);
+  const driver = live.children[1].child;
+  driver.stdout.write('{"type":"chrome_ready","mode":"attach","port":9225,"pid":999}\n');
+  await turn();
+  driver.stdout.write('{"type":"chrome_ready","mode":"launch","port":9223,"headless":true}\n');
+  await turn();
+  assert.deepEqual(h.calls.filter(Array.isArray), [['cast.start', 9225], ['cast.start', 9223]]);
   await live.run.end('won'); await until(() => live.run.snapshot().state === 'idle');
   assert.equal((await h.send('/start', { method: 'POST' })).status, 429);
   assert.equal((await h.send('/start', { method: 'POST', headers: { 'CF-Connecting-IP': '192.0.2.2' } })).status, 202);

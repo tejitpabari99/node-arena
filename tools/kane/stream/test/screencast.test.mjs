@@ -158,3 +158,44 @@ test('viewer limit is bounded and duplicate adds do not multiply listeners', asy
   first.emit('close'); assert.equal(h.stream.clientCount, 0); assert.equal(first.listenerCount('error'), 0);
   await h.stream.stop();
 });
+
+// Operator readiness can switch from the attach browser to Kane's fixed launch browser.
+const discovery = async url => ({ ok: true, json: async () => ({ webSocketDebuggerUrl:
+  `ws://127.0.0.1:${new URL(url).port}/devtools/browser/test` }) });
+
+test('fallback replaces the attach session, keeps viewers, drops stale frames and cancels old retries', async () => {
+  const h = harness({ fetch: discovery }), client = viewer(), lost = [];
+  h.stream.on('video_lost', event => lost.push(event)); h.stream.addClient(client);
+  await h.stream.start(9225); h.frame('attach');
+  const old = h.clients[0];
+  await h.stream.start(9223);
+  assert.equal(h.stream.clientCount, 1); assert.equal(h.stream.lastFrame, null);
+  assert.ok(h.calls.some(call => call.method === 'Page.stopScreencast' && call.sessionId === 'session-0'));
+  old.socket.message({ method: 'Page.screencastFrame', sessionId: 'session-0',
+    params: { sessionId: 7, data: Buffer.from('stale').toString('base64') } });
+  h.frame('fallback'); await settle();
+  assert.deepEqual(client.messages.filter(([, opts]) => opts.binary).map(([data]) => data.toString()), ['attach', 'fallback']);
+  h.clients[1].socket.dispatchEvent(new Event('close')); await settle();
+  assert.equal(h.time.timers.size, 1);
+  await h.stream.start(9223); await h.time.advance(6000);
+  assert.equal(h.clients.length, 3); assert.deepEqual(lost, []); assert.equal(h.stream.clientCount, 1);
+  await h.stream.stop(); assert.equal(h.time.timers.size, 0);
+});
+
+test('fallback cancels an in-flight attach connect and closes its late socket without replacing fallback', async () => {
+  let resolveOld, connects = 0, lateClosed = 0;
+  const socket = new FakeSocket();
+  const fallback = { socket, async send(method) {
+    if (method === 'Target.getTargets') return { targetInfos: [{ type: 'page', targetId: 'fallback', url: 'http://127.0.0.1/?kane=1' }] };
+    if (method === 'Target.attachToTarget') return { sessionId: 'fallback' };
+    return {};
+  }, close() { socket.dispatchEvent(new Event('close')); } };
+  const h = harness({ fetch: discovery, connect: () => ++connects === 1 ? new Promise(resolve => { resolveOld = resolve; }) : Promise.resolve(fallback) });
+  const client = viewer(); h.stream.addClient(client);
+  const oldStart = h.stream.start(9225); await settle();
+  await h.stream.start(9223); await oldStart;
+  resolveOld({ close() { lateClosed++; } }); await settle();
+  assert.equal(lateClosed, 1); assert.equal(h.stream.connection.client, fallback);
+  assert.equal(h.stream.clientCount, 1); assert.equal(connects, 2);
+  await h.stream.stop(); assert.equal(h.time.timers.size, 0);
+});
