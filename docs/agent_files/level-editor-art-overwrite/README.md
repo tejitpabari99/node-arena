@@ -20,6 +20,7 @@ Two approved dev-only tools: in-app level editor and art-override layer. P0 cust
 | [01-level-editor/review-2026-10-24-0627.md](01-level-editor/review-2026-10-24-0627.md) | Three-persona P0 review: PASS, zero outstanding must-fix | done |
 | [02-art-overrides/code-2026-10-24-0800.md](02-art-overrides/code-2026-10-24-0800.md) | Art Tasks 1–6 implementation + review-fix record | done |
 | [02-art-overrides/review-2026-10-24-0800.md](02-art-overrides/review-2026-10-24-0800.md) | Three-persona review of Tasks 1–6: NEEDS_CHANGES (1 must-fix, fixed in 3c25d3c) | done |
+| [02-art-overrides/review-2026-10-24-0830.md](02-art-overrides/review-2026-10-24-0830.md) | Re-review of fix commit 3c25d3c: PASS (0 must-fix) | done |
 
 ## Sub-projects
 | # | Name | Scope | Depends on | Phase |
