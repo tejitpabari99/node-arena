@@ -1,6 +1,6 @@
 ---
 status: in-progress
-summary: Two dependent implementation tasks; Task 1 dispatched for lifecycle and HTTP controls
+summary: Task 1 done with 90 stream tests passing; Task 2 viewer controls and verification in progress
 date: 2026-10-24
 ---
 # Tasks: Stream Stop and Reset
@@ -9,8 +9,8 @@ Source of truth: [PRD.md](PRD.md). The approved design preserves original spendi
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Reusable lifecycle and guarded HTTP Stop/Reset | none | in-progress |
-| 2 | Shared viewer controls, verification and runbook | 1 | todo |
+| 1 | Reusable lifecycle and guarded HTTP Stop/Reset | none | done |
+| 2 | Shared viewer controls, verification and runbook | 1 | in-progress |
 
 ## Task 1 — Reusable lifecycle and guarded HTTP Stop/Reset
 
