@@ -39,3 +39,13 @@ test('zoom button toggles Zoom in / Zoom out, keeps zoom across restart, and lin
  await expect(page.getByRole('button',{name:'Zoom in'})).toBeVisible();
  expect(Math.abs(await spread()-near)).toBeLessThan(2);
 });
+
+test('no focus ring on pause/zoom buttons after Escape-close or on load',async({page})=>{
+ await openLevel(page);
+ const ring=()=>page.evaluate(()=>({active:document.activeElement?.className??'',visible:Array.from(document.querySelectorAll('.battle-back,.battle-zoom')).filter(b=>b.matches(':focus-visible')).length}));
+ expect(await ring()).toMatchObject({visible:0});
+ await page.getByRole('button',{name:'Pause'}).click();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);
+ const after=await ring();expect(after.visible).toBe(0);expect(after.active).not.toContain('battle-back');
+ await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Resume',exact:true}).click();
+ expect(await ring()).toMatchObject({visible:0});
+});

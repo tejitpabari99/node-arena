@@ -28,7 +28,7 @@ it('runs HUD pause, restart, mute, victory/next/replay and defeat/retry flows in
     await page.keyboard.press('Shift+Tab');await browserExpect(dialog.getByRole('button',{name:'Levels'})).toBeFocused();
     await page.keyboard.press('Tab');await browserExpect(dialog.getByRole('button',{name:'Resume',exact:true})).toBeFocused();
     await page.getByRole('button',{name:'Resume'}).click();await browserExpect(dialog).toHaveCount(0);await step();expect(await page.evaluate(()=>Reflect.get(window,'hudTest').tick())).toBe(Number(tick)+1);
-    await browserExpect(page.getByRole('button',{name:'Pause'})).toBeFocused();
+    await browserExpect(page.getByRole('button',{name:'Pause'})).not.toBeFocused();
     await page.getByRole('button',{name:'Mute sound'}).click();expect(await page.evaluate(()=>Reflect.get(window,'hudTest').snapshot().save.settings)).toMatchObject({musicMute:true,sfxMute:true});
     await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Restart',exact:true}).click();await browserExpect(dialog).toHaveCount(0);expect(await page.evaluate(()=>Reflect.get(window,'hudTest').tick())).toBe(0);
     await page.getByRole('button',{name:'Pause'}).click();await page.getByRole('button',{name:'Levels',exact:true}).click();await browserExpect(page.getByRole('region',{name:'Campaign levels'})).toBeVisible();

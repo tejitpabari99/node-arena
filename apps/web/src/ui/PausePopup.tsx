@@ -1,6 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useLayoutEffect,useRef } from 'preact/hooks';
-/** Keep keyboard focus inside an open battle dialog and return it to its trigger. */
+/** Keep keyboard focus inside an open battle dialog and return it to its trigger (except HUD buttons, which would show a focus ring). */
 export function BattlePopup({title,children}:{title:string;children:ComponentChildren}){
   const ref=useRef<HTMLElement>(null);
   useLayoutEffect(()=>{
@@ -10,7 +10,7 @@ export function BattlePopup({title,children}:{title:string;children:ComponentChi
     buttons()[0]?.focus();
     const trap=(event:KeyboardEvent)=>{if(event.key!=='Tab')return;const controls=buttons(),first=controls[0],last=controls.at(-1);if(event.shiftKey&&(document.activeElement===first||!panel.contains(document.activeElement))){event.preventDefault();last?.focus();}else if(!event.shiftKey&&(document.activeElement===last||!panel.contains(document.activeElement))){event.preventDefault();first?.focus();}};
     document.addEventListener('keydown',trap);
-    return()=>{document.removeEventListener('keydown',trap);if(previous instanceof HTMLElement&&previous.isConnected)previous.focus();};
+    return()=>{document.removeEventListener('keydown',trap);if(previous instanceof HTMLElement&&previous.isConnected&&!previous.closest('#game-hud'))previous.focus();else if(panel.contains(document.activeElement))(document.activeElement as HTMLElement).blur();};
   },[]);
   return <div class="battle-scrim"><section ref={ref} class="battle-popup" role="dialog" aria-modal="true" aria-label={title}>
     <h1>{title}</h1><div class="battle-actions">{children}</div>
