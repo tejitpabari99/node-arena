@@ -171,3 +171,36 @@ test('drop and drag far outside the buildable area clamp to its edge; outline dr
   expect(statuses.some(m => m.startsWith('Preview unavailable') || m.startsWith('Preview out of date'))).toBe(false);
   await page.evaluate(() => window.__editorModel!.viewport.dispose());
 });
+
+test('real UI drop far outside the area lands on the area edge and keeps the preview rendered', async ({ page }) => {
+  test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Editor API is dev-only');
+  let saved: LevelDoc | undefined;
+  await page.route('**/__editor/save', async route => {
+    saved = (route.request().postDataJSON() as { level: LevelDoc }).level;
+    await route.fulfill({ json: { level: saved, warnings: [] } });
+  });
+  await page.goto('/editor.html');
+  await page.getByLabel('New level id').fill('na-far-drop');
+  await page.getByRole('button', { name: 'Create blank' }).click();
+  await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
+  const workspace = page.locator('.editor-workspace');
+  const before = JSON.parse((await workspace.getAttribute('data-bounds'))!) as { minX: number; maxX: number; minZ: number; maxZ: number };
+  const area = JSON.parse((await workspace.getAttribute('data-area'))!) as typeof before;
+  const zout = page.getByTestId('canvas-controls').getByRole('button', { name: 'Zoom out', exact: true });
+  for (let i = 0; i < 40 && await zout.isEnabled(); i++) await zout.click();
+  const source = (await page.getByRole('button', { name: 'Place house-wt1', exact: true }).boundingBox())!;
+  const r = (await page.getByLabel('Edit viewport').boundingBox())!;
+  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
+  await page.mouse.move(r.x + r.width - 6, r.y + r.height - 6, { steps: 8 }); await page.mouse.up();
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '1');
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+  await expect(page.getByTestId('viewport-status')).not.toContainText('Preview unavailable');
+  const after = JSON.parse((await workspace.getAttribute('data-bounds'))!) as typeof before;
+  // Bounds never shrink (the area is inset from them by the pad, so an edge drop needs no growth here).
+  expect(after.maxX).toBeGreaterThanOrEqual(before.maxX); expect(after.minZ).toBeLessThanOrEqual(before.minZ);
+  // Area is fixed per doc open: it still clamps drops, and the item sits on its edge.
+  expect(JSON.parse((await workspace.getAttribute('data-area'))!)).toEqual(area);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect.poll(() => saved?.buildings.length).toBe(1);
+  expect(saved!.buildings[0]!.pos).toEqual({ x: area.maxX, z: area.maxZ });
+});
