@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'preact/hooks';
 import { ItemProperties } from './Properties.js';
-import { snapYaw, type DocOp, type LibraryItem } from './model.js';
+import { snapYaw, type DocOp } from './model.js';
 import type { Point, Selection } from './picking.js';
 import { useEditor } from './EditorContext.js';
 import type { ComponentChildren } from 'preact';
 
 /** Temporary pre-redesign sidebar; consumes EditorContext. SP02 deletes this file. */
-export function LegacyPanel({ pointer, wrapLibrary, wrapSelection }: { pointer: Point | null; wrapLibrary: (c: ComponentChildren) => ComponentChildren; wrapSelection: (c: ComponentChildren) => ComponentChildren }) {
+export function LegacyPanel({ pointer, wrapSelection }: { pointer: Point | null; wrapSelection: (c: ComponentChildren) => ComponentChildren }) {
   const { doc, edit, deleteSelection, selection, select, clipboard, copy, paste, viewport, locked, losStatus } = useEditor();
   const [snap, setSnap] = useState(true);
   const [losFrom, setLosFrom] = useState(''), [losTo, setLosTo] = useState('');
@@ -15,13 +15,7 @@ export function LegacyPanel({ pointer, wrapLibrary, wrapSelection }: { pointer: 
   useEffect(() => { viewport.current?.setLos({ from: losFrom, to: losTo }); }, [losFrom, losTo]);
   useEffect(() => { setLosFrom(''); setLosTo(''); }, [doc.id]);
   return <>
-    {wrapLibrary(<aside class="editor-view-tools" aria-label="Viewport tools">
-      <h3>Library</h3>
-      {(['house-wt1', 'house-wt2', 'tower', 'obstacle-small', 'obstacle-big'] as LibraryItem[]).map(item => <button key={item} class="editor-library-item" disabled={locked} aria-label={`Place ${item}`} onPointerDown={event => {
-        if (event.button !== 0) return;
-        event.preventDefault(); viewport.current?.beginPlacement(item, event.pointerId);
-      }}>{item.replace('obstacle-', 'Obstacle ')}</button>)}
-      <p>Drag an item onto the view. Drag a selected item to move it.</p>
+    <aside class="editor-view-tools" aria-label="Viewport tools">
       <button disabled={locked || selection.length !== 1} onClick={deleteSelection}>Delete selected</button>
       <label>Selected item<select aria-label="Selected item" value={selection.length === 1 ? `${selection[0]!.kind}:${selection[0]!.id}` : ''} onChange={event => {
         const [kind, id] = event.currentTarget.value.split(':');
@@ -49,7 +43,7 @@ export function LegacyPanel({ pointer, wrapLibrary, wrapSelection }: { pointer: 
       <p>Click to select. Drag on empty ground for marquee.</p>
       <p data-testid="viewport-selection">{selection.length ? selection.map(item => `${item.kind}: ${item.id}`).join(', ') : 'No selection'}</p>
       <p aria-live="off">{pointer ? `x ${pointer.x.toFixed(2)} · z ${pointer.z.toFixed(2)}` : 'Ground coordinates'}</p>
-    </aside>)}
+    </aside>
     {wrapSelection(<ItemProperties doc={doc} selection={selection} onEdit={apply} disabled={locked} />)}
   </>;
 }
