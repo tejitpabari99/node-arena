@@ -128,3 +128,4 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-level .ed-players { gap: 6px; margin: 8px 0; }
 .ed-library-tile:hover { border-color: var(--ed-green); background: #fff; }
 .ed-apply { margin-top: 8px; }
+.preview-error { position: absolute; top: 8px; left: 8px; z-index: 3; margin: 0; padding: 4px 8px; border: 1px solid #ff9b9b; background: #5a1d1dd9; color: #fff; font-size: 12px; pointer-events: none; }

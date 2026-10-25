@@ -9,7 +9,7 @@ import { snapPosition, type DocOp, type LibraryItem } from './model.js';
 import type { LevelDoc } from './document.js';
 import { groundAt, pickObstacle, type Point, type Selection } from './picking.js';
 
-export interface ViewportStatus { message: string; rebuildMs?: number; compileMs?: number; sceneMs?: number; firstFrameMs?: number }
+export interface ViewportStatus { message: string; error?: string; rebuildMs?: number; compileMs?: number; sceneMs?: number; firstFrameMs?: number }
 /** Editor camera, picking and transient drag previews; only release emits document edits. */
 export function createEditorViewport(parent: HTMLElement, callbacks: {
   selection?(items: Selection[]): void;
@@ -73,6 +73,8 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   }
   let resources: Promise<{ manifest: ManifestV2; catalog: Catalog }> | undefined;
   let pending = Promise.resolve();
+  /** True while the last rebuild failed and the previous scene/level/sim is still shown. */
+  let stale = false;
   const marquee = document.createElement('div'); marquee.className = 'editor-marquee'; marquee.hidden = true; parent.append(marquee);
   let gesture: { id: number; x: number; y: number; lastX: number; lastY: number; pan: boolean; empty: boolean; target: Selection | null; origin: Point | null; start: Point | null; targets: Selection[] } | undefined;
   const report = (status: ViewportStatus) => callbacks.status?.(status);
@@ -113,7 +115,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     return groundAt(x, y, scene?.canvas.getBoundingClientRect() ?? parent.getBoundingClientRect(), scene?.camera ?? blankCamera, scene?.worldRoot ?? blankRoot);
   }
   function pick(x: number, y: number): Selection | null {
-    if (!scene || !level) return null;
+    if (!scene || !level || stale) return null;
     const rect = scene.canvas.getBoundingClientRect(), ray = new Raycaster();
     scene.scene.updateMatrixWorld(true);
     ray.setFromCamera(new Vector2((x - rect.left) / rect.width * 2 - 1, 1 - (y - rect.top) / rect.height * 2), scene.camera);
@@ -133,6 +135,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   function down(event: PointerEvent) {
     if (!scene || gesture || !event.isPrimary || ![0, 1, 2].includes(event.button)) return;
     const panning = event.button !== 0 || event.altKey;
+    if (stale && !panning) return; // selection, drag-move and marquee would target ids from the previous level
     const hit = panning ? null : pick(event.clientX, event.clientY);
     const item = hit && (hit.kind === 'building' ? workingDoc?.buildings : workingDoc?.elements)?.find(item => item.id === hit.id);
     if (!panning) {
@@ -205,7 +208,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   for (const [name, handler] of Object.entries(handlers)) parent.addEventListener(name, handler as EventListener, { passive: false });
   function zoomBy(factor: number) { zoom = Math.min(3, Math.max(.35, zoom * factor)); frameCamera(); }
   function gameCamera() { zoom = 1; pan = { x: 0, z: 0 }; frameCamera(); }
-  function clearScene() { scene?.dispose(); scene = undefined; level = undefined; sim = undefined; }
+  function clearScene() { scene?.dispose(); scene = undefined; level = undefined; sim = undefined; stale = false; }
   async function rebuild(doc: LevelDoc, token: number) {
     if (disposed || token !== generation) return;
     cancel();
@@ -238,14 +241,16 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       } else await scene.world.setLevel(next, next.theme);
       if (disposed || token !== generation) return;
       const sceneAt = performance.now();
-      level = next; sim = nextSim;
+      level = next; sim = nextSim; stale = false;
       scene.update({ view: sim.view, troops: createTroopBuffer(0), n: 0, alpha: 0, towerRadiusMilli: sim.towerRadiusMilli.bind(sim) }, [], 0);
       const rebuiltAt = performance.now();
       frameCamera(); choose(selection);
       report({ message: 'Ready', rebuildMs: rebuiltAt - start, compileMs: compiledAt - start, sceneMs: sceneAt - compiledAt, firstFrameMs: performance.now() - start });
     } catch (error) {
       if (disposed || token !== generation) return;
-      clearScene(); frameCamera(); report({ message: `Preview unavailable: ${error instanceof Error ? error.message : String(error)}` });
+      const reason = error instanceof Error ? error.message : String(error);
+      if (scene && level && sim) { stale = true; report({ message: 'Preview out of date', error: reason }); return; }
+      clearScene(); frameCamera(); report({ message: `Preview unavailable: ${reason}` });
     }
   }
   return {

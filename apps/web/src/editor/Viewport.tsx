@@ -24,6 +24,7 @@ export function Viewport({ onStatus, onLos, onSelection }: { onStatus: (status: 
   const { viewportStatus: status } = ctx;
   return <>
     <div ref={host} class="editor-workspace" aria-label="Edit viewport" />
+    {status.error !== undefined && <p role="alert" class="preview-error" data-testid="preview-error">Preview out of date — {status.error}</p>}
     <p role="status" class="sr-only" data-testid="viewport-status">{status.message}{status.rebuildMs !== undefined ? ` · ${status.rebuildMs.toFixed(1)} ms` : ''}</p>
   </>;
 }

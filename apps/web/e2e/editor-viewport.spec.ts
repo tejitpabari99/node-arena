@@ -153,3 +153,49 @@ test('textures that finish after scene readiness appear without touching the cam
   release(); await loaded;
   await expect.poll(async () => !(await canvas.screenshot()).equals(before)).toBe(true);
 });
+
+test('failed rebuild keeps the last scene with an error badge, disables picking, and clears on undo', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  await page.route('**/__editor/level/levelview-1', async route => {
+    const doc = await (await route.fetch()).json() as LevelDoc;
+    doc.buildings = [
+      { id: 'b0', archetype: 'house-wt1', pos: { x: -4, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
+      { id: 'b1', archetype: 'house-wt1', pos: { x: 4, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
+    ];
+    doc.elements = [];
+    await route.fulfill({ json: doc });
+  });
+  await page.goto('/editor.html?template=levelview-1');
+  const status = page.getByTestId('viewport-status'), badge = page.getByTestId('preview-error');
+  await expect(status).toContainText('Ready');
+  const box = (await page.getByLabel('Edit viewport').boundingBox())!, src = (await page.getByRole('button', { name: 'Place tower', exact: true }).boundingBox())!;
+  const drop = { x: box.x + box.width * .5, y: box.y + box.height * .8 };
+  const place = async () => {
+    await page.mouse.move(src.x + src.width / 2, src.y + src.height / 2); await page.mouse.down();
+    await page.mouse.move(drop.x, drop.y, { steps: 8 }); await page.mouse.up();
+  };
+  // Re-dropping at one screen point converges on an identical snapped position (the camera settles
+  // once the area stops growing); the first exact repeat is a coincident building, so the compile fails.
+  for (let i = 0; i < 8 && !(await badge.count()); i++) {
+    await place();
+    await expect(status).not.toContainText('Loading');
+    await page.waitForTimeout(400);
+  }
+  await expect(badge).toBeVisible();
+  await expect(badge).toHaveAttribute('role', 'alert');
+  await expect(badge).toContainText('Preview out of date');
+  await expect(badge).toContainText('Coincident');
+  await expect(status).not.toContainText('Preview unavailable');
+  await expect(page.getByLabel('Edit viewport').locator('canvas')).toBeVisible();
+  // Picking is disabled while stale, even directly on the previously rendered tower.
+  await page.getByLabel('Selected item', { exact: true }).selectOption('');
+  await page.mouse.click(drop.x, drop.y);
+  await expect(page.getByTestId('viewport-selection')).toHaveText('No selection');
+  // Undo restores a valid document; the badge clears and picking works again.
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(badge).toHaveCount(0);
+  await expect(status).toContainText('Ready');
+  await page.getByLabel('Selected item', { exact: true }).selectOption('');
+  await page.mouse.click(drop.x, drop.y);
+  await expect(page.getByTestId('viewport-selection')).toContainText('building:');
+});
