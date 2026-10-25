@@ -4,13 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kane plays Node Arena</title>
-  <link rel="stylesheet" href="/style.css">
-  <script src="/app.js" defer></script>
+  <link rel="stylesheet" href="/kane-cli/style.css">
+  <script src="/kane-cli/app.js" defer></script>
 </head>
 <body>
   <main>
     <header>
-      <h1>Kane plays Node Arena</h1>
+      <div>
+        <h1>Kane plays Node Arena</h1>
+        <p class="intro">Kane CLI is testing Node Arena by playing it autonomously. Watch it read the screen, choose its moves, and use the game’s controls in real time.</p>
+      </div>
       <div class="presence"><span class="presence-dot" aria-hidden="true"></span><span id="viewers">0</span> watching</div>
     </header>
     <section class="stage" aria-label="Live game stream">
@@ -18,7 +21,7 @@
       <p id="video-message">Waiting for a run</p>
     </section>
     <div class="controls">
-      <div class="run-status"><span id="status" role="status" data-state="starting">starting</span><p id="message" aria-live="polite">Connecting…</p><a id="backup" href="/backup.mp4" hidden>Watch recorded run</a></div>
+      <div class="run-status"><span id="status" role="status" data-state="starting">starting</span><p id="message" aria-live="polite">Connecting…</p><a id="backup" href="/kane-cli/backup.mp4" hidden>Watch recorded run</a></div>
       <div class="buttons" aria-label="Run controls">
         <button id="start" type="button" disabled>Start</button>
         <button id="stop" type="button" hidden>Stop</button>

@@ -87,7 +87,7 @@ async function main() {
       const Source = window.EventSource;
       window.EventSource = class extends Source { constructor(...args) { super(...args); this.addEventListener('message', event => window.smoke.events.push(JSON.parse(event.data))); } };
     });
-    await page.goto(base); return page;
+    await page.goto(base + '/kane-cli'); return page;
   }
   const pixels = page => page.evaluate(() => {
     const canvas = document.querySelector('#screen'), bytes = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
@@ -139,7 +139,7 @@ async function main() {
     await poll(async () => (await state()).state === 'cooldown');
     assert.equal((await state()).outcome, 'failed');
     for (const page of [first, second]) { await page.waitForFunction(() => document.querySelector('#message').textContent === 'Live run unavailable'); assert.equal(await page.locator('#backup').isVisible(), false); }
-    assert.equal((await fetch(base + '/backup.mp4', { method: 'HEAD' })).status, 404);
+    assert.equal((await fetch(base + '/kane-cli/backup.mp4', { method: 'HEAD' })).status, 404);
     await first.screenshot({ path: resolve(evidence, 'viewer-failed.png'), fullPage: true });
     await poll(async () => (await state()).state === 'idle');
     await sampleOwned();

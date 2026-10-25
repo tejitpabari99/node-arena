@@ -69,7 +69,7 @@
     "check:kane-bundle": "node scripts/check-kane-bundle.mjs",
     "kane:play": "node tools/kane/drive.mjs",
     "kane:credits": "node tools/kane/drive.mjs --credits-only",
-    "kane:stream": "node tools/kane/stream/server.mjs"
+    "kane:stream": "VITE_TEST_HOOKS=0 pnpm --filter @node-arena/web build && node tools/kane/stream/server.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

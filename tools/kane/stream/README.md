@@ -1,10 +1,11 @@
 # Hosted Kane stream
 
 Node Arena operator runbook. Run from the repository root with Node
->=22.13, pnpm 10.34.6 and the existing Chromium setup. The service exposes a viewer,
-JPEG frames over WebSocket and allowlist-filtered driver events over SSE. The test
+>=22.13, pnpm 10.34.6 and the existing Chromium setup. The service exposes the production playable game at `/` and the Kane viewer at
+`/kane-cli` (also `/kane-cli/`), JPEG frames over WebSocket and allowlist-filtered driver events over SSE. The test
 build, CDP and raw logs stay private. Never proxy the preview server or CDP.
-The stream exposes only the viewer, captured frames and filtered events.
+Only the production client build, fixed viewer assets, captured frames and filtered
+events are public. Source files, test builds and development/editor routes are not served.
 Assets based on / motivated by Tower War.
 
 **Before any paid Kane run or public exposure:** pass the security audit with no
@@ -14,7 +15,7 @@ DNS and tunnel changes are owner steps; do not apply them during a local smoke.
 
 ## Configured ngrok deployment (currently stopped)
 
-As authorized on 2026-10-24, [Kane plays Node Arena](https://helene-unreconnoitred-overslowly.ngrok-free.dev) was verified running the merged `kane-cli` branch from the primary `/root/projects/node-arena` checkout. After the successful real rehearsal, the user requested shutdown: both services are now inactive and boot-disabled, and the URL is intentionally offline. Configuration is preserved. When hosting is authorized again, normal browsers first see ngrok's free warning; click **Visit Site**. The real winning public rehearsal and proxy checks are recorded in [SP05 Task 10](../../../docs/agent_files/feat-kane-hackday-20261023-2128/05-hosted-stream/code-2026-10-24-2309.md). The user's ngrok and separate credit-budget instructions supersede the historical nginx/DNS and portal-confirmation prerequisites for this deployment; the alternatives below remain reference material.
+As authorized on 2026-10-24, [the ngrok site](https://helene-unreconnoitred-overslowly.ngrok-free.dev) was verified running the merged `kane-cli` branch from the primary `/root/projects/node-arena` checkout. After the successful real rehearsal, the user requested shutdown: both services are now inactive and boot-disabled, and the URL is intentionally offline. Configuration is preserved. When hosting is authorized again, normal browsers first see ngrok's free warning; click **Visit Site**. The real winning public rehearsal and proxy checks are recorded in [SP05 Task 10](../../../docs/agent_files/feat-kane-hackday-20261023-2128/05-hosted-stream/code-2026-10-24-2309.md). The user's ngrok and separate credit-budget instructions supersede the historical nginx/DNS and portal-confirmation prerequisites for this deployment; the alternatives below remain reference material.
 
 Dedicated units (currently inactive and boot-disabled) are `node-arena-kane-stream.service` and `node-arena-kane-ngrok.service`. Private operator files live in `/root/.config/node-arena-kane-stream/`: `service.env`, `locked-driver.mjs`, `ngrok-policy.yml`; unit definitions live under `/etc/systemd/system/`. These configurations and credentials are outside git. Health checks and a restart example for a later authorized session:
 
@@ -22,26 +23,40 @@ Dedicated units (currently inactive and boot-disabled) are `node-arena-kane-stre
 systemctl is-active node-arena-kane-stream.service node-arena-kane-ngrok.service
 systemctl is-enabled node-arena-kane-stream.service node-arena-kane-ngrok.service
 curl --fail http://127.0.0.1:8787/api/state
+# Build the current production client before direct systemd startup.
+VITE_TEST_HOOKS=0 pnpm --filter @node-arena/web build
 # Restart interrupts an active run; coordinate shared resources first.
 systemctl restart node-arena-kane-stream.service node-arena-kane-ngrok.service
 ```
 
 ngrok forwards only to `127.0.0.1:8787`, preserves public Host/Origin and disables traffic inspection. Its private policy removes incoming `CF-Connecting-IP`, `X-Forwarded-For`, `X-Real-IP` and `Forwarded`, then sets `CF-Connecting-IP` from ngrok's verified `${conn.client_ip}`. This replacement is required for `KANE_STREAM_TRUST_PROXY=1`; appending an attacker-supplied XFF would not provide trusted visitor identity. Actual private upstream capture verified the injected IP and Host; differing forged headers could not bypass per-IP connection caps.
 
-Production runs the real driver through the fixed local wrapper, which takes `/tmp/node-arena-kane-resources.lock` for each credits command/run rather than the idle service lifetime. Busy resources return generic unavailable. Backend 8787, preview 4175 and CDP 9225 (fallback 9223) remain loopback; the game, CDP and raw files are not tunneled. Production retains floor 200, max runs 20, wall limit 720 s, cooldown 120 s, Start/IP 600 s, daily 6, WS/SSE totals 100/200 and per-IP 3/3; no extra origins are enabled. No fake driver remains configured. Stop/Reset is a separate follow-up and is not deployed here.
+Production runs the real driver through the fixed local wrapper, which takes `/tmp/node-arena-kane-resources.lock` for each credits command/run rather than the idle service lifetime. Busy resources return generic unavailable. Backend 8787, preview 4175 and CDP 9225 (fallback 9223) remain loopback; the private test game, CDP and raw files are not tunneled. After this route change is merged and deployed, `/` serves the normal production game and `/kane-cli` serves the stream; opening or playing the normal game spends no Kane credits. Production retains floor 200, max runs 20, wall limit 720 s, cooldown 120 s, Start/IP 600 s, daily 6, WS/SSE totals 100/200 and per-IP 3/3; no extra origins are enabled. No fake driver remains configured. Stop/Reset is a separate follow-up and is not deployed here.
 
 ## Local operation and shared resources
 
 Build prerequisites follow the [root README](../../../README.md). The real driver
-requires `kane-cli` login. `pnpm kane:stream` listens on `127.0.0.1:8787`. Opening
-the page is free; Start with the real driver spends credits. The server preflights
+requires `kane-cli` login. `pnpm kane:stream` rebuilds `apps/web/dist` with test hooks explicitly disabled
+(even if `VITE_TEST_HOOKS=1` is inherited), then listens on `127.0.0.1:8787`.
+Open `/` to play the normal 20-level game, or `/kane-cli` to watch/control the stream.
+Opening either page and playing the normal game are free; Start with the real driver spends credits. The server preflights
 credits then spawns the existing headless driver with `--software-gl --serve`,
 credit floor and iteration cap. `--max-run-s` belongs to the **stream server**,
 not the driver:
 
 ```sh
+VITE_TEST_HOOKS=0 pnpm --filter @node-arena/web build
 node tools/kane/stream/server.mjs --max-run-s 720
 ```
+
+Direct Node/systemd startup does not build: rebuild production output first. If
+the production build is missing, `/` returns HTTP 503 with “Game temporarily
+unavailable.”; the viewer and backend controls remain available. The server serves
+only files inside `apps/web/dist`, rejects encoded/traversal paths and symlinks at
+every path component, and never proxies the private test preview. Static serving
+uses Linux `/proc/self/fd` directory descriptors. Game headers permit its local
+textures/models, font, audio and inline UI styles. Game-only `unsafe-eval` is
+required by the current AJV schema compiler (`Function`) and GLTF decoder WebAssembly; viewer CSP stays restrictive.
 
 Coordinate all browser/Kane work first. Hold the external advisory `flock` for the
 entire browser/credit session, including shutdown and cleanup. Check stream,
@@ -66,7 +81,7 @@ Credit-free local smoke (no Kane calls):
 ) 9>/tmp/node-arena-kane-resources.lock
 ```
 
-Open `http://127.0.0.1:8787` and press Start while it runs. The fake driver reports
+Open `http://127.0.0.1:8787/kane-cli` and press Start while it runs. The fake driver reports
 synthetic credits `500`, launches real loopback preview/Chrome and emits events for
 12 seconds **after readiness**. Completion exits 30 and yields `failed`; it does
 not claim a win. It still requires Chromium and the test build. After shutdown,
@@ -74,8 +89,9 @@ verify the session's driver, Chrome and preview exited without changing unrelate
 processes. For an authorized real run use the same lock/port procedure and omit
 `KANE_STREAM_DRIVER` and `KANE_STREAM_FAKE_DURATION_S`.
 
-Only fixed viewer files, `/backup.mp4`, `/api/state`, `/start`, `/stop`, `/reset`,
-`/events` and `/ws` are served. All three POST controls require a valid Origin;
+The normal game uses `/` and its built asset URLs. Fixed viewer assets live under
+`/kane-cli/`, including `/kane-cli/backup.mp4`. Backend routes stay at `/api/state`,
+`/start`, `/stop`, `/reset`, `/events` and `/ws`. All three POST controls require a valid Origin;
 the viewer sends no request body. The lifecycle includes
 starting/live/ending/cooldown; default cooldown is 120 seconds. The credit floor is
 checked before spawn and again by the driver. Raw NDJSON/process records stay in
@@ -120,12 +136,16 @@ Credit-free verification for this change uses ephemeral local HTTP servers,
 injected lifecycle operations, synthetic events and mocked JPEG/transport races:
 
 ```sh
+VITE_TEST_HOOKS=0 pnpm --filter @node-arena/web build
 node --test tools/kane/stream/test
 KANE_VIEWER_SCREENSHOTS=1 node --test tools/kane/stream/test/viewer.test.mjs
 pnpm check:docs
 ```
 
-The browser suite checks two viewers, initial/reload/Reset with zero automatic
+The browser suite also checks the real production game at `/` and `/?kane=1`
+(20 campaign levels, no `window.__na`), rendering/model/texture/font/audio loads,
+Zoom/Pause/Resume and both viewer route forms with zero automatic starts. Production
+game captures go to `/tmp/kane-route-*.png`. The controls suite checks two viewers, initial/reload/Reset with zero automatic
 `/start` requests, stopped cleanup gating, retained cooldown, fresh Start, stale
 HTTP responses, missed reset, old SSE/socket callbacks and in-flight decoding.
 Screenshots go to `/tmp/kane-controls-*.png` and `/tmp/kane-viewer-*.png`. These tests
@@ -357,13 +377,14 @@ for full live logs. Use nginx or a separately validated named Cloudflare Tunnel 
 full WS + SSE. No tunnel is started by this task.
 
 Owner may place a recorded winning run at `public/backup.mp4` relative to this
-folder. It is git-ignored; `/backup.mp4` serves it only when present and the failure
+folder. It is git-ignored; `/kane-cli/backup.mp4` serves it only when present and the failure
 UI can link to it. Keep sensitive raw evidence outside git and redact credentials,
 private paths and account details before sharing evidence. No recording is bundled.
 
 ## Checks and dependency
 
 ```sh
+VITE_TEST_HOOKS=0 pnpm --filter @node-arena/web build
 node --test tools/kane/stream/test
 pnpm check:docs
 git diff --check
