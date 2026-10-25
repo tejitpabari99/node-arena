@@ -278,3 +278,79 @@ test('camera model: stable on edit, anchored wheel, limits, fit area, game camer
   await page.evaluate(() => window.__editorViewport!.zoomBy(1000));
   expect((await page.evaluate(() => window.__editorViewport!.viewState)).atMax).toBe(true);
 });
+
+test('pan gestures: hand mode, Space, middle/right drag, marquee with hand off, grid overlay', async ({ page }) => {
+  test.skip(!development, 'Uses dev module imports and local API');
+  test.setTimeout(120000);
+  await page.goto('/editor.html');
+  await page.evaluate(async () => {
+    const path = '/src/editor/viewport-engine.ts';
+    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport-engine.js');
+    const host = document.createElement('div');
+    host.id = 'viewport-fixture'; host.className = 'editor-workspace';
+    Object.assign(host.style, { position: 'absolute', left: '240px', top: '100px', width: '900px', height: '650px' });
+    document.body.append(host);
+    window.__editorSelection = [];
+    window.__editorViewport = createEditorViewport(host, { selection: items => { window.__editorSelection = items; } });
+    const doc = await (await fetch('/__editor/level/na-trial')).json() as LevelDoc;
+    const model = '/src/editor/model.ts';
+    const { buildableArea } = await import(/* @vite-ignore */ model) as typeof import('../src/editor/model.js');
+    window.__editorViewport.setArea(buildableArea(doc.bounds));
+    await window.__editorViewport.setDocument(doc);
+  });
+  const cam = () => page.evaluate(() => window.__editorViewport!.inspection!.camera.position.toArray());
+  const drag = async (button: 'left' | 'middle' | 'right') => {
+    const before = await cam();
+    await page.mouse.move(600, 400); await page.mouse.down({ button });
+    await page.mouse.move(560, 380, { steps: 4 }); await page.mouse.up({ button });
+    return { before, after: await cam() };
+  };
+  // Pan must not change selection, even when pressing on an item: select b0 first, then pan from empty/any spot.
+  await page.evaluate(() => window.__editorViewport!.select([{ kind: 'building', id: 'b0' }]));
+  await page.evaluate(() => window.__editorViewport!.zoomBy(1.5));
+  let r = await drag('middle'); expect(r.after).not.toEqual(r.before);
+  r = await drag('right'); expect(r.after).not.toEqual(r.before);
+  // Hand off: left drag on empty = marquee, camera static.
+  await page.mouse.move(245, 105); await page.mouse.down(); await page.mouse.move(1135, 745, { steps: 5 });
+  await expect(page.locator('.editor-marquee:visible')).toHaveCount(1);
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.__editorSelection!.length)).toBeGreaterThan(0);
+  // Hand on: left drag pans, selection unchanged.
+  await page.evaluate(() => window.__editorViewport!.select([{ kind: 'building', id: 'b0' }]));
+  await page.evaluate(() => window.__editorViewport!.setHand(true));
+  expect(await page.locator('#viewport-fixture').evaluate(e => e.style.cursor)).toBe('grab');
+  r = await drag('left'); expect(r.after).not.toEqual(r.before);
+  expect(await page.evaluate(() => window.__editorSelection)).toEqual([{ kind: 'building', id: 'b0' }]);
+  await expect(page.locator('.editor-marquee:visible')).toHaveCount(0);
+  await page.evaluate(() => window.__editorViewport!.setHand(false));
+  // Space held (over canvas): left drag pans.
+  await page.evaluate(() => window.__editorViewport!.setSpace(true)); // key wiring lives in Viewport.tsx; engine seam here
+  expect(await page.locator('#viewport-fixture').evaluate(e => e.style.cursor)).toBe('grab');
+  r = await drag('left'); expect(r.after).not.toEqual(r.before);
+  await page.evaluate(() => window.__editorViewport!.setSpace(false));
+  expect(await page.locator('#viewport-fixture').evaluate(e => e.style.cursor)).toBe('');
+  // Grid overlay.
+  await expect(page.locator('.editor-grid-line')).toHaveCount(0);
+  await page.evaluate(() => window.__editorViewport!.setGrid(true));
+  expect(await page.locator('.editor-grid-line').count()).toBeGreaterThan(40);
+  expect(await page.locator('.editor-grid-major').count()).toBeGreaterThan(0);
+  await page.evaluate(() => window.__editorViewport!.fitArea()); // 40x30 area at fit: spacing may fall under 8px
+  await page.evaluate(() => window.__editorViewport!.setGrid(false));
+  await expect(page.locator('.editor-grid-line')).toHaveCount(0);
+});
+
+test('Space key in the editor pans only while the pointer is over the canvas', async ({ page }) => {
+  test.skip(!development, 'Dev-only editor');
+  await page.goto('/editor.html?template=levelview-1');
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+  const ws = page.locator('.editor-workspace'), box = (await ws.boundingBox())!;
+  await page.mouse.move(box.x + 50, box.y + 50);
+  await page.keyboard.down('Space');
+  expect(await ws.evaluate(e => (e as HTMLElement).style.cursor)).toBe('grab');
+  await page.keyboard.up('Space');
+  expect(await ws.evaluate(e => (e as HTMLElement).style.cursor)).toBe('');
+  await page.mouse.move(2, 2);
+  await page.keyboard.down('Space');
+  expect(await ws.evaluate(e => (e as HTMLElement).style.cursor)).toBe('');
+  await page.keyboard.up('Space');
+});

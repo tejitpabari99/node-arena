@@ -30,6 +30,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   let intent: 'reset' | 'fit' | undefined = 'reset';
   let viewState: ViewState = { zoom: 1, min: 1, max: ZOOM_MAX, atMin: false, atMax: false };
   let selection: Selection[] = [];
+  let hand = false, space = false, grid = false;
   let los: { from: string; to: string } | undefined;
   const svgNS = 'http://www.w3.org/2000/svg';
   const overlay = document.createElementNS(svgNS, 'svg'); overlay.classList.add('editor-layout-overlay'); parent.append(overlay);
@@ -50,6 +51,19 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     const w = rect.width, h = rect.height, corners = ring(buildArea);
     element('path', { d: `M0,0H${w}V${h}H0Z M${corners.join(' L')}Z`, 'fill-rule': 'evenodd', class: 'editor-area-shade' });
     element('polygon', { points: corners.join(' '), class: 'editor-area' });
+    if (grid) {
+      const mid = { x: Math.round((buildArea.minX + buildArea.maxX) / 2), z: Math.round((buildArea.minZ + buildArea.maxZ) / 2) };
+      const o = point(mid.x, mid.z), px = point(mid.x + 1, mid.z), pz = point(mid.x, mid.z + 1);
+      if (Math.min(Math.hypot(px.x - o.x, px.y - o.y), Math.hypot(pz.x - o.x, pz.y - o.y)) >= 8) {
+        const lines = element('g', { class: 'editor-grid' });
+        const line = (a: [number, number], c: [number, number], major: boolean) => {
+          const s0 = point(a[0], a[1]), s1 = point(c[0], c[1]);
+          element('line', { x1: s0.x, y1: s0.y, x2: s1.x, y2: s1.y, class: major ? 'editor-grid-line editor-grid-major' : 'editor-grid-line' }, lines);
+        };
+        for (let x = Math.ceil(buildArea.minX); x <= buildArea.maxX; x++) line([x, buildArea.minZ], [x, buildArea.maxZ], x % 5 === 0);
+        for (let z = Math.ceil(buildArea.minZ); z <= buildArea.maxZ; z++) line([buildArea.minX, z], [buildArea.maxX, z], z % 5 === 0);
+      }
+    }
     for (const target of selection) {
       const item = (target.kind === 'building' ? workingDoc.buildings : workingDoc.elements).find(item => item.id === target.id);
       if (item) { const p = point(item.pos.x, item.pos.z); element('ellipse', { cx: p.x, cy: p.y, rx: 23, ry: 13, class: 'editor-selection-ring' }); }
@@ -180,10 +194,11 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     const v = new Vector3(x, 0, z).applyMatrix4((scene?.worldRoot ?? blankRoot).matrixWorld).project(scene?.camera ?? blankCamera);
     return { x: rect.left + (v.x + 1) * rect.width / 2, y: rect.top + (1 - v.y) * rect.height / 2 };
   }
-  function cancel() { for (const node of groupGhosts) node.remove(); groupGhosts.length = 0; gesture = undefined; placement = undefined; ghostPoint = null; ghost.hidden = true; marquee.hidden = true; }
+  function updateCursor() { parent.style.cursor = gesture?.pan ? 'grabbing' : hand || space ? 'grab' : ''; }
+  function cancel() { for (const node of groupGhosts) node.remove(); groupGhosts.length = 0; gesture = undefined; placement = undefined; ghostPoint = null; ghost.hidden = true; marquee.hidden = true; updateCursor(); }
   function down(event: PointerEvent) {
-    if (!scene || gesture || !event.isPrimary || ![0, 1, 2].includes(event.button)) return;
-    const panning = event.button !== 0 || event.altKey;
+    if (!scene || gesture || placement || !event.isPrimary || ![0, 1, 2].includes(event.button)) return;
+    const panning = event.button !== 0 || event.altKey || hand || space;
     if (stale && !panning) return; // selection, drag-move and marquee would target ids from the previous level
     const hit = panning ? null : pick(event.clientX, event.clientY);
     const item = hit && (hit.kind === 'building' ? workingDoc?.buildings : workingDoc?.elements)?.find(item => item.id === hit.id);
@@ -193,7 +208,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       else if (!included) choose(hit ? [hit] : []);
     }
     gesture = { targets: [...selection], id: event.pointerId, x: event.clientX, y: event.clientY, lastX: event.clientX, lastY: event.clientY, pan: panning, empty: hit === null, target: hit, origin: item ? { ...item.pos } : null, start: at(event.clientX, event.clientY) };
-    scene.canvas.setPointerCapture(event.pointerId); event.preventDefault();
+    scene.canvas.setPointerCapture(event.pointerId); event.preventDefault(); updateCursor();
   }
   function move(event: PointerEvent) {
     callbacks.pointer?.(at(event.clientX, event.clientY));
@@ -320,6 +335,10 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     setDocument(doc: LevelDoc) { const token = ++generation; pending = pending.then(() => rebuild(doc, token)); return pending; },
     beginPlacement(item: LibraryItem, pointerId: number) { cancel(); placement = { item, id: pointerId }; },
     setLos(value: { from: string; to: string }) { los = value; overlays(); },
+    setHand(on: boolean) { hand = on; updateCursor(); },
+    setSpace(on: boolean) { space = on; updateCursor(); },
+    setGrid(on: boolean) { grid = on; overlays(); },
+    cancelPlacement() { if (placement) cancel(); },
     setArea(next: Area) { area = next; scheduleFrame(); overlays(); },
     zoomBy, fitArea, gameCamera, pick,
     get viewState() { return viewState; }, groundAt: at, select: choose,
