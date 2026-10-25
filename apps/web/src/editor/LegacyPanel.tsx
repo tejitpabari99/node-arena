@@ -8,15 +8,11 @@ import { useEditor } from './EditorContext.js';
 export function LegacyPanel({ pointer }: { pointer: Point | null }) {
   const { doc, edit, deleteSelection, selection, select, clipboard, copy, paste, viewport, locked, themes, colors, losStatus } = useEditor();
   const [snap, setSnap] = useState(true);
-  const [axis, setAxis] = useState<'vertical' | 'horizontal'>('vertical');
-  const [center, setCenter] = useState('');
-  const [swapOwners, setSwapOwners] = useState(false);
   const [losFrom, setLosFrom] = useState(''), [losTo, setLosTo] = useState('');
-  const centerValue = center === '' ? axis === 'vertical' ? (doc.bounds.minX + doc.bounds.maxX) / 2 : (doc.bounds.minZ + doc.bounds.maxZ) / 2 : Number(center);
   function apply(op: DocOp) { if (!locked) edit(op.type === 'obstacle-properties' ? { ...op, value: op.value.yawDeg === undefined ? op.value : { ...op.value, yawDeg: snapYaw(op.value.yawDeg, snap) } } : op); }
   useEffect(() => { viewport.current?.setSnap(snap); }, [snap]);
   useEffect(() => { viewport.current?.setLos({ from: losFrom, to: losTo }); }, [losFrom, losTo]);
-  useEffect(() => { setCenter(''); setLosFrom(''); setLosTo(''); }, [doc.id]);
+  useEffect(() => { setLosFrom(''); setLosTo(''); }, [doc.id]);
   return <>
     <LevelPropertiesForm doc={doc} onEdit={edit} themes={themes} colors={colors} disabled={locked} />
     <aside class="editor-view-tools" aria-label="Viewport tools">
@@ -38,11 +34,6 @@ export function LegacyPanel({ pointer }: { pointer: Point | null }) {
       <button disabled={locked || !clipboard} onClick={paste}>Paste</button>
       <label>Grid snap<input type="checkbox" checked={snap} onChange={event => setSnap(event.currentTarget.checked)} /></label>
       <p>Positions: 0.25 units. Yaw: 15°. Shift + click to add/remove selection.</p>
-      <label>Mirror axis<select value={axis} onChange={event => { setAxis(event.currentTarget.value as typeof axis); setCenter(''); }}><option value="vertical">Vertical (reflect x)</option><option value="horizontal">Horizontal (reflect z)</option></select></label>
-      <label>Mirror centre<input type="number" step=".01" value={center} placeholder={String(centerValue)} onInput={event => setCenter(event.currentTarget.value)} /></label>
-      <label>Swap p1 and p2 owners<input type="checkbox" checked={swapOwners} onChange={event => setSwapOwners(event.currentTarget.checked)} /></label>
-      <button disabled={locked || !Number.isFinite(centerValue)} onClick={() => apply({ type: 'mirror', targets: selection, axis, center: centerValue, swapOwners })}>Mirror</button>
-      <p>Mirror {selection.length ? 'selected items' : 'the whole level'}.</p>
       <button disabled={locked || !doc.buildings.length && !doc.elements.length} onClick={() => apply({ type: 'auto-fit' })}>Auto-fit bounds</button>
       <p>2-unit margin around all item positions. Draft bounds; Save writes them.</p>
       <p data-testid="bounds-preview">x {String(doc.bounds.minX).replace('-', '−')}…{doc.bounds.maxX} · z {String(doc.bounds.minZ).replace('-', '−')}…{doc.bounds.maxZ}</p>

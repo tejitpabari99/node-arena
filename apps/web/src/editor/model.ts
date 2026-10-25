@@ -7,7 +7,6 @@ export type LevelProperties = Pick<LevelDoc, 'name' | 'theme' | 'timeLimitSec' |
 export type Clipboard = Pick<LevelDoc, 'buildings' | 'elements'>;
 export type DocOp =
   | { type: 'move-selection'; targets: Selection[]; delta: Point }
-  | { type: 'mirror'; targets: Selection[]; axis: 'vertical' | 'horizontal'; center: number; swapOwners: boolean }
   | { type: 'paste'; clipboard: Clipboard; offset: Point }
   | { type: 'auto-fit' }
   | { type: 'level-properties'; value: LevelProperties }
@@ -35,12 +34,12 @@ export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
     };
     return { ...doc, buildings: [...doc.buildings, ...op.clipboard.buildings.map(item => clone(item, 'b'))], elements: [...doc.elements, ...op.clipboard.elements.map(item => clone(item, 'e'))] };
   }
-  if (op.type === 'mirror' || op.type === 'move-selection') {
-    const selected = (kind: Selection['kind'], id: string) => (op.type === 'mirror' && !op.targets.length) || op.targets.some(target => target.kind === kind && target.id === id);
-    const position = (pos: Point): Point => op.type === 'move-selection' ? { x: roundCoordinate(pos.x + op.delta.x), z: roundCoordinate(pos.z + op.delta.z) } : op.axis === 'vertical' ? { x: roundCoordinate(2 * op.center - pos.x), z: pos.z } : { x: pos.x, z: roundCoordinate(2 * op.center - pos.z) };
+  if (op.type === 'move-selection') {
+    const selected = (kind: Selection['kind'], id: string) => op.targets.some(target => target.kind === kind && target.id === id);
+    const position = (pos: Point): Point => ({ x: roundCoordinate(pos.x + op.delta.x), z: roundCoordinate(pos.z + op.delta.z) });
     return { ...doc,
-      buildings: doc.buildings.map(item => selected('building', item.id) ? { ...item, pos: position(item.pos), owner: op.type === 'mirror' && op.swapOwners ? item.owner === 'p1' ? 'p2' : item.owner === 'p2' ? 'p1' : item.owner : item.owner } : item),
-      elements: doc.elements.map(item => selected('obstacle', item.id) ? { ...item, pos: position(item.pos), yawDeg: op.type === 'mirror' ? normalizeYaw(op.axis === 'vertical' ? 180 - item.yawDeg : -item.yawDeg) : item.yawDeg } : item),
+      buildings: doc.buildings.map(item => selected('building', item.id) ? { ...item, pos: position(item.pos) } : item),
+      elements: doc.elements.map(item => selected('obstacle', item.id) ? { ...item, pos: position(item.pos) } : item),
     };
   }
   if (op.type === 'level-properties') {

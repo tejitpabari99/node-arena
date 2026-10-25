@@ -13,20 +13,8 @@ function fixture() {
   doc.elements = [{ id: 'e0', archetype: 'obstacle', pos: { x: -1, z: 4 }, yawDeg: 225, variant: 'big' }];
   return doc;
 }
-for (const axis of ['vertical', 'horizontal'] as const) for (const swapOwners of [false, true]) {
-  it(`mirrors ${axis} coordinates and normalized yaw with owner swap ${swapOwners}`, () => {
-    const doc = fixture();
-    const result = reduceDocument(doc, { type: 'mirror', targets: [], axis, center: 2, swapOwners });
-    expect(result.buildings.map(b => b.pos)).toEqual(axis === 'vertical' ? [{ x: 3, z: 3 }, { x: -1, z: 1 }, { x: 4, z: 0 }] : [{ x: 1, z: 1 }, { x: 5, z: 3 }, { x: 0, z: 4 }]);
-    expect(result.elements[0]).toMatchObject(axis === 'vertical' ? { pos: { x: 5, z: 4 }, yawDeg: 315 } : { pos: { x: -1, z: 0 }, yawDeg: 135 });
-    expect(result.buildings.map(b => b.owner)).toEqual(swapOwners ? ['p2', 'p1', null] : ['p1', 'p2', null]);
-    expect(doc.elements[0]!.yawDeg).toBe(225);
-  });
-}
-it('mirrors only selection and coalesces multi-move into one exact undo', () => {
+it('coalesces multi-move into one exact undo', () => {
   const doc = fixture(), targets = [{ kind: 'building', id: 'b0' }, { kind: 'obstacle', id: 'e0' }] as const;
-  const mirrored = reduceDocument(doc, { type: 'mirror', targets: [...targets], axis: 'vertical', center: 0, swapOwners: true });
-  expect(mirrored.buildings[1]).toBe(doc.buildings[1]); expect(mirrored.buildings[0]!.pos.x).toBe(-1);
   const state = historyReducer(createHistory(doc), { type: 'edit', op: { type: 'move-selection', targets: [...targets], delta: { x: 1.25, z: -2.5 } } });
   expect(state.present.buildings[0]!.pos).toEqual({ x: 2.25, z: .5 });
   expect(state.present.elements[0]!.pos).toEqual({ x: .25, z: 1.5 });

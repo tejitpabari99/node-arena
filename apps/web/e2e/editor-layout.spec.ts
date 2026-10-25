@@ -45,18 +45,14 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '1');
   await page.getByRole('button', { name: 'Select all', exact: true }).click();
-  await page.getByLabel('Mirror axis').selectOption('horizontal');
-  await page.getByLabel('Mirror centre').fill('1');
-  await page.getByLabel('Swap p1 and p2 owners').check();
-  await page.getByRole('button', { name: 'Mirror', exact: true }).click();
   await page.getByRole('button', { name: 'Auto-fit bounds', exact: true }).click();
-  await expect(page.getByTestId('bounds-preview')).toContainText('x −6…6 · z 0…4');
+  await expect(page.getByTestId('bounds-preview')).toContainText('x −6…6 · z −2…2');
   expect(writes).toBe(0);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect.poll(() => writes).toBe(1);
-  expect(saved!.bounds).toEqual({ minX: -6, maxX: 6, minZ: 0, maxZ: 4 });
-  expect(saved!.buildings.map(b => [b.pos, b.owner])).toEqual([[{ x: -4, z: 2 }, 'p2'], [{ x: 4, z: 2 }, 'p1']]);
-  expect(saved!.elements[0]!.yawDeg).toBe(337);
+  expect(saved!.bounds).toEqual({ minX: -6, maxX: 6, minZ: -2, maxZ: 2 });
+  expect(saved!.buildings.map(b => [b.pos, b.owner])).toEqual([[{ x: -4, z: 0 }, 'p1'], [{ x: 4, z: 0 }, 'p2']]);
+  expect(saved!.elements[0]!.yawDeg).toBe(23);
   expect(errors).toEqual([]);
 });
 
