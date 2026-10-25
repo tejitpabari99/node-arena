@@ -119,7 +119,6 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-selection > label { display: block; font-size: 13px; }
 .ed-selection select { max-width: 100%; }
 .ed-actions { margin-top: 8px; }
-.ed-view-tools { margin-top: 12px; }
 
 /* Left panel polish: Canva-like stacked fields, card rows, calm headings */
 .ed-left label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; font-weight: 600; margin: 6px 0; }
@@ -132,3 +131,10 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-library-tile:hover { border-color: var(--ed-green); background: #fff; }
 .ed-apply { margin-top: 8px; }
 .preview-error { position: absolute; top: 8px; left: 8px; z-index: 3; margin: 0; padding: 4px 8px; border: 1px solid #ff9b9b; background: #5a1d1dd9; color: #fff; font-size: 12px; pointer-events: none; }
+
+.canvas-controls { position: absolute; top: 8px; right: 8px; z-index: 3; display: flex; gap: 2px; padding: 4px; background: #fff; border-radius: 999px; box-shadow: 0 1px 4px #0004; }
+.canvas-btn { width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #1f2937; cursor: pointer; }
+.canvas-btn:hover:not(:disabled) { background: #eef0f3; }
+.canvas-btn[aria-pressed="true"] { background: #dbe7ff; color: #1d4ed8; }
+.canvas-btn:disabled { opacity: .35; cursor: default; }
+.canvas-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

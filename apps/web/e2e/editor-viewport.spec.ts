@@ -15,8 +15,8 @@ test('working copy renders, reports blank drafts, and has editor camera controls
   await page.getByRole('button', { name: 'Discard and continue', exact: true }).click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await expect(page.getByLabel('Edit viewport').locator('canvas')).toBeVisible();
-  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
-  await page.getByRole('button', { name: 'Game camera', exact: true }).click();
+  await page.getByTestId('canvas-controls').getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.getByTestId('canvas-controls').getByRole('button', { name: 'Game camera', exact: true }).click();
 });
 
 import type { EditorViewport, ViewportStatus } from '../src/editor/viewport-engine.js';
@@ -353,4 +353,47 @@ test('Space key in the editor pans only while the pointer is over the canvas', a
   await page.keyboard.down('Space');
   expect(await ws.evaluate(e => (e as HTMLElement).style.cursor)).toBe('');
   await page.keyboard.up('Space');
+});
+
+test('canvas controls: zoom limits, fit, game camera, hand, persisted grid', async ({ page }) => {
+  test.skip(!development, 'Editor API is dev-only');
+  test.setTimeout(120000);
+  await page.goto('/editor.html');
+  await page.evaluate(() => localStorage.removeItem('node-arena.editor.grid'));
+  await page.getByLabel('New level id').fill('na-canvas-ctl');
+  await page.getByRole('button', { name: 'Create blank' }).click();
+  await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
+  const controls = page.getByTestId('canvas-controls');
+  for (const name of ['Zoom out', 'Zoom in', 'Fit area', 'Game camera', 'Hand', 'Show grid']) {
+    const b = controls.getByRole('button', { name, exact: true });
+    await expect(b).toBeVisible(); await expect(b).toHaveAttribute('title', name);
+  }
+  const zin = controls.getByRole('button', { name: 'Zoom in', exact: true }), zout = controls.getByRole('button', { name: 'Zoom out', exact: true });
+  await expect(page.getByRole('button', { name: 'Zoom in', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Game camera', exact: true })).toHaveCount(1);
+  await controls.getByRole('button', { name: 'Fit area', exact: true }).click();
+  for (let i = 0; i < 40 && await zin.isEnabled(); i++) await zin.click();
+  await expect(zin).toBeDisabled(); await expect(zout).toBeEnabled();
+  for (let i = 0; i < 80 && await zout.isEnabled(); i++) await zout.click();
+  await expect(zout).toBeDisabled(); await expect(zin).toBeEnabled();
+  await zin.click(); await expect(zout).toBeEnabled();
+  await controls.getByRole('button', { name: 'Game camera', exact: true }).click();
+  await controls.getByRole('button', { name: 'Fit area', exact: true }).click();
+  const hand = controls.getByRole('button', { name: 'Hand', exact: true }), workspace = page.getByLabel('Edit viewport');
+  await expect(hand).toHaveAttribute('aria-pressed', 'false');
+  await hand.click();
+  await expect(hand).toHaveAttribute('aria-pressed', 'true');
+  await expect(workspace).toHaveCSS('cursor', 'grab');
+  await hand.click();
+  await expect(workspace).not.toHaveCSS('cursor', 'grab');
+  const grid = controls.getByRole('button', { name: 'Show grid', exact: true });
+  await expect(grid).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('.editor-grid-line')).toHaveCount(0);
+  await grid.click();
+  await expect(grid).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.locator('.editor-grid-line').count()).toBeGreaterThan(0);
+  await page.goto('/editor.html?level=na-trial');
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+  await expect(controls.getByRole('button', { name: 'Show grid', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.locator('.editor-grid-line').count()).toBeGreaterThan(0);
 });
