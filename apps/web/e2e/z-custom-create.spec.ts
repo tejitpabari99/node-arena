@@ -31,7 +31,8 @@ test('Custom → Create custom level from template → place → Save → appear
     const host = page.getByLabel('Edit viewport'), box = (await host.boundingBox())!;
     const item = page.getByRole('button', { name: 'Place house-wt1', exact: true }), source = (await item.boundingBox())!;
     await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
-    await page.mouse.down(); await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 8 });
+    // Viewport centre lands on the existing na-trial "crossing" building (coincident → save blocked); drop lower, on a free cell.
+    await page.mouse.down(); await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.65, { steps: 8 });
     await page.mouse.up();
     await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(before + 1));
     // The dev watcher may reload the page right after the write, so assert the save response, not the transient chip.
