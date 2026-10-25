@@ -61,7 +61,7 @@ test('fixed detached argv and public snapshot; raw lines and Chrome readiness tr
   driver.child.stdout.write('{"type":"chrome_ready","pid":999,"port":9225}\n');
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(run.snapshot().state, 'live'); assert.equal(lines.length, 1); assert.equal(ready.length, 1);
-  assert.deepEqual(Object.keys(run.snapshot()).sort(), ['attemptId', 'endsAtMax', 'runId', 'startedAt', 'state', 'viewers']);
+  assert.deepEqual(Object.keys(run.snapshot()).sort(), ['attemptId', 'cooldownEndsAt', 'endsAtMax', 'runId', 'startedAt', 'state', 'viewers']);
   await run.close();
 });
 
@@ -362,7 +362,7 @@ test('Reset clears presentation and emits reset before state, retains original c
   const events = []; run.on('reset', () => events.push('reset')); run.on('state', () => events.push('state'));
   assert.equal((await run.reset()).status, 200);
   assert.deepEqual(events, ['reset', 'state']);
-  assert.deepEqual(run.snapshot(), { state: 'cooldown', runId: null, attemptId: null, startedAt: null, endsAtMax: null, viewers: 0 });
+  assert.deepEqual(run.snapshot(), { state: 'cooldown', runId: null, attemptId: null, startedAt: null, endsAtMax: null, cooldownEndsAt: 120000, serverNow: 60000, viewers: 0 });
   await run.reset(); assert.equal((await run.start('two')).status, 409);
   await h.advance(59999); assert.equal(run.snapshot().state, 'cooldown');
   await h.advance(1); assert.equal(run.snapshot().state, 'idle');
@@ -459,4 +459,29 @@ test('conditional Stop rejects stale attempts before abort or reuse of shared cl
   assert.deepEqual(run.snapshot(), next); assert.equal(h.signals.length, nextSignals);
   assert.ok(h.spawned.every(child => !child.args.includes(a) && !child.args.includes(b)));
   await run.stop(b); await run.close();
+});
+
+
+test('cooldown deadline precedes state/end events, survives Reset and clears only at original expiry', async () => {
+  const h = harness(), run = await h.create({ KANE_STREAM_COOLDOWN_S: '30' });
+  assert.equal(run.snapshot().cooldownEndsAt, null);
+  await run.start(); await h.advance(7000);
+  const deadlines = [];
+  run.on('state', value => { if (value.state === 'cooldown') deadlines.push(value.cooldownEndsAt); });
+  run.on('end', () => deadlines.push(run.snapshot().cooldownEndsAt));
+  await run.stop();
+  assert.deepEqual(deadlines, [37000, 37000]);
+  await h.advance(10000);
+  assert.equal(run.snapshot().serverNow, 17000);
+  await run.reset(); await run.reset();
+  assert.equal(run.snapshot().cooldownEndsAt, 37000);
+  await h.advance(19999);
+  assert.equal(run.snapshot().state, 'cooldown');
+  assert.equal((await run.start()).status, 409);
+  await h.advance(1);
+  assert.equal(run.snapshot().state, 'idle');
+  assert.equal(run.snapshot().cooldownEndsAt, null);
+  await run.start();
+  assert.equal(run.snapshot().cooldownEndsAt, null);
+  await run.close();
 });

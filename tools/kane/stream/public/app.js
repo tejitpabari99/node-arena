@@ -10,6 +10,7 @@
   let currentState, serverState, currentRunId = null, currentAttemptId = null, lastSeq = -1;
   let stateRevision = 0, requestGeneration = 0, stopped = false, resetting = false;
   let localStart = null, stopQueued = false;
+  let cooldownDeadline = null, cooldownTimer;
   const stopRequests = new Set();
   let sseErrors = 0, wsAttempts = 0, generation = 0, decoding = false, pendingFrame = null;
   let hasFrame = false, backupAvailable = false, failed = false;
@@ -19,6 +20,16 @@
     finished: 'Run finished', stopping: 'Stopping…', stopped: 'Run stopped', failed: 'Live run unavailable', cooldown: 'Waiting for the next run',
   };
 
+  function renderStartLabel() {
+    clearTimeout(cooldownTimer); cooldownTimer = null;
+    if (disposed) return;
+    if (serverState !== 'cooldown') { start.textContent = 'Start'; return; }
+    const remaining = cooldownDeadline === null ? 0 : Math.ceil((cooldownDeadline - performance.now()) / 1000);
+    start.textContent = remaining > 0 ? `Start in ${remaining}s` : 'Start soon';
+    // Only authoritative idle state can make Start eligible; expiry just updates text.
+    if (remaining > 0) cooldownTimer = setTimeout(renderStartLabel, 1000);
+  }
+
   function render(state, isFailure = false) {
     failed = isFailure || state === 'failed';
     currentState = state;
@@ -26,6 +37,7 @@
     status.dataset.state = state;
     message.textContent = failed ? texts.failed : texts[state];
     start.disabled = state !== 'idle';
+    renderStartLabel();
     stop.hidden = stopped || !['starting', 'live'].includes(state);
     stop.disabled = stop.hidden;
     reset.hidden = !stopped;
@@ -81,6 +93,10 @@
     if (clear) resetRun();
     currentRunId = nextRun; currentAttemptId = nextAttempt;
     serverState = snapshot.state;
+    // Convert the shared deadline to a monotonic local clock, independent of device time.
+    cooldownDeadline = serverState === 'cooldown' && Number.isFinite(snapshot.cooldownEndsAt)
+      ? performance.now() + Math.max(0, snapshot.cooldownEndsAt - (Number.isFinite(snapshot.serverNow) ? snapshot.serverNow : Date.now()))
+      : null;
     stopped = nextStopped || stopQueued;
     if (localStart?.id === nextAttempt && (['ending', 'idle', 'cooldown'].includes(serverState) || localStart.settled)) localStart = null;
     if (queuedStopReady) { stopQueued = false; serverState = 'ending'; }
@@ -261,7 +277,7 @@
 
   window.addEventListener('pagehide', () => {
     disposed = true; generation++; pendingFrame = null;
-    clearTimeout(reconnectTimer);
+    clearTimeout(reconnectTimer); clearTimeout(cooldownTimer);
     abort.abort(); source?.close(); socket?.close();
   }, { once: true });
 

@@ -176,12 +176,12 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
   const ops = deps.processes ?? createProcessOps(config);
   const owner = await ops.identity(process.pid);
   const controller = new EventEmitter();
-  let state = 'idle', runId = null, attemptId = null, startedAt = null, endsAtMax = null, outcome;
+  let state = 'idle', runId = null, attemptId = null, startedAt = null, endsAtMax = null, cooldownEndsAt = null, outcome;
   let admission = createStartState(), owned = [], active = false, closed = false, closing, ending, pendingStart;
   let startAttempt, stopping, lockHeld = false;
   let wallTimer, cooldownTimer, scanTimer, scanPending, processReady;
   const handlers = new Map();
-  const snapshot = (viewers = 0) => ({ state, runId, attemptId, startedAt, endsAtMax, viewers, ...(outcome ? { outcome } : {}) });
+  const snapshot = (viewers = 0) => ({ state, runId, attemptId, startedAt, endsAtMax, cooldownEndsAt, viewers, ...(state === 'cooldown' ? { serverNow: now() } : {}), ...(outcome ? { outcome } : {}) });
   const change = next => { state = next; controller.emit('state', snapshot()); };
   const unavailable = () => ({ status: 503, message: 'unavailable' });
   const persist = () => ops.persist({ version: 1, owner, processes: owned });
@@ -278,8 +278,9 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
   }
 
   function cooldown() {
+    cooldownEndsAt = now() + config.cooldownMs;
     change('cooldown'); controller.emit('end', { runId, outcome });
-    if (!closed) cooldownTimer = later(() => { ending = undefined; change('idle'); }, config.cooldownMs);
+    if (!closed) cooldownTimer = later(() => { ending = undefined; cooldownEndsAt = null; change('idle'); }, config.cooldownMs);
   }
 
   function end(finalOutcome = 'failed') {
@@ -307,7 +308,7 @@ export async function createRunController({ env = process.env, cwd = ROOT, guard
     if (state !== 'idle' || pendingStart || stopping) return Promise.resolve({ status: 409, message: 'unavailable' });
     const checked = checkStart(admission, ip, now(), guardConfig);
     if (!checked.allowed) return Promise.resolve({ status: checked.status, message: 'unavailable', retryAfterSeconds: checked.retryAfterSeconds });
-    runId = null; startedAt = null; endsAtMax = null; outcome = undefined; ending = undefined;
+    runId = null; startedAt = null; endsAtMax = null; cooldownEndsAt = null; outcome = undefined; ending = undefined;
     attemptId = requestedAttemptId ?? randomUUID();
     // Token AND settlement promise exist before a starting listener can call Stop.
     const attempt = { abort: new AbortController(), cleanupFailed: false };
