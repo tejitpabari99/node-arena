@@ -338,7 +338,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     setHand(on: boolean) { hand = on; updateCursor(); },
     setSpace(on: boolean) { space = on; updateCursor(); },
     setGrid(on: boolean) { grid = on; overlays(); },
-    cancelPlacement() { if (placement) cancel(); },
+    cancelPlacement(): boolean { if (!placement) return false; cancel(); return true; },
     setArea(next: Area) { area = next; scheduleFrame(); overlays(); },
     zoomBy, fitArea, gameCamera, pick,
     get viewState() { return viewState; }, groundAt: at, select: choose,

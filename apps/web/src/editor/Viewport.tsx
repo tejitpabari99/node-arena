@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Selection } from './picking.js';
 import { useEditor } from './EditorContext.js';
 import { createEditorViewport, type ViewportStatus, type ViewState } from './viewport-engine.js';
+import { useShortcuts } from './useShortcuts.js';
 import { CanvasControls, readGrid, writeGrid } from './CanvasControls.js';
 
 /** Canvas host only: owns the engine and routes its callbacks to the editor context. */
@@ -22,25 +23,7 @@ export function Viewport({ onStatus, onLos, onSelection }: { onStatus: (status: 
     current.setGrid(grid);
     return () => { current.dispose(); delete ctx.viewport.current; };
   }, []);
-  // Minimal Space-to-pan hook; Task 8 moves this into useShortcuts.
-  useEffect(() => {
-    let over = false, held = false;
-    const el = host.current!, engine = () => ctx.viewport.current;
-    const typing = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(t.tagName));
-    const release = () => { if (held) { held = false; engine()?.setSpace(false); } };
-    const enter = () => { over = true; }, leave = () => { over = false; };
-    const key = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' || typing(e.target)) return;
-      if (e.type === 'keydown') { if (!over && !held) return; e.preventDefault(); if (!held) { held = true; engine()?.setSpace(true); } }
-      else if (held) { e.preventDefault(); release(); }
-    };
-    el.addEventListener('pointerenter', enter); el.addEventListener('pointerleave', leave);
-    window.addEventListener('keydown', key); window.addEventListener('keyup', key); window.addEventListener('blur', release);
-    return () => {
-      el.removeEventListener('pointerenter', enter); el.removeEventListener('pointerleave', leave);
-      window.removeEventListener('keydown', key); window.removeEventListener('keyup', key); window.removeEventListener('blur', release);
-    };
-  }, []);
+  useShortcuts(host);
   useEffect(() => { ctx.viewport.current?.setHand(hand); }, [hand]);
   useEffect(() => { ctx.viewport.current?.setGrid(grid); }, [grid]);
   useEffect(() => { ctx.viewport.current?.setArea(ctx.area); }, [ctx.area]);
