@@ -8,15 +8,15 @@ Source of truth: docs/agent_files/custom-level-fix-20261024-2127/03-canvas/PRD.m
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Area helpers and reducer clamping | - | todo |
-| 2 | Grow-only bounds, remove auto-fit | 1 | todo |
-| 3 | Resilient preview with error badge | 2 | todo |
-| 4 | Camera model: frame box, zoom limits, anchored wheel | 3 | todo |
-| 5 | Buildable-area outline, ghost clamp, always-on snap, ground extent | 1, 4 | todo |
-| 6 | Pan gestures, hand mode, grid overlay | 4, 5 | todo |
-| 7 | Canvas controls cluster | 4, 6 | todo |
-| 8 | Keyboard shortcuts | 6, 7 | todo |
-| 9 | Final verification: e2e and screenshots | 1-8 | todo |
+| 1 | Area helpers and reducer clamping | - | done |
+| 2 | Grow-only bounds, remove auto-fit | 1 | done |
+| 3 | Resilient preview with error badge | 2 | done |
+| 4 | Camera model: frame box, zoom limits, anchored wheel | 3 | done |
+| 5 | Buildable-area outline, ghost clamp, always-on snap, ground extent | 1, 4 | done |
+| 6 | Pan gestures, hand mode, grid overlay | 4, 5 | done |
+| 7 | Canvas controls cluster | 4, 6 | done |
+| 8 | Keyboard shortcuts | 6, 7 | done |
+| 9 | Final verification: e2e and screenshots | 1-8 | done |
 
 ## Task 1 — Area helpers and reducer clamping
 What it is / what it means: R1 (area math), R2, Decision 2. Pure model layer; items can no longer commit outside the 40x30 area.
