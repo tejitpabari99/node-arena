@@ -108,3 +108,11 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-library-label { font-size: 11px; line-height: 1.1; }
 .ed-library-tile:not(:has(img)) .ed-library-label { display: none; }
 .ed-hint { margin: 6px 0 0; font-size: 12px; opacity: .75; }
+.ed-group { margin: 6px 0; border: 1px solid var(--ed-border); border-radius: 10px; background: #fff; }
+.ed-group > summary { cursor: pointer; padding: 6px 10px; font-family: Coiny, system-ui, sans-serif; }
+.ed-group-body { padding: 4px 10px 10px; }
+.ed-group fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
+.ed-group label { display: block; margin: 6px 0; font-size: 13px; }
+.ed-selection > label { display: block; font-size: 13px; }
+.ed-selection select { max-width: 100%; }
+.ed-actions { margin-top: 8px; }

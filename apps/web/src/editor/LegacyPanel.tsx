@@ -1,40 +1,22 @@
 import { useEffect, useState } from 'preact/hooks';
-import { ItemProperties } from './Properties.js';
 import { snapYaw, type DocOp } from './model.js';
-import type { Point, Selection } from './picking.js';
+import type { Point } from './picking.js';
 import { useEditor } from './EditorContext.js';
-import type { ComponentChildren } from 'preact';
 
 /** Temporary pre-redesign sidebar; consumes EditorContext. SP02 deletes this file. */
-export function LegacyPanel({ pointer, wrapSelection }: { pointer: Point | null; wrapSelection: (c: ComponentChildren) => ComponentChildren }) {
-  const { doc, edit, deleteSelection, selection, select, clipboard, copy, paste, viewport, locked, losStatus } = useEditor();
+export function LegacyPanel({ pointer }: { pointer: Point | null }) {
+  const { doc, edit, selection, viewport, locked } = useEditor();
   const [snap, setSnap] = useState(true);
-  const [losFrom, setLosFrom] = useState(''), [losTo, setLosTo] = useState('');
   function apply(op: DocOp) { if (!locked) edit(op.type === 'obstacle-properties' ? { ...op, value: op.value.yawDeg === undefined ? op.value : { ...op.value, yawDeg: snapYaw(op.value.yawDeg, snap) } } : op); }
   useEffect(() => { viewport.current?.setSnap(snap); }, [snap]);
-  useEffect(() => { viewport.current?.setLos({ from: losFrom, to: losTo }); }, [losFrom, losTo]);
-  useEffect(() => { setLosFrom(''); setLosTo(''); }, [doc.id]);
   return <>
     <aside class="editor-view-tools" aria-label="Viewport tools">
-      <button disabled={locked || selection.length !== 1} onClick={deleteSelection}>Delete selected</button>
-      <label>Selected item<select aria-label="Selected item" value={selection.length === 1 ? `${selection[0]!.kind}:${selection[0]!.id}` : ''} onChange={event => {
-        const [kind, id] = event.currentTarget.value.split(':');
-        select(id ? [{ kind: kind as Selection['kind'], id }] : []);
-      }}><option value="">No single selection</option>{doc.buildings.map(item => <option key={item.id} value={`building:${item.id}`}>Building {item.id}</option>)}{doc.elements.map(item => <option key={item.id} value={`obstacle:${item.id}`}>Obstacle {item.id}</option>)}</select></label>
       <h3>Layout</h3>
-      <button onClick={() => select([...doc.buildings.map(item => ({ kind: 'building' as const, id: item.id })), ...doc.elements.map(item => ({ kind: 'obstacle' as const, id: item.id }))])}>Select all</button>{' '}
-      <button onClick={() => select([])}>Clear selection</button>
-      <button disabled={locked || !selection.length} onClick={copy}>Copy selected</button>{' '}
-      <button disabled={locked || !clipboard} onClick={paste}>Paste</button>
       <label>Grid snap<input type="checkbox" checked={snap} onChange={event => setSnap(event.currentTarget.checked)} /></label>
       <p>Positions: 0.25 units. Yaw: 15°. Shift + click to add/remove selection.</p>
       <button disabled={locked || !doc.buildings.length && !doc.elements.length} onClick={() => apply({ type: 'auto-fit' })}>Auto-fit bounds</button>
       <p>2-unit margin around all item positions. Draft bounds; Save writes them.</p>
       <p data-testid="bounds-preview">x {String(doc.bounds.minX).replace('-', '−')}…{doc.bounds.maxX} · z {String(doc.bounds.minZ).replace('-', '−')}…{doc.bounds.maxZ}</p>
-      <h3>Line of sight</h3>
-      <label>LOS from<select value={losFrom} onChange={event => setLosFrom(event.currentTarget.value)}><option value="">Choose source</option>{doc.buildings.map(item => <option key={item.id} value={item.id}>{item.id}</option>)}</select></label>
-      <label>LOS to<select value={losTo} onChange={event => setLosTo(event.currentTarget.value)}><option value="">Choose target</option>{doc.buildings.map(item => <option key={item.id} value={item.id}>{item.id}</option>)}</select></label>
-      <p data-testid="los-status">{losStatus}</p>
       <h3>View</h3>
       <button onClick={() => viewport.current?.zoomBy(1.2)} aria-label="Zoom in">+</button>{' '}
       <button onClick={() => viewport.current?.zoomBy(1 / 1.2)} aria-label="Zoom out">−</button>
@@ -44,6 +26,5 @@ export function LegacyPanel({ pointer, wrapSelection }: { pointer: Point | null;
       <p data-testid="viewport-selection">{selection.length ? selection.map(item => `${item.kind}: ${item.id}`).join(', ') : 'No selection'}</p>
       <p aria-live="off">{pointer ? `x ${pointer.x.toFixed(2)} · z ${pointer.z.toFixed(2)}` : 'Ground coordinates'}</p>
     </aside>
-    {wrapSelection(<ItemProperties doc={doc} selection={selection} onEdit={apply} disabled={locked} />)}
   </>;
 }

@@ -38,8 +38,9 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
     await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(index! + 1));
     await expect(page.getByTestId('viewport-status')).toContainText('Ready');
     await page.getByLabel('Selected item', { exact: true }).selectOption(`building:b${index}`);
-    await page.getByLabel('Building owner', { exact: true }).selectOption('p2');
-    await page.getByRole('button', { name: 'Apply building properties', exact: true }).click();
+    await page.locator('[data-section=selection] summary', { hasText: 'Owner and level' }).click();
+    await page.getByLabel('Owner', { exact: true }).selectOption('p2');
+    await page.getByRole('button', { name: 'Apply owner and level', exact: true }).click();
   }
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
@@ -52,9 +53,9 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
   await expect(page.getByLabel('Selected item', { exact: true })).toHaveValue('building:b1');
   await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(page.getByLabel('Building owner', { exact: true })).toHaveValue('');
+  await expect(page.getByLabel('Owner', { exact: true })).toHaveValue('');
   await page.getByRole('button', { name: 'Redo', exact: true }).click();
-  await expect(page.getByLabel('Building owner', { exact: true })).toHaveValue('p2');
+  await expect(page.getByLabel('Owner', { exact: true })).toHaveValue('p2');
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '2');
   expect(await page.evaluate(() => JSON.stringify({ ...localStorage }))).toBe(baseline);
   await page.reload();

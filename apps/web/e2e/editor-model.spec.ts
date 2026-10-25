@@ -29,7 +29,7 @@ test('library drops, deletion, and undo/redo persist through real preview rebuil
   await expect.poll(() => saved?.buildings.length).toBe(1);
   expect(saved!.buildings[0]).toMatchObject({ owner: null, level: 1, pos: { x: 0, z: 0 } });
   await expect(page.getByTestId('viewport-selection')).toContainText('b0');
-  await page.getByRole('button', { name: 'Delete selected', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '0');
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '1');

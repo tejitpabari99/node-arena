@@ -24,26 +24,30 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await expect(page.getByLabel('Grid snap')).toBeChecked();
-  await page.getByLabel('LOS from').selectOption('b0');
-  await page.getByLabel('LOS to').selectOption('b1');
+  await page.getByLabel('Selected item', { exact: true }).selectOption('building:b0');
+  await page.locator('[data-section=selection] summary', { hasText: 'Line of sight' }).click();
+  await page.getByLabel('LOS target').selectOption('b1');
   await expect(page.getByTestId('los-status')).toContainText('blocked-obstacle');
   await expect(page.getByTestId('los-status')).toContainText('e0');
   await expect(page.locator('.editor-los line')).toHaveAttribute('stroke', '#fb7185');
   await expect(page.locator('.editor-los circle')).toBeVisible();
   await page.getByLabel('Selected item', { exact: true }).selectOption('obstacle:e0');
+  await page.locator('[data-section=selection] summary', { hasText: 'Shape' }).click();
   await page.getByLabel('Yaw (degrees)').fill('23');
   await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('23');
-  await page.getByRole('button', { name: 'Apply obstacle properties' }).click();
+  await page.getByRole('button', { name: 'Apply shape' }).click();
   await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
+  // Yaw always snaps to 15 degrees, even with Grid snap off.
   await page.getByLabel('Grid snap').uncheck();
   await page.getByLabel('Yaw (degrees)').fill('23');
-  await page.getByRole('button', { name: 'Apply obstacle properties' }).click();
-  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('23');
-  await page.getByRole('button', { name: 'Copy selected', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply shape' }).click();
+  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
+  await page.getByRole('button', { name: 'Copy', exact: true }).click();
   await page.getByRole('button', { name: 'Paste', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '2');
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '1');
+  await page.getByLabel('Selected item', { exact: true }).selectOption('multi');
   await page.getByRole('button', { name: 'Select all', exact: true }).click();
   await page.getByRole('button', { name: 'Auto-fit bounds', exact: true }).click();
   await expect(page.getByTestId('bounds-preview')).toContainText('x −6…6 · z −2…2');
@@ -52,7 +56,7 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await expect.poll(() => writes).toBe(1);
   expect(saved!.bounds).toEqual({ minX: -6, maxX: 6, minZ: -2, maxZ: 2 });
   expect(saved!.buildings.map(b => [b.pos, b.owner])).toEqual([[{ x: -4, z: 0 }, 'p1'], [{ x: 4, z: 0 }, 'p2']]);
-  expect(saved!.elements[0]!.yawDeg).toBe(23);
+  expect(saved!.elements[0]!.yawDeg).toBe(30);
   expect(errors).toEqual([]);
 });
 
