@@ -51,7 +51,7 @@ export function LevelSection() {
           </div>;
         })}
       </div>
-      <button type="button" disabled={!canAddAi(draft.players, colors)} onClick={() => setDraft(addAi(draft, colors))}>Add AI</button>
+      <button type="button" disabled={!canAddAi(draft.players, colors)} onClick={() => setDraft(addAi(draft, colors, doc.players))}>Add AI</button>
       {dupes.length > 0 && <p class="ed-note" role="status">Each player needs a unique color.</p>}
       <button class="ed-btn-primary ed-apply" disabled={!ok}>Apply level properties</button>
     </fieldset>

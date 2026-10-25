@@ -16,10 +16,12 @@ describe('level draft', () => {
     expect(addAi(d, keys)).toBe(d);
     expect(d.players[3]!.id).toBe('p4');
   });
-  it('reuses lowest unused id after delete', () => {
-    let d = addAi(toDraft(doc), keys); d = deleteAi(d, 'p2');
+  it('never reuses an id deleted in the current draft', () => {
+    let d = addAi(toDraft(doc), keys, doc.players); d = deleteAi(d, 'p2');
     expect(d.players.map(p => p.id)).toEqual(['p1', 'p3']);
-    expect(addAi(d, keys).players.at(-1)!.id).toBe('p2');
+    expect(addAi(d, keys, doc.players).players.at(-1)!.id).toBe('p4');
+    const only = deleteAi(addAi(toDraft(doc), keys, doc.players), 'p2');
+    expect(addAi(only, keys, doc.players).players.map(p => p.id)).not.toContain('p2');
   });
   it('last AI and human cannot be deleted', () => {
     expect(canDeleteAi(doc.players, 'p2')).toBe(false);

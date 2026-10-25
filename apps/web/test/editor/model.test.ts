@@ -95,6 +95,17 @@ it('level-properties nulls owners missing from new players in one undoable step'
   expect(state.present.buildings.map(b => b.owner)).toEqual(['p1', 'p2']);
 });
 
+it('level-properties: delete AI + add AI + Apply leaves old AI buildings neutral', async () => {
+  const { addAi, deleteAi, toDraft } = await import('../../src/editor/level-draft.js');
+  const doc = blankDocument('na-own2', 'green', 'medium');
+  doc.buildings = [{ id: 'b1', archetype: 'tower', pos: { x: 4, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false }];
+  const keys = ['blue', 'red', 'green', 'yellow', 'pink'];
+  let d = addAi(toDraft(doc), keys, doc.players); d = deleteAi(d, 'p2');
+  d = addAi(d, keys, doc.players);
+  const state = model.historyReducer(model.createHistory(doc), { type: 'edit', op: { type: 'level-properties', value: d } });
+  expect(state.present.buildings[0]!.owner).toBeNull();
+});
+
 it('delete-many strips scripts, is one undo step, and no-ops on absent ids', () => {
   const doc = blankDocument('na-many', 'green', 'medium');
   doc.buildings = [
