@@ -14,7 +14,7 @@ export const listLevels = (): Promise<LevelListing[]> => get('levels');
 export const readLevel = (id: string): Promise<LevelDoc> => get(`level/${encodeURIComponent(id)}`);
 
 export class EditorApiError extends Error {
-  constructor(message: string, readonly issues: ContentIssue[] = []) { super(message); }
+  constructor(message: string, readonly issues: ContentIssue[] = [], readonly status = 0) { super(message); }
 }
 export async function saveLevel(level: LevelDoc): Promise<{ level: LevelDoc; warnings: ContentIssue[] }> {
   const response = await fetch('/__editor/save', {
@@ -22,7 +22,7 @@ export async function saveLevel(level: LevelDoc): Promise<{ level: LevelDoc; war
     body: JSON.stringify({ id: level.id, level }),
   });
   const body = await response.json() as { level: LevelDoc; warnings: ContentIssue[]; error?: string; issues?: ContentIssue[] };
-  if (!response.ok) throw new EditorApiError(body.error ?? `Save failed (${response.status})`, body.issues);
+  if (!response.ok) throw new EditorApiError(body.error ?? `Save failed (${response.status})`, body.issues, response.status);
   return body;
 }
 

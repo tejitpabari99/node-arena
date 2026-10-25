@@ -31,16 +31,22 @@ export const ZOOM_CLOSE = 0.72;
 /** Camera framing: extent multiplier on the fitted view (1 = old full fit). Single source of truth for both zoom levels. */
 export function zoomFraming(zoomed: boolean): number { return zoomed ? ZOOM_CLOSE : ZOOM_NEAR; }
 
+/** Fraction of each axis left for the scene after HUD padding (scaled down only when padding consumes the host). */
+export function paddingFractions(viewport: CameraViewport): { fractionX: number; fractionY: number } {
+  const width = Math.max(1,viewport.width), height = Math.max(1,viewport.height), p = viewport.padding;
+  const sx = Math.min(1,width * .9 / Math.max(1,p.left+p.right));
+  const sy = Math.min(1,height * .9 / Math.max(1,p.top+p.bottom));
+  return { fractionX: (width-(p.left+p.right)*sx)/width, fractionY: (height-(p.top+p.bottom)*sy)/height };
+}
+
 export function fitCamera(camera: PerspectiveCamera, bounds: Box3, settings: ManifestV2['camera'], aspect: number, viewport?: CameraViewport, framing = 1): void {
   camera.clearViewOffset();
   let fractionX = 1, fractionY = 1;
   if (viewport) {
+    const f = paddingFractions(viewport); fractionX = f.fractionX; fractionY = f.fractionY;
     const width = Math.max(1,viewport.width), height = Math.max(1,viewport.height), p = viewport.padding;
-    // A collapsed/transient host still needs a valid frustum. Scale margins down only when they consume the host.
     const sx = Math.min(1,width * .9 / Math.max(1,p.left+p.right));
     const sy = Math.min(1,height * .9 / Math.max(1,p.top+p.bottom));
-    fractionX = (width-(p.left+p.right)*sx)/width;
-    fractionY = (height-(p.top+p.bottom)*sy)/height;
     camera.setViewOffset(width,height,(p.right-p.left)*sx/2,(p.bottom-p.top)*sy/2,width,height);
   }
   const padded = bounds.clone().expandByScalar(settings.margin);

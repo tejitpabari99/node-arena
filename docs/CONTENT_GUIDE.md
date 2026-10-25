@@ -192,11 +192,9 @@ pnpm check:manifest
 pnpm assets:manifest --check
 ```
 
-Open the custom-level list and play **Art showcase · Green** (`na-showcase-green`) or **Art showcase · Snow** (`na-showcase-snow`). Each has 15 buildings: house-wt1, house-wt2 and tower across blue/green/red/yellow/neutral-gray owners, with levels 1/15/40 cycling through the three stages. Each type shows all stages; this is not every stage/owner combination. There are two small and two big obstacles per theme, plus initial routes and AI for troops, clashes, captures and tower shots. Reload the level after changes; there is no live art swap.
-
 Use the [art:status command](../tools/README.md#gates) for the remaining replacement inventory. It reads the merged manifest, so merge first. The inventory counts file-valued fields (not unique files), excludes scalar sky/light settings, labels remaining model/texture imports TW and other stock paths stock, and treats only the art path prefix as replaced. This is useful even if a patch changes only lighting or points outside that prefix; strict mode will still report remaining stock files.
 
-Art-only edits affect presentation, not simHash or bot identity: no contentVersion, RULES_VERSION or BOT_VERSION bump and no content/level lock regeneration. Adding or changing a showcase level's simulation data follows the normal version/hash process in this guide.
+Art-only edits affect presentation, not simHash or bot identity: no contentVersion, RULES_VERSION or BOT_VERSION bump and no content/level lock regeneration. Adding or changing a level's simulation data follows the normal version/hash process in this guide.
 
 ## Load, validate and compile
 

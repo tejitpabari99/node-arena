@@ -1,15 +1,19 @@
 import { compileLevel, computeRequires, loadCatalog, loadLevel, type Catalog, type CompiledLevel, type ManifestV2 } from '@node-arena/content';
 import { create, createTroopBuffer, type Sim } from '@node-arena/sim';
-import { Object3D, PerspectiveCamera, Raycaster, TextureLoader, Vector2, Vector3 } from 'three';
+import { Box3, Object3D, PerspectiveCamera, Raycaster, TextureLoader, Vector2, Vector3 } from 'three';
 import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
-import { fitCamera, HUD_PADDING, levelVisualBounds, zoomFraming } from '../render/camera.js';
+import { fitCamera, HUD_PADDING, levelVisualBounds, paddingFractions, zoomFraming } from '../render/camera.js';
 import { createLevelScene } from '../render/scene.js';
-import { snapPosition, type DocOp, type LibraryItem } from './model.js';
+import { buildableArea, clampPoint, snapPosition, type Area, type DocOp, type LibraryItem } from './model.js';
 import type { LevelDoc } from './document.js';
 import { groundAt, pickObstacle, type Point, type Selection } from './picking.js';
 
-export interface ViewportStatus { message: string; rebuildMs?: number; compileMs?: number; sceneMs?: number; firstFrameMs?: number }
+export interface ViewState { zoom: number; min: number; max: number; atMin: boolean; atMax: boolean }
+export const ZOOM_MAX = 4;
+/** Largest campaign bounds; the frame box never gets smaller than this around the area centre. */
+const FRAME_FLOOR_W = 21, FRAME_FLOOR_H = 15;
+export interface ViewportStatus { message: string; error?: string; rebuildMs?: number; compileMs?: number; sceneMs?: number; firstFrameMs?: number }
 /** Editor camera, picking and transient drag previews; only release emits document edits. */
 export function createEditorViewport(parent: HTMLElement, callbacks: {
   selection?(items: Selection[]): void;
@@ -17,11 +21,16 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   pointer?(point: Point | null): void;
   edit?(op: DocOp): void;
   los?(message: string): void;
+  view?(view: ViewState): void;
 } = {}) {
   let scene: ReturnType<typeof createLevelScene> | undefined;
   let level: CompiledLevel | undefined, sim: Sim | undefined;
   let disposed = false, generation = 0, zoom = 1, pan = { x: 0, z: 0 };
-  let selection: Selection[] = [], snap = true;
+  let area: Area | undefined, frameBox: Box3 | undefined, frameDocId: string | undefined;
+  let intent: 'reset' | 'fit' | undefined = 'reset';
+  let viewState: ViewState = { zoom: 1, min: 1, max: ZOOM_MAX, atMin: false, atMax: false };
+  let selection: Selection[] = [];
+  let hand = false, space = false, grid = false;
   let los: { from: string; to: string } | undefined;
   const svgNS = 'http://www.w3.org/2000/svg';
   const overlay = document.createElementNS(svgNS, 'svg'); overlay.classList.add('editor-layout-overlay'); parent.append(overlay);
@@ -36,8 +45,25 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, String(value));
       container.append(node); return node;
     };
-    const b = workingDoc.bounds;
-    element('polygon', { points: [[b.minX,b.minZ],[b.maxX,b.minZ],[b.maxX,b.maxZ],[b.minX,b.maxZ]].map(([x,z]) => { const p = point(x!,z!); return `${p.x},${p.y}`; }).join(' '), class: 'editor-bounds' });
+    const b = workingDoc.bounds, buildArea = currentArea();
+    parent.dataset.bounds = JSON.stringify(b); parent.dataset.area = JSON.stringify(buildArea);
+    const ring = (r: Area) => [[r.minX, r.minZ], [r.maxX, r.minZ], [r.maxX, r.maxZ], [r.minX, r.maxZ]].map(([x, z]) => { const p = point(x!, z!); return `${p.x},${p.y}`; });
+    const w = rect.width, h = rect.height, corners = ring(buildArea);
+    element('path', { d: `M0,0H${w}V${h}H0Z M${corners.join(' L')}Z`, 'fill-rule': 'evenodd', class: 'editor-area-shade' });
+    element('polygon', { points: corners.join(' '), class: 'editor-area' });
+    if (grid) {
+      const mid = { x: Math.round((buildArea.minX + buildArea.maxX) / 2), z: Math.round((buildArea.minZ + buildArea.maxZ) / 2) };
+      const o = point(mid.x, mid.z), px = point(mid.x + 1, mid.z), pz = point(mid.x, mid.z + 1);
+      if (Math.min(Math.hypot(px.x - o.x, px.y - o.y), Math.hypot(pz.x - o.x, pz.y - o.y)) >= 8) {
+        const lines = element('g', { class: 'editor-grid' });
+        const line = (a: [number, number], c: [number, number], major: boolean) => {
+          const s0 = point(a[0], a[1]), s1 = point(c[0], c[1]);
+          element('line', { x1: s0.x, y1: s0.y, x2: s1.x, y2: s1.y, class: major ? 'editor-grid-line editor-grid-major' : 'editor-grid-line' }, lines);
+        };
+        for (let x = Math.ceil(buildArea.minX); x <= buildArea.maxX; x++) line([x, buildArea.minZ], [x, buildArea.maxZ], x % 5 === 0);
+        for (let z = Math.ceil(buildArea.minZ); z <= buildArea.maxZ; z++) line([buildArea.minX, z], [buildArea.maxX, z], z % 5 === 0);
+      }
+    }
     for (const target of selection) {
       const item = (target.kind === 'building' ? workingDoc.buildings : workingDoc.elements).find(item => item.id === target.id);
       if (item) { const p = point(item.pos.x, item.pos.z); element('ellipse', { cx: p.x, cy: p.y, rx: 23, ry: 13, class: 'editor-selection-ring' }); }
@@ -73,25 +99,64 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   }
   let resources: Promise<{ manifest: ManifestV2; catalog: Catalog }> | undefined;
   let pending = Promise.resolve();
+  /** True while the last rebuild failed and the previous scene/level/sim is still shown. */
+  let stale = false;
   const marquee = document.createElement('div'); marquee.className = 'editor-marquee'; marquee.hidden = true; parent.append(marquee);
   let gesture: { id: number; x: number; y: number; lastX: number; lastY: number; pan: boolean; empty: boolean; target: Selection | null; origin: Point | null; start: Point | null; targets: Selection[] } | undefined;
   const report = (status: ViewportStatus) => callbacks.status?.(status);
+  const currentArea = (): Area => area ?? buildableArea(workingDoc!.bounds);
+  /** Cached frame box (scene frame, z negated): visual bounds union a 21x15 floor box at the area centre. */
+  function computeFrameBox(): Box3 {
+    const a = currentArea(), cx = (a.minX + a.maxX) / 2, cz = -(a.minZ + a.maxZ) / 2;
+    const box = levelVisualBounds(sim!.view, level!.buildings.map(b => b.id), scene!.world.anchors);
+    return box.union(new Box3(new Vector3(cx - FRAME_FLOOR_W / 2, 0, cz - FRAME_FLOOR_H / 2), new Vector3(cx + FRAME_FLOOR_W / 2, 0, cz + FRAME_FLOOR_H / 2)));
+  }
+  /** Area +-12 in sim milli-units, so the ground covers the whole buildable area at Fit area. */
+  const groundExtent = () => { const a = currentArea(); return { minX: (a.minX - 12) * 1000, maxX: (a.maxX + 12) * 1000, minZ: (a.minZ - 12) * 1000, maxZ: (a.maxZ + 12) * 1000 }; };
+  const isLive = () => !!(scene && level && sim && manifest);
+  const centreRay = new Raycaster();
   function frameCamera() {
-    if (!scene || !level || !sim || !manifest) {
-      if (!workingDoc) return;
-      const b = workingDoc.bounds, width = Math.max(1, parent.clientWidth), height = Math.max(1, parent.clientHeight);
+    const live = isLive();
+    if (!live && !workingDoc) return;
+    const cam = live ? scene!.camera : blankCamera, zs = live ? -1 : 1;
+    const width = Math.max(1, parent.clientWidth), height = Math.max(1, parent.clientHeight), a = currentArea();
+    const ac = { x: (a.minX + a.maxX) / 2, z: zs * (a.minZ + a.maxZ) / 2 };
+    const zLo = zs < 0 ? -a.maxZ : a.minZ, zHi = zs < 0 ? -a.minZ : a.maxZ;
+    cam.zoom = 1;
+    let fx = 1, fy = 1;
+    if (live) {
+      frameBox ??= computeFrameBox();
+      fitCamera(cam, frameBox, manifest!.camera, width / height, { width, height, padding: HUD_PADDING }, zoomFraming(false));
+      ({ fractionX: fx, fractionY: fy } = paddingFractions({ width, height, padding: HUD_PADDING }));
+    } else {
       blankCamera.aspect = width / height;
-      const cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2;
-      const distance = Math.max(b.maxZ - b.minZ, (b.maxX - b.minX) / blankCamera.aspect) * 1.5;
-      blankCamera.position.set(cx, distance, cz + distance * .5); blankCamera.lookAt(cx, 0, cz);
-      blankCamera.updateProjectionMatrix(); blankCamera.updateMatrixWorld(); overlays(); return;
+      const distance = Math.max(FRAME_FLOOR_H, FRAME_FLOOR_W / blankCamera.aspect) * 1.5;
+      blankCamera.position.set(ac.x, distance, ac.z + distance * .5); blankCamera.lookAt(ac.x, 0, ac.z);
+      blankCamera.updateProjectionMatrix(); blankCamera.updateMatrixWorld(true);
     }
-    const width = Math.max(1, parent.clientWidth), height = Math.max(1, parent.clientHeight);
-    scene.camera.zoom = zoom;
-    fitCamera(scene.camera, levelVisualBounds(sim.view, level.buildings.map(b => b.id), scene.world.anchors), manifest.camera,
-      width / height, { width, height, padding: HUD_PADDING }, zoomFraming(false));
-    scene.camera.position.x += pan.x; scene.camera.position.z += pan.z;
-    scene.camera.updateMatrixWorld(); scene.render(); overlays();
+    // Ground point under the view centre at pan 0; pan translates the camera, so centre ground = g0 + pan.
+    const base = cam.position.clone();
+    centreRay.setFromCamera(new Vector2(0, 0), cam);
+    const o = centreRay.ray.origin, d = centreRay.ray.direction, t = d.y === 0 ? 0 : -o.y / d.y;
+    const g0 = { x: o.x + d.x * t, z: o.z + d.z * t }, centrePan = { x: ac.x - g0.x, z: ac.z - g0.z };
+    cam.position.set(base.x + centrePan.x, base.y, base.z + centrePan.z); cam.updateMatrixWorld(true);
+    let k = 0;
+    for (const x of [a.minX, a.maxX]) for (const z of [zLo, zHi]) {
+      const v = new Vector3(x, 0, z).project(cam); k = Math.max(k, Math.abs(v.x) / fx, Math.abs(v.y) / fy);
+    }
+    const min = Math.min(ZOOM_MAX, k > 0 ? .96 / k : ZOOM_MAX), max = ZOOM_MAX;
+    if (intent === 'reset') { zoom = Math.sqrt(min * max); pan = { x: 0, z: 0 }; }
+    else if (intent === 'fit') { zoom = min; pan = { ...centrePan }; }
+    intent = undefined;
+    zoom = Math.min(max, Math.max(min, zoom));
+    pan.x = Math.min(a.maxX - g0.x, Math.max(a.minX - g0.x, pan.x));
+    pan.z = Math.min(zHi - g0.z, Math.max(zLo - g0.z, pan.z));
+    cam.zoom = zoom; cam.updateProjectionMatrix();
+    cam.position.set(base.x + pan.x, base.y, base.z + pan.z); cam.updateMatrixWorld(true);
+    if (live) scene!.render();
+    overlays();
+    viewState = { zoom, min, max, atMin: zoom <= min * 1.0001, atMax: zoom >= max * .9999 };
+    callbacks.view?.(viewState);
   }
   let manifest: ManifestV2 | undefined;
   // The shared scene refits first; defer our editor camera until after its resize observer.
@@ -113,7 +178,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     return groundAt(x, y, scene?.canvas.getBoundingClientRect() ?? parent.getBoundingClientRect(), scene?.camera ?? blankCamera, scene?.worldRoot ?? blankRoot);
   }
   function pick(x: number, y: number): Selection | null {
-    if (!scene || !level) return null;
+    if (!scene || !level || stale) return null;
     const rect = scene.canvas.getBoundingClientRect(), ray = new Raycaster();
     scene.scene.updateMatrixWorld(true);
     ray.setFromCamera(new Vector2((x - rect.left) / rect.width * 2 - 1, 1 - (y - rect.top) / rect.height * 2), scene.camera);
@@ -129,10 +194,12 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     const v = new Vector3(x, 0, z).applyMatrix4((scene?.worldRoot ?? blankRoot).matrixWorld).project(scene?.camera ?? blankCamera);
     return { x: rect.left + (v.x + 1) * rect.width / 2, y: rect.top + (1 - v.y) * rect.height / 2 };
   }
-  function cancel() { for (const node of groupGhosts) node.remove(); groupGhosts.length = 0; gesture = undefined; placement = undefined; ghostPoint = null; ghost.hidden = true; marquee.hidden = true; }
+  function updateCursor() { parent.style.cursor = gesture?.pan ? 'grabbing' : hand || space ? 'grab' : ''; }
+  function cancel() { for (const node of groupGhosts) node.remove(); groupGhosts.length = 0; gesture = undefined; placement = undefined; ghostPoint = null; ghost.hidden = true; marquee.hidden = true; updateCursor(); }
   function down(event: PointerEvent) {
-    if (!scene || gesture || !event.isPrimary || ![0, 1, 2].includes(event.button)) return;
-    const panning = event.button !== 0 || event.altKey;
+    if (!scene || gesture || placement || !event.isPrimary || ![0, 1, 2].includes(event.button)) return;
+    const panning = event.button !== 0 || event.altKey || hand || space;
+    if (stale && !panning) return; // selection, drag-move and marquee would target ids from the previous level
     const hit = panning ? null : pick(event.clientX, event.clientY);
     const item = hit && (hit.kind === 'building' ? workingDoc?.buildings : workingDoc?.elements)?.find(item => item.id === hit.id);
     if (!panning) {
@@ -141,7 +208,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       else if (!included) choose(hit ? [hit] : []);
     }
     gesture = { targets: [...selection], id: event.pointerId, x: event.clientX, y: event.clientY, lastX: event.clientX, lastY: event.clientY, pan: panning, empty: hit === null, target: hit, origin: item ? { ...item.pos } : null, start: at(event.clientX, event.clientY) };
-    scene.canvas.setPointerCapture(event.pointerId); event.preventDefault();
+    scene.canvas.setPointerCapture(event.pointerId); event.preventDefault(); updateCursor();
   }
   function move(event: PointerEvent) {
     callbacks.pointer?.(at(event.clientX, event.clientY));
@@ -151,7 +218,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       if (a && b) { pan.x += a.x - b.x; pan.z -= a.z - b.z; frameCamera(); }
     } else if (gesture.target && gesture.origin && gesture.start) {
       const p = Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > 5 ? at(event.clientX, event.clientY) : null;
-      showGhost(p && gesture.targets.some(item => item.kind === gesture!.target!.kind && item.id === gesture!.target!.id) ? snapPosition({ x: gesture.origin.x + p.x - gesture.start.x, z: gesture.origin.z + p.z - gesture.start.z }, snap) : null, `${gesture.target.id}${gesture.targets.length > 1 ? ` +${gesture.targets.length - 1}` : ''}`);
+      showGhost(p && gesture.targets.some(item => item.kind === gesture!.target!.kind && item.id === gesture!.target!.id) ? clampPoint(snapPosition({ x: gesture.origin.x + p.x - gesture.start.x, z: gesture.origin.z + p.z - gesture.start.z }), currentArea()) : null, `${gesture.target.id}${gesture.targets.length > 1 ? ` +${gesture.targets.length - 1}` : ''}`);
       for (const node of groupGhosts) node.remove(); groupGhosts.length = 0;
       if (ghostPoint) for (const target of gesture.targets) {
         if (target.id === gesture.target.id && target.kind === gesture.target.kind) continue;
@@ -190,22 +257,32 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   function dragMove(event: PointerEvent) {
     if (!placement || event.pointerId !== placement.id) return;
     const point = inside(event.clientX, event.clientY) ? at(event.clientX, event.clientY) : null;
-    callbacks.pointer?.(point); showGhost(point ? snapPosition(point, snap) : null, placement.item);
+    callbacks.pointer?.(point); showGhost(point ? clampPoint(snapPosition(point), currentArea()) : null, placement.item);
   }
   function dragUp(event: PointerEvent) {
     if (!placement || event.pointerId !== placement.id) return;
     const item = placement.item, pos = inside(event.clientX, event.clientY) ? at(event.clientX, event.clientY) : null;
     cancel();
-    if (pos) callbacks.edit?.({ type: 'place', item, pos: snapPosition(pos, snap) });
+    if (pos) callbacks.edit?.({ type: 'place', item, pos: clampPoint(snapPosition(pos), currentArea()) });
   }
   window.addEventListener('pointermove', dragMove); window.addEventListener('pointerup', dragUp); window.addEventListener('pointercancel', cancel);
-  function wheel(event: WheelEvent) { if (!scene) return; event.preventDefault(); zoomBy(Math.exp(-event.deltaY * .001)); }
+  function wheel(event: WheelEvent) { if (!workingDoc) return; event.preventDefault(); zoomBy(Math.exp(-event.deltaY * .001), { x: event.clientX, y: event.clientY }); }
   function context(event: Event) { event.preventDefault(); }
   const handlers = { pointerdown: down, pointermove: move, pointerup: up, pointercancel: cancel, lostpointercapture: cancel, wheel, contextmenu: context };
   for (const [name, handler] of Object.entries(handlers)) parent.addEventListener(name, handler as EventListener, { passive: false });
-  function zoomBy(factor: number) { zoom = Math.min(3, Math.max(.35, zoom * factor)); frameCamera(); }
-  function gameCamera() { zoom = 1; pan = { x: 0, z: 0 }; frameCamera(); }
-  function clearScene() { scene?.dispose(); scene = undefined; level = undefined; sim = undefined; }
+  /** Zoom by a factor; with an anchor (client px) the ground point under it stays put. */
+  function zoomBy(factor: number, anchor?: { x: number; y: number }) {
+    const before = anchor && at(anchor.x, anchor.y);
+    zoom *= factor; frameCamera();
+    const after = before && anchor && at(anchor.x, anchor.y);
+    if (before && after) { const zs = isLive() ? -1 : 1; pan.x += before.x - after.x; pan.z += zs * (before.z - after.z); frameCamera(); }
+  }
+  function fitArea() { if (!workingDoc) return; intent = 'fit'; frameCamera(); }
+  function gameCamera() {
+    if (!workingDoc) return;
+    if (isLive()) { frameBox = computeFrameBox(); zoom = 1; pan = { x: 0, z: 0 }; frameCamera(); } else fitArea();
+  }
+  function clearScene() { scene?.dispose(); scene = undefined; level = undefined; sim = undefined; stale = false; }
   async function rebuild(doc: LevelDoc, token: number) {
     if (disposed || token !== generation) return;
     cancel();
@@ -217,9 +294,10 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       const added = [...doc.buildings.map(item => ({ kind: 'building' as const, id: item.id })), ...doc.elements.map(item => ({ kind: 'obstacle' as const, id: item.id }))].filter(item => !previous.has(item.id));
       if (added.length === 1) nextSelection.push(added[0]!);
     }
+    const newDoc = frameDocId !== doc.id;
     workingDoc = doc;
     choose(nextSelection);
-    if (!doc.buildings.length) { clearScene(); frameCamera(); report({ message: 'Add a building to preview this blank level.' }); return; }
+    if (!doc.buildings.length) { clearScene(); frameBox = undefined; frameDocId = doc.id; if (newDoc) intent = 'reset'; frameCamera(); report({ message: 'Add a building to preview this blank level.' }); return; }
     report({ message: 'Loading preview…' });
     try {
       resources ??= loadManifest().then(value => ({ manifest: value, catalog: loadCatalog(contentFiles(), { themes: Object.keys(value.themes), colorKeys: Object.keys(value.palettes) }) }));
@@ -233,28 +311,37 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       const compiledAt = performance.now();
       if (scene && level?.theme !== next.theme) clearScene();
       if (!scene) {
-        scene = createLevelScene({ level: next, view: nextSim.view, manifest, parent, worldOptions: { textureLoader: loadTexture } });
+        scene = createLevelScene({ level: next, view: nextSim.view, manifest, parent, worldOptions: { textureLoader: loadTexture }, groundExtent: groundExtent() });
         await scene.ready;
-      } else await scene.world.setLevel(next, next.theme);
+      } else await scene.world.setLevel(next, next.theme, groundExtent());
       if (disposed || token !== generation) return;
       const sceneAt = performance.now();
-      level = next; sim = nextSim;
+      level = next; sim = nextSim; stale = false;
+      if (newDoc) { frameBox = undefined; intent = 'reset'; }
+      frameDocId = doc.id;
       scene.update({ view: sim.view, troops: createTroopBuffer(0), n: 0, alpha: 0, towerRadiusMilli: sim.towerRadiusMilli.bind(sim) }, [], 0);
       const rebuiltAt = performance.now();
       frameCamera(); choose(selection);
       report({ message: 'Ready', rebuildMs: rebuiltAt - start, compileMs: compiledAt - start, sceneMs: sceneAt - compiledAt, firstFrameMs: performance.now() - start });
     } catch (error) {
       if (disposed || token !== generation) return;
-      clearScene(); frameCamera(); report({ message: `Preview unavailable: ${error instanceof Error ? error.message : String(error)}` });
+      const reason = error instanceof Error ? error.message : String(error);
+      if (scene && level && sim) { stale = true; report({ message: 'Preview out of date', error: reason }); return; }
+      clearScene(); frameBox = undefined; frameDocId = doc.id; if (newDoc) intent = 'reset'; frameCamera(); report({ message: `Preview unavailable: ${reason}` });
     }
   }
   return {
     /** Serializes asset rebuilds; superseded requests are skipped, and no stale result enables picking. */
     setDocument(doc: LevelDoc) { const token = ++generation; pending = pending.then(() => rebuild(doc, token)); return pending; },
     beginPlacement(item: LibraryItem, pointerId: number) { cancel(); placement = { item, id: pointerId }; },
-    setSnap(enabled: boolean) { snap = enabled; },
     setLos(value: { from: string; to: string }) { los = value; overlays(); },
-    zoomBy, gameCamera, pick, groundAt: at, select: choose,
+    setHand(on: boolean) { hand = on; updateCursor(); },
+    setSpace(on: boolean) { space = on; updateCursor(); },
+    setGrid(on: boolean) { grid = on; overlays(); },
+    cancelPlacement(): boolean { if (!placement) return false; cancel(); return true; },
+    setArea(next: Area) { area = next; scheduleFrame(); overlays(); },
+    zoomBy, fitArea, gameCamera, pick,
+    get viewState() { return viewState; }, groundAt: at, select: choose,
     get inspection() { return scene; },
     get previewSim() { return sim; },
     get selected() { return selection; },

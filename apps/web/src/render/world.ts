@@ -62,7 +62,8 @@ export interface WorldRendererOptions {
 
 export interface WorldRenderer {
   /** Replaces all level content (ground, obstacles, lanes, buildings, units, fx, theme light). Caches are retained. */
-  setLevel(level: WorldLevel, themeId: string): Promise<void>;
+  /** `groundExtent` (sim milli-units) is unioned with bounds for the ground only; omitted = unchanged. */
+  setLevel(level: WorldLevel, themeId: string, groundExtent?: Bounds): Promise<void>;
   update(frame: WorldFrame, events: readonly SimEvent[], dtMs: number): void;
   readonly anchors: { building(id: string): BuildingAnchor | undefined };
   /** Raycast targets of every building; `mesh.userData.buildingIndex` is the dense building index. */
@@ -141,10 +142,11 @@ export function createWorldRenderer(scene: Object3D, manifest: ManifestV2, opts:
   }
 
   const world: WorldRenderer = {
-    async setLevel(level, themeId) {
+    async setLevel(level, themeId, groundExtent) {
       const mine = ++gen;
       await ready;
-      await env.setLevel({ bounds: level.bounds, elements: level.elements }, themeId);
+      const groundBounds = groundExtent ? { minX: Math.min(level.bounds.minX, groundExtent.minX), maxX: Math.max(level.bounds.maxX, groundExtent.maxX), minZ: Math.min(level.bounds.minZ, groundExtent.minZ), maxZ: Math.max(level.bounds.maxZ, groundExtent.maxZ) } : level.bounds;
+      await env.setLevel({ bounds: groundBounds, elements: level.elements }, themeId);
       env.lanes.clearPreview();
       const group = new Group(); group.name = 'world:level';
       const labels = new Group(); labels.name = 'world:level-labels';

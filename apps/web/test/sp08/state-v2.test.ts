@@ -36,11 +36,10 @@ it('loads custom names in position order without changing Common numbering or un
   expect(isLevelUnlocked(state,state.levels[1]!.id)).toBe(false);expect(isLevelUnlocked(state,'unknown')).toBe(false);
   await app.startLevel('na-last');expect(app.snapshot().screen).toBe('playing');app.dispose();
 });
-it('custom wins save normally and Next follows custom order, stopping at the last entry',async()=>{
+it('custom wins save normally; Next is a no-op for custom levels',async()=>{
   const app=setup({files:withCustomLevels(files),createSim:(level,seed)=>{const sim=create(level,seed);return {...sim,step:()=>{sim.view.over={outcome:'won',winner:0};return [];}};}});
   await app.boot();await app.startLevel('na-first');app.step();expect(app.snapshot().save.completed['na-first']).toBeDefined();
-  await app.next();expect(app.snapshot().levelId).toBe('na-last');const driver=app.driver;
-  await app.next();expect(app.driver).toBe(driver);expect(app.snapshot().levelId).toBe('na-last');
+  const driver=app.driver;await app.next();expect(app.driver).toBe(driver);expect(app.snapshot().levelId).toBe('na-first');app.openPicker();expect(app.snapshot().pickerView).toBe('custom');
   expect(isLevelUnlocked(app.snapshot(),app.snapshot().levels[1]!.id)).toBe(false);app.dispose();
 });
 it('Common Next stays in Common when custom entries exist',async()=>{

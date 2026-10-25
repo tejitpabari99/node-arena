@@ -11,7 +11,8 @@ export function Hud({state,app,onMute}:{state:AppSnapshot;app:AppController;onMu
   const levels=state.customLevels.some(l=>l.id===state.levelId)?state.customLevels:state.levels;
   const levelIndex=levels.findIndex(l=>l.id===state.levelId);
   const level=levels[levelIndex];
-  const hasNext=levelIndex>=0&&levelIndex<levels.length-1;
+  const custom=state.customLevels.some(l=>l.id===state.levelId);
+  const hasNext=!custom&&levelIndex>=0&&levelIndex<levels.length-1;
   const human=view?.players.findIndex(p=>p.kind==='human')??-1;
   const won=human>=0&&state.result?.winner===human;
   const modal=state.restartPopup||state.screen==='result';
@@ -23,6 +24,6 @@ export function Hud({state,app,onMute}:{state:AppSnapshot;app:AppController;onMu
       <button class="mute-button battle-mute" aria-label={muted?'Unmute sound':'Mute sound'} aria-pressed={muted} onClick={onMute}><img src={uiSprites[muted?'soundOff':'soundOn']} alt=""/></button>
     </div>
     {state.restartPopup&&<PausePopup onResume={()=>app.resume()} onRestart={()=>{void app.restart();}} onLevels={()=>app.openPicker()}/>}
-    {state.screen==='result'&&<ResultPopup won={won} hasNext={hasNext} onNext={()=>{void app.next();}} onReplay={()=>{void app.restart();}} onLevels={()=>app.openPicker()}/>}
+    {state.screen==='result'&&<ResultPopup won={won} hasNext={hasNext} custom={custom} onNext={()=>{void app.next();}} onReplay={()=>{void app.restart();}} onLevels={()=>app.openPicker()}/>}
   </>;
 }

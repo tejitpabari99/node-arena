@@ -25,3 +25,5 @@ export async function draw(page: Page) {
   expect(await page.evaluate(()=>window.__na!.commandLog)).toContainEqual({tick:0,cmd});
   return pair;
 }
+/** Accept every dialog (e.g. the editor's beforeunload guard) so page.goto never blocks on a dirty document. */
+export function acceptDialogs(page: Page) { page.on('dialog', dialog => { void dialog.accept(); }); }

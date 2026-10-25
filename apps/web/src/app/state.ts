@@ -5,11 +5,12 @@ import { loadManifest } from '../manifest/load';
 import { createSaveStore, type SaveData, type SaveSettings, type SaveStore } from '../save';
 /** Presentation-only pause between the sim reporting game over and showing the result popup. */
 export const RESULT_DELAY_MS = 1250;
+export type PickerView = 'main' | 'campaign' | 'custom' | 'templates';
 export type Screen = 'boot' | 'picker' | 'playing' | 'result' | 'error';
 export interface CampaignLevel { id: string; position: number; number: number; name: string }
 export interface AppSnapshot {
   screen: Screen; loading: boolean; restartPopup: boolean; levels: readonly CampaignLevel[]; customLevels: readonly CampaignLevel[];
-  levelId: string | null; save: SaveData; notices: readonly string[]; error: unknown;
+  pickerView: PickerView; levelId: string | null; save: SaveData; notices: readonly string[]; error: unknown;
   result: SimView['over']; remainingSeconds: number;
   /** Close camera zoom; reset to false per app load, kept across level restarts. */
   zoomed: boolean;
@@ -33,7 +34,7 @@ export function isLevelUnlocked(state: Pick<AppSnapshot,'levels'|'customLevels'|
 /** Level resources have generation-scoped ownership, including asynchronous renderer construction. */
 export function createAppController(options: AppOptions) {
   const save=options.save??createSaveStore(), listeners=new Set<()=>void>(),events=new Set<(u:TickUpdate)=>void>();
-  let state: AppSnapshot={screen:'boot',loading:true,restartPopup:false,levels:[],customLevels:[],levelId:null,save:save.snapshot(),notices:[],error:null,result:null,remainingSeconds:0,zoomed:false};
+  let state: AppSnapshot={screen:'boot',loading:true,restartPopup:false,levels:[],customLevels:[],pickerView:'main',levelId:null,save:save.snapshot(),notices:[],error:null,result:null,remainingSeconds:0,zoomed:false};
   let loaded: LoadedContent|undefined, manifest: ManifestV2|undefined,driver:GameDriver|null=null,runtime:LevelRuntime|undefined;
   let lastSeed=1;
   let finishing: ReturnType<typeof setTimeout>|null=null,finishingOn=false;
@@ -82,12 +83,13 @@ export function createAppController(options: AppOptions) {
         runtime?.frame({sim:owned.sim,alpha:0,steps:0,paused:owned.paused});publish();if(options.autoStart!==false)owned.start();
       }catch(error){created?.dispose();owned?.dispose();if(!disposed&&token===generation)fail(error);}
     },
-    openPicker(){if(disposed)return;++generation;clear();state={...state,screen:loaded?'picker':'error',loading:false,restartPopup:false,result:null};publish();},
+    openPicker(){if(disposed)return;++generation;clear();const pickerView:PickerView=state.levelId&&state.customLevels.some(l=>l.id===state.levelId)?'custom':state.levelId?'campaign':state.pickerView;state={...state,screen:loaded?'picker':'error',loading:false,restartPopup:false,result:null,pickerView};publish();},
+    setPickerView(pickerView:PickerView){if(disposed)return;state={...state,pickerView};publish();},
     pause(){if(state.screen!=='playing'||finishingOn)return;runtime?.cancel();driver?.pause();},
     resume(){if(state.screen!=='playing'||!state.restartPopup)return;driver?.resume();if(driver&&!driver.paused){state={...state,restartPopup:false};runtime?.refresh();publish();}},
     escape(){if(finishingOn)return;if(state.restartPopup)api.resume();else if(state.screen==='playing'&&!runtime?.cancel())api.pause();},
     restart(){return state.levelId?api.startLevel(state.levelId,lastSeed):Promise.resolve();},
-    next(){const levels=state.customLevels.some(l=>l.id===state.levelId)?state.customLevels:state.levels;const i=levels.findIndex(l=>l.id===state.levelId),next=levels[i+1];return next?api.startLevel(next.id):Promise.resolve();},
+    next(){if(state.customLevels.some(l=>l.id===state.levelId))return Promise.resolve();const levels=state.levels;const i=levels.findIndex(l=>l.id===state.levelId),next=levels[i+1];return next?api.startLevel(next.id):Promise.resolve();},
     retry(){return state.levelId&&loaded?api.restart():api.boot();},
     toggleZoom(){state={...state,zoomed:!state.zoomed};runtime?.setZoom?.(state.zoomed);publish();},
     updateSettings(patch:Partial<SaveSettings>){save.updateSettings(patch);publish();},

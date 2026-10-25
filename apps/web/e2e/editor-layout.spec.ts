@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
-test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and persist fitted bounds only on Save', async ({ page }) => {
+test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and persist only on Save', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev-only editor');
-  let writes = 0, saved: LevelDoc | undefined;
+  let writes = 0, original: LevelDoc['bounds'] | undefined, saved: LevelDoc | undefined;
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await page.route('**/__editor/level/levelview-1', async route => {
     const doc = await (await route.fetch()).json() as LevelDoc;
+    original = structuredClone(doc.bounds);
     doc.buildings = [
       { id: 'b0', archetype: 'house-wt1', pos: { x: -4, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
       { id: 'b1', archetype: 'house-wt1', pos: { x: 4, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
@@ -23,44 +24,45 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await page.getByLabel('Copy level').selectOption('levelview-1');
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
-  await expect(page.getByLabel('Grid snap')).toBeChecked();
-  await page.getByLabel('LOS from').selectOption('b0');
-  await page.getByLabel('LOS to').selectOption('b1');
+  await page.getByLabel('Selected item', { exact: true }).selectOption('building:b0');
+  await page.locator('[data-section=selection] summary', { hasText: 'Line of sight' }).click();
+  await page.getByLabel('LOS target').selectOption('b1');
   await expect(page.getByTestId('los-status')).toContainText('blocked-obstacle');
   await expect(page.getByTestId('los-status')).toContainText('e0');
   await expect(page.locator('.editor-los line')).toHaveAttribute('stroke', '#fb7185');
   await expect(page.locator('.editor-los circle')).toBeVisible();
   await page.getByLabel('Selected item', { exact: true }).selectOption('obstacle:e0');
+  await page.locator('[data-section=selection] summary', { hasText: 'Shape' }).click();
   await page.getByLabel('Yaw (degrees)').fill('23');
   await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('23');
-  await page.getByRole('button', { name: 'Apply obstacle properties' }).click();
+  await page.getByRole('button', { name: 'Apply shape' }).click();
   await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
-  await page.getByLabel('Grid snap').uncheck();
+  // Yaw always snaps to 15 degrees.
   await page.getByLabel('Yaw (degrees)').fill('23');
-  await page.getByRole('button', { name: 'Apply obstacle properties' }).click();
-  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('23');
-  await page.getByRole('button', { name: 'Copy selected', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply shape' }).click();
+  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
+  await page.getByRole('button', { name: 'Copy', exact: true }).click();
   await page.getByRole('button', { name: 'Paste', exact: true }).click();
-  await expect(page.getByTestId('draft-summary')).toContainText('2 obstacles');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '2');
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(page.getByTestId('draft-summary')).toContainText('1 obstacles');
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '1');
+  await page.getByLabel('Selected item', { exact: true }).selectOption('multi');
   await page.getByRole('button', { name: 'Select all', exact: true }).click();
-  await page.getByLabel('Mirror axis').selectOption('horizontal');
-  await page.getByLabel('Mirror centre').fill('1');
-  await page.getByLabel('Swap p1 and p2 owners').check();
-  await page.getByRole('button', { name: 'Mirror', exact: true }).click();
-  await page.getByRole('button', { name: 'Auto-fit bounds', exact: true }).click();
-  await expect(page.getByTestId('bounds-preview')).toContainText('x −6…6 · z 0…4');
+  const body = await page.locator('body').innerText();
+  expect(body).not.toMatch(/mirror|auto-fit|ground coordinates|bounds-preview/i);
+  await expect(page.getByTestId('bounds-preview')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /auto-fit/i })).toHaveCount(0);
   expect(writes).toBe(0);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect.poll(() => writes).toBe(1);
-  expect(saved!.bounds).toEqual({ minX: -6, maxX: 6, minZ: 0, maxZ: 4 });
-  expect(saved!.buildings.map(b => [b.pos, b.owner])).toEqual([[{ x: -4, z: 2 }, 'p2'], [{ x: 4, z: 2 }, 'p1']]);
-  expect(saved!.elements[0]!.yawDeg).toBe(337);
+  expect(saved!.buildings.map(b => [b.pos, b.owner])).toEqual([[{ x: -4, z: 0 }, 'p1'], [{ x: 4, z: 0 }, 'p2']]);
+  expect(saved!.elements[0]!.yawDeg).toBe(30);
+  // Grow-only: in-bounds edits never move an edge (no auto-fit).
+  expect(saved!.bounds).toEqual(original);
   expect(errors).toEqual([]);
 });
 
-import type { EditorViewport } from '../src/editor/viewport.js';
+import type { EditorViewport } from '../src/editor/viewport-engine.js';
 import type { DocHistory } from '../src/editor/model.js';
 declare global { interface Window { __editorLayout?: { viewport: EditorViewport; history: DocHistory; rebuilds: number } } }
 
@@ -68,8 +70,8 @@ test('multi-selection drags use snapped shared deltas, ghosts only during motion
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Real dev preview');
   await page.goto('/editor.html');
   const target = await page.evaluate(async () => {
-    const path = '/src/editor/viewport.ts', modelPath = '/src/editor/model.ts';
-    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport.js');
+    const path = '/src/editor/viewport-engine.ts', modelPath = '/src/editor/model.ts';
+    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport-engine.js');
     const { createHistory, historyReducer } = await import(/* @vite-ignore */ modelPath) as typeof import('../src/editor/model.js');
     const doc = await (await fetch('/__editor/level/levelview-1')).json() as LevelDoc;
     doc.buildings = [
