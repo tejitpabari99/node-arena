@@ -11,11 +11,12 @@ export type DocOp =
   | { type: 'paste'; clipboard: Clipboard; offset: Point }
   | { type: 'auto-fit' }
   | { type: 'level-properties'; value: LevelProperties }
-  | { type: 'building-properties'; id: string; value: Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined } }
-  | { type: 'obstacle-properties'; id: string; value: { variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined } }
+  | { type: 'building-properties'; id: string; value: Partial<Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined }> }
+  | { type: 'obstacle-properties'; id: string; value: Partial<{ variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined }> }
   | { type: 'place'; item: LibraryItem; pos: Point }
   | { type: 'move'; target: Selection; pos: Point }
-  | { type: 'delete'; target: Selection };
+  | { type: 'delete'; target: Selection }
+  | { type: 'delete-many'; targets: Selection[] };
 export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[] }
 export type HistoryAction = { type: 'edit'; op: DocOp; area?: { minX: number; maxX: number; minZ: number; maxZ: number } } | { type: 'undo' } | { type: 'redo' };
 export const createHistory = (present: LevelDoc): DocHistory => ({ past: [], present, future: [] });
@@ -42,7 +43,14 @@ export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
       elements: doc.elements.map(item => selected('obstacle', item.id) ? { ...item, pos: position(item.pos), yawDeg: op.type === 'mirror' ? normalizeYaw(op.axis === 'vertical' ? 180 - item.yawDeg : -item.yawDeg) : item.yawDeg } : item),
     };
   }
-  if (op.type === 'level-properties') return { ...doc, ...op.value };
+  if (op.type === 'level-properties') {
+    const ids = new Set(op.value.players.map(player => player.id));
+    return { ...doc, ...op.value, buildings: doc.buildings.map(item => item.owner !== null && !ids.has(item.owner) ? { ...item, owner: null } : item) };
+  }
+  if (op.type === 'delete-many') {
+    const next = op.targets.reduce((acc, target) => reduceDocument(acc, { type: 'delete', target }), doc);
+    return next === doc ? doc : next;
+  }
   if (op.type === 'building-properties') return { ...doc, buildings: doc.buildings.map(item => item.id === op.id ? cleanOptional({ ...item, ...op.value }) as LevelDoc['buildings'][number] : item) };
   if (op.type === 'obstacle-properties') return { ...doc, elements: doc.elements.map(item => item.id === op.id ? cleanOptional({ ...item, ...op.value }) as LevelDoc['elements'][number] : item) };
   if (op.type === 'place') {

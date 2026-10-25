@@ -187,7 +187,7 @@ export function Editor() {
   const ctx: EditorContext | null = doc && history ? {
     doc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, viewportStatus, losStatus,
     edit: (op: DocOp) => dispatch({ type: 'edit', op, area }),
-    deleteSelection() { if (selection.length === 1) dispatch({ type: 'edit', op: { type: 'delete', target: selection[0]! }, area }); },
+    deleteSelection() { if (selection.length) dispatch({ type: 'edit', op: { type: 'delete-many', targets: selection }, area }); },
     select: next => { viewport.current?.select(next); },
     copy() { setClipboard(copySelection(doc, selection)); pasteCount.current = 0; },
     paste() { if (!clipboard) return; pasteCount.current++; dispatch({ type: 'edit', op: { type: 'paste', clipboard, offset: { x: .5 * pasteCount.current, z: .5 * pasteCount.current } }, area }); },

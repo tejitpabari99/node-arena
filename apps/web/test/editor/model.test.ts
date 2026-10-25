@@ -80,3 +80,49 @@ it('removes line own/target scripts but ignores unrelated buildings and obstacle
     expect(model.reduceDocument(doc, { type: 'delete', target: { kind: 'building', id: 'absent' } })).toBe(doc);
   }
 });
+
+it('level-properties nulls owners missing from new players in one undoable step', () => {
+  const doc = blankDocument('na-own', 'green', 'medium');
+  doc.buildings = [
+    { id: 'b0', archetype: 'tower', pos: { x: 0, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
+    { id: 'b1', archetype: 'tower', pos: { x: 4, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
+  ];
+  const value = { ...doc, players: doc.players.filter(p => p.id !== 'p2') };
+  let state = model.historyReducer(model.createHistory(doc), { type: 'edit', op: { type: 'level-properties', value } });
+  expect(state.present.buildings.map(b => b.owner)).toEqual(['p1', null]);
+  expect(state.past).toHaveLength(1);
+  state = model.historyReducer(state, { type: 'undo' });
+  expect(state.present.buildings.map(b => b.owner)).toEqual(['p1', 'p2']);
+});
+
+it('delete-many strips scripts, is one undo step, and no-ops on absent ids', () => {
+  const doc = blankDocument('na-many', 'green', 'medium');
+  doc.buildings = [
+    { id: 'b0', archetype: 'house-wt1', pos: { x: 0, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
+    { id: 'b1', archetype: 'house-wt1', pos: { x: 4, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
+  ];
+  doc.elements = [{ id: 'e0', archetype: 'obstacle', variant: 'small', pos: { x: 2, z: 2 }, yawDeg: 0 }];
+  (doc.players[1]!.bot! as SeatBot).script = [{ op: 'line', own: 'b0', target: null, afterMs: 0 }];
+  let state = model.historyReducer(model.createHistory(doc), { type: 'edit', op: { type: 'delete-many', targets: [{ kind: 'building', id: 'b0' }, { kind: 'obstacle', id: 'e0' }, { kind: 'building', id: 'nope' }] } });
+  expect(state.present.buildings.map(b => b.id)).toEqual(['b1']);
+  expect(state.present.elements).toHaveLength(0);
+  expect((state.present.players[1]!.bot as SeatBot).script).toBeUndefined();
+  expect(state.past).toHaveLength(1);
+  state = model.historyReducer(state, { type: 'undo' });
+  expect(state.present).toEqual(doc);
+  expect(model.reduceDocument(doc, { type: 'delete-many', targets: [{ kind: 'building', id: 'nope' }] })).toBe(doc);
+  expect(model.reduceDocument(doc, { type: 'delete-many', targets: [] })).toBe(doc);
+});
+
+it('partial building/obstacle properties leave other fields intact; undefined clears', () => {
+  const doc = blankDocument('na-part', 'green', 'medium');
+  doc.buildings = [{ id: 'b0', archetype: 'tower', pos: { x: 0, z: 0 }, owner: 'p1', level: 2, ignoreForWin: true }];
+  doc.elements = [{ id: 'e0', archetype: 'obstacle', variant: 'big', pos: { x: 2, z: 2 }, yawDeg: 45 }];
+  const b = model.reduceDocument(doc, { type: 'building-properties', id: 'b0', value: { level: 3 } }).buildings[0]!;
+  expect(b).toEqual({ ...doc.buildings[0], level: 3 });
+  const o = model.reduceDocument(doc, { type: 'obstacle-properties', id: 'e0', value: { yawDeg: 90 } }).elements[0]!;
+  expect(o).toEqual({ ...doc.elements[0], yawDeg: 90 });
+  const cleared = model.reduceDocument(doc, { type: 'obstacle-properties', id: 'e0', value: { variant: undefined } }).elements[0]!;
+  expect('variant' in cleared).toBe(false);
+  expect(cleared.yawDeg).toBe(45);
+});

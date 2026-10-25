@@ -13,7 +13,7 @@ export function LegacyPanel({ pointer }: { pointer: Point | null }) {
   const [swapOwners, setSwapOwners] = useState(false);
   const [losFrom, setLosFrom] = useState(''), [losTo, setLosTo] = useState('');
   const centerValue = center === '' ? axis === 'vertical' ? (doc.bounds.minX + doc.bounds.maxX) / 2 : (doc.bounds.minZ + doc.bounds.maxZ) / 2 : Number(center);
-  function apply(op: DocOp) { if (!locked) edit(op.type === 'obstacle-properties' ? { ...op, value: { ...op.value, yawDeg: snapYaw(op.value.yawDeg, snap) } } : op); }
+  function apply(op: DocOp) { if (!locked) edit(op.type === 'obstacle-properties' ? { ...op, value: op.value.yawDeg === undefined ? op.value : { ...op.value, yawDeg: snapYaw(op.value.yawDeg, snap) } } : op); }
   useEffect(() => { viewport.current?.setSnap(snap); }, [snap]);
   useEffect(() => { viewport.current?.setLos({ from: losFrom, to: losTo }); }, [losFrom, losTo]);
   useEffect(() => { setCenter(''); setLosFrom(''); setLosTo(''); }, [doc.id]);
