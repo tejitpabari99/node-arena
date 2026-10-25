@@ -1,6 +1,7 @@
 import { boundsFromPositions } from '@node-arena/content';
 import type { SeatBot } from '@node-arena/content';
 import type { LevelDoc } from './document.js';
+import { playerLabel } from './labels.js';
 import { roundCoordinate, type Point, type Selection } from './picking.js';
 export type LibraryItem = 'house-wt1' | 'house-wt2' | 'tower' | 'obstacle-small' | 'obstacle-big';
 export type LevelProperties = Pick<LevelDoc, 'name' | 'theme' | 'timeLimitSec' | 'players'>;
@@ -100,7 +101,7 @@ function stepReferences(node: { own?: string | null; target?: string | null; the
 export function scriptRemovalMessages(state: DocHistory): string[] {
   const before = state.past.at(-1);
   if (!before) return [];
-  return state.present.players.flatMap((player, index) => (before.players.find(p => p.id === player.id)?.bot as SeatBot | undefined)?.script?.length && player.bot && !(player.bot as SeatBot).script ? [`AI ${index + 1} script removed`] : []);
+  return state.present.players.flatMap(player => (before.players.find(p => p.id === player.id)?.bot as SeatBot | undefined)?.script?.length && player.bot && !(player.bot as SeatBot).script ? [`${playerLabel(state.present.players, player.id)} script removed`] : []);
 }
 
 function cleanOptional<T extends object>(value: T): T {

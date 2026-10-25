@@ -63,12 +63,12 @@ it('removes only scripts referencing deleted buildings including nested steps in
   expect((state.present.players[1]!.bot! as SeatBot).script).toBeUndefined();
   expect(state.present.players[2]).toEqual(doc.players[2]);
   expect(state.past).toHaveLength(1);
-  expect(model.scriptRemovalMessages(state)).toEqual(['AI 2 script removed']);
+  expect(model.scriptRemovalMessages(state)).toEqual(['AI1 script removed']);
   state = model.historyReducer(state, { type: 'undo' });
   expect(state.present).toEqual(doc);
   expect(model.scriptRemovalMessages(state)).toEqual([]);
   state = model.historyReducer(state, { type: 'redo' });
-  expect(model.scriptRemovalMessages(state)).toEqual(['AI 2 script removed']);
+  expect(model.scriptRemovalMessages(state)).toEqual(['AI1 script removed']);
 });
 
 it('removes line own/target scripts but ignores unrelated buildings and obstacle identities', () => {

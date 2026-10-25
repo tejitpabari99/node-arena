@@ -60,7 +60,7 @@ test('property forms commit once, update the preview, and deletion banners undo 
   expect(saved!.elements[0]).toMatchObject({ variant: 'big', yawDeg: 45, footprint: { shape: 'box', w: 2, d: 3 } });
   await page.getByLabel('Selected item', { exact: true }).selectOption('building:b0');
   await page.getByRole('button', { name: 'Delete selected', exact: true }).click();
-  await expect(page.getByTestId('script-removal-banner')).toContainText('AI 2 script removed');
+  await expect(page.getByTestId('script-removal-banner')).toContainText('AI1 script removed');
   await expect(page.locator('.ed-canvas').getByTestId('script-removal-banner')).toBeVisible();
   if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/banner-toast-1280x720.png` });
   await page.getByRole('button', { name: 'Save', exact: true }).click();

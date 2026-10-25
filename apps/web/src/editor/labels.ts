@@ -1,0 +1,39 @@
+import type { LevelDoc } from './document.js';
+
+type Players = LevelDoc['players'];
+
+/** Human, or AI{k} where k is the 1-based position among AI players. Ids stay stable; labels are derived. */
+export function playerLabel(players: Players, id: string): string {
+  const player = players.find(p => p.id === id);
+  if (!player || player.kind === 'human') return 'Human';
+  return `AI${players.filter(p => p.kind !== 'human').findIndex(p => p.id === id) + 1}`;
+}
+
+/** Labels by item id, in doc order: `{Owner} {noun} {n}`; obstacles `{Small|Big} obstacle {n}` per variant. */
+export function itemLabels(doc: Pick<LevelDoc, 'players' | 'buildings' | 'elements'>): Map<string, string> {
+  const labels = new Map<string, string>(), counts = new Map<string, number>();
+  const next = (key: string) => { const n = (counts.get(key) ?? 0) + 1; counts.set(key, n); return n; };
+  for (const item of doc.buildings) {
+    const owner = item.owner === null || !doc.players.some(p => p.id === item.owner) ? 'Neutral' : playerLabel(doc.players, item.owner);
+    const noun = item.archetype === 'tower' ? 'tower' : 'house';
+    labels.set(item.id, `${owner} ${noun} ${next(`${owner}|${noun}`)}`);
+  }
+  for (const item of doc.elements) {
+    const name = item.variant === 'small' ? 'Small obstacle' : item.variant === 'big' ? 'Big obstacle' : 'Obstacle';
+    labels.set(item.id, `${name} ${next(`obstacle|${name}`)}`);
+  }
+  return labels;
+}
+
+/** Lowest unused `pN`, N >= 2. */
+export function nextPlayerId(players: Players): string {
+  const used = new Set(players.map(p => p.id));
+  let n = 2; while (used.has(`p${n}`)) n++;
+  return `p${n}`;
+}
+
+/** First palette key (manifest order) not used by any player; undefined if all are used. */
+export function firstUnusedColor(players: Players, paletteKeys: readonly string[]): string | undefined {
+  const used = new Set(players.map(p => p.colorKey));
+  return paletteKeys.find(key => !used.has(key));
+}
