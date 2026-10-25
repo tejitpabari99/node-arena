@@ -14,7 +14,6 @@ test('Check runs on the unsaved working copy and displays streamed proxy evidenc
   await expect(page.getByLabel('Proxy evidence')).toContainText('seed');
   await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeEnabled();
   expect(saves).toBe(0);
-  await page.getByText('Level properties', { exact: true }).click();
   await page.getByLabel('Level name', { exact: true }).fill('Changed after check');
   await page.getByRole('button', { name: 'Apply level properties', exact: true }).click();
   await expect(page.getByLabel('Proxy evidence')).toHaveCount(0);

@@ -27,6 +27,8 @@ export interface EditorContext {
   dirty: boolean;
   themes: string[];
   colors: string[];
+  /** manifest palette colorKey -> CSS color */
+  palettes: Record<string, string>;
   /** temp: engine -> Editor routing for LegacyPanel/tests */
   viewportStatus: ViewportStatus;
   losStatus: string;

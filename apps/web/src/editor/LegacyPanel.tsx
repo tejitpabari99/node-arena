@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'preact/hooks';
-import { ItemProperties, LevelPropertiesForm } from './Properties.js';
+import { ItemProperties } from './Properties.js';
 import { snapYaw, type DocOp, type LibraryItem } from './model.js';
 import type { Point, Selection } from './picking.js';
 import { useEditor } from './EditorContext.js';
+import type { ComponentChildren } from 'preact';
 
 /** Temporary pre-redesign sidebar; consumes EditorContext. SP02 deletes this file. */
-export function LegacyPanel({ pointer }: { pointer: Point | null }) {
-  const { doc, edit, deleteSelection, selection, select, clipboard, copy, paste, viewport, locked, themes, colors, losStatus } = useEditor();
+export function LegacyPanel({ pointer, wrapLibrary, wrapSelection }: { pointer: Point | null; wrapLibrary: (c: ComponentChildren) => ComponentChildren; wrapSelection: (c: ComponentChildren) => ComponentChildren }) {
+  const { doc, edit, deleteSelection, selection, select, clipboard, copy, paste, viewport, locked, losStatus } = useEditor();
   const [snap, setSnap] = useState(true);
   const [losFrom, setLosFrom] = useState(''), [losTo, setLosTo] = useState('');
   function apply(op: DocOp) { if (!locked) edit(op.type === 'obstacle-properties' ? { ...op, value: op.value.yawDeg === undefined ? op.value : { ...op.value, yawDeg: snapYaw(op.value.yawDeg, snap) } } : op); }
@@ -14,8 +15,7 @@ export function LegacyPanel({ pointer }: { pointer: Point | null }) {
   useEffect(() => { viewport.current?.setLos({ from: losFrom, to: losTo }); }, [losFrom, losTo]);
   useEffect(() => { setLosFrom(''); setLosTo(''); }, [doc.id]);
   return <>
-    <LevelPropertiesForm doc={doc} onEdit={edit} themes={themes} colors={colors} disabled={locked} />
-    <aside class="editor-view-tools" aria-label="Viewport tools">
+    {wrapLibrary(<aside class="editor-view-tools" aria-label="Viewport tools">
       <h3>Library</h3>
       {(['house-wt1', 'house-wt2', 'tower', 'obstacle-small', 'obstacle-big'] as LibraryItem[]).map(item => <button key={item} class="editor-library-item" disabled={locked} aria-label={`Place ${item}`} onPointerDown={event => {
         if (event.button !== 0) return;
@@ -49,7 +49,7 @@ export function LegacyPanel({ pointer }: { pointer: Point | null }) {
       <p>Click to select. Drag on empty ground for marquee.</p>
       <p data-testid="viewport-selection">{selection.length ? selection.map(item => `${item.kind}: ${item.id}`).join(', ') : 'No selection'}</p>
       <p aria-live="off">{pointer ? `x ${pointer.x.toFixed(2)} · z ${pointer.z.toFixed(2)}` : 'Ground coordinates'}</p>
-    </aside>
-    <ItemProperties doc={doc} selection={selection} onEdit={apply} disabled={locked} />
+    </aside>)}
+    {wrapSelection(<ItemProperties doc={doc} selection={selection} onEdit={apply} disabled={locked} />)}
   </>;
 }

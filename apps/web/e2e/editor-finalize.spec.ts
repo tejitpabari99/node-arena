@@ -47,7 +47,6 @@ test('Finalize requires saved draft, streams steps, and refreshes disk status wi
   expect(JSON.parse(finalizeBody).level.id).toBe('na-finalize-browser');
   await popover.getByRole('button', { name: 'Close' }).click();
   await expect(page.getByText('Content locks current')).toHaveCount(0);
-  await page.getByText('Level properties', { exact: true }).click();
   await page.getByLabel('Level name', { exact: true }).fill('Changed after Finalize');
   await page.getByRole('button', { name: 'Apply level properties' }).click();
   await expect(finalize).toBeDisabled();

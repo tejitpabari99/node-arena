@@ -21,12 +21,12 @@ test('property forms commit once, update the preview, and deletion banners undo 
   await page.getByLabel('Copy level').selectOption('levelview-1');
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
-  await page.getByText('Level properties', { exact: true }).click();
   await page.getByLabel('Level name', { exact: true }).fill('Snow practice');
   await page.getByLabel('Level theme', { exact: true }).selectOption('snow');
   await page.getByLabel('Time limit (seconds)').fill('120');
-  await page.getByLabel('p2 action delay (ms)').fill('2500');
-  await page.getByLabel('p2 behavior').selectOption('attackOnly');
+  await page.getByRole('button', { name: 'AI1 card' }).click();
+  await page.getByLabel('AI1 action delay (ms)').fill('2500');
+  await page.getByLabel('AI1 behavior').selectOption('attackOnly');
   await page.getByRole('button', { name: 'Apply level properties' }).click();
   await expect(page.getByLabel('Level theme', { exact: true })).toHaveValue('snow');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');

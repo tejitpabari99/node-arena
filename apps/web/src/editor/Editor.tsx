@@ -4,7 +4,7 @@ import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { PlayOverlay } from './PlayOverlay.js';
-import { LegacyPanel } from './LegacyPanel.js';
+import { LeftPanel } from './LeftPanel.js';
 import { Toasts } from './Toasts.js';
 import { Shell } from './Shell.js';
 import { TopBar } from './TopBar.js';
@@ -25,7 +25,7 @@ import { useInitialLoad } from './useInitialLoad.js';
 
 /** Owns immutable working-copy snapshots; forms and Play attach here. */
 export function Editor() {
-  const [choices, setChoices] = useState<{ themes: string[]; colors: string[] }>({ themes: [], colors: [] });
+  const [choices, setChoices] = useState<{ themes: string[]; colors: string[]; palettes: Record<string, string> }>({ themes: [], colors: [], palettes: {} });
   const [history, setHistory] = useState<DocHistory | null>(null);
   const doc = history?.present ?? null;
   const openSeq = useRef(0);
@@ -175,7 +175,7 @@ export function Editor() {
     return `${match[1]} ${item?.id ?? match[2]} (${issue.pointer})`;
   }
   useEffect(() => {
-    void loadManifest().then(manifest => setChoices({ themes: Object.keys(manifest.themes), colors: Object.keys(manifest.palettes) })).catch(reason => setError(String(reason)));
+    void loadManifest().then(manifest => setChoices({ themes: Object.keys(manifest.themes), colors: Object.keys(manifest.palettes), palettes: manifest.palettes as Record<string, string> })).catch(reason => setError(String(reason)));
   }, []);
   /** Replaces the working document: fresh history, selection and saved baseline. */
   function replaceDoc(next: LevelDoc, saved: boolean) {
@@ -185,7 +185,7 @@ export function Editor() {
   const { levels, setLevels, loading, error: startError, copyHint } = useInitialLoad(replaceDoc);
   useEffect(() => { (window as unknown as { __editorSave?: typeof doSave }).__editorSave = doSave; });
   const ctx: EditorContext | null = doc && history ? {
-    doc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, viewportStatus, losStatus,
+    doc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, palettes: choices.palettes, viewportStatus, losStatus,
     edit: (op: DocOp) => dispatch({ type: 'edit', op, area }),
     deleteSelection() { if (selection.length) dispatch({ type: 'edit', op: { type: 'delete-many', targets: selection }, area }); },
     select: next => { viewport.current?.select(next); },
@@ -195,7 +195,7 @@ export function Editor() {
   } : null;
   const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar failureSeq={manualFailures} issues={validation.issues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel} onName={() => setFileOpen(true)} onPlay={() => setPlaying(true)}
     extras={<JobPopovers open={popover} setOpen={setPopover} job={job} busy={busy} dirty={dirty} onCheck={() => void solvable()} onCancel={() => proxyAbort.current?.abort()} onFinalize={() => void finalize()} checkIssues={issues} issueLabel={issueLabel} checkError={checkError} proxyEvents={proxyEvents} finalizeEvents={finalizeEvents} finalizeError={finalizeError} lockStatus={lockStatus} lockOutput={lockOutput} />} /></EditorCtx.Provider>;
-  return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<EditorCtx.Provider value={ctx}><LegacyPanel pointer={pointer} /></EditorCtx.Provider>}>
+  return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<EditorCtx.Provider value={ctx}><LeftPanel pointer={pointer} /></EditorCtx.Provider>}>
     <Toasts banners={history ? scriptRemovalMessages(history) : []} error={error} onDismissError={() => setError('')} />
     <EditorCtx.Provider value={ctx}><Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} onPointer={setPointer} /></EditorCtx.Provider>
   </Shell> : <FileModal standalone levels={levels} dirty={false} loading={loading} startError={startError} copyHint={copyHint} onClose={() => undefined} onReplace={replaceDoc} />}
