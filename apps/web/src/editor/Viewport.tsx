@@ -1,17 +1,17 @@
 import { useEffect, useRef } from 'preact/hooks';
-import type { Point, Selection } from './picking.js';
+import type { Selection } from './picking.js';
 import { useEditor } from './EditorContext.js';
 import { createEditorViewport, type ViewportStatus } from './viewport-engine.js';
 
 /** Canvas host only: owns the engine and routes its callbacks to the editor context. */
-export function Viewport({ onStatus, onLos, onSelection, onPointer }: { onStatus: (status: ViewportStatus) => void; onLos: (message: string) => void; onSelection: (items: Selection[]) => void; onPointer?: (point: Point | null) => void }) {
+export function Viewport({ onStatus, onLos, onSelection }: { onStatus: (status: ViewportStatus) => void; onLos: (message: string) => void; onSelection: (items: Selection[]) => void }) {
   const ctx = useEditor(), latest = useRef(ctx); latest.current = ctx;
-  const route = useRef({ onStatus, onLos, onSelection, onPointer }); route.current = { onStatus, onLos, onSelection, onPointer };
+  const route = useRef({ onStatus, onLos, onSelection }); route.current = { onStatus, onLos, onSelection };
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const current = createEditorViewport(host.current!, {
       status: status => route.current.onStatus(status), los: message => route.current.onLos(message),
-      selection: items => route.current.onSelection(items), pointer: point => route.current.onPointer?.(point),
+      selection: items => route.current.onSelection(items),
       edit: op => { if (!latest.current.locked) latest.current.edit(op); },
     });
     ctx.viewport.current = current;

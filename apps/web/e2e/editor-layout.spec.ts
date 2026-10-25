@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
-test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and persist fitted bounds only on Save', async ({ page }) => {
+test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and persist only on Save', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev-only editor');
   let writes = 0, saved: LevelDoc | undefined;
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
@@ -23,7 +23,6 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await page.getByLabel('Copy level').selectOption('levelview-1');
   await page.getByRole('button', { name: 'Copy level', exact: true }).click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
-  await expect(page.getByLabel('Grid snap')).toBeChecked();
   await page.getByLabel('Selected item', { exact: true }).selectOption('building:b0');
   await page.locator('[data-section=selection] summary', { hasText: 'Line of sight' }).click();
   await page.getByLabel('LOS target').selectOption('b1');
@@ -37,8 +36,7 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('23');
   await page.getByRole('button', { name: 'Apply shape' }).click();
   await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
-  // Yaw always snaps to 15 degrees, even with Grid snap off.
-  await page.getByLabel('Grid snap').uncheck();
+  // Yaw always snaps to 15 degrees.
   await page.getByLabel('Yaw (degrees)').fill('23');
   await page.getByRole('button', { name: 'Apply shape' }).click();
   await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
@@ -49,12 +47,13 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '1');
   await page.getByLabel('Selected item', { exact: true }).selectOption('multi');
   await page.getByRole('button', { name: 'Select all', exact: true }).click();
-  await page.getByRole('button', { name: 'Auto-fit bounds', exact: true }).click();
-  await expect(page.getByTestId('bounds-preview')).toContainText('x −6…6 · z −2…2');
+  const body = await page.locator('body').innerText();
+  expect(body).not.toMatch(/mirror|auto-fit|grid snap|ground coordinates|bounds-preview/i);
+  await expect(page.getByTestId('bounds-preview')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /auto-fit/i })).toHaveCount(0);
   expect(writes).toBe(0);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect.poll(() => writes).toBe(1);
-  expect(saved!.bounds).toEqual({ minX: -6, maxX: 6, minZ: -2, maxZ: 2 });
   expect(saved!.buildings.map(b => [b.pos, b.owner])).toEqual([[{ x: -4, z: 0 }, 'p1'], [{ x: 4, z: 0 }, 'p2']]);
   expect(saved!.elements[0]!.yawDeg).toBe(30);
   expect(errors).toEqual([]);

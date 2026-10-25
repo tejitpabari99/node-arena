@@ -70,10 +70,10 @@ for (const size of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]
     await expect(page.getByTestId('viewport-status')).toContainText('Ready');
     const m = await page.evaluate(() => {
       const el = document.documentElement, left = document.querySelector('.ed-left')!, canvas = document.querySelector('.ed-canvas')!.getBoundingClientRect(), top = document.querySelector('.ed-top')!.getBoundingClientRect();
-      return { sw: el.scrollWidth, sh: el.scrollHeight, cw: el.clientWidth, ch: el.clientHeight, leftScrolls: left.scrollHeight > left.clientHeight, leftW: left.getBoundingClientRect().width, topH: top.height, canvas: { x: canvas.x, y: canvas.y, w: canvas.width, h: canvas.height } };
+      return { sw: el.scrollWidth, sh: el.scrollHeight, cw: el.clientWidth, ch: el.clientHeight, leftOverflow: getComputedStyle(left).overflowY, leftW: left.getBoundingClientRect().width, topH: top.height, canvas: { x: canvas.x, y: canvas.y, w: canvas.width, h: canvas.height } };
     });
     expect(m.sw).toBeLessThanOrEqual(m.cw); expect(m.sh).toBeLessThanOrEqual(m.ch);
-    expect(m.leftScrolls).toBe(true); expect(m.leftW).toBe(300); expect(m.topH).toBe(56);
+    expect(m.leftOverflow).toBe('auto'); expect(m.leftW).toBe(300); expect(m.topH).toBe(56);
     expect(m.canvas).toEqual({ x: 300, y: 56, w: size.width - 300, h: size.height - 56 });
     const host = await page.getByLabel('Edit viewport').boundingBox();
     expect(host!.width).toBeCloseTo(size.width - 300, 0); expect(host!.height).toBeCloseTo(size.height - 56, 0);

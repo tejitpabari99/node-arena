@@ -14,7 +14,7 @@ import { useAutosave } from './useAutosave.js';
 import { Viewport } from './Viewport.js';
 import { EditorCtx, type EditorContext } from './EditorContext.js';
 import type { EditorViewport, ViewportStatus } from './viewport-engine.js';
-import type { Point, Selection } from './picking.js';
+import type { Selection } from './picking.js';
 import type { EditorFinalizeEvent } from '../../../../tools/src/editor-finalize.js';
 import type { EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
 import { finalizeLevel, readFinalizeStatus, checkSolvable, EditorApiError, listLevels, saveLevel } from './api.js';
@@ -52,7 +52,6 @@ export function Editor() {
   const viewport = useRef<EditorViewport>();
   const [viewportStatus, setViewportStatus] = useState<ViewportStatus>({ message: 'Loading preview…' });
   const [losStatus, setLosStatus] = useState('Choose two buildings to preview line of sight.');
-  const [pointer, setPointer] = useState<Point | null>(null);
   useEffect(() => { setSelection([]); setClipboard(undefined); pasteCount.current = 0; }, [doc?.id]);
   // 40x30 buildable area around the bounds centre, fixed for the lifetime of an opened document.
   const area = useMemo(() => {
@@ -195,9 +194,9 @@ export function Editor() {
   } : null;
   const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar failureSeq={manualFailures} issues={validation.issues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel} onName={() => setFileOpen(true)} onPlay={() => setPlaying(true)}
     extras={<JobPopovers open={popover} setOpen={setPopover} job={job} busy={busy} dirty={dirty} onCheck={() => void solvable()} onCancel={() => proxyAbort.current?.abort()} onFinalize={() => void finalize()} checkIssues={issues} issueLabel={issueLabel} checkError={checkError} proxyEvents={proxyEvents} finalizeEvents={finalizeEvents} finalizeError={finalizeError} lockStatus={lockStatus} lockOutput={lockOutput} />} /></EditorCtx.Provider>;
-  return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<EditorCtx.Provider value={ctx}><LeftPanel pointer={pointer} /></EditorCtx.Provider>}>
+  return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<EditorCtx.Provider value={ctx}><LeftPanel /></EditorCtx.Provider>}>
     <Toasts banners={history ? scriptRemovalMessages(history) : []} error={error} onDismissError={() => setError('')} />
-    <EditorCtx.Provider value={ctx}><Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} onPointer={setPointer} /></EditorCtx.Provider>
+    <EditorCtx.Provider value={ctx}><Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} /></EditorCtx.Provider>
   </Shell> : <FileModal standalone levels={levels} dirty={false} loading={loading} startError={startError} copyHint={copyHint} onClose={() => undefined} onReplace={replaceDoc} />}
   {doc && fileOpen && <FileModal standalone={false} levels={levels} dirty={dirty} loading={loading} startError="" copyHint={copyHint} currentId={doc.id} onClose={() => setFileOpen(false)} onReplace={replaceDoc} />}{playing && doc && <PlayOverlay doc={doc} onExit={() => setPlaying(false)} />}</>;
 }

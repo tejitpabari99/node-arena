@@ -1,11 +1,15 @@
-import { LevelSchema } from '@node-arena/content';
+import { LevelSchema, type NextBuilding } from '@node-arena/content';
+import { contentFiles } from '../app/boot.js';
 import { useEffect, useState } from 'preact/hooks';
 import type { LevelDoc } from './document.js';
 import { useEditor } from './EditorContext.js';
 import { itemLabels, playerLabel } from './labels.js';
 import { snapYaw } from './model.js';
 import type { Selection } from './picking.js';
-import { archetypes } from './Properties.js';
+
+const archetypes = Object.fromEntries(Object.entries(contentFiles()).filter(([path]) => path.startsWith('data/buildings/')).map(([, value]) => {
+  const item = JSON.parse(value as string) as NextBuilding; return [item.id, item];
+}));
 
 type Building = LevelDoc['buildings'][number];
 type Obstacle = LevelDoc['elements'][number];
