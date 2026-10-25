@@ -49,7 +49,7 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await page.getByLabel('Selected item', { exact: true }).selectOption('multi');
   await page.getByRole('button', { name: 'Select all', exact: true }).click();
   const body = await page.locator('body').innerText();
-  expect(body).not.toMatch(/mirror|auto-fit|grid snap|ground coordinates|bounds-preview/i);
+  expect(body).not.toMatch(/mirror|auto-fit|ground coordinates|bounds-preview/i);
   await expect(page.getByTestId('bounds-preview')).toHaveCount(0);
   await expect(page.getByRole('button', { name: /auto-fit/i })).toHaveCount(0);
   expect(writes).toBe(0);

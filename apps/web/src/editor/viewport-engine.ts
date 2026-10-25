@@ -5,7 +5,7 @@ import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
 import { fitCamera, HUD_PADDING, levelVisualBounds, paddingFractions, zoomFraming } from '../render/camera.js';
 import { createLevelScene } from '../render/scene.js';
-import { buildableArea, snapPosition, type Area, type DocOp, type LibraryItem } from './model.js';
+import { buildableArea, clampPoint, snapPosition, type Area, type DocOp, type LibraryItem } from './model.js';
 import type { LevelDoc } from './document.js';
 import { groundAt, pickObstacle, type Point, type Selection } from './picking.js';
 
@@ -29,7 +29,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   let area: Area | undefined, frameBox: Box3 | undefined, frameDocId: string | undefined;
   let intent: 'reset' | 'fit' | undefined = 'reset';
   let viewState: ViewState = { zoom: 1, min: 1, max: ZOOM_MAX, atMin: false, atMax: false };
-  let selection: Selection[] = [], snap = true;
+  let selection: Selection[] = [];
   let los: { from: string; to: string } | undefined;
   const svgNS = 'http://www.w3.org/2000/svg';
   const overlay = document.createElementNS(svgNS, 'svg'); overlay.classList.add('editor-layout-overlay'); parent.append(overlay);
@@ -44,8 +44,12 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, String(value));
       container.append(node); return node;
     };
-    const b = workingDoc.bounds;
-    element('polygon', { points: [[b.minX,b.minZ],[b.maxX,b.minZ],[b.maxX,b.maxZ],[b.minX,b.maxZ]].map(([x,z]) => { const p = point(x!,z!); return `${p.x},${p.y}`; }).join(' '), class: 'editor-bounds' });
+    const b = workingDoc.bounds, buildArea = currentArea();
+    parent.dataset.bounds = JSON.stringify(b); parent.dataset.area = JSON.stringify(buildArea);
+    const ring = (r: Area) => [[r.minX, r.minZ], [r.maxX, r.minZ], [r.maxX, r.maxZ], [r.minX, r.maxZ]].map(([x, z]) => { const p = point(x!, z!); return `${p.x},${p.y}`; });
+    const w = rect.width, h = rect.height, corners = ring(buildArea);
+    element('path', { d: `M0,0H${w}V${h}H0Z M${corners.join(' L')}Z`, 'fill-rule': 'evenodd', class: 'editor-area-shade' });
+    element('polygon', { points: corners.join(' '), class: 'editor-area' });
     for (const target of selection) {
       const item = (target.kind === 'building' ? workingDoc.buildings : workingDoc.elements).find(item => item.id === target.id);
       if (item) { const p = point(item.pos.x, item.pos.z); element('ellipse', { cx: p.x, cy: p.y, rx: 23, ry: 13, class: 'editor-selection-ring' }); }
@@ -93,6 +97,8 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     const box = levelVisualBounds(sim!.view, level!.buildings.map(b => b.id), scene!.world.anchors);
     return box.union(new Box3(new Vector3(cx - FRAME_FLOOR_W / 2, 0, cz - FRAME_FLOOR_H / 2), new Vector3(cx + FRAME_FLOOR_W / 2, 0, cz + FRAME_FLOOR_H / 2)));
   }
+  /** Area +-12 in sim milli-units, so the ground covers the whole buildable area at Fit area. */
+  const groundExtent = () => { const a = currentArea(); return { minX: (a.minX - 12) * 1000, maxX: (a.maxX + 12) * 1000, minZ: (a.minZ - 12) * 1000, maxZ: (a.maxZ + 12) * 1000 }; };
   const isLive = () => !!(scene && level && sim && manifest);
   const centreRay = new Raycaster();
   function frameCamera() {
@@ -197,7 +203,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       if (a && b) { pan.x += a.x - b.x; pan.z -= a.z - b.z; frameCamera(); }
     } else if (gesture.target && gesture.origin && gesture.start) {
       const p = Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > 5 ? at(event.clientX, event.clientY) : null;
-      showGhost(p && gesture.targets.some(item => item.kind === gesture!.target!.kind && item.id === gesture!.target!.id) ? snapPosition({ x: gesture.origin.x + p.x - gesture.start.x, z: gesture.origin.z + p.z - gesture.start.z }, snap) : null, `${gesture.target.id}${gesture.targets.length > 1 ? ` +${gesture.targets.length - 1}` : ''}`);
+      showGhost(p && gesture.targets.some(item => item.kind === gesture!.target!.kind && item.id === gesture!.target!.id) ? clampPoint(snapPosition({ x: gesture.origin.x + p.x - gesture.start.x, z: gesture.origin.z + p.z - gesture.start.z }), currentArea()) : null, `${gesture.target.id}${gesture.targets.length > 1 ? ` +${gesture.targets.length - 1}` : ''}`);
       for (const node of groupGhosts) node.remove(); groupGhosts.length = 0;
       if (ghostPoint) for (const target of gesture.targets) {
         if (target.id === gesture.target.id && target.kind === gesture.target.kind) continue;
@@ -236,13 +242,13 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   function dragMove(event: PointerEvent) {
     if (!placement || event.pointerId !== placement.id) return;
     const point = inside(event.clientX, event.clientY) ? at(event.clientX, event.clientY) : null;
-    callbacks.pointer?.(point); showGhost(point ? snapPosition(point, snap) : null, placement.item);
+    callbacks.pointer?.(point); showGhost(point ? clampPoint(snapPosition(point), currentArea()) : null, placement.item);
   }
   function dragUp(event: PointerEvent) {
     if (!placement || event.pointerId !== placement.id) return;
     const item = placement.item, pos = inside(event.clientX, event.clientY) ? at(event.clientX, event.clientY) : null;
     cancel();
-    if (pos) callbacks.edit?.({ type: 'place', item, pos: snapPosition(pos, snap) });
+    if (pos) callbacks.edit?.({ type: 'place', item, pos: clampPoint(snapPosition(pos), currentArea()) });
   }
   window.addEventListener('pointermove', dragMove); window.addEventListener('pointerup', dragUp); window.addEventListener('pointercancel', cancel);
   function wheel(event: WheelEvent) { if (!workingDoc) return; event.preventDefault(); zoomBy(Math.exp(-event.deltaY * .001), { x: event.clientX, y: event.clientY }); }
@@ -290,9 +296,9 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       const compiledAt = performance.now();
       if (scene && level?.theme !== next.theme) clearScene();
       if (!scene) {
-        scene = createLevelScene({ level: next, view: nextSim.view, manifest, parent, worldOptions: { textureLoader: loadTexture } });
+        scene = createLevelScene({ level: next, view: nextSim.view, manifest, parent, worldOptions: { textureLoader: loadTexture }, groundExtent: groundExtent() });
         await scene.ready;
-      } else await scene.world.setLevel(next, next.theme);
+      } else await scene.world.setLevel(next, next.theme, groundExtent());
       if (disposed || token !== generation) return;
       const sceneAt = performance.now();
       level = next; sim = nextSim; stale = false;
@@ -313,9 +319,8 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     /** Serializes asset rebuilds; superseded requests are skipped, and no stale result enables picking. */
     setDocument(doc: LevelDoc) { const token = ++generation; pending = pending.then(() => rebuild(doc, token)); return pending; },
     beginPlacement(item: LibraryItem, pointerId: number) { cancel(); placement = { item, id: pointerId }; },
-    setSnap(enabled: boolean) { snap = enabled; },
     setLos(value: { from: string; to: string }) { los = value; overlays(); },
-    setArea(next: Area) { area = next; scheduleFrame(); },
+    setArea(next: Area) { area = next; scheduleFrame(); overlays(); },
     zoomBy, fitArea, gameCamera, pick,
     get viewState() { return viewState; }, groundAt: at, select: choose,
     get inspection() { return scene; },

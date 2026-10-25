@@ -59,7 +59,6 @@ test('single-item movement commits correct data coordinates once on release and 
       status: status => { if (status.message === 'Ready') window.__editorModel!.rebuilds++; },
       edit: op => { const state = window.__editorModel!; state.ops.push(op); state.doc = reduceDocument(state.doc, op); void viewport.setDocument(state.doc); },
     });
-    viewport.setSnap(false);
     window.__editorModel = { viewport, doc, ops: [], rebuilds: 0 }; await viewport.setDocument(doc);
     const scene = viewport.inspection!, anchor = scene.world.anchors.building('b0')!;
     const p = anchor.pos.clone().applyMatrix4(scene.worldRoot.matrixWorld).project(scene.camera), r = scene.canvas.getBoundingClientRect();
@@ -68,7 +67,8 @@ test('single-item movement commits correct data coordinates once on release and 
   const expected = await page.evaluate(p => {
     const { viewport, doc } = window.__editorModel!;
     const a = viewport.groundAt(p.x, p.y)!, b = viewport.groundAt(p.x + 45, p.y + 30)!;
-    return { x: Math.round((doc.buildings[0]!.pos.x + b.x - a.x) * 100) / 100, z: Math.round((doc.buildings[0]!.pos.z + b.z - a.z) * 100) / 100 };
+    const snap = (n: number) => Math.round(n / .25) * .25; // snapping is always on
+    return { x: snap(doc.buildings[0]!.pos.x + b.x - a.x), z: snap(doc.buildings[0]!.pos.z + b.z - a.z) };
   }, target);
   await page.mouse.move(target.x, target.y); await page.mouse.down();
   await page.mouse.move(target.x + 45, target.y + 30, { steps: 12 });
@@ -129,4 +129,45 @@ test('all library archetypes populate blank drafts and persist after compilation
   const source = (await page.getByRole('button', { name: 'Place tower', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + 20, source.y + 10); await page.mouse.down(); await page.mouse.move(20, 20); await page.mouse.up();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '3');
+});
+
+test('drop and drag far outside the buildable area clamp to its edge; outline drawn; preview stays intact', async ({ page }) => {
+  test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Uses real dev viewport');
+  await page.goto('/editor.html');
+  const info = await page.evaluate(async () => {
+    const path = '/src/editor/viewport-engine.ts', modelPath = '/src/editor/model.ts';
+    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport-engine.js');
+    const { reduceDocument, buildableArea } = await import(/* @vite-ignore */ modelPath) as typeof import('../src/editor/model.js');
+    const doc = await (await fetch('/__editor/level/levelview-1')).json() as LevelDoc;
+    const host = document.createElement('div'); host.className = 'editor-workspace';
+    Object.assign(host.style, { position: 'absolute', left: '240px', top: '50px', width: '900px', height: '650px' }); document.body.append(host);
+    const full = buildableArea(doc.bounds);
+    // Small area around the centre so a corner of the viewport is well outside it.
+    const cx = (full.minX + full.maxX) / 2, cz = (full.minZ + full.maxZ) / 2, area = { minX: cx - 3, maxX: cx + 3, minZ: cz - 2, maxZ: cz + 2 };
+    const statuses: string[] = [];
+    const viewport = createEditorViewport(host, {
+      status: s => statuses.push(s.message),
+      edit: op => { const state = window.__editorModel!; state.ops.push(op); state.doc = reduceDocument(state.doc, op, area); void viewport.setDocument(state.doc); },
+    });
+    viewport.setArea(area);
+    window.__editorModel = { viewport, doc, ops: [], rebuilds: 0 }; await viewport.setDocument(doc);
+    (window as unknown as { __statuses: string[] }).__statuses = statuses;
+    const r = host.getBoundingClientRect();
+    return { area, x: r.right - 8, y: r.bottom - 8, bounds: doc.bounds };
+  });
+  await expect(page.locator('.editor-workspace')).toHaveAttribute('data-bounds', /.+/);
+  expect(await page.locator('.editor-workspace .editor-area').count()).toBe(1);
+  expect(await page.locator('.editor-workspace .editor-bounds').count()).toBe(0);
+  expect(await page.locator('.editor-workspace .editor-area').evaluate(n => getComputedStyle(n).strokeDasharray)).toBe('none');
+  await page.evaluate(({ x, y }) => { window.__editorModel!.viewport.beginPlacement('obstacle-small', 1); window.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, clientX: x, clientY: y })); }, info);
+  const ghost = await page.evaluate(() => { const g = document.querySelector<HTMLElement>('.editor-ghost')!; return { x: Number(g.dataset.x), z: Number(g.dataset.z) }; });
+  expect(ghost.x).toBe(info.area.maxX); expect(ghost.z).toBe(info.area.minZ);
+  await page.evaluate(({ x, y }) => window.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1, clientX: x, clientY: y })), info);
+  await expect.poll(() => page.evaluate(() => window.__editorModel!.ops.length)).toBe(1);
+  const placed = await page.evaluate(() => { const s = window.__editorModel!; const op = s.ops[0] as { pos: { x: number; z: number } }; return { pos: op.pos, bounds: s.doc.bounds }; });
+  expect(placed.pos).toEqual({ x: info.area.maxX, z: info.area.minZ });
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __statuses: string[] }).__statuses.at(-1))).toBe('Ready');
+  const statuses = await page.evaluate(() => (window as unknown as { __statuses: string[] }).__statuses);
+  expect(statuses.some(m => m.startsWith('Preview unavailable') || m.startsWith('Preview out of date'))).toBe(false);
+  await page.evaluate(() => window.__editorModel!.viewport.dispose());
 });

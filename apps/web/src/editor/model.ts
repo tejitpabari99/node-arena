@@ -152,6 +152,7 @@ export function copySelection(doc: LevelDoc, targets: Selection[]): Clipboard {
   return structuredClone({ buildings: doc.buildings.filter(item => targets.some(t => t.kind === 'building' && t.id === item.id)), elements: doc.elements.filter(item => targets.some(t => t.kind === 'obstacle' && t.id === item.id)) });
 }
 const normalizeYaw = (value: number) => roundCoordinate(((roundCoordinate(value) % 360) + 360) % 360);
+/** Snapping is always on; `enabled` is kept only for test compatibility. */
 export function snapPosition(point: Point, enabled = true): Point {
   const snap = (n: number) => roundCoordinate(enabled ? Math.round(n / .25) * .25 : n);
   return { x: snap(point.x), z: snap(point.z) };

@@ -15,6 +15,8 @@ export interface SceneOptions {
   scope?: Disposables;
   padding?: HudPadding;
   zoomed?: boolean;
+  /** Ground-only extent in sim milli-units (editor); omitted for the game. */
+  groundExtent?: import('./ground-renderer.js').Bounds;
   worldOptions?: Omit<WorldRendererOptions, 'worldRoot'>;
 }
 
@@ -53,7 +55,7 @@ export function createLevelScene(options: SceneOptions) {
     renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove();
   });
   resize();
-  const ready = world.setLevel(level,level.theme).then(() => {
+  const ready = world.setLevel(level,level.theme,options.groundExtent).then(() => {
     if (disposed) return;
     bounds = levelVisualBounds(view,ids,world.anchors); resize();
   });

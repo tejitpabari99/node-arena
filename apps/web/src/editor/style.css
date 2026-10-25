@@ -25,7 +25,8 @@
 .editor-script-banner { padding: 12px; border: 1px solid #be8225; background: #fff1c9; color: #5a3a07; }
 
 .editor-layout-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
-.editor-bounds { fill: none; stroke: #cbd5e1; stroke-width: 1.5; stroke-dasharray: 6 4; }
+.editor-area { fill: none; stroke: #bbf7d0; stroke-width: 2; }
+.editor-area-shade { fill: rgba(0, 0, 0, .18); stroke: none; }
 .editor-selection-ring { fill: #7dd3fc22; stroke: #7dd3fc; stroke-width: 2; }
 
 .editor-play-overlay { position: fixed; inset: 0; z-index: 10; overflow: hidden; font-family: Coiny, system-ui, sans-serif; background: #73c7e6; color-scheme: light; }
