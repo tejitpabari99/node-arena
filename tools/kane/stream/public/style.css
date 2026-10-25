@@ -5,6 +5,7 @@ main { width: min(1080px, 100% - 40px); margin: 32px auto; }
 header, .controls { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 header { margin-bottom: 22px; }
 h1 { font-size: clamp(21px, 3vw, 30px); letter-spacing: -.04em; margin: 0; font-weight: 650; }
+.intro { max-width: 720px; margin: 10px 0 0; color: #b6c5ce; font-size: 14px; line-height: 1.5; }
 .presence { display: flex; gap: 6px; align-items: center; color: #afc0ca; font-size: 13px; white-space: nowrap; }
 .presence-dot { width: 7px; height: 7px; background: #85d8b2; border-radius: 50%; margin-right: 3px; }
 .stage { position: relative; aspect-ratio: 16 / 9; background: #080d10; border: 1px solid #2d3a43; border-radius: 12px; overflow: hidden; }
