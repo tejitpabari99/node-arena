@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "report_kind": "sanitized_submission_evidence",
+  "prepared_at_utc": "2026-10-24T23:26:46Z",
+  "project": {
+    "name": "Node Arena",
+    "event_project_id": 43,
+    "repository_url": "https://github.com/tejitpabari99/node-arena",
+    "branch": "kane-cli",
+    "code_reviewed_commit": "244f9b7bf2369a9658b6c7e1fa190343a7804ae3",
+    "source_snapshot_note": "Documentation commit may be newer; re-read git rev-parse HEAD after later commits or pushes before reporting latest branch head."
+  },
+  "historical_execution": {
+    "application_commit": "8fe61961fb1cc6f3c77eded71d2a3b9b1f6507ed",
+    "date_utc": "2026-10-24",
+    "approximate_window_utc": "23:01-23:07",
+    "driver_run_id": "dd9b2cb1-276c-43e5-bc4d-1c64760136da",
+    "objective_summary": "Play the dedicated Kane Arena level through live route buttons using bounded capture, attack and cut objectives; choose moves from the visible page.",
+    "kane_calls": [
+      {
+        "ordinal": 1,
+        "session_id": "fe740f58-2a43-4735-9019-08b1d37088c2",
+        "status": "passed",
+        "process_exit_code": 0,
+        "duration_seconds": 51.4,
+        "reported_credits": 18.5885175
+      },
+      {
+        "ordinal": 2,
+        "session_id": "33cf0064-e9d6-438f-90de-3c85e1a550b7",
+        "status": "passed",
+        "process_exit_code": 0,
+        "duration_seconds": 41.1,
+        "reported_credits": 16.5201325
+      },
+      {
+        "ordinal": 3,
+        "session_id": "4037a6df-e8e5-4454-8466-43b5edb1537e",
+        "status": "passed",
+        "process_exit_code": 0,
+        "duration_seconds": 58.3,
+        "reported_credits": 16.956895
+      },
+      {
+        "ordinal": 4,
+        "session_id": "cc9394a7-271a-4e50-aeac-e61ea61859af",
+        "status": "passed",
+        "process_exit_code": 0,
+        "duration_seconds": 64.4,
+        "reported_credits": 20.12984,
+        "evidence_pack_sha256": "85542ff3ce31c478749b49c04bf4e5191d6f425d90e1efc1160d57efc971990a"
+      }
+    ],
+    "event_reporting_candidate_session_id": "cc9394a7-271a-4e50-aeac-e61ea61859af",
+    "independent_game_result": {
+      "outcome": "won",
+      "winner": 0,
+      "tick": 1027
+    },
+    "driver_terminal": {
+      "outcome": "won",
+      "exit_code": 0,
+      "completed_kane_calls": 4,
+      "wall_seconds": 375.948
+    },
+    "public_observer": {
+      "jpeg_frames": 965,
+      "sse_chunks": 105,
+      "websocket_closes": 0,
+      "shell_exit_code": 143,
+      "shell_exit_note": "Successful report written before browser teardown; do not claim an unqualified zero shell exit."
+    },
+    "credits": {
+      "attributable_kane_reported_total": 72.195385,
+      "account_balance_delta": 79.8455,
+      "account_delta_caveat": "May include other workers; not attributed entirely to this match."
+    },
+    "committed_execution_record": "docs/agent_files/feat-kane-hackday-20261023-2128/05-hosted-stream/code-2026-10-24-2309.md",
+    "evidence_handling": "Raw logs, packs, screenshots and credentials are not included."
+  },
+  "workflow_status": {
+    "live_gameplay_and_spectator": "Implemented; historical hosted win and spectator transport verified.",
+    "stop_hook": {
+      "status": "Installed agent-session use verified by owner in another branch; direct authenticated rehearsal passed, detected deliberate label regression, then passed after restoration.",
+      "installation_confirmation_source": "owner",
+      "independent_rehearsal_exits": [
+        0,
+        2,
+        0
+      ]
+    },
+    "assurance": {
+      "generated_tests": 9,
+      "executed_generated_tests": 3,
+      "proven_coverage_percent": 8.03921568627451,
+      "approved_use_cases": 3,
+      "extracted_use_cases": 4,
+      "designed_criteria": 23,
+      "total_criteria": 42,
+      "executed_generated_tests_note": "Distinct cases with runtime authoring attempts: t-2, t-3 and t-5; this does not assert all nine designed cases executed.",
+      "coverage_percent_basis": "Tool-reported risk-weighted project score; not the arithmetic percentage of proven criterion count.",
+      "proven_criteria": 4,
+      "proven_criterion_ids": [
+        "ac-8",
+        "ac-14",
+        "ac-16",
+        "ac-23"
+      ],
+      "second_human_checkpoint": "approved by owner",
+      "latest_saved_replay": {
+        "execution_id": "a0861c18-3424-4fe4-b6ac-40fde262e9ca",
+        "completed_at_utc": "2026-10-24T23:37:00.128Z",
+        "status": "passed",
+        "tests": 2,
+        "passed": 2,
+        "failed": 0,
+        "broken": 0,
+        "skipped": 0,
+        "authored": 0,
+        "duration_seconds": 95.156,
+        "upload_status": "ok",
+        "cases": [
+          {
+            "case": "t-3 draw",
+            "session_id": "6afa155a-34d0-46df-830e-6cae4c752265",
+            "status": "passed",
+            "duration_seconds": 45
+          },
+          {
+            "case": "t-5 single click",
+            "session_id": "c8a23932-911c-4803-89ff-12b12a3a6e42",
+            "status": "passed",
+            "duration_seconds": 43
+          }
+        ],
+        "stable_selector_guard_passed": true,
+        "volatile_locators": 0
+      },
+      "coverage_scope_note": "Latest suite passed four criteria with zero failed criteria. Project coverage retains earlier rejection-case failures and criteria not run; no fully proven use-case claim.",
+      "historical_snapshot_note": "The earlier 0% snapshot was captured after design and before runtime execution.",
+      "validation_provenance": {
+        "kind": "local_validation_snapshot",
+        "source_branch": "feat/kane-workflow-integrations",
+        "initially_inspected_checkout_commit": "6ec72ec218b2084c80cfcb7e05e51400708467b1",
+        "commit_note": "Checkout baseline only; newer local validation artifacts were not included in this commit at inspection. This report copies allowlisted summary fields, not raw evidence.",
+        "application_commit": "9f452afec9b9ca15c869c69dbee6e4d26d7cf4e8",
+        "stable_name_patch_commit_prefix": "52159493",
+        "summary_artifact": "tools/kane/assure/runtime-evidence/final-recorded-suite/suite-summary.json",
+        "project_cover_artifact": "tools/kane/assure/cover-2026-10-24.txt",
+        "selector_audit_artifact": "tools/kane/assure/runtime-evidence/accessible-selector-audit.json"
+      }
+    },
+    "github_actions": "Regular CI passed. Linked Kane workflow completed with artifacts uploaded, but credentialed setup/login/replay skipped for missing credentials; actual Kane execution evidence comes from local runs.",
+    "qualification_scope": "The current demo shows Kane playing one dedicated level."
+  },
+  "event_reporting": {
+    "status": "check_current_event_state_before_finalizing",
+    "consent_at_preparation": "unset; root requested user authorization separately",
+    "event_report_id": null,
+    "project_link_status": "check_current_event_state",
+    "note": "Local report prepared. This artifact does not grant reporting consent, submit an event report or establish project linkage. No event-server verification is claimed."
+  },
+  "submission_handoff": {
+    "text_fields": "User must paste pitch, harness description, Kane feature selections and limitations; no event text-field tool.",
+    "shipped_prize_bundle": "Paste both live X post and Substack blog links, tick their checklist rows and press Save before finalizing.",
+    "blog_url": "https://tejitpabari.substack.com/p/letting-kane-cli-play-node-arena?r=58t4g&utm_campaign=post&utm_medium=web&showWelcomeOnShare=true",
+    "x_post_url": "https://x.com/tejit99/status/2114142477439697336?s=20"
+  },
+  "updated_at_utc": "2026-10-24T23:37:00.128Z",
+  "update_timestamp_note": "Completion time of the latest included local assurance validation; prepared_at_utc retains the original preparation time.",
+  "github_evidence": {
+    "regular_ci": {
+      "url": "https://github.com/tejitpabari99/node-arena/actions/runs/40139746008",
+      "status": "success",
+      "completed_at_utc": "2026-10-24T22:43:05Z",
+      "commit": "2078b9f1a0ed8d37b08d481f780f2ea0ac54375a"
+    },
+    "kane_workflow": {
+      "url": "https://github.com/tejitpabari99/node-arena/actions/runs/40139746004/job/121008775427",
+      "job_status": "success",
+      "credentialed_replay_status": "skipped",
+      "skip_reason": "no Kane credentials",
+      "artifacts_uploaded": true
+    },
+    "local_kane_execution_record": {
+      "url": "https://github.com/tejitpabari99/node-arena/blob/cf40d8f418df4d2b74942f6a306be07475d0a89c/docs/agent_files/feat-kane-hackday-20261023-2128/03-kane-driver/code-2026-10-24-2149.md",
+      "pull_request_url": "https://github.com/tejitpabari99/node-arena/pull/26",
+      "application_commit": "cf40d8f418df4d2b74942f6a306be07475d0a89c",
+      "game_result": "won",
+      "kane_calls": 3,
+      "wall_seconds": 262.785,
+      "reported_credits": 65.9541,
+      "accepted_moves": 5,
+      "rejected_moves": 0,
+      "saved_smoke_replay": {
+        "exit_code": 0,
+        "steps": 2,
+        "duration_seconds": 30.33
+      },
+      "note": "Separate local execution, not the four-call historical hosted run or a GitHub-hosted Kane replay."
+    }
+  },
+  "owner_provided_validation": {
+    "source": "owner-provided agent report",
+    "web_unit_tests_passed": 398,
+    "assurance_runner_unit_tests_passed": 19,
+    "checks_passed": [
+      "lint",
+      "builds",
+      "typechecks",
+      "docs",
+      "production exclusion"
+    ],
+    "scope_note": "Free unit/static/build checks, separate from generated browser-case executions."
+  }
+}
