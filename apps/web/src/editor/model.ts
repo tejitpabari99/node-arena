@@ -9,7 +9,6 @@ export type Clipboard = Pick<LevelDoc, 'buildings' | 'elements'>;
 export type DocOp =
   | { type: 'move-selection'; targets: Selection[]; delta: Point }
   | { type: 'paste'; clipboard: Clipboard; offset: Point }
-  | { type: 'auto-fit' }
   | { type: 'level-properties'; value: LevelProperties }
   | { type: 'building-properties'; id: string; value: Partial<Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined }> }
   | { type: 'obstacle-properties'; id: string; value: Partial<{ variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined }> }
@@ -39,12 +38,21 @@ export function clampDelta(points: Point[], delta: Point, area: Area): Point {
 export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[] }
 export type HistoryAction = { type: 'edit'; op: DocOp; area?: Area } | { type: 'undo' } | { type: 'redo' };
 export const createHistory = (present: LevelDoc): DocHistory => ({ past: [], present, future: [] });
+const GROWING: ReadonlySet<DocOp['type']> = new Set(['place', 'move', 'move-selection', 'paste']);
+/** Grow-only bounds: only items outside the bounds drive growth (2-unit pad); never shrinks; same doc when nothing is outside. */
+export function growBounds(doc: LevelDoc): LevelDoc {
+  const b = doc.bounds;
+  const out = [...doc.buildings, ...doc.elements].map(item => item.pos).filter(p => p.x < b.minX || p.x > b.maxX || p.z < b.minZ || p.z > b.maxZ);
+  if (!out.length) return doc;
+  const g = boundsFromPositions(out);
+  return { ...doc, bounds: { minX: Math.min(b.minX, g.minX), maxX: Math.max(b.maxX, g.maxX), minZ: Math.min(b.minZ, g.minZ), maxZ: Math.max(b.maxZ, g.maxZ) } };
+}
 /** Pure structural edits; drag previews never enter this reducer. */
 export function reduceDocument(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
-  if (op.type === 'auto-fit') {
-    const points = [...doc.buildings, ...doc.elements].map(item => item.pos);
-    return points.length ? { ...doc, bounds: boundsFromPositions(points) } : doc;
-  }
+  const next = applyOp(doc, op, area);
+  return next !== doc && GROWING.has(op.type) ? growBounds(next) : next;
+}
+function applyOp(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
   if (op.type === 'paste') {
     const ids = new Set([...doc.buildings, ...doc.elements].map(item => item.id));
     const clone = <T extends { id: string; pos: Point }>(item: T, prefix: string): T => {

@@ -3,10 +3,11 @@ import type { LevelDoc } from '../src/editor/document.js';
 
 test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and persist only on Save', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev-only editor');
-  let writes = 0, saved: LevelDoc | undefined;
+  let writes = 0, original: LevelDoc['bounds'] | undefined, saved: LevelDoc | undefined;
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await page.route('**/__editor/level/levelview-1', async route => {
     const doc = await (await route.fetch()).json() as LevelDoc;
+    original = structuredClone(doc.bounds);
     doc.buildings = [
       { id: 'b0', archetype: 'house-wt1', pos: { x: -4, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
       { id: 'b1', archetype: 'house-wt1', pos: { x: 4, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
@@ -56,6 +57,8 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await expect.poll(() => writes).toBe(1);
   expect(saved!.buildings.map(b => [b.pos, b.owner])).toEqual([[{ x: -4, z: 0 }, 'p1'], [{ x: 4, z: 0 }, 'p2']]);
   expect(saved!.elements[0]!.yawDeg).toBe(30);
+  // Grow-only: in-bounds edits never move an edge (no auto-fit).
+  expect(saved!.bounds).toEqual(original);
   expect(errors).toEqual([]);
 });
 

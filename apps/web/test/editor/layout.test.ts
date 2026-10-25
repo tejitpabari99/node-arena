@@ -37,11 +37,20 @@ it('snaps positions by .25 and yaw by 15 degrees, optionally preserving unsnappe
   expect(snapYaw(359.999, false)).toBe(0); expect(snapYaw(360)).toBe(0);
   expect(snapYaw(23)).toBe(30); expect(snapYaw(-23)).toBe(330); expect(snapYaw(23.127, false)).toBe(23.13);
 });
-it('auto-fits both buildings and obstacles with 2-unit margin as an undoable draft edit', () => {
-  const doc = fixture(), state = historyReducer(createHistory(doc), { type: 'edit', op: { type: 'auto-fit' } });
-  expect(state.present.bounds).toEqual({ minX: -3, maxX: 7, minZ: -2, maxZ: 6 });
-  expect(doc.bounds).toEqual({ minX: -4, maxX: 8, minZ: -6, maxZ: 10 });
-  expect(historyReducer(state, { type: 'undo' }).present).toBe(doc);
+it('grow-only bounds: no-op identity, one-side growth, no shrink, inside items ignored, undo restores', () => {
+  const doc = fixture();
+  const same = reduceDocument(doc, { type: 'move', target: { kind: 'building', id: 'b0' }, pos: { x: 2, z: 3 } });
+  expect(same.bounds).toBe(doc.bounds);
+  expect(reduceDocument(doc, { type: 'move', target: { kind: 'building', id: 'b0' }, pos: { x: 1, z: 3 } })).toBe(doc);
+  const state = historyReducer(createHistory(doc), { type: 'edit', op: { type: 'place', item: 'tower', pos: { x: 10.5, z: 0 } } });
+  expect(state.present.bounds).toEqual({ minX: -4, maxX: 13, minZ: -6, maxZ: 10 });
+  expect(historyReducer(state, { type: 'undo' }).present.bounds).toEqual({ minX: -4, maxX: 8, minZ: -6, maxZ: 10 });
+  const moved = reduceDocument(state.present, { type: 'move', target: { kind: 'building', id: 'b3' }, pos: { x: 0, z: 0 } });
+  expect(moved.bounds).toEqual({ minX: -4, maxX: 13, minZ: -6, maxZ: 10 });
+  const pasted = reduceDocument(doc, { type: 'paste', clipboard: copySelection(doc, [{ kind: 'building', id: 'b1' }]), offset: { x: 0, z: -9 } });
+  expect(pasted.bounds).toEqual({ minX: -4, maxX: 8, minZ: -10, maxZ: 10 });
+  const ms = reduceDocument(doc, { type: 'move-selection', targets: [{ kind: 'obstacle', id: 'e0' }], delta: { x: -10, z: 0 } });
+  expect(ms.bounds).toEqual({ minX: -13, maxX: 8, minZ: -6, maxZ: 10 });
 });
 
 import { buildableArea, clampDelta, clampPoint } from '../../src/editor/model.js';
