@@ -18,7 +18,7 @@ import type { Selection } from './picking.js';
 import type { EditorFinalizeEvent } from '../../../../tools/src/editor-finalize.js';
 import type { EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
 import { finalizeLevel, readFinalizeStatus, checkSolvable, EditorApiError, listLevels, saveLevel } from './api.js';
-import { copySelection, createHistory, historyReducer, scriptRemovalMessages, type Clipboard, type DocHistory, type DocOp, type HistoryAction } from './model.js';
+import { buildableArea, copySelection, createHistory, historyReducer, scriptRemovalMessages, type Clipboard, type DocHistory, type DocOp, type HistoryAction } from './model.js';
 import type { LevelDoc } from './document.js';
 import { FileModal } from './FileModal.js';
 import { useInitialLoad } from './useInitialLoad.js';
@@ -54,10 +54,7 @@ export function Editor() {
   const [losStatus, setLosStatus] = useState('Choose two buildings to preview line of sight.');
   useEffect(() => { setSelection([]); setClipboard(undefined); pasteCount.current = 0; }, [doc?.id]);
   // 40x30 buildable area around the bounds centre, fixed for the lifetime of an opened document.
-  const area = useMemo(() => {
-    const b = doc?.bounds ?? { minX: 0, maxX: 0, minZ: 0, maxZ: 0 }, cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2;
-    return { minX: cx - 20, maxX: cx + 20, minZ: cz - 15, maxZ: cz + 15 };
-  }, [openSeq.current]);
+  const area = useMemo(() => buildableArea(doc?.bounds ?? { minX: 0, maxX: 0, minZ: 0, maxZ: 0 }), [openSeq.current]);
   const [error, setError] = useState('');
   const [manualFailures, setManualFailures] = useState(0);
   const [fileOpen, setFileOpen] = useState(false);

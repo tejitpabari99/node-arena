@@ -17,11 +17,30 @@ export type DocOp =
   | { type: 'move'; target: Selection; pos: Point }
   | { type: 'delete'; target: Selection }
   | { type: 'delete-many'; targets: Selection[] };
+export interface Area { minX: number; maxX: number; minZ: number; maxZ: number }
+export const AREA_W = 40, AREA_H = 30;
+const quarter = (v: number) => Math.round(v * 4) / 4;
+/** Fixed 40x30 buildable rectangle centred on the bounds centre, rounded to 0.25. */
+export function buildableArea(bounds: Area): Area {
+  const cx = quarter((bounds.minX + bounds.maxX) / 2), cz = quarter((bounds.minZ + bounds.maxZ) / 2);
+  return { minX: cx - AREA_W / 2, maxX: cx + AREA_W / 2, minZ: cz - AREA_H / 2, maxZ: cz + AREA_H / 2 };
+}
+export const clampPoint = (p: Point, area: Area): Point => ({ x: Math.min(area.maxX, Math.max(area.minX, p.x)), z: Math.min(area.maxZ, Math.max(area.minZ, p.z)) });
+/** Per-axis delta keeping the group's extent inside the area; 0 on an axis where the group is wider than the area. */
+export function clampDelta(points: Point[], delta: Point, area: Area): Point {
+  if (!points.length) return delta;
+  const axis = (vals: number[], d: number, lo: number, hi: number) => {
+    const min = Math.min(...vals), max = Math.max(...vals);
+    if (max - min > hi - lo) return 0;
+    return Math.min(hi - max, Math.max(lo - min, d));
+  };
+  return { x: axis(points.map(q => q.x), delta.x, area.minX, area.maxX), z: axis(points.map(q => q.z), delta.z, area.minZ, area.maxZ) };
+}
 export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[] }
-export type HistoryAction = { type: 'edit'; op: DocOp; area?: { minX: number; maxX: number; minZ: number; maxZ: number } } | { type: 'undo' } | { type: 'redo' };
+export type HistoryAction = { type: 'edit'; op: DocOp; area?: Area } | { type: 'undo' } | { type: 'redo' };
 export const createHistory = (present: LevelDoc): DocHistory => ({ past: [], present, future: [] });
 /** Pure structural edits; drag previews never enter this reducer. */
-export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
+export function reduceDocument(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
   if (op.type === 'auto-fit') {
     const points = [...doc.buildings, ...doc.elements].map(item => item.pos);
     return points.length ? { ...doc, bounds: boundsFromPositions(points) } : doc;
@@ -33,11 +52,21 @@ export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
       const id = `${prefix}${i}`; ids.add(id);
       return { ...structuredClone(item), id, pos: { x: roundCoordinate(item.pos.x + op.offset.x), z: roundCoordinate(item.pos.z + op.offset.z) } };
     };
-    return { ...doc, buildings: [...doc.buildings, ...op.clipboard.buildings.map(item => clone(item, 'b'))], elements: [...doc.elements, ...op.clipboard.elements.map(item => clone(item, 'e'))] };
+    let buildings = op.clipboard.buildings.map(item => clone(item, 'b')), elements = op.clipboard.elements.map(item => clone(item, 'e'));
+    if (area) {
+      const d = clampDelta([...buildings, ...elements].map(item => item.pos), { x: 0, z: 0 }, area);
+      if (d.x || d.z) {
+        const shift = <T extends { pos: Point }>(item: T): T => ({ ...item, pos: { x: roundCoordinate(item.pos.x + d.x), z: roundCoordinate(item.pos.z + d.z) } });
+        buildings = buildings.map(shift); elements = elements.map(shift);
+      }
+    }
+    return { ...doc, buildings: [...doc.buildings, ...buildings], elements: [...doc.elements, ...elements] };
   }
   if (op.type === 'move-selection') {
     const selected = (kind: Selection['kind'], id: string) => op.targets.some(target => target.kind === kind && target.id === id);
-    const position = (pos: Point): Point => ({ x: roundCoordinate(pos.x + op.delta.x), z: roundCoordinate(pos.z + op.delta.z) });
+    const chosen = [...doc.buildings.filter(i => selected('building', i.id)), ...doc.elements.filter(i => selected('obstacle', i.id))].map(i => i.pos);
+    const delta = area ? clampDelta(chosen, op.delta, area) : op.delta;
+    const position = (pos: Point): Point => ({ x: roundCoordinate(pos.x + delta.x), z: roundCoordinate(pos.z + delta.z) });
     return { ...doc,
       buildings: doc.buildings.map(item => selected('building', item.id) ? { ...item, pos: position(item.pos) } : item),
       elements: doc.elements.map(item => selected('obstacle', item.id) ? { ...item, pos: position(item.pos) } : item),
@@ -48,7 +77,7 @@ export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
     return { ...doc, ...op.value, buildings: doc.buildings.map(item => item.owner !== null && !ids.has(item.owner) ? { ...item, owner: null } : item) };
   }
   if (op.type === 'delete-many') {
-    const next = op.targets.reduce((acc, target) => reduceDocument(acc, { type: 'delete', target }), doc);
+    const next = op.targets.reduce((acc, target) => reduceDocument(acc, { type: 'delete', target }, area), doc);
     return next === doc ? doc : next;
   }
   if (op.type === 'building-properties') return { ...doc, buildings: doc.buildings.map(item => item.id === op.id ? cleanOptional({ ...item, ...op.value }) as LevelDoc['buildings'][number] : item) };
@@ -58,7 +87,8 @@ export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
     const obstacle = op.item.startsWith('obstacle-');
     const prefix = obstacle ? 'e' : 'b';
     let index = 0; while (ids.has(`${prefix}${index}`)) index++;
-    const id = `${prefix}${index}`, pos = { x: roundCoordinate(op.pos.x), z: roundCoordinate(op.pos.z) };
+    const at = area ? clampPoint(op.pos, area) : op.pos;
+    const id = `${prefix}${index}`, pos = { x: roundCoordinate(at.x), z: roundCoordinate(at.z) };
     if (obstacle) return { ...doc, elements: [...doc.elements, { id, archetype: 'obstacle', variant: op.item === 'obstacle-big' ? 'big' : 'small', pos, yawDeg: 0 }] };
     return { ...doc, buildings: [...doc.buildings, { id, archetype: op.item, pos, owner: null, level: 1, ignoreForWin: false }] };
   }
@@ -74,7 +104,8 @@ export function reduceDocument(doc: LevelDoc, op: DocOp): LevelDoc {
     }) : doc.players;
     return { ...doc, players, [key]: entries.filter((_, i) => i !== index) };
   }
-  const pos = { x: roundCoordinate(op.pos.x), z: roundCoordinate(op.pos.z) };
+  const to = area ? clampPoint(op.pos, area) : op.pos;
+  const pos = { x: roundCoordinate(to.x), z: roundCoordinate(to.z) };
   if (entries[index]!.pos.x === pos.x && entries[index]!.pos.z === pos.z) return doc;
   return { ...doc, [key]: entries.map((item, i) => i === index ? { ...item, pos } : item) };
 }
@@ -89,7 +120,7 @@ export function historyReducer(state: DocHistory, action: HistoryAction): DocHis
     const present = state.future[0];
     return present ? { past: [...state.past, state.present].slice(-100), present, future: state.future.slice(1) } : state;
   }
-  const present = reduceDocument(state.present, action.op);
+  const present = reduceDocument(state.present, action.op, action.area);
   return present === state.present ? state : { past: [...state.past, state.present].slice(-100), present, future: [] };
 }
 

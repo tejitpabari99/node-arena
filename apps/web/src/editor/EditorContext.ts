@@ -1,11 +1,11 @@
 import { createContext } from 'preact';
 import { useContext } from 'preact/hooks';
 import type { LevelDoc } from './document.js';
-import type { Clipboard, DocHistory, DocOp, HistoryAction } from './model.js';
+import type { Area, Clipboard, DocHistory, DocOp, HistoryAction } from './model.js';
 import type { Selection } from './picking.js';
 import type { EditorViewport, ViewportStatus } from './viewport-engine.js';
 
-export interface EditorArea { minX: number; maxX: number; minZ: number; maxZ: number }
+export type EditorArea = Area;
 
 /** Shared editor state: Editor.tsx provides it; Viewport and panels consume it. */
 export interface EditorContext {
