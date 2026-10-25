@@ -8,15 +8,15 @@ Source of truth: docs/agent_files/custom-level-fix-20261024-2127/02-left-panel/P
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Model: level-properties owner nulling, delete-many, partial property ops | - | todo |
-| 2 | Model: mirror removal | 1 | todo |
-| 3 | Label and player helpers, banner text | 1 | todo |
-| 4 | Library thumbnails module | - | todo |
-| 5 | LeftPanel shell and Level section | 3 | todo |
-| 6 | Library section | 4, 5 | todo |
-| 7 | Selection section | 1, 3, 5 | todo |
-| 8 | Wire panel, delete legacy sidebar, update e2e specs | 2, 6, 7 | todo |
-| 9 | Final verification: e2e and screenshot comparison | 8 | todo |
+| 1 | Model: level-properties owner nulling, delete-many, partial property ops | - | done |
+| 2 | Model: mirror removal | 1 | done |
+| 3 | Label and player helpers, banner text | 1 | done |
+| 4 | Library thumbnails module | - | done |
+| 5 | LeftPanel shell and Level section | 3 | done |
+| 6 | Library section | 4, 5 | done |
+| 7 | Selection section | 1, 3, 5 | done |
+| 8 | Wire panel, delete legacy sidebar, update e2e specs | 2, 6, 7 | done |
+| 9 | Final verification: e2e and screenshot comparison | 8 | done |
 
 ## Task 1 — Model: level-properties owner nulling, delete-many, partial property ops
 What it is / what it means: Decisions 3, 5, 8 and the Model ops section. The reducer must guarantee one undo step and never leave invalid owners.
