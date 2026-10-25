@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter, once } from 'node:events';
 import { request } from 'node:http';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, mkdir, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { PassThrough } from 'node:stream';
 import { createRunController } from '../run.mjs';
@@ -18,6 +18,8 @@ async function until(check) {
 async function fixture(t, options = {}) {
   const publicDir = await mkdtemp(join(tmpdir(), 'kane-stream-http-'));
   for (const [file, value] of [['index.html', '<h1>Viewer</h1>'], ['app.js', 'hello()'], ['style.css', 'body{}']]) await writeFile(join(publicDir, file), value);
+  const gameDir = await mkdtemp(join(tmpdir(), 'kane-stream-game-'));
+  await writeFile(join(gameDir, 'index.html'), '<h1>Node Arena game</h1>');
   const run = new EventEmitter(), cast = new EventEmitter(), clients = new Set();
   let snapshot = { state: 'idle', runId: null, attemptId: null, startedAt: null, endsAtMax: null }, next = 1;
   const starts = [], calls = [];
@@ -35,11 +37,11 @@ async function fixture(t, options = {}) {
   cast.stop = async () => calls.push('cast.stop');
   cast.addClient = ws => { clients.add(ws); return true; };
   cast.removeClient = ws => clients.delete(ws);
-  const app = await createStreamServer({ env: {}, publicDir, runController: run, screencast: cast, port: 0, handleSignals: false, ...options });
+  const app = await createStreamServer({ env: {}, publicDir, gameDir, runController: run, screencast: cast, port: 0, handleSignals: false, ...options });
   await app.listen();
   const base = `http://127.0.0.1:${app.server.address().port}`;
   const send = (path, { method = 'GET', headers = {}, body, origin = base } = {}) => new Promise((resolve, reject) => {
-    const req = request(base + path, { method, headers: { ...(origin ? { Origin: origin } : {}), ...headers } }, res => {
+    const req = request(base, { path, method, headers: { ...(origin ? { Origin: origin } : {}), ...headers } }, res => {
       const chunks = []; res.on('data', chunk => chunks.push(chunk));
       res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, text: Buffer.concat(chunks).toString() }));
     });
@@ -56,8 +58,8 @@ async function fixture(t, options = {}) {
     ws.once('open', () => resolve({ ws })); ws.once('error', reject);
     ws.once('unexpected-response', (_req, res) => { res.resume(); ws.terminate(); resolve({ status: res.statusCode }); });
   });
-  t.after(async () => { await app.close(); await rm(publicDir, { recursive: true, force: true }); });
-  return { app, base, run, cast, clients, calls, starts, publicDir, send, events, connect };
+  t.after(async () => { await app.close(); await rm(publicDir, { recursive: true, force: true }); await rm(gameDir, { recursive: true, force: true }); });
+  return { app, base, run, cast, clients, calls, starts, publicDir, gameDir, send, events, connect };
 }
 
 test('server binds loopback only, enforces timeouts, security headers and exact static routes', async t => {
@@ -65,18 +67,63 @@ test('server binds loopback only, enforces timeouts, security headers and exact 
   assert.equal(h.app.server.address().address, '127.0.0.1');
   assert.equal(h.app.server.maxHeaderSize, 8192);
   assert.equal(h.app.server.headersTimeout, 10000); assert.equal(h.app.server.requestTimeout, 10000);
-  for (const path of ['/', '/app.js', '/style.css']) {
+  for (const path of ['/', '/kane-cli', '/kane-cli/', '/kane-cli/app.js', '/kane-cli/style.css']) {
     const res = await h.send(path); assert.equal(res.status, 200);
     assert.equal(res.headers['x-content-type-options'], 'nosniff'); assert.equal(res.headers['referrer-policy'], 'no-referrer');
     assert.match(res.headers['content-security-policy'], /frame-ancestors 'none'/); assert.equal(res.headers['access-control-allow-origin'], undefined);
   }
   for (const path of ['/../run.mjs', '/%2e%2e/run.mjs', '/app.js?x=1', '/api/state?x=1', '/ws?x=1', '/unknown']) assert.equal((await h.send(path)).status, 404, path);
-  for (const [path, method] of [['/', 'POST'], ['/start', 'GET'], ['/api/state', 'POST'], ['/events', 'POST'], ['/ws', 'POST'], ['/app.js', 'HEAD']]) assert.equal((await h.send(path, { method })).status, 405);
+  for (const [path, method] of [['/', 'POST'], ['/start', 'GET'], ['/api/state', 'POST'], ['/events', 'POST'], ['/ws', 'POST'], ['/kane-cli/app.js', 'HEAD']]) assert.equal((await h.send(path, { method })).status, 405);
   assert.equal((await h.send('/ws')).status, 426);
-  assert.equal((await h.send('/backup.mp4', { method: 'HEAD' })).status, 404);
+  assert.equal((await h.send('/kane-cli/backup.mp4', { method: 'HEAD' })).status, 404);
   await writeFile(join(h.publicDir, 'backup.mp4'), 'fake video');
-  assert.equal((await h.send('/backup.mp4', { method: 'HEAD' })).status, 200);
-  assert.equal((await h.send('/backup.mp4')).text, 'fake video');
+  assert.equal((await h.send('/kane-cli/backup.mp4', { method: 'HEAD' })).status, 200);
+  assert.equal((await h.send('/kane-cli/backup.mp4')).text, 'fake video');
+});
+
+test('production game static files stay confined, reject encoded/traversal paths and fail closed on symlinks', async t => {
+  const h = await fixture(t);
+  await mkdir(join(h.gameDir, 'textures', 'tw'), { recursive: true });
+  await writeFile(join(h.gameDir, 'textures/tw/ground-green.png'), 'texture');
+  await writeFile(join(h.gameDir, 'manifest.tw.json'), '{}');
+  assert.equal((await h.send('/')).text, '<h1>Node Arena game</h1>');
+  assert.equal((await h.send('/?kane=1')).text, '<h1>Node Arena game</h1>');
+  for (const path of ['/kane-cli', '/kane-cli/']) assert.equal((await h.send(path)).text, '<h1>Viewer</h1>');
+  const texture = await h.send('/textures/tw/ground-green.png');
+  assert.equal(texture.status, 200); assert.equal(texture.text, 'texture'); assert.equal(texture.headers['content-type'], 'image/png');
+  assert.equal((await h.send('/textures/tw/ground-green.png', { method: 'HEAD' })).text, '');
+  assert.equal((await h.send('/manifest.tw.json')).status, 200);
+  assert.match((await h.send('/')).headers['content-security-policy'], /style-src 'self' 'unsafe-inline'/);
+  assert.doesNotMatch((await h.send('/kane-cli')).headers['content-security-policy'], /unsafe-inline|unsafe-eval/);
+  assert.match((await h.send('/')).headers['content-security-policy'], /script-src 'self' 'unsafe-eval'/);
+  for (const path of ['/../index.html', '/textures/../../index.html', '/%2e%2e/index.html', '/textures%2ftw/ground-green.png', '/textures/%252e%252e/index.html', '/textures/./tw/ground-green.png', '//index.html', '/textures\\tw/ground-green.png', '/%00.png', '/%ZZ.png', '/.env', '/package.json', '/src/main.tsx', '/apps/web/dist-test/index.html', '/editor.html', '/e2e/content-parity.html', '/tools/kane/stream/server.mjs', '/kane-runs/run.json', '/app.js', '/style.css', '/backup.mp4']) {
+    assert.equal((await h.send(path)).status, 404, path);
+  }
+  await writeFile(join(h.publicDir, 'secret.json'), 'private');
+  await symlink(join(h.publicDir, 'secret.json'), join(h.gameDir, 'secret.json'));
+  await symlink(h.publicDir, join(h.gameDir, 'escape'));
+  assert.equal((await h.send('/secret.json')).status, 404);
+  assert.equal((await h.send('/escape/secret.json')).status, 404);
+  await symlink(join(h.gameDir, 'manifest.tw.json'), join(h.gameDir, 'internal.json'));
+  assert.equal((await h.send('/internal.json')).status, 404);
+  await symlink(join(h.publicDir, 'secret.json'), join(h.publicDir, 'backup.mp4'));
+  assert.equal((await h.send('/kane-cli/backup.mp4')).status, 404);
+  assert.deepEqual(h.starts, []);
+});
+
+test('missing production output reports safe unavailability while viewer and API remain usable', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'kane-stream-symlink-root-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const gameDir = join(root, 'dist');
+  const h = await fixture(t, { gameDir: gameDir + '/' });
+  await rm(h.gameDir, { recursive: true, force: true });
+  const response = await h.send('/');
+  assert.equal(response.status, 503); assert.equal(response.text, 'Game temporarily unavailable.');
+  assert.doesNotMatch(response.text, /\/root\//);
+  assert.equal((await h.send('/kane-cli')).status, 200);
+  assert.equal((await h.send('/api/state')).status, 200);
+  await symlink(h.publicDir, gameDir);
+  assert.equal((await h.send('/')).status, 503);
 });
 
 test('server config rejects unsafe binding and maps only server max-run flag into env', () => {
@@ -283,7 +330,7 @@ test('boot, GET/reload, WS/SSE and Reset invoke no preflight or driver; only exp
   const run = await createRunController({ env: {}, deps: { spawn, processes }, handleSignals: false });
   const h = await fixture(t, { runController: run });
   assert.equal(spawned.length, 0);
-  for (const route of ['/', '/', '/api/state', '/app.js']) assert.equal((await h.send(route)).status, 200);
+  for (const route of ['/', '/kane-cli', '/api/state', '/kane-cli/app.js']) assert.equal((await h.send(route)).status, 200);
   const first = await h.events(), second = await h.events(); const { ws } = await h.connect();
   assert.equal((await h.send('/reset', { method: 'POST' })).status, 200);
   assert.equal((await h.send('/stop', { method: 'POST' })).status, 409); assert.equal(spawned.length, 0);

@@ -72,7 +72,7 @@ const waitText = (page, id, value) => page.waitForFunction(({ id, value }) => do
 
 test('viewer renders all states, starts once, late joins and resets per-run replay without a reconnect loop', async t => {
   const f = await fixture(t), { page } = f;
-  await page.goto(f.base);
+  await page.goto(f.base + '/kane-cli');
   await waitText(page, 'status', 'idle');
   assert.equal(await page.title(), 'Kane plays Node Arena');
   assert.equal(await page.locator('#start').isEnabled(), true);
@@ -89,7 +89,7 @@ test('viewer renders all states, starts once, late joins and resets per-run repl
   assert.match(await text(page, 'log'), /<img src=x onerror=alert\(1\)>/);
   assert.equal(await page.locator('#log img').count(), 0);
   const late = await page.context().newPage();
-  await late.goto(f.base);
+  await late.goto(f.base + '/kane-cli');
   await waitText(late, 'status', 'live');
   await late.waitForFunction(() => document.querySelectorAll('#log li').length === 1);
   await page.waitForFunction(() => document.getElementById('viewers').textContent === '2');
@@ -120,13 +120,13 @@ test('viewer handles unavailable start and offers only an existing backup', asyn
   const f = await fixture(t), { page } = f;
   await page.route('**/backup.mp4', route => route.fulfill({ status: 200, body: '' }));
   f.reject(503);
-  await page.goto(f.base);
+  await page.goto(f.base + '/kane-cli');
   await waitText(page, 'status', 'idle');
   await page.locator('#start').click();
   await waitText(page, 'status', 'failed');
   assert.equal(await text(page, 'message'), 'Live run unavailable');
   await page.locator('#backup').waitFor({ state: 'visible' });
-  assert.equal(await page.locator('#backup').getAttribute('href'), '/backup.mp4');
+  assert.equal(await page.locator('#backup').getAttribute('href'), '/kane-cli/backup.mp4');
   assert.equal(await page.locator('#start').isDisabled(), true);
   assert.equal(f.starts, 1);
 });
@@ -145,7 +145,7 @@ test('viewer decodes only one frame plus latest pending, closes bitmaps and clea
     };
     HTMLCanvasElement.prototype.getContext = () => ({ drawImage() {} });
   });
-  await page.goto(f.base);
+  await page.goto(f.base + '/kane-cli');
   await page.waitForFunction(() => document.getElementById('viewers').textContent === '1');
   for (const client of f.clients) client.send(Buffer.from([1]));
   await page.waitForFunction(() => window.frameProbe.decoded.length === 1);
@@ -170,7 +170,7 @@ test('public assets have no unsafe HTML insertion', async () => {
 
 test('viewer renders real JPEG frames on canvas and keeps a responsive 16:9 stage', async t => {
   const f = await fixture(t), { page } = f;
-  await page.goto(f.base);
+  await page.goto(f.base + '/kane-cli');
   await page.waitForFunction(() => document.getElementById('viewers').textContent === '1');
   f.state('live', 'render-run');
   await waitText(page, 'status', 'live');
@@ -199,7 +199,7 @@ test('two viewers share explicit Stop, cleanup gating, Reset and cooldown withou
   const f = await fixture(t), { page } = f;
   const posts = [], attempts = [];
   page.context().on('request', request => { if (request.method() === 'POST') posts.push(new URL(request.url()).pathname); if (new URL(request.url()).pathname === '/start') attempts.push(request.headers()['x-kane-attempt-id']); });
-  await page.goto(f.base);
+  await page.goto(f.base + '/kane-cli');
   await waitText(page, 'status', 'idle');
   await page.reload();
   await waitText(page, 'status', 'idle');
@@ -211,7 +211,7 @@ test('two viewers share explicit Stop, cleanup gating, Reset and cooldown withou
   f.state('live', 'run-1');
   await waitText(page, 'status', 'live');
   const other = await page.context().newPage();
-  await other.goto(f.base);
+  await other.goto(f.base + '/kane-cli');
   await waitText(other, 'status', 'live');
   await other.reload();
   await waitText(other, 'status', 'live');
@@ -284,7 +284,7 @@ test('Stop works while Start HTTP is pending and late control responses cannot o
     await new Promise(resolve => { releaseStart = resolve; });
     await route.fulfill({ status: 503, body: '{}' });
   });
-  await page.goto(f.base);
+  await page.goto(f.base + '/kane-cli');
   await waitText(page, 'status', 'idle');
   await page.locator('#start').click();
   await waitText(page, 'status', 'starting');
@@ -303,7 +303,7 @@ test('Stop works while Start HTTP is pending and late control responses cannot o
   await waitText(page, 'status', 'stopped');
   assert.equal(await page.locator('#reset').isDisabled(), true);
   const other = await page.context().newPage();
-  await other.goto(f.base);
+  await other.goto(f.base + '/kane-cli');
   await waitText(other, 'status', 'stopped');
   await other.locator('#reset').click();
   await waitText(page, 'status', 'cooldown');
@@ -354,7 +354,7 @@ async function transportProbe(page) {
 test('shared Reset invalidates JPEG work, queued old socket blobs, SSE replay cursor and metadata', async t => {
   const f = await fixture(t), { page } = f;
   await transportProbe(page);
-  await page.goto(f.base);
+  await page.goto(f.base + '/kane-cli');
   await page.waitForFunction(() => window.transports.events.length === 1);
   await page.evaluate(() => {
     const p = window.transports;
@@ -398,7 +398,7 @@ test('shared Reset invalidates JPEG work, queued old socket blobs, SSE replay cu
 test('reconnect state detects a missed Reset and repeated null starting snapshots do not loop', async t => {
   const f = await fixture(t), { page } = f;
   await transportProbe(page);
-  await page.goto(f.base);
+  await page.goto(f.base + '/kane-cli');
   await page.waitForFunction(() => window.transports.events.length === 1);
   await page.evaluate(() => {
     const p = window.transports;
@@ -431,7 +431,7 @@ test('Stop queued before Start reservation cancels that attempt without an unsaf
     await route.continue();
   });
   f.state('idle', 'previous-finished-run', 'won');
-  await page.goto(f.base);
+  await page.goto(f.base + '/kane-cli');
   await waitText(page, 'status', 'idle');
   await page.locator('#start').click();
   await page.locator('#stop').click();
@@ -463,7 +463,7 @@ for (const reply of [202, 503]) {
       await new Promise(resolve => { releaseStart = resolve; });
       await route.fulfill({ status: reply, contentType: 'application/json', body: reply === 202 ? '{"runId":"own-run"}' : '{}' });
     });
-    await page.goto(f.base); await waitText(page, 'status', 'idle');
+    await page.goto(f.base + '/kane-cli'); await waitText(page, 'status', 'idle');
     await page.locator('#start').click(); await page.locator('#stop').click();
     await f.run.reset(); await page.waitForTimeout(50);
     assert.equal(await text(page, 'status'), 'stopping');
@@ -498,7 +498,7 @@ test('a settled accepted Start with missed terminal events cannot carry a queued
     // Model a completed attempt whose startup/terminal SSE events were missed.
     await route.fulfill({ status: 202, contentType: 'application/json', body: '{"runId":"already-ended"}' });
   });
-  await page.goto(f.base);
+  await page.goto(f.base + '/kane-cli');
   await waitText(page, 'status', 'idle');
   await page.locator('#start').click();
   await page.locator('#stop').click();
@@ -532,7 +532,7 @@ for (const { baseline, terminalState, outcome, reply, replayOutcome } of [
       await route.fulfill({ status: reply, contentType: 'application/json', body: reply === 202 ? '{"runId":"run-A"}' : '{}' });
     });
     f.state('idle', baseline, baseline ? 'won' : undefined, baselineAttempt);
-    await page.goto(f.base);
+    await page.goto(f.base + '/kane-cli');
     await waitText(page, 'status', 'idle');
     await page.locator('#start').click();
     await page.locator('#stop').click();
@@ -576,7 +576,7 @@ for (const terminal of ['preflight-failed', 'unrelated-starting']) {
       await new Promise(resolve => { releaseStart = resolve; });
       await route.fulfill({ status: 503, body: '{}' });
     });
-    await page.goto(f.base); await waitText(page, 'status', 'idle');
+    await page.goto(f.base + '/kane-cli'); await waitText(page, 'status', 'idle');
     await page.locator('#start').click(); await page.locator('#stop').click();
     assert.match(ownAttempt ?? '', /^[0-9a-f-]{36}$/);
     const other = randomUUID();
@@ -618,7 +618,7 @@ test('accepted Start can be conditionally stopped before startup SSE arrives', a
     f.state('starting', 'own', undefined, ownAttempt, false);
     await route.fulfill({ status: 202, contentType: 'application/json', body: '{"runId":"own"}' });
   });
-  await page.goto(f.base); await waitText(page, 'status', 'idle');
+  await page.goto(f.base + '/kane-cli'); await waitText(page, 'status', 'idle');
   const accepted = page.waitForResponse(value => new URL(value.url()).pathname === '/start');
   await page.locator('#start').click(); await accepted; await page.waitForTimeout(40);
   await page.locator('#stop').click();
@@ -636,7 +636,7 @@ test('normal Stop targets its visible attempt and a delayed request cannot end a
     target = route.request().headers()['x-kane-attempt-id'];
     await new Promise(resolve => { releaseStop = resolve; }); await route.continue();
   });
-  await page.goto(f.base); await waitText(page, 'status', 'live');
+  await page.goto(f.base + '/kane-cli'); await waitText(page, 'status', 'live');
   await page.locator('#stop').click(); assert.equal(target, a);
   f.state('starting', null, undefined, b); f.state('live', 'B', undefined, b);
   await waitText(page, 'status', 'live');
@@ -655,7 +655,7 @@ test('explicit Stop ends the displayed other attempt and retains cancellation of
     ownAttempt = route.request().headers()['x-kane-attempt-id'];
     await new Promise(resolve => { releaseStart = resolve; }); await route.fulfill({ status: 503, body: '{}' });
   });
-  await page.goto(f.base); await waitText(page, 'status', 'idle');
+  await page.goto(f.base + '/kane-cli'); await waitText(page, 'status', 'idle');
   await page.locator('#start').click();
   f.state('starting', null, undefined, other); f.state('live', 'other', undefined, other);
   await waitText(page, 'status', 'live');
@@ -685,7 +685,7 @@ test('accepted unseen A cannot leave Reset blocked after an explicit Stop cleans
       await route.fulfill({ status: 409, body: '{}' });
     } else await route.continue();
   });
-  await page.goto(f.base); await waitText(page, 'status', 'idle');
+  await page.goto(f.base + '/kane-cli'); await waitText(page, 'status', 'idle');
   const accepted = page.waitForResponse(value => new URL(value.url()).pathname === '/start');
   await page.locator('#start').click(); await accepted; await page.waitForTimeout(40);
   // Every A state was missed. Reconnection first observes another viewer's B.
@@ -713,7 +713,7 @@ test('queued cancellation sends only its accepted nonce when delayed HTTP202 arr
     await new Promise(resolve => { releaseStart = resolve; });
     await route.fulfill({ status: 202, contentType: 'application/json', body: '{"runId":"A"}' });
   });
-  await page.goto(f.base); await waitText(page, 'status', 'idle');
+  await page.goto(f.base + '/kane-cli'); await waitText(page, 'status', 'idle');
   await page.locator('#start').click(); await page.locator('#stop').click();
   f.state('live', 'B', undefined, b); await page.waitForTimeout(50);
   assert.equal(await text(page, 'status'), 'stopping'); assert.deepEqual(stops, []);

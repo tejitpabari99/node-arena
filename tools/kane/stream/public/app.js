@@ -266,7 +266,7 @@
   }, { once: true });
 
   async function init() {
-    void fetch('/backup.mp4', { method: 'HEAD', signal: abort.signal }).then(response => {
+    void fetch('/kane-cli/backup.mp4', { method: 'HEAD', signal: abort.signal }).then(response => {
       if (disposed) return;
       backupAvailable = response.ok;
       backup.hidden = !(failed && backupAvailable);

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { admitConnection, releaseConnection, createConnectionState, readGuardConfig, checkOrigin, clientIp } from './guards.mjs';
@@ -11,20 +11,59 @@ import { createRunController } from './run.mjs';
 import { createScreencast } from './screencast.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+const GAME = fileURLToPath(new URL('../../../apps/web/dist/', import.meta.url));
 const PUBLIC = fileURLToPath(new URL('./public/', import.meta.url));
 const BODY_LIMIT = 1024, SSE_BUFFER_LIMIT = 512 * 1024;
 const STATIC = new Map([
-  ['/', ['index.html', 'text/html; charset=utf-8']],
-  ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
-  ['/style.css', ['style.css', 'text/css; charset=utf-8']],
-  ['/backup.mp4', ['backup.mp4', 'video/mp4']],
+  ['/kane-cli', ['index.html', 'text/html; charset=utf-8']],
+  ['/kane-cli/', ['index.html', 'text/html; charset=utf-8']],
+  ['/kane-cli/app.js', ['app.js', 'text/javascript; charset=utf-8']],
+  ['/kane-cli/style.css', ['style.css', 'text/css; charset=utf-8']],
+  ['/kane-cli/backup.mp4', ['backup.mp4', 'video/mp4']],
 ]);
-const METHODS = new Map([['/', ['GET']], ['/app.js', ['GET']], ['/style.css', ['GET']],
-  ['/backup.mp4', ['GET', 'HEAD']], ['/api/state', ['GET']], ['/events', ['GET']], ['/start', ['POST']], ['/stop', ['POST']], ['/reset', ['POST']], ['/ws', ['GET']]]);
+const METHODS = new Map([...STATIC.keys()].map(path => [path, path.endsWith('.mp4') ? ['GET', 'HEAD'] : ['GET']]));
+for (const [path, methods] of [['/api/state', ['GET']], ['/events', ['GET']], ['/start', ['POST']], ['/stop', ['POST']], ['/reset', ['POST']], ['/ws', ['GET']]]) METHODS.set(path, methods);
+const MIME = new Map(Object.entries({
+  '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp',
+  '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.glb': 'model/gltf-binary',
+  '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg', '.wav': 'audio/wav',
+  '.ttf': 'font/ttf', '.woff': 'font/woff', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8',
+}));
+// Reject ambiguous encodings and path components before filesystem access. Only
+// the root document accepts queries (including ?kane=1, harmless in production).
+function gameEntry(url) {
+  if (url === '/' || url.startsWith('/?')) return ['index.html', 'text/html; charset=utf-8'];
+  if (!/^\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)+$/.test(url)) return null;
+  const type = MIME.get(extname(url));
+  return type ? [url.slice(1), type] : null;
+}
 const HEADERS = {
   'Content-Security-Policy': "default-src 'self'; img-src blob:; connect-src 'self'; frame-ancestors 'none'",
   'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'no-store',
 };
+
+const GAME_HEADERS = { ...HEADERS,
+  // Preact sets inline style properties; Three loads same-origin textures/models,
+  // FontFace loads the game font, WebAudio fetches same-origin audio, and
+  // AJV compiles the existing schemas with Function; MeshoptDecoder also
+  // instantiates WebAssembly. Keep these permissions off the viewer.
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+};
+
+// Walk through pinned directory descriptors on Linux. O_NOFOLLOW protects every
+// component, including parents, even if a directory is replaced during a request.
+async function openStatic(root, path) {
+  let directory = await open(resolve(root), constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+  try {
+    const parts = path.split('/');
+    for (const part of parts.slice(0, -1)) {
+      const child = await open(`/proc/self/fd/${directory.fd}/${part}`, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+      await directory.close(); directory = child;
+    }
+    return await open(`/proc/self/fd/${directory.fd}/${parts.at(-1)}`, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  } finally { await directory.close(); }
+}
 
 function integer(value, fallback, min, max) {
   if (value === undefined || value === '') return fallback;
@@ -70,6 +109,7 @@ export async function createStreamServer(options = {}) {
     env, cwd: options.cwd ?? ROOT, guardConfig, handleSignals: false, deps: options.runDeps,
   });
   const publicDir = options.publicDir ?? PUBLIC;
+  const gameDir = options.gameDir ?? GAME;
   const relay = createRelayBuffer();
   const sse = new Set(), sockets = new Set(), websocket = new Set(), signalHandlers = new Map();
   let connections = createConnectionState(), closing, closed = false;
@@ -121,21 +161,24 @@ export async function createStreamServer(options = {}) {
   };
   run.on('reset', onReset); run.on('state', onState); run.on('line', onLine); run.on('chrome_ready', onChrome); cast.on('video_lost', videoLost);
 
-  async function staticFile(req, res, entry) {
+  async function staticFile(req, res, entry, game = false) {
     let file;
     try {
-      // Even this fixed allowlist must not follow an accidental symlink out of public/.
-      file = await open(resolve(publicDir, entry[0]), constants.O_RDONLY | constants.O_NOFOLLOW);
+      file = await openStatic(game ? gameDir : publicDir, entry[0]);
       const stat = await file.stat();
       if (!stat.isFile()) { await file.close(); error(res, 404); return; }
       if (res.destroyed) { await file.close(); return; }
-      res.writeHead(200, { ...HEADERS, 'Content-Type': entry[1], 'Content-Length': stat.size });
+      res.writeHead(200, { ...(game ? GAME_HEADERS : HEADERS), 'Content-Type': entry[1], 'Content-Length': stat.size });
       if (req.method === 'HEAD') { await file.close(); res.end(); return; }
       const stream = file.createReadStream();
       stream.on('error', () => res.destroy()); res.once('close', () => stream.destroy()); stream.pipe(res);
     } catch {
       await file?.close().catch(() => {});
-      if (res.headersSent) res.destroy(); else error(res, 404);
+      if (res.headersSent) res.destroy();
+      else if (game && entry[0] === 'index.html') {
+        const body = 'Game temporarily unavailable.';
+        res.writeHead(503, { ...GAME_HEADERS, 'Content-Type': 'text/plain; charset=utf-8' }); res.end(body);
+      } else error(res, 404);
     }
   }
   async function start(req, res) {
@@ -164,7 +207,8 @@ export async function createStreamServer(options = {}) {
     keepAliveTimeout: 5000, connectionsCheckingInterval: 1000 }, async (req, res) => {
     res.on('error', () => {});
     if (closed) { error(res, 503); return; }
-    const methods = METHODS.get(req.url);
+    const game = METHODS.has(req.url) ? null : gameEntry(req.url);
+    const methods = METHODS.get(req.url) ?? (game ? ['GET', 'HEAD'] : null);
     if (!methods) { req.resume(); error(res, 404); return; }
     if (!methods.includes(req.method)) { req.resume(); res.setHeader('Allow', methods.join(', ')); error(res, 405); return; }
     if (Number(req.headers['content-length'] ?? 0) > BODY_LIMIT) { req.resume(); error(res, 413); return; }
@@ -182,6 +226,7 @@ export async function createStreamServer(options = {}) {
     if (req.url === '/start') { void start(req, res); return; }
     if (req.url === '/stop' || req.url === '/reset') { void control(req, res, req.url.slice(1)); return; }
     if (STATIC.has(req.url)) { void staticFile(req, res, STATIC.get(req.url)); return; }
+    if (game) { void staticFile(req, res, game, true); return; }
     if (req.url === '/api/state') { json(res, 200, snapshot()); return; }
     if (req.url === '/ws') { error(res, 426); return; }
     if (!reserve('sse', clientIp(req, guardConfig), res)) { error(res, 429); return; }

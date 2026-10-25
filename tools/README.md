@@ -38,7 +38,7 @@ Node-only tools run through the root pnpm scripts and `tools/src/cli.ts`. Run `p
 | `pnpm art:status [--strict]` | Report-only list of merged-manifest file fields outside the art prefix, with TW/stock labels and replacement totals; strict exits 1 while any remain |
 | `pnpm kane:play -- [flags]` | Run the local Kane game driver; [CLI, NDJSON, exits and rehearsal](kane/README.md) |
 | `pnpm kane:credits` | Read authenticated Kane credit balance without a paid run |
-| `pnpm kane:stream` | Start the loopback live viewer; Start can spend credits; [configuration and owner deployment runbook](kane/stream/README.md) |
+| `pnpm kane:stream` | Build production game and host it at `/`, with live viewer at http://127.0.0.1:8787/kane-cli; viewer Start can spend credits; [configuration and owner deployment runbook](kane/stream/README.md) |
 | `pnpm kane:replay -- [--serve] [tests...]` | Replay committed Kane smoke recordings from temporary copies; needs authentication and credits |
 | `pnpm check:kane-bundle [--no-build]` | Builds web `dist` and `dist-test` (unless `--no-build`); production dist has 0 files matching `na-kane`/`Kane Arena`, test-hooks dist has >0; prod `/` and `/?kane=1` show the 20-card picker without `window.__na`. Runs after `test:web:all` in the GitHub browser job; excluded from the 38-step content/simulation `pnpm run ci` chain to avoid duplicate browser builds |
 | `pnpm check:parked --strict` | No parked CI entries, refused commands or parked source/test directories remain |
