@@ -117,3 +117,14 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-selection select { max-width: 100%; }
 .ed-actions { margin-top: 8px; }
 .ed-view-tools { margin-top: 12px; }
+
+/* Left panel polish: Canva-like stacked fields, card rows, calm headings */
+.ed-left label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; font-weight: 600; margin: 6px 0; }
+.ed-left label:has(> input[type="checkbox"]) { flex-direction: row; align-items: center; justify-content: space-between; }
+.ed-left input:not([type="checkbox"]), .ed-left select { padding: 6px 8px; width: 100%; box-sizing: border-box; font-weight: 400; background: #fff; }
+.ed-section { padding: 10px 12px; background: #fff; border: 1px solid var(--ed-border); border-radius: 12px; }
+.ed-section-title { font-size: 16px; padding: 0; }
+.ed-player { padding: 6px 8px; background: #f3f6f8; border: 1px solid var(--ed-border); border-radius: 10px; }
+.ed-level .ed-players { gap: 6px; margin: 8px 0; }
+.ed-library-tile:hover { border-color: var(--ed-green); background: #fff; }
+.ed-apply { margin-top: 8px; }
