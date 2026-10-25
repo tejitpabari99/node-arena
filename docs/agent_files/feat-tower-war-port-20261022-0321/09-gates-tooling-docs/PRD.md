@@ -7,7 +7,7 @@ date: 2026-10-23
 
 Repo/branch: node-arena · feat/tower-war-port · Depends on: all (Phase 5 + incremental; **Phase A is task 0 of the whole program, before SP01**) · Feeds: release of 2.0.0
 Owns: `scripts/ci.sh`, `.github/workflows/{ci,balance}.yml`, root `package.json` `typecheck`/`build:prerequisites`/`ci.sh` structure (single owner of that restructuring; each SP adds its own script lines, e.g. `defs`, `import:tw`, `check:import`, `assets:tw`), `tools/src/{levels,levels-output,balance*,replay,cli,output}.ts` (**`cli.ts` is 09's**; 02/05/07 add one-line branch registrations only; manifest validation is consumed from `@node-arena/content` (02), not `apps/web/src/manifest`) + `tools/test/**` (rewire, not new semantics), new `tools/src/{parked,docs-check}.ts`, `tools/levels-lock.json`, `tools/solutions/**`, `tools/unsolved-by-proxy.json`, `README.md`, `tools/README.md`, `docs/FUTURES.md`, `AGENTS.md` project section, `docs/research/README.md`, final `campaign:verify` spec.
-Does not own: rule text (01), defs/content/lock/version commands (02), sim (03/04), importer + `LEVELS_GUIDE.md` (05), bot semantics + goldens (06), assets/manifest data/`CREDITS.md` content (07), web src/e2e (08). Edits `CONTENT_GUIDE.md` (02's) only for cross-links. Does not deploy [owner brief: local only].
+Does not own: rule text (01), defs/content/lock/version commands (02), sim (03/04), importer + `LEVELS_GUIDE.md` (05), bot semantics + goldens (06), assets/manifest data/`CREDITS.md` content (07), web src/e2e (08). Edits `CONTENT_GUIDE.md` (02's) only for cross-links. Deployment is outside this tooling task.
 
 ## TL;DR
 - SP01 (version 2.0.0) and 02's CUT leave goldens/bots/web/levels/balance/replay red on purpose. Fix: 09 **Phase A** (task 0 of the program, before SP01) turns `ci.sh` + root scripts into a named-step runner with a `PARKED` list (gate -> owner SP). `pnpm run ci` is green at every commit; "red" = explicitly parked, never silent.
@@ -24,7 +24,7 @@ Does not own: rule text (01), defs/content/lock/version commands (02), sim (03/0
 ## Goals / Non-Goals
 | Goals | Non-Goals |
 |---|---|
-| Every kept gate checks a TW property; none passes vacuously | Making CI download `TW_EXTRACT` (local-only) |
+| Every kept gate checks a TW property; none passes vacuously | Making CI download `TW_EXTRACT` |
 | Red window = a written list that only shrinks | Statistical balance gating (balance stays report-only) |
 | `pnpm run ci` green on clean clone, Node 22 + 24, before merge | Hosting/deploy [owner brief] |
 | Docs match code; stale-path drift caught by a gate | Rewriting 01-08-owned docs |
@@ -69,7 +69,7 @@ Does not own: rule text (01), defs/content/lock/version commands (02), sim (03/0
 5. **`tools/levels-lock.json`** (`pnpm levels:lock` writes, `validate:levels` checks): per level, seed 1: outcome, final tick, final hash. Guards cross-Node and cross-commit determinism on real levels. Any change requires `RULES_VERSION`/`contentVersion`/`BOT_VERSION` bump per existing guards. CI default `--seeds 4` (OPEN: time budget).
 6. **`balance`**: report-only (exit 0 on stats); rows per level x proxy AD + idle; header carries rules/content/BOT versions; byte-identical `--jobs 1|2` kept. Delete targets code/tests.
 7. **`check:docs`** (`tools/src/docs-check.ts`): every root `pnpm` script appears in `tools/README.md` or `AGENTS.md`; every backticked repo path in `README.md`, `tools/README.md`, `docs/{CONTENT_GUIDE,LEVELS_GUIDE,CREDITS}.md` exists; no doc links to deleted v1 names (`bots:churn`, `layout`, `balance-targets`, `slice:verify`, `visual:`). Cheap, no network.
-8. **CI workflow**: (a) keep Node 22+24 matrix `pnpm run ci` (determinism across versions is the matrix itself); (b) Chromium install for web/content/sim stays (sim browser-parity golden) [verified: ci.yml]; add `@node-arena/defs` only if it adds browser tests; (c) `check:import` and `assets:tw:check` print `skipped (TW_EXTRACT unset)` and exit 0; in `ci.sh` surface as `::notice::`; **never** make them required in CI; (d) `check:manifest` validates committed asset hashes against `tw-extract.lock.json` without the extract [07]; (e) Playwright job keeps `test:web:all`; add `timeout-minutes`; (f) `balance.yml` args updated to new proxy flag names; (g) private-repo asset checkout needs no LFS [RESOLVED: owner — no LFS, plain git].
+8. **CI workflow**: (a) keep Node 22+24 matrix `pnpm run ci` (determinism across versions is the matrix itself); (b) Chromium install for web/content/sim stays (sim browser-parity golden) [verified: ci.yml]; add `@node-arena/defs` only if it adds browser tests; (c) `check:import` and `assets:tw:check` print `skipped (TW_EXTRACT unset)` and exit 0; in `ci.sh` surface as `::notice::`; **never** make them required in CI; (d) `check:manifest` validates committed asset hashes against `tw-extract.lock.json` without the extract [07]; (e) Playwright job keeps `test:web:all`; add `timeout-minutes`; (f) `balance.yml` args updated to new proxy flag names; (g) asset checkout needs no LFS [RESOLVED: owner — no LFS, plain git].
 9. **Docs**: see Docs table.
 10. **Final acceptance** (Phase C), below.
 
@@ -111,12 +111,12 @@ Rule for dev-code agents: before each commit run `pnpm run ci`; it may only fail
 ## Docs
 | Doc | Action |
 |---|---|
-| `README.md` | rewrite Contents (add `packages/defs`, TW scope, 20 levels, local-only), replace "Look" with TW screenshots from `BF/ref/out` copied to `docs/img/` (delete v1 imgs), dev commands table, `TW_EXTRACT` note |
+| `README.md` | rewrite Contents (add `packages/defs`, TW scope, 20 levels, asset acknowledgment), replace "Look" with TW screenshots from `BF/ref/out` copied to `docs/img/` (delete v1 imgs), dev commands table, `TW_EXTRACT` note |
 | `docs/CONTENT_GUIDE.md` | 02 rewrites; 09 adds links to `LEVELS_GUIDE.md` and this gate list; `check:docs` verifies paths |
 | `tools/README.md` | full rewrite: new contents, gate semantics (req. 4-8), env-skip behaviour, `levels:lock`, parked list pointer; remove bands/layout/targets |
 | `docs/FUTURES.md` | **append/merge, never replace** earlier SP entries (04/06 append before this task): replace only the stale v1.1 section; add deferred TW features (incl. the dropped `CrossingSource` seam note from 04 S1) (each with TW evidence pointer to `docs/research/tower-wars/*`): walls, mines, rivers/water, rocket towers, fortress, trolley, railway, shield/ranged unit modules (schema room exists), **Boosters (bomb + speed)** ([RESOLVED: owner — boosters deferred]; research facts to record: bomb = 3 aims per use, speed = 1.3x unit speed / 1.7x spawn rate, 15 s delay, 20 s cooldown, TW gate = first available at level 4; evidence pointer `docs/research/tower-wars/*`), tutorials, meta (coins/skins/shop), PvP/multiplayer, skins, cargo, hosting/deploy, levels 24+ (see LEVELS_GUIDE tracker snapshot; generated census tracker is a 05 follow-up), portrait/mobile, original-level editor, new themes beyond Green/Snow |
-| `docs/CREDITS.md` | 07 owns rows; 09 verifies header states TW art is Vaveda's, extracted, repo private, not redistributable, and the audio/Kenney CC0 rows still match files; `check:manifest` enforces coverage |
-| `AGENTS.md` project section | package list (+`packages/defs`), scripts list (drop churn/slice/layout; add `import:tw`, `check:import`, `assets:tw`, `levels:lock`, `check:parked`, `check:docs`, `campaign:verify`), "Rules authority" (R-ids, v2), docs pointers (`LEVELS_GUIDE`), state `TW_EXTRACT` is local-only. No change to Style/Orchestrator sections |
+| `docs/CREDITS.md` | 07 owns rows; 09 verifies header states "Assets based on / motivated by Tower War." and the audio/Kenney CC0 rows still match files; `check:manifest` enforces coverage |
+| `AGENTS.md` project section | package list (+`packages/defs`), scripts list (drop churn/slice/layout; add `import:tw`, `check:import`, `assets:tw`, `levels:lock`, `check:parked`, `check:docs`, `campaign:verify`), "Rules authority" (R-ids, v2), docs pointers (`LEVELS_GUIDE`), describe local `TW_EXTRACT` configuration. No change to Style/Orchestrator sections |
 | `docs/research/README.md` | add index lines for each `tower-wars/*.md`, plus pointer to `BF/` PRDs; note `06a` describes pre-port v1 (historical, not edited) |
 | `apps/web/README.md` | trim to current commands (check) |
 
@@ -139,7 +139,7 @@ Final acceptance flow (Phase C): `pnpm run ci` (22, 24) -> `campaign:verify` -> 
 | 4 | v1 visual harness | delete | adapt M-ids to TW | Thresholds calibrated to v1.1 refs; 07 loop + owner approval |
 | 5 | Level determinism lock | `tools/levels-lock.json` (seed 1 hash per level) | rely on unit goldens only | Covers all 20 real levels on both Node versions |
 | 6 | Unsolvable level | `tools/unsolved-by-proxy.json` allowlist (warnings) + owner pass | recorded solution replays (no producer); relax gate | Agents cannot play; honest warning list, owner pass is the real check |
-| 7 | CI extract | skip, never require | store extract in CI | Private licensed data, local-only |
+| 7 | CI extract | skip, never require | store extract in CI | Extract supplied through local `TW_EXTRACT` |
 | 8 | `slice:verify` | replace with `campaign:verify` | keep | v1 slice meaningless |
 | 9 | Doc drift | `check:docs` | convention only | Prior READMEs went stale [verified] |
 | 10 | Perf in CI | draw-call/tri budgets only | fps gate | Software GL in CI; fps owner-measured |
@@ -148,7 +148,7 @@ Final acceptance flow (Phase C): `pnpm run ci` (22, 24) -> `campaign:verify` -> 
 - Run `TW_EXTRACT=... pnpm check:import && pnpm assets:tw:check` locally before merge (CI cannot).
 - Play levels 1-20 (positions 4-23) in browser; fill the checklist in `BF/09-gates-tooling-docs/owner-pass.md` (mechanics feel, readability, level order/difficulty, results flow). Visual approval vs refs.
 - [RESOLVED: owner accepts parked window; all gates green before merge]
-- [RESOLVED: owner — repo stays private; TW art committed]
+- [RESOLVED: TW art committed; assets based on / motivated by Tower War.]
 - [RESOLVED: owner — no LFS, plain git]
 
 ## Risks
@@ -160,12 +160,12 @@ Final acceptance flow (Phase C): `pnpm run ci` (22, 24) -> `campaign:verify` -> 
 | Proxy cannot win hard levels | any-of-3-`AD` rule, `tools/unsolved-by-proxy.json` warnings, owner pass; 06 spike first [06 OPEN 3] |
 | Cross-Node float/ordering drift | levels-lock + sim goldens already integer; matrix 22/24 |
 | 07 render specs have no host until 08 | 07 uses vitest + its capture script; Playwright render specs wait for 08 (agree in 07/08 tasks) |
-| TW art in repo vs future public release | CREDITS block; repo private [RESOLVED: owner]; assets are not redistributable |
+| TW art provenance | CREDITS acknowledgment: Assets based on / motivated by Tower War. |
 | SP04 gate expectations | resolved: gate rows for CMB-04/TWR/OBS follow 04 (see Open Questions) |
 
 ## Open Questions
 - [RESOLVED: default 4 seeds, measure after SP06, drop to 2 if over CI budget] CI time budget and seeds for `validate:levels` (measure after SP06; default 4, fallback 2).
-- [RESOLVED: owner — repo stays private; committing TW art is OK]
+- [RESOLVED: TW art committed; assets based on / motivated by Tower War.]
 - [RESOLVED: SP04 PRD exists; gates are `check:rules` tags CMB-04/TWR/OBS, `scenarios-geometry.ts` golden appended to 03's `run.ts` scenario array, bench scenario (720 troops, 40 hostile crossings, 3 towers)]
 - [RESOLVED: owner — no LFS, plain git] TW art (~3 MB) and reference frames committed as plain git.
 - [DEFERRED: docs/FUTURES.md] Web bundle/size budget gate beyond per-model budgets (not specified by 07/08).

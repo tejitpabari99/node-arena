@@ -1,4 +1,4 @@
-// Read-only access to the private Tower War extract (TW_EXTRACT). Every file read is hashed (sha256) so the lock file
+// Read-only access to the Tower War extract (TW_EXTRACT). Every file read is hashed (sha256) so the lock file
 // records exactly which inputs produced the committed assets. Paths are posix and relative to the extract root.
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, statSync } from 'node:fs';

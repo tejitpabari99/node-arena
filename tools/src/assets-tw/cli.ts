@@ -1,4 +1,4 @@
-// `assets:tw` / `assets:tw:check` (PRD 07 R3). Both skip cleanly (exit 0) when TW_EXTRACT is unset: the extract is private and local-only.
+// `assets:tw` / `assets:tw:check` (PRD 07 R3). Both skip cleanly (exit 0) when TW_EXTRACT is unset: regeneration needs the source extract.
 //   TW_EXTRACT=/path/to/_extract pnpm --filter @node-arena/tools assets:tw          regenerate committed assets + lock
 //   TW_EXTRACT=/path/to/_extract pnpm --filter @node-arena/tools assets:tw:check    regenerate to a temp dir, byte-diff vs committed
 import { createHash } from 'node:crypto';
@@ -16,7 +16,7 @@ export const ASSETS_ROOT = join(REPO, 'apps/web/assets');
 export const LOCK_FILE = join(REPO, 'tools/assets/tw-extract.lock.json');
 /** Directories wholly owned by the importer: files in them that the importer did not produce are stale. */
 export const OWNED_DIRS = ['models/tw', 'textures/tw'] as const;
-export const SKIP_MESSAGE = 'TW_EXTRACT is not set (or not a directory); skipping (needs the private Tower War extract).';
+export const SKIP_MESSAGE = 'TW_EXTRACT is not set (or not a directory); skipping (needs the Tower War extract).';
 
 const sha = (b: Uint8Array) => createHash('sha256').update(b).digest('hex').slice(0, 12);
 

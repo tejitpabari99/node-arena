@@ -43,7 +43,7 @@ What changes at a high level: Add `tintMask` to the team modes and make the merg
 Done when: render test shows the masked region recoloured per palette and the unmasked region unchanged; `campaign:verify` screenshots unchanged for textureSwap visuals; `sim:golden`, `replay:verify golden` and simHash unchanged.
 
 ## Task 6 — art:status command
-What it is / what it means: A to-do list of art still original before going public (R9, Goal 5).
+What it is / what it means: A report of art still using original files (R9, Goal 5).
 What changes at a high level: New report-only `pnpm art:status [--strict]` reading the merged manifest and listing every file-valued field whose path is not under `art/` (TW vs stock label), with a summary count line; scalars are not listed. `--strict` exits 1 while any remain.
 Done when: tests cover listing, count line, and `--strict` exit codes against a fixture manifest with and without art overrides.
 

@@ -1,6 +1,6 @@
 # 05 - Tower War meta, modes and UX teardown (direction P5)
 
-Source: Tower War - Tactical Conquest v1.29.3 (`games.vaveda.militaryoverturn`). All paths below are under `/root/projects/tower-war/_extract` (local only, nothing copied). Sibling docs: `01-characters-units-towers.md` (skins, rarity per-level increments, rage prefabs, artefact table), `02-levels.md` (level categories, RC unlock gates, campaign order, difficulty). This doc does not repeat them; it adds the meta layer around a match.
+Source: Tower War - Tactical Conquest v1.29.3 (`games.vaveda.militaryoverturn`). All paths below are under `/root/projects/tower-war/_extract` (local research path). Sibling docs: `01-characters-units-towers.md` (skins, rarity per-level increments, rage prefabs, artefact table), `02-levels.md` (level categories, RC unlock gates, campaign order, difficulty). This doc does not repeat them; it adds the meta layer around a match.
 
 Citation shorthand: `RC:<key>` = key inside `game_settings` of `assets/data_unity3d/TextAsset/saykit_mlltrna_1.29.3_98.json` (the shipped remote-config defaults; every `game_settings` value is itself a JSON string, parse twice). `LOC:<key>` = `raw/saykit_localization_en.json` -> `strings` (1,713 keys). `dump.cs:Lnnn` = `il2cpp/dump.cs`. "(inferred from names)" = no code or data proves it. "Disasm" = hand-read ARM64 of one function (capstone), method bodies are otherwise not decompiled.
 
