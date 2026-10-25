@@ -174,13 +174,11 @@ test('failed rebuild keeps the last scene with an error badge, disables picking,
     await page.mouse.move(src.x + src.width / 2, src.y + src.height / 2); await page.mouse.down();
     await page.mouse.move(drop.x, drop.y, { steps: 8 }); await page.mouse.up();
   };
-  // Re-dropping at one screen point converges on an identical snapped position (the camera settles
-  // once the area stops growing); the first exact repeat is a coincident building, so the compile fails.
-  for (let i = 0; i < 8 && !(await badge.count()); i++) {
-    await place();
-    await expect(status).not.toContainText('Loading');
-    await page.waitForTimeout(400);
-  }
+  // The view is stable across edits, so re-dropping at one screen point lands on the identical snapped
+  // position: the second drop is a coincident building and the compile fails.
+  await place();
+  await expect(status).toContainText('Ready');
+  await place();
   await expect(badge).toBeVisible();
   await expect(badge).toHaveAttribute('role', 'alert');
   await expect(badge).toContainText('Preview out of date');
@@ -198,4 +196,85 @@ test('failed rebuild keeps the last scene with an error badge, disables picking,
   await page.getByLabel('Selected item', { exact: true }).selectOption('');
   await page.mouse.click(drop.x, drop.y);
   await expect(page.getByTestId('viewport-selection')).toContainText('building:');
+});
+
+test('camera model: stable on edit, anchored wheel, limits, fit area, game camera, default zoom', async ({ page }, testInfo) => {
+  test.skip(!development, 'Uses dev module imports and local API');
+  test.setTimeout(120000);
+  await page.goto('/editor.html');
+  await page.evaluate(async () => {
+    const path = '/src/editor/viewport-engine.ts';
+    const { createEditorViewport } = await import(/* @vite-ignore */ path) as typeof import('../src/editor/viewport-engine.js');
+    const host = document.createElement('div');
+    host.id = 'viewport-fixture'; host.className = 'editor-workspace';
+    Object.assign(host.style, { position: 'absolute', left: '240px', top: '100px', width: '900px', height: '650px' });
+    document.body.append(host);
+    window.__editorViewport = createEditorViewport(host, {});
+    const doc = await (await fetch('/__editor/level/na-trial')).json() as LevelDoc;
+    const model = '/src/editor/model.ts';
+    const { buildableArea } = await import(/* @vite-ignore */ model) as typeof import('../src/editor/model.js');
+    window.__editorViewport.setArea(buildableArea(doc.bounds)); // fixed per doc open, like Editor's ctx.area
+    await window.__editorViewport.setDocument(doc);
+    (window as unknown as { __doc: LevelDoc }).__doc = doc;
+  });
+  const read = () => page.evaluate(() => { const v = window.__editorViewport!, c = v.inspection!.camera; return { ...v.viewState, pos: c.position.toArray(), zoom: c.zoom }; });
+  const initial = await read();
+  console.log(`default zoom na-trial: ${initial.zoom.toFixed(3)} (min ${initial.min.toFixed(3)} max ${initial.max})`);
+  testInfo.annotations.push({ type: 'default-zoom-na-trial', description: initial.zoom.toFixed(3) });
+  expect(initial.zoom).toBeGreaterThan(1);
+  expect(initial.max).toBe(4);
+  // An edit that grows the content and bounds does not move the view.
+  await page.evaluate(async () => {
+    const doc = structuredClone((window as unknown as { __doc: LevelDoc }).__doc);
+    const first = doc.buildings[0]!;
+    doc.buildings.push({ ...first, id: 'extra', pos: { x: first.pos.x + 8, z: first.pos.z + 3 } });
+    doc.bounds = { ...doc.bounds, maxX: doc.bounds.maxX + 8 };
+    await window.__editorViewport!.setDocument(doc);
+  });
+  const edited = await read();
+  expect(edited.zoom).toBe(initial.zoom);
+  expect(edited.pos).toEqual(initial.pos);
+  // Wheel keeps the ground point under the cursor within 2px.
+  const cursor = { x: 240 + 300, y: 100 + 400 };
+  const groundBefore = await page.evaluate(({ x, y }) => window.__editorViewport!.groundAt(x, y)!, cursor);
+  const zoom0 = (await read()).zoom;
+  await page.mouse.move(cursor.x, cursor.y); await page.mouse.wheel(0, -300);
+  await expect.poll(async () => (await read()).zoom).toBeGreaterThan(zoom0);
+  const projected = await page.evaluate(({ x, y, g }) => {
+    const s = window.__editorViewport!.inspection!, q = s.camera.position.clone().set(g.x, 0, g.z).applyMatrix4(s.worldRoot.matrixWorld).project(s.camera), r = s.canvas.getBoundingClientRect();
+    return { x: r.left + (q.x + 1) * r.width / 2 - x, y: r.top + (1 - q.y) * r.height / 2 - y };
+  }, { ...cursor, g: groundBefore });
+  expect(Math.abs(projected.x)).toBeLessThan(2); expect(Math.abs(projected.y)).toBeLessThan(2);
+  // Zoom stops at the limits.
+  await page.evaluate(() => window.__editorViewport!.zoomBy(1000));
+  let v = await read(); expect(v.zoom).toBe(4); expect(v.atMax).toBe(true);
+  await page.evaluate(() => window.__editorViewport!.zoomBy(1e-6));
+  v = await read(); expect(v.zoom).toBeCloseTo(v.min, 6); expect(v.atMin).toBe(true); expect(v.min).toBeLessThan(1);
+  // Fit area shows the whole 40x30 area.
+  await page.evaluate(() => window.__editorViewport!.zoomBy(2)); await page.evaluate(() => window.__editorViewport!.fitArea());
+  const corners = await page.evaluate(() => {
+    const doc = (window as unknown as { __doc: LevelDoc }).__doc, s = window.__editorViewport!.inspection!, r = s.canvas.getBoundingClientRect();
+    const cx = Math.round((doc.bounds.minX + doc.bounds.maxX) * 2) / 4, cz = Math.round((doc.bounds.minZ + doc.bounds.maxZ) * 2) / 4;
+    return [[-20, -15], [20, -15], [20, 15], [-20, 15]].map(([dx, dz]) => {
+      const q = s.camera.position.clone().set(cx + dx!, 0, cz + dz!).applyMatrix4(s.worldRoot.matrixWorld).project(s.camera);
+      return { x: r.left + (q.x + 1) * r.width / 2, y: r.top + (1 - q.y) * r.height / 2, r: { l: r.left, t: r.top, w: r.width, h: r.height } };
+    });
+  });
+  for (const c of corners) { expect(c.x).toBeGreaterThanOrEqual(c.r.l); expect(c.x).toBeLessThanOrEqual(c.r.l + c.r.w); expect(c.y).toBeGreaterThanOrEqual(c.r.t); expect(c.y).toBeLessThanOrEqual(c.r.t + c.r.h); }
+  expect((await read()).atMin).toBe(true);
+  // Game camera is zoom 1.
+  await page.evaluate(() => window.__editorViewport!.gameCamera());
+  expect((await read()).zoom).toBe(1);
+  // Blank doc: same semantics, default zoom above 1.
+  const blank = await page.evaluate(async () => {
+    const doc = structuredClone((window as unknown as { __doc: LevelDoc }).__doc);
+    doc.id = 'na-blank'; doc.buildings = []; doc.elements = [];
+    await window.__editorViewport!.setDocument(doc);
+    return window.__editorViewport!.viewState;
+  });
+  console.log(`default zoom blank: ${blank.zoom.toFixed(3)} (min ${blank.min.toFixed(3)} max ${blank.max})`);
+  testInfo.annotations.push({ type: 'default-zoom-blank', description: blank.zoom.toFixed(3) });
+  expect(blank.zoom).toBeGreaterThan(1);
+  await page.evaluate(() => window.__editorViewport!.zoomBy(1000));
+  expect((await page.evaluate(() => window.__editorViewport!.viewState)).atMax).toBe(true);
 });

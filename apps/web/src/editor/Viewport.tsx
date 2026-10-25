@@ -17,6 +17,7 @@ export function Viewport({ onStatus, onLos, onSelection }: { onStatus: (status: 
     ctx.viewport.current = current;
     return () => { current.dispose(); delete ctx.viewport.current; };
   }, []);
+  useEffect(() => { ctx.viewport.current?.setArea(ctx.area); }, [ctx.area]);
   useEffect(() => { delete host.current!.dataset.ready; void ctx.viewport.current?.setDocument(ctx.doc); }, [ctx.doc]);
   useEffect(() => {
     if (ctx.viewportStatus.message === 'Loading preview…') delete host.current!.dataset.ready; else host.current!.dataset.ready = 'true';
