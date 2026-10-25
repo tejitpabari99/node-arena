@@ -4,7 +4,7 @@ Submission materials prepared from `kane-cli` source commit `244f9b7bf2369a9658b
 
 | File | Contents |
 |---|---|
-| [submission.md](submission.md) | Paste-ready pitch, four workflows, verified execution status, scope, game/Kane commands, sources and final handoff |
+| [submission.md](submission.md) | Live spectator/playable demos, paste-ready pitch, four workflows, verified execution status, project/Kane appendix, game/Kane commands, sources and final handoff |
 | [kane-run-report.json](kane-run-report.json) | Sanitized hosted-run metadata, 2/2 assurance replay result, tool-reported 8% project coverage, GitHub evidence and event-report status |
 
 The owner confirmed installed agent-session Stop-hook use and approved the second assurance checkpoint. Regular GitHub CI passed; the linked Kane workflow skipped credentialed replay, while actual Kane execution is documented from local runs. The latest assurance result is explicitly a local validation snapshot, separate from the original reviewed source commit.

@@ -6,6 +6,11 @@ Submission draft, prepared 2026-10-24. Repository: [node-arena](https://github.c
 
 Node Arena uses Kane CLI to play a live strategy game, catch browser regressions after agent edits, turn game rules into linked tests, and integrate saved-test replay with agent edits and informational CI.
 
+## Live demos
+
+- **[Watch Kane CLI play Node Arena](https://helene-unreconnoitred-overslowly.ngrok-free.dev/kane-cli).** Kane CLI is testing Node Arena by playing it autonomously. Watch it read the screen, choose its moves, and use the game’s controls in real time.
+- **[Play Node Arena yourself](https://helene-unreconnoitred-overslowly.ngrok-free.dev).** Ignore **Custom Level**; it is under development. Use the campaign to play the normal game.
+
 ## Harness description
 
 1. **Live gameplay and spectators.** A Node driver attaches Kane to Chrome and gives bounded capture, attack and cut objectives. Readable building labels and route buttons make the WebGL game operable. Kane chooses the buttons; the driver verifies accepted commands and the actual game result. A separate viewer shares browser frames and filtered progress logs. A hosted rehearsal finished with a verified win.
@@ -87,7 +92,7 @@ Expected completion is `stalled` / exit 20 with zero paid runs; that indicates a
 
 ## Submission handoff
 
-Paste the pitch, harness description, Kane feature selections and limitations into the event form; these text fields have no event tool. A local run report is prepared. Check current reporting consent, event report creation and project linkage before claiming event evidence is attached; see the mutable status fields in [kane-run-report.json](kane-run-report.json).
+Paste the pitch, harness description, Kane feature selections and limitations into the corresponding event form fields. Use the [appendix](#appendix-project-overview-and-kane-cli-approach) for Project description/About, or its Kane approach section for Harness description, as appropriate. No dedicated additional-info field was identified; the event tool exposes `project_description` and `one_line_pitch`. A local run report is prepared. Check current reporting consent, event report creation and project linkage before claiming event evidence is attached; see the mutable status fields in [kane-run-report.json](kane-run-report.json).
 
 Published links supplied by the user:
 
@@ -95,6 +100,27 @@ Published links supplied by the user:
 - X post: [Published post](https://x.com/tejit99/status/2114142477439697336?s=20)
 
 Before finalizing the **Shipped prize bundle**, paste both links above, tick the corresponding checklist rows and press **Save**. Including these links here does not save them to the event form.
+
+## Appendix: Project overview and Kane CLI approach
+
+### What Node Arena is
+
+Node Arena is a browser tower-strategy game: draw persistent routes, send units between buildings and capture the opposing network. Its 20-level solo campaign spans Green and Snow themes with soldiers, tanks, towers, obstacles and scripted AI. The normal game is available through the [playable demo](#live-demos); Custom Level is still under development. [Game overview and campaign scope](../../../README.md).
+
+### What this project demonstrates
+
+The project makes autonomous game testing visible. Kane plays a dedicated level in a real browser while a spectator viewer shows its actions and progress. The harness checks whether moves were accepted and whether the game actually ended in a win. The [verified hosted run](#verified-hosted-run) finished in four Kane calls over 375.948 seconds, with a Kane-reported charge of 72.195385 credits. This demonstrates one level, rather than campaign-wide qualification.
+
+The same integration also checks changes made by coding agents: saved browser replays exercise the game UI, an opt-in Stop hook catches regressions after edits, and a rules-to-tests workflow records both passing criteria and remaining gaps. The latest [assurance validation](#assurance-runtime-evidence) passed two saved cases with zero newly authored tests; the tool-reported project score remains 8%, with 4/42 criteria proven.
+
+### How Kane CLI is used effectively
+
+- **Make a WebGL game operable through real controls.** Readable DOM building labels and route buttons expose the game state and available actions. Kane selects those controls, which submit ordinary simulator commands; the driver checks accepted moves and the authoritative game result. Bounded objectives and run limits keep each attempt focused. This combines autonomous browser interaction with game-level verification, rather than relying only on screenshots or a model's claim of success.
+- **Show the testing loop to spectators.** A separate viewer broadcasts browser frames and filtered progress through custom CDP, WebSocket and SSE transport. Viewers can watch the browser agent work without needing to operate its test session. The transport is harness code; Kane supplies the autonomous gameplay.
+- **Turn regressions into a repeatable feedback loop.** The opt-in agent Stop hook rebuilds and replays a saved smoke after web edits. A deliberate UI regression produced a failed replay, then passed after restoration. The informational CI workflow supports saved replay; regular CI passed, while the linked Kane CI job skipped credentialed execution. The actual Kane execution evidence is local.
+- **Connect requirements to measured evidence.** Source-backed assurance extracts use cases from mechanics and UI facts, pauses for human review, generates test designs and reports coverage. The passing draw and single-click replays prove specific criteria, while the remaining coverage gaps stay visible. Saved replay avoids new authoring decisions; it is not a claim of zero-credit execution.
+
+Implementation and dated execution sources are listed below; the [harness description](#harness-description), [feature status](#kane-features-and-execution-status) and linked reports distinguish implemented workflows from verified runs.
 
 ## Sources
 
