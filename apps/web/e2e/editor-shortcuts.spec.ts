@@ -43,6 +43,10 @@ test('Shortcuts: delete, copy/paste, undo/redo, esc clear', async ({ page }) => 
 test('Shortcuts: Ctrl+S saves without blocking; Esc cancels placement before selection', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev-only editor');
   await open(page);
+  await page.route('**/__editor/save', async route => {
+    const level = (route.request().postDataJSON() as { level: LevelDoc }).level;
+    await route.fulfill({ json: { level, warnings: [] } });
+  });
   await pick(page, 'building:b0');
   // Placement: Esc cancels placement first, selection stays.
   const src = (await page.getByRole('button', { name: 'Place tower', exact: true }).boundingBox())!;
