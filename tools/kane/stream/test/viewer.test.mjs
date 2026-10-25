@@ -13,7 +13,7 @@ async function fixture(t) {
   const run = new EventEmitter();
   let current = { state: 'idle', runId: null, attemptId: null, viewers: 0 }, lastStartAttempt;
   let starts = 0, response = 202, settleStop;
-  run.snapshot = viewers => ({ ...current, viewers });
+  run.snapshot = viewers => ({ ...current, viewers, serverNow: Date.now() });
   run.start = async (_ip, attemptId) => {
     starts++;
     if (response !== 202) return { status: response };
@@ -31,13 +31,13 @@ async function fixture(t) {
     current = { ...current, state: 'ending', outcome: 'stopped' };
     run.emit('state', current);
     await new Promise(resolve => { settleStop = resolve; });
-    current = { ...current, state: 'cooldown' };
+    current = { ...current, state: 'cooldown', cooldownEndsAt: Date.now() + 30000 };
     run.emit('state', current);
     return { status: 200 };
   };
   run.reset = async () => {
     if (!['idle', 'cooldown'].includes(current.state)) return { status: 409 };
-    current = { state: current.state, runId: null, attemptId: null, startedAt: null, endsAtMax: null };
+    current = { state: current.state, runId: null, attemptId: null, startedAt: null, endsAtMax: null, cooldownEndsAt: current.cooldownEndsAt ?? null };
     run.emit('reset', current); run.emit('state', current);
     return { status: 200 };
   };
@@ -64,6 +64,7 @@ async function fixture(t) {
       notify = true) {
       current = { state, runId, outcome, attemptId }; if (notify) run.emit('state', current);
     },
+    cooldown(ms, outcome = 'stopped') { current = { state: 'cooldown', runId: 'cooled-run', attemptId: randomUUID(), outcome, cooldownEndsAt: Date.now() + ms }; run.emit('state', current); },
     finishStop() { settleStop(); }, reject(status) { response = status; }, get starts() { return starts; } };
 }
 
@@ -720,4 +721,89 @@ test('queued cancellation sends only its accepted nonce when delayed HTTP202 arr
   releaseStart(); await page.waitForTimeout(80);
   assert.deepEqual(stops, [a]); await waitText(page, 'status', 'live');
   assert.equal(await page.locator('#reset').isHidden(), true); assert.deepEqual(f.errors, []);
+});
+
+// Mock server only: no Start/preflight or paid Kane calls during countdown checks.
+test('cooldown countdown survives stopped presentation, shared Reset, reload and late join without restarting the wait', async t => {
+  const f = await fixture(t), { page } = f;
+  f.cooldown(30000);
+  await page.goto(f.base + '/kane-cli');
+  await waitText(page, 'status', 'stopped');
+  const remaining = async viewer => Number((await text(viewer, 'start')).match(/^Start in (\d+)s$/)?.[1]);
+  const initial = await remaining(page);
+  assert.ok(initial > 1 && initial <= 30);
+  assert.equal(await page.locator('#start').isDisabled(), true);
+  await page.waitForFunction(initial => {
+    const seconds = Number(document.getElementById('start').textContent.match(/^Start in (\d+)s$/)?.[1]);
+    return seconds > 0 && seconds < initial;
+  }, initial);
+  const beforeReset = await remaining(page);
+  await page.locator('#reset').click();
+  await waitText(page, 'status', 'cooldown');
+  assert.ok(await remaining(page) <= beforeReset);
+  await page.reload();
+  await waitText(page, 'status', 'cooldown');
+  assert.ok(await remaining(page) <= beforeReset);
+  const other = await page.context().newPage();
+  await other.goto(f.base + '/kane-cli');
+  await waitText(other, 'status', 'cooldown');
+  assert.ok(await remaining(other) > 0 && await remaining(other) <= beforeReset);
+  if (process.env.KANE_VIEWER_SCREENSHOTS) {
+    await page.screenshot({ path: '/tmp/kane-countdown-desktop.png', fullPage: true });
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.screenshot({ path: '/tmp/kane-countdown-mobile.png', fullPage: true });
+  }
+  const box = await page.locator('#start').boundingBox();
+  assert.ok(box.height >= 60 && box.width >= 200);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  assert.equal(await page.locator('#start').evaluate(button => getComputedStyle(button).fontSize), '20px');
+  f.state('idle', null);
+  for (const viewer of [page, other]) {
+    await waitText(viewer, 'status', 'idle');
+    assert.equal(await text(viewer, 'start'), 'Start');
+    assert.equal(await viewer.locator('#start').isEnabled(), true);
+  }
+  await page.waitForTimeout(1100);
+  assert.equal(await text(page, 'start'), 'Start');
+  assert.equal(f.starts, 0);
+  assert.deepEqual(f.errors, []);
+});
+
+test('countdown uses server time despite clock skew, never enables early, and clears old timers on new state/pagehide', async t => {
+  const f = await fixture(t), { page } = f;
+  await transportProbe(page);
+  await page.clock.install({ time: new Date('2030-01-01T00:00:00Z') });
+  await page.goto(f.base + '/kane-cli');
+  await page.waitForFunction(() => window.transports.events.length === 1);
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
+  const emit = snapshot => page.evaluate(snapshot => window.transports.events.at(-1).emit('state', snapshot), snapshot);
+  const cooldown = { state: 'cooldown', runId: null, attemptId: null, cooldownEndsAt: 105000, serverNow: 100000 };
+  await emit(cooldown);
+  assert.equal(await text(page, 'start'), 'Start in 5s');
+  await page.clock.runFor(1000);
+  assert.equal(await text(page, 'start'), 'Start in 4s');
+  // Reconnect presents the original deadline with current authoritative time.
+  await emit({ ...cooldown, serverNow: 101000 });
+  await page.clock.runFor(4000);
+  assert.equal(await text(page, 'start'), 'Start soon');
+  assert.equal(await page.locator('#start').isDisabled(), true);
+  for (const cooldownEndsAt of [null, 'invalid', 99000]) {
+    await emit({ ...cooldown, cooldownEndsAt });
+    assert.equal(await text(page, 'start'), 'Start soon');
+  }
+  await emit({ ...cooldown, outcome: 'stopped', serverNow: 100000 });
+  assert.equal(await text(page, 'status'), 'stopped');
+  assert.equal(await text(page, 'start'), 'Start in 5s');
+  await emit({ state: 'idle', outcome: 'stopped', cooldownEndsAt: null });
+  await page.clock.runFor(2000);
+  assert.equal(await text(page, 'start'), 'Start');
+  assert.equal(await page.locator('#start').isDisabled(), true, 'stopped still requires Reset');
+  await emit({ state: 'idle', cooldownEndsAt: null });
+  assert.equal(await page.locator('#start').isEnabled(), true);
+  await emit(cooldown);
+  await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+  await page.clock.runFor(2000);
+  assert.equal(await text(page, 'start'), 'Start in 5s', 'pagehide cancels countdown updates');
+  assert.equal(f.starts, 0);
+  assert.deepEqual(f.errors, []);
 });

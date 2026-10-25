@@ -24,6 +24,8 @@ canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
 #message { margin: 0; font-size: 14px; color: #b6c5ce; }
 a { color: #a5d6ff; font-size: 14px; text-underline-offset: 3px; }
 button { border: 0; border-radius: 8px; min-width: 112px; padding: 12px 24px; font: inherit; font-weight: 650; color: #082216; background: #93e3b7; cursor: pointer; }
+#start { min-height: 60px; min-width: min(200px, calc(100vw - 24px)); max-width: 100%; padding: 16px 24px; font-size: 20px; }
+#start:disabled { color: #c3d1d9; }
 button:hover:enabled { background: #b2f0cf; }
 button:disabled { cursor: default; background: #2b393f; color: #82959f; }
 button:focus-visible, a:focus-visible { outline: 3px solid #c5e4ff; outline-offset: 4px; }
