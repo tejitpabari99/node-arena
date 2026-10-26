@@ -10,7 +10,7 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/03-to
 |---|---|---|---|
 | 1 | useDismiss and Menu primitive | SP01 T3 | done |
 | 2 | ConfirmDialog and guard state | SP01 T4 | done |
-| 3 | Create/Open dialogs and start screen | 2, SP02 T3 | in-progress |
+| 3 | Create/Open dialogs and start screen | 2, SP02 T3 | done |
 | 4 | SaveStatus and chipText | SP01 T4 | in-progress |
 | 5 | Toast notices | SP01 T4 | in-progress |
 | 6 | Share panel (Save, Finalize, Check, version) | 1, 4, SP02 T4, SP02 T6 | todo |
