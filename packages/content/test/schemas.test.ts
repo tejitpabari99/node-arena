@@ -67,6 +67,19 @@ test('Type.Partial instance overrides scale like archetype values (fx3 never und
   }
 });
 
+test('editorVersion is optional and accepts only three numeric version components', () => {
+  const validate = createAjv().compile(content.NextSchemas.level);
+  const level = levelSample({});
+  assert.equal(validate(level), true, JSON.stringify(validate.errors));
+  for (const editorVersion of ['0.0.1', '0.0.27', '1.2.3']) {
+    assert.equal(validate({ ...level, editorVersion }), true, JSON.stringify(validate.errors));
+  }
+  for (const editorVersion of ['1.0', 'x', '', '0.0.-1', '0.0.1-extra', 1, null]) {
+    assert.equal(validate({ ...level, editorVersion }), false, JSON.stringify(editorVersion));
+    assert.equal(validate.errors?.[0]?.instancePath, '/editorVersion');
+  }
+});
+
 test('no fx3-tagged field sits under oneOf/anyOf/allOf/if/then/else (walker contract)', () => {
   const combinators = new Set(['oneOf', 'anyOf', 'allOf', 'not', 'if', 'then', 'else']);
   const offenders: string[] = [];

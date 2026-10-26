@@ -4,7 +4,7 @@
  * Known keys first in this order, unknown keys after in insertion order.
  */
 export const KEY_ORDER = {
-  level: ['$schema', 'schemaVersion', 'id', 'name', 'source', 'theme', 'bounds', 'objective', 'timeLimitSec', 'players', 'buildings', 'elements', 'requires'],
+  level: ['$schema', 'schemaVersion', 'id', 'name', 'editorVersion', 'source', 'theme', 'bounds', 'objective', 'timeLimitSec', 'players', 'buildings', 'elements', 'requires'],
   source: ['game', 'gameVersion', 'asset', 'campaignPosition', 'dialect', 'dropped'],
   bounds: ['minX', 'maxX', 'minZ', 'maxZ'],
   player: ['id', 'kind', 'colorKey', 'bot'],

@@ -11,6 +11,7 @@ import * as levels from '../src/levels.js';
 import { parseUnsolved } from '../src/unsolved.js';
 import { levelsMarkdown } from '../src/levels-output.js';
 import { balance } from '../src/balance.js';
+import { serializeLevel } from '../src/import-tw/serialize.js';
 
 const root = resolve(import.meta.dirname, '../..');
 const { data, meta } = splitFiles(await loadFiles(resolve(root, 'packages/content')));
@@ -127,4 +128,12 @@ test('levels:lock merge refuses missing, malformed and invalid existing locks wi
     assert.equal(unknown.status, 1); assert.match(unknown.stdout, /Unknown or empty/);
     assert.equal(await readFile(lock, 'utf8'), '{}');
   });
+});
+
+test('serializeLevel places editorVersion after name regardless of input key order', () => {
+  const level = { theme: 'green', editorVersion: '0.0.7', name: 'Custom', id: 'na-custom', schemaVersion: '2.0.0' };
+  const serialized = serializeLevel(level);
+  assert.deepEqual(Object.keys(JSON.parse(serialized)), ['schemaVersion', 'id', 'name', 'editorVersion', 'theme']);
+  assert.equal(serializeLevel(Object.fromEntries(Object.entries(level).reverse())), serialized);
+  assert.equal(serializeLevel(JSON.parse(serialized)), serialized);
 });

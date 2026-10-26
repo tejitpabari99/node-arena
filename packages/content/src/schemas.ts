@@ -109,6 +109,7 @@ const objectiveIds = Object.keys(OBJECTIVES).map((k) => Type.Literal(k));
 
 export const LevelSchema = Type.Object({
   ...envelope, id: id(), name: Type.String({ minLength: 1, 'x-presentation': true }),
+  editorVersion: Type.Optional(Type.String({ pattern: '^\\d+\\.\\d+\\.\\d+$', 'x-presentation': true })),
   source: Type.Optional(Type.Object({
     game: Type.String({ minLength: 1 }), gameVersion: Type.String({ minLength: 1 }), asset: Type.String({ minLength: 1 }),
     campaignPosition: Type.Optional(count({ minimum: 1 })),

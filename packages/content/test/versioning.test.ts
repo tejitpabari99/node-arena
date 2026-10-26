@@ -65,3 +65,18 @@ test('rules header, exported constant and content metadata must agree', () => {
   assert.throws(() => content.checkRulesVersion(`RULES_VERSION: ${content.RULES_VERSION}\n`, '99.0.1'), /rulesVersion/);
   assert.throws(() => content.checkRulesVersion('no header', '1.0.0'), /RULES_VERSION/);
 });
+
+test('editorVersion metadata preserves compiled levels and content/bot hash locks without a version bump', () => {
+  const files = hashFixture();
+  const before = content.loadContent(dataOnly(files));
+  const hashes = content.generateHashes(before);
+  const metadata = { contentVersion: files['content.json'].contentVersion as string };
+  for (const editorVersion of ['0.0.1', '0.0.2']) {
+    files['data/levels/levelview-1.json'].editorVersion = editorVersion;
+    const after = content.loadContent(dataOnly(files));
+    assert.deepEqual(after.compiled, before.compiled);
+    const changed = content.generateHashes(after);
+    assert.deepEqual(changed, hashes);
+    assert.doesNotThrow(() => content.checkContentVersion(metadata, changed, { metadata, hashes }));
+  }
+});
