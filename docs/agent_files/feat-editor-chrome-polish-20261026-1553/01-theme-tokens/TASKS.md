@@ -12,8 +12,8 @@ Source of truth: [PRD.md](PRD.md). Rewrites `apps/web/src/editor/style.css` into
 | 2 | Button, field and focus primitives | 1 | done |
 | 3 | Menu, popover and row primitives | 1 | done |
 | 4 | Modal, toast, panel/section and status primitives | 1 | done |
-| 5 | Remove Coiny and delete dead legacy CSS | 2, 3, 4 | in-progress |
-| 6 | Verification: contrast, tests, screenshots | 5 | todo |
+| 5 | Remove Coiny and delete dead legacy CSS | 2, 3, 4 | done |
+| 6 | Verification: contrast, tests, screenshots | 5 | in-progress |
 
 ## Task 1 — Tokens, base reset, game-sheet leak
 What it is / what it means: The `--ed-*` design token set (font stack, type scale, greys, accent, semantics, radii, shadows, spacing, z-index, controls gutter) that every later primitive and sibling project consumes (PRD Req 1, 2; D1-D5, D9, D10).
