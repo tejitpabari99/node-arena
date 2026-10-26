@@ -19,6 +19,8 @@ export interface SharePanelProps {
   onFinalize(): void;
   onDetails(): void;
   proxyEvents: EditorProxyEvent[];
+  /** Failed-check evidence (issues or error) also warrants the Details button. */
+  hasCheckProblem?: boolean;
   finalizeEvents: EditorFinalizeEvent[];
   finalizeError: string;
   lockStatus: 'checking' | 'current' | 'unfinalized' | 'unknown';
@@ -48,7 +50,7 @@ export function SharePanel(p: SharePanelProps) {
     return () => window.removeEventListener('resize', place);
   }, [p.open]);
   const checking = p.job === 'check', finalizing = p.job === 'finalize';
-  const hasReport = p.proxyEvents.some(event => event.type === 'result');
+  const hasReport = p.proxyEvents.length > 0 || !!p.hasCheckProblem;
   const output = p.finalizeEvents.map(event => event.type === 'step' ? `→ ${event.step}\n` : event.type === 'output' ? event.output : event.type === 'error' ? `${event.error}\n` : event.type === 'result' ? 'Finalize complete. Review git diff and commit when ready.\n' : '').join('');
   return <span class="ed-share-wrap">
     <button ref={trigger} type="button" class="ed-btn ed-btn-primary" data-testid="share-button" aria-haspopup="dialog" aria-expanded={p.open} aria-controls={p.open ? 'editor-share-panel' : undefined} onClick={() => p.onOpenChange(!p.open)}>Share ▾</button>

@@ -10,6 +10,7 @@ try {
     const run = playProxy(...args); emit({ type: 'progress', run }); return run;
   });
   emit({ type: 'result', report });
-} catch {
-  emit({ type: 'error', error: 'Proxy check failed' }); process.exitCode = 1;
+} catch (error) {
+  const detail = error instanceof Error ? (error.stack ?? error.message) : String(error);
+  emit({ type: 'error', error: detail.slice(0, 2000) }); process.exitCode = 1;
 }

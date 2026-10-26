@@ -74,5 +74,9 @@ it('dismissal never cancels running check; explicit Cancel retains cancellation 
   await page.getByRole('button', { name: 'Invalid next check' }).click(); await share(); await page.getByRole('button', { name: 'Check', exact: true }).click();
   await domExpect(page.getByTestId('check-toast')).toContainText('Invalid level'); await show();
   await domExpect(page.getByRole('alert', { name: 'Check errors' })).toContainText('/players: Player required');
+  // Failed check: Details stays reachable and the error is shown once, without evidence disclaimer.
+  await page.getByRole('button', { name: 'Close check details' }).click();
+  await domExpect(page.getByTestId('check-row').getByRole('button', { name: 'Details' })).toBeVisible();
+  await show(); await domExpect(page.getByTestId('check-popover').getByText('Evidence only')).toHaveCount(0);
   expect(errors).toEqual([]);
 });

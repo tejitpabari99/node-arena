@@ -43,6 +43,7 @@ export function CheckFlyout(p: CheckFlyoutProps) {
   if (!p.open) return null;
   const report = p.proxyEvents.find(event => event.type === 'result');
   const checking = p.job === 'check';
+  const evidence = p.proxyEvents.some(event => event.type === 'progress' || event.type === 'result');
   const close = () => { p.onOpenChange(false); p.detailsRef.current?.focus(); };
   return <div ref={flyout} class="ed-popover ed-check-flyout" role="dialog" aria-labelledby="editor-check-title" tabIndex={-1} data-testid="check-popover">
     <button type="button" class="ed-btn ed-popover-close" aria-label="Close check details" onClick={close}>×</button>
@@ -50,12 +51,12 @@ export function CheckFlyout(p: CheckFlyoutProps) {
     {checking && <p role="status"><span class="ed-spinner" role="progressbar" aria-label="Working" /> Checking proxy matches… <button type="button" class="ed-btn" onClick={p.onCancel}>Cancel</button></p>}
     {p.checkError && <p role="alert">{p.checkError}</p>}
     {p.checkIssues.length > 0 && <ul role="alert" aria-label="Check errors">{p.checkIssues.map((issue, index) => <li key={index} data-item={issue.pointer}>{p.issueLabel(issue)}: {issue.message}</li>)}</ul>}
-    {p.proxyEvents.length > 0 && <section aria-label="Proxy evidence" aria-live="polite">
+    {evidence && <section aria-label="Proxy evidence" aria-live="polite">
       <p>Evidence only. Proxy wins do not prove solvability; no wins do not prove impossibility. Owner play and sign-off remain required.</p>
       {report?.type === 'result' && <p role="status">{`Proxy wins: ${report.report.totalWins}/${report.report.runs}. Validation: ${report.report.ok ? 'passed' : 'failed'}.`}</p>}
-      <pre>{p.proxyEvents.map(event => event.type === 'progress' ? `${event.run.proxy} seed ${event.run.seed}: ${event.run.outcome}, winner ${event.run.winner ?? 'none'}, ${event.run.ticks} ticks` : event.type === 'error' ? event.error : '').filter(Boolean).join('\n')}</pre>
+      <pre>{p.proxyEvents.map(event => event.type === 'progress' ? `${event.run.proxy} seed ${event.run.seed}: ${event.run.outcome}, winner ${event.run.winner ?? 'none'}, ${event.run.ticks} ticks` : '').filter(Boolean).join('\n')}</pre>
       {report?.type === 'result' && <details><summary>Full proxy report</summary><pre>{JSON.stringify(report.report, null, 2)}</pre></details>}
     </section>}
-    {!checking && !p.checkError && p.checkIssues.length === 0 && p.proxyEvents.length === 0 && <p>No check results. Run Check to see proxy evidence.</p>}
+    {!checking && !p.checkError && p.checkIssues.length === 0 && !evidence && <p>No check results. Run Check to see proxy evidence.</p>}
   </div>;
 }

@@ -79,7 +79,7 @@ it('rejects concurrent jobs, streams failure, and releases the gate for retry', 
     expect((await fetch(`${url}/__editor/levels`)).status).toBe(200);
     finish();
     let rest = ''; for (;;) { const chunk = await reader.read(); if (chunk.done) break; rest += new TextDecoder().decode(chunk.value); }
-    expect(events(rest)).toEqual([{ type: 'error', error: 'Proxy check failed' }]);
+    expect(events(rest)).toEqual([{ type: 'error', error: 'private/internal/path' }]);
     const retry = await send(); expect(retry.status).toBe(200); await retry.text();
   } finally { finish(); await new Promise<void>(done => local.close(() => done())); }
 });
@@ -123,3 +123,9 @@ it('aborting a real running proxy process settles cancellation before returning'
   }, controller.signal)).rejects.toThrow('cancelled');
   expect(progress).toBe(1);
 });
+
+it('surfaces the real worker error instead of a generic failure', async () => {
+  const seen: EditorProxyEvent[] = [];
+  await expect(runEditorProxy({ level: null, unsolved: null } as never, event => seen.push(event), new AbortController().signal)).rejects.toThrow(/TypeError|Cannot|undefined|null/);
+  expect(seen.some(event => event.type === 'error' && event.error !== 'Proxy check failed' && event.error.length > 0)).toBe(true);
+}, 60_000);

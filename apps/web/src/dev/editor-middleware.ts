@@ -144,7 +144,8 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
           const controller = new AbortController();
           const cancel = () => { if (!res.writableEnded) controller.abort(); };
           res.on('close', cancel);
-          const emit = (event: EditorProxyEvent) => { if (!res.destroyed) res.write(JSON.stringify(event) + '\n'); };
+          let forwardedError = false;
+          const emit = (event: EditorProxyEvent) => { if (event.type === 'error') forwardedError = true; if (!res.destroyed) res.write(JSON.stringify(event) + '\n'); };
           try {
             const input = await prepareEditorProxy(resolve(levelsDir, '../..'), value.id, value.level);
             if (controller.signal.aborted) return;
@@ -153,7 +154,12 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
             res.setHeader('X-Accel-Buffering', 'no');
             emit({ type: 'started', id: value.id });
             try { await (options.runProxy ?? runEditorProxy)(input, emit, controller.signal); }
-            catch { if (!controller.signal.aborted) emit({ type: 'error', error: 'Proxy check failed' }); }
+            catch (error) {
+              if (!controller.signal.aborted) {
+                console.error('[editor] proxy check', error);
+                if (!forwardedError) emit({ type: 'error', error: error instanceof Error ? error.message : String(error) });
+              }
+            }
             res.end();
           } finally { res.off('close', cancel); release(); }
           return;

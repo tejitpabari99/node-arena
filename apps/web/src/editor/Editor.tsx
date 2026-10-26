@@ -107,8 +107,9 @@ export function Editor() {
       markSaved(result.level); setFailure(null); if (source === 'manual') armedRef.current = true; setValidation({ issues: [], warnings: result.warnings });
       // Swap in the normalized document only if nothing was edited during the request; no history entry.
       setHistory(state => state && state.present === sent ? { ...state, present: result.level } : state);
-      setLevels(await listLevels());
       saveOutcome.current = { seq, ok: true };
+      // A list refresh failure after a successful write must not flip the outcome.
+      try { setLevels(await listLevels()); } catch { /* list refreshes on next open */ }
     } catch (reason) {
       if (openSeq.current !== seq) return;
       saveOutcome.current = { seq, ok: false };
@@ -167,7 +168,7 @@ export function Editor() {
     if (!doc || busy || finalizingRef.current) return;
     const seq = openSeq.current;
     finalizingRef.current = true;
-    setBusy(true); setJob('finalize'); shareOpen(true); setError(''); setFinalizeError(''); setFinalizeEvents([]); setLockStatus('checking');
+    setBusy(true); setJob('finalize'); shareOpen(true); setUi(state => ({ ...state, flyout: false })); setError(''); setFinalizeError(''); setFinalizeEvents([]); setLockStatus('checking');
     try {
       await doSave('manual');
       const sent = savedRef.current, current = historyRef.current?.present;
@@ -258,7 +259,7 @@ export function Editor() {
   const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar failureSeq={manualFailures} issues={validation.issues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel}
     onBack={() => guard(leave, 'back')} onPlay={() => { setUi(closedUi); setPlaying(true); }}
     file={{ open: ui.menu, onOpenChange: menu => setUi(state => ({ ...state, menu, share: false, flyout: false })), onCreate: () => setUi(state => ({ ...state, dialog: 'create' })), onOpen: () => setUi(state => ({ ...state, dialog: 'open' })), onDuplicate: () => guard(duplicate, 'duplicate') }}
-    share={<><SharePanel open={ui.share} onOpenChange={shareOpen} savedDoc={savedDoc} locked={busy} busy={busy} job={job} onSave={() => void doSave('manual')} onCheck={() => void solvable()} onCancel={() => proxyAbort.current?.abort()} onFinalize={() => void finalize()} onDetails={showDetails} proxyEvents={proxyEvents} finalizeEvents={finalizeEvents} finalizeError={finalizeError} lockStatus={lockStatus} lockOutput={lockOutput} flyoutOpen={ui.flyout} flyoutRef={flyoutRef} panelRef={panelRef} detailsRef={detailsRef} />
+    share={<><SharePanel open={ui.share} onOpenChange={shareOpen} savedDoc={savedDoc} locked={busy} busy={busy} job={job} onSave={() => void doSave('manual')} onCheck={() => void solvable()} onCancel={() => proxyAbort.current?.abort()} onFinalize={() => void finalize()} onDetails={showDetails} proxyEvents={proxyEvents} hasCheckProblem={issues.length > 0 || !!checkError} finalizeEvents={finalizeEvents} finalizeError={finalizeError} lockStatus={lockStatus} lockOutput={lockOutput} flyoutOpen={ui.flyout} flyoutRef={flyoutRef} panelRef={panelRef} detailsRef={detailsRef} />
       <CheckFlyout open={ui.share && ui.flyout} onOpenChange={flyout => setUi(state => ({ ...state, flyout }))} panelRef={panelRef} flyoutRef={flyoutRef} detailsRef={detailsRef} job={job} onCancel={() => proxyAbort.current?.abort()} checkIssues={issues} issueLabel={issueLabel} checkError={checkError} proxyEvents={proxyEvents} /></>} /></EditorCtx.Provider>;
   const dialogProps = { levels, loading, currentId: doc?.id ?? '', suspended: !!ui.confirm, onClose: () => setUi(state => ({ ...state, dialog: null })), onReplace: (next: LevelDoc, saved: boolean) => guard(savedResult => replaceDoc(saved && savedResult?.id === next.id ? savedResult : next, saved)) };
   return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<EditorCtx.Provider value={ctx}><LeftPanel /></EditorCtx.Provider>}>
