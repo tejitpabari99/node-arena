@@ -42,14 +42,14 @@ function ParamsGroup({ item }: { item: Building }) {
   const defaults = archetypes[item.archetype]?.modules ?? {};
   const schema = LevelSchema.properties.buildings.items.properties.params!.properties as Record<string, { properties: Record<string, SchemaField> }>;
   return <form aria-label="Parameters" onSubmit={event => { event.preventDefault(); edit({ type: 'building-properties', id: item.id, value: { params: Object.keys(params).length ? params : undefined } as never }); }}><fieldset disabled={locked}>
-    <p class="ed-hint">Leave blank to use the archetype default.</p>
+    <p class="ed-field-hint">Leave blank to use the archetype default.</p>
     {Object.entries(defaults).flatMap(([module, values]) => Object.entries(schema[module]?.properties ?? {}).map(([field, spec]) => {
       const { label, tooltip } = paramLabel(module, field);
       const current = params[module]?.[field];
       const fallback = (values as Record<string, unknown>)[field];
       if (module === 'spawns' && field === 'troop') {
         const unit = String(current ?? fallback ?? '');
-        return <label key={`${module}.${field}`} title={tooltip}>{label}<span>{unit.charAt(0).toUpperCase() + unit.slice(1)}{current !== undefined && <> <span title="This level overrides the building's default unit">(override)</span></>}</span></label>;
+        return <label key={`${module}.${field}`} title={tooltip}>{label}<span class="ed-field-readonly">{unit.charAt(0).toUpperCase() + unit.slice(1)}{current !== undefined && <> <span title="This level overrides the building's default unit">(override)</span></>}</span></label>;
       }
       function change(value: string) {
         const next = { ...params, [module]: { ...params[module] } };
@@ -108,9 +108,9 @@ export function SelectionSection() {
   const obstacle = single?.kind === 'obstacle' ? doc.elements.find(e => e.id === single.id) : undefined;
   const value = isMulti ? 'multi' : single ? keyOf(single) : '';
   const actions = <div class="ed-actions">
-    <button type="button" disabled={locked || !selection.length} onClick={copy}>Copy</button>{' '}
-    <button type="button" disabled={locked || !clipboard} onClick={paste}>Paste</button>{' '}
-    <button type="button" disabled={locked || !selection.length} onClick={deleteSelection}>Delete</button>
+    <button type="button" class="ed-btn" disabled={locked || !selection.length} onClick={copy}>Copy</button>{' '}
+    <button type="button" class="ed-btn" disabled={locked || !clipboard} onClick={paste}>Paste</button>{' '}
+    <button type="button" class="ed-btn" disabled={locked || !selection.length} onClick={deleteSelection}>Delete</button>
   </div>;
   return <div class="ed-selection">
     <label>Selected item<select aria-label="Selected item" value={value} onChange={event => {
@@ -127,8 +127,8 @@ export function SelectionSection() {
     </select></label>
     {isMulti && <div class="ed-multi">
       <p data-testid="multi-count">{selection.length} selected</p>
-      <button type="button" onClick={() => select([...doc.buildings.map(b => ({ kind: 'building' as const, id: b.id })), ...doc.elements.map(e => ({ kind: 'obstacle' as const, id: e.id }))])}>Select all</button>{' '}
-      <button type="button" onClick={() => select([])}>Clear</button>
+      <button type="button" class="ed-btn" onClick={() => select([...doc.buildings.map(b => ({ kind: 'building' as const, id: b.id })), ...doc.elements.map(e => ({ kind: 'obstacle' as const, id: e.id }))])}>Select all</button>{' '}
+      <button type="button" class="ed-btn" onClick={() => select([])}>Clear</button>
       {actions}
     </div>}
     {building && <div key={building.id}>
@@ -141,6 +141,6 @@ export function SelectionSection() {
       <Group title="Shape"><ShapeGroup key={JSON.stringify({ v: obstacle.variant, y: obstacle.yawDeg, f: obstacle.footprint ?? null })} item={obstacle} /></Group>
       {actions}
     </div>}
-    {!isMulti && !single && <p class="ed-hint">Click an item or choose one above.</p>}
+    {!isMulti && !single && <p class="ed-field-hint">Click an item or choose one above.</p>}
   </div>;
 }

@@ -1,0 +1,27 @@
+
+> node-arena@ typecheck /root/projects/node-arena/.worktrees/feat-editor-chrome-polish
+> pnpm typecheck:defs && pnpm typecheck:content && pnpm typecheck:sim && pnpm typecheck:bots && pnpm typecheck:tools && pnpm typecheck:web
+
+
+> node-arena@ typecheck:defs /root/projects/node-arena/.worktrees/feat-editor-chrome-polish
+> pnpm exec tsc -p packages/defs/tsconfig.json --noEmit && pnpm exec tsc -p packages/defs/tsconfig.check.json
+
+
+> node-arena@ typecheck:content /root/projects/node-arena/.worktrees/feat-editor-chrome-polish
+> pnpm exec tsc -p packages/content/tsconfig.json --noEmit && pnpm exec tsc -p packages/content/tsconfig.check.json
+
+
+> node-arena@ typecheck:sim /root/projects/node-arena/.worktrees/feat-editor-chrome-polish
+> pnpm exec tsc -p packages/sim/tsconfig.json --noEmit && pnpm exec tsc -p packages/sim/tsconfig.golden.json
+
+
+> node-arena@ typecheck:bots /root/projects/node-arena/.worktrees/feat-editor-chrome-polish
+> pnpm exec tsc -p packages/bots/tsconfig.json --noEmit && pnpm exec tsc -p packages/bots/tsconfig.check.json
+
+
+> node-arena@ typecheck:tools /root/projects/node-arena/.worktrees/feat-editor-chrome-polish
+> pnpm exec tsc -p tools/tsconfig.json
+
+
+> node-arena@ typecheck:web /root/projects/node-arena/.worktrees/feat-editor-chrome-polish
+> pnpm exec tsc -p apps/web/tsconfig.json

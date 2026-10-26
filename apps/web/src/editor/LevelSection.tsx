@@ -17,7 +17,7 @@ export function LevelSection() {
   const patch = (id: string, change: Partial<Player>) => setDraft({ ...draft, players: draft.players.map(p => p.id === id ? { ...p, ...change } as Player : p) });
   const dupes = duplicateColors(draft.players);
   const ok = canApply(doc, draft);
-  const del = (p: Player) => <button type="button" class="ed-player-delete" aria-label={`Delete ${playerLabel(draft.players, p.id)}`} disabled={!canDeleteAi(draft.players, p.id)} onClick={() => setConfirm(p.id)}>Delete</button>;
+  const del = (p: Player) => <button type="button" class="ed-btn" aria-label={`Delete ${playerLabel(draft.players, p.id)}`} disabled={!canDeleteAi(draft.players, p.id)} onClick={() => setConfirm(p.id)}>Delete</button>;
   return <form class="ed-level" aria-label="Level properties" onSubmit={event => { event.preventDefault(); if (ok && !locked) edit({ type: 'level-properties', value: draft }); }}>
     <fieldset disabled={locked}>
       <label>Level id<output aria-label="Level id" title="Fixed when the level is created">{doc.id}</output></label>
@@ -30,7 +30,7 @@ export function LevelSection() {
           const count = ownedCount(doc, p.id);
           return <div key={p.id} class="ed-player" data-player={p.id} data-open={expanded}>
             <div class="ed-player-head">
-              <button type="button" class="ed-player-toggle" aria-expanded={expanded} aria-label={`${label} card`} onClick={() => setOpen(expanded ? null : p.id)}>
+              <button type="button" class="ed-btn ed-btn-ghost" aria-expanded={expanded} aria-label={`${label} card`} onClick={() => setOpen(expanded ? null : p.id)}>
                 <span class="ed-chip">{label}</span>
                 <span class="ed-swatch" data-testid={`swatch-${p.id}`} style={{ background: palettes[p.colorKey] ?? '#ccc' }} title={p.colorKey} />
               </button>
@@ -46,13 +46,13 @@ export function LevelSection() {
             </div>}
             {confirm === p.id && <div class="ed-confirm" role="alertdialog" aria-label={`Confirm delete ${label}`}>
               <p>Delete {label}?{count > 0 && ` Its ${count} building${count === 1 ? '' : 's'} become Neutral.`}</p>
-              <button type="button" onClick={() => { setDraft(deleteAi(draft, p.id)); setConfirm(null); setOpen(null); }}>Confirm delete</button>{' '}
-              <button type="button" onClick={() => setConfirm(null)}>Cancel</button>
+              <button type="button" class="ed-btn" onClick={() => { setDraft(deleteAi(draft, p.id)); setConfirm(null); setOpen(null); }}>Confirm delete</button>{' '}
+              <button type="button" class="ed-btn" onClick={() => setConfirm(null)}>Cancel</button>
             </div>}
           </div>;
         })}
       </div>
-      <button type="button" disabled={!canAddAi(draft.players, colors)} onClick={() => setDraft(addAi(draft, colors, doc.players))}>Add AI</button>
+      <button type="button" class="ed-btn" disabled={!canAddAi(draft.players, colors)} onClick={() => setDraft(addAi(draft, colors, doc.players))}>Add AI</button>
       {dupes.length > 0 && <p class="ed-note" role="status">Each player needs a unique color.</p>}
       <button class="ed-btn-primary ed-apply" disabled={!ok}>Apply level properties</button>
     </fieldset>

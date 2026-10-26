@@ -1,0 +1,68 @@
+[WebServer] (node:3026961) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:3026974) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:3027004) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] 6:21:51 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:51 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:51 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:51 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:51 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:51 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:51 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:51 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:52 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:52 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:52 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:52 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+  ✓  1 [chromium] › e2e/editor-library.spec.ts:3:1 › Library: five ordered tiles with art or text fallback; drag places an item (4.5s)
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:56 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+  ✓  2 [chromium] › e2e/editor-shell.spec.ts:9:1 › starts blank drafts and copies without retaining source identity (5.0s)
+  -  3 [chromium] › e2e/editor-shell.spec.ts:57:1 › test-hooks preview includes the editor shell without filesystem middleware
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:21:59 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+  ✓  4 [chromium] › e2e/editor-shell.spec.ts:66:3 › shell has no page scroll, scrolling left panel and filling canvas at 1280x720 (2.1s)
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+[WebServer] 6:22:02 PM [vite] (client) [console.warn] THREE.WebGLRenderer: Texture marked for update but no image data found.
+  ✓  5 [chromium] › e2e/editor-shell.spec.ts:66:3 › shell has no page scroll, scrolling left panel and filling canvas at 1920x1080 (3.0s)
+
+  1 skipped
+  4 passed (17.5s)

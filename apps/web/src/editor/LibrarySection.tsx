@@ -16,7 +16,7 @@ export function LibrarySection() {
   }, []);
   return <div class="ed-library">
     <div class="ed-library-grid">
-      {LIBRARY_ITEMS.map(item => <button key={item} type="button" class="ed-library-tile" data-item={item} disabled={locked} aria-label={`Place ${item}`} onPointerDown={event => {
+      {LIBRARY_ITEMS.map(item => <button key={item} type="button" class="ed-btn ed-library-tile" data-item={item} disabled={locked} aria-label={`Place ${item}`} onPointerDown={event => {
         if (event.button !== 0 || !event.isPrimary) return;
         event.preventDefault(); viewport.current?.beginPlacement(item, event.pointerId);
       }}>
@@ -24,6 +24,6 @@ export function LibrarySection() {
         <span class="ed-library-label" aria-hidden="true">{LABELS[item]}</span>
       </button>)}
     </div>
-    <p class="ed-hint">Drag an item onto the view.</p>
+    <p class="ed-field-hint">Drag an item onto the view.</p>
   </div>;
 }

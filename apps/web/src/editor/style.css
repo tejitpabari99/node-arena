@@ -174,42 +174,31 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-file section { min-width: 0; } .ed-file select, .ed-file input { max-width: 100%; box-sizing: border-box; }
 .ed-file label { display: grid; gap: var(--ed-s-2); margin: var(--ed-s-4) 0; min-width: 0; } .ed-file select { width: 100%; }
 
-/* Left panel sections */
-.ed-section-body { padding-top: 6px; }
-.ed-level fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-.ed-level label { margin: 8px 0; }
-.ed-players { display: grid; gap: 8px; margin: 12px 0; }
-.ed-player { border-bottom: 1px solid var(--ed-border); padding-bottom: 6px; }
-.ed-player-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.ed-level .ed-player-toggle { display: flex; align-items: center; gap: 8px; background: none; box-shadow: none; padding: 4px; }
-.ed-swatch { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ed-g-0); box-shadow: 0 0 0 1px var(--ed-border); display: inline-block; }
-.ed-confirm { margin-top: 6px; padding: 8px; background: var(--ed-g-100); border-radius: var(--ed-r-lg); }
-.ed-note { color: var(--ed-danger); font-size: 13px; margin: 8px 0; }
-.ed-apply { display: block; width: 100%; margin-top: 12px; }
-.ed-library-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.editor-shell button.ed-library-tile, .ed-shell button.ed-library-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; min-width: 0; touch-action: none; user-select: none; color: var(--ed-ink); background: var(--ed-g-50); box-shadow: none; border: 1px solid var(--ed-border); border-radius: var(--ed-r-lg); }
-.ed-library-tile img { width: 100%; aspect-ratio: 1; object-fit: contain; pointer-events: none; }
-.ed-library-fallback { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1; text-align: center; font-size: 11px; font-weight: 600; background: var(--ed-g-100); border-radius: 6px; }
-.ed-library-label { font-size: 11px; line-height: 1.1; }
-.ed-library-tile:not(:has(img)) .ed-library-label { display: none; }
-.ed-hint { margin: 6px 0 0; font-size: 12px; opacity: .75; }
-.ed-group { margin: 6px 0; border: 1px solid var(--ed-border); border-radius: var(--ed-r-lg); background: var(--ed-g-0); }
-.ed-group > summary { padding: 6px 10px; }
-.ed-group-body { padding: 4px 10px 10px; }
-.ed-group fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
-.ed-group label { display: block; margin: 6px 0; font-size: var(--ed-fs-sm); }
-.ed-selection > label { display: block; font-size: var(--ed-fs-sm); }
-.ed-selection select { max-width: 100%; }
-.ed-actions { margin-top: 8px; }
-
-/* Left panel polish: Canva-like stacked fields, card rows, calm headings */
-.ed-left label { display: flex; flex-direction: column; gap: 3px; font-size: var(--ed-fs-sm); font-weight: 500; margin: 6px 0; }
+/* Left panel: shared section, field and button primitives own appearance. */
+.ed-section-body { padding-top: var(--ed-s-2); }
+.ed-left fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.ed-left label { display: flex; flex-direction: column; gap: var(--ed-s-1); margin: var(--ed-s-2) 0; }
 .ed-left label:has(> input[type="checkbox"]) { flex-direction: row; align-items: center; justify-content: space-between; }
-.ed-left input:not([type="checkbox"]), .ed-left select { padding: 6px 8px; width: 100%; box-sizing: border-box; font-weight: 400; background: var(--ed-g-0); }
-.ed-player { padding: 6px 8px; background: var(--ed-g-50); border: 1px solid var(--ed-border); border-radius: var(--ed-r-lg); }
-.ed-level .ed-players { gap: 6px; margin: 8px 0; }
-.ed-library-tile:hover { border-color: var(--ed-accent); background: var(--ed-g-0); }
-.ed-apply { margin-top: 8px; }
+.ed-left input:not([type="checkbox"]), .ed-left select { width: 100%; }
+.ed-left output, .ed-field-readonly { color: var(--ed-text); overflow-wrap: anywhere; user-select: text; }
+.ed-players { display: grid; gap: var(--ed-s-2); margin: var(--ed-s-2) 0; }
+.ed-player { padding: var(--ed-s-2); background: var(--ed-g-50); border: 1px solid var(--ed-border); border-radius: var(--ed-r-lg); }
+.ed-player-head { display: flex; align-items: center; justify-content: space-between; gap: var(--ed-s-2); }
+.ed-swatch { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ed-g-0); box-shadow: 0 0 0 1px var(--ed-border); display: inline-block; }
+.ed-confirm { margin-top: var(--ed-s-2); padding: var(--ed-s-2); background: var(--ed-g-100); border-radius: var(--ed-r-lg); }
+.ed-note { color: var(--ed-danger); font-size: var(--ed-fs); margin: var(--ed-s-2) 0; }
+.ed-apply { width: 100%; margin-top: var(--ed-s-2); }
+.ed-library-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--ed-s-2); }
+.ed-left .ed-library-tile { flex-direction: column; min-width: 0; padding: var(--ed-s-1); touch-action: none; user-select: none; }
+.ed-library-tile img { width: 100%; aspect-ratio: 1; object-fit: contain; pointer-events: none; }
+.ed-library-fallback { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1; text-align: center; font-size: var(--ed-fs-xs); font-weight: 600; background: var(--ed-g-100); border-radius: var(--ed-r); }
+.ed-library-label { font-size: var(--ed-fs-xs); line-height: 1.1; }
+.ed-library-tile:not(:has(img)) .ed-library-label { display: none; }
+.ed-group { margin: var(--ed-s-2) 0; }
+.ed-group > summary { padding: var(--ed-s-1) 0; }
+.ed-group-body { padding: 0 0 var(--ed-s-2); }
+.ed-selection select { max-width: 100%; }
+.ed-actions { display: flex; flex-wrap: wrap; gap: var(--ed-s-1); margin-top: var(--ed-s-2); }
 .preview-error { position: absolute; top: 8px; left: 8px; z-index: 3; margin: 0; padding: 4px 8px; border: 1px solid #ff9b9b; background: #5a1d1dd9; color: #fff; font-size: 12px; pointer-events: none; }
 
 .canvas-controls { position: absolute; top: var(--ed-s-3); right: var(--ed-s-3); z-index: 3; display: flex; flex-direction: column; align-items: stretch; gap: var(--ed-s-2); width: 36px; pointer-events: none; }
