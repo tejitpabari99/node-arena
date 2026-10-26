@@ -12,7 +12,7 @@ Brief: `brainstorm.md`. Screenshots: `before/` (current editor, 9 shots), `ref/`
 | # | Name | Scope | Depends | Status |
 |---|---|---|---|---|
 | 01 | theme-tokens | `--ed-*` tokens, Inter/system stack, base button/input/menu/popover/modal/toast styles | none | done |
-| 02 | versioning-save | `editorVersion` 0.0.N, 30s autosave, Finalize saves first, server Duplicate op | none | in-progress |
+| 02 | versioning-save | `editorVersion` 0.0.N, 30s autosave, Finalize saves first, server Duplicate op | none | done |
 | 03 | topbar-menus | Back + File menu, dialogs, Share panel, Check flow, save status | 01, 02, 05 | draft |
 | 04 | left-panel | Read-only level id, param labels/tooltips, read-only troop | 01 | draft |
 | 05 | map-controls | Vertical map-style canvas controls | 01 | draft |
@@ -67,4 +67,6 @@ SP01's six planned tasks and stacking review fix are complete; all three final r
 - [Implementation run (all six tasks)](02-versioning-save/code-2026-10-26-1745.md)
 - [Save-first Finalize and full final verification](02-versioning-save/code-2026-10-26-1743.md)
 
-SP02's six tasks are complete. Bug Hunter and Security PASS; Architect pending. Subproject remains in-progress until the final review verdict.
+SP02's six tasks are complete; Bug Hunter, Security and Architect PASS.
+
+- [Final SP02 review — PASS](02-versioning-save/review-2026-10-26-1746.md)
