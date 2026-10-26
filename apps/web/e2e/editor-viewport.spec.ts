@@ -368,6 +368,34 @@ test('canvas controls: zoom limits, fit, game camera, hand, persisted grid', asy
     const b = controls.getByRole('button', { name, exact: true });
     await expect(b).toBeVisible(); await expect(b).toHaveAttribute('title', name);
   }
+  await expect(controls).toHaveAttribute('role', 'group');
+  await expect(controls).toHaveAccessibleName('Canvas controls');
+  expect(await controls.getByRole('button').evaluateAll(buttons => buttons.map(b => b.getAttribute('aria-label'))))
+    .toEqual(['Zoom in', 'Zoom out', 'Fit area', 'Game camera', 'Hand', 'Show grid']);
+  const canvasBox = (await page.locator('.ed-canvas').boundingBox())!;
+  const controlBox = (await controls.boundingBox())!;
+  expect(controlBox.y - canvasBox.y).toBeCloseTo(12, 1);
+  expect(canvasBox.x + canvasBox.width - controlBox.x - controlBox.width).toBeCloseTo(12, 1);
+  const buttons = controls.getByRole('button');
+  const buttonBoxes = await Promise.all((await buttons.all()).map(async button => (await button.boundingBox())!));
+  for (const [i, box] of buttonBoxes.entries()) {
+    expect(box.x).toBeCloseTo(controlBox.x, 1);
+    expect(box.width).toBeCloseTo(36, 1);
+    expect(box.height).toBeCloseTo(36, 1);
+    if (i > 0) expect(box.y).toBeGreaterThan(buttonBoxes[i - 1]!.y);
+  }
+  const cards = controls.locator('.canvas-card');
+  await expect(cards).toHaveCount(5);
+  const cardBoxes = await Promise.all((await cards.all()).map(async card => (await card.boundingBox())!));
+  for (const [i, box] of cardBoxes.entries()) {
+    expect(box.x).toBeCloseTo(controlBox.x, 1);
+    expect(box.width).toBeCloseTo(36, 1);
+    expect(box.height).toBeCloseTo(i === 0 ? 72 : 36, 1);
+    if (i > 0) expect(box.y - cardBoxes[i - 1]!.y - cardBoxes[i - 1]!.height).toBeCloseTo(8, 1);
+    await expect(cards.nth(i).getByRole('button')).toHaveCount(i === 0 ? 2 : 1);
+  }
+  expect(buttonBoxes[1]!.y - buttonBoxes[0]!.y).toBeCloseTo(36, 1);
+  expect(controlBox.height).toBeCloseTo(248, 1);
   const zin = controls.getByRole('button', { name: 'Zoom in', exact: true }), zout = controls.getByRole('button', { name: 'Zoom out', exact: true });
   await expect(page.getByRole('button', { name: 'Zoom in', exact: true })).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Game camera', exact: true })).toHaveCount(1);
