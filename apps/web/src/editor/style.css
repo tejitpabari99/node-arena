@@ -174,6 +174,17 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-file section { min-width: 0; } .ed-file select, .ed-file input { max-width: 100%; box-sizing: border-box; }
 .ed-file label { display: grid; gap: var(--ed-s-2); margin: var(--ed-s-4) 0; min-width: 0; } .ed-file select { width: 100%; }
 
+/* Create/Open bodies are shared by the dismissible dialogs and start card. */
+.ed-level-dialog { width: min(460px, 92vw); max-height: 92vh; overflow-y: auto; }
+.ed-level-form label { display: grid; gap: var(--ed-s-2); margin: var(--ed-s-3) 0; min-width: 0; }
+.ed-level-form input, .ed-level-form select { width: 100%; max-width: 100%; box-sizing: border-box; }
+.ed-level-form .ed-group-box:disabled { opacity: .5; }
+.ed-start-screen { position: fixed; inset: 0; overflow-y: auto; padding: var(--ed-s-5); box-sizing: border-box; }
+.ed-start-card { position: relative; box-sizing: border-box; width: min(460px, 100%); margin: var(--ed-s-5) auto; padding: var(--ed-s-5); border: 1px solid var(--ed-border); border-radius: var(--ed-r-lg); background: var(--ed-g-0); box-shadow: var(--ed-sh-lg); }
+.ed-start-card h2 { font-size: var(--ed-fs-md); font-weight: 600; }
+.ed-start-back { float: right; color: var(--ed-text); }
+.ed-start-open-title { border-top: 1px solid var(--ed-border); padding-top: var(--ed-s-4); margin-top: var(--ed-s-5); }
+
 /* Left panel: shared section, field and button primitives own appearance. */
 .ed-section-body { padding-top: var(--ed-s-2); }
 .ed-left fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
