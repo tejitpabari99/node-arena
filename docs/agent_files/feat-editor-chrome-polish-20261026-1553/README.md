@@ -15,7 +15,7 @@ Brief: `brainstorm.md`. Screenshots: `before/` (current editor, 9 shots), `ref/`
 | 02 | versioning-save | `editorVersion` 0.0.N, 30s autosave, Finalize saves first, server Duplicate op | none | done |
 | 03 | topbar-menus | Back + File menu, dialogs, Share panel, Check flow, save status | 01, 02, 05 | draft |
 | 04 | left-panel | Read-only level id, param labels/tooltips, read-only troop | 01 | draft |
-| 05 | map-controls | Vertical map-style canvas controls | 01 | in-progress |
+| 05 | map-controls | Vertical map-style canvas controls | 01 | done |
 
 ## Dependency graph
 ```mermaid
@@ -76,4 +76,6 @@ SP02's six tasks are complete; Bug Hunter, Security and Architect PASS.
 - [Layout regression, captures and final verification](05-map-controls/code-2026-10-26-1755.md)
 - [Eleven screenshots](05-map-controls/screens/), [browser harness](05-map-controls/verify-controls.mjs), [machine results](05-map-controls/verification-results.json)
 
-SP05's four tasks are complete. Bug Hunter and Security PASS; Architect pending. Share/Check gutter integration remains a cross-cutting SP03 follow-up, as explicitly permitted by SP05 Task 4.
+SP05's four tasks are complete; Bug Hunter, Security and Architect PASS. Share/Check gutter integration remains a cross-cutting SP03 follow-up, as explicitly permitted by SP05 Task 4.
+
+- [Final SP05 review — PASS](05-map-controls/review-2026-10-26-1759.md)
