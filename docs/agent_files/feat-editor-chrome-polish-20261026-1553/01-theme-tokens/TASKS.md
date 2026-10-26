@@ -9,10 +9,10 @@ Source of truth: [PRD.md](PRD.md). Rewrites `apps/web/src/editor/style.css` into
 | # | Task | Depends on | Status |
 |---|---|---|---|
 | 1 | Tokens, base reset, game-sheet leak override | - | done |
-| 2 | Button, field and focus primitives | 1 | in-progress |
-| 3 | Menu, popover and row primitives | 1 | in-progress |
-| 4 | Modal, toast, panel/section and status primitives | 1 | in-progress |
-| 5 | Remove Coiny and delete dead legacy CSS | 2, 3, 4 | todo |
+| 2 | Button, field and focus primitives | 1 | done |
+| 3 | Menu, popover and row primitives | 1 | done |
+| 4 | Modal, toast, panel/section and status primitives | 1 | done |
+| 5 | Remove Coiny and delete dead legacy CSS | 2, 3, 4 | in-progress |
 | 6 | Verification: contrast, tests, screenshots | 5 | todo |
 
 ## Task 1 — Tokens, base reset, game-sheet leak
