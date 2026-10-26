@@ -23,11 +23,48 @@ async function regularTarget(path: string): Promise<void> {
 /** Shared save seam for future jobs: synchronous content checks only, never proxy matches or shell commands. */
 export async function saveEditorLevel(contentDir: string, id: string, input: unknown, copy = false): Promise<EditorSaveResult> {
   if (!/^na-[a-z0-9-]{1,40}$/.test(id)) throw new EditorSaveError(400, 'Invalid writable level id');
+  return queued(contentDir, root => save(root, id, input, copy));
+}
+
+async function queued<T>(contentDir: string, operation: (root: string) => Promise<T>): Promise<T> {
   const root = await realpath(contentDir);
   const previous = pending.get(root) ?? Promise.resolve();
-  const current = previous.catch(() => undefined).then(() => save(root, id, input, copy));
+  const current = previous.catch(() => undefined).then(() => operation(root));
   pending.set(root, current);
   try { return await current; } finally { if (pending.get(root) === current) pending.delete(root); }
+}
+
+/** Allocate and save under the same root queue, without re-entering the queued save API. */
+export async function duplicateEditorLevel(contentDir: string, sourceId: string): Promise<Pick<EditorSaveResult, 'level' | 'warnings'>> {
+  if (!/^(?:na-[a-z0-9-]{1,40}|levelview-[a-z0-9-]+)$/.test(sourceId)) throw new EditorSaveError(400, 'Invalid source level id');
+  return queued(contentDir, async root => {
+    const sourceTarget = resolve(root, `data/levels/${sourceId}.json`);
+    if (await realpath(dirname(sourceTarget)) !== dirname(sourceTarget)) throw new EditorSaveError(403, 'Level directories must not be symlinks');
+    const info = await lstat(sourceTarget);
+    if (!info.isFile()) throw new EditorSaveError(403, 'Source must be a regular file');
+    if (info.size > 1024 * 1024) throw new EditorSaveError(413, 'Level exceeds 1 MiB');
+    const source = JSON.parse(await readFile(sourceTarget, 'utf8')) as NextLevel;
+    if (!source || source.id !== sourceId || typeof source.name !== 'string') throw new EditorSaveError(422, 'Invalid level identity');
+    const files = await loadFiles(root);
+    const reserved = new Set<string>();
+    for (const [file, text] of Object.entries(files)) {
+      if (file.startsWith('data/campaigns/') && file.endsWith('.json')) {
+        const campaign = (typeof text === 'string' ? JSON.parse(text) : text) as NextCampaign;
+        for (const entry of campaign.entries) reserved.add(entry.level);
+      }
+    }
+    const base = sourceId.startsWith('na-') ? sourceId.slice(3) : sourceId;
+    for (let index = 1; ; index++) {
+      const suffix = index === 1 ? '-copy' : `-copy-${index}`;
+      const stem = base.slice(0, 40 - suffix.length).replace(/-+$/, '');
+      const id = `na-${stem}${suffix}`;
+      if (reserved.has(id)) continue;
+      try { await lstat(resolve(root, `data/levels/${id}.json`)); continue; }
+      catch (error) { if (!missing(error)) throw error; }
+      const { level, warnings } = await save(root, id, source, true);
+      return { level, warnings };
+    }
+  });
 }
 
 async function save(root: string, id: string, input: unknown, copy: boolean): Promise<EditorSaveResult> {

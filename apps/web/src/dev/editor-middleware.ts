@@ -4,7 +4,7 @@ import { isAbsolute, relative, resolve } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Connect, Plugin } from 'vite';
 import { ContentLoadError } from '@node-arena/content';
-import { EditorSaveError, saveEditorLevel } from '../../../../tools/src/editor-ops.js';
+import { duplicateEditorLevel, EditorSaveError, saveEditorLevel } from '../../../../tools/src/editor-ops.js';
 import { prepareEditorProxy, runEditorProxy, type EditorProxyRunner, type EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
 
 import { editorFinalizeStatus, finalizeEditorLevel, type EditorFinalizeRunner } from '../../../../tools/src/editor-finalize.js';
@@ -156,6 +156,17 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
             catch { if (!controller.signal.aborted) emit({ type: 'error', error: 'Proxy check failed' }); }
             res.end();
           } finally { res.off('close', cancel); release(); }
+          return;
+        }
+        if (path === '/__editor/duplicate') {
+          let value: { id?: unknown };
+          try { value = JSON.parse(body) as typeof value; }
+          catch { throw new EditorHttpError(400, 'Invalid JSON'); }
+          if (!value || typeof value.id !== 'string') throw new EditorHttpError(400, 'Duplicate requires an id');
+          await editorLevelPath(levelsDir, value.id);
+          const release = (options.jobs ?? editorJobs).acquireSave();
+          try { json(res, 200, await duplicateEditorLevel(resolve(levelsDir, '../..'), value.id)); }
+          finally { release(); }
           return;
         }
         if (path === '/__editor/save') {
