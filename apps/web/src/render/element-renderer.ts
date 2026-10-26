@@ -1,5 +1,5 @@
 import { DynamicDrawUsage, Group, InstancedMesh, Matrix4, Quaternion, Vector3, type BufferGeometry, type Mesh, type Object3D } from 'three';
-import type { ManifestV2 } from '@node-arena/content';
+import type { CompiledFootprint, ManifestV2 } from '@node-arena/content';
 import { parseModelRef } from '../manifest/model-ref.js';
 import { type Renderer, type RendererContext } from './registry.js';
 import { MILLI_TO_WORLD } from './scale.js';
@@ -7,7 +7,7 @@ import { MILLI_TO_WORLD } from './scale.js';
 export type ObstacleTheme = ManifestV2['themes'][string]['obstacle'];
 export type ObstacleVariant = 'small' | 'big';
 /** The subset of `CompiledLevel['elements'][number]` the renderer reads. */
-export interface ElementInstance { id: string; x: number; z: number; yawMilliDeg: number; visual: string; variant?: string }
+export interface ElementInstance { id: string; x: number; z: number; yawMilliDeg: number; visual: string; variant?: string; footprint?: CompiledFootprint }
 export interface ChildExtra { index: number; variant: ObstacleVariant; scale: readonly [number, number, number] }
 
 /** Child index `k` from the level element id `o<cluster>-<k>`. */
@@ -27,7 +27,12 @@ export function placeObstacles(elements: readonly ElementInstance[], visualId: s
     if (e.visual !== visualId) continue;
     const k = childIndex(e.id), child = k === undefined ? undefined : children.find(c => c.index === k);
     const variant: ObstacleVariant = (e.variant === 'small' || e.variant === 'big' ? e.variant : child?.variant) ?? 'big';
-    out.push({ variant, x: e.x * worldScale, z: e.z * worldScale, yaw: (e.yawMilliDeg / 1000) * (Math.PI / 180), scale: child?.scale ?? [1, 1, 1] });
+    const yaw = (e.yawMilliDeg / 1000) * (Math.PI / 180);
+    const tiles = Math.max(1, Math.round((e.footprint?.shape === 'box' ? e.footprint.w ?? 713 : 713) / 713));
+    for (let tile = 0; tile < tiles; tile++) {
+      const offset = (tile - (tiles - 1) / 2) * 713;
+      out.push({ variant, x: (e.x + offset * Math.cos(yaw)) * worldScale, z: (e.z - offset * Math.sin(yaw)) * worldScale, yaw, scale: child?.scale ?? [1, 1, 1] });
+    }
   }
   return out;
 }
