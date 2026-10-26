@@ -8,11 +8,11 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/02-ve
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Schema field and key order | - | in-progress |
-| 2 | Server save: bump and no-op | 1 | todo |
+| 1 | Schema field and key order | - | done |
+| 2 | Server save: bump and no-op | 1 | in-progress |
 | 3 | Duplicate op and client API | 2 | todo |
 | 4 | Client copy/blank and savedRef | 3 | todo |
-| 5 | Autosave 30s | - | todo |
+| 5 | Autosave 30s | - | in-progress |
 | 6 | Finalize saves first | 4 | todo |
 
 ## Task 1 — Schema field and key order
