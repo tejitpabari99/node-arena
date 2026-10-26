@@ -3,7 +3,7 @@ import { contentFiles } from '../app/boot.js';
 import { useEffect, useState } from 'preact/hooks';
 import type { LevelDoc } from './document.js';
 import { useEditor } from './EditorContext.js';
-import { itemLabels, playerLabel } from './labels.js';
+import { itemLabels, paramLabel, playerLabel } from './labels.js';
 import { snapYaw } from './model.js';
 import type { Selection } from './picking.js';
 
@@ -31,7 +31,7 @@ function OwnerGroup({ item }: { item: Building }) {
       {draft.owner && !doc.players.some(p => p.id === draft.owner) && <option value={draft.owner}>Unknown owner: {draft.owner}</option>}
     </select></label>
     <label>Level<input type="number" required min="1" max={maxLevel} step="1" value={draft.level} onInput={event => setDraft({ ...draft, level: Number(event.currentTarget.value) })} /></label>
-    <label>Ignore for win<input type="checkbox" checked={draft.ignoreForWin} onChange={event => setDraft({ ...draft, ignoreForWin: event.currentTarget.checked })} /></label>
+    <label title="Decoy: no need to capture it to win; at least one building must stay required. (R-WIN-01/02, R-CPT-01)">Optional target (not needed to win)<input type="checkbox" checked={draft.ignoreForWin} onChange={event => setDraft({ ...draft, ignoreForWin: event.currentTarget.checked })} /></label>
     <button class="ed-btn-primary" aria-label="Apply owner and level">Apply</button>
   </fieldset></form>;
 }
@@ -44,6 +44,7 @@ function ParamsGroup({ item }: { item: Building }) {
   return <form aria-label="Parameters" onSubmit={event => { event.preventDefault(); edit({ type: 'building-properties', id: item.id, value: { params: Object.keys(params).length ? params : undefined } as never }); }}><fieldset disabled={locked}>
     <p class="ed-hint">Leave blank to use the archetype default.</p>
     {Object.entries(defaults).flatMap(([module, values]) => Object.entries(schema[module]?.properties ?? {}).map(([field, spec]) => {
+      const { label, tooltip } = paramLabel(module, field);
       const current = params[module]?.[field];
       const fallback = (values as Record<string, unknown>)[field];
       function change(value: string) {
@@ -53,8 +54,8 @@ function ParamsGroup({ item }: { item: Building }) {
         if (!Object.keys(next[module]!).length) delete next[module];
         setParams(next);
       }
-      return <label key={`${module}.${field}`}>{module} {field}{spec.type === 'boolean'
-        ? <select value={current === undefined ? '' : String(current)} onChange={event => change(event.currentTarget.value)}><option value="">Default ({String(fallback)})</option><option value="true">Yes</option><option value="false">No</option></select>
+      return <label key={`${module}.${field}`} title={tooltip}>{label}{spec.type === 'boolean'
+        ? <select value={current === undefined ? '' : String(current)} onChange={event => change(event.currentTarget.value)}><option value="">Default ({fallback ? 'Yes' : 'No'})</option><option value="true">Yes</option><option value="false">No</option></select>
         : <input type={spec.type === 'string' ? 'text' : 'number'} min={spec.exclusiveMinimum !== undefined ? spec.exclusiveMinimum + .001 : spec.minimum} max={spec.maximum} step={spec.type === 'integer' ? '1' : '.001'} placeholder={String(fallback ?? '')} value={current === undefined ? '' : String(current)} onInput={event => change(event.currentTarget.value)} />}</label>;
     }))}
     <button class="ed-btn-primary" aria-label="Apply parameters">Apply</button>

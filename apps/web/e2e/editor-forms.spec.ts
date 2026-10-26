@@ -39,9 +39,9 @@ test('property forms commit once, update the preview, and deletion banners undo 
   await page.locator('[data-section=selection] summary', { hasText: 'Parameters' }).click();
   await page.getByLabel('Owner', { exact: true }).selectOption('p2');
   await page.getByLabel('Level', { exact: true }).fill('5');
-  await page.getByLabel('Ignore for win').check();
+  await page.getByLabel('Optional target (not needed to win)').check();
   await page.getByRole('button', { name: 'Apply owner and level' }).click();
-  await page.getByLabel('spawns spawnSpeed').fill('0.8');
+  await page.getByLabel('Spawn speed').fill('0.8');
   await page.getByRole('button', { name: 'Apply parameters' }).click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await page.getByLabel('Level', { exact: true }).press('Delete');
