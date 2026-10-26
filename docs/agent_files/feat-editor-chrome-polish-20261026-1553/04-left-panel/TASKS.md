@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 summary: Five tasks - param label table, label rendering and selectors, read-only troop, level id row, SP01 restyle with 1440x900 screenshots.
 date: 2026-10-26
 ---
@@ -12,7 +12,7 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/04-le
 | 2 | Render labels, tooltips, selectors | 1 | done |
 | 3 | Read-only troop row | 2 | done |
 | 4 | Level id row | - | done |
-| 5 | SP01 restyle and screenshots | 2, 3, 4, SP01 | in-progress |
+| 5 | SP01 restyle and screenshots | 2, 3, 4, SP01 | done |
 
 ## Task 1 — Param label table and helper
 What it is / what it means: One source of human labels and tooltips, kept out of defs/content so identities do not move (R2, D1, D7).

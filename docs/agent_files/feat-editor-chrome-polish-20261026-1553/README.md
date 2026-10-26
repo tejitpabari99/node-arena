@@ -79,3 +79,10 @@ SP02's six tasks are complete; Bug Hunter, Security and Architect PASS.
 SP05's four tasks are complete; Bug Hunter, Security and Architect PASS. Share/Check gutter integration remains a cross-cutting SP03 follow-up, as explicitly permitted by SP05 Task 4.
 
 - [Final SP05 review — PASS](05-map-controls/review-2026-10-26-1759.md)
+
+## SP04 implementation artifacts
+- [Implementation run (all five tasks)](04-left-panel/code-2026-10-26-1829.md)
+- [Styling, captures and full verification](04-left-panel/code-2026-10-26-1818.md)
+- [Three screenshots](04-left-panel/screens/), [browser harness](04-left-panel/verify-left-panel.mjs), [machine results](04-left-panel/verification-results.json)
+
+SP04 implementation is complete; final review closure is recorded separately.
