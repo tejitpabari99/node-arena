@@ -1,6 +1,6 @@
 ---
-status: approved
-summary: Editor chrome polish — File/Share menus, versioning, map controls, theme
+status: done
+summary: All five editor chrome sub-projects complete — verified, independently reviewed PASS
 date: 2026-10-26
 ---
 
@@ -13,7 +13,7 @@ Brief: `brainstorm.md`. Screenshots: `before/` (current editor, 9 shots), `ref/`
 |---|---|---|---|---|
 | 01 | theme-tokens | `--ed-*` tokens, Inter/system stack, base button/input/menu/popover/modal/toast styles | none | done |
 | 02 | versioning-save | `editorVersion` 0.0.N, 30s autosave, Finalize saves first, server Duplicate op | none | done |
-| 03 | topbar-menus | Back + File menu, dialogs, Share panel, Check flow, save status | 01, 02, 05 | in-progress |
+| 03 | topbar-menus | Back + File menu, dialogs, Share panel, Check flow, save status | 01, 02, 05 | done |
 | 04 | left-panel | Read-only level id, param labels/tooltips, read-only troop | 01 | done |
 | 05 | map-controls | Vertical map-style canvas controls | 01 | done |
 
@@ -99,9 +99,14 @@ Tasks 1–7 built props-driven component foundations; Task 8 integrated new chro
 - [Implementation run (all nine tasks and stale-Open fix)](03-topbar-menus/code-2026-10-26-1903.md)
 - [Early Bug Hunter finding and resolution history](03-topbar-menus/review-2026-10-26-1903.md)
 
-SP03 remains in progress pending final review closure; all nine implementation tasks are complete. Early stale same-id Open was fixed. Final Bug Hunter and Security follow-ups PASS; Architect follow-up pending; no final PASS claimed.
+SP03 all nine tasks complete; final Bug Hunter, Security and Architect reviews PASS. Early stale same-id Open was fixed and regression verified.
 
 - [Task 9 full CI, live geometry and visual verification](03-topbar-menus/code-2026-10-26-1917.md)
 - [Eight final screenshots](03-topbar-menus/screens/), [capture harness](03-topbar-menus/verify-chrome.mjs), [machine results](03-topbar-menus/verification-results.json)
 
 Final verification: 67 dev editor passes/two expected preview skips, both preview cases passed separately; all live CI gates pass, 983 unit/fixture passes, 19 extract-only cases skipped and two extract gates skipped (`TW_EXTRACT` absent). Original-extract checks remain unverified; `PARKED` empty.
+
+- [Final SP03 review — PASS](03-topbar-menus/review-2026-10-26-1919.md)
+- [Final branch run — all five sub-projects](code-2026-10-26-1919.md)
+
+All five sub-projects complete in order 01 → 02 → 05 → 04 → 03; all final independent reviews PASS.
