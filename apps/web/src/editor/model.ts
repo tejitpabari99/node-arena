@@ -10,6 +10,7 @@ export type DocOp =
   | { type: 'move-selection'; targets: Selection[]; delta: Point }
   | { type: 'paste'; clipboard: Clipboard; offset: Point }
   | { type: 'level-properties'; value: LevelProperties }
+  | { type: 'add-ai'; player: LevelDoc['players'][number]; ownBuilding: string | null }
   | { type: 'building-properties'; id: string; value: Partial<Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined }> }
   | { type: 'obstacle-properties'; id: string; value: Partial<{ variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined }> }
   | { type: 'place'; item: LibraryItem; pos: Point }
@@ -79,6 +80,10 @@ function applyOp(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
       buildings: doc.buildings.map(item => selected('building', item.id) ? { ...item, pos: position(item.pos) } : item),
       elements: doc.elements.map(item => selected('obstacle', item.id) ? { ...item, pos: position(item.pos) } : item),
     };
+  }
+  if (op.type === 'add-ai') {
+    if (doc.players.some(player => player.id === op.player.id)) return doc;
+    return { ...doc, players: [...doc.players, op.player], buildings: doc.buildings.map(item => item.id === op.ownBuilding && item.owner === null ? { ...item, owner: op.player.id } : item) };
   }
   if (op.type === 'level-properties') {
     const ids = new Set(op.value.players.map(player => player.id));

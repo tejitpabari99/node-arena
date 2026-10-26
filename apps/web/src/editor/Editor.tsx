@@ -23,7 +23,7 @@ import type { Selection } from './picking.js';
 import type { EditorFinalizeEvent } from '../../../../tools/src/editor-finalize.js';
 import type { EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
 import { finalizeLevel, readFinalizeStatus, checkSolvable, EditorApiError, duplicateLevel, listLevels, saveLevel } from './api.js';
-import { buildableArea, copySelection, createHistory, historyReducer, scriptRemovalMessages, type Clipboard, type DocHistory, type DocOp, type HistoryAction } from './model.js';
+import { buildableArea, copySelection, createHistory, historyReducer, scriptRemovalMessages, type Clipboard, type DocHistory, type HistoryAction } from './model.js';
 import type { LevelDoc } from './document.js';
 import { useInitialLoad } from './useInitialLoad.js';
 import { confirmAction } from './confirm-flow.js';
@@ -252,7 +252,11 @@ export function Editor() {
   const contextSeq = openSeq.current;
   const ctx: EditorContext | null = doc && history ? {
     doc, savedDoc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, palettes: choices.palettes, viewportStatus, losStatus,
-    edit: (op: DocOp, merge?: string) => { if (openSeq.current === contextSeq) dispatch({ type: 'edit', op, area, ...(merge ? { merge } : {}) }); },
+    edit: (op, merge) => {
+      if (busy || openSeq.current !== contextSeq) return;
+      clearSave();
+      setHistory(state => state && openSeq.current === contextSeq ? historyReducer(state, { type: 'edit', op: typeof op === 'function' ? op(state.present) : op, area, ...(merge ? { merge } : {}) }) : state);
+    },
     endEditBurst: () => dispatch({ type: 'end-edit' }),
     deleteSelection() { if (selection.length) dispatch({ type: 'edit', op: { type: 'delete-many', targets: selection }, area }); },
     select: next => { viewport.current?.select(next); },

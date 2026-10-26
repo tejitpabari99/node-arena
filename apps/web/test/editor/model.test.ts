@@ -166,3 +166,15 @@ it('ends merging at blur boundaries, other fields, discrete edits, and undo', ()
   expect(state.future).toEqual([]);
   expect(model.historyReducer(state, { type: 'undo' }).present.name).toBe('Four');
 });
+
+it('adds an AI and its chosen neutral starting house as one reversible edit', () => {
+  const doc = blankDocument('na-add-ai', 'green', 'medium');
+  doc.buildings = [{ id: 'house', archetype: 'house-wt1', pos: { x: 0, z: 0 }, owner: null, level: 1, ignoreForWin: false }];
+  const player = { id: 'p3', kind: 'ai' as const, colorKey: 'green', bot: { kind: 'tw' as const, actionDelayMs: 4000, behavior: 'full' as const } };
+  const state = model.historyReducer(model.createHistory(doc), { type: 'edit', op: { type: 'add-ai', player, ownBuilding: 'house' } });
+  expect(state.present.players.map(p => p.id)).toEqual(['p1', 'p2', 'p3']);
+  expect(state.present.buildings[0]!.owner).toBe('p3'); expect(state.past).toHaveLength(1);
+  expect(model.historyReducer(state, { type: 'undo' }).present).toEqual(doc);
+  const noHouse = model.historyReducer(model.createHistory(doc), { type: 'edit', op: { type: 'add-ai', player, ownBuilding: null } });
+  expect(noHouse.present.players).toHaveLength(3); expect(noHouse.present.buildings[0]!.owner).toBeNull();
+});

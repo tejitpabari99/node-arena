@@ -14,7 +14,7 @@ export interface EditorContext {
   savedDoc: LevelDoc | null;
   history: DocHistory;
   dispatch(a: HistoryAction): void;
-  edit(op: DocOp, merge?: string): void;
+  edit(op: DocOp | ((doc: LevelDoc) => DocOp), merge?: string): void;
   endEditBurst(): void;
   deleteSelection(): void;
   area: EditorArea;
