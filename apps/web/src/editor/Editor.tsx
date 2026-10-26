@@ -26,6 +26,7 @@ import { finalizeLevel, readFinalizeStatus, checkSolvable, EditorApiError, dupli
 import { buildableArea, copySelection, createHistory, historyReducer, scriptRemovalMessages, type Clipboard, type DocHistory, type DocOp, type HistoryAction } from './model.js';
 import type { LevelDoc } from './document.js';
 import { useInitialLoad } from './useInitialLoad.js';
+import { confirmAction } from './confirm-flow.js';
 
 type PendingAction = { action(savedResult?: LevelDoc): void | Promise<void>; kind: 'replace' | 'back' | 'duplicate' };
 const closedUi = { menu: false, share: false, flyout: false, dialog: null as 'create' | 'open' | null, confirm: null as PendingAction | null };
@@ -232,16 +233,17 @@ export function Editor() {
     setConfirmBusy(true);
     try {
       let savedResult: LevelDoc | undefined;
-      if (save) {
+      const ran = await confirmAction(save ? 'save' : 'discard', async () => {
         const seq = openSeq.current;
         saveOutcome.current = null;
         await doSave('manual');
         const current = historyRef.current?.present, saved = savedRef.current;
         const outcome = saveOutcome.current as { seq: number; ok: boolean } | null;
-        if (seq !== openSeq.current || !outcome?.ok || outcome.seq !== seq || !current || !saved || isDirty(current, saved)) return;
+        if (seq !== openSeq.current || !outcome?.ok || outcome.seq !== seq || !current || !saved || isDirty(current, saved)) return false;
         savedResult = saved;
-      }
-      await pending.action(savedResult);
+        return true;
+      }, () => pending.action(savedResult));
+      if (!ran) return;
       setUi(state => ({ ...state, confirm: null, dialog: null }));
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
     finally { setConfirmBusy(false); }
