@@ -11,7 +11,7 @@ Brief: `brainstorm.md`. Screenshots: `before/` (current editor, 9 shots), `ref/`
 ## Sub-projects
 | # | Name | Scope | Depends | Status |
 |---|---|---|---|---|
-| 01 | theme-tokens | `--ed-*` tokens, Inter/system stack, base button/input/menu/popover/modal/toast styles | none | in-progress |
+| 01 | theme-tokens | `--ed-*` tokens, Inter/system stack, base button/input/menu/popover/modal/toast styles | none | done |
 | 02 | versioning-save | `editorVersion` 0.0.N, 30s autosave, Finalize saves first, server Duplicate op | none | draft |
 | 03 | topbar-menus | Back + File menu, dialogs, Share panel, Check flow, save status | 01, 02, 05 | draft |
 | 04 | left-panel | Read-only level id, param labels/tooltips, read-only troop | 01 | draft |
@@ -59,4 +59,6 @@ Base origin/main (#24 merged). Back + File top-left (Create/Duplicate/Open/Undo/
 - [Verification results](01-theme-tokens/verification-results.json), [browser harness](01-theme-tokens/verify-theme.mjs)
 - [SP01 screenshots and protected baselines](01-theme-tokens/screens/), [nine after states and additional captures](after/)
 
-SP01's six planned tasks are complete. Subproject remains in-progress until the review fix is verified and re-reviewed.
+SP01's six planned tasks and stacking review fix are complete; all three final reviewers PASS.
+
+- [Final SP01 review — PASS](01-theme-tokens/review-2026-10-26-1718.md)
