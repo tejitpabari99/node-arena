@@ -38,12 +38,13 @@ Base origin/main (#24 merged). Back + File top-left (Create/Duplicate/Open/Undo/
 - Popovers, Share panel, Check flyout: `z-index: var(--ed-z-pop)` (5). Toasts 15, modals 20.
 - Right-anchored panels keep `right >= var(--ed-controls-gutter)` so the column stays visible.
 
-## Remaining cross-cutting risks / open questions
-- Open: SP01 `.canvas-controls` block in `style.css` shared with SP05; SP01 only swaps tokens, SP05 rewrites (order 01 -> 05).
-- Open: SP05 assumes SP01 tokens (`--ed-sh-md`, `--ed-r-lg`, `--ed-accent-soft`, `--ed-g-*`) exist; SP05 task must follow SP01.
-- Verify (SP02 task): content gates (`check:content`, `validate:content --base HEAD`, `tools/test/gates.test.ts`) vs level file change with unchanged simHash; exempt editorVersion if flagged.
-- Verify (SP04): tooltip wording vs R-TWR-01 / GAME_RULES.
-- Risk: one shared CSS file across 5 sub-projects; large e2e churn (shared helper `apps/web/e2e/editor-helpers.ts`).
+## Cross-cutting verification and deferred work
+- Resolved: SP01 tokens landed before SP05 control CSS rewrite; required shared-file order completed.
+- Verified: SP05 uses the completed SP01 token contract (`--ed-sh-md`, `--ed-r-lg`, `--ed-accent-soft`, `--ed-g-*`).
+- Verified: SP02 editorVersion metadata and unchanged simHash pass content/version guards; final live CI gates pass.
+- Verified: SP04 tooltips match R-TWR-01/GAME_RULES; factual timing descriptions corrected without mechanics changes.
+- Verified: shared CSS sequence and atomic SP03 helper/selector migration completed; fresh editor dev/preview and full live CI pass.
+- Verified: SP03 Task 9 live geometry, stacking and screenshots close SP05 Share/Check gutter integration.
 - Deferred: self-hosted Inter, dark mode, arrow-key nav in Share panel, map-control extras (minimap, tooltips with shortcuts).
 
 ## Folder contents
@@ -76,7 +77,7 @@ SP02's six tasks are complete; Bug Hunter, Security and Architect PASS.
 - [Layout regression, captures and final verification](05-map-controls/code-2026-10-26-1755.md)
 - [Eleven screenshots](05-map-controls/screens/), [browser harness](05-map-controls/verify-controls.mjs), [machine results](05-map-controls/verification-results.json)
 
-SP05's four tasks are complete; Bug Hunter, Security and Architect PASS. Share/Check gutter integration remains a cross-cutting SP03 follow-up, as explicitly permitted by SP05 Task 4.
+SP05's four tasks are complete; Bug Hunter, Security and Architect PASS. SP03 Task 9 now closes the cross-cutting Share/Check gutter integration through actual geometry assertions and captures.
 
 - [Final SP05 review — PASS](05-map-controls/review-2026-10-26-1759.md)
 
@@ -92,10 +93,15 @@ SP04's five tasks are complete; Bug Hunter, Security and Architect PASS.
 ## SP03 implementation staging
 - [Staging and initial task dispatch](03-topbar-menus/code-2026-10-26-1830.md)
 
-Tasks 1 and 2 begin independently as props-driven component foundations. Legacy surfaces remain until Task 8 integrates the new chrome and migrates selectors atomically.
+Tasks 1–7 built props-driven component foundations; Task 8 integrated new chrome, removed legacy surfaces and migrated selectors atomically.
 
 ## SP03 implementation and review history
-- [Interim implementation run (Tasks 1–8 and stale-Open fix)](03-topbar-menus/code-2026-10-26-1903.md)
+- [Implementation run (all nine tasks and stale-Open fix)](03-topbar-menus/code-2026-10-26-1903.md)
 - [Early Bug Hunter finding and resolution history](03-topbar-menus/review-2026-10-26-1903.md)
 
-SP03 remains in progress: Tasks 1–8 complete; Task 9 CI/captures and final three-persona review pending. The early stale same-id Open finding was fixed; no final PASS is claimed yet.
+SP03 remains in progress pending final review closure; all nine implementation tasks are complete. Early stale same-id Open was fixed. Final Bug Hunter and Security follow-ups PASS; Architect follow-up pending; no final PASS claimed.
+
+- [Task 9 full CI, live geometry and visual verification](03-topbar-menus/code-2026-10-26-1917.md)
+- [Eight final screenshots](03-topbar-menus/screens/), [capture harness](03-topbar-menus/verify-chrome.mjs), [machine results](03-topbar-menus/verification-results.json)
+
+Final verification: 67 dev editor passes/two expected preview skips, both preview cases passed separately; all live CI gates pass, 983 unit/fixture passes, 19 extract-only cases skipped and two extract gates skipped (`TW_EXTRACT` absent). Original-extract checks remain unverified; `PARKED` empty.

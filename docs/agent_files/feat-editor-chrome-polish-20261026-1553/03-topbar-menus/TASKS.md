@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 summary: Nine tasks - dismiss/menu primitives, confirm guard, Create/Open/start dialogs, save status, notices, Share panel, Check flyout, bar rewrite, visual verification.
 date: 2026-10-26
 ---
@@ -16,7 +16,7 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/03-to
 | 6 | Share panel (Save, Finalize, Check, version) | 1, 4, SP02 T4, SP02 T6 | done |
 | 7 | Check flyout and toast Details | 5, 6, SP05 T2 | done |
 | 8 | Top bar rewrite and File menu | 1, 2, 3, 6, 7 | done |
-| 9 | Verification and screenshots | 8, SP01 T6, SP04 T5 | in-progress |
+| 9 | Verification and screenshots | 8, SP01 T6, SP04 T5 | done |
 
 ## Execution staging
 Early tasks build and verify props-driven foundations with real Vitest and Chromium fixtures. Keep legacy `FileModal`/`JobPopovers` and existing live wiring until Task 8; Task 8 integrates all new components, removes both legacy surfaces and migrates all affected selectors atomically. This staging overrides earlier per-task wording assigning live Editor state replacement, legacy deletion or selector migration before Task 8; final accepted behavior is unchanged. Duplicate-when-dirty is Save & duplicate / Cancel only.
