@@ -1,5 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { openFile, save, share } from './editor-helpers.js';
+
+async function expectAboveCanvasAndOutsideControls(page: Page, surface: Locator) {
+  const box = (await surface.boundingBox())!, controls = (await page.getByTestId('canvas-controls').boundingBox())!;
+  expect(box.x + box.width).toBeLessThanOrEqual(1440 - 56);
+  expect(box.x + box.width).toBeLessThan(controls.x);
+  expect(await surface.evaluate(element => {
+    const box = element.getBoundingClientRect(), canvas = document.querySelector('.ed-canvas')!.getBoundingClientRect();
+    const x = box.left + box.width / 2, y = box.top + box.height / 2;
+    return x >= canvas.left && x < canvas.right && y >= canvas.top && y < canvas.bottom && element.contains(document.elementFromPoint(x, y));
+  })).toBe(true);
+}
 
 test.beforeEach(async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev editor');
@@ -23,6 +34,7 @@ test('minimal bar, File keyboard navigation and exclusive Share preserve the con
   const panel = (await page.getByTestId('share-panel').boundingBox())!, controls = (await page.getByTestId('canvas-controls').boundingBox())!;
   expect(panel.x + panel.width).toBeLessThanOrEqual(1440 - 56);
   expect(panel.x + panel.width).toBeLessThan(controls.x);
+  await expectAboveCanvasAndOutsideControls(page, page.getByTestId('share-panel'));
   await page.keyboard.press('Escape'); await expect(page.getByTestId('share-button')).toBeFocused();
 });
 
@@ -79,6 +91,8 @@ test('Check completion toast reopens Share and left flyout; Escape closes topmos
   await expect(flyout).toContainText('Proxy wins: 2/3');
   const f = (await flyout.boundingBox())!, p = (await panel.boundingBox())!;
   expect(f.x + f.width).toBeLessThan(p.x);
+  await expectAboveCanvasAndOutsideControls(page, panel);
+  await expectAboveCanvasAndOutsideControls(page, flyout);
   await page.keyboard.press('Escape'); await expect(flyout).toHaveCount(0); await expect(panel).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Details' })).toBeFocused();
   await page.keyboard.press('Escape'); await expect(panel).toHaveCount(0);
