@@ -1,5 +1,54 @@
 import { test, expect } from '@playwright/test';
+import type { SeatBot } from '@node-arena/content';
 import type { LevelDoc } from '../src/editor/document.js';
+
+test('persistent editor banners stay below Play and return above the editor canvas', async ({ page }) => {
+  test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev editor');
+  await page.route('**/__editor/level/levelview-1', async route => {
+    const doc = await (await route.fetch()).json() as LevelDoc;
+    doc.buildings = [
+      { id: 'b0', archetype: 'house-wt1', pos: { x: -3, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
+      { id: 'b1', archetype: 'house-wt1', pos: { x: 3, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
+      { id: 'b2', archetype: 'house-wt1', pos: { x: 3, z: 3 }, owner: 'p2', level: 1, ignoreForWin: false },
+    ];
+    (doc.players[1]!.bot! as SeatBot).script = [{ op: 'line', own: 'b2', target: 'b0', afterMs: 0 }];
+    await route.fulfill({ json: doc });
+  });
+  await page.goto('/editor.html?template=levelview-1');
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+  await page.getByLabel('Selected item', { exact: true }).selectOption('building:b2');
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  const banner = page.getByTestId('script-removal-banner');
+  await expect(banner).toContainText('AI1 script removed');
+  const message = await banner.textContent();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.locator('.editor-play-arena canvas')).toBeVisible();
+  await expect(page.locator('.ed-shell')).toHaveAttribute('inert', '');
+  expect(await banner.evaluate(element => {
+    const shell = element.closest<HTMLElement>('.ed-shell')!;
+    const rect = element.getBoundingClientRect();
+    // Inert suppresses hit testing, not painting. Remove it synchronously so this
+    // checks the actual layer order, then restore before any input can run.
+    shell.inert = false;
+    try {
+      return !!document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('.editor-play-overlay');
+    } finally { shell.inert = true; }
+  })).toBe(true);
+  await page.getByRole('button', { name: 'Back to editor', exact: true }).click();
+  await expect(page.locator('.editor-play-overlay')).toHaveCount(0);
+  await expect(banner).toHaveText(message!);
+  expect(await banner.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+  })).toBe(true);
+  await page.getByTestId('save-chip').click();
+  const popover = page.getByTestId('save-popover');
+  await expect(popover).toBeVisible();
+  expect(await popover.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return element.contains(document.elementFromPoint(rect.right - 10, rect.bottom - 10));
+  })).toBe(true);
+});
 
 test('new → place → Save → real Play defeat → back → reload custom; main progress and mute stay untouched', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev editor');
