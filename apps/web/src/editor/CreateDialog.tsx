@@ -12,17 +12,20 @@ export interface CreateBodyProps {
   /** Build/read completes before this callback; the owner can then guard replacement. */
   onReplace(doc: LevelDoc, saved: boolean): void | Promise<void>;
   onBusyChange?(busy: boolean): void;
+  /** Level id from `?level=`; initial copy source once it is listed. */
+  copyHint?: string;
 }
 export interface CreateDialogProps extends CreateBodyProps { onClose(): void; suspended?: boolean }
 
 const EXISTS = 'Choose a new id; that level already exists.';
 
-export function CreateDialogBody({ levels, loading, disabled: unavailable = false, currentId, onReplace, onBusyChange }: CreateBodyProps) {
+export function CreateDialogBody({ levels, loading, disabled: unavailable = false, currentId, onReplace, onBusyChange, copyHint = '' }: CreateBodyProps) {
   let next = 1;
   while (levels.some(level => level.id === `na-custom-${next}`) || currentId === `na-custom-${next}`) next++;
   const [typedId, setTypedId] = useState<string | null>(null), id = typedId ?? `na-custom-${next}`;
   const [theme, setTheme] = useState('green'), [size, setSize] = useState<SizePreset>('medium');
-  const [copyId, setCopyId] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const [copyChoice, setCopyChoice] = useState<string | null>(null), copyId = copyChoice ?? (levels.some(level => level.id === copyHint) ? copyHint : ''), setCopyId = setCopyChoice;
+  const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const disabled = unavailable || loading || busy;
   async function create() {
     if (disabled) return;

@@ -20,7 +20,7 @@ export function useInitialLoad(onOpen: (doc: LevelDoc, saved: boolean) => void):
   const [copyHint, setCopyHint] = useState('');
   useEffect(() => {
     void listLevels().then(async items => {
-      setLevels(items); setCopyHint(items[0]?.id ?? '');
+      setLevels(items);
       const params = new URLSearchParams(window.location.search), template = params.get('template');
       if (template !== null) {
         // Create-custom flow: copy a template into a new unique custom level; never reuses the template id.

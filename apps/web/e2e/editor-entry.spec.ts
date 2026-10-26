@@ -45,3 +45,12 @@ test('test-hooks build does not expose development Edit links', async ({ page })
   await expect(page.getByRole('link', { name: /^Edit / })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Create custom level' })).toHaveCount(0);
 });
+
+test('?level= of an imported level preselects it as the Copy source on the start screen', async ({ page }) => {
+  test.skip(!development, 'Development entry points');
+  await page.goto('/editor.html?level=levelview-1');
+  await expect(page.getByLabel('Copy existing level', { exact: true })).toHaveValue('levelview-1');
+  await expect(page.getByTestId('file-menu-button')).toHaveCount(0);
+  await page.goto('/editor.html');
+  await expect(page.getByLabel('Copy existing level', { exact: true })).toHaveValue('');
+});
