@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { createServer, request, type Server } from 'node:http';
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { createEditorMiddleware, editorLevelPath } from '../../src/dev/editor-middleware.js';
 
 let server: Server;
@@ -83,4 +83,30 @@ it('rejects malformed saves without writes or filesystem path disclosure', async
   const response = await raw('/__editor/save', { method: 'POST', headers: { 'X-NA-Editor': '1', Origin: base }, chunks: ['{}'] });
   expect(response.status).toBe(400);
   expect(await readFile(join(levels, 'na-local.json'), 'utf8')).toBe('{"id":"na-local","name":"Custom"}');
+});
+
+it('returns the saved document, warnings and changed flag from the save endpoint', async () => {
+  const content = await mkdtemp(join(tmpdir(), 'na-editor-response-'));
+  let saveServer: Server | undefined;
+  try {
+    await cp(resolve('../../packages/content/data'), join(content, 'data'), { recursive: true });
+    await cp(resolve('../../packages/content/content.json'), join(content, 'content.json'));
+    const level = JSON.parse(await readFile(join(content, 'data/levels/levelview-1.json'), 'utf8')) as unknown;
+    const middleware = createEditorMiddleware(join(content, 'data/levels'));
+    saveServer = createServer((req, res) => middleware(req, res, () => { res.statusCode = 404; res.end(); }));
+    await new Promise<void>(done => saveServer!.listen(0, '127.0.0.1', done));
+    const address = saveServer.address(); if (!address || typeof address === 'string') throw new Error('Missing test server');
+    const origin = `http://127.0.0.1:${address.port}`;
+    for (const changed of [true, false]) {
+      const response = await fetch(`${origin}/__editor/save`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-NA-Editor': '1', Origin: origin },
+        body: JSON.stringify({ id: 'na-response', level, copy: true }),
+      });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({ level: { id: 'na-response', editorVersion: '0.0.1' }, warnings: [], changed });
+    }
+  } finally {
+    if (saveServer) await new Promise<void>(done => saveServer!.close(() => done()));
+    await rm(content, { recursive: true, force: true });
+  }
 });
