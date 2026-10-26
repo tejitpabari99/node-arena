@@ -11,7 +11,7 @@ Brief: `brainstorm.md`. Screenshots: `before/` (current editor, 9 shots), `ref/`
 ## Sub-projects
 | # | Name | Scope | Depends | Status |
 |---|---|---|---|---|
-| 01 | theme-tokens | `--ed-*` tokens, Inter/system stack, base button/input/menu/popover/modal/toast styles | none | draft |
+| 01 | theme-tokens | `--ed-*` tokens, Inter/system stack, base button/input/menu/popover/modal/toast styles | none | in-progress |
 | 02 | versioning-save | `editorVersion` 0.0.N, 30s autosave, Finalize saves first, server Duplicate op | none | draft |
 | 03 | topbar-menus | Back + File menu, dialogs, Share panel, Check flow, save status | 01, 02, 05 | draft |
 | 04 | left-panel | Read-only level id, param labels/tooltips, read-only troop | 01 | draft |

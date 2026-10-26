@@ -1,5 +1,5 @@
 ---
-status: draft
+status: in-progress
 summary: Task breakdown for the editor theme tokens and base primitives (SP01), foundation for SP02-05.
 date: 2026-10-26
 ---
@@ -8,7 +8,7 @@ Source of truth: [PRD.md](PRD.md). Rewrites `apps/web/src/editor/style.css` into
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Tokens, base reset, game-sheet leak override | - | todo |
+| 1 | Tokens, base reset, game-sheet leak override | - | in-progress |
 | 2 | Button, field and focus primitives | 1 | todo |
 | 3 | Menu, popover and row primitives | 1 | todo |
 | 4 | Modal, toast, panel/section and status primitives | 1 | todo |
