@@ -212,9 +212,12 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-apply { margin-top: 8px; }
 .preview-error { position: absolute; top: 8px; left: 8px; z-index: 3; margin: 0; padding: 4px 8px; border: 1px solid #ff9b9b; background: #5a1d1dd9; color: #fff; font-size: 12px; pointer-events: none; }
 
-.canvas-controls { position: absolute; top: 8px; right: 8px; z-index: 3; display: flex; gap: 2px; padding: 4px; background: var(--ed-g-0); border-radius: var(--ed-r-lg); box-shadow: var(--ed-sh-sm); }
-.canvas-btn { width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 0; border-radius: var(--ed-r); background: transparent; color: var(--ed-text); cursor: pointer; }
-.canvas-btn:hover:not(:disabled) { background: var(--ed-g-100); }
+.canvas-controls { position: absolute; top: var(--ed-s-3); right: var(--ed-s-3); z-index: 3; display: flex; flex-direction: column; align-items: stretch; gap: var(--ed-s-2); width: 36px; pointer-events: none; }
+.canvas-card { background: var(--ed-g-0); border-radius: var(--ed-r-lg); box-shadow: var(--ed-sh-md); overflow: hidden; pointer-events: auto; }
+.canvas-card-zoom .canvas-btn + .canvas-btn { border-top: 1px solid var(--ed-border); }
+.canvas-btn { width: 36px; height: 36px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ed-g-600); cursor: pointer; }
+.canvas-btn:hover:not(:disabled):not([aria-pressed="true"]) { background: var(--ed-g-100); color: var(--ed-g-800); }
 .canvas-btn[aria-pressed="true"] { background: var(--ed-accent-soft); color: var(--ed-accent); }
 .canvas-btn:disabled { opacity: .35; cursor: default; }
-.canvas-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+:is(.ed-shell, .editor-shell) .canvas-btn:focus-visible { outline: 2px solid var(--ed-accent); outline-offset: -2px; }
+.canvas-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
