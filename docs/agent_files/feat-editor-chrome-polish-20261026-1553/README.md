@@ -70,3 +70,10 @@ SP01's six planned tasks and stacking review fix are complete; all three final r
 SP02's six tasks are complete; Bug Hunter, Security and Architect PASS.
 
 - [Final SP02 review — PASS](02-versioning-save/review-2026-10-26-1746.md)
+
+## SP05 implementation artifacts
+- [Implementation run (all four tasks)](05-map-controls/code-2026-10-26-1759.md)
+- [Layout regression, captures and final verification](05-map-controls/code-2026-10-26-1755.md)
+- [Eleven screenshots](05-map-controls/screens/), [browser harness](05-map-controls/verify-controls.mjs), [machine results](05-map-controls/verification-results.json)
+
+SP05's four tasks are complete. Bug Hunter and Security PASS; Architect pending. Share/Check gutter integration remains a cross-cutting SP03 follow-up, as explicitly permitted by SP05 Task 4.
