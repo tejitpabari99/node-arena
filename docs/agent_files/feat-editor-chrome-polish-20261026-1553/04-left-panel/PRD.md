@@ -44,16 +44,16 @@ Three content changes, no layout restructure: (1) show immutable level id read-o
 | Key (`module.field`) | Label | Tooltip (one line) |
 |---|---|---|
 | `level.maxLevel` | Max level (garrison cap) | Highest level this building reaches; extra troops are forwarded or lost. (R-CAP-01) |
-| `spawns.troop` | Unit produced | The unit this building sends out; set by building type. |
+| `spawns.troop` | Unit produced | The unit this building sends out; the building type sets the default. |
 | `spawns.spawnSpeed` | Spawn speed | Higher = troops leave each line faster, scaling with level. (R-SPN-01) |
 | `spawns.lineSpawnPenalty` | Per-extra-line slowdown | Each extra outgoing line slows every line's spawning; 0 = none. (R-SPN-01) |
 | `grows.growTime` | Regrow time multiplier | Scales time to regain a level; only ticks with no outgoing lines. Higher = slower. (R-GRW-01) |
-| `shoots.attackDelay` | Attack delay | Base time between shots; shorter at higher levels. (R-TWR-01) |
+| `shoots.attackDelay` | Fire-rate gain per level | Makes shots more frequent as level rises; higher = faster. (R-TWR-01) |
 | `shoots.attackRadius` | Attack radius | Base shooting range at stage 1. |
-| `shoots.speedUpByLevel` | Fire-rate gain per level | How much faster the tower fires as it levels up. |
+| `shoots.speedUpByLevel` | Shot delay multiplier | Scales time between shots; higher = slower. (R-TWR-01) |
 | `shoots.radiusUpByLevel` | Range gain per stage | Extra range added for each stage above 1. |
 | `shoots.radiusUnit` | Range scale | Multiplier converting range values into map distance. |
-| `shoots.minRadius` | Minimum range | Troops closer than this are not shot (dead zone). (R-TWR-02) |
+| `shoots.minRadius` | Minimum range | Troops at or within this distance are not shot (dead zone). (R-TWR-02) |
 | `shoots.neutralFires` | Fires while neutral | If yes, an unowned tower still shoots. |
 | `shoots.troopPad` | Troop hit margin | Extra reach added to range when targeting troops. |
 | `shoots.hitsNeutralHouses` | Shoots neutral houses | If yes, the tower also lowers unowned houses in range. |
@@ -70,10 +70,11 @@ Three content changes, no layout restructure: (1) show immutable level id read-o
 | D5 | Level id | Read-only row outside draft | Editable with warning | Ids immutable |
 | D6 | Old labels | Hard rename, update e2e selectors | Keep old aria aliases | Aliases keep jargon in a11y tree; only two known selectors |
 | D7 | Unknown module/field | Humanized fallback | Raw id | Future defs stay presentable |
+| D8 | Verified firing semantics | `attackDelay` = fire-rate gain per level; `speedUpByLevel` = shot delay multiplier | Original reversed descriptions | Factual correction verified against `docs/GAME_RULES.md:425` and `packages/sim/src/modules/shoots.ts:19`; no mechanics/defs/rules change. Minimum dead-zone equality is inclusive; building type sets the default troop, while level overrides remain supported |
 
 ## Risks / Open Questions
 - [RESOLVED: humanized unit id (e.g. "Soldier", "Tank").]
-- [RESOLVED: tooltip units follow GAME_RULES/defs; else describe in grid cells/seconds as defs specify. Code agent still verifies against R-TWR-01 before merge.]
+- [RESOLVED: tooltip semantics verified against GAME_RULES:425 / sim shoots.ts:19; D8 corrects reversed firing descriptions, inclusive minRadius and default-vs-override troop wording. No mechanics change.]
 - [RESOLVED: plain read-only text, no copy button.]
 - [RESOLVED: spawns.def.ts + level.ts:101] troop = unit id validated against `catalog.units`.
 - [RESOLVED: golden levels.ts:53] override exists in fixtures; preserved via untouched params clone.
