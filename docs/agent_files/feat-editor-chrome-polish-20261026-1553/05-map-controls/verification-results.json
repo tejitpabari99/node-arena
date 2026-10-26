@@ -1,0 +1,124 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "geometry": {
+    "canvas": {
+      "x": 300,
+      "y": 56,
+      "width": 1140,
+      "height": 844
+    },
+    "controls": {
+      "x": 1392,
+      "y": 68,
+      "width": 36,
+      "height": 248
+    },
+    "cards": [
+      {
+        "x": 1392,
+        "y": 68,
+        "width": 36,
+        "height": 72
+      },
+      {
+        "x": 1392,
+        "y": 148,
+        "width": 36,
+        "height": 36
+      },
+      {
+        "x": 1392,
+        "y": 192,
+        "width": 36,
+        "height": 36
+      },
+      {
+        "x": 1392,
+        "y": 236,
+        "width": 36,
+        "height": 36
+      },
+      {
+        "x": 1392,
+        "y": 280,
+        "width": 36,
+        "height": 36
+      }
+    ],
+    "z": "3",
+    "pointerEvents": "none",
+    "gutter": "56px",
+    "popZ": "5"
+  },
+  "toggles": [
+    {
+      "name": "Hand",
+      "pressed": "true",
+      "background": "rgb(231, 239, 252)",
+      "color": "rgb(37, 99, 201)"
+    },
+    {
+      "name": "Show grid",
+      "pressed": "true",
+      "background": "rgb(231, 239, 252)",
+      "color": "rgb(37, 99, 201)"
+    }
+  ],
+  "tokens": {
+    "pressed": "#e7effc",
+    "icon": "#2563c9"
+  },
+  "disabled": [
+    {
+      "name": "Zoom in",
+      "opacity": "0.35"
+    },
+    {
+      "name": "Zoom out",
+      "opacity": "0.35"
+    }
+  ],
+  "focus": [
+    {
+      "name": "Zoom in",
+      "visible": true,
+      "outline": "rgb(37, 99, 201) solid 2px",
+      "offset": "-2px"
+    },
+    {
+      "name": "Zoom out",
+      "visible": true,
+      "outline": "rgb(37, 99, 201) solid 2px",
+      "offset": "-2px"
+    },
+    {
+      "name": "Fit area",
+      "visible": true,
+      "outline": "rgb(37, 99, 201) solid 2px",
+      "offset": "-2px"
+    },
+    {
+      "name": "Game camera",
+      "visible": true,
+      "outline": "rgb(37, 99, 201) solid 2px",
+      "offset": "-2px"
+    },
+    {
+      "name": "Hand",
+      "visible": true,
+      "outline": "rgb(37, 99, 201) solid 2px",
+      "offset": "-2px"
+    },
+    {
+      "name": "Show grid",
+      "visible": true,
+      "outline": "rgb(37, 99, 201) solid 2px",
+      "offset": "-2px"
+    }
+  ],
+  "pageErrors": [],
+  "sp03GutterIntegration": "Pending SP03 Share/Check implementation; no temporary UI created."
+}
