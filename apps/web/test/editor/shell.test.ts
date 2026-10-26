@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { createServer, request, type Server } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { createEditorMiddleware } from '../../src/dev/editor-middleware.js';
@@ -70,4 +70,19 @@ it('starts blank and template copies without a server-owned editorVersion', () =
   expect(copy).not.toHaveProperty('source');
   expect(source.editorVersion).toBe('0.0.7');
   expect(source.source.asset).toBe('level');
+});
+
+
+// Inspect the real component's button contract without mounting browser-only popover effects.
+vi.mock('preact/hooks', () => ({ useRef: () => ({ current: null }), useState: () => [0, () => undefined], useEffect: () => undefined }));
+it('allows Finalize for a dirty document while still disabling competing jobs', async () => {
+  const { JobPopovers } = await import('../../src/editor/JobPopovers.js');
+  const props: import('../../src/editor/JobPopovers.js').JobPopoversProps = { open: null, setOpen() {}, job: null, busy: false, dirty: true, onCheck() {}, onCancel() {}, onFinalize() {}, checkIssues: [], issueLabel: () => '', checkError: '', proxyEvents: [], finalizeEvents: [], finalizeError: '', lockStatus: 'current', lockOutput: '' };
+  function button(busy: boolean) {
+    const root = JobPopovers({ ...props, busy });
+    const wrap = (root.props.children as preact.VNode[])[1]!;
+    return (wrap.props as { children: preact.VNode[] }).children[0]!.props as unknown as { disabled: boolean };
+  }
+  expect(button(false).disabled).toBe(false);
+  expect(button(true).disabled).toBe(true);
 });

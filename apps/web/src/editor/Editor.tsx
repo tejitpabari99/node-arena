@@ -59,6 +59,9 @@ export function Editor() {
   const [manualFailures, setManualFailures] = useState(0);
   const [fileOpen, setFileOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Keep the job lock across the queued save and stream, including save finally blocks.
+  const finalizingRef = useRef(false);
+  const saveOutcome = useRef<{ seq: number; ok: boolean } | null>(null);
   const [playing, setPlaying] = useState(false);
   const [issues, setIssues] = useState<ContentIssue[]>([]);
   const [finalizeEvents, setFinalizeEvents] = useState<EditorFinalizeEvent[]>([]);
@@ -92,15 +95,17 @@ export function Editor() {
       // Swap in the normalized document only if nothing was edited during the request; no history entry.
       setHistory(state => state && state.present === sent ? { ...state, present: result.level } : state);
       setLevels(await listLevels());
+      saveOutcome.current = { seq, ok: true };
     } catch (reason) {
       if (openSeq.current !== seq) return;
+      saveOutcome.current = { seq, ok: false };
       // 409 = another job holds the gate: transient, the next tick retries.
       if (source === 'auto' && reason instanceof EditorApiError && reason.status === 409) return;
       setAttempted(true); if (source === 'manual') setManualFailures(count => count + 1);
       if (reason instanceof ContentLoadError) { setValidation({ issues: reason.errors, warnings: [] }); setFailure({ doc: sent, message: '' }); }
       else if (reason instanceof EditorApiError && reason.issues.length) { setValidation({ issues: reason.issues, warnings: [] }); setFailure({ doc: sent, message: '' }); }
       else setFailure({ doc: sent, message: reason instanceof Error ? reason.message : String(reason) });
-    } finally { setSaving(count => count - 1); if (source === 'manual') setBusy(false); }
+    } finally { setSaving(count => count - 1); if (source === 'manual' && !finalizingRef.current) setBusy(false); }
   }
   const runSaveRef = useRef(runSave); runSaveRef.current = runSave;
   const saveQueue = useRef<ReturnType<typeof createSaveQueue<'manual' | 'auto'>>>();
@@ -146,12 +151,19 @@ export function Editor() {
     return () => { active = false; };
   }, [popover, busy]);
   async function finalize() {
-    const sent = savedRef.current;
-    if (!doc || dirty || !sent || busy) return;
+    if (!doc || busy || finalizingRef.current) return;
+    const seq = openSeq.current;
+    finalizingRef.current = true;
     setBusy(true); setJob('finalize'); setPopover('finalize'); setError(''); setFinalizeError(''); setFinalizeEvents([]); setLockStatus('checking');
-    try { await finalizeLevel(sent, event => setFinalizeEvents(events => [...events, event])); }
+    try {
+      await doSave('manual');
+      const sent = savedRef.current, current = historyRef.current?.present;
+      // runSave surfaces failures itself. A resolved queue alone does not prove a save succeeded.
+      if (openSeq.current !== seq || !saveOutcome.current?.ok || saveOutcome.current.seq !== seq || !sent || !current || sent.id !== current.id || isDirty(current, sent)) return;
+      await finalizeLevel(sent, event => setFinalizeEvents(events => [...events, event]));
+    }
     catch (reason) { setFinalizeError(reason instanceof Error ? reason.message : String(reason)); }
-    finally { setJob(null); setBusy(false); }
+    finally { finalizingRef.current = false; setJob(null); setBusy(false); }
   }
   async function solvable() {
     if (!doc || busy) return;

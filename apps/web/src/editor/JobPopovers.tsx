@@ -64,11 +64,11 @@ export function JobPopovers(p: JobPopoversProps) {
       </div>}
     </span>
     <span ref={finalizeWrap} class="ed-chip-wrap">
-      <button class="ed-btn" disabled={p.busy || p.dirty} onClick={p.onFinalize}>{finalizing && <Spinner />}Finalize</button>
+      <button class="ed-btn" disabled={p.busy} onClick={p.onFinalize}>{finalizing && <Spinner />}Finalize</button>
       <button class="ed-btn ed-caret" aria-label="Finalize details" aria-expanded={p.open === 'finalize'} onClick={() => toggle('finalize')}>▾</button>
       {p.open === 'finalize' && <div class="ed-popover ed-job-popover" data-testid="finalize-popover" style={{ left: `${left}px` }}>
         <button class="ed-btn ed-popover-close" aria-label="Close" onClick={() => p.setOpen(null)}>×</button>
-        {p.dirty && <p>Unsaved changes. Save before Finalize.</p>}
+        {p.dirty && <p>Unsaved changes will be saved before Finalize.</p>}
         <p role="status" data-testid="lock-status">{p.lockStatus === 'unfinalized' ? 'Unfinalized changes on disk.' : p.lockStatus === 'current' ? 'Content locks current on disk.' : p.lockStatus === 'checking' ? 'Checking content status…' : 'Content status unavailable; retry after saving or running a job.'}</p>
         {p.lockOutput && <details><summary>Content status details</summary><pre>{p.lockOutput}</pre></details>}
         {p.finalizeError && <p role="alert">{p.finalizeError}</p>}
