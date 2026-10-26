@@ -1,5 +1,5 @@
 ---
-status: draft
+status: in-progress
 summary: Nine tasks - dismiss/menu primitives, confirm guard, Create/Open/start dialogs, save status, notices, Share panel, Check flyout, bar rewrite, visual verification.
 date: 2026-10-26
 ---
@@ -8,8 +8,8 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/03-to
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | useDismiss and Menu primitive | SP01 T3 | todo |
-| 2 | ConfirmDialog and guard state | SP01 T4 | todo |
+| 1 | useDismiss and Menu primitive | SP01 T3 | in-progress |
+| 2 | ConfirmDialog and guard state | SP01 T4 | in-progress |
 | 3 | Create/Open dialogs and start screen | 2, SP02 T3 | todo |
 | 4 | SaveStatus and chipText | SP01 T4 | todo |
 | 5 | Toast notices | SP01 T4 | todo |
@@ -17,6 +17,9 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/03-to
 | 7 | Check flyout and toast Details | 5, 6, SP05 T2 | todo |
 | 8 | Top bar rewrite and File menu | 1, 2, 3, 6, 7 | todo |
 | 9 | Verification and screenshots | 8, SP01 T6, SP04 T5 | todo |
+
+## Execution staging
+Early tasks build and verify props-driven foundations with real Vitest and Chromium fixtures. Keep legacy `FileModal`/`JobPopovers` and existing live wiring until Task 8; Task 8 integrates all new components, removes both legacy surfaces and migrates all affected selectors atomically. This staging overrides earlier per-task wording assigning live Editor state replacement, legacy deletion or selector migration before Task 8; final accepted behavior is unchanged. Duplicate-when-dirty is Save & duplicate / Cancel only.
 
 ## Task 1 — useDismiss and Menu primitive
 What it is / what it means: Shared dismissal and menu behavior (R3, R17, D9, Architecture).

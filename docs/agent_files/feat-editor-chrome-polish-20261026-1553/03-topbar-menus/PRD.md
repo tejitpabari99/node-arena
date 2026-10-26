@@ -11,7 +11,7 @@ Repo/branch: node-arena · `feat/editor-chrome-polish` · Depends on: SP01 (toke
 - Left: `← Back`, `File ▾` only. File menu: Create…, Duplicate, Open…, ─, Undo, Redo (kbd hints).
 - Right: plain-text save status, Play, primary `Share ▾`. Share panel (Canva-style, right-aligned) rows: Save, Finalize, Check; footer `Version 0.0.N`.
 - Check = spinner row, then toast "Check: AI won X/Y · Details"; Details opens a flyout LEFT of the panel. Finalize = one action (save-then-finalize per SP02).
-- FileModal splits into Create / Open / Confirm dialogs; start screen reuses them. Dirty guard everywhere is a 3-way Save / Discard / Cancel.
+- FileModal splits into Create / Open / Confirm dialogs; start screen reuses them. Dirty guards use Save / Discard / Cancel; Duplicate uses Save & duplicate / Cancel only.
 
 ## Problem
 Evidence (`TopBar.tsx`, `JobPopovers.tsx`, `FileModal.tsx`):
@@ -33,8 +33,8 @@ Non-goals: real sharing/links; renaming/deleting levels; left panel (SP04), map 
 | R4 | Create dialog: `id` input (prefill first free `na-custom-N`), `.ed-group-box` with Theme (green, snow) + Size (small/medium/large), `.ed-divider-or`, `Copy existing level` select (first option "None"), `Create` button last (`create-confirm`). |
 | R5 | Create semantics: copy source = None -> blank from Theme+Size. Source chosen -> copy wins; the Theme/Size box gets `disabled` + dimmed + hint "Copied from <id>; theme and size come from the source". Button label stays `Create`. Id collision error as today (`EXISTS`). |
 | R6 | Open dialog: select of all `na-` levels + `Open level` (`open-confirm`); empty state "No custom levels yet." |
-| R7 | Duplicate: if dirty -> 3-way Confirm; Save awaits `doSave`, aborts on failure; then `duplicateLevel(doc.id)` and `replaceDoc(level, true)` (opens immediately, version 0.0.1). Discard duplicates the disk copy (edits dropped). |
-| R8 | Create/Open/Duplicate when dirty use the same Confirm dialog (testid `discard-confirm` kept on container) with `confirm-save`, `confirm-discard`, `confirm-cancel`. |
+| R7 | Duplicate: if dirty -> Confirm offering Save & duplicate / Cancel only. Save awaits `doSave`, aborts on failure; then `duplicateLevel(doc.id)` and `replaceDoc(level, true)` (opens immediately, version 0.0.1). No discard option. |
+| R8 | Create/Open when dirty use the same Confirm dialog (testid `discard-confirm` kept on container) with `confirm-save`, `confirm-discard`, `confirm-cancel`. Duplicate reuses the dialog with only `confirm-save` (Save & duplicate) and `confirm-cancel`. |
 | R9 | Start state (no doc): standalone card on the editor backdrop with title "Level editor", a Back link, and the same CreateDialog body stacked above OpenDialog body, separated by a heading rule. Not dismissible. |
 | R10 | SaveStatus: plain text (`.ed-status`, no border), `data-testid=save-chip`, `data-state`. Text via `chipText`: "✓ Saved", "Saving…", "Unsaved", "N issues", "Can't save". Only error/issues/message states are `<button>` opening `save-popover` (right-aligned under the text); other states are `<span role=status>`. |
 | R11 | Share button `ed-btn-primary` (testid `share-button`, `aria-haspopup=dialog`, `aria-expanded`). Panel `.ed-popover` (testid `share-panel`), 320px, right-aligned under button, `role=dialog`, title "Share". |
@@ -76,7 +76,7 @@ State flow (all state stays in Editor.tsx; components are props-driven):
 |---|---|---|---|---|
 | D1 | Create ambiguity | Copy select defaults "None"; choosing a source disables Theme/Size box with hint | Separate tabs; last-edited wins | Matches locked "or" divider layout; visible, no hidden precedence |
 | D2 | Start screen | Same Create + Open bodies in a standalone card | Keep old 3-column FileModal | One mental model; removes divergent code |
-| D3 | Dirty prompt | 3-way Save / Discard / Cancel | Keep 2-way discard | Duplicate needs Save; cheap everywhere |
+| D3 | Dirty prompt | Save / Discard / Cancel for Back/Create/Open; Save & duplicate / Cancel only for Duplicate | Duplicate discard | Resolved decision: save current edits before duplicating; no discard option |
 | D4 | Name in bar | None | Muted id label | Locked: Back + File only; SP04 shows id |
 | D5 | Undo/Redo | Menu items + shortcuts | Keep icon buttons | Locked |
 | D6 | Check result | Toast + flyout | Inline results in panel | Panel stays compact; results are long |
@@ -109,10 +109,13 @@ State flow (all state stays in Editor.tsx; components are props-driven):
 - Bar at 1440x900 contains exactly: `back`, `file-menu-button`, `save-chip`, Play, `share-button`; no `level-name`, Undo, Redo, Save, caret.
 - File menu opens under File; items present with kbd hints; Esc closes and focus returns to `file-menu-button`; Undo/Redo items enable/disable with history.
 - Create: collision error shown; picking a copy source disables Theme/Size box; Create opens blank (theme/size honored) or copy (source ids).
-- Dirty + Create/Open/Duplicate/Back shows `discard-confirm`; Save runs `doSave` first and aborts on failure; Discard proceeds; Cancel keeps doc.
+- Dirty + Create/Open/Back shows `discard-confirm`; Save runs `doSave` first and aborts on failure; Discard proceeds; Cancel keeps doc. Dirty Duplicate offers Save & duplicate / Cancel only; save failure aborts duplication.
 - Duplicate on saved level opens `<id>-copy` with `editor-version` "Version 0.0.1"; disabled on never-saved doc.
 - Share panel right-aligned under button, does not overlap SP05 map-controls column (bounding boxes disjoint) and sits above canvas.
 - Check: row spinner while running, Cancel works; on finish toast text matches `Check: AI won X/Y`, Details opens `check-popover` left of `share-panel` (flyout right edge < panel left edge).
 - Finalize on dirty doc saves then finalizes; `lock-status` visible in row; no dropdown.
 - Save status has no border/background (computed `border-top-width` 0), green when saved.
 - `pnpm test`, `pnpm lint`, `pnpm typecheck`, updated `editor-*.spec.ts` green; screenshots vs `ref/canva.png` recorded under `03-topbar-menus/screens/`.
+
+## Implementation staging — 2026-10-26
+Early tasks build/test props-driven components using real Vitest and Chromium fixtures. Retain legacy `FileModal`/`JobPopovers` and current Editor wiring until Task 8 integrates the new components, removes both legacy surfaces and migrates all selectors atomically. This keeps intermediate commits usable; final user-approved behavior is unchanged. Duplicate dirty Save & duplicate / Cancel is the resolved decision and overrides the earlier discard wording.
