@@ -13,8 +13,8 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/03-to
 | 3 | Create/Open dialogs and start screen | 2, SP02 T3 | done |
 | 4 | SaveStatus and chipText | SP01 T4 | done |
 | 5 | Toast notices | SP01 T4 | done |
-| 6 | Share panel (Save, Finalize, Check, version) | 1, 4, SP02 T4, SP02 T6 | in-progress |
-| 7 | Check flyout and toast Details | 5, 6, SP05 T2 | todo |
+| 6 | Share panel (Save, Finalize, Check, version) | 1, 4, SP02 T4, SP02 T6 | done |
+| 7 | Check flyout and toast Details | 5, 6, SP05 T2 | in-progress |
 | 8 | Top bar rewrite and File menu | 1, 2, 3, 6, 7 | todo |
 | 9 | Verification and screenshots | 8, SP01 T6, SP04 T5 | todo |
 
