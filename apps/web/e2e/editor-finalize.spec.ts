@@ -69,7 +69,7 @@ for (const invalid of [true, false]) test(`Finalize aborts and surfaces ${invali
     await page.getByRole('button', { name: 'Create blank' }).click();
   }
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
-  await expect(page.getByTestId('save-chip')).toContainText("Can't save");
+  await expect(page.getByTestId('save-chip')).toHaveText(invalid ? /^\d+ issues$/ : "Can't save");
   await expect(page.getByTestId('save-popover')).toContainText(invalid ? 'must NOT have fewer than 1 items' : 'disk full');
   await expect(page.getByRole('button', { name: 'Finalize', exact: true })).toBeEnabled();
   expect(saves).toBe(invalid ? 0 : 1); expect(finalizes).toBe(0);
@@ -125,7 +125,7 @@ test('a failed no-change save cannot Finalize using an older saved baseline', as
   await page.route('**/__editor/finalize', async route => { finalizes++; await route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }); });
   await page.goto('/editor.html?template=levelview-1');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
   await expect(page.getByTestId('save-message')).toHaveText('disk unavailable');
   await expect(page.getByRole('button', { name: 'Finalize', exact: true })).toBeEnabled();

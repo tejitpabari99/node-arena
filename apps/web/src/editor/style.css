@@ -98,6 +98,14 @@ body:has(.ed-shell):not(:has(.editor-play-overlay)), body:has(.editor-shell):not
 .ed-status[data-state="saving"], :is(.ed-shell, .editor-shell) .ed-chip[data-state="saving"] { color: var(--ed-muted); }
 .ed-status[data-state="unsaved"], :is(.ed-shell, .editor-shell) .ed-chip[data-state="unsaved"] { color: var(--ed-warn); }
 .ed-status[data-state="issues"], .ed-status[data-state="error"], :is(.ed-shell, .editor-shell) .ed-chip[data-state="issues"], :is(.ed-shell, .editor-shell) .ed-chip[data-state="error"] { color: var(--ed-danger); }
+.ed-save-status-wrap { position: relative; }
+.ed-status.ed-save-status[data-state="saved"]::before { content: none; }
+:is(.ed-shell, .editor-shell) button.ed-save-status,
+:is(.ed-shell, .editor-shell) button.ed-save-status:hover,
+:is(.ed-shell, .editor-shell) button.ed-save-status:active { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+:is(.ed-shell, .editor-shell) button.ed-save-status[data-state="error"] { color: var(--ed-danger); }
+.ed-save-status-wrap > .ed-save-popover { position: absolute; top: calc(100% + var(--ed-s-2)); right: 0; width: max-content; box-sizing: border-box; max-width: min(420px, 92vw); }
+
 /* Menu and popover surfaces leave placement to their callers. */
 .ed-menu, .ed-popover { z-index: var(--ed-z-pop); border: 1px solid var(--ed-border); border-radius: var(--ed-r-lg); background: var(--ed-g-0); box-shadow: var(--ed-sh-md); color: var(--ed-text); }
 .ed-menu { min-width: 200px; padding: var(--ed-s-1); }

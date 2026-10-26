@@ -30,7 +30,7 @@ export function TopBar({ failureSeq, issues, warnings, saveMessage, issueLabel, 
     document.addEventListener('pointerdown', away); document.addEventListener('keydown', key);
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', key); };
   }, [open]);
-  const count = issues.length || 1;
+  const count = issues.length;
   return <>
     <a href="/" class="ed-btn">← Game</a>
     <button class="ed-btn" data-testid="level-name" title={doc.id} disabled={locked} onClick={onName}>{doc.name || doc.id}</button>

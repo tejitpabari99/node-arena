@@ -19,7 +19,7 @@ export function isDirty<T extends object>(present: T, saved: T | null): boolean 
 
 export type ChipKind = 'saved' | 'saving' | 'unsaved' | 'error';
 export function chipText(kind: ChipKind, issueCount: number): string {
-  return kind === 'saved' ? 'Saved ✓' : kind === 'saving' ? 'Saving…' : kind === 'unsaved' ? 'Unsaved' : `Can't save · ${issueCount} issues`;
+  return kind === 'saved' ? '✓ Saved' : kind === 'saving' ? 'Saving…' : kind === 'unsaved' ? 'Unsaved' : (issueCount > 0 ? `${issueCount} issues` : "Can't save");
 }
 
 /**

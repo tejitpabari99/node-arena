@@ -33,13 +33,13 @@ test('chip walks Unsaved, Saving, Saved and back to Unsaved on edit', async ({ p
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(chip).toHaveText('Saving…');
   release();
-  await expect(chip).toHaveText('Saved ✓');
+  await expect(chip).toHaveText('✓ Saved');
   const before = Number(await page.locator('.ed-shell').getAttribute('data-buildings'));
   await placeBuilding(page);
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(before + 1));
   await expect(chip).toHaveText('Unsaved');
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(chip).toHaveText('Saved ✓');
+  await expect(chip).toHaveText('✓ Saved');
   await page.setViewportSize({ width: 1280, height: 720 });
   const dir = process.env.SHOT_DIR; if (dir) { mkdirSync(dir, { recursive: true }); await page.locator('.ed-top').screenshot({ path: `${dir}/topbar-1280x720.png` }); }
 });
@@ -53,7 +53,7 @@ test('blank document Save lists issues in the chip popover; level-name exposes i
   await expect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-chip-blank');
   await expect(chip).toHaveText('Unsaved');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(chip).toHaveText(/^Can't save · \d+ issues$/);
+  await expect(chip).toHaveText(/^\d+ issues$/);
   await expect(page.getByTestId('save-popover')).toBeVisible();
   await expect(page.getByTestId('save-popover')).toContainText('must NOT have fewer than 1 items');
   await expect(page.getByTestId('save-popover').locator('li[data-item]').first()).toBeVisible();
@@ -77,7 +77,7 @@ test('an edit made during a stalled save survives and the chip stays Unsaved', a
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(before + 1));
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(before));
-  await expect(chip).toHaveText('Saved ✓');
+  await expect(chip).toHaveText('✓ Saved');
 });
 
 async function openClocked(page: Page, url = '/editor.html?template=levelview-1') {
@@ -101,7 +101,7 @@ test('after a manual Save an edit waits through 5s and 15s, autosaves at 30s, an
   const posted = await mockSave(page);
   await openClocked(page);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   expect(posted.length).toBe(1);
   await page.clock.runFor(30100);
   expect(posted.length).toBe(1);
@@ -114,7 +114,7 @@ test('after a manual Save an edit waits through 5s and 15s, autosaves at 30s, an
   expect(posted.length).toBe(1);
   await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
   await page.clock.runFor(15100);
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   expect(posted.length).toBe(2);
   await page.clock.runFor(30100);
   expect(posted.length).toBe(2);
@@ -131,7 +131,7 @@ test('a failed autosave shows the error chip and is not retried until the next e
   });
   await openClocked(page);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   fail = true;
   await placeBuilding(page);
   await page.clock.runFor(30100);
@@ -142,7 +142,7 @@ test('a failed autosave shows the error chip and is not retried until the next e
   fail = false;
   await placeBuilding(page, .6);
   await page.clock.runFor(30100);
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   expect(calls).toBe(3);
 });
 
@@ -157,13 +157,13 @@ test('a 409 job-running autosave response is transient and retried on the next t
   });
   await openClocked(page);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   await placeBuilding(page);
   await page.clock.runFor(30100);
   await expect.poll(() => calls).toBe(2);
   await expect(page.getByTestId('save-chip')).not.toHaveText(/Can't save/);
   await page.clock.runFor(30100);
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   expect(calls).toBe(3);
 });
 
@@ -176,7 +176,7 @@ test('no autosave while Check or Finalize runs; autosave never hits Finalize', a
   await page.route('**/__editor/finalize', async route => { finalizeCalls++; await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'stub' }) }); });
   await openClocked(page);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   await placeBuilding(page);
   await page.getByRole('button', { name: 'Check', exact: true }).click();
   await expect.poll(() => checkCalls).toBe(1);
@@ -199,7 +199,7 @@ test('beforeunload guard is registered only while the document is dirty', async 
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   expect(await guarded()).toBe(true);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   expect(await guarded()).toBe(false);
   await placeBuilding(page);
   await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
@@ -237,7 +237,7 @@ test('file modal is standalone with no document: all three paths create one, bad
   await page.getByLabel('Open level').selectOption('na-trial');
   await page.getByRole('button', { name: 'Open level', exact: true }).click();
   await expect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-trial');
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
 });
 
 test('file modal over an open document: dirty replace prompts, Cancel keeps, Discard replaces, Esc dismisses', async ({ page }) => {

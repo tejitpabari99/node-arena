@@ -33,8 +33,8 @@ describe('dirty model', () => {
     expect(isDirty({ ...sent, nested: { editorVersion: 'changed' } }, saved)).toBe(true);
     expect(isDirty({ name: 'Legacy', editorVersion: '0.0.1' }, { name: 'Legacy' })).toBe(false);
   });
-  it('formats the four chip states', () => {
-    expect([chipText('saved', 0), chipText('saving', 0), chipText('unsaved', 0), chipText('error', 3)]).toEqual(['Saved ✓', 'Saving…', 'Unsaved', "Can't save · 3 issues"]);
+  it('formats status text with counted issues and a non-issue failure', () => {
+    expect([chipText('saved', 0), chipText('saving', 0), chipText('unsaved', 0), chipText('error', 3), chipText('error', 0)]).toEqual(['✓ Saved', 'Saving…', 'Unsaved', '3 issues', "Can't save"]);
   });
 });
 
