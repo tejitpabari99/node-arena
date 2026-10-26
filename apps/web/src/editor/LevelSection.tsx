@@ -20,6 +20,7 @@ export function LevelSection() {
   const del = (p: Player) => <button type="button" class="ed-player-delete" aria-label={`Delete ${playerLabel(draft.players, p.id)}`} disabled={!canDeleteAi(draft.players, p.id)} onClick={() => setConfirm(p.id)}>Delete</button>;
   return <form class="ed-level" aria-label="Level properties" onSubmit={event => { event.preventDefault(); if (ok && !locked) edit({ type: 'level-properties', value: draft }); }}>
     <fieldset disabled={locked}>
+      <label>Level id<output aria-label="Level id" title="Fixed when the level is created">{doc.id}</output></label>
       <label>Level name<input required value={draft.name} onInput={event => setDraft({ ...draft, name: event.currentTarget.value })} /></label>
       <label>Level theme<select aria-label="Level theme" value={draft.theme} onChange={event => setDraft({ ...draft, theme: event.currentTarget.value })}>{[...new Set([draft.theme, ...themes])].map(theme => <option key={theme}>{theme}</option>)}</select></label>
       <label>Time limit (seconds)<input type="number" min="1" max="107374182" step="1" placeholder="Unlimited" value={draft.timeLimitSec ?? ''} onInput={event => setDraft({ ...draft, timeLimitSec: event.currentTarget.value === '' ? null : Number(event.currentTarget.value) })} /></label>

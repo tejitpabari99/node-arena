@@ -74,3 +74,43 @@ test('Level section: add/delete AI, duplicate block, one undo step, owners nulle
   await expect.poll(() => saved.doc?.players.map(p => p.id)).toEqual(['p1', 'p2']);
   expect(saved.doc!.buildings.filter(b => b.owner === 'p2')).toHaveLength(owned.n);
 });
+
+test('Level id is selectable immutable text before the name and stays outside the Apply payload', async ({ page }) => {
+  test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Uses the real LevelSection through Vite');
+  await page.goto('/editor.html');
+  await page.evaluate(async () => {
+    const path = '/e2e/fixtures/level-section.ts';
+    const fixture = await import(/* @vite-ignore */ path) as typeof import('./fixtures/level-section.js');
+    fixture.mount();
+  });
+  const section = page.locator('#level-section-fixture');
+  const id = section.getByLabel('Level id', { exact: true });
+  await expect(id).toHaveText('na-level-section');
+  await expect(id).toHaveAttribute('title', 'Fixed when the level is created');
+  expect(await id.evaluate(element => ({
+    editable: (element as HTMLElement).isContentEditable || element.matches('input, textarea, select'),
+    beforeName: Boolean(element.compareDocumentPosition(document.querySelector('#level-section-fixture input')!) & Node.DOCUMENT_POSITION_FOLLOWING),
+  }))).toEqual({ editable: false, beforeName: true });
+  // A user can select the plain text to copy it.
+  await id.evaluate(element => {
+    const range = document.createRange(); range.selectNodeContents(element);
+    const selection = window.getSelection()!; selection.removeAllRanges(); selection.addRange(range);
+  });
+  expect(await page.evaluate(() => window.getSelection()!.toString())).toBe('na-level-section');
+  const apply = section.getByRole('button', { name: 'Apply level properties' });
+  await expect(apply).toBeDisabled();
+  await section.getByLabel('Level name', { exact: true }).fill('Renamed level');
+  await apply.click();
+  const ops = await page.evaluate(async () => {
+    const path = '/e2e/fixtures/level-section.ts';
+    return (await import(/* @vite-ignore */ path) as typeof import('./fixtures/level-section.js')).ops;
+  });
+  expect(ops).toEqual([{ type: 'level-properties', value: {
+    name: 'Renamed level', theme: 'green', timeLimitSec: null,
+    players: [
+      { id: 'p1', kind: 'human', colorKey: 'blue' },
+      { id: 'p2', kind: 'ai', colorKey: 'red', bot: { kind: 'tw', actionDelayMs: 4000, behavior: 'full', script: [] } },
+    ],
+  } }]);
+  await expect(id).toHaveText('na-level-section');
+});
