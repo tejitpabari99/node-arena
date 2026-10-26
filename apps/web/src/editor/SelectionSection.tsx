@@ -3,9 +3,10 @@ import { contentFiles } from '../app/boot.js';
 import { useEffect, useState } from 'preact/hooks';
 import type { LevelDoc } from './document.js';
 import { useEditor } from './EditorContext.js';
-import { itemLabels, paramLabel, playerLabel } from './labels.js';
+import { HIDDEN_PARAMS, itemLabels, paramLabel, playerLabel } from './labels.js';
 import { snapYaw } from './model.js';
 import type { Selection } from './picking.js';
+import { LiveFieldError, useLiveField } from './useLiveField.js';
 
 const archetypes = Object.fromEntries(Object.entries(contentFiles()).filter(([path]) => path.startsWith('data/buildings/')).map(([, value]) => {
   const item = JSON.parse(value as string) as NextBuilding; return [item.id, item];
@@ -22,48 +23,67 @@ function Group({ title, children }: { title: string; children: preact.ComponentC
 
 function OwnerGroup({ item }: { item: Building }) {
   const { doc, edit, locked } = useEditor();
-  const [draft, setDraft] = useState({ owner: item.owner, level: item.level, ignoreForWin: item.ignoreForWin });
   const maxLevel = Number((item.params as { level?: { maxLevel?: number } } | undefined)?.level?.maxLevel ?? (archetypes[item.archetype]?.modules?.level as { maxLevel?: number } | undefined)?.maxLevel ?? 64);
-  return <form aria-label="Owner and level" onSubmit={event => { event.preventDefault(); edit({ type: 'building-properties', id: item.id, value: { owner: draft.owner, level: draft.level, ignoreForWin: draft.ignoreForWin } }); }}><fieldset disabled={locked}>
-    <label>Owner<select aria-label="Owner" value={draft.owner ?? ''} onChange={event => setDraft({ ...draft, owner: event.currentTarget.value || null })}>
+  return <fieldset aria-label="Owner and level" disabled={locked}>
+    <label>Owner<select aria-label="Owner" value={item.owner ?? ''} onChange={event => edit({ type: 'building-properties', id: item.id, value: { owner: event.currentTarget.value || null } })}>
       <option value="">Neutral</option>
       {doc.players.map(p => <option key={p.id} value={p.id}>{playerLabel(doc.players, p.id)}</option>)}
-      {draft.owner && !doc.players.some(p => p.id === draft.owner) && <option value={draft.owner}>Unknown owner: {draft.owner}</option>}
+      {item.owner && !doc.players.some(p => p.id === item.owner) && <option value={item.owner}>Unknown owner: {item.owner}</option>}
     </select></label>
-    <label>Level<input type="number" required min="1" max={maxLevel} step="1" value={draft.level} onInput={event => setDraft({ ...draft, level: Number(event.currentTarget.value) })} /></label>
-    <label title="Decoy: no need to capture it to win; at least one building must stay required. (R-WIN-01/02, R-CPT-01)">Optional target (not needed to win)<input type="checkbox" checked={draft.ignoreForWin} onChange={event => setDraft({ ...draft, ignoreForWin: event.currentTarget.checked })} /></label>
-    <button class="ed-btn-primary" aria-label="Apply owner and level">Apply</button>
-  </fieldset></form>;
+    <NumberField label="Level" fieldKey={`${item.id}:level`} value={item.level} spec={{ type: 'integer', minimum: 1, maximum: maxLevel }} commit={(value, merge) => edit({ type: 'building-properties', id: item.id, value: { level: value! } }, merge)} />
+    <label title="Decoy: no need to capture it to win; at least one building must stay required. (R-WIN-01/02, R-CPT-01)">Optional target (not needed to win)<input type="checkbox" checked={item.ignoreForWin} onChange={event => edit({ type: 'building-properties', id: item.id, value: { ignoreForWin: event.currentTarget.checked } })} /></label>
+  </fieldset>;
+}
+
+function NumberField({ label, tooltip, fieldKey, value, spec, optional = false, placeholder, commit }: { label: string; tooltip?: string; fieldKey: string; value: number | undefined; spec: SchemaField; optional?: boolean; placeholder?: string; commit(value: number | undefined, merge: string): void }) {
+  const { doc, endEditBurst } = useEditor();
+  const field = useLiveField({
+    value: value === undefined ? '' : String(value), mergeKey: `${doc.id}:${fieldKey}`,
+    validate: text => {
+      if (!text.trim()) return optional ? undefined : 'Enter a number';
+      const number = Number(text);
+      if (!Number.isFinite(number)) return 'Enter a number';
+      if (spec.type === 'integer' && !Number.isInteger(number)) return 'Enter a whole number';
+      if (Math.abs(number * 1000 - Math.round(number * 1000)) > 1e-6) return 'Use at most 3 decimal places';
+      if (spec.minimum !== undefined && number < spec.minimum) return `Minimum: ${spec.minimum}`;
+      if (spec.exclusiveMinimum !== undefined && number <= spec.exclusiveMinimum) return `Must be greater than ${spec.exclusiveMinimum}`;
+      if (spec.maximum !== undefined && number > spec.maximum) return `Maximum: ${spec.maximum}`;
+      return undefined;
+    },
+    commit: (text, merge) => commit(text.trim() ? Number(text) : undefined, merge), endBurst: endEditBurst,
+  });
+  return <label title={tooltip}>{label}<input aria-label={label} type="number" required={!optional} min={spec.exclusiveMinimum !== undefined ? spec.exclusiveMinimum + .001 : spec.minimum} max={spec.maximum} step={spec.type === 'integer' ? '1' : '.001'} placeholder={placeholder} {...field.inputProps} /><LiveFieldError field={field} /></label>;
 }
 
 function ParamsGroup({ item }: { item: Building }) {
   const { edit, locked } = useEditor();
-  const [params, setParams] = useState<Record<string, Record<string, string | number | boolean>>>(() => structuredClone((item.params ?? {}) as Record<string, Record<string, string | number | boolean>>));
   const defaults = archetypes[item.archetype]?.modules ?? {};
   const schema = LevelSchema.properties.buildings.items.properties.params!.properties as Record<string, { properties: Record<string, SchemaField> }>;
-  return <form aria-label="Parameters" onSubmit={event => { event.preventDefault(); edit({ type: 'building-properties', id: item.id, value: { params: Object.keys(params).length ? params : undefined } as never }); }}><fieldset disabled={locked}>
+  function change(module: string, field: string, value: string | number | boolean | undefined, merge?: string) {
+    edit(current => {
+      const params = structuredClone(current.buildings.find(building => building.id === item.id)?.params ?? {}) as Record<string, Record<string, string | number | boolean>>;
+      const values = { ...params[module] };
+      if (value === undefined) delete values[field]; else values[field] = value;
+      if (Object.keys(values).length) params[module] = values; else delete params[module];
+      return { type: 'building-properties', id: item.id, value: { params: Object.keys(params).length ? params : undefined } };
+    }, merge);
+  }
+  return <fieldset aria-label="Parameters" disabled={locked}>
     <p class="ed-field-hint">Leave blank to use the archetype default.</p>
     {Object.entries(defaults).flatMap(([module, values]) => Object.entries(schema[module]?.properties ?? {}).map(([field, spec]) => {
+      if (HIDDEN_PARAMS.has(`${module}.${field}`)) return null;
       const { label, tooltip } = paramLabel(module, field);
-      const current = params[module]?.[field];
+      const current = (item.params as Record<string, Record<string, string | number | boolean>> | undefined)?.[module]?.[field];
       const fallback = (values as Record<string, unknown>)[field];
       if (module === 'spawns' && field === 'troop') {
         const unit = String(current ?? fallback ?? '');
         return <label key={`${module}.${field}`} title={tooltip}>{label}<span class="ed-field-readonly">{unit.charAt(0).toUpperCase() + unit.slice(1)}{current !== undefined && <> <span title="This level overrides the building's default unit">(override)</span></>}</span></label>;
       }
-      function change(value: string) {
-        const next = { ...params, [module]: { ...params[module] } };
-        if (value === '') delete next[module]![field];
-        else next[module]![field] = spec.type === 'boolean' ? value === 'true' : spec.type === 'string' ? value : Number(value);
-        if (!Object.keys(next[module]!).length) delete next[module];
-        setParams(next);
-      }
-      return <label key={`${module}.${field}`} title={tooltip}>{label}{spec.type === 'boolean'
-        ? <select value={current === undefined ? '' : String(current)} onChange={event => change(event.currentTarget.value)}><option value="">Default ({fallback ? 'Yes' : 'No'})</option><option value="true">Yes</option><option value="false">No</option></select>
-        : <input type={spec.type === 'string' ? 'text' : 'number'} min={spec.exclusiveMinimum !== undefined ? spec.exclusiveMinimum + .001 : spec.minimum} max={spec.maximum} step={spec.type === 'integer' ? '1' : '.001'} placeholder={String(fallback ?? '')} value={current === undefined ? '' : String(current)} onInput={event => change(event.currentTarget.value)} />}</label>;
+      return spec.type === 'boolean'
+        ? <label key={`${module}.${field}`} title={tooltip}>{label}<select aria-label={label} value={current === undefined ? '' : String(current)} onChange={event => change(module, field, event.currentTarget.value === '' ? undefined : event.currentTarget.value === 'true')}><option value="">Default ({fallback ? 'Yes' : 'No'})</option><option value="true">Yes</option><option value="false">No</option></select></label>
+        : <NumberField key={`${module}.${field}`} label={label} tooltip={tooltip} fieldKey={`${item.id}:params:${module}.${field}`} value={current as number | undefined} spec={spec} optional placeholder={String(fallback ?? '')} commit={(value, merge) => change(module, field, value, merge)} />;
     }))}
-    <button class="ed-btn-primary" aria-label="Apply parameters">Apply</button>
-  </fieldset></form>;
+  </fieldset>;
 }
 
 /** Preview only: never touches history. Remounted per building so the target resets. */
@@ -85,17 +105,18 @@ function LosGroup({ item, labels }: { item: Building; labels: Map<string, string
 
 function ShapeGroup({ item }: { item: Obstacle }) {
   const { edit, locked } = useEditor();
-  const [draft, setDraft] = useState({ variant: item.variant, yawDeg: item.yawDeg, footprint: item.footprint });
-  return <form aria-label="Shape" onSubmit={event => { event.preventDefault(); const yawDeg = snapYaw(draft.yawDeg); setDraft({ ...draft, yawDeg }); edit({ type: 'obstacle-properties', id: item.id, value: { variant: draft.variant, yawDeg, footprint: draft.footprint } }); }}><fieldset disabled={locked}>
-    <label>Obstacle variant<select aria-label="Obstacle variant" value={draft.variant ?? ''} onChange={event => setDraft({ ...draft, variant: (event.currentTarget.value || undefined) as typeof draft.variant })}><option value="">Default</option><option value="small">Small</option><option value="big">Big</option></select></label>
-    <label>Yaw (degrees)<input type="number" required min="-360" max="360" step=".001" value={draft.yawDeg} onInput={event => setDraft({ ...draft, yawDeg: Number(event.currentTarget.value) })} /></label>
-    <label>Footprint shape<select aria-label="Footprint shape" value={draft.footprint?.shape ?? ''} onChange={event => setDraft({ ...draft, footprint: event.currentTarget.value === '' ? undefined : event.currentTarget.value === 'circle' ? { shape: 'circle', radius: 1 } : { shape: 'box', w: 1, d: 1 } })}><option value="">Archetype default</option><option value="circle">Circle</option><option value="box">Box</option></select></label>
-    {draft.footprint && (draft.footprint.shape === 'circle' ? ['radius'] : ['w', 'd']).map(field => <label key={field}>Footprint {field === 'w' ? 'width' : field === 'd' ? 'depth' : 'radius'}<input type="number" required min=".001" max="100" step=".001" value={draft.footprint![field as 'radius' | 'w' | 'd']} onInput={event => setDraft({ ...draft, footprint: { ...draft.footprint!, [field]: Number(event.currentTarget.value) } as typeof draft.footprint })} /></label>)}
-    <button class="ed-btn-primary" aria-label="Apply shape">Apply</button>
-  </fieldset></form>;
+  return <fieldset aria-label="Shape" disabled={locked}>
+    <label>Obstacle variant<select aria-label="Obstacle variant" value={item.variant ?? ''} onChange={event => edit({ type: 'obstacle-properties', id: item.id, value: { variant: (event.currentTarget.value || undefined) as Obstacle['variant'] } })}><option value="">Default</option><option value="small">Small</option><option value="big">Big</option></select></label>
+    <NumberField label="Yaw (degrees)" fieldKey={`${item.id}:yawDeg`} value={item.yawDeg} spec={{ type: 'number', minimum: -360, maximum: 360 }} commit={(value, merge) => edit({ type: 'obstacle-properties', id: item.id, value: { yawDeg: snapYaw(value!) } }, merge)} />
+    <label>Footprint shape<select aria-label="Footprint shape" value={item.footprint?.shape ?? ''} onChange={event => edit({ type: 'obstacle-properties', id: item.id, value: { footprint: event.currentTarget.value === '' ? undefined : event.currentTarget.value === 'circle' ? { shape: 'circle', radius: 1 } : { shape: 'box', w: 1, d: 1 } } })}><option value="">Archetype default</option><option value="circle">Circle</option><option value="box">Box</option></select></label>
+    {item.footprint && (item.footprint.shape === 'circle' ? ['radius'] : ['w', 'd']).map(field => <NumberField key={`${item.footprint!.shape}:${field}`} label={`Footprint ${field === 'w' ? 'width' : field === 'd' ? 'depth' : 'radius'}`} fieldKey={`${item.id}:footprint:${field}`} value={item.footprint![field as 'radius' | 'w' | 'd']} spec={{ type: 'number', minimum: .001, maximum: 100 }} commit={(value, merge) => edit(current => {
+      const footprint = current.elements.find(element => element.id === item.id)?.footprint;
+      return { type: 'obstacle-properties', id: item.id, value: footprint?.shape === item.footprint?.shape ? { footprint: { ...footprint, [field]: value } as Obstacle['footprint'] } : {} };
+    }, merge)} />)}
+  </fieldset>;
 }
 
-/** Friendly-label dropdown (synced both ways with canvas selection) plus per-group Apply forms. */
+/** Friendly-label dropdown (synced both ways with canvas selection) plus live property controls. */
 export function SelectionSection() {
   const { doc, selection, select, clipboard, copy, paste, deleteSelection, locked } = useEditor();
   const labels = itemLabels(doc);
@@ -132,13 +153,13 @@ export function SelectionSection() {
       {actions}
     </div>}
     {building && <div key={building.id}>
-      <Group title="Owner and level"><OwnerGroup key={JSON.stringify({ o: building.owner, l: building.level, i: building.ignoreForWin })} item={building} /></Group>
-      <Group title="Parameters"><ParamsGroup key={JSON.stringify(building.params ?? null)} item={building} /></Group>
+      <Group title="Owner and level"><OwnerGroup item={building} /></Group>
+      <Group title="Parameters"><ParamsGroup item={building} /></Group>
       <Group title="Line of sight"><LosGroup item={building} labels={labels} /></Group>
       {actions}
     </div>}
     {obstacle && <div key={obstacle.id}>
-      <Group title="Shape"><ShapeGroup key={JSON.stringify({ v: obstacle.variant, y: obstacle.yawDeg, f: obstacle.footprint ?? null })} item={obstacle} /></Group>
+      <Group title="Shape"><ShapeGroup item={obstacle} /></Group>
       {actions}
     </div>}
     {!isMulti && !single && <p class="ed-field-hint">Click an item or choose one above.</p>}

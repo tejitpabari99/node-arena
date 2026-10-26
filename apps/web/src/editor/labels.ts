@@ -2,6 +2,8 @@ import type { LevelDoc } from './document.js';
 
 type Players = LevelDoc['players'];
 
+export const HIDDEN_PARAMS: ReadonlySet<string> = new Set(['level.maxLevel', 'grows.growTime', 'spawns.lineSpawnPenalty']);
+
 /** Editor-only copy: keep display labels outside the hashed module/content registries. */
 export const PARAM_LABELS: Record<string, { label: string; tooltip: string }> = {
   'level.maxLevel': { label: 'Max level (garrison cap)', tooltip: 'Highest level this building reaches; extra troops are forwarded or lost. (R-CAP-01)' },
