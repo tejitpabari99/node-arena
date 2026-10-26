@@ -87,5 +87,5 @@ export function FileModal({ levels, standalone, dirty, loading, startError, copy
   </div>;
   return standalone
     ? <main class="editor-shell ed-file-standalone">{dialog}</main>
-    : <div class="editor-shell ed-file-backdrop" onPointerDown={event => { if (event.target === event.currentTarget) onClose(); }}>{dialog}</div>;
+    : <div class="editor-shell ed-modal-backdrop ed-file-backdrop" onPointerDown={event => { if (event.target === event.currentTarget) onClose(); }}>{dialog}</div>;
 }

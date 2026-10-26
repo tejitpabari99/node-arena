@@ -52,9 +52,7 @@ body:has(.ed-shell), body:has(.editor-shell) {
 .editor-properties { margin: 16px 0; padding: 12px; background: var(--ed-panel); border: 1px solid var(--ed-border); border-radius: 6px; }
 .editor-properties summary { cursor: pointer; }
 .editor-properties fieldset { min-width: 0; border: 1px solid var(--ed-border); }
-.ed-toasts { position: absolute; z-index: 3; top: 12px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; max-width: min(560px, 90%); pointer-events: none; }
-.ed-toast { pointer-events: auto; margin: 0; padding: 10px 14px; border-radius: 12px; box-shadow: 0 8px 24px #1b3a4b33; }
-.ed-toast-error { display: flex; align-items: center; gap: 10px; border: 1px solid var(--ed-border); background: var(--ed-panel); color: var(--ed-ink); }
+.ed-toasts { position: absolute; z-index: var(--ed-z-toast); top: 12px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; max-width: min(560px, 90%); pointer-events: none; }
 .editor-script-banner { padding: 12px; border: 1px solid #be8225; background: #fff1c9; color: #5a3a07; }
 
 .editor-layout-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
@@ -75,16 +73,16 @@ body:has(.ed-shell), body:has(.editor-shell) {
 
 /* Primitives */
 /* Buttons, fields and keyboard focus. Bare buttons share the default primitive. */
-.ed-btn, .ed-shell button, .editor-shell button {
+.ed-btn, .ed-shell button:where(:not(.canvas-btn)), .editor-shell button:where(:not(.canvas-btn)) {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--ed-s-1);
   box-sizing: border-box; min-height: 28px; padding: 4px 10px;
   font: inherit; line-height: 18px; text-decoration: none; cursor: pointer;
   border: 1px solid var(--ed-border-strong); border-radius: var(--ed-r);
   color: var(--ed-text); background: var(--ed-g-0); box-shadow: none; text-shadow: none;
 }
-.ed-btn:hover:not(:disabled), .ed-shell button:hover:not(:disabled), .editor-shell button:hover:not(:disabled) { background: var(--ed-g-50); }
-.ed-btn:active:not(:disabled), .ed-shell button:active:not(:disabled), .editor-shell button:active:not(:disabled) { background: var(--ed-g-100); }
-.ed-btn:disabled, .ed-shell button:disabled, .editor-shell button:disabled { opacity: .45; cursor: default; }
+.ed-btn:hover:not(:disabled), .ed-shell button:where(:not(.canvas-btn)):hover:not(:disabled), .editor-shell button:where(:not(.canvas-btn)):hover:not(:disabled) { background: var(--ed-g-50); }
+.ed-btn:active:not(:disabled), .ed-shell button:where(:not(.canvas-btn)):active:not(:disabled), .editor-shell button:where(:not(.canvas-btn)):active:not(:disabled) { background: var(--ed-g-100); }
+.ed-btn:disabled, .ed-shell button:where(:not(.canvas-btn)):disabled, .editor-shell button:where(:not(.canvas-btn)):disabled { opacity: .45; cursor: default; }
 .ed-btn-primary, .ed-shell button.ed-btn-primary, .editor-shell button.ed-btn-primary { color: var(--ed-g-0); background: var(--ed-accent); border-color: var(--ed-accent); }
 .ed-btn-primary:hover:not(:disabled), .ed-shell button.ed-btn-primary:hover:not(:disabled), .editor-shell button.ed-btn-primary:hover:not(:disabled),
 .ed-btn-primary:active:not(:disabled), .ed-shell button.ed-btn-primary:active:not(:disabled), .editor-shell button.ed-btn-primary:active:not(:disabled) { background: var(--ed-accent-hover); border-color: var(--ed-accent-hover); }
@@ -106,8 +104,13 @@ body:has(.ed-shell), body:has(.editor-shell) {
 .ed-field-hint { margin: var(--ed-s-1) 0 0; font-size: var(--ed-fs-sm); color: var(--ed-muted); }
 :is(.ed-shell, .editor-shell) :focus-visible { outline: 2px solid var(--ed-accent); outline-offset: 1px; }
 
-.ed-chip, .ed-modal-title { font-family: Coiny, system-ui, sans-serif; font-weight: 400; }
-.ed-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: var(--ed-panel); border: 1px solid var(--ed-border); color: var(--ed-ink); }
+/* Plain status text; the chip hook remains for existing consumers. */
+.ed-status, .ed-chip, .ed-shell button.ed-chip, .editor-shell button.ed-chip { display: inline-flex; align-items: center; gap: var(--ed-s-1); padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ed-muted); font: inherit; box-shadow: none; }
+.ed-status[data-state="saved"], :is(.ed-shell, .editor-shell) .ed-chip[data-state="saved"] { color: var(--ed-success); }
+.ed-status[data-state="saved"]::before { content: "✓"; }
+.ed-status[data-state="saving"], :is(.ed-shell, .editor-shell) .ed-chip[data-state="saving"] { color: var(--ed-muted); }
+.ed-status[data-state="unsaved"], :is(.ed-shell, .editor-shell) .ed-chip[data-state="unsaved"] { color: var(--ed-warn); }
+.ed-status[data-state="issues"], .ed-status[data-state="error"], :is(.ed-shell, .editor-shell) .ed-chip[data-state="issues"], :is(.ed-shell, .editor-shell) .ed-chip[data-state="error"] { color: var(--ed-danger); }
 /* Menu and popover surfaces leave placement to their callers. */
 .ed-menu, .ed-popover { z-index: var(--ed-z-pop); border: 1px solid var(--ed-border); border-radius: var(--ed-r-lg); background: var(--ed-g-0); box-shadow: var(--ed-sh-md); color: var(--ed-text); }
 .ed-menu { min-width: 200px; padding: var(--ed-s-1); }
@@ -123,8 +126,25 @@ body:has(.ed-shell), body:has(.editor-shell) {
 .ed-popover-title { margin: 0 0 var(--ed-s-2); font-size: var(--ed-fs); font-weight: 600; }
 .ed-row { display: flex; align-items: center; justify-content: space-between; gap: var(--ed-s-2); padding: var(--ed-s-2) 0; }
 .ed-row + .ed-row { border-top: 1px solid var(--ed-border); }
-.ed-modal { position: fixed; z-index: 20; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: min(560px, 92vw); padding: 24px; border-radius: 20px; background: var(--ed-panel); border: 1px solid var(--ed-border); box-shadow: 0 16px 48px #1b3a4b55; color: var(--ed-ink); }
-.ed-panel { padding: 12px; border-radius: 14px; background: var(--ed-panel); border: 1px solid var(--ed-border); color: var(--ed-ink); }
+/* Dialog, toast and panel primitives. */
+.ed-modal { position: fixed; z-index: var(--ed-z-modal); left: 50%; top: 50%; transform: translate(-50%, -50%); box-sizing: border-box; max-width: min(560px, 92vw); padding: 20px; border-radius: 12px; background: var(--ed-g-0); border: 1px solid var(--ed-border); box-shadow: var(--ed-sh-lg); color: var(--ed-text); }
+.ed-modal-title { margin: 0 0 var(--ed-s-3); font-family: var(--ed-font); font-size: var(--ed-fs-lg); font-weight: 600; }
+.ed-modal-backdrop { position: fixed; inset: 0; z-index: var(--ed-z-modal); background: rgba(15, 23, 42, .4); }
+.ed-modal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ed-s-2); margin-top: var(--ed-s-4); }
+.ed-divider-or { display: flex; align-items: center; gap: var(--ed-s-3); margin: var(--ed-s-4) 0; color: var(--ed-muted); font-size: var(--ed-fs-sm); }
+.ed-divider-or::before, .ed-divider-or::after { content: ""; flex: 1; height: 1px; background: var(--ed-border); }
+.ed-group-box { min-width: 0; margin: 0; padding: var(--ed-s-3); border: 1px solid var(--ed-border); border-radius: var(--ed-r); }
+.ed-toast, .ed-toast.editor-script-banner { display: flex; align-items: center; gap: var(--ed-s-2); pointer-events: auto; margin: 0; padding: 10px 14px; border: 0; border-radius: var(--ed-r-lg); background: var(--ed-g-900); color: var(--ed-g-0); box-shadow: var(--ed-sh-md); }
+.ed-toast-error { border-left: 3px solid var(--ed-danger); }
+.ed-toast-success { border-left: 3px solid var(--ed-success); }
+.ed-toast.editor-script-banner { border-left: 3px solid var(--ed-warn); }
+.ed-toast-action, .ed-shell button.ed-toast-action, .editor-shell button.ed-toast-action { min-height: 28px; padding: 0 4px; border: 0; background: transparent; color: var(--ed-accent-soft); text-decoration: underline; text-underline-offset: 2px; }
+.ed-toast-action:hover:not(:disabled), .ed-shell button.ed-toast-action:hover:not(:disabled), .editor-shell button.ed-toast-action:hover:not(:disabled),
+.ed-toast-action:active:not(:disabled), .ed-shell button.ed-toast-action:active:not(:disabled), .editor-shell button.ed-toast-action:active:not(:disabled) { background: var(--ed-g-800); color: var(--ed-g-0); }
+.ed-panel { padding: var(--ed-s-3); border-radius: var(--ed-r-lg); background: var(--ed-g-0); border: 1px solid var(--ed-border); color: var(--ed-text); }
+.ed-section { margin: 0 0 var(--ed-s-3); padding: 0 0 var(--ed-s-3); border: 0; border-bottom: 1px solid var(--ed-border); border-radius: 0; background: transparent; }
+.ed-section-title, .ed-group > summary { cursor: pointer; font-family: var(--ed-font); font-size: var(--ed-fs); font-weight: 600; color: var(--ed-text); }
+.ed-section-title { margin: 0; padding: 0; }
 
 /* Shell grid: no page scroll; left slot scrolls alone; canvas fills the rest. */
 html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
@@ -141,8 +161,7 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 
 .ed-top-spacer { flex: 1 1 auto; }
 .ed-chip-wrap { flex: none; }
-.ed-top .ed-chip { cursor: pointer; font-size: 14px; }
-.ed-top .ed-chip[data-state="error"] { border-color: #c0392b; color: #c0392b; }
+.ed-top .ed-chip { cursor: pointer; font-size: var(--ed-fs); }
 .ed-top .ed-btn { text-decoration: none; }
 .ed-save-popover { position: fixed; top: 60px; right: 12px; max-width: min(420px, 92vw); max-height: 60vh; overflow: auto; }
 .ed-save-popover ul { margin: 0; padding-left: 18px; }
@@ -155,9 +174,9 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 
 /* File modal: standalone over the sky, or dismissible over the editor. */
 .ed-file-standalone { position: fixed; inset: 0; overflow: auto; }
-.ed-file-backdrop { position: fixed; inset: 0; z-index: 19; background: #1b3a4b66; }
+.ed-file-backdrop { z-index: calc(var(--ed-z-modal) - 1); }
 .ed-file { width: min(1000px, 92vw); max-width: min(1000px, 92vw); max-height: 92vh; overflow-y: auto; box-sizing: border-box; }
-.ed-file .ed-modal-title { margin: 0 0 8px; font-size: 28px; }
+.ed-file .ed-modal-title { margin: 0 0 var(--ed-s-2); }
 .ed-file-game { position: absolute; top: 24px; right: 24px; color: var(--ed-ink); }
 .ed-file-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px; margin: 12px 0; border: 1px solid #c0394d; border-radius: 10px; background: #fff4e5; }
 .ed-file-confirm p { margin: 0; flex: 1 0 100%; }
@@ -166,8 +185,6 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-file label { min-width: 0; } .ed-file select { width: 100%; }
 
 /* Left panel sections */
-.ed-section { margin: 0 0 12px; }
-.ed-section-title { cursor: pointer; font-family: Coiny, system-ui, sans-serif; font-size: 18px; padding: 4px 0; }
 .ed-section-body { padding-top: 6px; }
 .ed-level fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .ed-level label { margin: 8px 0; }
@@ -187,7 +204,7 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-library-tile:not(:has(img)) .ed-library-label { display: none; }
 .ed-hint { margin: 6px 0 0; font-size: 12px; opacity: .75; }
 .ed-group { margin: 6px 0; border: 1px solid var(--ed-border); border-radius: 10px; background: #fff; }
-.ed-group > summary { cursor: pointer; padding: 6px 10px; font-family: Coiny, system-ui, sans-serif; }
+.ed-group > summary { padding: 6px 10px; }
 .ed-group-body { padding: 4px 10px 10px; }
 .ed-group fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
 .ed-group label { display: block; margin: 6px 0; font-size: 13px; }
@@ -199,8 +216,6 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-left label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; font-weight: 600; margin: 6px 0; }
 .ed-left label:has(> input[type="checkbox"]) { flex-direction: row; align-items: center; justify-content: space-between; }
 .ed-left input:not([type="checkbox"]), .ed-left select { padding: 6px 8px; width: 100%; box-sizing: border-box; font-weight: 400; background: #fff; }
-.ed-section { padding: 10px 12px; background: #fff; border: 1px solid var(--ed-border); border-radius: 12px; }
-.ed-section-title { font-size: 16px; padding: 0; }
 .ed-player { padding: 6px 8px; background: #f3f6f8; border: 1px solid var(--ed-border); border-radius: 10px; }
 .ed-level .ed-players { gap: 6px; margin: 8px 0; }
 .ed-library-tile:hover { border-color: var(--ed-green); background: #fff; }
