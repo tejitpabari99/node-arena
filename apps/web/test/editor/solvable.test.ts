@@ -37,9 +37,9 @@ it('runs real proxies on the unsaved working copy, streams runs and preserves di
   expect(report).toMatchObject({ id: 'na-proxy', solvable: true, ok: true, deterministic: true, runs: 12 });
   expect(report.totalWins).toBeGreaterThan(0);
   const lose = structuredClone(source); lose.buildings.forEach(building => { building.owner = 'p2'; });
-  const losing = events(await (await check(lose)).text()).at(-1).report;
-  expect(losing).toMatchObject({ solvable: false, totalWins: 0, ok: false });
-  expect(losing.errors.join(' ')).toContain('Unsolvable by proxy');
+  const missingHouse = await check(lose);
+  expect(missingHouse.status).toBe(422);
+  expect(await missingHouse.json()).toMatchObject({ issues: [{ message: 'Human has no starting house' }] });
   expect(await readdir(join(dir, 'data/levels'))).toEqual(files);
   expect(await readFile(join(dir, 'data/campaigns/custom.json'), 'utf8')).toBe(campaign);
 }, 30000);
@@ -104,8 +104,9 @@ it('disconnect cancels the job before permitting a replacement', async () => {
 });
 
 it('preserves unsolved allowlist semantics without presenting validation-ok as a proxy win', async () => {
-  const lose = structuredClone(source); lose.buildings.forEach(building => { building.owner = 'p2'; });
-  const input = await prepareEditorProxy(dir, 'na-proxy-listed', lose);
+  const input = await prepareEditorProxy(dir, 'na-proxy-listed', source);
+  // Exercise the worker's allowlist independently of editor playability validation.
+  input.level.buildings.forEach(building => { building.owner = 1; });
   input.unsolved = { id: 'na-proxy-listed', reason: 'Owner manual fixture', ownerSignOff: null };
   const output: EditorProxyEvent[] = [];
   await runEditorProxy(input, event => output.push(event), new AbortController().signal);

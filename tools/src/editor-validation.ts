@@ -1,4 +1,14 @@
 import { ContentLoadError, computeRequires, loadLevel, parseAndConvert, type Catalog, type NextLevel } from '@node-arena/content';
+import { playerLabel } from '../../apps/web/src/editor/labels.js';
+
+/** Playability check for editor Check/Finalize only; incomplete drafts remain saveable. */
+export function assertPlayersHaveHouses(catalog: Catalog, level: NextLevel): void {
+  const owners = new Set(level.buildings.filter(building => catalog.buildings[building.archetype]?.modules.drawsLines !== undefined).map(building => building.owner));
+  const errors = level.players.flatMap((player, index) => owners.has(player.id) ? [] : [{
+    file: `data/levels/${level.id}.json`, pointer: `/players/${index}`, message: `${playerLabel(level.players, player.id)} has no starting house`,
+  }]);
+  if (errors.length) throw new ContentLoadError(errors);
+}
 
 /** Browser-safe, synchronous validation shared by Save and future editor jobs. Values remain authored units. */
 export function validateEditorDocument(catalog: Catalog, input: unknown, id: string, copy = false) {

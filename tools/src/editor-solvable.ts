@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { compileLevel, loadCatalog, loadLevel, type CompiledLevel, type ManifestV2 } from '@node-arena/content';
 import { loadFiles } from './files.js';
-import { validateEditorDocument } from './editor-validation.js';
+import { assertPlayersHaveHouses, validateEditorDocument } from './editor-validation.js';
 import type { LevelReport, LevelRunReport } from './levels.js';
 import { readUnsolved, type UnsolvedEntry } from './unsolved.js';
 
@@ -18,6 +18,7 @@ export async function prepareEditorProxy(contentDir: string, id: string, input: 
   const manifest = JSON.parse(await readFile(new URL('../../apps/web/assets/manifest.json', import.meta.url), 'utf8')) as ManifestV2;
   const catalog = loadCatalog(files, { themes: Object.keys(manifest.themes), colorKeys: Object.keys(manifest.palettes) });
   const checked = validateEditorDocument(catalog, input, id);
+  assertPlayersHaveHouses(catalog, checked.level);
   const level = compileLevel(catalog, loadLevel(catalog, checked.level).level);
   const unsolved = (await readUnsolved(fileURLToPath(new URL('../unsolved-by-proxy.json', import.meta.url)))).find(entry => entry.id === id) ?? null;
   return { level, unsolved };
