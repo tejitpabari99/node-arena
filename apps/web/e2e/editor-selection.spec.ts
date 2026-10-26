@@ -1,11 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
-async function open(page: Page, archetype = 'house-wt1') {
+async function open(page: Page, archetype = 'house-wt1', params?: LevelDoc['buildings'][number]['params']) {
   await page.route('**/__editor/level/levelview-1', async route => {
     const doc = await (await route.fetch()).json() as LevelDoc;
     doc.buildings = [
-      { id: 'b0', archetype, pos: { x: -4, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
+      { id: 'b0', archetype, pos: { x: -4, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false, ...(params ? { params } : {}) },
       { id: 'b1', archetype: 'house-wt1', pos: { x: 4, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
       { id: 'b2', archetype: 'house-wt1', pos: { x: 4, z: 3 }, owner: null, level: 1, ignoreForWin: false },
     ];
@@ -152,3 +152,34 @@ test('Selection: tower help explains firing semantics and boolean defaults use Y
   await expect(form.getByRole('combobox', { name: 'Fires while neutral', exact: true })).toHaveValue('');
   await expect(form.getByRole('combobox', { name: 'Shoots neutral houses', exact: true })).toHaveValue('');
 });
+
+for (const overridden of [false, true]) {
+  test(`Selection: produced unit is read-only and ${overridden ? 'Tank override survives' : 'Soldier default stays implicit through'} other edits and Save`, async ({ page }) => {
+    test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Uses the real SelectionSection and editor save flow');
+    let saved: LevelDoc | undefined;
+    await page.route('**/__editor/save', async route => {
+      saved = (route.request().postDataJSON() as { level: LevelDoc }).level;
+      await route.fulfill({ json: { level: saved, warnings: [] } });
+    });
+    const params = overridden ? { spawns: { troop: 'tank', lineSpawnPenalty: 0.7 }, grows: { growTime: 2 } } : undefined;
+    await open(page, 'house-wt1', params);
+    await selected(page).selectOption('building:b0');
+    await group(page, 'Parameters');
+    const form = page.getByRole('form', { name: 'Parameters', exact: true });
+    const unit = form.locator('label').filter({ hasText: /^Unit produced/ });
+    await expect(unit).toContainText(overridden ? 'Tank' : 'Soldier');
+    await expect(unit.locator('input, select, textarea, [contenteditable=true]')).toHaveCount(0);
+    await expect(form.getByRole('textbox', { name: 'Unit produced', exact: true })).toHaveCount(0);
+    await expect(unit.getByText('(override)', { exact: true })).toHaveCount(overridden ? 1 : 0);
+    if (overridden) await expect(unit.getByText('(override)', { exact: true })).toHaveAttribute('title', "This level overrides the building's default unit");
+    // Editing this module and another module must retain every existing override.
+    await form.getByLabel('Spawn speed', { exact: true }).fill('0.9');
+    await form.getByLabel('Max level (garrison cap)', { exact: true }).fill('32');
+    await page.getByRole('button', { name: 'Apply parameters' }).click();
+    await expect(unit).toContainText(overridden ? 'Tank' : 'Soldier');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect.poll(() => saved?.buildings[0]?.params).toEqual({
+      ...params, level: { maxLevel: 32 }, spawns: { ...params?.spawns, spawnSpeed: 0.9 },
+    });
+  });
+}

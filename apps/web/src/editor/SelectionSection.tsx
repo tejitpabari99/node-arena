@@ -47,6 +47,10 @@ function ParamsGroup({ item }: { item: Building }) {
       const { label, tooltip } = paramLabel(module, field);
       const current = params[module]?.[field];
       const fallback = (values as Record<string, unknown>)[field];
+      if (module === 'spawns' && field === 'troop') {
+        const unit = String(current ?? fallback ?? '');
+        return <label key={`${module}.${field}`} title={tooltip}>{label}<span>{unit.charAt(0).toUpperCase() + unit.slice(1)}{current !== undefined && <> <span title="This level overrides the building's default unit">(override)</span></>}</span></label>;
+      }
       function change(value: string) {
         const next = { ...params, [module]: { ...params[module] } };
         if (value === '') delete next[module]![field];
