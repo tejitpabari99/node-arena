@@ -58,15 +58,15 @@ export function FileModal({ levels, standalone, dirty, loading, startError, copy
   const dialog = <div class="ed-modal ed-file" role="dialog" aria-modal="true" aria-labelledby="ed-file-title">
     <h2 id="ed-file-title" class="ed-modal-title">{standalone ? 'Level editor' : 'Open or create a level'}</h2>
     {standalone && <a class="ed-file-game" href="/">Game</a>}
-    {error && <p role="alert">{error}</p>}
+    {error && <p class="ed-file-error" role="alert">{error}</p>}
     {pending && <div class="ed-file-confirm" data-testid="discard-confirm">
       <p>Discard unsaved changes?</p>
       <button class="ed-btn ed-btn-primary" onClick={() => onReplace(pending.doc, pending.saved)}>Discard and continue</button>
       <button class="ed-btn" onClick={() => setPending(null)}>Cancel</button>
     </div>}
     <label>New level id<input value={id} disabled={!!pending} onInput={event => setTypedId(event.currentTarget.value)} placeholder="na-my-level" /></label>
-    <p class="editor-hint">Blank levels and copies need a new na- id. Copies drop imported source metadata.</p>
-    <div class="editor-start-grid">
+    <p class="ed-field-hint">Blank levels and copies need a new na- id. Copies drop imported source metadata.</p>
+    <div class="ed-file-grid">
       <section><h3>New blank</h3>
         <label>Theme<select value={theme} onChange={event => setTheme(event.currentTarget.value)}><option value="green">Green</option><option value="snow">Snow</option></select></label>
         <label>Size<select value={size} onChange={event => setSize(event.currentTarget.value as SizePreset)}><option value="small">Small (12 × 12)</option><option value="medium">Medium (20 × 20)</option><option value="large">Large (30 × 30)</option></select></label>
