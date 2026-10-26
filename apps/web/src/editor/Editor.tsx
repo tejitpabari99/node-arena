@@ -27,7 +27,7 @@ import { buildableArea, copySelection, createHistory, historyReducer, scriptRemo
 import type { LevelDoc } from './document.js';
 import { useInitialLoad } from './useInitialLoad.js';
 
-type PendingAction = { action(): void | Promise<void>; kind: 'replace' | 'back' | 'duplicate' };
+type PendingAction = { action(savedResult?: LevelDoc): void | Promise<void>; kind: 'replace' | 'back' | 'duplicate' };
 const closedUi = { menu: false, share: false, flyout: false, dialog: null as 'create' | 'open' | null, confirm: null as PendingAction | null };
 
 /** Owns immutable working-copy snapshots; forms and Play attach here. */
@@ -230,6 +230,7 @@ export function Editor() {
     if (!pending || confirmBusy) return;
     setConfirmBusy(true);
     try {
+      let savedResult: LevelDoc | undefined;
       if (save) {
         const seq = openSeq.current;
         saveOutcome.current = null;
@@ -237,8 +238,9 @@ export function Editor() {
         const current = historyRef.current?.present, saved = savedRef.current;
         const outcome = saveOutcome.current as { seq: number; ok: boolean } | null;
         if (seq !== openSeq.current || !outcome?.ok || outcome.seq !== seq || !current || !saved || isDirty(current, saved)) return;
+        savedResult = saved;
       }
-      await pending.action();
+      await pending.action(savedResult);
       setUi(state => ({ ...state, confirm: null, dialog: null }));
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
     finally { setConfirmBusy(false); }
@@ -258,7 +260,7 @@ export function Editor() {
     file={{ open: ui.menu, onOpenChange: menu => setUi(state => ({ ...state, menu, share: false, flyout: false })), onCreate: () => setUi(state => ({ ...state, dialog: 'create' })), onOpen: () => setUi(state => ({ ...state, dialog: 'open' })), onDuplicate: () => guard(duplicate, 'duplicate') }}
     share={<><SharePanel open={ui.share} onOpenChange={shareOpen} savedDoc={savedDoc} locked={busy} busy={busy} job={job} onSave={() => void doSave('manual')} onCheck={() => void solvable()} onCancel={() => proxyAbort.current?.abort()} onFinalize={() => void finalize()} onDetails={showDetails} proxyEvents={proxyEvents} finalizeEvents={finalizeEvents} finalizeError={finalizeError} lockStatus={lockStatus} lockOutput={lockOutput} flyoutOpen={ui.flyout} flyoutRef={flyoutRef} panelRef={panelRef} detailsRef={detailsRef} />
       <CheckFlyout open={ui.share && ui.flyout} onOpenChange={flyout => setUi(state => ({ ...state, flyout }))} panelRef={panelRef} flyoutRef={flyoutRef} detailsRef={detailsRef} job={job} onCancel={() => proxyAbort.current?.abort()} checkIssues={issues} issueLabel={issueLabel} checkError={checkError} proxyEvents={proxyEvents} /></>} /></EditorCtx.Provider>;
-  const dialogProps = { levels, loading, currentId: doc?.id ?? '', suspended: !!ui.confirm, onClose: () => setUi(state => ({ ...state, dialog: null })), onReplace: (next: LevelDoc, saved: boolean) => guard(() => replaceDoc(next, saved)) };
+  const dialogProps = { levels, loading, currentId: doc?.id ?? '', suspended: !!ui.confirm, onClose: () => setUi(state => ({ ...state, dialog: null })), onReplace: (next: LevelDoc, saved: boolean) => guard(savedResult => replaceDoc(saved && savedResult?.id === next.id ? savedResult : next, saved)) };
   return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<EditorCtx.Provider value={ctx}><LeftPanel /></EditorCtx.Provider>}>
     <Toasts banners={history ? scriptRemovalMessages(history) : []} error={error} onDismissError={() => setError('')} notices={notices} onDismissNotice={id => setNotices(items => items.filter(item => item.id !== id))} />
     <EditorCtx.Provider value={ctx}><Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} /></EditorCtx.Provider>
