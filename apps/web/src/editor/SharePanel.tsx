@@ -53,7 +53,7 @@ export function SharePanel(p: SharePanelProps) {
   const hasReport = p.proxyEvents.length > 0 || !!p.hasCheckProblem;
   const output = p.finalizeEvents.map(event => event.type === 'step' ? `→ ${event.step}\n` : event.type === 'output' ? event.output : event.type === 'error' ? `${event.error}\n` : event.type === 'result' ? 'Finalize complete. Review git diff and commit when ready.\n' : '').join('');
   return <span class="ed-share-wrap">
-    <button ref={trigger} type="button" class="ed-btn ed-btn-primary" data-testid="share-button" aria-haspopup="dialog" aria-expanded={p.open} aria-controls={p.open ? 'editor-share-panel' : undefined} onClick={() => p.onOpenChange(!p.open)}>Share ▾</button>
+    <button ref={trigger} type="button" class="ed-btn" data-testid="share-button" aria-label="Share" aria-haspopup="dialog" aria-expanded={p.open} aria-controls={p.open ? 'editor-share-panel' : undefined} onClick={() => p.onOpenChange(!p.open)}><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 4-2M6 10l4 2" /><circle cx="4" cy="8" r="2" /><circle cx="12" cy="3" r="2" /><circle cx="12" cy="13" r="2" /></svg>Share</button>
     {p.open && <div ref={panel} id="editor-share-panel" class="ed-popover ed-share-panel" role="dialog" aria-labelledby="editor-share-title" tabIndex={-1} data-testid="share-panel"
       onKeyDown={event => { if (event.key === 'Tab') tabbing.current = true; }}
       onBlurCapture={event => {

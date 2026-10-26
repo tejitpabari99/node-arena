@@ -1,6 +1,6 @@
 import { compileLevel, computeRequires, loadCatalog, loadLevel } from '@node-arena/content';
-import { create } from '@node-arena/sim';
-import { Box3, Vector3 } from 'three';
+import { create, createTroopBuffer } from '@node-arena/sim';
+import { Box3, TextureLoader, Vector3 } from 'three';
 import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
 import { fitCamera } from '../render/camera.js';
@@ -35,6 +35,13 @@ export const createWebGlThumbnailRenderer: ThumbnailRendererFactory = async () =
   const manifest = await loadManifest();
   const catalog = loadCatalog(contentFiles(), { themes: Object.keys(manifest.themes), colorKeys: Object.keys(manifest.palettes) });
   const theme = Object.keys(manifest.themes)[0]!;
+  const loader = new TextureLoader(), textureLoads: Promise<void>[] = [];
+  let textureError: unknown;
+  const textureLoader = (path: string) => {
+    let loaded!: () => void;
+    textureLoads.push(new Promise<void>(resolve => { loaded = resolve; }));
+    return loader.load(`/${path}`, loaded, undefined, error => { textureError ??= error; loaded(); });
+  };
   const host = document.createElement('div');
   Object.assign(host.style, { position: 'fixed', left: '-9999px', top: '0', width: `${SIZE}px`, height: `${SIZE}px`, pointerEvents: 'none' });
   document.body.appendChild(host);
@@ -47,8 +54,13 @@ export const createWebGlThumbnailRenderer: ThumbnailRendererFactory = async () =
   return {
     async render(item) {
       const { level, sim } = compile(item);
-      if (!scene) { scene = createLevelScene({ level, view: sim.view, manifest, parent: host }); await scene.ready; }
+      if (!scene) { scene = createLevelScene({ level, view: sim.view, manifest, parent: host, worldOptions: { textureLoader } }); await scene.ready; }
       else await scene.world.setLevel(level, level.theme);
+      // Initial sim state applies neutral team textures and selects the one visible building stage.
+      scene.world.setShowTowerRanges(false);
+      scene.update({ view: sim.view, troops: createTroopBuffer(0), n: 0, alpha: 0 }, [], 0);
+      await Promise.all(textureLoads);
+      if (textureError) throw textureError;
       await frame(); // let the scene's ResizeObserver run before we override the camera
       const obstacle = item.startsWith('obstacle-');
       const hidden = obstacle ? 'b0' : undefined;
