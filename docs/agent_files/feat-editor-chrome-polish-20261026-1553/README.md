@@ -14,7 +14,7 @@ Brief: `brainstorm.md`. Screenshots: `before/` (current editor, 9 shots), `ref/`
 | 01 | theme-tokens | `--ed-*` tokens, Inter/system stack, base button/input/menu/popover/modal/toast styles | none | done |
 | 02 | versioning-save | `editorVersion` 0.0.N, 30s autosave, Finalize saves first, server Duplicate op | none | done |
 | 03 | topbar-menus | Back + File menu, dialogs, Share panel, Check flow, save status | 01, 02, 05 | draft |
-| 04 | left-panel | Read-only level id, param labels/tooltips, read-only troop | 01 | in-progress |
+| 04 | left-panel | Read-only level id, param labels/tooltips, read-only troop | 01 | done |
 | 05 | map-controls | Vertical map-style canvas controls | 01 | done |
 
 ## Dependency graph
@@ -85,4 +85,6 @@ SP05's four tasks are complete; Bug Hunter, Security and Architect PASS. Share/C
 - [Styling, captures and full verification](04-left-panel/code-2026-10-26-1818.md)
 - [Three screenshots](04-left-panel/screens/), [browser harness](04-left-panel/verify-left-panel.mjs), [machine results](04-left-panel/verification-results.json)
 
-SP04 implementation is complete; final review closure is recorded separately.
+SP04's five tasks are complete; Bug Hunter, Security and Architect PASS.
+
+- [Final SP04 review — PASS](04-left-panel/review-2026-10-26-1829.md)
