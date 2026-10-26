@@ -92,25 +92,31 @@ test('new document is never autosaved before a manual Save, even when edited', a
   await openClocked(page);
   await placeBuilding(page);
   await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
-  await page.clock.runFor(15000);
+  await page.clock.runFor(30100);
   expect(posted.length).toBe(0);
 });
 
-test('after a manual Save an edit autosaves once within 5s and the chip returns to Saved', async ({ page }) => {
+test('after a manual Save an edit waits through 5s and 15s, autosaves at 30s, and returns to Saved', async ({ page }) => {
   test.skip(!development, 'Editor API is dev-only');
   const posted = await mockSave(page);
   await openClocked(page);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
   expect(posted.length).toBe(1);
-  await page.clock.runFor(10000);
+  await page.clock.runFor(30100);
   expect(posted.length).toBe(1);
   await placeBuilding(page);
   await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
-  await page.clock.runFor(5100);
+  await page.clock.runFor(5000);
+  expect(posted.length).toBe(1);
+  await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
+  await page.clock.runFor(10000);
+  expect(posted.length).toBe(1);
+  await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
+  await page.clock.runFor(15100);
   await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
   expect(posted.length).toBe(2);
-  await page.clock.runFor(10000);
+  await page.clock.runFor(30100);
   expect(posted.length).toBe(2);
 });
 
@@ -128,14 +134,14 @@ test('a failed autosave shows the error chip and is not retried until the next e
   await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
   fail = true;
   await placeBuilding(page);
-  await page.clock.runFor(5100);
+  await page.clock.runFor(30100);
   await expect(page.getByTestId('save-chip')).toHaveText(/Can't save/);
   expect(calls).toBe(2);
-  await page.clock.runFor(20000);
+  await page.clock.runFor(60100);
   expect(calls).toBe(2);
   fail = false;
   await placeBuilding(page, .6);
-  await page.clock.runFor(5100);
+  await page.clock.runFor(30100);
   await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
   expect(calls).toBe(3);
 });
@@ -153,10 +159,10 @@ test('a 409 job-running autosave response is transient and retried on the next t
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
   await placeBuilding(page);
-  await page.clock.runFor(5100);
+  await page.clock.runFor(30100);
   await expect.poll(() => calls).toBe(2);
   await expect(page.getByTestId('save-chip')).not.toHaveText(/Can't save/);
-  await page.clock.runFor(5100);
+  await page.clock.runFor(30100);
   await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
   expect(calls).toBe(3);
 });
@@ -175,11 +181,11 @@ test('no autosave while Check or Finalize runs; autosave never hits Finalize', a
   await page.getByRole('button', { name: 'Check', exact: true }).click();
   await expect.poll(() => checkCalls).toBe(1);
   const before = posted.length;
-  await page.clock.runFor(20000);
+  await page.clock.runFor(60100);
   expect(posted.length).toBe(before);
   release();
   await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeEnabled();
-  await page.clock.runFor(5100);
+  await page.clock.runFor(30100);
   await expect.poll(() => posted.length).toBe(before + 1);
   expect(finalizeCalls).toBe(0);
 });
