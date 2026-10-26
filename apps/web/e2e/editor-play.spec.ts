@@ -1,4 +1,4 @@
-import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, share } from './editor-helpers.js';
+import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, share, openCopied } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { SeatBot } from '@node-arena/content';
 import type { LevelDoc } from '../src/editor/document.js';
@@ -15,7 +15,7 @@ test('persistent editor banners stay below Play and return above the editor canv
     (doc.players[1]!.bot! as SeatBot).script = [{ op: 'line', own: 'b2', target: 'b0', afterMs: 0 }];
     await route.fulfill({ json: doc });
   });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await page.getByLabel('Selected item', { exact: true }).selectOption('building:b2');
   await page.getByRole('button', { name: 'Delete', exact: true }).click();

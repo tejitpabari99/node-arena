@@ -1,4 +1,4 @@
-import { undo as editorUndo, openFile } from './editor-helpers.js';
+import { undo as editorUndo, openFile, openCopied } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 const development = process.env.WEB_TEST_SERVER === 'dev';
@@ -166,7 +166,7 @@ test('failed rebuild keeps the last scene with an error badge, disables picking,
     doc.elements = [];
     await route.fulfill({ json: doc });
   });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   const status = page.getByTestId('viewport-status'), badge = page.getByTestId('preview-error');
   await expect(status).toContainText('Ready');
   const box = (await page.getByLabel('Edit viewport').boundingBox())!, src = (await page.getByRole('button', { name: 'Place tower', exact: true }).boundingBox())!;
@@ -342,7 +342,7 @@ test('pan gestures: hand mode, Space, middle/right drag, marquee with hand off, 
 
 test('Space key in the editor pans only while the pointer is over the canvas', async ({ page }) => {
   test.skip(!development, 'Dev-only editor');
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const ws = page.locator('.editor-workspace'), box = (await ws.boundingBox())!;
   await page.mouse.move(box.x + 50, box.y + 50);

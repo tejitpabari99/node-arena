@@ -1,4 +1,4 @@
-import { openFile, share } from './editor-helpers.js';
+import { openFile, share, openCopied } from './editor-helpers.js';
 import { test, expect, type Page } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -12,7 +12,7 @@ async function open(page: Page) {
     doc.elements = [];
     await route.fulfill({ json: doc });
   });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
 }
 const shell = (page: Page) => page.locator('.ed-shell');

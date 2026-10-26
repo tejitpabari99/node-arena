@@ -41,3 +41,9 @@ export async function copyFrom(page: Page, source: string, id?: string) {
 export async function expectId(page: Page, id: string | RegExp) {
   await expect(page.getByLabel('Level id', { exact: true })).toHaveText(id);
 }
+/** Enter through the game-menu Create handoff, then choose an existing source. */
+export async function openCopied(page: Page, source = 'levelview-1') {
+  await page.goto('/editor.html?create=1');
+  await copyFrom(page, source);
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+}

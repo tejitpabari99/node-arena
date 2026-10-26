@@ -1,4 +1,4 @@
-import { save as editorSave, share } from './editor-helpers.js';
+import { save as editorSave, share, openCopied } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -67,7 +67,7 @@ for (const invalid of [true, false]) test(`Finalize aborts and surfaces ${invali
   let saves = 0, finalizes = 0;
   await page.route('**/__editor/save', async route => { saves++; await route.fulfill({ status: 500, json: { error: 'disk full' } }); });
   await page.route('**/__editor/finalize', async route => { finalizes++; await route.fulfill({ status: 500, json: { error: 'unexpected finalize' } }); });
-  await page.goto(invalid ? '/editor.html' : '/editor.html?template=levelview-1');
+  if (invalid) await page.goto('/editor.html'); else await openCopied(page);
   if (invalid) {
     await page.getByLabel('New level id').fill('na-finalize-invalid');
     await page.getByTestId('create-confirm').click();
@@ -100,7 +100,7 @@ test('Finalize waits behind autosave and keeps edits and competing jobs locked t
     await finishing;
     await route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' });
   });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   void page.evaluate(() => window.__editorSave!('auto'));
   await expect.poll(() => order.length).toBe(1);
@@ -129,7 +129,7 @@ test('a failed no-change save cannot Finalize using an older saved baseline', as
     else await route.fulfill({ status: 500, json: { error: 'disk unavailable' } });
   });
   await page.route('**/__editor/finalize', async route => { finalizes++; await route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }); });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await editorSave(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   await share(page);
@@ -145,7 +145,7 @@ test('starting Finalize closes an open Check details flyout', async ({ page }) =
   await page.route('**/__editor/save', route => route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '0.0.1' }, warnings: [], changed: true } }));
   await page.route('**/__editor/finalize', route => route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }));
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await page.getByLabel('Level name', { exact: true }).fill('Edited before finalize');
   await page.getByRole('button', { name: 'Apply level properties' }).click();
   await share(page);
@@ -163,7 +163,7 @@ test('a successful save whose level-list refresh fails still lets Finalize proce
   await page.route('**/__editor/levels', route => failList ? route.fulfill({ status: 500, json: { error: 'list down' } }) : route.fallback());
   await page.route('**/__editor/save', route => { failList = true; return route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '0.0.1' }, warnings: [], changed: true } }); });
   await page.route('**/__editor/finalize', route => { finalizes++; return route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }); });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await page.getByLabel('Level name', { exact: true }).fill('Edited before finalize');
   await page.getByRole('button', { name: 'Apply level properties' }).click();
   await share(page);

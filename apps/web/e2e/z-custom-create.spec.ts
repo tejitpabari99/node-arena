@@ -9,7 +9,7 @@ const development = process.env.WEB_TEST_SERVER === 'dev';
 const data = fileURLToPath(new URL('../../../packages/content/data', import.meta.url));
 const customJson = resolve(data, 'campaigns/custom.json');
 
-test('Custom → Create custom level from template → place → Save → appears in Custom → plays with placed building', async ({ page }) => {
+test('Custom → Create custom level from shared dialog → place → Save → appears in Custom → plays with placed building', async ({ page }) => {
   test.skip(!development, 'Editor is dev-only');
   test.setTimeout(120000);
   const original = await readFile(customJson, 'utf8');
@@ -18,12 +18,11 @@ test('Custom → Create custom level from template → place → Save → appear
     const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
     await page.goto('/?test=1');
     await page.getByRole('button', { name: 'Custom', exact: true }).click();
-    await page.getByRole('button', { name: 'Create custom level', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Start from a level' })).toBeVisible();
-    await expect(page.locator('.template-card')).toHaveCount(21);
-    await expect(page.getByRole('button', { name: 'Create and edit', exact: true })).toHaveAttribute('aria-disabled', 'true');
-    await page.locator('.template-card[data-template-id="na-trial"]').click();
-    await page.getByRole('button', { name: 'Create and edit', exact: true }).click();
+    await page.getByRole('link', { name: 'Create custom level', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Create level', exact: true });
+    await expect(dialog).toBeVisible();
+    await dialog.getByLabel('Copy existing level', { exact: true }).selectOption('na-trial');
+    await dialog.getByTestId('create-confirm').click();
     const draft = page.getByLabel('Level id', { exact: true });
     await expect(draft).toHaveText( /^na-custom-\d+$/);
     createdId = (await draft.textContent())!;

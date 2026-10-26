@@ -1,4 +1,4 @@
-import { undo as editorUndo, save as editorSave, openFile, share } from './editor-helpers.js';
+import { undo as editorUndo, save as editorSave, openFile, share, openCopied } from './editor-helpers.js';
 import { test, expect, type Page, type Route } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { acceptDialogs } from './helpers.js';
@@ -27,7 +27,7 @@ test('chip walks Unsaved, Saving, Saved and back to Unsaved on edit', async ({ p
   test.skip(!development, 'Editor API is dev-only');
   let release!: () => void; const hold = new Promise<void>(resolve => { release = resolve; });
   await mockSave(page, hold);
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const chip = page.getByTestId('save-chip');
   await expect(chip).toHaveText('Unsaved');
@@ -64,7 +64,7 @@ test('an edit made during a stalled save survives and the chip stays Unsaved', a
   test.skip(!development, 'Editor API is dev-only');
   let release!: () => void; const hold = new Promise<void>(resolve => { release = resolve; });
   const posted = await mockSave(page, hold);
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const before = Number(await page.locator('.ed-shell').getAttribute('data-buildings'));
   const chip = page.getByTestId('save-chip');
@@ -81,9 +81,9 @@ test('an edit made during a stalled save survives and the chip stays Unsaved', a
   await expect(chip).toHaveText('✓ Saved');
 });
 
-async function openClocked(page: Page, url = '/editor.html?template=levelview-1') {
+async function openClocked(page: Page) {
   await page.clock.install();
-  await page.goto(url);
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
 }
 
@@ -197,7 +197,7 @@ test('beforeunload guard is registered only while the document is dirty', async 
   acceptDialogs(page);
   await mockSave(page);
   const guarded = () => page.evaluate(() => { const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); return event.defaultPrevented; });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   expect(await guarded()).toBe(true);
   await editorSave(page);
@@ -245,7 +245,7 @@ test('start card offers blank, copy and open; bad and existing ids alert', async
 test('file dialog over an open document: dirty replace prompts, Cancel keeps, Discard replaces, Esc dismisses', async ({ page }) => {
   test.skip(!development, 'Editor API is dev-only');
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const name = page.getByLabel('Level id', { exact: true }), original = await name.textContent();
   await openFile(page, 'create');

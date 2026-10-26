@@ -1,8 +1,9 @@
+import { openCopied } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 
 test('Library: five ordered tiles with art or text fallback; drag places an item', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Editor API is dev-only');
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const tiles = page.locator('.ed-library-tile');
   await expect(tiles).toHaveCount(5);

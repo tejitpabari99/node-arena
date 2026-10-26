@@ -1,4 +1,4 @@
-import { save as editorSave, openFile } from './editor-helpers.js';
+import { save as editorSave, openFile, openCopied } from './editor-helpers.js';
 import { test, expect as browserExpect, expect } from '@playwright/test';
 
 const development = process.env.WEB_TEST_SERVER === 'dev';
@@ -67,7 +67,7 @@ for (const size of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]
   test(`shell has no page scroll, scrolling left panel and filling canvas at ${size.width}x${size.height}`, async ({ page }) => {
     test.skip(!development, 'Editor filesystem API is dev-only');
     await page.setViewportSize(size);
-    await page.goto('/editor.html?template=levelview-1');
+    await openCopied(page);
     await expect(page.getByTestId('viewport-status')).toContainText('Ready');
     const m = await page.evaluate(() => {
       const el = document.documentElement, left = document.querySelector('.ed-left')!, canvas = document.querySelector('.ed-canvas')!.getBoundingClientRect(), top = document.querySelector('.ed-top')!.getBoundingClientRect();

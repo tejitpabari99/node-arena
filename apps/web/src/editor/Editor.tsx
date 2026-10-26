@@ -211,7 +211,7 @@ export function Editor() {
     setDoc(next); if (saved) markSaved(next);
     setSelection([]); setClipboard(undefined); pasteCount.current = 0; clearSave(); setNotices([]); setUi(closedUi);
   }
-  const { levels, setLevels, loading, error: startError, copyHint } = useInitialLoad(replaceDoc);
+  const { levels, setLevels, loading, error: startError, copyHint, create } = useInitialLoad(replaceDoc);
   function guard(action: PendingAction['action'], kind: PendingAction['kind'] = 'replace') {
     if (busy) return;
     if (historyRef.current && isDirty(historyRef.current.present, savedRef.current)) {
@@ -273,7 +273,7 @@ export function Editor() {
   return <>{doc && ctx ? <Shell inert={playing} counts={{ buildings: doc.buildings.length, obstacles: doc.elements.length, players: doc.players.length }} top={toolbar} left={<EditorCtx.Provider value={ctx}><LeftPanel /></EditorCtx.Provider>}>
     <Toasts banners={history ? scriptRemovalMessages(history) : []} error={error} onDismissError={() => setError('')} notices={notices} onDismissNotice={id => setNotices(items => items.filter(item => item.id !== id))} />
     <EditorCtx.Provider value={ctx}><Viewport onStatus={setViewportStatus} onLos={setLosStatus} onSelection={setSelection} /></EditorCtx.Provider>
-  </Shell> : <StartScreen levels={levels} loading={loading} copyHint={copyHint} startError={startError} onReplace={replaceDoc} />}
+  </Shell> : create ? <CreateDialog levels={levels} loading={loading} onClose={leave} onReplace={replaceDoc} /> : <StartScreen levels={levels} loading={loading} copyHint={copyHint} startError={startError} onReplace={replaceDoc} />}
   {doc && ui.dialog === 'create' && <CreateDialog {...dialogProps} />}
   {doc && ui.dialog === 'open' && <OpenDialog {...dialogProps} />}
   {ui.confirm && <ConfirmDialog busy={confirmBusy} message={failureActive ? saveMessage || validation.issues.map(issue => `${issueLabel(issue)}: ${issue.message}`).join('\n') || 'Saving failed. Review the save status before continuing.' : 'Save your changes before continuing?'} saveLabel={ui.confirm.kind === 'duplicate' ? 'Save & duplicate' : ui.confirm.kind === 'back' ? 'Save and leave' : 'Save'} discardLabel={ui.confirm.kind === 'back' ? 'Leave without saving' : 'Discard'} onSave={() => void confirm(true)} {...(ui.confirm.kind === 'duplicate' ? {} : { onDiscard: () => void confirm(false) })} onCancel={() => setUi(state => ({ ...state, confirm: null }))} />}

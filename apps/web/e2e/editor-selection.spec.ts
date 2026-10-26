@@ -1,4 +1,4 @@
-import { undo as editorUndo, save as editorSave, historyDisabled } from './editor-helpers.js';
+import { undo as editorUndo, save as editorSave, historyDisabled, openCopied } from './editor-helpers.js';
 import { test, expect, type Page } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -13,7 +13,7 @@ async function open(page: Page, archetype = 'house-wt1', params?: LevelDoc['buil
     doc.elements = [{ id: 'e0', archetype: 'obstacle', variant: 'small', pos: { x: 0, z: 0 }, yawDeg: 0 }];
     await route.fulfill({ json: doc });
   });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
 }
 const group = (page: Page, name: string) => page.locator('[data-section=selection] summary', { hasText: name }).click();
