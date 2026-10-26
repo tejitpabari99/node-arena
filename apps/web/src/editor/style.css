@@ -130,6 +130,8 @@ body:has(.ed-shell):not(:has(.editor-play-overlay)), body:has(.editor-shell):not
 .ed-divider-or::before, .ed-divider-or::after { content: ""; flex: 1; height: 1px; background: var(--ed-border); }
 .ed-group-box { min-width: 0; margin: 0; padding: var(--ed-s-3); border: 1px solid var(--ed-border); border-radius: var(--ed-r); }
 .ed-toast, .ed-toast.editor-script-banner { display: flex; align-items: center; gap: var(--ed-s-2); pointer-events: auto; margin: 0; padding: 10px 14px; border: 0; border-radius: var(--ed-r-lg); background: var(--ed-g-900); color: var(--ed-g-0); box-shadow: var(--ed-sh-md); }
+:is(.ed-shell, .editor-shell) button.ed-toast-close { padding: 0 4px; border: 0; background: transparent; color: var(--ed-g-0); }
+:is(.ed-shell, .editor-shell) button.ed-toast-close:hover, :is(.ed-shell, .editor-shell) button.ed-toast-close:active { background: var(--ed-g-800); }
 .ed-toast-error { border-left: 3px solid var(--ed-danger); }
 .ed-toast-success { border-left: 3px solid var(--ed-success); }
 .ed-toast.editor-script-banner { border-left: 3px solid var(--ed-warn); }
