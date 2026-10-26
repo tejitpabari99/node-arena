@@ -15,7 +15,7 @@ Brief: `brainstorm.md`. Screenshots: `before/` (current editor, 9 shots), `ref/`
 | 02 | versioning-save | `editorVersion` 0.0.N, 30s autosave, Finalize saves first, server Duplicate op | none | done |
 | 03 | topbar-menus | Back + File menu, dialogs, Share panel, Check flow, save status | 01, 02, 05 | draft |
 | 04 | left-panel | Read-only level id, param labels/tooltips, read-only troop | 01 | draft |
-| 05 | map-controls | Vertical map-style canvas controls | 01 | draft |
+| 05 | map-controls | Vertical map-style canvas controls | 01 | in-progress |
 
 ## Dependency graph
 ```mermaid

@@ -1,5 +1,5 @@
 ---
-status: draft
+status: in-progress
 summary: Task breakdown for Google-Maps-style vertical canvas controls (SP05); requires SP01 merged first.
 date: 2026-10-26
 ---
@@ -8,8 +8,8 @@ Source of truth: [PRD.md](PRD.md). Replaces the horizontal pill of canvas contro
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Restructure markup, icons and DOM order | SP01 merged | todo |
-| 2 | Column, card and button styling with stacking contract | 1 | todo |
+| 1 | Restructure markup, icons and DOM order | SP01 merged | in-progress |
+| 2 | Column, card and button styling with stacking contract | 1 | in-progress |
 | 3 | Update viewport tests for stacking and inset | 2 | todo |
 | 4 | Verification and screenshots | 3 | todo |
 
