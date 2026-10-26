@@ -1,5 +1,5 @@
 import { boundsFromPositions } from '@node-arena/content';
-import type { SeatBot } from '@node-arena/content';
+import type { Catalog, CompiledFootprint, SeatBot } from '@node-arena/content';
 import type { LevelDoc } from './document.js';
 import { playerLabel } from './labels.js';
 import { roundCoordinate, type Point, type Selection } from './picking.js';
@@ -24,6 +24,41 @@ const quarter = (v: number) => Math.round(v * 4) / 4;
 export function buildableArea(bounds: Area): Area {
   const cx = quarter((bounds.minX + bounds.maxX) / 2), cz = quarter((bounds.minZ + bounds.maxZ) / 2);
   return { minX: cx - AREA_W / 2, maxX: cx + AREA_W / 2, minZ: cz - AREA_H / 2, maxZ: cz + AREA_H / 2 };
+}
+
+/** Nearest unoccupied quarter-grid spot; spiral order breaks equal-distance ties deterministically. */
+export function placeCenter(doc: LevelDoc, item: LibraryItem, catalog: Pick<Catalog, 'buildings' | 'elements'>, area = buildableArea(doc.bounds)): Extract<DocOp, { type: 'place' }> | null {
+  const center = { x: quarter((area.minX + area.maxX) / 2), z: quarter((area.minZ + area.maxZ) / 2) };
+  const obstacles = [
+    ...doc.buildings.map(building => ({ pos: building.pos, footprint: catalog.buildings[building.archetype]?.footprint, scale: .001, yaw: 0 })),
+    ...doc.elements.map(element => ({ pos: element.pos, footprint: element.footprint ?? catalog.elements[element.archetype]?.footprint, scale: element.footprint ? 1 : .001, yaw: element.yawDeg })),
+  ];
+  function occupied(point: Point) {
+    return obstacles.some(obstacle => {
+      const dx = point.x - obstacle.pos.x, dz = point.z - obstacle.pos.z;
+      if (dx === 0 && dz === 0) return true;
+      const footprint: CompiledFootprint | undefined = obstacle.footprint;
+      if (!footprint) return false;
+      if (footprint.shape === 'circle') return dx * dx + dz * dz <= ((footprint.radius ?? 0) * obstacle.scale) ** 2;
+      const angle = obstacle.yaw * Math.PI / 180, c = Math.cos(angle), s = Math.sin(angle);
+      return Math.abs(c * dx - s * dz) <= (footprint.w ?? 0) * obstacle.scale / 2 && Math.abs(s * dx + c * dz) <= (footprint.d ?? 0) * obstacle.scale / 2;
+    });
+  }
+  let best: Point | undefined, distance = Infinity;
+  function consider(x: number, z: number) {
+    const point = { x: center.x + x * .25, z: center.z + z * .25 }, squared = (x * x + z * z) / 16;
+    if (squared >= distance || point.x < area.minX || point.x > area.maxX || point.z < area.minZ || point.z > area.maxZ || occupied(point)) return;
+    best = point; distance = squared;
+  }
+  consider(0, 0);
+  const rings = Math.ceil(Math.max(Math.abs(area.minX - center.x), Math.abs(area.maxX - center.x), Math.abs(area.minZ - center.z), Math.abs(area.maxZ - center.z)) * 4);
+  for (let ring = 1; ring <= rings && ring * ring / 16 < distance; ring++) {
+    for (let x = -ring; x <= ring; x++) consider(x, -ring);
+    for (let z = -ring + 1; z <= ring; z++) consider(ring, z);
+    for (let x = ring - 1; x >= -ring; x--) consider(x, ring);
+    for (let z = ring - 1; z > -ring; z--) consider(-ring, z);
+  }
+  return best ? { type: 'place', item, pos: best } : null;
 }
 export const clampPoint = (p: Point, area: Area): Point => ({ x: Math.min(area.maxX, Math.max(area.minX, p.x)), z: Math.min(area.maxZ, Math.max(area.minZ, p.z)) });
 /** Per-axis delta keeping the group's extent inside the area; 0 on an axis where the group is wider than the area. */

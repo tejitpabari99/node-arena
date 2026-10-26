@@ -14,7 +14,7 @@ function Fixture() {
   const [calls, setCalls] = useState<string[]>([]), [images, setImages] = useState<Record<string, string>>({});
   const call = (name: string) => setCalls(values => [...values, name]);
   const context: EditorContext = {
-    doc: initial, savedDoc: initial, history: createHistory(initial), dispatch() {}, edit() {}, endEditBurst() {},
+    doc: initial, savedDoc: initial, history: createHistory(initial), dispatch() {}, edit() {}, endEditBurst() {}, placeCenter() {},
     selection: [], select() {}, area: initial.bounds, locked, dirty: false, deleteSelection() {}, copy() {}, paste() {}, viewport: {},
     async save(source) { call(`save:${source}`); }, saveState: 'saved', themes: ['green', 'snow'], colors: ['blue', 'red'], palettes: {}, viewportStatus: { message: '' }, losStatus: '',
   };

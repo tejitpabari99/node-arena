@@ -23,7 +23,7 @@ import type { Selection } from './picking.js';
 import type { EditorFinalizeEvent } from '../../../../tools/src/editor-finalize.js';
 import type { EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
 import { finalizeLevel, readFinalizeStatus, checkSolvable, EditorApiError, duplicateLevel, listLevels, saveLevel } from './api.js';
-import { buildableArea, copySelection, createHistory, historyReducer, scriptRemovalMessages, type Clipboard, type DocHistory, type HistoryAction } from './model.js';
+import { buildableArea, copySelection, createHistory, historyReducer, placeCenter, scriptRemovalMessages, type Clipboard, type DocHistory, type HistoryAction, type LibraryItem } from './model.js';
 import type { LevelDoc } from './document.js';
 import { useInitialLoad } from './useInitialLoad.js';
 import { confirmAction } from './confirm-flow.js';
@@ -75,6 +75,7 @@ export function Editor() {
   function showDetails() { setUi(state => ({ ...state, menu: false, share: true, flyout: true })); }
   function shareOpen(share: boolean) { setUi(state => ({ ...state, menu: false, share, flyout: share && state.flyout })); }
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(busy); busyRef.current = busy;
   // Keep the job lock across the queued save and stream, including save finally blocks.
   const finalizingRef = useRef(false);
   const saveOutcome = useRef<{ seq: number; ok: boolean } | null>(null);
@@ -250,6 +251,22 @@ export function Editor() {
   }
   useEffect(() => { (window as unknown as { __editorSave?: typeof doSave }).__editorSave = doSave; });
   const contextSeq = openSeq.current;
+  async function placeAtCenter(item: LibraryItem) {
+    if (busyRef.current) return;
+    const seq = openSeq.current, id = historyRef.current?.present.id;
+    try {
+      const loaded = await getCatalog(), current = historyRef.current;
+      if (busyRef.current || openSeq.current !== seq || !current || current.present.id !== id) return;
+      const op = placeCenter(current.present, item, loaded, area);
+      if (!op) { notice({ kind: 'info', message: 'No free placement position in the buildable area.' }); return; }
+      const next = historyReducer(current, { type: 'edit', op, area });
+      const kind = item.startsWith('obstacle-') ? 'obstacle' : 'building';
+      const placed = (kind === 'obstacle' ? next.present.elements : next.present.buildings).at(-1)!;
+      historyRef.current = next; setHistory(next); clearSave();
+      const selected: Selection[] = [{ kind, id: placed.id }];
+      setSelection(selected); viewport.current?.select(selected);
+    } catch (reason) { if (openSeq.current === seq) setError(reason instanceof Error ? reason.message : String(reason)); }
+  }
   const ctx: EditorContext | null = doc && history ? {
     doc, savedDoc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, palettes: choices.palettes, viewportStatus, losStatus,
     edit: (op, merge) => {
@@ -258,6 +275,7 @@ export function Editor() {
       setHistory(state => state && openSeq.current === contextSeq ? historyReducer(state, { type: 'edit', op: typeof op === 'function' ? op(state.present) : op, area, ...(merge ? { merge } : {}) }) : state);
     },
     endEditBurst: () => dispatch({ type: 'end-edit' }),
+    placeCenter: item => { void placeAtCenter(item); },
     deleteSelection() { if (selection.length) dispatch({ type: 'edit', op: { type: 'delete-many', targets: selection }, area }); },
     select: next => { viewport.current?.select(next); },
     copy() { setClipboard(copySelection(doc, selection)); pasteCount.current = 0; },

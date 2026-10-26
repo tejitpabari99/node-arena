@@ -24,6 +24,7 @@ function Fixture() {
     doc: history.present, savedDoc: initial, history, dispatch,
     edit: (op, merge) => setHistory(state => historyReducer(state, { type: 'edit', op: typeof op === 'function' ? op(state.present) : op, ...(merge ? { merge } : {}) })),
     endEditBurst: () => dispatch({ type: 'end-edit' }),
+    placeCenter() {},
     selection, select, area: initial.bounds, locked: false, dirty: true,
     deleteSelection() {}, copy() {}, paste() {}, viewport: {},
     async save() {}, saveState: 'unsaved', themes: ['green', 'snow'], colors: ['blue', 'red'], palettes: {}, viewportStatus: { message: '' }, losStatus: '',
