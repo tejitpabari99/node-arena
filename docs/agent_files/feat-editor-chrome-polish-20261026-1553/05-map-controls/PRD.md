@@ -76,7 +76,7 @@ DOM order: Zoom in, Zoom out (matches visual `+` over `−`; current DOM is out-
 
 ## Risks / Open Questions
 - [RESOLVED: single token `--ed-controls-gutter: 56px` defined in SP01 tokens; controls z 3; SP03 popovers z = `--ed-z-pop` (5) and right-anchored panels keep `right >= var(--ed-controls-gutter)`. Hide/dim fallback not needed.]
-- [OPEN] SP01 token landing: this PRD assumes `--ed-sh-md`, `--ed-r-lg`, `--ed-accent-soft`, `--ed-g-*` exist; SP05 task must follow SP01 (same file, order SP01 -> SP05 -> SP03/04).
+- [RESOLVED: SP05 tasks depend on SP01 being merged first (landing order 01 → 02 → 05 → 04 → 03)]
 - [RESOLVED: tests] Existing specs query by role+name inside `data-testid=canvas-controls` (`editor-viewport.spec.ts:18-19, 366-385`, `editor-model.spec.ts:189`); none assert layout, order or size. `title === name` assertion (line 369) must stay true.
 - [RESOLVED: pointer] Container `pointer-events:none` avoids a dead 36px-wide strip over the canvas.
 - [DEFERRED] Hide-on-small-height, tooltips with shortcuts, minimap/compass, split Hand/Grid into a "View" menu.

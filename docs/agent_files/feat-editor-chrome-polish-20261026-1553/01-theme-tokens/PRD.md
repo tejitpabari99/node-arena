@@ -90,7 +90,7 @@ Primitive->consumer map: `.ed-menu*` -> SP03 File menu (+ optional Share overflo
 - [RESOLVED: start with proposed `#2563c9`, tune during screenshot iteration with user review; measure contrast by script.]
 - [RESOLVED: tests] No e2e asserts font/color/Coiny. Style asserts found are non-theme: `editor-shell.spec.ts:73` (left `overflowY`, left width 300px, top height 56px, canvas bounds), `editor-viewport.spec.ts` cursor, `editor-model.spec.ts:161` stroke-dasharray, `editor-library.spec.ts:13` touch-action. Keep grid (56px/300px), library tile `touch-action:none`, `.editor-area` unchanged.
 - [RESOLVED: legacy] See D6; `.editor-play-overlay` stays (class used in `play.ts:14`, `editor-play.spec.ts`).
-- [OPEN] Interdependency with SP05: both edit `.canvas-controls` region of `style.css`. Proposal: SP01 lands first and leaves that block alone except token swaps; SP05 rewrites it. Sequence SP01 -> SP05 -> SP03/04 to avoid conflicts on the single file.
+- [RESOLVED: landing order 01 → 02 → 05 → 04 → 03; SP01 leaves the .canvas-controls block untouched except tokens; SP05 rewrites it]
 - [RESOLVED: 56px top bar stays.]
 - [DEFERRED] Self-hosted Inter, dark mode, density toggle.
 - Merge risk: one shared CSS file across 5 sub-projects; mitigate by section headers + SP01 merging first.

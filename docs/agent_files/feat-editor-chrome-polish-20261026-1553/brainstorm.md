@@ -35,9 +35,9 @@ Rework the level editor chrome (not the game UI): a cleaner top bar (Back + File
 ## Non-goals
 Real sharing/collaboration, level rename/delete, persisting check results, game UI changes.
 
-## Field meanings (Q&A)
-- `maxLevel`: highest upgrade level the building can reach.
-- `troop`: unit type the building produces/holds; shown read-only (humanized id, e.g. "Soldier").
-- `lineSpawnPenalty`: spawn-rate penalty applied when units are sent along a line (tooltip wording follows GAME_RULES/defs).
-- `growTime`: time for the building to grow/produce its next unit/step (units per defs: seconds/cells).
-- `ignoreForWin`: if set, the building does not count toward the win/lose condition.
+## Field meanings (VERIFIED from code / GAME_RULES)
+- `maxLevel`: garrison/HP cap (default 64); arriving troops beyond cap are forwarded or lost (R-CAP-01/03, R-GRW-01). Editable per-building override.
+- `spawns` troop: unit the building produces (soldier/tank); building type implies it; overridable in JSON (golden test uses tank) -> shown read-only.
+- `lineSpawnPenalty`: each extra outgoing line slows every line's spawn; K = 1000 + penalty x (n-1); default 0.3; 0 = no slowdown (R-SPN-01).
+- `growTime`: multiplier on regrow period (default 1.7; higher = slower); only ticks for houses with zero lines; neutrals/towers don't grow (R-GRW-01).
+- `ignoreForWin`: decoy not needed for win/loss; flips to winner on victory; capturing clears flag; >=1 non-ignored building required (R-WIN-01/02, R-CPT-01).
