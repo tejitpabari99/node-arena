@@ -8,10 +8,10 @@ Source of truth: [PRD.md](PRD.md). Replaces the horizontal pill of canvas contro
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Restructure markup, icons and DOM order | SP01 merged | in-progress |
-| 2 | Column, card and button styling with stacking contract | 1 | in-progress |
-| 3 | Update viewport tests for stacking and inset | 2 | todo |
-| 4 | Verification and screenshots | 3 | todo |
+| 1 | Restructure markup, icons and DOM order | SP01 merged | done |
+| 2 | Column, card and button styling with stacking contract | 1 | done |
+| 3 | Update viewport tests for stacking and inset | 2 | in-progress |
+| 4 | Verification and screenshots | 3 | in-progress |
 
 ## Task 1 — Restructure markup, icons and DOM order
 What it is / what it means: Group the six buttons into cards while keeping all behaviour, labels and test ids (PRD Req 1, 3, 6; D2, D3, D8).
