@@ -11,7 +11,7 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/04-le
 | 1 | Param label table and helper | - | done |
 | 2 | Render labels, tooltips, selectors | 1 | in-progress |
 | 3 | Read-only troop row | 2 | todo |
-| 4 | Level id row | - | in-progress |
+| 4 | Level id row | - | done |
 | 5 | SP01 restyle and screenshots | 2, 3, 4, SP01 | todo |
 
 ## Task 1 — Param label table and helper
