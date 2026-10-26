@@ -138,3 +138,36 @@ test('a failed no-change save cannot Finalize using an older saved baseline', as
   await expect(page.getByRole('button', { name: 'Finalize', exact: true })).toBeEnabled();
   expect(calls).toBe(2); expect(finalizes).toBe(0);
 });
+
+test('starting Finalize closes an open Check details flyout', async ({ page }) => {
+  test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev editor');
+  await page.route('**/__editor/solvable', route => route.fulfill({ contentType: 'application/x-ndjson', body: JSON.stringify({ type: 'result', report: { totalWins: 2, runs: 3, ok: true } }) + '\n' }));
+  await page.route('**/__editor/save', route => route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '0.0.1' }, warnings: [], changed: true } }));
+  await page.route('**/__editor/finalize', route => route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/editor.html?template=levelview-1');
+  await page.getByLabel('Level name', { exact: true }).fill('Edited before finalize');
+  await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await share(page);
+  await page.getByRole('button', { name: 'Check', exact: true }).click();
+  await page.getByTestId('check-toast').getByRole('button', { name: 'Details' }).click();
+  await expect(page.getByTestId('check-popover')).toBeVisible();
+  await page.getByRole('button', { name: 'Finalize', exact: true }).click();
+  await expect(page.getByTestId('check-popover')).toHaveCount(0);
+  await expect(page.locator('.ed-toast-success', { hasText: 'Finalize complete.' })).toBeVisible();
+});
+
+test('a successful save whose level-list refresh fails still lets Finalize proceed', async ({ page }) => {
+  test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev editor');
+  let finalizes = 0, failList = false;
+  await page.route('**/__editor/levels', route => failList ? route.fulfill({ status: 500, json: { error: 'list down' } }) : route.fallback());
+  await page.route('**/__editor/save', route => { failList = true; return route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '0.0.1' }, warnings: [], changed: true } }); });
+  await page.route('**/__editor/finalize', route => { finalizes++; return route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }); });
+  await page.goto('/editor.html?template=levelview-1');
+  await page.getByLabel('Level name', { exact: true }).fill('Edited before finalize');
+  await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await share(page);
+  await page.getByRole('button', { name: 'Finalize', exact: true }).click();
+  await expect(page.locator('.ed-toast-success', { hasText: 'Finalize complete.' })).toBeVisible();
+  expect(finalizes).toBe(1);
+});
