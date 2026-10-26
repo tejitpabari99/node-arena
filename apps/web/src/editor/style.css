@@ -169,6 +169,20 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-spinner { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border: 2px solid var(--ed-border); border-top-color: var(--ed-ink); border-radius: 50%; animation: ed-spin .8s linear infinite; vertical-align: -1px; }
 @keyframes ed-spin { to { transform: rotate(360deg); } }
 
+/* Share save and job panel. */
+.ed-share-wrap { display: inline-flex; flex: none; }
+.ed-share-panel { position: fixed; top: 60px; right: var(--ed-controls-gutter); box-sizing: border-box; width: 320px; max-height: calc(100vh - 72px); overflow-y: auto; }
+.ed-share-row { gap: var(--ed-s-2); }
+.ed-share-row .ed-menu-kbd { padding-left: 0; }
+.ed-share-job { display: block; }
+.ed-share-action, .ed-share-actions { display: flex; align-items: center; justify-content: space-between; gap: var(--ed-s-2); }
+.ed-share-panel p { margin: var(--ed-s-1) 0; overflow-wrap: anywhere; }
+.ed-share-panel details { margin-top: var(--ed-s-2); font-size: var(--ed-fs-sm); }
+.ed-share-panel summary { cursor: pointer; }
+.ed-share-panel pre { max-height: 160px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin: var(--ed-s-2) 0 0; }
+.ed-share-panel .ed-share-details { margin-top: var(--ed-s-1); padding: 0; color: var(--ed-accent); }
+.ed-share-version { border-top: 1px solid var(--ed-border); padding-top: var(--ed-s-3); color: var(--ed-muted); font-size: var(--ed-fs-sm); }
+
 /* File modal: standalone over the sky, or dismissible over the editor. */
 .ed-file-standalone { position: fixed; inset: 0; overflow: auto; }
 .ed-file-backdrop { z-index: calc(var(--ed-z-modal) - 1); }
