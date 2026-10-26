@@ -1,5 +1,5 @@
 ---
-status: draft
+status: in-progress
 summary: Five tasks - param label table, label rendering and selectors, read-only troop, level id row, SP01 restyle with 1440x900 screenshots.
 date: 2026-10-26
 ---
@@ -8,7 +8,7 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/04-le
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Param label table and helper | - | todo |
+| 1 | Param label table and helper | - | in-progress |
 | 2 | Render labels, tooltips, selectors | 1 | todo |
 | 3 | Read-only troop row | 2 | todo |
 | 4 | Level id row | - | todo |
