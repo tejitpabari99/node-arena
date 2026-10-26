@@ -1,3 +1,4 @@
+
 import { test, expect } from '@playwright/test';
 
 const development = process.env.WEB_TEST_SERVER === 'dev';
@@ -13,7 +14,7 @@ test('campaign cards have no Edit links; custom cards edit na- levels; global Ed
   await page.getByRole('button', { name: 'Custom', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Edit na-trial', exact: true })).toHaveAttribute('href', '/editor.html?level=na-trial');
   await page.getByRole('link', { name: 'Edit na-trial', exact: true }).click();
-  await expect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-trial');
+  await expect(page.getByLabel('Level id', { exact: true })).toHaveText('na-trial');
 });
 
 test('global Edit link is hidden in campaign levels, shown for custom levels; unknown query ids do not open a document', async ({ page }) => {
@@ -30,7 +31,7 @@ test('global Edit link is hidden in campaign levels, shown for custom levels; un
   await expect(page.getByRole('link', { name: 'Edit level', exact: true })).toHaveAttribute('href', '/editor.html?level=na-trial');
   await page.goto('/editor.html?level=..%2Fcontent');
   await expect(page.getByRole('alert')).toContainText('Unknown level');
-  await expect(page.getByTestId('level-name')).toHaveCount(0);
+  await expect(page.getByTestId('file-menu-button')).toHaveCount(0);
 });
 
 test('test-hooks build does not expose development Edit links', async ({ page }) => {

@@ -73,15 +73,17 @@ it('starts blank and template copies without a server-owned editorVersion', () =
 });
 
 
-// Inspect the real component's button contract without mounting browser-only popover effects.
-vi.mock('preact/hooks', () => ({ useRef: () => ({ current: null }), useState: () => [0, () => undefined], useEffect: () => undefined }));
+// The replacement panel keeps the SP02 Finalize lock contract.
+vi.mock('preact/hooks', () => ({ useRef: () => ({ current: null }), useLayoutEffect: () => undefined }));
 it('allows Finalize for a dirty document while still disabling competing jobs', async () => {
-  const { JobPopovers } = await import('../../src/editor/JobPopovers.js');
-  const props: import('../../src/editor/JobPopovers.js').JobPopoversProps = { open: null, setOpen() {}, job: null, busy: false, dirty: true, onCheck() {}, onCancel() {}, onFinalize() {}, checkIssues: [], issueLabel: () => '', checkError: '', proxyEvents: [], finalizeEvents: [], finalizeError: '', lockStatus: 'current', lockOutput: '' };
+  const { SharePanel } = await import('../../src/editor/SharePanel.js');
+  const props: import('../../src/editor/SharePanel.js').SharePanelProps = { open: true, onOpenChange() {}, savedDoc: null, locked: false, job: null, busy: false, onSave() {}, onCheck() {}, onCancel() {}, onFinalize() {}, onDetails() {}, proxyEvents: [], finalizeEvents: [], finalizeError: '', lockStatus: 'current', lockOutput: '' };
   function button(busy: boolean) {
-    const root = JobPopovers({ ...props, busy });
-    const wrap = (root.props.children as preact.VNode[])[1]!;
-    return (wrap.props as { children: preact.VNode[] }).children[0]!.props as unknown as { disabled: boolean };
+    const root = SharePanel({ ...props, busy });
+    const panel = (root.props.children as preact.VNode[])[1]!;
+    const row = (panel.props as { children: preact.VNode[] }).children[2]!;
+    const action = (row.props as { children: preact.VNode[] }).children[0]!;
+    return ((action.props as { children: preact.VNode[] }).children[1]!.props as unknown as { disabled: boolean });
   }
   expect(button(false).disabled).toBe(false);
   expect(button(true).disabled).toBe(true);

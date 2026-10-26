@@ -1,3 +1,4 @@
+import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, copyFrom } from './editor-helpers.js';
 import type { SeatBot } from '@node-arena/content';
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
@@ -17,9 +18,7 @@ test('property forms commit once, update the preview, and deletion banners undo 
     await route.fulfill({ json: { level: saved, warnings: [] } });
   });
   await page.goto('/editor.html');
-  await page.getByLabel('New level id').fill('na-forms-browser');
-  await page.getByLabel('Copy level').selectOption('levelview-1');
-  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await copyFrom(page, 'levelview-1', 'na-forms-browser');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await page.getByLabel('Level name', { exact: true }).fill('Snow practice');
   await page.getByLabel('Level theme', { exact: true }).selectOption('snow');
@@ -30,10 +29,10 @@ test('property forms commit once, update the preview, and deletion banners undo 
   await page.getByRole('button', { name: 'Apply level properties' }).click();
   await expect(page.getByLabel('Level theme', { exact: true })).toHaveValue('snow');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(page.getByLabel('Level name', { exact: true })).toHaveValue('LevelView 1');
-  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  expect(await historyDisabled(page, 'undo')).toBe(true);
+  await editorRedo(page);
   await page.getByLabel('Selected item', { exact: true }).selectOption('building:b0');
   await page.locator('[data-section=selection] summary', { hasText: 'Owner and level' }).click();
   await page.locator('[data-section=selection] summary', { hasText: 'Parameters' }).click();
@@ -56,7 +55,7 @@ test('property forms commit once, update the preview, and deletion banners undo 
   await page.getByLabel('Footprint depth').fill('3');
   await page.getByRole('button', { name: 'Apply shape' }).click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect.poll(() => saved?.name).toBe('Snow practice');
   expect(saved!.timeLimitSec).toBe(120);
   expect(saved!.players[1]!.bot).toMatchObject({ actionDelayMs: 2500, behavior: 'attackOnly' });
@@ -67,11 +66,11 @@ test('property forms commit once, update the preview, and deletion banners undo 
   await expect(page.getByTestId('script-removal-banner')).toContainText('AI1 script removed');
   await expect(page.locator('.ed-canvas').getByTestId('script-removal-banner')).toBeVisible();
   if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/banner-toast-1280x720.png` });
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect.poll(() => (saved?.players[1]!.bot as SeatBot | undefined)?.script).toBeUndefined();
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(page.getByTestId('script-removal-banner')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect.poll(() => (saved?.players[1]!.bot as SeatBot | undefined)?.script?.length).toBe(1);
   expect(errors).toEqual([]);
 });

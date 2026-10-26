@@ -1,3 +1,4 @@
+import { undo as editorUndo, save as editorSave, historyDisabled, copyFrom } from './editor-helpers.js';
 import { test, expect, type Page } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -12,9 +13,7 @@ async function open(page: Page, saved: { doc?: LevelDoc }, owned: { n: number })
     await route.fulfill({ json: { level: saved.doc, warnings: [] } });
   });
   await page.goto('/editor.html');
-  await page.getByLabel('New level id').fill('na-level-section');
-  await page.getByLabel('Copy level').selectOption('levelview-1');
-  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await copyFrom(page, 'levelview-1', 'na-level-section');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
 }
 
@@ -23,7 +22,6 @@ test('Level section: add/delete AI, duplicate block, one undo step, owners nulle
   const saved: { doc?: LevelDoc } = {}, owned = { n: 0 };
   await open(page, saved, owned);
   const apply = page.getByRole('button', { name: 'Apply level properties' });
-  const undo = page.getByRole('button', { name: 'Undo', exact: true });
   await expect(apply).toBeDisabled();
   const before = await page.locator('.ed-player').count();
   const addAi = page.getByRole('button', { name: 'Add AI', exact: true });
@@ -60,17 +58,17 @@ test('Level section: add/delete AI, duplicate block, one undo step, owners nulle
   expect(owned.n).toBeGreaterThan(0);
   await expect(page.getByRole('alertdialog')).toContainText(`Its ${owned.n} building${owned.n === 1 ? '' : 's'} become Neutral.`);
   await page.getByRole('button', { name: 'Confirm delete' }).click();
-  await expect(undo).toBeDisabled();
+  expect(await historyDisabled(page)).toBe(true);
   await apply.click(); // one Apply
-  await expect(undo).toBeEnabled();
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  expect(await historyDisabled(page)).toBe(false);
+  await editorSave(page);
   await expect.poll(() => saved.doc?.players.map(p => p.id)).toEqual(['p1', 'p3']);
   expect(saved.doc!.buildings.some(b => b.owner === 'p2')).toBe(false);
   expect(saved.doc!.buildings.filter(b => b.owner === null).length).toBeGreaterThanOrEqual(owned.n);
   // A single Undo restores prior players and owners.
-  await undo.click();
-  await expect(undo).toBeDisabled();
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorUndo(page);
+  expect(await historyDisabled(page)).toBe(true);
+  await editorSave(page);
   await expect.poll(() => saved.doc?.players.map(p => p.id)).toEqual(['p1', 'p2']);
   expect(saved.doc!.buildings.filter(b => b.owner === 'p2')).toHaveLength(owned.n);
 });

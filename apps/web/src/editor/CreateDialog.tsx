@@ -13,7 +13,7 @@ export interface CreateBodyProps {
   onReplace(doc: LevelDoc, saved: boolean): void | Promise<void>;
   onBusyChange?(busy: boolean): void;
 }
-export interface CreateDialogProps extends CreateBodyProps { onClose(): void }
+export interface CreateDialogProps extends CreateBodyProps { onClose(): void; suspended?: boolean }
 
 const EXISTS = 'Choose a new id; that level already exists.';
 
@@ -55,11 +55,11 @@ export function CreateDialogBody({ levels, loading, disabled: unavailable = fals
   </form>;
 }
 
-export function CreateDialog({ onClose, onBusyChange, ...props }: CreateDialogProps) {
+export function CreateDialog({ onClose, onBusyChange, suspended, ...props }: CreateDialogProps) {
   const [busy, setBusy] = useState(false);
   // Notify optional owners without changing the reusable body's contract.
   useEffect(() => { onBusyChange?.(busy); }, [busy, onBusyChange]);
-  return <LevelDialogFrame title="Create level" busy={busy} onClose={onClose}>
+  return <LevelDialogFrame suspended={!!suspended} title="Create level" busy={busy} onClose={onClose}>
     <CreateDialogBody {...props} onBusyChange={setBusy} />
   </LevelDialogFrame>;
 }

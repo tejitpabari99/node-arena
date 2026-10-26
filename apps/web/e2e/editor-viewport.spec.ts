@@ -1,3 +1,4 @@
+import { undo as editorUndo, openFile } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 const development = process.env.WEB_TEST_SERVER === 'dev';
@@ -6,13 +7,13 @@ test('working copy renders, reports blank drafts, and has editor camera controls
   test.skip(!development, 'Editor API is dev-only');
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-viewport');
-  await page.getByRole('button', { name: 'Create blank' }).click();
+  await page.getByTestId('create-confirm').click();
   await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
-  await page.getByTestId('level-name').click();
-  await page.getByLabel('New level id').fill('na-viewport');
-  await page.getByLabel('Copy level').selectOption('levelview-1');
-  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
-  await page.getByRole('button', { name: 'Discard and continue', exact: true }).click();
+  await openFile(page, 'create');
+  await page.getByLabel('New level id').fill('na-viewport-copy');
+  await page.getByLabel('Copy existing level', { exact: true }).selectOption('levelview-1');
+  await page.getByTestId('create-confirm').click();
+  await page.getByTestId('confirm-discard').click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await expect(page.getByLabel('Edit viewport').locator('canvas')).toBeVisible();
   await page.getByTestId('canvas-controls').getByRole('button', { name: 'Zoom in', exact: true }).click();
@@ -144,8 +145,8 @@ test('textures that finish after scene readiness appear without touching the cam
   await page.route('**/textures/tw/*-blue.png', async route => { await held; await route.continue(); });
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-late-textures');
-  await page.getByLabel('Copy level').selectOption('levelview-20');
-  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await page.getByLabel('Copy existing level', { exact: true }).selectOption('levelview-20');
+  await page.getByTestId('create-confirm').click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const canvas = page.getByLabel('Edit viewport').locator('canvas');
   const before = await canvas.screenshot();
@@ -190,7 +191,7 @@ test('failed rebuild keeps the last scene with an error badge, disables picking,
   await page.mouse.click(drop.x, drop.y);
   await expect(page.getByTestId('viewport-selection')).toHaveText('No selection');
   // Undo restores a valid document; the badge clears and picking works again.
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(badge).toHaveCount(0);
   await expect(status).toContainText('Ready');
   await page.getByLabel('Selected item', { exact: true }).selectOption('');
@@ -361,7 +362,7 @@ test('canvas controls: zoom limits, fit, game camera, hand, persisted grid', asy
   await page.goto('/editor.html');
   await page.evaluate(() => localStorage.removeItem('node-arena.editor.grid'));
   await page.getByLabel('New level id').fill('na-canvas-ctl');
-  await page.getByRole('button', { name: 'Create blank' }).click();
+  await page.getByTestId('create-confirm').click();
   await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
   const controls = page.getByTestId('canvas-controls');
   for (const name of ['Zoom out', 'Zoom in', 'Fit area', 'Game camera', 'Hand', 'Show grid']) {

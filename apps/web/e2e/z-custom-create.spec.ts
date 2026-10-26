@@ -1,3 +1,4 @@
+import { save as editorSave } from './editor-helpers.js';
 // Named z-* so it runs last: its real level write/removal invalidates the dev server's content graph for other specs.
 import { test, expect } from '@playwright/test';
 import { readFile, writeFile, rm } from 'node:fs/promises';
@@ -23,9 +24,9 @@ test('Custom → Create custom level from template → place → Save → appear
     await expect(page.getByRole('button', { name: 'Create and edit', exact: true })).toHaveAttribute('aria-disabled', 'true');
     await page.locator('.template-card[data-template-id="na-trial"]').click();
     await page.getByRole('button', { name: 'Create and edit', exact: true }).click();
-    const draft = page.getByTestId('level-name');
-    await expect(draft).toHaveAttribute('title', /^na-custom-\d+$/);
-    createdId = (await draft.getAttribute('title'))!;
+    const draft = page.getByLabel('Level id', { exact: true });
+    await expect(draft).toHaveText( /^na-custom-\d+$/);
+    createdId = (await draft.textContent())!;
     expect(createdId).not.toBe('na-trial');
     const before = Number(await page.locator('.ed-shell').getAttribute('data-buildings'));
     const host = page.getByLabel('Edit viewport'), box = (await host.boundingBox())!;
@@ -37,7 +38,7 @@ test('Custom → Create custom level from template → place → Save → appear
     await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(before + 1));
     // The dev watcher may reload the page right after the write, so assert the save response, not the transient chip.
     const saveResponse = page.waitForResponse(response => response.url().includes('/__editor/save'));
-    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await editorSave(page);
     expect((await saveResponse).ok()).toBe(true);
     // Dev server picks up the new level file via its watcher and may reload the page: retry the whole navigation.
     const card = page.locator(`.level-grid.custom .level-card[data-level-id="${createdId}"]`);

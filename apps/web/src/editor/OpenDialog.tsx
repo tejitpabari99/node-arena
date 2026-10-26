@@ -4,7 +4,7 @@ import type { CreateBodyProps } from './CreateDialog.js';
 import { LevelDialogFrame } from './LevelDialogFrame.js';
 
 export type OpenBodyProps = CreateBodyProps;
-export interface OpenDialogProps extends OpenBodyProps { onClose(): void }
+export interface OpenDialogProps extends OpenBodyProps { onClose(): void; suspended?: boolean }
 
 export function OpenDialogBody({ levels, loading, disabled: unavailable = false, currentId, onReplace, onBusyChange }: OpenBodyProps) {
   const customs = levels.filter(level => level.id.startsWith('na-'));
@@ -29,10 +29,10 @@ export function OpenDialogBody({ levels, loading, disabled: unavailable = false,
   </form>;
 }
 
-export function OpenDialog({ onClose, onBusyChange, ...props }: OpenDialogProps) {
+export function OpenDialog({ onClose, onBusyChange, suspended, ...props }: OpenDialogProps) {
   const [busy, setBusy] = useState(false);
   useEffect(() => { onBusyChange?.(busy); }, [busy, onBusyChange]);
-  return <LevelDialogFrame title="Open level" busy={busy} onClose={onClose}>
+  return <LevelDialogFrame suspended={!!suspended} title="Open level" busy={busy} onClose={onClose}>
     <OpenDialogBody {...props} onBusyChange={setBusy} />
   </LevelDialogFrame>;
 }

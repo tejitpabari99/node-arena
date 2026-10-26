@@ -1,3 +1,4 @@
+import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, share } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { SeatBot } from '@node-arena/content';
 import type { LevelDoc } from '../src/editor/document.js';
@@ -41,8 +42,8 @@ test('persistent editor banners stay below Play and return above the editor canv
     const rect = element.getBoundingClientRect();
     return element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
   })).toBe(true);
-  await page.getByTestId('save-chip').click();
-  const popover = page.getByTestId('save-popover');
+  await share(page);
+  const popover = page.getByTestId('share-panel');
   await expect(popover).toBeVisible();
   expect(await popover.evaluate(element => {
     const rect = element.getBoundingClientRect();
@@ -76,7 +77,7 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
     return JSON.stringify({ ...localStorage });
   });
   await page.getByLabel('New level id').fill('na-play-browser');
-  await page.getByRole('button', { name: 'Create blank', exact: true }).click();
+  await page.getByTestId('create-confirm').click();
   await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
   for (const [index, fraction] of [[0, .4], [1, .6]]) {
     const button = page.getByRole('button', { name: 'Place house-wt1', exact: true });
@@ -91,7 +92,7 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
     await page.getByLabel('Owner', { exact: true }).selectOption('p2');
     await page.getByRole('button', { name: 'Apply owner and level', exact: true }).click();
   }
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.locator('.editor-play-arena canvas')).toBeVisible();
@@ -100,10 +101,10 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
   await page.getByRole('button', { name: 'Back to editor', exact: true }).click();
   await expect(page.locator('.editor-play-overlay')).toHaveCount(0);
   await expect(page.getByLabel('Selected item', { exact: true })).toHaveValue('building:b1');
-  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await historyDisabled(page, 'undo')).toBe(false);
+  await editorUndo(page);
   await expect(page.getByLabel('Owner', { exact: true })).toHaveValue('');
-  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await editorRedo(page);
   await expect(page.getByLabel('Owner', { exact: true })).toHaveValue('p2');
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '2');
   expect(await page.evaluate(() => JSON.stringify({ ...localStorage }))).toBe(baseline);

@@ -1,3 +1,4 @@
+import { save as editorSave, share } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -27,31 +28,34 @@ test('dirty Finalize saves the exact server response before streaming and refres
   page.on('request', request => { if (request.url().endsWith('/__editor/finalize')) finalizeBody = request.postData() ?? ''; });
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-finalize-browser');
-  await page.getByLabel('Copy level').selectOption('levelview-1');
-  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await page.getByLabel('Copy existing level', { exact: true }).selectOption('levelview-1');
+  await page.getByTestId('create-confirm').click();
   const finalize = page.getByRole('button', { name: 'Finalize', exact: true });
-  const popover = page.getByTestId('finalize-popover');
-  await expect(finalize).toBeEnabled();
+  const popover = page.getByTestId('share-panel');
+  await expect(page.getByTestId('share-button')).toBeEnabled();
   // Lock text only lives in the popover, fetched lazily on open.
   await expect(page.getByText('Content locks current')).toHaveCount(0);
   await expect(page.getByText('Unfinalized changes')).toHaveCount(0);
   expect(statusRequests).toBe(0);
-  await page.getByRole('button', { name: 'Finalize details' }).click();
+  await share(page);
   await expect(popover).toContainText('Unfinalized changes on disk');
   await page.keyboard.press('Escape');
   await expect(popover).toHaveCount(0);
   await expect(page.getByText('Unfinalized changes')).toHaveCount(0);
+  await share(page);
   await expect(finalize).toBeEnabled();
   await finalize.click();
   await expect(popover).toBeVisible();
-  await expect(page.getByLabel('Finalize output')).toContainText('Wrote hashes.lock.json');
+  await popover.getByText('Finalize output', { exact: true }).click();
+  await expect(popover).toContainText('Wrote hashes.lock.json');
   await expect(popover).toContainText('Content locks current');
   expect(JSON.parse(finalizeBody).level.id).toBe('na-finalize-browser');
   expect(order).toEqual(['save', 'finalize']);
-  await popover.getByRole('button', { name: 'Close' }).click();
+  await page.getByTestId('share-button').click();
   await expect(page.getByText('Content locks current')).toHaveCount(0);
   await page.getByLabel('Level name', { exact: true }).fill('Changed after Finalize');
   await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await share(page);
   await expect(finalize).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
   expect(finalizes).toBe(1); expect(statusRequests).toBeGreaterThanOrEqual(2);
@@ -66,8 +70,9 @@ for (const invalid of [true, false]) test(`Finalize aborts and surfaces ${invali
   await page.goto(invalid ? '/editor.html' : '/editor.html?template=levelview-1');
   if (invalid) {
     await page.getByLabel('New level id').fill('na-finalize-invalid');
-    await page.getByRole('button', { name: 'Create blank' }).click();
+    await page.getByTestId('create-confirm').click();
   }
+  await share(page);
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
   await expect(page.getByTestId('save-chip')).toHaveText(invalid ? /^\d+ issues$/ : "Can't save");
   await expect(page.getByTestId('save-popover')).toContainText(invalid ? 'must NOT have fewer than 1 items' : 'disk full');
@@ -101,6 +106,7 @@ test('Finalize waits behind autosave and keeps edits and competing jobs locked t
   await expect.poll(() => order.length).toBe(1);
   await page.getByLabel('Level name', { exact: true }).fill('Edited while autosave waits');
   await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await share(page);
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
   for (const name of ['Save', 'Play', 'Check', 'Finalize']) await expect(page.getByRole('button', { name, exact: true })).toBeDisabled();
   releaseAuto();
@@ -124,8 +130,9 @@ test('a failed no-change save cannot Finalize using an older saved baseline', as
   });
   await page.route('**/__editor/finalize', async route => { finalizes++; await route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }); });
   await page.goto('/editor.html?template=levelview-1');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
+  await share(page);
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
   await expect(page.getByTestId('save-message')).toHaveText('disk unavailable');
   await expect(page.getByRole('button', { name: 'Finalize', exact: true })).toBeEnabled();

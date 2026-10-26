@@ -1,3 +1,4 @@
+import { undo as editorUndo, save as editorSave, openFile, share } from './editor-helpers.js';
 import { test, expect, type Page, type Route } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { acceptDialogs } from './helpers.js';
@@ -30,7 +31,7 @@ test('chip walks Unsaved, Saving, Saved and back to Unsaved on edit', async ({ p
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const chip = page.getByTestId('save-chip');
   await expect(chip).toHaveText('Unsaved');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect(chip).toHaveText('Saving…');
   release();
   await expect(chip).toHaveText('✓ Saved');
@@ -38,21 +39,21 @@ test('chip walks Unsaved, Saving, Saved and back to Unsaved on edit', async ({ p
   await placeBuilding(page);
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(before + 1));
   await expect(chip).toHaveText('Unsaved');
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(chip).toHaveText('✓ Saved');
   await page.setViewportSize({ width: 1280, height: 720 });
   const dir = process.env.SHOT_DIR; if (dir) { mkdirSync(dir, { recursive: true }); await page.locator('.ed-top').screenshot({ path: `${dir}/topbar-1280x720.png` }); }
 });
 
-test('blank document Save lists issues in the chip popover; level-name exposes id', async ({ page }) => {
+test('blank document Save lists issues in the status popover; left panel exposes id', async ({ page }) => {
   test.skip(!development, 'Editor API is dev-only');
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-chip-blank');
-  await page.getByRole('button', { name: 'Create blank' }).click();
+  await page.getByTestId('create-confirm').click();
   const chip = page.getByTestId('save-chip');
-  await expect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-chip-blank');
+  await expect(page.getByLabel('Level id', { exact: true })).toHaveText('na-chip-blank');
   await expect(chip).toHaveText('Unsaved');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect(chip).toHaveText(/^\d+ issues$/);
   await expect(page.getByTestId('save-popover')).toBeVisible();
   await expect(page.getByTestId('save-popover')).toContainText('must NOT have fewer than 1 items');
@@ -75,7 +76,7 @@ test('an edit made during a stalled save survives and the chip stays Unsaved', a
   release();
   await expect(chip).toHaveText('Unsaved');
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(before + 1));
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', String(before));
   await expect(chip).toHaveText('✓ Saved');
 });
@@ -100,7 +101,7 @@ test('after a manual Save an edit waits through 5s and 15s, autosaves at 30s, an
   test.skip(!development, 'Editor API is dev-only');
   const posted = await mockSave(page);
   await openClocked(page);
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   expect(posted.length).toBe(1);
   await page.clock.runFor(30100);
@@ -130,7 +131,7 @@ test('a failed autosave shows the error chip and is not retried until the next e
     else await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ level: body.level, warnings: [] }) });
   });
   await openClocked(page);
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   fail = true;
   await placeBuilding(page);
@@ -156,7 +157,7 @@ test('a 409 job-running autosave response is transient and retried on the next t
     else await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ level: body.level, warnings: [] }) });
   });
   await openClocked(page);
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   await placeBuilding(page);
   await page.clock.runFor(30100);
@@ -175,9 +176,10 @@ test('no autosave while Check or Finalize runs; autosave never hits Finalize', a
   await page.route('**/__editor/solvable', async route => { checkCalls++; await hold; await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'stub' }) }); });
   await page.route('**/__editor/finalize', async route => { finalizeCalls++; await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'stub' }) }); });
   await openClocked(page);
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   await placeBuilding(page);
+  await share(page);
   await page.getByRole('button', { name: 'Check', exact: true }).click();
   await expect.poll(() => checkCalls).toBe(1);
   const before = posted.length;
@@ -198,7 +200,7 @@ test('beforeunload guard is registered only while the document is dirty', async 
   await page.goto('/editor.html?template=levelview-1');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   expect(await guarded()).toBe(true);
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   expect(await guarded()).toBe(false);
   await placeBuilding(page);
@@ -206,67 +208,67 @@ test('beforeunload guard is registered only while the document is dirty', async 
   await expect.poll(guarded).toBe(true);
 });
 
-test('file modal is standalone with no document: all three paths create one, bad and existing ids alert', async ({ page }) => {
+test('start card offers blank, copy and open; bad and existing ids alert', async ({ page }) => {
   test.skip(!development, 'Editor API is dev-only');
   acceptDialogs(page);
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/editor.html');
-  const dialog = page.getByRole('dialog');
+  const dialog = page.locator('.ed-start-card');
   await expect(dialog).toBeVisible();
-  await expect(page.getByTestId('level-name')).toHaveCount(0);
+  await expect(page.getByTestId('file-menu-button')).toHaveCount(0);
   await expect(page.locator('.ed-top')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(dialog).toBeVisible();
   await expect(page.getByLabel('New level id')).toHaveValue(/^na-custom-\d+$/);
   const dir = process.env.SHOT_DIR; if (dir) { mkdirSync(dir, { recursive: true }); await page.screenshot({ path: `${dir}/file-modal-standalone-1280x720.png` }); }
   await page.getByLabel('New level id').fill('bad id');
-  await page.getByRole('button', { name: 'Create blank' }).click();
+  await page.getByTestId('create-confirm').click();
   await expect(dialog.getByRole('alert')).toContainText('na-');
   await page.getByLabel('New level id').fill('na-trial');
-  await page.getByRole('button', { name: 'Create blank' }).click();
+  await page.getByTestId('create-confirm').click();
   await expect(dialog.getByRole('alert')).toContainText('already exists');
   await page.getByLabel('New level id').fill('na-modal-blank');
-  await page.getByRole('button', { name: 'Create blank' }).click();
-  await expect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-modal-blank');
+  await page.getByTestId('create-confirm').click();
+  await expect(page.getByLabel('Level id', { exact: true })).toHaveText('na-modal-blank');
   await expect(dialog).toHaveCount(0);
   await page.goto('/editor.html');
-  await page.getByLabel('Copy level').selectOption('levelview-1');
-  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
-  await expect(page.getByTestId('level-name')).toHaveAttribute('title', /^na-custom-\d+$/);
+  await page.getByLabel('Copy existing level', { exact: true }).selectOption('levelview-1');
+  await page.getByTestId('create-confirm').click();
+  await expect(page.getByLabel('Level id', { exact: true })).toHaveText(/^na-custom-\d+$/);
   await page.goto('/editor.html');
   await page.getByLabel('Open level').selectOption('na-trial');
   await page.getByRole('button', { name: 'Open level', exact: true }).click();
-  await expect(page.getByTestId('level-name')).toHaveAttribute('title', 'na-trial');
+  await expect(page.getByLabel('Level id', { exact: true })).toHaveText('na-trial');
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
 });
 
-test('file modal over an open document: dirty replace prompts, Cancel keeps, Discard replaces, Esc dismisses', async ({ page }) => {
+test('file dialog over an open document: dirty replace prompts, Cancel keeps, Discard replaces, Esc dismisses', async ({ page }) => {
   test.skip(!development, 'Editor API is dev-only');
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/editor.html?template=levelview-1');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
-  const name = page.getByTestId('level-name'), original = await name.getAttribute('title');
-  await name.click();
+  const name = page.getByLabel('Level id', { exact: true }), original = await name.textContent();
+  await openFile(page, 'create');
   await expect(page.getByRole('dialog')).toBeVisible();
   const dir = process.env.SHOT_DIR; if (dir) { mkdirSync(dir, { recursive: true }); await page.screenshot({ path: `${dir}/file-modal-dismissible-1280x720.png` }); }
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(name).toHaveAttribute('title', original!);
-  await name.click();
+  await expect(name).toHaveText(original!);
+  await openFile(page, 'create');
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await name.click();
+  await openFile(page, 'create');
   await page.getByLabel('New level id').fill('na-discard-test');
-  await page.getByRole('button', { name: 'Create blank' }).click();
-  await expect(page.getByText('Discard unsaved changes?')).toBeVisible();
+  await page.getByTestId('create-confirm').click();
+  await expect(page.getByTestId('discard-confirm')).toBeVisible();
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await expect(page.getByText('Discard unsaved changes?')).toHaveCount(0);
+  await expect(page.getByTestId('discard-confirm')).toHaveCount(0);
   await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(name).toHaveAttribute('title', original!);
-  await page.getByRole('button', { name: 'Create blank' }).click();
-  await page.getByRole('button', { name: 'Discard and continue', exact: true }).click();
+  await expect(name).toHaveText(original!);
+  await page.getByTestId('create-confirm').click();
+  await page.getByTestId('confirm-discard').click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(name).toHaveAttribute('title', 'na-discard-test');
+  await expect(name).toHaveText('na-discard-test');
 });
 
 test('manifest load failure shows a dismissible alert toast', async ({ page }) => {
@@ -274,7 +276,7 @@ test('manifest load failure shows a dismissible alert toast', async ({ page }) =
   await page.route('**/manifest.json', route => route.fulfill({ status: 500, body: 'nope' }));
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-toast-manifest');
-  await page.getByRole('button', { name: 'Create blank' }).click();
+  await page.getByTestId('create-confirm').click();
   const toast = page.locator('.ed-canvas').getByTestId('error-toast');
   await expect(toast).toBeVisible();
   await expect(toast).toHaveAttribute('role', 'alert');

@@ -1,3 +1,4 @@
+import { openFile, share } from './editor-helpers.js';
 import { test, expect, type Page } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -63,10 +64,11 @@ test('Shortcuts: Ctrl+S saves without blocking; Esc cancels placement before sel
   page.on('request', r => { if (r.method() !== 'GET' && r.url().includes('__editor')) saves.push(r.url()); });
   await page.keyboard.press('Control+s');
   await expect.poll(() => saves.length).toBeGreaterThan(0);
+  await share(page);
   await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
 });
 
-test('Shortcuts: none fire while typing or with FileModal open', async ({ page }) => {
+test('Shortcuts: none fire while typing or with a file dialog open', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev-only editor');
   await open(page);
   await pick(page, 'building:b0');
@@ -75,7 +77,7 @@ test('Shortcuts: none fire while typing or with FileModal open', async ({ page }
   await field.focus(); await page.keyboard.press('Delete'); await page.keyboard.press('Backspace'); await page.keyboard.press('Control+v'); await page.keyboard.press('Control+z');
   await count(page, 2);
   await expect(page.getByTestId('viewport-selection')).toHaveText('building: b0');
-  await page.getByTestId('level-name').click();
+  await openFile(page, 'create');
   await expect(page.locator('[aria-modal=true]')).toBeVisible();
   await page.keyboard.press('Delete'); await page.keyboard.press('Control+z');
   await count(page, 2);

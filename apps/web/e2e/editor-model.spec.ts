@@ -1,3 +1,4 @@
+import { undo as editorUndo, save as editorSave, historyDisabled, createBlank } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -10,8 +11,7 @@ test('library drops, deletion, and undo/redo persist through real preview rebuil
     await route.fulfill({ json: { level: saved, warnings: [] } });
   });
   await page.goto('/editor.html');
-  await page.getByLabel('New level id').fill('na-model-browser');
-  await page.getByRole('button', { name: 'Create blank' }).click();
+  await createBlank(page, 'na-model-browser');
   const host = page.getByLabel('Edit viewport'), box = (await host.boundingBox())!;
   const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   const item = page.getByRole('button', { name: 'Place house-wt1', exact: true });
@@ -20,24 +20,24 @@ test('library drops, deletion, and undo/redo persist through real preview rebuil
   await page.mouse.down(); await page.mouse.move(centre.x, centre.y, { steps: 8 });
   await expect(host.locator('.editor-ghost')).toBeVisible();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '0');
-  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+  expect(await historyDisabled(page, 'undo')).toBe(true);
   await page.mouse.up();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '1');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await expect(host.locator('canvas')).toBeVisible();
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect.poll(() => saved?.buildings.length).toBe(1);
   expect(saved!.buildings[0]).toMatchObject({ owner: null, level: 1, pos: { x: 0, z: 0 } });
   await expect(page.getByTestId('viewport-selection')).toContainText('b0');
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '0');
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '1');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   // One undo for the original drop proves its pointer moves were coalesced.
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '0');
-  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+  expect(await historyDisabled(page, 'undo')).toBe(true);
   expect(errors).toEqual([]);
 });
 
@@ -102,7 +102,7 @@ test('all library archetypes populate blank drafts and persist after compilation
   });
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-library-browser');
-  await page.getByRole('button', { name: 'Create blank' }).click();
+  await page.getByTestId('create-confirm').click();
   async function drop(item: string, dx: number, dy: number) {
     const source = (await page.getByRole('button', { name: `Place ${item}`, exact: true }).boundingBox())!;
     const r = (await page.getByLabel('Edit viewport').boundingBox())!;
@@ -120,7 +120,7 @@ test('all library archetypes populate blank drafts and persist after compilation
   await drop('tower', 90, 40);
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '3');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect.poll(() => saved?.buildings.length).toBe(3);
   expect(saved!.buildings.map(b => [b.archetype, b.owner, b.level])).toEqual([['house-wt1', null, 1], ['house-wt2', null, 1], ['tower', null, 1]]);
   expect(saved!.elements.map(e => e.variant)).toEqual(['small', 'big']);
@@ -181,7 +181,7 @@ test('real UI drop far outside the area lands on the area edge and keeps the pre
   });
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-far-drop');
-  await page.getByRole('button', { name: 'Create blank' }).click();
+  await page.getByTestId('create-confirm').click();
   await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
   const workspace = page.locator('.editor-workspace');
   const before = JSON.parse((await workspace.getAttribute('data-bounds'))!) as { minX: number; maxX: number; minZ: number; maxZ: number };
@@ -200,7 +200,7 @@ test('real UI drop far outside the area lands on the area edge and keeps the pre
   expect(after.maxX).toBeGreaterThanOrEqual(before.maxX); expect(after.minZ).toBeLessThanOrEqual(before.minZ);
   // Area is fixed per doc open: it still clamps drops, and the item sits on its edge.
   expect(JSON.parse((await workspace.getAttribute('data-area'))!)).toEqual(area);
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect.poll(() => saved?.buildings.length).toBe(1);
   expect(saved!.buildings[0]!.pos).toEqual({ x: area.maxX, z: area.maxZ });
 });

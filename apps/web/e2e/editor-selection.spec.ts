@@ -1,3 +1,4 @@
+import { undo as editorUndo, save as editorSave, historyDisabled } from './editor-helpers.js';
 import { test, expect, type Page } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -49,22 +50,22 @@ test('Selection: each group Apply changes only its own fields; LOS previews with
   await page.getByRole('button', { name: 'Apply owner and level' }).click();
   await expect(page.getByLabel('Spawn speed')).toHaveValue('0.8');
   await expect(page.getByLabel('Level', { exact: true })).toHaveValue('3');
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(page.getByLabel('Level', { exact: true })).toHaveValue('1');
-  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+  expect(await historyDisabled(page, 'undo')).toBe(true);
   // Parameters Apply leaves owner/level untouched.
   await page.getByLabel('Owner', { exact: true }).selectOption('p2');
   await page.getByLabel('Spawn speed').fill('0.9');
   await page.getByRole('button', { name: 'Apply parameters' }).click();
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(page.getByLabel('Owner', { exact: true })).toHaveValue('p2');
   await expect(page.getByLabel('Spawn speed')).toHaveValue('');
   // LOS preview: no history entry.
-  const before = await page.getByRole('button', { name: 'Undo', exact: true }).isDisabled();
+  const before = await historyDisabled(page, 'undo');
   await page.getByLabel('LOS target').selectOption('b1');
   await expect(page.getByTestId('los-status')).toContainText('blocked-obstacle');
   await expect(page.locator('.editor-los')).toHaveCount(1);
-  expect(await page.getByRole('button', { name: 'Undo', exact: true }).isDisabled()).toBe(before);
+  expect(await historyDisabled(page, 'undo')).toBe(before);
   // Obstacle: Shape group, yaw always snaps.
   await selected(page).selectOption('obstacle:e0');
   await expect(page.locator('.editor-los')).toHaveCount(0);
@@ -88,13 +89,13 @@ test('Selection: multi-select actions and single Undo reverts multi-delete', asy
   await page.getByRole('button', { name: 'Copy', exact: true }).click();
   await page.getByRole('button', { name: 'Paste', exact: true }).click();
   await expect(shell).toHaveAttribute('data-buildings', '6');
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(shell).toHaveAttribute('data-buildings', '3');
   await page.getByRole('button', { name: 'Select all', exact: true }).click();
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
   await expect(shell).toHaveAttribute('data-buildings', '0');
   await expect(shell).toHaveAttribute('data-obstacles', '0');
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(shell).toHaveAttribute('data-buildings', '3');
   await expect(shell).toHaveAttribute('data-obstacles', '1');
   // Exactly one selected clears multi mode.
@@ -148,7 +149,7 @@ test('Selection: tower help explains firing semantics and boolean defaults use Y
   await page.getByRole('button', { name: 'Apply parameters' }).click();
   await expect(form.getByRole('combobox', { name: 'Fires while neutral', exact: true })).toHaveValue('false');
   await expect(form.getByRole('combobox', { name: 'Shoots neutral houses', exact: true })).toHaveValue('false');
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(form.getByRole('combobox', { name: 'Fires while neutral', exact: true })).toHaveValue('');
   await expect(form.getByRole('combobox', { name: 'Shoots neutral houses', exact: true })).toHaveValue('');
 });
@@ -177,7 +178,7 @@ for (const overridden of [false, true]) {
     await form.getByLabel('Max level (garrison cap)', { exact: true }).fill('32');
     await page.getByRole('button', { name: 'Apply parameters' }).click();
     await expect(unit).toContainText(overridden ? 'Tank' : 'Soldier');
-    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await editorSave(page);
     await expect.poll(() => saved?.buildings[0]?.params).toEqual({
       ...params, level: { maxLevel: 32 }, spawns: { ...params?.spawns, spawnSpeed: 0.9 },
     });

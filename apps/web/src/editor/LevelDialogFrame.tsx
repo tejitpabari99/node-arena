@@ -3,16 +3,18 @@ import { useId, useLayoutEffect, useRef } from 'preact/hooks';
 
 interface LevelDialogFrameProps {
   title: string;
+  suspended?: boolean;
   busy: boolean;
   onClose(): void;
   children: ComponentChildren;
 }
 
 /** Modal shell shared by Create/Open. Standalone bodies do not acquire modal behavior. */
-export function LevelDialogFrame({ title, busy, onClose, children }: LevelDialogFrameProps) {
+export function LevelDialogFrame({ title, busy, onClose, children, suspended = false }: LevelDialogFrameProps) {
   const root = useRef<HTMLDivElement>(null), titleId = useId();
   const current = useRef({ busy, onClose }); current.current = { busy, onClose };
   useLayoutEffect(() => {
+    if (suspended) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const dialog = root.current!;
     const controls = () => Array.from(dialog.querySelectorAll<HTMLElement>('input:not(:disabled), select:not(:disabled), button:not(:disabled), a[href], [tabindex="0"]'))
@@ -38,8 +40,8 @@ export function LevelDialogFrame({ title, busy, onClose, children }: LevelDialog
       document.removeEventListener('keydown', keydown, true);
       if (previous?.isConnected) previous.focus();
     };
-  }, []);
-  return <div class="editor-shell ed-modal-backdrop" onPointerDown={event => {
+  }, [suspended]);
+  return <div class="editor-shell ed-modal-backdrop" hidden={suspended} inert={suspended} onPointerDown={event => {
     if (event.target !== event.currentTarget) return;
     event.preventDefault();
     if (!busy) onClose();
