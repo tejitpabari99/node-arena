@@ -1,3 +1,36 @@
+/* Tokens: shared by the editor shell and standalone file dialog. */
+.ed-shell, .editor-shell {
+  --ed-font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ed-fs-xs: 11px; --ed-fs-sm: 12px; --ed-fs: 13px; --ed-fs-md: 14px; --ed-fs-lg: 16px;
+  --ed-g-0: #fff; --ed-g-50: #f8f9fa; --ed-g-100: #f1f3f5; --ed-g-200: #e5e8eb; --ed-g-300: #d0d5db;
+  --ed-g-500: #6b7280; --ed-g-600: #4b5563; --ed-g-800: #1f2937; --ed-g-900: #111827;
+  --ed-text: var(--ed-g-800); --ed-muted: var(--ed-g-600); --ed-border: var(--ed-g-200); --ed-border-strong: var(--ed-g-300);
+  --ed-accent: #2563c9; --ed-accent-hover: #1e54ac; --ed-accent-soft: #e7effc;
+  --ed-success: #15803d; --ed-warn: #b45309; --ed-danger: #c0392b; --ed-danger-soft: #fdecea;
+  --ed-r-sm: 4px; --ed-r: 6px; --ed-r-lg: 8px;
+  --ed-sh-sm: 0 1px 2px rgba(16, 24, 40, .08);
+  --ed-sh-md: 0 4px 12px rgba(16, 24, 40, .12), 0 0 0 1px rgba(16, 24, 40, .04);
+  --ed-sh-lg: 0 12px 32px rgba(16, 24, 40, .18);
+  --ed-s-1: 4px; --ed-s-2: 8px; --ed-s-3: 12px; --ed-s-4: 16px; --ed-s-5: 24px;
+  --ed-z-pop: 5; --ed-z-toast: 15; --ed-z-modal: 20;
+  --ed-controls-gutter: 56px;
+
+  /* Compatibility aliases while existing feature rules migrate to the primitives. */
+  --ed-panel: var(--ed-g-0); --ed-ink: var(--ed-text);
+  --ed-green: var(--ed-accent); --ed-green-light: var(--ed-accent); --ed-green-dark: var(--ed-accent-hover);
+}
+
+/* Base reset: chrome never inherits the game's root font or white text. */
+.ed-shell, .editor-shell { font: var(--ed-fs)/1.4 var(--ed-font); color: var(--ed-text); color-scheme: light; }
+.ed-shell h1, .ed-shell h2, .ed-shell h3, .editor-shell h1, .editor-shell h2, .editor-shell h3 { font-family: var(--ed-font); font-weight: 600; }
+/* Shell tokens live below body; fallbacks keep the page backdrop neutral too. */
+body:has(.ed-shell), body:has(.editor-shell) {
+  font: 13px/1.4 var(--ed-font, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  color: var(--ed-text, #1f2937);
+  background: var(--ed-g-50, #f8f9fa);
+  color-scheme: light;
+}
+
 .editor-shell header span, .editor-hint { color: #4a6572; }
 .editor-start-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 24px; }
 .editor-start-grid section { padding: 20px; background: var(--ed-panel); border: 1px solid var(--ed-border); border-radius: 10px; }
@@ -40,11 +73,11 @@
 .editor-play-bar button { background: #244f88; padding: 10px; border-radius: 5px; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-/* Editor theme: main-menu look. Greens sampled from .level-card in ../style.css. */
-.ed-shell, .editor-shell { --ed-sky-top: #73c7e6; --ed-sky-bottom: #ccecf2; --ed-green: #43af4d; --ed-green-light: #8bdf62; --ed-green-dark: #24813e; --ed-panel: #ffffffee; --ed-ink: #1b3a4b; --ed-border: #9ec3d1; color: var(--ed-ink); font-family: system-ui, sans-serif; }
-.ed-shell h1, .ed-shell h2, .ed-shell h3, .editor-shell h1, .editor-shell h2, .editor-shell h3, .ed-btn, .ed-chip, .ed-modal-title, .ed-shell button, .editor-shell button { font-family: Coiny, system-ui, sans-serif; font-weight: 400; }
+/* Primitives */
+.ed-btn, .ed-shell button, .editor-shell button { font: inherit; }
+.ed-chip, .ed-modal-title { font-family: Coiny, system-ui, sans-serif; font-weight: 400; }
 .ed-shell input, .ed-shell select, .ed-shell label, .editor-shell input, .editor-shell select, .editor-shell label { font-family: system-ui, sans-serif; }
-.ed-btn, .ed-shell button, .editor-shell button { padding: 8px 14px; border-radius: 12px; border: 0; color: var(--ed-ink); background: #fff; box-shadow: 0 3px var(--ed-border); }
+.ed-btn, .ed-shell button, .editor-shell button { min-height: 28px; padding: 4px 10px; border-radius: var(--ed-r); border: 1px solid var(--ed-border-strong); color: var(--ed-text); background: var(--ed-g-0); box-shadow: none; text-shadow: none; }
 .ed-btn-primary, .ed-shell button.ed-btn-primary, .editor-shell button.ed-btn-primary { color: #fff; background: linear-gradient(var(--ed-green-light), var(--ed-green)); box-shadow: 0 3px var(--ed-green-dark), inset 0 2px #c7f9a8; text-shadow: 0 2px var(--ed-green-dark); }
 .ed-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: var(--ed-panel); border: 1px solid var(--ed-border); color: var(--ed-ink); }
 .ed-popover { position: absolute; z-index: 5; padding: 12px; border-radius: 14px; background: var(--ed-panel); border: 1px solid var(--ed-border); box-shadow: 0 8px 24px #1b3a4b33; color: var(--ed-ink); }
