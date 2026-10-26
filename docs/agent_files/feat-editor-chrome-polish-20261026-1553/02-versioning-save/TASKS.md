@@ -1,5 +1,5 @@
 ---
-status: draft
+status: in-progress
 summary: Six tasks - schema field, server bump/no-op save, duplicate op, client copy/blank hygiene, 30s autosave, save-first Finalize.
 date: 2026-10-26
 ---
@@ -8,7 +8,7 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/02-ve
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Schema field and key order | - | todo |
+| 1 | Schema field and key order | - | in-progress |
 | 2 | Server save: bump and no-op | 1 | todo |
 | 3 | Duplicate op and client API | 2 | todo |
 | 4 | Client copy/blank and savedRef | 3 | todo |
