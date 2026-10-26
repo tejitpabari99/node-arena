@@ -16,6 +16,7 @@ Brief: `brainstorm.md`. Screenshots: `before/` (current editor, 9 shots), `ref/`
 | 03 | topbar-menus | Back + File menu, dialogs, Share panel, Check flow, save status | 01, 02, 05 | done |
 | 04 | left-panel | Read-only level id, param labels/tooltips, read-only troop | 01 | done |
 | 05 | map-controls | Vertical map-style canvas controls | 01 | done |
+| 06 | editor-amendments | Menu Create reuse, no Apply buttons, Add AI recolour, player-needs-house Check, toolbar tweaks, hide 3 params, grey thumbnails, row obstacles, double-click place | 03, 04 + review fixes | draft |
 
 ## Dependency graph
 ```mermaid
@@ -113,3 +114,6 @@ All five sub-projects complete in order 01 → 02 → 05 → 04 → 03; all fina
 
 ## Whole-branch deep review (2026-10-26)
 - [Whole-branch deep review — NEEDS_CHANGES](review-2026-10-26-2000.md)
+
+## SP06 editor amendments (draft)
+[PRD](06-editor-amendments/PRD.md). Owner amendments after SP01-05: game-menu Create reuses the editor Create dialog; live-applied edits with undo coalescing (no Apply buttons); Add AI recolours a neutral house; Check/Finalize require every player to own a house; Save/icon Play/Share toolbar; three params hidden; grey thumbnails; multi-tile "row" obstacle (one element, existing footprint override, no schema change); double-click placement. Starts after whole-branch review fixes land.
