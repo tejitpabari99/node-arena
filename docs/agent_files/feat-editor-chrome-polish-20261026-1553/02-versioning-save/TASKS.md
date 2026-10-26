@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 summary: Six tasks - schema field, server bump/no-op save, duplicate op, client copy/blank hygiene, 30s autosave, save-first Finalize.
 date: 2026-10-26
 ---
@@ -13,7 +13,7 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/02-ve
 | 3 | Duplicate op and client API | 2 | done |
 | 4 | Client copy/blank and savedRef | 3 | done |
 | 5 | Autosave 30s | - | done |
-| 6 | Finalize saves first | 4 | in-progress |
+| 6 | Finalize saves first | 4 | done |
 
 ## Task 1 — Schema field and key order
 What it is / what it means: Level JSON may carry optional `editorVersion` ("0.0.N"). Metadata only, outside `simHash` (R1, D6, D9).

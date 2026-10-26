@@ -62,3 +62,9 @@ Base origin/main (#24 merged). Back + File top-left (Create/Duplicate/Open/Undo/
 SP01's six planned tasks and stacking review fix are complete; all three final reviewers PASS.
 
 - [Final SP01 review — PASS](01-theme-tokens/review-2026-10-26-1718.md)
+
+## SP02 implementation artifacts
+- [Implementation run (all six tasks)](02-versioning-save/code-2026-10-26-1745.md)
+- [Save-first Finalize and full final verification](02-versioning-save/code-2026-10-26-1743.md)
+
+SP02's six tasks are complete. Bug Hunter and Security PASS; Architect pending. Subproject remains in-progress until the final review verdict.
