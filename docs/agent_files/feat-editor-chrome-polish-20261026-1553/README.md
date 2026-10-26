@@ -50,3 +50,13 @@ Base origin/main (#24 merged). Back + File top-left (Create/Duplicate/Open/Undo/
 - `brainstorm.md`, `README.md`
 - `01-theme-tokens/` ... `05-map-controls/` (each `PRD.md`)
 - `before/` current-editor screenshots; `ref/` reference screenshots
+
+## SP01 implementation and review artifacts
+- [Implementation run (all six tasks)](01-theme-tokens/code-20261026-1714.md)
+- [Legacy cleanup proof](01-theme-tokens/code-20261026-1655.md)
+- [Verification, contrast and captures](01-theme-tokens/code-20261026-1705.md)
+- [Initial review — NEEDS_CHANGES, one stacking fix](01-theme-tokens/review-2026-10-26-1714.md)
+- [Verification results](01-theme-tokens/verification-results.json), [browser harness](01-theme-tokens/verify-theme.mjs)
+- [SP01 screenshots and protected baselines](01-theme-tokens/screens/), [nine after states and additional captures](after/)
+
+SP01's six planned tasks are complete. Subproject remains in-progress until the review fix is verified and re-reviewed.
