@@ -56,3 +56,15 @@ it('a committed value acknowledgement preserves newer local typing', () => {
   expect(field.value).toBe('Second');
   vi.advanceTimersByTime(400); expect(commits).toEqual(['First', 'Second']);
 });
+it('normalizes valid text locally before committing and ignores repeated equivalent values', () => {
+  vi.useFakeTimers();
+  const commits: string[] = [];
+  const field = createLiveField({ value: '0', mergeKey: 'row:rotation', validate: text => Number.isFinite(Number(text)) ? undefined : 'Enter a number', normalize: text => text === '23' ? '30' : text, commit: text => commits.push(text), endBurst() {} }, () => undefined);
+  field.input('23'); field.finish(); expect(field.value).toBe('30'); expect(commits).toEqual(['30']);
+  field.sync('30'); field.input('23'); field.finish();
+  expect(field.value).toBe('30'); expect(commits).toEqual(['30']);
+  field.input('45'); field.sync('30'); expect(field.value).toBe('45');
+  field.finish(); expect(commits).toEqual(['30', '45']);
+  field.input('invalid'); field.finish(); expect(field.value).toBe('invalid'); expect(field.error).toBe('Enter a number');
+  expect(commits).toEqual(['30', '45']);
+});

@@ -97,3 +97,17 @@ it('edits legacy single-tile rows with bounded length and rotation controls, one
   await page.getByRole('button', { name: 'Undo', exact: true }).click(); await domExpect(rotation).toHaveValue('60');
   await page.getByRole('button', { name: 'Rotate -15 degrees', exact: true }).click(); await domExpect(rotation).toHaveValue('45');
 });
+
+it('repeated equivalent rotation text snaps on Enter and blur without adding another undo step', async () => {
+  await reset();
+  await page.getByLabel('Selected item').selectOption('obstacle:row');
+  await page.getByText('Shape', { exact: true }).click();
+  const rotation = page.getByLabel('Rotation', { exact: true });
+  await rotation.fill('23'); await rotation.press('Enter');
+  await domExpect(rotation).toHaveValue('30');
+  await rotation.fill('23'); await rotation.blur();
+  await domExpect(rotation).toHaveValue('30');
+  await domExpect(page.getByTestId('past')).toHaveText('1');
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await domExpect(rotation).toHaveValue('0');
+});

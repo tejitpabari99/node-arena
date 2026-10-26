@@ -38,7 +38,7 @@ function OwnerGroup({ item }: { item: Building }) {
   </fieldset>;
 }
 
-function NumberField({ label, tooltip, fieldKey, value, spec, optional = false, placeholder, commit }: { label: string; tooltip?: string; fieldKey: string; value: number | undefined; spec: SchemaField; optional?: boolean; placeholder?: string; commit(value: number | undefined, merge: string): void }) {
+function NumberField({ label, tooltip, fieldKey, value, spec, optional = false, placeholder, normalize, commit }: { label: string; tooltip?: string; fieldKey: string; value: number | undefined; spec: SchemaField; optional?: boolean; placeholder?: string; normalize?(value: number): number; commit(value: number | undefined, merge: string): void }) {
   const { doc, endEditBurst } = useEditor();
   const field = useLiveField({
     value: value === undefined ? '' : String(value), mergeKey: `${doc.id}:${fieldKey}`,
@@ -53,6 +53,7 @@ function NumberField({ label, tooltip, fieldKey, value, spec, optional = false, 
       if (spec.maximum !== undefined && number > spec.maximum) return `Maximum: ${spec.maximum}`;
       return undefined;
     },
+    normalize: text => normalize && text.trim() ? String(normalize(Number(text))) : text,
     commit: (text, merge) => commit(text.trim() ? Number(text) : undefined, merge), endBurst: endEditBurst,
   });
   return <label title={tooltip}>{label}<input aria-label={label} type="number" required={!optional} min={spec.exclusiveMinimum !== undefined ? spec.exclusiveMinimum + .001 : spec.minimum} max={spec.maximum} step={spec.type === 'integer' ? '1' : '.001'} placeholder={placeholder} {...field.inputProps} /><LiveFieldError field={field} /></label>;
@@ -115,7 +116,7 @@ function RowShapeGroup({ item, pitch, depth }: { item: Obstacle; pitch: number; 
   return <fieldset aria-label="Shape" disabled={locked}>
     <label>Variant<select aria-label="Obstacle variant" value={item.variant ?? ''} onChange={event => edit({ type: 'obstacle-properties', id: item.id, value: { variant: (event.currentTarget.value || undefined) as Obstacle['variant'] } })}><option value="">Default</option><option value="small">Small</option><option value="big">Big</option></select></label>
     <NumberField label="Length (tiles)" fieldKey={`${item.id}:rowLength`} value={length} spec={{ type: 'integer', minimum: 1, maximum: 10 }} commit={(value, merge) => edit({ type: 'obstacle-properties', id: item.id, value: { footprint: { shape: 'box', w: Math.round(value! * pitch * 1000) / 1000, d: depth } } }, merge)} />
-    <NumberField label="Rotation" fieldKey={`${item.id}:yawDeg`} value={item.yawDeg} spec={{ type: 'number', minimum: -360, maximum: 360 }} commit={(value, merge) => edit({ type: 'obstacle-properties', id: item.id, value: { yawDeg: snapYaw(value!) } }, merge)} />
+    <NumberField label="Rotation" normalize={snapYaw} fieldKey={`${item.id}:yawDeg`} value={item.yawDeg} spec={{ type: 'number', minimum: -360, maximum: 360 }} commit={(value, merge) => edit({ type: 'obstacle-properties', id: item.id, value: { yawDeg: snapYaw(value!) } }, merge)} />
     <div class="ed-actions"><button type="button" class="ed-btn" aria-label="Rotate -15 degrees" onClick={() => rotate(-15)}>-15</button><button type="button" class="ed-btn" aria-label="Rotate +15 degrees" onClick={() => rotate(15)}>+15</button></div>
   </fieldset>;
 }
@@ -126,7 +127,7 @@ function ShapeGroup({ item }: { item: Obstacle }) {
   if (defaults?.shape === 'box' && defaults.w !== undefined && defaults.d !== undefined && (!item.footprint || item.footprint.shape === 'box' && item.footprint.d === defaults.d)) return <RowShapeGroup item={item} pitch={defaults.w} depth={defaults.d} />;
   return <fieldset aria-label="Shape" disabled={locked}>
     <label>Obstacle variant<select aria-label="Obstacle variant" value={item.variant ?? ''} onChange={event => edit({ type: 'obstacle-properties', id: item.id, value: { variant: (event.currentTarget.value || undefined) as Obstacle['variant'] } })}><option value="">Default</option><option value="small">Small</option><option value="big">Big</option></select></label>
-    <NumberField label="Yaw (degrees)" fieldKey={`${item.id}:yawDeg`} value={item.yawDeg} spec={{ type: 'number', minimum: -360, maximum: 360 }} commit={(value, merge) => edit({ type: 'obstacle-properties', id: item.id, value: { yawDeg: snapYaw(value!) } }, merge)} />
+    <NumberField label="Yaw (degrees)" normalize={snapYaw} fieldKey={`${item.id}:yawDeg`} value={item.yawDeg} spec={{ type: 'number', minimum: -360, maximum: 360 }} commit={(value, merge) => edit({ type: 'obstacle-properties', id: item.id, value: { yawDeg: snapYaw(value!) } }, merge)} />
     <label>Footprint shape<select aria-label="Footprint shape" value={item.footprint?.shape ?? ''} onChange={event => edit({ type: 'obstacle-properties', id: item.id, value: { footprint: event.currentTarget.value === '' ? undefined : event.currentTarget.value === 'circle' ? { shape: 'circle', radius: 1 } : { shape: 'box', w: 1, d: 1 } } })}><option value="">Archetype default</option><option value="circle">Circle</option><option value="box">Box</option></select></label>
     {item.footprint && (item.footprint.shape === 'circle' ? ['radius'] : ['w', 'd']).map(field => <NumberField key={`${item.footprint!.shape}:${field}`} label={`Footprint ${field === 'w' ? 'width' : field === 'd' ? 'depth' : 'radius'}`} fieldKey={`${item.id}:footprint:${field}`} value={item.footprint![field as 'radius' | 'w' | 'd']} spec={{ type: 'number', minimum: .001, maximum: 100 }} commit={(value, merge) => edit(current => {
       const footprint = current.elements.find(element => element.id === item.id)?.footprint;

@@ -3,6 +3,7 @@ export interface LiveFieldOptions {
   value: string;
   mergeKey: string;
   validate(text: string): string | undefined;
+  normalize?(text: string): string;
   commit(text: string, merge: string): void;
   endBurst(): void;
 }
@@ -19,6 +20,7 @@ export function createLiveField(initial: LiveFieldOptions, changed: () => void) 
     error = options.validate(value);
     if (!error) {
       pending = false;
+      value = options.normalize?.(value) ?? value;
       if (value !== committed) { committed = value; options.commit(value, options.mergeKey); }
     }
     changed();
