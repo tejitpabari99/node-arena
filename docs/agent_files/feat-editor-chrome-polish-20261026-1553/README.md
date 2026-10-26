@@ -110,3 +110,6 @@ Final verification: 67 dev editor passes/two expected preview skips, both previe
 - [Final branch run — all five sub-projects](code-2026-10-26-1919.md)
 
 All five sub-projects complete in order 01 → 02 → 05 → 04 → 03; all final independent reviews PASS.
+
+## Whole-branch deep review (2026-10-26)
+- [Whole-branch deep review — NEEDS_CHANGES](review-2026-10-26-2000.md)
