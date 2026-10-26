@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: Owner amendments after SP01-05 - game-menu Create reuses the editor Create dialog, all Apply buttons removed (live edits with undo coalescing), Add AI auto-colours a neutral house, Check/Finalize fail when a player owns no house, toolbar icon/primary tweaks, three params hidden, grey house/tower thumbnails, "row" obstacles as one multi-tile element, double-click-to-place.
 date: 2026-10-26
 ---

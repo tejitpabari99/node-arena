@@ -1,6 +1,6 @@
 ---
 status: done
-summary: All five editor chrome sub-projects complete — verified, independently reviewed PASS
+summary: All six editor sub-projects complete — verified, independently reviewed PASS
 date: 2026-10-26
 ---
 
@@ -16,7 +16,7 @@ Brief: `brainstorm.md`. Screenshots: `before/` (current editor, 9 shots), `ref/`
 | 03 | topbar-menus | Back + File menu, dialogs, Share panel, Check flow, save status | 01, 02, 05 | done |
 | 04 | left-panel | Read-only level id, param labels/tooltips, read-only troop | 01 | done |
 | 05 | map-controls | Vertical map-style canvas controls | 01 | done |
-| 06 | editor-amendments | Menu Create reuse, no Apply buttons, Add AI recolour, player-needs-house Check, toolbar tweaks, hide 3 params, grey thumbnails, row obstacles, double-click place | 03, 04 + review fixes | draft |
+| 06 | editor-amendments | Menu Create reuse, no Apply buttons, Add AI recolour, player-needs-house Check, toolbar tweaks, hide 3 params, grey thumbnails, row obstacles, double-click place | 03, 04 + review fixes | done |
 
 ## Dependency graph
 ```mermaid
@@ -50,7 +50,7 @@ Base origin/main (#24 merged). Back + File top-left (Create/Duplicate/Open/Undo/
 
 ## Folder contents
 - `brainstorm.md`, `README.md`
-- `01-theme-tokens/` ... `05-map-controls/` (each `PRD.md`)
+- `01-theme-tokens/` ... `06-editor-amendments/` (each `PRD.md`)
 - `before/` current-editor screenshots; `ref/` reference screenshots
 
 ## SP01 implementation and review artifacts
@@ -116,5 +116,10 @@ All five sub-projects complete in order 01 → 02 → 05 → 04 → 03; all fina
 - [Whole-branch deep review — NEEDS_CHANGES](review-2026-10-26-2000.md)
 - [Re-review of whole-branch fixes — PASS](review-2026-10-26-2100.md)
 
-## SP06 editor amendments (draft)
-[PRD](06-editor-amendments/PRD.md), [TASKS](06-editor-amendments/TASKS.md). Owner amendments after SP01-05: game-menu Create reuses the editor Create dialog; live-applied edits with undo coalescing (no Apply buttons); Add AI recolours a neutral house; Check/Finalize require every player to own a house; Save/icon Play/Share toolbar; three params hidden; grey thumbnails; multi-tile "row" obstacle (one element, existing footprint override, no schema change); double-click placement. Starts after whole-branch review fixes land.
+## SP06 implementation and verification
+[PRD](06-editor-amendments/PRD.md), [TASKS](06-editor-amendments/TASKS.md). Owner amendments after SP01-05: game-menu Create reuses the editor Create dialog; live-applied edits with undo coalescing (no Apply buttons); Add AI recolours a neutral house; Check/Finalize require every player to own a house; Save/icon Play/Share toolbar; three params hidden; grey thumbnails; multi-tile "row" obstacle (one element, existing footprint override, no schema change); double-click placement. All ten tasks complete after the whole-branch review fixes. Root typecheck/lint/test/content gates pass; final preview 24 passed / 77 expected dev-only skips; final development 99 passed / 2 expected preview-only skips. Unit/fixture suite: 1,011 passed, 19 extract-only skips.
+
+
+- [SP06 implementation run — all ten tasks](06-editor-amendments/code-2026-10-26-2314.md)
+- [Independent SP06 production review — PASS](06-editor-amendments/review-2026-10-26-2235.md)
+- [Five accepted screenshots](06-editor-amendments/screens/), [machine verification results](06-editor-amendments/verification-results.json)
