@@ -47,3 +47,7 @@ export async function openCopied(page: Page, source = 'levelview-1') {
   await copyFrom(page, source);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
 }
+/** End the active text-input burst before asserting document or history changes. */
+export async function flushEdits(page: Page) {
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+}

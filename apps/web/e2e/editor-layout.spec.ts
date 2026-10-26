@@ -1,8 +1,8 @@
-import { undo as editorUndo, save as editorSave, copyFrom } from './editor-helpers.js';
+import { undo as editorUndo, save as editorSave, copyFrom, flushEdits } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
-test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and persist only on Save', async ({ page }) => {
+test('layout tools update a draft, snap rotation live, show actual blocked LOS, and persist only on Save', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev-only editor');
   let writes = 0, original: LevelDoc['bounds'] | undefined, saved: LevelDoc | undefined;
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
@@ -32,14 +32,14 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await expect(page.locator('.editor-los circle')).toBeVisible();
   await page.getByLabel('Selected item', { exact: true }).selectOption('obstacle:e0');
   await page.locator('[data-section=selection] summary', { hasText: 'Shape' }).click();
-  await page.getByLabel('Yaw (degrees)').fill('23');
-  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('23');
-  await page.getByRole('button', { name: 'Apply shape' }).click();
-  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
+  await page.getByLabel('Rotation').fill('23');
+  await expect(page.getByLabel('Rotation')).toHaveValue('23');
+  await flushEdits(page);
+  await expect(page.getByLabel('Rotation')).toHaveValue('30');
   // Yaw always snaps to 15 degrees.
-  await page.getByLabel('Yaw (degrees)').fill('23');
-  await page.getByRole('button', { name: 'Apply shape' }).click();
-  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
+  await page.getByLabel('Rotation').fill('23');
+  await flushEdits(page);
+  await expect(page.getByLabel('Rotation')).toHaveValue('30');
   await page.getByRole('button', { name: 'Copy', exact: true }).click();
   await page.getByRole('button', { name: 'Paste', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '2');

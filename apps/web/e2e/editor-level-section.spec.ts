@@ -17,12 +17,11 @@ async function open(page: Page, saved: { doc?: LevelDoc }, owned: { n: number })
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
 }
 
-test('Level section: add/delete AI, duplicate block, one undo step, owners nulled', async ({ page }) => {
+test('Level section: add/delete AI commit separately, duplicate colors stay local, and delete undo restores ownership', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Editor API is dev-only');
   const saved: { doc?: LevelDoc } = {}, owned = { n: 0 };
   await open(page, saved, owned);
-  const apply = page.getByRole('button', { name: 'Apply level properties' });
-  await expect(apply).toBeDisabled();
+  await expect(page.getByRole('button', { name: /Apply/ })).toHaveCount(0);
   const before = await page.locator('.ed-player').count();
   const addAi = page.getByRole('button', { name: 'Add AI', exact: true });
   // Add until AI cap (3).
@@ -32,13 +31,13 @@ test('Level section: add/delete AI, duplicate block, one undo step, owners nulle
   await expect(addAi).toBeDisabled();
   const colors = await page.locator('.ed-swatch').evaluateAll(els => els.map(e => (e as HTMLElement).title));
   expect(new Set(colors).size).toBe(colors.length);
-  // Duplicate color blocks Apply with inline note.
+  // Duplicate color remains local and shows an inline error.
   await page.getByRole('button', { name: 'AI3 card' }).click();
   await page.getByLabel('AI3 color').selectOption(colors[0]!);
   await expect(page.getByText('Each player needs a unique color.')).toBeVisible();
-  await expect(apply).toBeDisabled();
+  await expect(page.getByLabel('AI3 color')).toHaveAttribute('aria-invalid', 'true');
   await page.getByLabel('AI3 color').selectOption(colors[3]!);
-  await expect(apply).toBeEnabled();
+  await expect(page.getByLabel('AI3 color')).not.toHaveAttribute('aria-invalid');
   expect(before).toBeGreaterThanOrEqual(2);
   // Delete AI3 and AI2 via confirm; cancel keeps it.
   await page.getByRole('button', { name: 'Delete AI3' }).click();
@@ -46,7 +45,6 @@ test('Level section: add/delete AI, duplicate block, one undo step, owners nulle
   await expect(page.locator('.ed-player')).toHaveCount(4);
   await page.getByRole('button', { name: 'Delete AI3' }).click();
   await expect(page.getByRole('alertdialog')).toContainText('Delete AI3?');
-  await expect(page.getByRole('alertdialog')).not.toContainText('become Neutral');
   await page.getByRole('button', { name: 'Confirm delete' }).click();
   await page.getByRole('button', { name: 'Delete AI2' }).click();
   await page.getByRole('button', { name: 'Confirm delete' }).click();
@@ -58,22 +56,20 @@ test('Level section: add/delete AI, duplicate block, one undo step, owners nulle
   expect(owned.n).toBeGreaterThan(0);
   await expect(page.getByRole('alertdialog')).toContainText(`Its ${owned.n} building${owned.n === 1 ? '' : 's'} become Neutral.`);
   await page.getByRole('button', { name: 'Confirm delete' }).click();
-  expect(await historyDisabled(page)).toBe(true);
-  await apply.click(); // one Apply
   expect(await historyDisabled(page)).toBe(false);
   await editorSave(page);
   await expect.poll(() => saved.doc?.players.map(p => p.id)).toEqual(['p1', 'p3']);
   expect(saved.doc!.buildings.some(b => b.owner === 'p2')).toBe(false);
   expect(saved.doc!.buildings.filter(b => b.owner === null).length).toBeGreaterThanOrEqual(owned.n);
-  // A single Undo restores prior players and owners.
+  // One Undo restores just the last deleted player and its owners.
   await editorUndo(page);
-  expect(await historyDisabled(page)).toBe(true);
+  expect(await historyDisabled(page)).toBe(false);
   await editorSave(page);
-  await expect.poll(() => saved.doc?.players.map(p => p.id)).toEqual(['p1', 'p2']);
+  await expect.poll(() => saved.doc?.players.map(p => p.id)).toEqual(['p1', 'p2', 'p3']);
   expect(saved.doc!.buildings.filter(b => b.owner === 'p2')).toHaveLength(owned.n);
 });
 
-test('Level id is selectable immutable text before the name and stays outside the Apply payload', async ({ page }) => {
+test('Level id is selectable immutable text before the name and stays outside the edit payload', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Uses the real LevelSection through Vite');
   await page.goto('/editor.html');
   await page.evaluate(async () => {
@@ -95,10 +91,9 @@ test('Level id is selectable immutable text before the name and stays outside th
     const selection = window.getSelection()!; selection.removeAllRanges(); selection.addRange(range);
   });
   expect(await page.evaluate(() => window.getSelection()!.toString())).toBe('na-level-section');
-  const apply = section.getByRole('button', { name: 'Apply level properties' });
-  await expect(apply).toBeDisabled();
+  await expect(section.getByRole('button', { name: /Apply/ })).toHaveCount(0);
   await section.getByLabel('Level name', { exact: true }).fill('Renamed level');
-  await apply.click();
+  await section.getByLabel('Level name', { exact: true }).press('Enter');
   const ops = await page.evaluate(async () => {
     const path = '/e2e/fixtures/level-section.ts';
     return (await import(/* @vite-ignore */ path) as typeof import('./fixtures/level-section.js')).ops;

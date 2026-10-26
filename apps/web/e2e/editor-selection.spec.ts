@@ -1,4 +1,4 @@
-import { undo as editorUndo, save as editorSave, historyDisabled, openCopied } from './editor-helpers.js';
+import { undo as editorUndo, save as editorSave, historyDisabled, openCopied, flushEdits } from './editor-helpers.js';
 import { test, expect, type Page } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -22,7 +22,7 @@ const selected = (page: Page) => page.getByLabel('Selected item', { exact: true 
 test('Selection: dropdown lists friendly labels and syncs with canvas selection', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev-only editor');
   await open(page);
-  expect(await selected(page).locator('option').allTextContents()).toEqual(['Nothing selected', 'Human house 1', 'AI1 house 1', 'Neutral house 1', 'Small obstacle 1', 'Multi-select']);
+  expect(await selected(page).locator('option').allTextContents()).toEqual(['Nothing selected', 'Human house 1', 'AI1 house 1', 'Neutral house 1', 'Small row 1', 'Multi-select']);
   await expect(selected(page)).toHaveValue('');
   await selected(page).selectOption({ label: 'AI1 house 1' });
   await expect(page.getByTestId('viewport-selection')).toHaveText('building: b1');
@@ -37,26 +37,29 @@ test('Selection: dropdown lists friendly labels and syncs with canvas selection'
   await expect(selected(page).locator('option:checked')).toHaveText('Neutral tower 1');
 });
 
-test('Selection: each group Apply changes only its own fields; LOS previews without history', async ({ page }) => {
+test('Selection: live groups change only their own fields; LOS previews without history', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev-only editor');
   await open(page);
   await selected(page).selectOption('building:b0');
   await group(page, 'Owner and level'); await group(page, 'Parameters'); await group(page, 'Line of sight');
   // Owner labels use playerLabel.
   expect(await page.getByLabel('Owner', { exact: true }).locator('option').allTextContents()).toEqual(['Neutral', 'Human', 'AI1']);
-  // A pending Parameters draft survives an Owner/level Apply.
+  // Blur commits each field independently.
   await page.getByLabel('Spawn speed').fill('0.8');
   await page.getByLabel('Level', { exact: true }).fill('3');
-  await page.getByRole('button', { name: 'Apply owner and level' }).click();
+  await flushEdits(page);
   await expect(page.getByLabel('Spawn speed')).toHaveValue('0.8');
   await expect(page.getByLabel('Level', { exact: true })).toHaveValue('3');
   await editorUndo(page);
   await expect(page.getByLabel('Level', { exact: true })).toHaveValue('1');
+  await expect(page.getByLabel('Spawn speed')).toHaveValue('0.8');
+  await editorUndo(page);
+  await expect(page.getByLabel('Spawn speed')).toHaveValue('');
   expect(await historyDisabled(page, 'undo')).toBe(true);
-  // Parameters Apply leaves owner/level untouched.
+  // Parameter edits leave owner/level untouched.
   await page.getByLabel('Owner', { exact: true }).selectOption('p2');
   await page.getByLabel('Spawn speed').fill('0.9');
-  await page.getByRole('button', { name: 'Apply parameters' }).click();
+  await flushEdits(page);
   await editorUndo(page);
   await expect(page.getByLabel('Owner', { exact: true })).toHaveValue('p2');
   await expect(page.getByLabel('Spawn speed')).toHaveValue('');
@@ -70,9 +73,9 @@ test('Selection: each group Apply changes only its own fields; LOS previews with
   await selected(page).selectOption('obstacle:e0');
   await expect(page.locator('.editor-los')).toHaveCount(0);
   await group(page, 'Shape');
-  await page.getByLabel('Yaw (degrees)').fill('23');
-  await page.getByRole('button', { name: 'Apply shape' }).click();
-  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
+  await page.getByLabel('Rotation').fill('23');
+  await flushEdits(page);
+  await expect(page.getByLabel('Rotation')).toHaveValue('30');
 });
 
 test('Selection: multi-select actions and single Undo reverts multi-delete', async ({ page }) => {
@@ -114,16 +117,13 @@ test('Selection: house parameters expose readable names, help, and unchanged def
   const optional = page.getByRole('checkbox', { name: 'Optional target (not needed to win)', exact: true });
   await expect(optional).toBeVisible();
   await expect(optional.locator('..')).toHaveAttribute('title', 'Decoy: no need to capture it to win; at least one building must stay required. (R-WIN-01/02, R-CPT-01)');
-  const form = page.getByRole('form', { name: 'Parameters', exact: true });
+  const form = page.getByRole('group', { name: 'Parameters', exact: true });
   expect(await form.locator('label').evaluateAll(labels => labels.map(label => label.firstChild?.textContent))).toEqual([
-    'Max level (garrison cap)', 'Unit produced', 'Spawn speed', 'Per-extra-line slowdown', 'Regrow time multiplier',
+    'Unit produced', 'Spawn speed',
   ]);
   await expect(form.getByText('Leave blank to use the archetype default.', { exact: true })).toBeVisible();
   for (const [label, tooltip, placeholder] of [
-    ['Max level (garrison cap)', 'Highest level this building reaches; extra troops are forwarded or lost. (R-CAP-01)', '64'],
     ['Spawn speed', 'Higher = troops leave each line faster, scaling with level. (R-SPN-01)', '0.5'],
-    ['Per-extra-line slowdown', "Each extra outgoing line slows every line's spawning; 0 = none. (R-SPN-01)", '0.3'],
-    ['Regrow time multiplier', 'Scales time to regain a level; only ticks with no outgoing lines. Higher = slower. (R-GRW-01)', '1.7'],
   ]) {
     const input = form.getByLabel(label!, { exact: true });
     await expect(input).toHaveAttribute('placeholder', placeholder!);
@@ -136,7 +136,7 @@ test('Selection: tower help explains firing semantics and boolean defaults use Y
   await open(page, 'tower');
   await selected(page).selectOption('building:b0');
   await group(page, 'Parameters');
-  const form = page.getByRole('form', { name: 'Parameters', exact: true });
+  const form = page.getByRole('group', { name: 'Parameters', exact: true });
   const fireGain = form.getByLabel('Fire-rate gain per level', { exact: true });
   await expect(fireGain.locator('..')).toHaveAttribute('title', 'Makes shots more frequent as level rises; higher = faster. (R-TWR-01)');
   const delay = form.getByLabel('Shot delay multiplier', { exact: true });
@@ -146,12 +146,14 @@ test('Selection: tower help explains firing semantics and boolean defaults use Y
     expect(await select.locator('option').allTextContents()).toEqual(['Default (Yes)', 'Yes', 'No']);
     await select.selectOption('false');
   }
-  await page.getByRole('button', { name: 'Apply parameters' }).click();
+  await flushEdits(page);
   await expect(form.getByRole('combobox', { name: 'Fires while neutral', exact: true })).toHaveValue('false');
   await expect(form.getByRole('combobox', { name: 'Shoots neutral houses', exact: true })).toHaveValue('false');
   await editorUndo(page);
-  await expect(form.getByRole('combobox', { name: 'Fires while neutral', exact: true })).toHaveValue('');
+  await expect(form.getByRole('combobox', { name: 'Fires while neutral', exact: true })).toHaveValue('false');
   await expect(form.getByRole('combobox', { name: 'Shoots neutral houses', exact: true })).toHaveValue('');
+  await editorUndo(page);
+  await expect(form.getByRole('combobox', { name: 'Fires while neutral', exact: true })).toHaveValue('');
 });
 
 for (const overridden of [false, true]) {
@@ -162,11 +164,11 @@ for (const overridden of [false, true]) {
       saved = (route.request().postDataJSON() as { level: LevelDoc }).level;
       await route.fulfill({ json: { level: saved, warnings: [] } });
     });
-    const params = overridden ? { spawns: { troop: 'tank', lineSpawnPenalty: 0.7 }, grows: { growTime: 2 } } : undefined;
+    const params = overridden ? { level: { maxLevel: 32 }, spawns: { troop: 'tank', lineSpawnPenalty: 0.7 }, grows: { growTime: 2 } } : undefined;
     await open(page, 'house-wt1', params);
     await selected(page).selectOption('building:b0');
     await group(page, 'Parameters');
-    const form = page.getByRole('form', { name: 'Parameters', exact: true });
+    const form = page.getByRole('group', { name: 'Parameters', exact: true });
     const unit = form.locator('label').filter({ hasText: /^Unit produced/ });
     await expect(unit).toContainText(overridden ? 'Tank' : 'Soldier');
     await expect(unit.locator('input, select, textarea, [contenteditable=true]')).toHaveCount(0);
@@ -175,12 +177,12 @@ for (const overridden of [false, true]) {
     if (overridden) await expect(unit.getByText('(override)', { exact: true })).toHaveAttribute('title', "This level overrides the building's default unit");
     // Editing this module and another module must retain every existing override.
     await form.getByLabel('Spawn speed', { exact: true }).fill('0.9');
-    await form.getByLabel('Max level (garrison cap)', { exact: true }).fill('32');
-    await page.getByRole('button', { name: 'Apply parameters' }).click();
+    await expect(form.getByLabel('Max level (garrison cap)', { exact: true })).toHaveCount(0);
+    await flushEdits(page);
     await expect(unit).toContainText(overridden ? 'Tank' : 'Soldier');
     await editorSave(page);
     await expect.poll(() => saved?.buildings[0]?.params).toEqual({
-      ...params, level: { maxLevel: 32 }, spawns: { ...params?.spawns, spawnSpeed: 0.9 },
+      ...params, spawns: { ...params?.spawns, spawnSpeed: 0.9 },
     });
   });
 }

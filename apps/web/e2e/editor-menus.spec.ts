@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { openFile, save, share, openCopied } from './editor-helpers.js';
+import { openFile, save, share, openCopied, flushEdits } from './editor-helpers.js';
 
 async function expectAboveCanvasAndOutsideControls(page: Page, surface: Locator) {
   const box = (await surface.boundingBox())!, controls = (await page.getByTestId('canvas-controls').boundingBox())!;
@@ -21,7 +21,7 @@ test('minimal bar, File keyboard navigation and exclusive Share preserve the con
   await page.setViewportSize({ width: 1440, height: 900 });
   await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
-  await expect(page.locator('.ed-top > button, .ed-top > span > button')).toHaveCount(4);
+  await expect(page.locator('.ed-top > button, .ed-top > span > button')).toHaveCount(5);
   await expect(page.getByTestId('save-chip')).toHaveJSProperty('tagName', 'SPAN');
   await expect(page.getByTestId('level-name')).toHaveCount(0);
   await page.getByTestId('file-menu-button').focus(); await page.keyboard.press('ArrowDown');
@@ -64,7 +64,7 @@ test('Duplicate requires a saved document, aborts on failed save then duplicates
   await page.route('**/__editor/duplicate', route => { duplicates++; return route.fulfill({ json: { level: { ...saved, id: `${saved.id}-copy`, editorVersion: '0.0.1' }, warnings: [] } }); });
   await openCopied(page); await save(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
-  await page.getByLabel('Level name', { exact: true }).fill('Edited duplicate'); await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await page.getByLabel('Level name', { exact: true }).fill('Edited duplicate'); await flushEdits(page);
   fail = true;
   await page.getByTestId('file-menu-button').click(); await page.getByTestId('menu-duplicate').click();
   await expect(page.getByTestId('confirm-discard')).toHaveCount(0);

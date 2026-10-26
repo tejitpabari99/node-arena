@@ -1,9 +1,9 @@
-import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, copyFrom } from './editor-helpers.js';
+import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, copyFrom, flushEdits } from './editor-helpers.js';
 import type { SeatBot } from '@node-arena/content';
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
-test('property forms commit once, update the preview, and deletion banners undo with scripts', async ({ page }) => {
+test('property fields commit live, update the preview, and deletion banners undo with scripts', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Editor API is dev-only');
   let saved: LevelDoc | undefined;
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
@@ -25,13 +25,15 @@ test('property forms commit once, update the preview, and deletion banners undo 
   await page.getByLabel('Time limit (seconds)').fill('120');
   await page.getByRole('button', { name: 'AI1 card' }).click();
   await page.getByLabel('AI1 action delay (ms)').fill('2500');
+  await page.getByLabel('AI1 action delay (ms)').blur();
   await page.getByLabel('AI1 behavior').selectOption('attackOnly');
-  await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await flushEdits(page);
   await expect(page.getByLabel('Level theme', { exact: true })).toHaveValue('snow');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await editorUndo(page);
-  await expect(page.getByLabel('Level name', { exact: true })).toHaveValue('LevelView 1');
-  expect(await historyDisabled(page, 'undo')).toBe(true);
+  await expect(page.getByLabel('Level name', { exact: true })).toHaveValue('Snow practice');
+  await expect(page.getByLabel('AI1 behavior')).toHaveValue('full');
+  expect(await historyDisabled(page, 'undo')).toBe(false);
   await editorRedo(page);
   await page.getByLabel('Selected item', { exact: true }).selectOption('building:b0');
   await page.locator('[data-section=selection] summary', { hasText: 'Owner and level' }).click();
@@ -39,9 +41,9 @@ test('property forms commit once, update the preview, and deletion banners undo 
   await page.getByLabel('Owner', { exact: true }).selectOption('p2');
   await page.getByLabel('Level', { exact: true }).fill('5');
   await page.getByLabel('Optional target (not needed to win)').check();
-  await page.getByRole('button', { name: 'Apply owner and level' }).click();
+  await flushEdits(page);
   await page.getByLabel('Spawn speed').fill('0.8');
-  await page.getByRole('button', { name: 'Apply parameters' }).click();
+  await flushEdits(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await page.getByLabel('Level', { exact: true }).press('Delete');
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', /^\d+$/);
@@ -49,18 +51,16 @@ test('property forms commit once, update the preview, and deletion banners undo 
   await page.getByLabel('Selected item', { exact: true }).selectOption('obstacle:e0');
   await page.locator('[data-section=selection] summary', { hasText: 'Shape' }).click();
   await page.getByLabel('Obstacle variant').selectOption('big');
-  await page.getByLabel('Yaw (degrees)').fill('45');
-  await page.getByLabel('Footprint shape').selectOption('box');
-  await page.getByLabel('Footprint width').fill('2');
-  await page.getByLabel('Footprint depth').fill('3');
-  await page.getByRole('button', { name: 'Apply shape' }).click();
+  await page.getByLabel('Length (tiles)').fill('3');
+  await page.getByLabel('Rotation', { exact: true }).fill('45');
+  await flushEdits(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await editorSave(page);
   await expect.poll(() => saved?.name).toBe('Snow practice');
   expect(saved!.timeLimitSec).toBe(120);
   expect(saved!.players[1]!.bot).toMatchObject({ actionDelayMs: 2500, behavior: 'attackOnly' });
   expect(saved!.buildings[0]).toMatchObject({ owner: 'p2', level: 5, ignoreForWin: true, params: { spawns: { spawnSpeed: 0.8 } } });
-  expect(saved!.elements[0]).toMatchObject({ variant: 'big', yawDeg: 45, footprint: { shape: 'box', w: 2, d: 3 } });
+  expect(saved!.elements[0]).toMatchObject({ variant: 'big', yawDeg: 45, footprint: { shape: 'box', w: 2.139, d: .713 } });
   await page.getByLabel('Selected item', { exact: true }).selectOption('building:b0');
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
   await expect(page.getByTestId('script-removal-banner')).toContainText('AI1 script removed');

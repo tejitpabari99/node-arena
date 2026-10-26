@@ -1,4 +1,4 @@
-import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, share, openCopied } from './editor-helpers.js';
+import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, share, openCopied, flushEdits } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { SeatBot } from '@node-arena/content';
 import type { LevelDoc } from '../src/editor/document.js';
@@ -90,7 +90,7 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
     await page.getByLabel('Selected item', { exact: true }).selectOption(`building:b${index}`);
     await page.locator('[data-section=selection] summary', { hasText: 'Owner and level' }).click();
     await page.getByLabel('Owner', { exact: true }).selectOption('p2');
-    await page.getByRole('button', { name: 'Apply owner and level', exact: true }).click();
+    await flushEdits(page);
   }
   await editorSave(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');

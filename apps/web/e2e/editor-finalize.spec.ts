@@ -1,4 +1,4 @@
-import { save as editorSave, share, openCopied } from './editor-helpers.js';
+import { save as editorSave, share, openCopied, flushEdits } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -54,10 +54,10 @@ test('dirty Finalize saves the exact server response before streaming and refres
   await page.getByTestId('share-button').click();
   await expect(page.getByText('Content locks current')).toHaveCount(0);
   await page.getByLabel('Level name', { exact: true }).fill('Changed after Finalize');
-  await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await flushEdits(page);
   await share(page);
   await expect(finalize).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
+  await expect(page.getByTestId('share-panel').getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
   expect(finalizes).toBe(1); expect(statusRequests).toBeGreaterThanOrEqual(2);
 });
 
@@ -105,18 +105,22 @@ test('Finalize waits behind autosave and keeps edits and competing jobs locked t
   void page.evaluate(() => window.__editorSave!('auto'));
   await expect.poll(() => order.length).toBe(1);
   await page.getByLabel('Level name', { exact: true }).fill('Edited while autosave waits');
-  await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await flushEdits(page);
   await share(page);
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
-  for (const name of ['Save', 'Play', 'Check', 'Finalize']) await expect(page.getByRole('button', { name, exact: true })).toBeDisabled();
+  // Save exists in both the toolbar and Share panel; both must remain locked.
+  const saves = page.getByRole('button', { name: 'Save', exact: true });
+  await expect(saves).toHaveCount(2);
+  for (const button of await saves.all()) await expect(button).toBeDisabled();
+  for (const name of ['Play', 'Check', 'Finalize']) await expect(page.getByRole('button', { name, exact: true })).toBeDisabled();
   releaseAuto();
   await expect.poll(() => order.length).toBe(2);
-  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+  await expect(page.getByTestId('share-panel').getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
   releaseManual();
   await expect.poll(() => order).toEqual(['save', 'save', 'finalize']);
-  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+  await expect(page.getByTestId('share-panel').getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
   releaseFinalize();
-  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
+  await expect(page.getByTestId('share-panel').getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
 });
 
 
@@ -147,7 +151,7 @@ test('starting Finalize closes an open Check details flyout', async ({ page }) =
   await page.setViewportSize({ width: 1440, height: 900 });
   await openCopied(page);
   await page.getByLabel('Level name', { exact: true }).fill('Edited before finalize');
-  await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await flushEdits(page);
   await share(page);
   await page.getByRole('button', { name: 'Check', exact: true }).click();
   await page.getByTestId('check-toast').getByRole('button', { name: 'Details' }).click();
@@ -165,7 +169,7 @@ test('a successful save whose level-list refresh fails still lets Finalize proce
   await page.route('**/__editor/finalize', route => { finalizes++; return route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }); });
   await openCopied(page);
   await page.getByLabel('Level name', { exact: true }).fill('Edited before finalize');
-  await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await flushEdits(page);
   await share(page);
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
   await expect(page.locator('.ed-toast-success', { hasText: 'Finalize complete.' })).toBeVisible();

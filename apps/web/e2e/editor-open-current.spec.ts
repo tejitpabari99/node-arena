@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
-import { openFile, save, share } from './editor-helpers.js';
+import { openFile, save, share, flushEdits } from './editor-helpers.js';
 
 async function openFixture(page: Page) {
   const source = await (await page.request.get('/__editor/level/na-trial')).json() as LevelDoc;
@@ -24,7 +24,7 @@ async function openFixture(page: Page) {
 async function editCurrent(page: Page) {
   await page.getByLabel('Level name', { exact: true }).fill('Saved during Open');
   await page.getByLabel('Time limit (seconds)').fill('120');
-  await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await flushEdits(page);
   await expect(page.getByTestId('save-chip')).toHaveText('Unsaved');
 }
 async function requestCurrent(page: Page) {
@@ -46,7 +46,7 @@ test('Open current + Save installs the saved response and later saves preserve p
   await share(page); await expect(page.getByTestId('editor-version')).toHaveText('Version 0.0.2');
   expect(await page.evaluate(() => { const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); return event.defaultPrevented; })).toBe(false);
   await page.getByLabel('Level theme', { exact: true }).selectOption('snow');
-  await page.getByRole('button', { name: 'Apply level properties' }).click();
+  await flushEdits(page);
   await save(page); await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   expect(writes).toHaveLength(2);
   expect(writes[1]).toMatchObject({ name: 'Saved during Open', timeLimitSec: 120, theme: 'snow', editorVersion: '0.0.3' });

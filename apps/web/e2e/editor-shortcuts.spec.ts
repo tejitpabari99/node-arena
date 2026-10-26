@@ -65,7 +65,7 @@ test('Shortcuts: Ctrl+S saves without blocking; Esc cancels placement before sel
   await page.keyboard.press('Control+s');
   await expect.poll(() => saves.length).toBeGreaterThan(0);
   await share(page);
-  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
+  await expect(page.getByTestId('share-panel').getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
 });
 
 test('Shortcuts: none fire while typing or with a file dialog open', async ({ page }) => {

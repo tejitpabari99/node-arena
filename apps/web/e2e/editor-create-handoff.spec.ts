@@ -22,11 +22,17 @@ test('Custom create opens the shared Create dialog as the only surface and creat
   await expect(dialog).toHaveCount(0);
   await expect(page.getByLabel('Level id', { exact: true })).toHaveText('na-handoff-browser');
   await expect(page.getByLabel('Level theme')).toHaveValue('snow');
-  await expect(page.getByTestId('save-chip')).toContainText('Unsaved');
+  // Blank documents have no buildings, so validation may replace the status text.
+  // The replacement guard below proves this new level still has unsaved changes.
   await openFile(page, 'create');
   await expect(dialog).toBeVisible();
   // Both routes render the exact same reusable form, including blank/copy controls.
   expect(await dialog.locator('form').innerText()).toBe(body);
+  await dialog.getByLabel('New level id').fill('na-handoff-replacement');
+  await dialog.getByTestId('create-confirm').click();
+  await expect(page.getByRole('dialog', { name: 'Unsaved changes', exact: true })).toBeVisible();
+  await page.getByTestId('confirm-cancel').click();
+  await expect(page.getByLabel('Level id', { exact: true })).toHaveText('na-handoff-browser');
 });
 
 test('closing the handoff dialog returns to the game', async ({ page }) => {

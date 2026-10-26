@@ -345,6 +345,8 @@ test('Space key in the editor pans only while the pointer is over the canvas', a
   await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const ws = page.locator('.editor-workspace'), box = (await ws.boundingBox())!;
+  // Create closes beneath the pointer; establish a fresh canvas entry for shortcuts.
+  await page.mouse.move(2, 2);
   await page.mouse.move(box.x + 50, box.y + 50);
   await page.keyboard.down('Space');
   expect(await ws.evaluate(e => (e as HTMLElement).style.cursor)).toBe('grab');

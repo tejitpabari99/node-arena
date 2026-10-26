@@ -8,7 +8,7 @@ test('Library: five ordered tiles with art or text fallback; drag places an item
   const tiles = page.locator('.ed-library-tile');
   await expect(tiles).toHaveCount(5);
   expect(await tiles.evaluateAll(list => list.map(t => t.getAttribute('aria-label')))).toEqual(['Place house-wt1', 'Place house-wt2', 'Place tower', 'Place obstacle-small', 'Place obstacle-big']);
-  for (const [i, label] of ['House 1', 'House 2', 'Tower', 'Small obstacle', 'Big obstacle'].entries()) await expect(tiles.nth(i)).toContainText(label);
+  for (const [i, label] of ['House 1', 'House 2', 'Tower', 'Small row', 'Big row'].entries()) await expect(tiles.nth(i)).toContainText(label);
   // Each tile shows an image once thumbnails are ready, else the text fallback.
   await expect.poll(async () => await tiles.locator('img').count() + await tiles.locator('.ed-library-fallback').count(), { timeout: 30_000 }).toBe(5);
   await expect(tiles.first()).toHaveCSS('touch-action', 'none');

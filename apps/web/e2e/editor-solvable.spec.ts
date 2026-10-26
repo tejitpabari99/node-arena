@@ -1,4 +1,4 @@
-import { share } from './editor-helpers.js';
+import { share, flushEdits } from './editor-helpers.js';
 import { expect, test } from '@playwright/test';
 
 test('Check runs on the unsaved working copy and displays streamed proxy evidence', async ({ page }) => {
@@ -18,7 +18,7 @@ test('Check runs on the unsaved working copy and displays streamed proxy evidenc
   await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeEnabled();
   expect(saves).toBe(0);
   await page.getByLabel('Level name', { exact: true }).fill('Changed after check');
-  await page.getByRole('button', { name: 'Apply level properties', exact: true }).click();
+  await flushEdits(page);
   await expect(page.getByLabel('Proxy evidence')).toHaveCount(0);
   expect(saves).toBe(0);
 });
@@ -39,7 +39,7 @@ test('Check popover Cancel aborts the running check', async ({ page }) => {
   const popover = page.getByTestId('check-popover');
   await expect(page.getByTestId('check-row').getByRole('button', { name: 'Cancel' })).toBeVisible();
   await expect(check).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+  await expect(page.getByTestId('share-panel').getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
   await page.keyboard.press('Escape');
   await expect(popover).toHaveCount(0);
   await share(page);

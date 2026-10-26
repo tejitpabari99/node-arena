@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: Ten tasks - live-edit/undo foundation, live Level and Selection panels, player-house validation, toolbar and thumbnails, menu Create handoff, row rendering, row authoring, double-click place, verification.
 date: 2026-10-26
 ---
@@ -12,12 +12,12 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/06-ed
 | 2 | Live Level section and Add AI | 1 | done |
 | 3 | Live Selection section and hidden params | 1 | done |
 | 4 | Player-house validation in Check/Finalize | review fixes | done |
-| 5 | Toolbar (Save, icon Play, Share) and grey thumbnails | review fixes | in-progress |
-| 6 | Game-menu Create handoff | 1 | in-progress |
+| 5 | Toolbar (Save, icon Play, Share) and grey thumbnails | review fixes | done |
+| 6 | Game-menu Create handoff | 1 | done |
 | 7 | Multi-tile row rendering | review fixes | done |
-| 8 | Row library items and selection panel | 3, 7 | todo |
-| 9 | Double-click place at centre | 8 | todo |
-| 10 | Verification and screenshots | 1-9 | todo |
+| 8 | Row library items and selection panel | 3, 7 | done |
+| 9 | Double-click place at centre | 8 | done |
+| 10 | Verification and screenshots | 1-9 | done |
 
 ## Execution staging
 Tasks 2 and 3 (disjoint section files), 4, 5 and 7 touch disjoint areas and may run two at a time. `model.ts` is touched by 1, 2, 8, 9 and `Editor.tsx` by 1, 6, 9: those run in dependency order, never concurrently. `style.css` edits in 5 and 8 must not overlap. Task 3 removes the Shape Apply; Task 8 then replaces the shape fields for rows.
