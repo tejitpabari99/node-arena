@@ -10,8 +10,8 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/02-ve
 |---|---|---|---|
 | 1 | Schema field and key order | - | done |
 | 2 | Server save: bump and no-op | 1 | done |
-| 3 | Duplicate op and client API | 2 | in-progress |
-| 4 | Client copy/blank and savedRef | 3 | todo |
+| 3 | Duplicate op and client API | 2 | done |
+| 4 | Client copy/blank and savedRef | 3 | in-progress |
 | 5 | Autosave 30s | - | done |
 | 6 | Finalize saves first | 4 | todo |
 
