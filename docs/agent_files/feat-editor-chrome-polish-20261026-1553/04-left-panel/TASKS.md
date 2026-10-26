@@ -10,9 +10,9 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/04-le
 |---|---|---|---|
 | 1 | Param label table and helper | - | done |
 | 2 | Render labels, tooltips, selectors | 1 | done |
-| 3 | Read-only troop row | 2 | in-progress |
+| 3 | Read-only troop row | 2 | done |
 | 4 | Level id row | - | done |
-| 5 | SP01 restyle and screenshots | 2, 3, 4, SP01 | todo |
+| 5 | SP01 restyle and screenshots | 2, 3, 4, SP01 | in-progress |
 
 ## Task 1 — Param label table and helper
 What it is / what it means: One source of human labels and tooltips, kept out of defs/content so identities do not move (R2, D1, D7).
