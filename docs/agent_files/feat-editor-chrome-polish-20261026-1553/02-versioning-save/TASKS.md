@@ -11,9 +11,9 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/02-ve
 | 1 | Schema field and key order | - | done |
 | 2 | Server save: bump and no-op | 1 | done |
 | 3 | Duplicate op and client API | 2 | done |
-| 4 | Client copy/blank and savedRef | 3 | in-progress |
+| 4 | Client copy/blank and savedRef | 3 | done |
 | 5 | Autosave 30s | - | done |
-| 6 | Finalize saves first | 4 | todo |
+| 6 | Finalize saves first | 4 | in-progress |
 
 ## Task 1 — Schema field and key order
 What it is / what it means: Level JSON may carry optional `editorVersion` ("0.0.N"). Metadata only, outside `simHash` (R1, D6, D9).
