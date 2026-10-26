@@ -93,3 +93,9 @@ SP04's five tasks are complete; Bug Hunter, Security and Architect PASS.
 - [Staging and initial task dispatch](03-topbar-menus/code-2026-10-26-1830.md)
 
 Tasks 1 and 2 begin independently as props-driven component foundations. Legacy surfaces remain until Task 8 integrates the new chrome and migrates selectors atomically.
+
+## SP03 implementation and review history
+- [Interim implementation run (Tasks 1–8 and stale-Open fix)](03-topbar-menus/code-2026-10-26-1903.md)
+- [Early Bug Hunter finding and resolution history](03-topbar-menus/review-2026-10-26-1903.md)
+
+SP03 remains in progress: Tasks 1–8 complete; Task 9 CI/captures and final three-persona review pending. The early stale same-id Open finding was fixed; no final PASS is claimed yet.
