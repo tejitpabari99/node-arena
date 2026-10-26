@@ -39,7 +39,7 @@ export function playerLabel(players: Players, id: string): string {
   return `AI${players.filter(p => p.kind !== 'human').findIndex(p => p.id === id) + 1}`;
 }
 
-/** Labels by item id, in doc order: `{Owner} {noun} {n}`; obstacles `{Small|Big} obstacle {n}` per variant. */
+/** Labels by item id, in doc order: `{Owner} {noun} {n}`; obstacles `{Small|Big} row {n}` per variant. */
 export function itemLabels(doc: Pick<LevelDoc, 'players' | 'buildings' | 'elements'>): Map<string, string> {
   const labels = new Map<string, string>(), counts = new Map<string, number>();
   const next = (key: string) => { const n = (counts.get(key) ?? 0) + 1; counts.set(key, n); return n; };
@@ -49,7 +49,7 @@ export function itemLabels(doc: Pick<LevelDoc, 'players' | 'buildings' | 'elemen
     labels.set(item.id, `${owner} ${noun} ${next(`${owner}|${noun}`)}`);
   }
   for (const item of doc.elements) {
-    const name = item.variant === 'small' ? 'Small obstacle' : item.variant === 'big' ? 'Big obstacle' : 'Obstacle';
+    const name = item.variant === 'small' ? 'Small row' : item.variant === 'big' ? 'Big row' : 'Obstacle';
     labels.set(item.id, `${name} ${next(`obstacle|${name}`)}`);
   }
   return labels;

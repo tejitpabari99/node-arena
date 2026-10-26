@@ -102,7 +102,7 @@ function applyOp(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
     let index = 0; while (ids.has(`${prefix}${index}`)) index++;
     const at = area ? clampPoint(op.pos, area) : op.pos;
     const id = `${prefix}${index}`, pos = { x: roundCoordinate(at.x), z: roundCoordinate(at.z) };
-    if (obstacle) return { ...doc, elements: [...doc.elements, { id, archetype: 'obstacle', variant: op.item === 'obstacle-big' ? 'big' : 'small', pos, yawDeg: 0 }] };
+    if (obstacle) return { ...doc, elements: [...doc.elements, { id, archetype: 'obstacle', variant: op.item === 'obstacle-big' ? 'big' : 'small', pos, yawDeg: 0, footprint: { shape: 'box', w: 3.565, d: .713 } }] };
     return { ...doc, buildings: [...doc.buildings, { id, archetype: op.item, pos, owner: null, level: 1, ignoreForWin: false }] };
   }
   const key = op.target.kind === 'building' ? 'buildings' : 'elements';

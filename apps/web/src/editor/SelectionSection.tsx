@@ -1,4 +1,4 @@
-import { LevelSchema, type NextBuilding } from '@node-arena/content';
+import { LevelSchema, type NextBuilding, type NextElement } from '@node-arena/content';
 import { contentFiles } from '../app/boot.js';
 import { useEffect, useState } from 'preact/hooks';
 import type { LevelDoc } from './document.js';
@@ -10,6 +10,9 @@ import { LiveFieldError, useLiveField } from './useLiveField.js';
 
 const archetypes = Object.fromEntries(Object.entries(contentFiles()).filter(([path]) => path.startsWith('data/buildings/')).map(([, value]) => {
   const item = JSON.parse(value as string) as NextBuilding; return [item.id, item];
+}));
+const elementArchetypes = Object.fromEntries(Object.entries(contentFiles()).filter(([path]) => path.startsWith('data/elements/')).map(([, value]) => {
+  const item = JSON.parse(value as string) as NextElement; return [item.id, item];
 }));
 
 type Building = LevelDoc['buildings'][number];
@@ -103,8 +106,24 @@ function LosGroup({ item, labels }: { item: Building; labels: Map<string, string
   </>;
 }
 
+function RowShapeGroup({ item, pitch, depth }: { item: Obstacle; pitch: number; depth: number }) {
+  const { edit, locked } = useEditor();
+  const length = Math.max(1, Math.round((item.footprint?.w ?? pitch) / pitch));
+  function rotate(delta: number) {
+    edit(current => ({ type: 'obstacle-properties', id: item.id, value: { yawDeg: snapYaw((current.elements.find(element => element.id === item.id)?.yawDeg ?? item.yawDeg) + delta) } }));
+  }
+  return <fieldset aria-label="Shape" disabled={locked}>
+    <label>Variant<select aria-label="Obstacle variant" value={item.variant ?? ''} onChange={event => edit({ type: 'obstacle-properties', id: item.id, value: { variant: (event.currentTarget.value || undefined) as Obstacle['variant'] } })}><option value="">Default</option><option value="small">Small</option><option value="big">Big</option></select></label>
+    <NumberField label="Length (tiles)" fieldKey={`${item.id}:rowLength`} value={length} spec={{ type: 'integer', minimum: 1, maximum: 10 }} commit={(value, merge) => edit({ type: 'obstacle-properties', id: item.id, value: { footprint: { shape: 'box', w: Math.round(value! * pitch * 1000) / 1000, d: depth } } }, merge)} />
+    <NumberField label="Rotation" fieldKey={`${item.id}:yawDeg`} value={item.yawDeg} spec={{ type: 'number', minimum: -360, maximum: 360 }} commit={(value, merge) => edit({ type: 'obstacle-properties', id: item.id, value: { yawDeg: snapYaw(value!) } }, merge)} />
+    <div class="ed-actions"><button type="button" class="ed-btn" aria-label="Rotate -15 degrees" onClick={() => rotate(-15)}>-15</button><button type="button" class="ed-btn" aria-label="Rotate +15 degrees" onClick={() => rotate(15)}>+15</button></div>
+  </fieldset>;
+}
+
 function ShapeGroup({ item }: { item: Obstacle }) {
   const { edit, locked } = useEditor();
+  const defaults = elementArchetypes[item.archetype]?.footprint;
+  if (defaults?.shape === 'box' && defaults.w !== undefined && defaults.d !== undefined && (!item.footprint || item.footprint.shape === 'box' && item.footprint.d === defaults.d)) return <RowShapeGroup item={item} pitch={defaults.w} depth={defaults.d} />;
   return <fieldset aria-label="Shape" disabled={locked}>
     <label>Obstacle variant<select aria-label="Obstacle variant" value={item.variant ?? ''} onChange={event => edit({ type: 'obstacle-properties', id: item.id, value: { variant: (event.currentTarget.value || undefined) as Obstacle['variant'] } })}><option value="">Default</option><option value="small">Small</option><option value="big">Big</option></select></label>
     <NumberField label="Yaw (degrees)" fieldKey={`${item.id}:yawDeg`} value={item.yawDeg} spec={{ type: 'number', minimum: -360, maximum: 360 }} commit={(value, merge) => edit({ type: 'obstacle-properties', id: item.id, value: { yawDeg: snapYaw(value!) } }, merge)} />

@@ -79,3 +79,21 @@ it('commits shape controls live, retains invalid text, and flushes a pending fie
   await page.getByLabel('Selected item').evaluate(select => { (select as HTMLSelectElement).value = 'building:house'; select.dispatchEvent(new Event('change', { bubbles: true })); });
   expect((await doc()).elements[0]).toMatchObject({ yawDeg: 45, footprint: { shape: 'box', w: 2, d: 1 } });
 });
+
+it('edits legacy single-tile rows with bounded length and rotation controls, one undo per rotation button', async () => {
+  await reset(); await selected('obstacle:row');
+  const length = page.getByLabel('Length (tiles)', { exact: true }), rotation = page.getByLabel('Rotation', { exact: true });
+  await domExpect(length).toHaveValue('1');
+  for (const name of ['Yaw (degrees)', 'Footprint shape', 'Footprint width', 'Footprint depth']) expect(await page.getByLabel(name, { exact: true }).count()).toBe(0);
+  await length.fill('11'); await length.press('Enter'); await domExpect(length).toHaveAttribute('aria-invalid', 'true');
+  expect((await doc()).elements[1]!.footprint).toBeUndefined();
+  await length.fill('3'); await length.press('Enter');
+  await rotation.fill('45'); await rotation.press('Enter');
+  expect((await doc()).elements[1]).toMatchObject({ yawDeg: 45, footprint: { shape: 'box', w: 2.139, d: .713 } });
+  await page.getByRole('button', { name: 'Rotate +15 degrees', exact: true }).click();
+  await domExpect(rotation).toHaveValue('60');
+  await page.getByRole('button', { name: 'Rotate +15 degrees', exact: true }).click();
+  await domExpect(rotation).toHaveValue('75');
+  await page.getByRole('button', { name: 'Undo', exact: true }).click(); await domExpect(rotation).toHaveValue('60');
+  await page.getByRole('button', { name: 'Rotate -15 degrees', exact: true }).click(); await domExpect(rotation).toHaveValue('45');
+});

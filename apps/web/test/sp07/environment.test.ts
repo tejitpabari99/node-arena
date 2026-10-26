@@ -117,6 +117,7 @@ describe('obstacles', () => {
       expect(placeObstacles([{ ...base, ...(footprint ? { footprint } : {}) }], 'element.obstacle', [])).toEqual([{ variant: 'big', x: 0, z: 0, yaw: 0, scale: [1, 1, 1] }]);
     }
     expect(placeObstacles([{ ...base, footprint: { shape: 'box', w: 2000, d: 713 } }], 'element.obstacle', [])).toHaveLength(3);
+    expect(placeObstacles([{ ...base, footprint: { shape: 'box', w: 14260, d: 713 } }], 'element.obstacle', [])).toHaveLength(20);
   });
   it('builds one mesh instance per row tile and clears the entire row together', async () => {
     for (const theme of ['green', 'snow'] as const) {

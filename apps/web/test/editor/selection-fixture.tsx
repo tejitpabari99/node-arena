@@ -11,7 +11,10 @@ initial.buildings = [
   { id: 'house', archetype: 'house-wt1', pos: { x: 0, z: 0 }, owner: 'p1', level: 10, ignoreForWin: false, params: { level: { maxLevel: 32 }, grows: { growTime: 2 }, spawns: { lineSpawnPenalty: .7 } } },
   { id: 'tower', archetype: 'tower', pos: { x: 4, z: 0 }, owner: null, level: 5, ignoreForWin: false },
 ];
-initial.elements = [{ id: 'rock', archetype: 'obstacle', pos: { x: -4, z: 0 }, yawDeg: 0, variant: 'small' }];
+initial.elements = [
+  { id: 'rock', archetype: 'obstacle', pos: { x: -4, z: 0 }, yawDeg: 0, variant: 'small', footprint: { shape: 'box', w: 1, d: 1 } },
+  { id: 'row', archetype: 'obstacle', pos: { x: 0, z: 4 }, yawDeg: 0, variant: 'big' },
+];
 
 function Fixture() {
   const [history, setHistory] = useState(() => createHistory(initial));

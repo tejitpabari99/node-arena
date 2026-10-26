@@ -16,6 +16,18 @@ it('places neutral archetype defaults with unique identities without mutating sn
   expect(state.present.elements.map(e => [e.variant, e.pos])).toEqual([['small', { x: 2.35, z: -3.46 }], ['big', { x: 2.35, z: -3.46 }]]);
   expect(new Set([...state.present.buildings, ...state.present.elements].map(e => e.id)).size).toBe(5);
 });
+it('places one five-tile row with a single identity and deletes/undoes the whole row', () => {
+  const empty = model.createHistory(blankDocument('na-row', 'green', 'medium'));
+  for (const item of ['obstacle-small', 'obstacle-big'] as const) {
+    const placed = model.historyReducer(empty, { type: 'edit', op: { type: 'place', item, pos: { x: 0, z: 0 } } });
+    expect(placed.present.elements).toHaveLength(1);
+    expect(placed.present.elements[0]).toMatchObject({ variant: item === 'obstacle-small' ? 'small' : 'big', yawDeg: 0, footprint: { shape: 'box', w: 3.565, d: .713 } });
+    expect(placed.past).toHaveLength(1);
+    const deleted = model.historyReducer(placed, { type: 'edit', op: { type: 'delete', target: { kind: 'obstacle', id: placed.present.elements[0]!.id } } });
+    expect(deleted.present.elements).toEqual([]);
+    expect(model.historyReducer(deleted, { type: 'undo' }).present).toEqual(placed.present);
+  }
+});
 it('moves and deletes identified items; undo/redo restores exact documents and new edits clear redo', () => {
   let state = model.createHistory(blankDocument('na-model', 'green', 'medium'));
   state = model.historyReducer(state, { type: 'edit', op: { type: 'place', item: 'house-wt1', pos: { x: 0, z: 0 } } });

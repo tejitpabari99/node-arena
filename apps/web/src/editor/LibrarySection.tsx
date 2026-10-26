@@ -3,7 +3,7 @@ import { useEditor } from './EditorContext.js';
 import type { LibraryItem } from './model.js';
 import { getThumbnails, LIBRARY_ITEMS, type Thumbnails } from './thumbnails.js';
 
-const LABELS: Record<LibraryItem, string> = { 'house-wt1': 'House 1', 'house-wt2': 'House 2', tower: 'Tower', 'obstacle-small': 'Small obstacle', 'obstacle-big': 'Big obstacle' };
+const LABELS: Record<LibraryItem, string> = { 'house-wt1': 'House 1', 'house-wt2': 'House 2', tower: 'Tower', 'obstacle-small': 'Small row', 'obstacle-big': 'Big row' };
 
 /** Drag-to-place tiles; thumbnails render lazily and fall back to a text tile. */
 export function LibrarySection() {
