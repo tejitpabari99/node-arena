@@ -53,7 +53,7 @@ export function Editor() {
     openSeq.current++; armedRef.current = false; markSaved(null); setAttempted(false); setFailure(null); setValidation({ issues: [], warnings: [] });
     setHistory(next ? createHistory(next) : null);
   }
-  function dispatch(action: HistoryAction) { if (busy) return; clearSave(); setHistory(state => state ? historyReducer(state, action) : state); }
+  function dispatch(action: HistoryAction) { if (action.type !== 'end-edit' && busy) return; if (action.type !== 'end-edit') clearSave(); setHistory(state => state ? historyReducer(state, action) : state); }
   const [selection, setSelection] = useState<Selection[]>([]);
   const [clipboard, setClipboard] = useState<Clipboard>();
   const pasteCount = useRef(0);
@@ -107,7 +107,7 @@ export function Editor() {
       if (openSeq.current !== seq) return;
       markSaved(result.level); setFailure(null); if (source === 'manual') armedRef.current = true; setValidation({ issues: [], warnings: result.warnings });
       // Swap in the normalized document only if nothing was edited during the request; no history entry.
-      setHistory(state => state && state.present === sent ? { ...state, present: result.level } : state);
+      setHistory(state => state && state.present === sent ? { ...state, present: result.level, merge: undefined } : state);
       saveOutcome.current = { seq, ok: true };
       // A list refresh failure after a successful write must not flip the outcome.
       try { setLevels(await listLevels()); } catch { /* list refreshes on next open */ }
@@ -249,9 +249,11 @@ export function Editor() {
     finally { setConfirmBusy(false); }
   }
   useEffect(() => { (window as unknown as { __editorSave?: typeof doSave }).__editorSave = doSave; });
+  const contextSeq = openSeq.current;
   const ctx: EditorContext | null = doc && history ? {
     doc, savedDoc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, palettes: choices.palettes, viewportStatus, losStatus,
-    edit: (op: DocOp) => dispatch({ type: 'edit', op, area }),
+    edit: (op: DocOp, merge?: string) => { if (openSeq.current === contextSeq) dispatch({ type: 'edit', op, area, ...(merge ? { merge } : {}) }); },
+    endEditBurst: () => dispatch({ type: 'end-edit' }),
     deleteSelection() { if (selection.length) dispatch({ type: 'edit', op: { type: 'delete-many', targets: selection }, area }); },
     select: next => { viewport.current?.select(next); },
     copy() { setClipboard(copySelection(doc, selection)); pasteCount.current = 0; },

@@ -137,3 +137,32 @@ it('partial building/obstacle properties leave other fields intact; undefined cl
   expect('variant' in cleared).toBe(false);
   expect(cleared.yawDeg).toBe(45);
 });
+
+it('coalesces consecutive commits to one item field and undoes the whole typing burst', () => {
+  const doc = blankDocument('na-merge', 'green', 'medium');
+  let state = model.createHistory(doc);
+  for (const name of ['A', 'Arena', 'Arena name']) state = model.historyReducer(state, { type: 'edit', merge: 'level:name', op: { type: 'level-properties', value: { ...state.present, name } } });
+  expect(state.past).toHaveLength(1);
+  expect(state.present.name).toBe('Arena name');
+  state = model.historyReducer(state, { type: 'undo' });
+  expect(state.present).toBe(doc);
+  expect(model.historyReducer(state, { type: 'redo' }).present.name).toBe('Arena name');
+});
+
+it('ends merging at blur boundaries, other fields, discrete edits, and undo', () => {
+  const doc = blankDocument('na-boundary', 'green', 'medium');
+  const change = (state: model.DocHistory, name: string, merge?: string) => model.historyReducer(state, { type: 'edit', ...(merge ? { merge } : {}), op: { type: 'level-properties', value: { ...state.present, name } } });
+  let state = change(model.createHistory(doc), 'One', 'level:name');
+  state = model.historyReducer(state, { type: 'end-edit' });
+  state = change(state, 'Two', 'level:name');
+  expect(state.past).toHaveLength(2);
+  state = change(state, 'Three', 'other:name');
+  state = change(state, 'Four');
+  state = change(state, 'Five', 'level:name');
+  expect(state.past).toHaveLength(5);
+  state = model.historyReducer(state, { type: 'undo' });
+  state = change(state, 'Six', 'level:name');
+  expect(state.past).toHaveLength(5);
+  expect(state.future).toEqual([]);
+  expect(model.historyReducer(state, { type: 'undo' }).present.name).toBe('Four');
+});

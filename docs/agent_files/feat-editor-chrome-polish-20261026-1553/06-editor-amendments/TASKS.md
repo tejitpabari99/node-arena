@@ -8,13 +8,13 @@ Source of truth: `docs/agent_files/feat-editor-chrome-polish-20261026-1553/06-ed
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Live-edit foundation (useLiveField, undo merge) | review fixes | todo |
+| 1 | Live-edit foundation (useLiveField, undo merge) | review fixes | in-progress |
 | 2 | Live Level section and Add AI | 1 | todo |
 | 3 | Live Selection section and hidden params | 1 | todo |
-| 4 | Player-house validation in Check/Finalize | review fixes | todo |
+| 4 | Player-house validation in Check/Finalize | review fixes | done |
 | 5 | Toolbar (Save, icon Play, Share) and grey thumbnails | review fixes | todo |
 | 6 | Game-menu Create handoff | 1 | todo |
-| 7 | Multi-tile row rendering | review fixes | todo |
+| 7 | Multi-tile row rendering | review fixes | done |
 | 8 | Row library items and selection panel | 3, 7 | todo |
 | 9 | Double-click place at centre | 8 | todo |
 | 10 | Verification and screenshots | 1-9 | todo |

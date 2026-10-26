@@ -35,8 +35,8 @@ export function clampDelta(points: Point[], delta: Point, area: Area): Point {
   };
   return { x: axis(points.map(q => q.x), delta.x, area.minX, area.maxX), z: axis(points.map(q => q.z), delta.z, area.minZ, area.maxZ) };
 }
-export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[] }
-export type HistoryAction = { type: 'edit'; op: DocOp; area?: Area } | { type: 'undo' } | { type: 'redo' };
+export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[]; merge?: string | undefined }
+export type HistoryAction = { type: 'edit'; op: DocOp; area?: Area; merge?: string } | { type: 'end-edit' } | { type: 'undo' } | { type: 'redo' };
 export const createHistory = (present: LevelDoc): DocHistory => ({ past: [], present, future: [] });
 const GROWING: ReadonlySet<DocOp['type']> = new Set(['place', 'move', 'move-selection', 'paste']);
 /** Grow-only bounds: only items outside the bounds drive growth (2-unit pad); never shrinks; same doc when nothing is outside. */
@@ -120,16 +120,18 @@ function applyOp(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
 
 /** D8: at most 100 undo snapshots; immutable docs also make redo exact. */
 export function historyReducer(state: DocHistory, action: HistoryAction): DocHistory {
+  if (action.type === 'end-edit') return state.merge === undefined ? state : { ...state, merge: undefined };
   if (action.type === 'undo') {
     const present = state.past.at(-1);
-    return present ? { past: state.past.slice(0, -1), present, future: [state.present, ...state.future].slice(0, 100) } : state;
+    return present ? { past: state.past.slice(0, -1), present, future: [state.present, ...state.future].slice(0, 100) } : { ...state, merge: undefined };
   }
   if (action.type === 'redo') {
     const present = state.future[0];
-    return present ? { past: [...state.past, state.present].slice(-100), present, future: state.future.slice(1) } : state;
+    return present ? { past: [...state.past, state.present].slice(-100), present, future: state.future.slice(1) } : { ...state, merge: undefined };
   }
   const present = reduceDocument(state.present, action.op, action.area);
-  return present === state.present ? state : { past: [...state.past, state.present].slice(-100), present, future: [] };
+  if (present === state.present) return state.merge === undefined || action.merge === state.merge ? state : { ...state, merge: undefined };
+  return { past: action.merge && action.merge === state.merge ? state.past : [...state.past, state.present].slice(-100), present, future: [], merge: action.merge };
 }
 
 function stepReferences(node: { own?: string | null; target?: string | null; then?: unknown[] }, id: string): boolean {
