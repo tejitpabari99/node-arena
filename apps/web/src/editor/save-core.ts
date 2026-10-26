@@ -7,9 +7,14 @@ export function stableStringify(value: unknown): string {
     : item);
 }
 
-/** Dirty = never saved, or present differs from the last document known to equal disk (reference check first). */
+/** Authored content only: the root editorVersion is owned by the server, including in undo snapshots. */
+function authoredContent(value: object): object {
+  return Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'editorVersion'));
+}
+
+/** Dirty = never saved, or authored content differs from the saved response (reference check first). */
 export function isDirty<T extends object>(present: T, saved: T | null): boolean {
-  return !saved || (present !== saved && stableStringify(present) !== stableStringify(saved));
+  return !saved || (present !== saved && stableStringify(authoredContent(present)) !== stableStringify(authoredContent(saved)));
 }
 
 export type ChipKind = 'saved' | 'saving' | 'unsaved' | 'error';

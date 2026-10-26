@@ -10,6 +10,8 @@ export type EditorArea = Area;
 /** Shared editor state: Editor.tsx provides it; Viewport and panels consume it. */
 export interface EditorContext {
   doc: LevelDoc;
+  /** Last server response/opened document; version display must read this baseline. null until first save. */
+  savedDoc: LevelDoc | null;
   history: DocHistory;
   dispatch(a: HistoryAction): void;
   edit(op: DocOp): void;

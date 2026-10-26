@@ -24,5 +24,6 @@ export function copyDocument(source: LevelDoc, id: string): LevelDoc {
   const copy = structuredClone(source);
   copy.id = id;
   delete copy.source;
+  delete copy.editorVersion;
   return copy;
 }

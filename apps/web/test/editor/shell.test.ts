@@ -2,6 +2,7 @@ import { afterAll, beforeAll, expect, it } from 'vitest';
 import { createServer, request, type Server } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { createEditorMiddleware } from '../../src/dev/editor-middleware.js';
+import { blankDocument, copyDocument } from '../../src/editor/document.js';
 
 let server: Server;
 let base: string;
@@ -58,4 +59,15 @@ it('caps POST bodies at 1 MiB before parsing Save payloads', async () => {
   expect(oversized.status).toBe(413);
   const allowed = await fetch(`${base}__editor/save`, { method: 'POST', headers, body: '{}' });
   expect(allowed.status).toBe(400);
+});
+
+it('starts blank and template copies without a server-owned editorVersion', () => {
+  const blank = blankDocument('na-blank', 'green', 'small');
+  expect(blank).not.toHaveProperty('editorVersion');
+  const source = { ...blank, editorVersion: '0.0.7', source: { game: 'test', gameVersion: '1', asset: 'level' } };
+  const copy = copyDocument(source, 'na-template');
+  expect(copy).not.toHaveProperty('editorVersion');
+  expect(copy).not.toHaveProperty('source');
+  expect(source.editorVersion).toBe('0.0.7');
+  expect(source.source.asset).toBe('level');
 });

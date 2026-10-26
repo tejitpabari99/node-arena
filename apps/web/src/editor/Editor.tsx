@@ -181,7 +181,7 @@ export function Editor() {
   const { levels, setLevels, loading, error: startError, copyHint } = useInitialLoad(replaceDoc);
   useEffect(() => { (window as unknown as { __editorSave?: typeof doSave }).__editorSave = doSave; });
   const ctx: EditorContext | null = doc && history ? {
-    doc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, palettes: choices.palettes, viewportStatus, losStatus,
+    doc, savedDoc, history, dispatch, area, selection, clipboard, viewport, locked: busy, themes: choices.themes, colors: choices.colors, palettes: choices.palettes, viewportStatus, losStatus,
     edit: (op: DocOp) => dispatch({ type: 'edit', op, area }),
     deleteSelection() { if (selection.length) dispatch({ type: 'edit', op: { type: 'delete-many', targets: selection }, area }); },
     select: next => { viewport.current?.select(next); },

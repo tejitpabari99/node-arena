@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { NextLevel, SeatBot } from '@node-arena/content';
 import { createEditorMiddleware } from '../../src/dev/editor-middleware.js';
+import { isDirty } from '../../src/editor/save-core.js';
 
 const race = vi.hoisted(() => ({ run: undefined as undefined | (() => Promise<void>) }));
 vi.mock('node:fs/promises', async importOriginal => {
@@ -207,9 +208,10 @@ it('repairs a missing campaign entry without rewriting or versioning the level',
 it('assigns monotonic non-skipping versions to parallel real saves of one level', async () => {
   const first = await saved('na-version-race', original);
   const results = await Promise.all(['First edit', 'Second edit', 'Third edit'].map(name => saved('na-version-race', { ...first.level, name })));
-  expect(results.map(result => result.level.editorVersion)).toEqual(['0.0.2', '0.0.3', '0.0.4']);
+  // Concurrent HTTP requests may reach the server in a different order than they were started.
+  expect(results.map(result => result.level.editorVersion).sort()).toEqual(['0.0.2', '0.0.3', '0.0.4']);
   expect(results.map(result => result.changed)).toEqual([true, true, true]);
-  expect(JSON.parse(await disk('na-version-race'))).toEqual(results[2]!.level);
+  expect(JSON.parse(await disk('na-version-race'))).toEqual(results.find(result => result.level.editorVersion === '0.0.4')!.level);
 });
 
 it.each([{ repair: false, file: 'level' }, { repair: true, file: 'level' }, { repair: false, file: 'campaign' }, { repair: true, file: 'campaign' }])('detects external $file writes during unchanged saves (campaign repair: $repair)', async ({ repair, file }) => {
@@ -228,4 +230,22 @@ it.each([{ repair: false, file: 'level' }, { repair: true, file: 'level' }, { re
   expect(response.status).toBe(409);
   expect(await readFile(path, 'utf8')).toBe(external);
   await writeFile(join(dir, 'data/campaigns/custom.json'), goodCampaign);
+});
+
+it('a changed:false response clears dirty when an undo snapshot carries an older server version', async () => {
+  const id = 'na-client-baseline';
+  const initial = await save(id, original, true);
+  expect(initial.status).toBe(200);
+  const first = await initial.json() as { level: NextLevel };
+  const changed = await save(id, { ...first.level, name: 'Saved baseline' });
+  expect(changed.status).toBe(200);
+  const second = await changed.json() as { level: NextLevel };
+  const undoSnapshot = { ...second.level, editorVersion: '0.0.1' };
+  const response = await save(id, undoSnapshot);
+  expect(response.status).toBe(200);
+  const result = await response.json() as { level: NextLevel; changed: boolean };
+  expect(result.changed).toBe(false);
+  expect(result.level.editorVersion).toBe('0.0.2');
+  expect(isDirty(undoSnapshot, result.level)).toBe(false);
+  expect(isDirty({ ...undoSnapshot, name: 'Edit during request' }, result.level)).toBe(true);
 });
