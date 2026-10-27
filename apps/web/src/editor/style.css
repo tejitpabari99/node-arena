@@ -235,3 +235,8 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-check-flyout p { margin: var(--ed-s-2) 0; }
 .ed-check-flyout pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: var(--ed-s-2) 0; }
 .ed-check-flyout summary { cursor: pointer; }
+.ed-check-table { width: 100%; border-collapse: collapse; margin: var(--ed-s-2) 0; font-size: var(--ed-fs-sm, inherit); }
+.ed-check-table th, .ed-check-table td { border: 1px solid var(--ed-border); padding: 2px 6px; text-align: left; vertical-align: top; }
+.ed-check-table thead th { font-weight: 600; }
+.ed-check-table td[data-won="true"] { font-weight: 600; }
+.ed-check-legend ul { margin: var(--ed-s-2) 0; padding-left: 18px; }

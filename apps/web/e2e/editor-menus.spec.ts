@@ -88,7 +88,7 @@ test('Check completion toast reopens Share and left flyout; Escape closes topmos
   await expect(page.getByTestId('share-panel')).toHaveCount(0);
   await page.getByTestId('check-toast').getByRole('button', { name: 'Details' }).click();
   const flyout = page.getByTestId('check-popover'), panel = page.getByTestId('share-panel');
-  await expect(flyout).toContainText('Proxy wins: 2/3');
+  await expect(flyout).toContainText('Auto-player won 2 of 3 test games');
   const f = (await flyout.boundingBox())!, p = (await panel.boundingBox())!;
   expect(f.x + f.width).toBeLessThan(p.x);
   await expectAboveCanvasAndOutsideControls(page, panel);

@@ -12,9 +12,9 @@ test('Check runs on the unsaved working copy and displays streamed proxy evidenc
   await share(page);
   await page.getByRole('button', { name: 'Check', exact: true }).click();
   await page.getByTestId('check-toast').getByRole('button', { name: 'Details' }).click();
-  await expect(page.getByLabel('Proxy evidence')).toContainText('Proxy wins:', { timeout: 30000 });
-  await expect(page.getByLabel('Proxy evidence')).toContainText('Evidence only');
-  await expect(page.getByLabel('Proxy evidence')).toContainText('seed');
+  await expect(page.getByLabel('Proxy evidence')).toContainText('Auto-player won', { timeout: 30000 });
+  await expect(page.getByLabel('Proxy evidence')).toContainText('not proof');
+  await expect(page.getByLabel('Proxy evidence')).toContainText('Start 1');
   await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeEnabled();
   expect(saves).toBe(0);
   await page.getByLabel('Level name', { exact: true }).fill('Changed after check');

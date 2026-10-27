@@ -2,6 +2,7 @@ import type { ContentIssue } from '@node-arena/content';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { chipText, type ChipKind } from './save-core.js';
 import { useDismiss } from './useDismiss.js';
+import { formatIssue } from './check-format.js';
 
 export interface SaveStatusProps {
   saveState: ChipKind;
@@ -33,8 +34,8 @@ export function SaveStatus({ saveState, issues, warnings, saveMessage, failureSe
     {open && interactive && <div class="ed-popover ed-save-popover" data-testid="save-popover">
       {issues.length === 0 && warnings.length === 0 && !saveMessage && <p>No issues.</p>}
       {saveMessage && <p data-testid="save-message">{saveMessage}</p>}
-      {issues.length > 0 && <ul aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
-      {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
+      {issues.length > 0 && <ul aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer} title={formatIssue(issue, issueLabel(issue)).raw}>{formatIssue(issue, issueLabel(issue)).text}</li>)}</ul>}
+      {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer} title={formatIssue(issue, issueLabel(issue)).raw}>{formatIssue(issue, issueLabel(issue)).text}</li>)}</ul>}
     </div>}
   </span>;
 }

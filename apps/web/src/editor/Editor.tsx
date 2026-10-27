@@ -27,6 +27,7 @@ import { buildableArea, copySelection, createHistory, historyReducer, placeCente
 import type { LevelDoc } from './document.js';
 import { useInitialLoad } from './useInitialLoad.js';
 import { confirmAction } from './confirm-flow.js';
+import { formatIssue } from './check-format.js';
 
 type PendingAction = { action(savedResult?: LevelDoc): void | Promise<void>; kind: 'replace' | 'back' | 'duplicate' };
 const closedUi = { menu: false, share: false, flyout: false, dialog: null as 'create' | 'open' | null, confirm: null as PendingAction | null };
@@ -294,6 +295,6 @@ export function Editor() {
   </Shell> : create ? <CreateDialog levels={levels} loading={loading} onClose={leave} onReplace={replaceDoc} /> : <StartScreen levels={levels} loading={loading} copyHint={copyHint} startError={startError} onReplace={replaceDoc} />}
   {doc && ui.dialog === 'create' && <CreateDialog {...dialogProps} />}
   {doc && ui.dialog === 'open' && <OpenDialog {...dialogProps} />}
-  {ui.confirm && <ConfirmDialog busy={confirmBusy} message={failureActive ? saveMessage || validation.issues.map(issue => `${issueLabel(issue)}: ${issue.message}`).join('\n') || 'Saving failed. Review the save status before continuing.' : 'Save your changes before continuing?'} saveLabel={ui.confirm.kind === 'duplicate' ? 'Save & duplicate' : ui.confirm.kind === 'back' ? 'Save and leave' : 'Save'} discardLabel={ui.confirm.kind === 'back' ? 'Leave without saving' : 'Discard'} onSave={() => void confirm(true)} {...(ui.confirm.kind === 'duplicate' ? {} : { onDiscard: () => void confirm(false) })} onCancel={() => setUi(state => ({ ...state, confirm: null }))} />}
+  {ui.confirm && <ConfirmDialog busy={confirmBusy} message={failureActive ? saveMessage || validation.issues.map(issue => formatIssue(issue, issueLabel(issue)).text).join('\n') || 'Saving failed. Review the save status before continuing.' : 'Save your changes before continuing?'} saveLabel={ui.confirm.kind === 'duplicate' ? 'Save & duplicate' : ui.confirm.kind === 'back' ? 'Save and leave' : 'Save'} discardLabel={ui.confirm.kind === 'back' ? 'Leave without saving' : 'Discard'} onSave={() => void confirm(true)} {...(ui.confirm.kind === 'duplicate' ? {} : { onDiscard: () => void confirm(false) })} onCancel={() => setUi(state => ({ ...state, confirm: null }))} />}
   {playing && doc && <PlayOverlay doc={doc} onExit={() => setPlaying(false)} />}</>;
 }

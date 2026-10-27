@@ -30,9 +30,9 @@ it('streams real check API events into toast Details; reopening both surfaces pr
   const flyout = page.getByTestId('check-popover');
   await domExpect(flyout).toHaveAttribute('role', 'dialog'); await domExpect(flyout).toHaveAccessibleName('Check details');
   await domExpect(page.getByTestId('share-panel')).toBeVisible();
-  await domExpect(flyout).toContainText('Evidence only. Proxy wins do not prove solvability');
-  await domExpect(flyout).toContainText('Proxy wins: 3/4. Validation: passed.');
-  await domExpect(flyout).toContainText('proxy-500 seed 2: won, winner 0, 120 ticks');
+  await domExpect(flyout).toContainText('not proof');
+  await domExpect(flyout).toContainText('Auto-player won 3 of 4 test games. Level data is valid.');
+  await domExpect(flyout).toContainText('Won · 0:06');
   await flyout.getByText('Full proxy report', { exact: true }).click(); await domExpect(flyout.locator('details pre')).toContainText('report-hash');
   await page.getByTestId('outside').click(); await domExpect(flyout).toHaveCount(0); await domExpect(page.getByTestId('share-panel')).toHaveCount(0);
   await page.getByTestId('check-toast').getByRole('button', { name: 'Details', exact: true }).click(); await domExpect(flyout).toBeVisible();
@@ -77,6 +77,6 @@ it('dismissal never cancels running check; explicit Cancel retains cancellation 
   // Failed check: Details stays reachable and the error is shown once, without evidence disclaimer.
   await page.getByRole('button', { name: 'Close check details' }).click();
   await domExpect(page.getByTestId('check-row').getByRole('button', { name: 'Details' })).toBeVisible();
-  await show(); await domExpect(page.getByTestId('check-popover').getByText('Evidence only')).toHaveCount(0);
+  await show(); await domExpect(page.getByTestId('check-popover').getByText('not proof')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
