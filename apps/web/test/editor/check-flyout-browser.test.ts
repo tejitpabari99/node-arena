@@ -42,8 +42,13 @@ it('anchors 400px flyout 8px left of Share at the same top, z5, and resizes with
   await reset(); await show();
   for (const width of [1440, 1024, 700]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.waitForFunction(() => { const flyout = document.querySelector('[data-testid="check-popover"]')!.getBoundingClientRect(), panel = document.querySelector('[data-testid="share-panel"]')!.getBoundingClientRect(); return Math.abs(panel.left - flyout.right - 8) < 1; });
-    const flyout = (await page.getByTestId('check-popover').boundingBox())!, panel = (await page.getByTestId('share-panel').boundingBox())!, controls = (await page.getByTestId('map-controls').boundingBox())!;
+    const geometry = () => page.evaluate(() => {
+      const box = (id: string) => { const r = document.querySelector(`[data-testid="${id}"]`)!.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width }; };
+      return { flyout: box('check-popover'), panel: box('share-panel'), controls: box('map-controls') };
+    });
+    // One atomic read, retried until layout settles after the viewport resize; assertions stay exact.
+    await browserExpect.poll(async () => { const g = await geometry(); return Math.abs(g.flyout.x + g.flyout.width - (g.panel.x - 8)) < 1 && Math.abs(g.flyout.width - Math.min(400, g.panel.x - 16)) < 1; }, { timeout: 5000 }).toBe(true);
+    const { flyout, panel, controls } = await geometry();
     expect(flyout.y).toBe(panel.y); expect(flyout.x).toBeGreaterThanOrEqual(8); expect(flyout.x + flyout.width).toBe(panel.x - 8);
     expect(flyout.width).toBe(Math.min(400, panel.x - 16)); expect(panel.x + panel.width).toBeLessThanOrEqual(width - 56); expect(flyout.x + flyout.width).toBeLessThan(controls.x); expect(panel.x + panel.width).toBeLessThan(controls.x);
     expect(await page.getByTestId('check-popover').evaluate(el => getComputedStyle(el).zIndex)).toBe('5');

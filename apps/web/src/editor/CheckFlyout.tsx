@@ -38,8 +38,11 @@ export function CheckFlyout(p: CheckFlyoutProps) {
     (flyout.current?.querySelector<HTMLButtonElement>('button') ?? flyout.current)?.focus();
     const observer = new ResizeObserver(place);
     if (p.panelRef.current) observer.observe(p.panelRef.current);
-    window.addEventListener('resize', place);
-    return () => { observer.disconnect(); window.removeEventListener('resize', place); };
+    // Share repositions itself on the same resize event; re-place next frame so a stale panel rect is never kept.
+    let frame = 0;
+    const onResize = () => { place(); cancelAnimationFrame(frame); frame = requestAnimationFrame(place); };
+    window.addEventListener('resize', onResize);
+    return () => { observer.disconnect(); cancelAnimationFrame(frame); window.removeEventListener('resize', onResize); };
   }, [p.open]);
   if (!p.open) return null;
   const report = p.proxyEvents.find(event => event.type === 'result');
