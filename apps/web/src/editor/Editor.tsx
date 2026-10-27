@@ -219,7 +219,7 @@ export function Editor() {
       setUi(state => ({ ...state, menu: false, share: false, flyout: false, confirm: { action, kind } }));
     } else void action();
   }
-  function leave() { bypassUnload.current = true; window.location.assign('/'); }
+  function leave() { bypassUnload.current = true; window.location.assign('/?view=custom'); }
   async function duplicate() {
     const saved = savedRef.current;
     if (!saved) return;

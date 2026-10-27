@@ -97,7 +97,7 @@ it('creates, copies and opens levels with accessible reusable dialogs in Chromiu
     await browserExpect(open.getByText('No custom levels yet.')).toBeVisible(); await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Show Start', exact: true }).click();
     await browserExpect(page.getByRole('heading', { name: 'Level editor', exact: true })).toBeVisible();
-    await browserExpect(page.getByRole('link', { name: 'Back', exact: true })).toHaveAttribute('href', '/');
+    await browserExpect(page.getByRole('link', { name: 'Back', exact: true })).toHaveAttribute('href', '/?view=custom');
     await browserExpect(page.getByTestId('create-confirm')).toBeVisible(); await browserExpect(page.getByTestId('open-confirm')).toBeVisible();
     await browserExpect(page.getByLabel('New level id')).toHaveValue('na-custom-1');
     await page.getByTestId('create-confirm').click();

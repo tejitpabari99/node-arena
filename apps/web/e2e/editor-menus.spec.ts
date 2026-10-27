@@ -110,7 +110,7 @@ test('Back failure keeps editing, Cancel keeps native guard, approved Discard le
   await page.getByTestId('confirm-cancel').click();
   expect(await page.evaluate(() => { const e = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(e); return e.defaultPrevented; })).toBe(true);
   await page.getByTestId('back').click(); await page.getByTestId('confirm-discard').click();
-  await expect(page).toHaveURL(/\/$/); expect(prompts).toBe(0);
+  await expect(page).toHaveURL(/\/\?view=custom$/); expect(prompts).toBe(0);
 });
 
 test('Back Save and leave waits for a successful save; clean Back leaves directly', async ({ page }) => {
@@ -118,9 +118,9 @@ test('Back Save and leave waits for a successful save; clean Back leaves directl
   await page.route('**/__editor/save', async route => { await held; await route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '0.0.1' }, warnings: [] } }); });
   await openCopied(page); await page.getByTestId('back').click();
   await page.getByTestId('confirm-save').click(); await expect(page.getByTestId('confirm-save')).toBeDisabled();
-  await expect(page).toHaveURL(/editor.html/); release(); await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/editor.html/); release(); await expect(page).toHaveURL(/\/\?view=custom$/);
   await page.goto('/editor.html?level=na-trial'); await page.getByTestId('back').click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/\?view=custom$/);
 });
 
 test('Open reads before confirmation, preserves read errors, and saves before installing target', async ({ page }) => {
