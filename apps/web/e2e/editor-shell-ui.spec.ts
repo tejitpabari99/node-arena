@@ -57,7 +57,7 @@ test('blank document Save lists issues in the status popover; left panel exposes
   await editorSave(page);
   await expect(chip).toHaveText(/^\d+ issues$/);
   await expect(page.getByTestId('save-popover')).toBeVisible();
-  await expect(page.getByTestId('save-popover')).toContainText('Human has no building');
+  await expect(page.getByTestId('save-popover')).toContainText('Human has no troop building');
   await expect(page.getByTestId('save-popover').locator('li[data-item]').first()).toBeVisible();
 });
 

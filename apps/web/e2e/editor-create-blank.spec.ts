@@ -77,9 +77,9 @@ test('deleting every building keeps the preview healthy, lists per-player issues
   await expect(shell).toHaveAttribute('data-buildings', '1');
   await expect(page.getByTestId('save-chip')).toHaveText(/^1 issues?$/);
   await page.getByTestId('save-chip').click();
-  await expect(page.getByTestId('save-popover')).toContainText('AI1 has no building — add one and set its owner to AI1');
+  await expect(page.getByTestId('save-popover')).toContainText('AI1 has no troop building — add a house and set its owner to AI1');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByTestId('ownership-blocked')).toContainText('AI1 has no building');
+  await expect(page.getByTestId('ownership-blocked')).toContainText('AI1 has no troop building');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   // Delete the last house: no stale banner, one issue per player, no generic message.
   await page.getByLabel('Selected item', { exact: true }).selectOption({ label: 'Human house 1' });
@@ -89,8 +89,8 @@ test('deleting every building keeps the preview healthy, lists per-player issues
   await expect(page.getByTestId('preview-error')).toHaveCount(0);
   await page.getByTestId('save-chip').click();
   const popover = page.getByTestId('save-popover');
-  await expect(popover).toContainText('Human has no building — add one and set its owner to Human');
-  await expect(popover).toContainText('AI1 has no building — add one and set its owner to AI1');
+  await expect(popover).toContainText('Human has no troop building — add a house and set its owner to Human');
+  await expect(popover).toContainText('AI1 has no troop building — add a house and set its owner to AI1');
   await expect(popover).not.toContainText('Add at least one building');
   await expect(page.getByTestId('viewport-selection')).not.toContainText('b0');
 });

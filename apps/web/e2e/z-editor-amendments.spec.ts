@@ -145,7 +145,7 @@ test('Save accepts a player without a house; real Check fails and Finalize is bl
     }).toPass({ timeout: 60000 });
     // Finalize is blocked in the editor (before any save or lock change) and names the player.
     await share(page); await page.getByRole('button', { name: 'Finalize', exact: true }).click();
-    await expect(page.getByTestId('ownership-blocked')).toContainText('AI2 has no building — add one and set its owner to AI2');
+    await expect(page.getByTestId('ownership-blocked')).toContainText('AI2 has no troop building — add a house and set its owner to AI2');
   } finally {
     await writeFile(custom, original);
     if (createdId) await rm(resolve(data, 'levels', `${createdId}.json`), { force: true });

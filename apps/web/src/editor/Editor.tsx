@@ -3,6 +3,8 @@ import { validateEditorDocument } from '../../../../tools/src/editor-validation.
 import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { spawnsTroops } from './houses.js';
+import type { NextBuilding } from '@node-arena/content';
 import { combineIssues, ownershipIssues } from './ownership.js';
 import { PlayOverlay } from './PlayOverlay.js';
 import { LeftPanel } from './LeftPanel.js';
@@ -34,6 +36,7 @@ type PendingAction = { action(savedResult?: LevelDoc): void | Promise<void>; kin
 const closedUi = { menu: false, share: false, flyout: false, dialog: null as 'create' | 'open' | null, confirm: null as PendingAction | null };
 
 /** Owns immutable working-copy snapshots; forms and Play attach here. */
+const troopTypes: ReadonlySet<string> = new Set(Object.entries(contentFiles()).filter(([path]) => path.startsWith('data/buildings/')).map(([, value]) => JSON.parse(value as string) as NextBuilding).filter(spawnsTroops).map(arch => arch.id));
 export function Editor() {
   const [choices, setChoices] = useState<{ themes: string[]; colors: string[]; palettes: Record<string, string> }>({ themes: [], colors: [], palettes: {} });
   const [history, setHistory] = useState<DocHistory | null>(null);
@@ -144,7 +147,7 @@ export function Editor() {
     return () => { active = false; clearTimeout(timer); };
   }, [doc]);
   // Ownership gaps are sync, not part of save validation (drafts stay saveable), but block Play, Check and Finalize.
-  const ownership = useMemo(() => doc ? ownershipIssues(doc) : [], [doc]);
+  const ownership = useMemo(() => doc ? ownershipIssues(doc, troopTypes) : [], [doc]);
   const shownIssues = useMemo(() => combineIssues(validation.issues, ownership), [validation.issues, ownership]);
   function blockedByOwnership(): boolean {
     if (!ownership.length) return false;
