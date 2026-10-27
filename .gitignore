@@ -9,3 +9,4 @@ visual-out/
 
 # asset capture stub/scratch outputs (named acceptance captures are force-added by their tasks)
 docs/agent_files/*/ref/out/
+.firebase/

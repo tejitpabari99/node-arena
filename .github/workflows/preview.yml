@@ -1,0 +1,115 @@
+name: Preview
+# Per-PR Firebase Hosting preview channel (pr-<N>, expires 7d), torn down on close.
+# Same-repo PRs only: fork PRs never get FIREBASE_SERVICE_ACCOUNT.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, closed]
+concurrency:
+  group: preview-${{ github.event.number }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  deploy-preview:
+    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CHANNEL_ID: pr-${{ github.event.number }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:prerequisites
+      - run: pnpm build:web
+      - name: Deploy preview channel
+        id: deploy
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          creds_file="$RUNNER_TEMP/firebase-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$creds_file"
+          export GOOGLE_APPLICATION_CREDENTIALS="$creds_file"
+
+          set +e
+          deploy_output=$(npx firebase-tools@15.34.1 hosting:channel:deploy "$CHANNEL_ID" \
+            --project node-arena-99 --expires 7d 2>&1)
+          deploy_exit=$?
+          set -e
+
+          rm -f "$creds_file"
+          echo "$deploy_output"
+          if [ "$deploy_exit" -ne 0 ]; then
+            exit "$deploy_exit"
+          fi
+
+          # Require "--" so the live URL (node-arena-99.web.app) never matches.
+          preview_url=$(echo "$deploy_output" \
+            | grep -oE 'https://[a-zA-Z0-9-]+--[a-zA-Z0-9-]+\.web\.app[a-zA-Z0-9/_.-]*' \
+            | head -n1)
+          if [ -z "$preview_url" ]; then
+            echo "::error::Could not extract a preview URL from firebase-tools output."
+            exit 1
+          fi
+          echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
+      - name: Write job summary
+        run: |
+          {
+            echo "### Firebase Hosting preview"
+            echo ""
+            echo "**Channel:** \`$CHANNEL_ID\` (expires in 7 days)"
+            echo ""
+            echo "**URL:** ${{ steps.deploy.outputs.preview_url }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Comment preview URL on the PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
+        run: |
+          body="### Preview deployed
+
+          **URL:** $PREVIEW_URL
+
+          Channel \`$CHANNEL_ID\` expires 7 days after the last deploy. This
+          comment updates on every new push to this PR."
+
+          gh pr comment "${{ github.event.number }}" \
+            --repo "${{ github.repository }}" \
+            --edit-last \
+            --body "$body" \
+            || gh pr comment "${{ github.event.number }}" \
+              --repo "${{ github.repository }}" \
+              --body "$body"
+
+  # Frees the channel on close (merged or not); channels also auto-expire.
+  teardown-preview:
+    if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CHANNEL_ID: pr-${{ github.event.number }}
+    steps:
+      - name: Delete this PR's preview channel
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          set -u
+          # Hard guard: never delete the live channel.
+          if [ "$CHANNEL_ID" = "live" ]; then
+            echo "::error::Refusing to delete the live Hosting channel"
+            exit 1
+          fi
+          creds_file="$RUNNER_TEMP/firebase-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$creds_file"
+          export GOOGLE_APPLICATION_CREDENTIALS="$creds_file"
+          trap 'rm -f "$creds_file"' EXIT
+          npx firebase-tools@15.34.1 hosting:channel:delete "$CHANNEL_ID" \
+            --project node-arena-99 --force \
+            || echo "Channel $CHANNEL_ID already gone or expired; nothing to delete."
