@@ -39,8 +39,8 @@ test('closing the handoff dialog returns to the game', async ({ page }) => {
   await page.goto('/editor.html?create=1');
   await expect(page.getByRole('dialog', { name: 'Create level', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole('button', { name: 'Custom', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/\?view=custom$/);
+  await expect(page.getByRole('heading', { name: 'Custom levels', exact: true })).toBeVisible();
 });
 
 test('level URL takes precedence over create and preserves the imported copy hint', async ({ page }) => {

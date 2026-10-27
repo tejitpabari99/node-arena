@@ -186,7 +186,9 @@ test('overlay uses real input, identical initial hash, private completions/mute,
   expect(state.save.completed['na-runtime-browser']).toBeDefined();
   expect(await page.evaluate(() => localStorage.getItem('nodearena:save'))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem('nodearena:save.bak'))).toBeNull();
-  await page.getByRole('button', { name: 'Levels', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Replay', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Levels', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit level', exact: true }).click();
   await expect(page.locator('.editor-play-overlay')).toHaveCount(0);
   expect(await page.evaluate(() => window.__editorPlayTest.disposals)).toEqual({ runtime: 1, driver: 1, exited: 1 });
   expect(await page.evaluate(() => window.__editorPlayTest.play.app.driver)).toBeNull();

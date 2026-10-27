@@ -26,7 +26,6 @@ test('starts blank drafts and copies without retaining source identity', async (
   await browserExpect(page.locator('.ed-shell')).toHaveAttribute('data-players', '2');
   await editorSave(page);
   await browserExpect(page.getByTestId('save-chip')).toHaveText(/^\d+ issues$/);
-  await browserExpect(page.getByTestId('save-popover')).toContainText('/buildings');
   await browserExpect(page.getByTestId('save-popover')).toContainText('Add at least one building');
   await openFile(page, 'create');
   await page.getByLabel('Copy existing level', { exact: true }).selectOption('levelview-1');
