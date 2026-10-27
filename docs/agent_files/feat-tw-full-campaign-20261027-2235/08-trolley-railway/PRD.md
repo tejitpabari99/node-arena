@@ -5,9 +5,9 @@ date: 2026-10-27
 ---
 # PRD: 08 Trolley + railway
 
-Repo/branch: node-arena, `feat/tw-full-campaign` (Phase D PR = SP08+09) · Depends on: 04 (projectile hits may target trolley; `hits:'trolley'`), 02 (element facility; mine/wall helper), 03 (ring column pattern, return channel), 05 (river passes), 06 (command parse table, `RULES_VERSION` 3.5.0, BOT 2.6.0), 07 (3.6.0). Takes **RULES 3.7.0**, next BOT minor (**2.7.0**). Feeds: 09 (final import 267/330+, docs, gates).
+Repo/branch: node-arena, `feat/tw-full-campaign` (Phase D PR = SP08+09) · Depends on: 04 (projectile hits may target trolley; `hits:'trolley'`), 02 (element facility; mine/wall helper), 03 (ring column pattern, return channel), 05 (river passes), 06 (command parse table, `RULES_VERSION` 3.5.0, BOT 2.6.0), 07 (3.6.0). Takes **RULES 3.7.0**, next BOT minor (**2.7.0**). Feeds: 09 (final curation, docs, gates).
 Owns: `docs/GAME_RULES.md` (areas `TRL`, `RAIL`, command 4.1 `RailMove`, phase rows 1/8 amendments, changelog), `packages/content/src/versioning.ts`, `packages/bots/src/version.ts`, `packages/defs/src/{commands.ts,modules/{trolley,rides}.def.ts}` + registries/events (`TrolleyReady`, `TrolleyLaunched`, `TrolleyExploded`, `BuildingRemoved`, `RailMoveStarted`, `RailMoveEnded`), `packages/content/data/{buildings/trolley.json,elements/railway.json}` + schemas + level `railways` field, `packages/sim/src/{rails.ts (new),state.ts,hash.ts,commands.ts,tick.ts,ring.ts (kind column value),crossings.ts,geometry.ts (pair/lane rebuild entrypoint)}`, `modules/{trolley,rides}.ts`, `packages/bots/src/{tw-ai.ts,script.ts,seat.ts}`, `tools/src/import-tw/{feature-map.json,map-level.ts,script.ts}`, `apps/web/src/{render,input,hud,editor}/*`, `tools/src/assets-tw/*`, imported levels, locks, `tools/unsolved-by-proxy.json`, `docs/FUTURES.md` (CrossingSource entry).
-Does not own: boosters/rage, cargo (dropped), projectile semantics (04), rocket/fortress (06/07), final census docs (09).
+Does not own: boosters/rage, cargo (dropped), projectile semantics (04), rocket/fortress (06/07), final docs (09).
 
 ## TL;DR
 - **Trolley = building archetype + a pseudo-troop.** Own troops fill it; overflow past `maxLevel` sets `ready`. A ready trolley has exactly one slot; `DrawLine` from it launches one *cart* troop (kind `cart`, 50 mt/tick = TW 1.0 u/s) on the normal channel ring. Carts kill every troop they touch (own or enemy), and on arrival (or touching any building) delete that building. [decomp: 03 §8.7] No new command.
@@ -25,7 +25,7 @@ Does not own: boosters/rage, cargo (dropped), projectile semantics (04), rocket/
 ## Goals / Non-Goals
 | Goals | Non-Goals |
 |---|---|
-| Trolley + railway playable by human, TW AI, proxy; levels 267-340 unblocked | Smooth cart motion in sim (continuous drag), booster speed-up (1.3x), cargo |
+| Trolley + railway playable by human, TW AI, proxy; >=10 trolley and >=10 railway levels selected and imported | Smooth cart motion in sim (continuous drag), booster speed-up (1.3x), cargo |
 | Deterministic, snapshotted, hashed state; old replays unchanged | Generic `CrossingSource` registry |
 | `RailMove` in the closed command set, same validation for all seats (R-ENT-04) | Rail effects on troops in flight other than kill-on-move |
 | TW AI rail behaviour (AiRM steps + tower repositioning) | Boss / PvP rail variants |
@@ -52,7 +52,7 @@ Does not own: boosters/rage, cargo (dropped), projectile semantics (04), rocket/
 
 **R5 Web**: trolley model + "ready" glow; cart mesh travelling the line interpolated from `(launch, arrival)`; explosion fx (reuse 04 blast); rail track polyline + station posts; moving building animated along the polyline over `moveTicks`; input: drag a rail building along the track, release snaps to nearest point and sends `RailMove`; trolley ready highlights and the existing draw gesture launches. Editor: place trolley, place rail with 2-5 points and attach a building, export `railways`. `explainDraw` unchanged. TW assets: `Trolley`, `Game/Railway/*`, `WayTrolley` via asset pipeline.
 
-**R6 Importer**: `feature-map`: `trolley -> archetype trolley`, `Railway -> element railway`, `AiRM -> map (token removed)`; `script.ts` stops dropping AiRM and emits `railMove` nodes in queue index order; `map-level.ts` emits `railways`. Census delta table (96 rails, 188 trolleys) in 09.
+**R6 Importer**: `feature-map`: `trolley -> archetype trolley`, `Railway -> element railway`, `AiRM -> map (token removed)`; `script.ts` stops dropping AiRM and emits `railMove` nodes in queue index order; `map-level.ts` emits `railways`. Coverage lines (trolley, railway) in the SP08 PR; candidate counts from the SP01 pool tool.
 
 ## Architecture
 - **Cart on the ring.** `ring.kind` gains `cart`. Hp/exchange: `exchange()` (03) short-circuits when either side is `cart` (troop dies, cart intact). Crossing/head-on windows already exist for any troop kind; no new geometry. Arrival path (phase 8) dispatches `cart` to `trolley.explode(target)` before capture/reinforce logic. Elements helper (02) gets a `damageCart` callback for mines.
@@ -94,6 +94,6 @@ Does not own: boosters/rage, cargo (dropped), projectile semantics (04), rocket/
 - `R-TRL-01..05`, `R-RAIL-01..06` in GAME_RULES with `covers R-...` tests; `RULES_VERSION` 3.7.0 + changelog; `pnpm check:rules` green.
 - Tests: fill -> ready -> draw -> cart kills mixed-owner troops -> removal; mine damage; rail move cuts lines, kills troops, blocks draw while Moving, snaps and rebuilds blocking; replay/snapshot round-trip; shipped-20 hashes and `bots:golden` unchanged.
 - Bots: `railMove` step and tower repositioning covered; `BOT_VERSION` bumped; AiRM no longer dropped (`check:import` green).
-- Feature-map rows flipped; levels through 340 imported; `validate:levels` or `unsolved-by-proxy.json` entries; `content:lock`, `levels:lock` refreshed.
+- Feature-map rows flipped; select >=10 TW-pool levels (Common 24-340) featuring trolley and, separately, railway (>=10 each) per README Curation rules (candidates and metrics from SP01 pool tool; the first selected level introduces trolley and, separately, railway (>=10 each) with no other new element; spread across later positions; prefer proxy-solvable, allowlist only if no equal-feature alternative); import only those; show the coverage line in the PR (`trolley and, separately, railway (>=10 each): n levels, first at display N`). Selection is provisional; SP09 finalizes order and numbering. `validate:levels` or `unsolved-by-proxy.json` entries; `content:lock`, `levels:lock` refreshed.
 - Web: trolley/rail render, drag-to-snap works, editor places both; `test:web:e2e` and `campaign:verify` green; `pnpm run ci` green.
 - FUTURES `CrossingSource` entry marked closed.

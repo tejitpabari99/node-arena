@@ -5,7 +5,7 @@ date: 2026-10-27
 ---
 # PRD: 03 Resource piles
 
-Repo/branch: node-arena, `feat/tw-full-campaign` (Phase A PR = SP01+02+03) · Depends on: 02 (element hp/state columns, crossing helper, `RULES_VERSION` 3.1.0, ELM area), 01 soft (census, themes for levels >= 41) · Feeds: 05 (rivers reuse the return-channel idea for plank-less troops), 08 (trolley), 09
+Repo/branch: node-arena, `feat/tw-full-campaign` (Phase A PR = SP01+02+03) · Depends on: 02 (element hp/state columns, crossing helper, `RULES_VERSION` 3.1.0, ELM area), 01 soft (pool tool, themes for levels >= 41) · Feeds: 05 (rivers reuse the return-channel idea for plank-less troops), 08 (trolley), 09
 Owns: `docs/GAME_RULES.md` (new area `PIL`, edits to R-ENT-01, R-LIN-01, R-CAP-01, R-WIN-01 cross-refs, phase table, changelog), `packages/content/src/versioning.ts` (RULES_VERSION 3.1.0 -> 3.2.0), `packages/defs/src/modules/{depletes,carries}.def.ts` + events (`PileHit`, `PileDepleted`, `TroopReturned`), `packages/content/data/buildings/resource-pile.json` + schema bits, `packages/sim/src/{ring.ts,state.ts,hash.ts,types.ts,read.ts}` + `modules/{depletes,carries}.ts`, `packages/bots/src/{tw-ai.ts,script.ts,version.ts}`, `tools/src/import-tw/{feature-map.json,map-level.ts,gate.ts}`, `apps/web/src/render/*` (pile + carried-gold), `apps/web/src/editor/*`, `tools/src/assets-tw/*` (Resources*/Gold rows), imported levels, `tools/levels-lock.json`, `tools/unsolved-by-proxy.json`.
 Does not own: walls/mines (02), rivers/planks (05), cargo (stays dropped), meta/currency use of gold (OUT).
 
@@ -14,7 +14,7 @@ Does not own: walls/mines (02), rivers/planks (05), cargo (stays dropped), meta/
 - Arriving own troop takes `min(amount, attack)` gold (soldier 1, tank 2), `amount` drops, troop **turns around** and walks back; on arrival home it reinforces `+defense + gold` (TW: "1 + carried gold"). Gold has **no other in-match meaning**. [verified: §6 PickUp/AddObjectInHand/WarriorEffectOnCollision]
 - Return trip = same troop (same `seq`) moved to a **companion return channel** (`pile -> home`) at progress 0: ring stays FIFO, so **no per-troop direction, re-anchor or sorted insert** is needed (06-gap-map §3 predicted those; this design avoids them) [design].
 - AI adds piles to its weakest-first target list (key = amount). Zero shipped levels have `WOD` -> existing 20 levels, locks, goldens unchanged; `BOT_VERSION` 2.4.4 -> 2.5.0 regardless (identity change).
-- Importer: `WOD` row becomes `building / resource-pile`; first pile at position 67; census-driven import.
+- Importer: `WOD` row becomes `building / resource-pile`; first pile at TW position 67; curated import.
 
 ## Problem
 Piles gate 412 of 1,012 campaign levels (first at 67) [verified: 06-gap-map §1; 02-levels §5]. `WOD` is parsed but mapped as `kind: element, archetype: null` -> every pile level is blocked [verified: feature-map.json L22]. The sim has no resource, carry or return concept; the earlier AI port dropped pile targets because they "shift weakest-first order on 412 levels" [verified: FUTURES.md L6/L12]; 159 AI script steps (`AiCWS.THId`) target piles [verified: 02-levels §3.4]. No shipped level (positions 4-23) has `WOD` [verified: grep over `packages/content/data/levels`].
@@ -78,8 +78,8 @@ Piles gate 412 of 1,012 campaign levels (first at 67) [verified: 06-gap-map §1;
 
 ### R6 Importer
 - `feature-map.json`: `WOD` -> `{action: map, kind: building, archetype: "resource-pile"}`; `gate.ts` `resource: 'WOD'` token cleared; `map-level.ts` emits piles after BD buildings in TW `id` order (S3), `level = c`, `rotation` presentation-only. `parse-raw` already reads `WOD` [verified: parse-raw.ts L103, L213].
-- Import all positions <= 340 unblocked (census, SP01 R4); unsolved-by-proxy rows with `ownerSignOff: null`; content version bump + `content:lock`, `levels:lock`.
-- LEVELS_GUIDE census row "resource piles" updated; report 0 shipped-level hash movement.
+- Curated import: select >=10 TW-pool levels (Common 24-340) featuring resource piles per README Curation rules (candidates and metrics from SP01 pool tool; the first selected level introduces resource piles with no other new element; spread across later positions; prefer proxy-solvable, allowlist only if no equal-feature alternative); import only those; show the coverage line in the PR (`resource piles: n levels, first at display N`). Selection is provisional; SP09 finalizes order and numbering. Unsolved-by-proxy rows with `ownerSignOff: null`; content version bump + `content:lock`, `levels:lock`.
+- LEVELS_GUIDE feature row "resource piles" updated; report 0 shipped-level hash movement.
 
 ## Architecture (high level)
 - **Pile = building, carry = ring column, return = companion channel.** Everything pile-specific is data (`depletes`, `carries`) plus one arrival-dispatch branch; SP02's element crossings still apply to returners since they are ordinary ring troops. SP05 can reuse "turn around on companion channel" for bridge-less soldiers.
@@ -119,6 +119,6 @@ Piles gate 412 of 1,012 campaign levels (first at 67) [verified: 06-gap-map §1;
 - `R-PIL-01..05` in GAME_RULES with `covers R-...` tests; `check:rules` green; RULES_VERSION 3.2.0 + changelog.
 - Unit tests: pickup clamp (soldier 1, tank 2, amount < carry), depletion + line cut, return reinforcement `1 + gold` incl. cap/surplus, home captured mid-return, returner clash on crossing lane, same-tick multi-arrival order, snapshot/hash round-trip with `carry`, determinism across runs.
 - Bots: pile enters weakest-first list only while `amount > 0`; script pile `THId` resolves; `BOT_VERSION` 2.5.0; bot goldens for existing 20 levels byte-identical.
-- First pile level (position 67) and all pile-only-unblocked levels <= 340 imported, solvable by proxy or in `unsolved-by-proxy.json`; census delta recorded.
+- >=10 selected pile levels imported (first introduces piles alone), solvable by proxy or in `unsolved-by-proxy.json`; coverage line recorded.
 - Web: pile and carried gold render, fx from events, editor places piles; `assets:tw:check`, `check:manifest` green.
 - `bench:sim` within budget; `pnpm run ci` green.

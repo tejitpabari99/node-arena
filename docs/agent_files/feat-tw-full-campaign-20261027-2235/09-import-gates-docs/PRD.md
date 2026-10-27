@@ -1,103 +1,119 @@
 ---
 status: draft
-summary: Close the initiative: final import sweep of Common positions 4-340 (census-driven residual triage), gates re-baselined at ~337 levels (PR subset vs nightly full, locks, goldens, bench), docs consolidated (rules changelog 3.1-3.7, census-generated coverage tracker, deviations ledger, FUTURES cleanup, credits, README/AGENTS), web smoke at scale, and an owner acceptance package.
+summary: Final curation + assembly of the curated Common campaign (20 shipped + selection from TW Common 24-340, ~100-150 levels): confirm per-element >=10 coverage, order by TW position with a concrete difficulty-curve check, fill gaps, contiguous display numbering, LEVELS_GUIDE selection table; then gates re-baselined at curated size, docs consolidated (rules changelog 3.1-3.7, deviations ledger, FUTURES cleanup, credits, README/AGENTS), web smoke, and an owner acceptance package.
 date: 2026-10-27
 ---
-# PRD: 09 Final import, gates, docs
+# PRD: 09 Final curation, gates, docs
 
-Repo/branch: node-arena, `feat/tw-full-campaign` (Phase D PR = SP08+09) · Depends on: all (01-08 merged or in the same branch; runs last) · Feeds: release (campaign 4-340)
-Owns: `docs/LEVELS_GUIDE.md` (coverage tracker, deviations ledger, dropped data), `docs/FUTURES.md` (cleanup), `docs/CONTENT_GUIDE.md` (cross-links only), `docs/CREDITS.md` (audit; rows are added by 01/02-08), `README.md`, `AGENTS.md` project section, `tools/README.md`, `tools/unsolved-by-proxy.json` (final review), `tools/levels-lock.json` (final refresh), `tools/src/import-tw/level-overrides.json` policy, `.github/workflows/{ci,nightly,balance}.yml` (tuning only), `apps/web/e2e` + `playwright.campaign.config.ts` (campaign smoke scale), `docs/agent_files/feat-tw-full-campaign-20261027-2235/{census.json,owner-pass.md,README.md}`.
-Does not own: any rule text or mechanic (02-08 own `GAME_RULES.md` areas; 09 only reviews the consolidated changelog and fixes wording, no behaviour), importer rows (each SP flips its own), `census` script (01), lazy loading and picker (01).
+Repo/branch: node-arena, `feat/tw-full-campaign` (Phase D PR = SP08+09) · Depends on: all (01-08 merged or in the same branch; runs last) · Feeds: release (curated campaign, Level 1..N)
+Owns: `packages/content/data/campaigns/common.json` (final order/numbering), `docs/LEVELS_GUIDE.md` (selection table, deviations ledger, dropped data), `docs/FUTURES.md` (cleanup), `docs/CONTENT_GUIDE.md` (cross-links only), `docs/CREDITS.md` (audit; rows are added by 01/02-08), `README.md`, `AGENTS.md` project section, `tools/README.md`, `tools/unsolved-by-proxy.json` (final review), `tools/levels-lock.json` (final refresh), `tools/src/import-tw/level-overrides.json` policy, `.github/workflows/{ci,balance}.yml` (tuning only), `apps/web/e2e` + `playwright.campaign.config.ts` (campaign smoke), `docs/agent_files/feat-tw-full-campaign-20261027-2235/{census.json,owner-pass.md,README.md}`.
+Does not own: any rule text or mechanic (02-08 own `GAME_RULES.md` areas; 09 only reviews the consolidated changelog and fixes wording, no behaviour), importer rows (each SP flips its own), the pool tool (01), lazy loading and picker (01).
 
 ## TL;DR
-- Nothing new in the sim. 09 is the sweep: run `pnpm census`, import whatever is still importable in 4-340, and make every leftover block an explicit, documented decision.
-- Gates: keep SP01's PR-subset / nightly-full split; final pre-release run is `validate:levels --all` on Node 22 and 24 with identical `levels-lock.json` hashes; unsolved allowlist reviewed row by row.
-- Docs: tracker generated from census (not a static snapshot), one deviations ledger, FUTURES pruned, README/AGENTS say 337 levels.
-- Web: campaign smoke becomes a deterministic sample plus a nightly full sweep, not 337 x 5 s in PR CI.
-- Owner gets `owner-pass.md`: one level per feature introduction + every unsolved-by-proxy level.
+- Nothing new in the sim. 09 is the final curation: take each SP's provisional selection, confirm every element has >=10 shipped levels spread through the campaign, order by TW position, run the difficulty-curve check, fill gaps, assign contiguous display numbers 1..N, and write the selection table (what and why) in LEVELS_GUIDE.
+- Gates: full `validate:levels` at curated size (SP01 measured), final pre-release run on Node 22 and 24 with identical `levels-lock.json` hashes; unsolved allowlist reviewed row by row.
+- Docs: selection table + generated feature coverage from the pool tool (not a static snapshot), one deviations ledger, FUTURES pruned, README/AGENTS say "N levels".
+- Web: campaign smoke is a deterministic sample in PR and a full sweep run manually pre-release.
+- Owner gets `owner-pass.md`: one level per element introduction + every allowlisted level.
 
 ## Problem
-- Each mechanic SP imports "what it unlocks" against a census that moves under it; nobody owns the end state: leftover blocks, the 12 "prefab-only" ids, a tracker still static [verified: `LEVELS_GUIDE.md` L98-100 "not recomputed"], README/AGENTS "20 levels" [verified: `README.md` L3, `AGENTS.md`].
+- Each mechanic SP selects "its" levels against a pool that moves under it; nobody owns the end state: coverage, order, difficulty trend, numbering, a static tracker [verified: `LEVELS_GUIDE.md` L98-100 "not recomputed"], README/AGENTS "20 levels" [verified: `README.md` L3, `AGENTS.md`].
 - `campaign:verify` and `acceptance.spec.ts` hard-code 20 levels [verified: `tools/README.md` L83, `e2e/acceptance.spec.ts` L6].
 - FUTURES still lists shipped work (walls/mines, rivers, rockets, fortress, trolley, piles, themes, census, CrossingSource) [verified: `FUTURES.md`].
-- The only prefab inputs in the repo are two (positions 10, 23); SP01 says "12 prefab-only ids" [verified: `ls tools/src/import-tw/prefab`; SP01 R4 claim unverified].
+- Prefab-only ids matter only if selected (SP01 pool tool lists them; 10 and 23 shipped).
 
 ## Goals / Non-Goals
 | Goals | Non-Goals |
 |---|---|
-| Census over 4-340: 0 blocked except rows documented with a reason in LEVELS_GUIDE | Positions >340, tutorials 1-3, boss, Draw-only levels (OUT) |
-| `pnpm run ci` green on Node 22+24; nightly full `validate:levels --all` green or allowlisted | Statistical balance gating (`balance` stays report-only) |
-| Docs match code; `check:docs` green | New mechanics or rule changes |
-| Owner can accept in one sitting from a short list | Owner sign-off itself (owner-only; `ownerSignOff` stays null) |
+| Per-element coverage >=10 shipped levels (walls, mines, WT3 artillery, resource piles, capture rocket, rivers+bridges, ROBS, selectable fortress, rocket tower, trolley, railway; AI Random BT2 and Defense BT1 where levels use them), spread after first introduction | Importing every TW level (D1) |
+| Order by TW position + difficulty trend per ~10-level window; each element introduced alone | Positions >340, tutorials 1-3, boss, Draw-only levels (OUT) |
+| `pnpm run ci` green on Node 22+24; `validate:levels --all` green or only allowlisted | Statistical balance gating (`balance` stays report-only) |
+| Docs match code; `check:docs` green | New mechanics or rule changes; owner sign-off itself (`ownerSignOff` stays null) |
 
 ## Requirements
-### R1 Import sweep
-- Run `pnpm census` then `pnpm import:tw --range 4-340`; classify every non-imported position as: (a) importable now (miss: fix), (b) blocked by an OUT feature (boosters/boss/Draw-only/cargo-only), (c) parse failure (long/v0 dialect, missing prefab). (a) must be 0.
-- **Prefab-only ids**: list them from the extract (`census` should print them); for each <=340 either commit an `*.ext.json` + `colliders.json` rows via UnityPy (`dump_colliders.py`), or record it as blocked-with-reason. [P1 see Risks]
-- **Residual triage** table in LEVELS_GUIDE §5: position, blocker, class (a/b/c), decision. Blocked positions leave the campaign sparse (`--skip-blocked`) per the owner decision on unimportable positions (see Risks; recommended: skip and keep contiguous display numbering) [P2 OWNER].
-- **`level-overrides.json` policy**: file today holds playtest tuning for shipped levels (bot delays, building nudges, with `reason`). Policy: imports 24-340 ship **un-tuned** (faithful TW); overrides only for a level that fails proxy solvability for a *fixable cause* (placement, delay) and require `reason`; unsolvable stays in `unsolved-by-proxy.json` instead of being tuned away. Overrides reviewed in the sweep; none added speculatively.
-- Reconcile counts: `common.json` entries == files in `data/levels` (minus `na-*`) == `levels-lock.json` keys == census `imported`.
+### R1 Final curation (see README Curation)
+1. **Pool**: `pnpm census` (SP01) over TW Common 24-340 with metrics (`--metrics`) filled for every provisional pick and for gap candidates.
+2. **Coverage check**: per element, count shipped levels (the 20 shipped included: position 23 is a wall level). Required >=10 each. Print the coverage table (element, n, first display level, last display level, largest gap). Generated by the pool tool from `common.json` + level features (`--coverage`).
+3. **Spread rule**: after its first level, each element's largest gap between consecutive uses <= max(15, 15% of N) display levels, and its last use is within the final 30 levels unless it was introduced within the last 30. [RESOLVED: picked values; measure on real selection and adjust, record as deviation in LEVELS_GUIDE]
+4. **Order**: sort by TW `source.position` (ascending) = inherited introduction curve; assign display numbers contiguously from 21 (shipped 20 keep 1-20, which are TW positions 4-23). Skipped/unselected positions simply do not exist; no gaps in display numbering (D2, D5).
+5. **Introduction rule**: an element's first level (by display order) must contain no other newly introduced element (a theme change may coincide). If a selected level introduces two, swap to an equal-feature alternative from the pool; if none, record the exception in the selection table.
+6. **Difficulty score** (per level, 0-100; higher = harder), from pool-tool metrics, 4 seeds x 3 delays = 12 proxy runs per level:
+   `D = 40*(1 - w) + 25*t + 20*min(1, ratio/2) + 15*min(1, (numAIs - 1)/3)`
+   with `w` = proxy win rate, `t` = min(1, medianWinTick / 20000) (non-won runs count as 20000), `ratio` = (sum of AI start levels) / (sum of player start levels), `numAIs` = number of AI players. (Unsolved-by-proxy levels score high on `w`/`t`; prefer solvable alternatives.)
+7. **Curve check**: split display levels into consecutive windows of 10 (a trailing window < 5 merges into the previous). Let `W_k` = mean D of window k. Pass iff (a) `W_{k+1} >= W_k - 3` for every k (local dips inside a window allowed), (b) mean of the last window >= mean of the first window of NEW levels (display 21-30) + 10, and (c) each element-introduction level has `D <= W_prev + 10` (introductions must not spike). The constants (3, 10, 10) are picked values. [RESOLVED: picked per policy; measure on the real selection, adjust if the pool cannot satisfy them, record the final constants as a deviation in LEVELS_GUIDE]
+8. **Fix loop**: on failure, (i) reorder levels *within* the segment between two consecutive element-first-introduction levels (introduction order stays fixed), ascending by D; (ii) swap a offending level for an equal-feature pool alternative with D closer to the window trend and nearest TW position; (iii) add a pool level to fill a low window; (iv) if still failing, record the exception row. Never drop an element below 10.
+9. **Gaps**: an element with <10 after fix loop gets candidates from the pool in order: proxy-solvable, closest TW position after its introduction, D within trend. If the pool has <10 usable, ship the maximum and record in the selection table (expected: none).
+10. **Size**: N falls out of coverage + curve (~100-150 estimated; fewer fine). All 4 new theme art sets ship regardless; the selection table states which themes appear (all 6 only if N >= 101).
+11. **Selection table** in LEVELS_GUIDE §5 (replaces the static census): display number, TW position, theme, features (incl. AI behaviours), D, proxy status, why selected (introduction / coverage / curve fill), exceptions. Plus skipped-positions note (unselected and unimportable alike).
+- **Overrides policy**: `level-overrides.json` holds playtest tuning for shipped levels. Selected levels ship **un-tuned** (faithful TW); overrides only for a *fixable cause* (placement, delay) with `reason`. Unsolvable -> `unsolved-by-proxy.json`, but an equal-feature solvable alternative is preferred over allowlisting.
+- Reconcile counts: `common.json` entries == files in `data/levels` (minus `na-*`) == `levels-lock.json` keys.
 
-### R2 Gates at scale
-- `validate:levels`: PR = SP01 subset (changed + first-of-world + 10% sample) + seed-1 lock for all levels; nightly = full seeds x delays, 4-way shards. 09 measures wall time on the final tree and tunes the sample rate/shards to keep the PR delta <= +3 min [G1 see Risks].
-- `levels:lock` refreshed once at the end (single bulk commit, so per-SP `--levels` refreshes never conflict). `check:content --base HEAD` and `validate:content` timed at 337 (target <60 s combined, SP01).
-- **Unsolved allowlist review**: each row has reason (stalemate / eliminated / cap-hit), mechanic tag, and `ownerSignOff`. Rows whose reason is "proxy cannot use feature X" (e.g. rockets, rail) are grouped; if >~15% of levels are unsolved, flag as proxy weakness, not level fault [G2 see Risks].
-- **Goldens/replays**: one `sim:golden` per new mechanic family, small hand-built scenario (wall/mine, pile, artillery, river, rocket, capture rocket, fortress, trolley, rail move) if the owning SP did not already add one; `bots:golden` adds the BOT-changing SPs (03 piles, 06 rockets, 08 AiRM). `replay:verify golden` scans all. Existing 20-level hashes may move only where SP02 re-imported position 23.
-- `bench:sim`/`bench:bots`: re-run on the largest level (most units/projectiles) and a rocket-heavy one; budgets unchanged unless a measured regression is explained and accepted [G3 see Risks].
-- Version chain check (script or `check:docs` assertion): RULES 3.7.0, BOT 2.7.0, content version/hash consistent with locks; no stray bump between SPs.
-- Parked scaffold: `PARKED` must be empty; `check:parked --strict` passes.
+### R2 Gates at curated size
+- `validate:levels`: SP01 measured the cost (2.1 s/level baseline); 09 re-measures on the final tree. [RESOLVED: no sharding or nightly split; PR delta budget +6 min, `--jobs` only if exceeded, per SP01]
+- `levels:lock` refreshed once at the end (single bulk commit). `check:content --base HEAD` and `validate:content` timed at curated size (target <30 s combined, SP01).
+- **Unsolved allowlist review**: each row has reason (stalemate / eliminated / cap-hit), mechanic tag, `ownerSignOff`. Rows whose reason is "proxy cannot use feature X" are grouped; if >~10% of shipped levels are unsolved, flag as proxy weakness, not level fault [G2].
+- **Goldens/replays**: one `sim:golden` per new mechanic family (wall/mine, pile, artillery, river, rocket, capture rocket, fortress, trolley, rail move) if the owning SP did not add one; `bots:golden` adds the BOT-changing SPs (03, 06, 08). `replay:verify golden` scans all. Shipped-20 hashes may move only where SP02 re-imported position 23.
+- `bench:sim`/`bench:bots`: re-run on the largest selected level and a rocket-heavy one; budgets unchanged unless a measured regression is explained and accepted [G3].
+- Version chain check (script or `check:docs` assertion): RULES 3.7.0, BOT 2.7.0, content version/hash consistent with locks.
+- Parked scaffold: `PARKED` empty; `check:parked --strict` passes.
+- Pre-release: a one-off full run (`validate:levels --all`, `campaign:verify --all`) on Node 22 and 24 via `workflow_dispatch` or locally; lock hashes identical.
 
 ### R3 Docs
 | Doc | Action |
 |---|---|
-| `GAME_RULES.md` | Review-only: changelog 3.1.0-3.7.0 complete and ordered; phase table rows (6, 7a-7d, 4b, 8) consistent; every new `R-*` has `covers` tests (`check:rules`); no fix to behaviour |
-| `LEVELS_GUIDE.md` | §5 tracker replaced by census-generated table (+ link to `census.json`); deviations ledger = one table of every spike "picked value" (SP, quantity, TW source or "not decoded", chosen value, rationale); dropped-data table updated (cargo, sc, tutorial scripts; wall no longer dropped); "Imported levels (20)" wording updated |
-| `FUTURES.md` | Remove shipped: walls/mines, rivers/bridges, rockets/fortress, trolley/rail, resource piles (both entries), themes beyond Green/Snow, census, CrossingSource (closed as not built; keep one line in LEVELS_GUIDE/GAME_RULES notes). Keep boosters, tutorials, meta, PvP, cargo, shield/ranged modules, bundle gate (see W3), mobile/portrait, hosting, editor items |
+| `GAME_RULES.md` | Review-only: changelog 3.1.0-3.7.0 complete and ordered; phase table rows (6, 7a-7d, 4b, 8) consistent; every new `R-*` has `covers` tests (`check:rules`); no behaviour fix |
+| `LEVELS_GUIDE.md` | §5 = selection table + coverage table (R1) + link to `census.json`; deviations ledger = one table of every spike "picked value" (SP, quantity, TW source or "not decoded", chosen value, rationale), including curve constants; dropped-data table updated (cargo, sc, tutorial scripts; wall no longer dropped); "Imported levels (20)" wording updated |
+| `FUTURES.md` | Remove shipped: walls/mines, rivers/bridges, rockets/fortress, trolley/rail, resource piles, themes beyond Green/Snow, census, CrossingSource (closed as not built). Keep boosters, tutorials, meta, PvP, cargo, shield/ranged modules, bundle gate, mobile/portrait, hosting, editor items. Add: "import more of TW 24-340" as a deferred idea |
 | `CREDITS.md` | Audit only: every file under `apps/web/assets/**` covered (`check:manifest` warning count 0) |
-| `README.md`, `AGENTS.md` | "20-level" -> campaign positions 4-340 (337 levels), themes list, mechanics list; script inventory current |
-| `tools/README.md` | census, shard/`--all`, nightly, campaign smoke modes |
+| `README.md`, `AGENTS.md` | "20-level" -> curated campaign of N levels (20 shipped + selection from TW 24-340), themes list, mechanics list; script inventory current |
+| `tools/README.md` | pool tool (`census`, `--metrics`, `--coverage`), gate timing result, campaign smoke modes |
 
-### R4 Web at scale
-- `campaign:verify` gets modes: `--sample` (default PR: first/last of each 20-level world + first level per feature introduction + changed levels, ~40) and `--all` (nightly, sharded). Existing 5 s dwell + browser-error check + screenshot kept; `acceptance.spec.ts` HUD-safe-frame test stays on a sample, not 337.
-- Manual check: picker at 337 (world grouping, scroll-to-current, unlock O(1)), save size, boot loads one level (SP01 AC).
-- Perf/bundle: record main-chunk gzip size and largest level chunk in the PR; **bundle budget gate decided OUT** (record numbers in tools/README, keep FUTURES entry) unless main chunk regressed >25% vs pre-initiative [W1 see Risks].
+### R4 Web at curated size
+- `campaign:verify` modes: `--sample` (default PR: first/last of each 20-level world + each element's introduction level + changed levels, ~25-30) and `--all` (manual pre-release; ~N x 5 s ≈ 10-12 min). Existing 5 s dwell + browser-error check + screenshot kept; `acceptance.spec.ts` HUD-safe-frame test stays on a sample.
+- Manual check: picker at N (world grouping, scroll-to-current, unlock O(1)), save size, boot loads one level (SP01 AC).
+- Perf/bundle: record main-chunk gzip size and largest level chunk in the PR; **bundle budget gate OUT** unless main chunk regressed >25% vs pre-initiative [W1].
 
 ### R5 Owner acceptance package
-- `owner-pass.md` (template, model on previous port's): header (commit, versions, census summary), section A feature-introduction levels (one per: base, towers, wall, mine, WT3 artillery, pile, river, ROBS, capture rocket, fortress, rocket tower, trolley, rail, each new theme), section B every unsolved-by-proxy row (checkbox: winnable / too hard / broken / sign-off), section C visual (theme screenshots vs `ref/`), D picker/save/mobile-touch drag-aim, E sign-off line.
-- Positions chosen from the census `first-position-per-feature` field, not memory (known first positions: 24 wall, 36 mine, 45 WT3, 67 pile, 89 c_rt, 103 river, 140 ROBS, 182 fortress, 216 rt, 267 trolley, 330 rail [verified: LEVELS_GUIDE §5]).
+- `owner-pass.md`: header (commit, versions, N, coverage table), section A **one level per element introduction** (base, towers, wall, mine, WT3 artillery, pile, river, ROBS, capture rocket, fortress, rocket tower, trolley, rail, BT1/BT2 where used, each new theme as it first appears), section B **every allowlisted (unsolved-by-proxy) level** (checkbox: winnable / too hard / broken / sign-off), section C visual (theme screenshots vs `ref/`), D picker/save/mobile-touch drag-aim, E sign-off line.
+- Positions come from the generated selection table (display number + TW position), not memory.
 
 ## Architecture
-No code architecture beyond: census as single source of truth feeding (1) import classification, (2) LEVELS_GUIDE tracker (generator output pasted between markers, checked by `check:docs`), (3) owner-pass section A. Workflow sharding reuses SP01 `--shard i/n`. A small `tools/src/census` addition may emit `first-position-per-feature` and a markdown tracker block (extension to 01's script, owned by 09 once SP01 merged).
+No code architecture beyond: the pool tool as single source of truth feeding (1) selection and the curve check (`--metrics`, `--coverage`), (2) the LEVELS_GUIDE selection table (generator output pasted between markers, checked by `check:docs`), (3) owner-pass section A. A small `tools/src/census` addition (coverage + curve check emitters) is owned by 09 once SP01 merged.
 
 ## Decisions
 | # | Topic | Chosen | Alternative | Why |
 |---|---|---|---|---|
-| 1 | Tuning imported levels | Un-tuned; allowlist instead | Per-level override sweep | Fidelity; owner decides difficulty later |
-| 2 | Campaign smoke | Sample in PR, full nightly | All 337 in PR | 337 x 5 s ≈ 28 min + screenshots |
-| 3 | Bundle budget gate | OUT, record numbers | Add gate | Lazy levels already remove the main risk |
-| 4 | Tracker | Generated block | Hand-edited | Census drift was the original problem |
-| 5 | Golden per mechanic | One small scenario each | Rely on level locks | Locks fail opaquely; goldens localise |
-| 6 | Final lock refresh | One bulk commit | Per SP | Avoids lock merge conflicts |
+| 1 | Scope | curated, >=10 per element (D1) | all 4-340 | owner decision; fewer levels, same coverage |
+| 2 | Numbering | contiguous 1..N, `source.position` metadata (D2/D5) | show TW gaps | owner decision |
+| 3 | Ordering | TW position, then in-segment reorder | sort globally by D | preserves introduction order |
+| 4 | Difficulty metric | composite D (R1.6), windowed means | single metric | combines proxy and structure |
+| 5 | Tuning selected levels | un-tuned; swap for alternatives instead | per-level overrides | fidelity |
+| 6 | Campaign smoke | sample in PR, full manual | all N in PR | N x 5 s + screenshots |
+| 7 | Bundle budget gate | OUT, record numbers | add gate | lazy levels remove main risk |
+| 8 | Final lock refresh | one bulk commit | per SP | avoids lock merge conflicts |
 
 ## Manual steps (owner)
-- Provide `TW_EXTRACT` (rebuilt) for census/import/assets; run `owner-pass.md`; decide P2 gaps; sign off unsolved rows (`ownerSignOff`).
+- Provide `TW_EXTRACT` (rebuilt) for pool tool/import/assets; run `owner-pass.md`; sign off unsolved rows (`ownerSignOff`).
 
 ## Risks / Open Questions
-- P1 prefab-only ids: [RESOLVED: campaign ids <=340 with prefab-only levels are positions 10, 23, 35, 66, 137, 215, 221, 266, 329 (10, 23 shipped). Converter `tools/src/import-tw/parse-prefab.ts` exists; extract being rebuilt; convert remaining 7 via parse-prefab in SP09/SP01 import. Any that fail go to the residual triage table with reason]
-- [OPEN] OWNER: unimportable positions — skip position and keep contiguous display numbering, list skipped positions in LEVELS_GUIDE (recommended) vs. show gaps vs. block merge until all import
-- G1 PR sample rate/shards: [RESOLVED: start 10% sample + 4 nightly shards; measure in task and adjust to keep PR delta <= +3 min]
-- G2 unsolved threshold: [RESOLVED: start 15% of levels unsolved => flag proxy weakness; measure in task and adjust. Proxy-unsolvable levels go to allowlist with `ownerSignOff: null`]
-- G3 bench budgets: [RESOLVED: start with existing budgets +20% headroom for projectile/rocket-heavy levels; measure in task and adjust, record accepted regressions]
-- W1 bundle threshold: [RESOLVED: start 25% main-chunk gzip regression flag (no gate); measure in task and adjust]
-- [DEFERRED] Boosters, rage, tutorials 1-3, boss/Draw-only levels, cargo, PvP, meta, skins.
+- P1 prefab-only ids: [RESOLVED: ids are {10, 23 (shipped), 35, 66, 137, 215, 221, 266, 329}; converter `parse-prefab.ts` exists; only matter if selected; a selected id that fails conversion is swapped for an equal-feature alternative]
+- P2 unimportable positions: [RESOLVED: owner — skip, contiguous display numbering (D2)]
+- Curve/coverage constants: [RESOLVED: picked values in R1.3/R1.7; measure on the real selection, adjust, record as deviation in LEVELS_GUIDE]
+- Element with <10 usable pool levels: [RESOLVED: ship the maximum and record in the selection table]
+- G1 gate timing: [RESOLVED: per SP01 (no shard/nightly; +6 min budget; measure and adjust)]
+- G2 unsolved threshold: [RESOLVED: start 10% of shipped levels unsolved => flag proxy weakness; measure and adjust. Unsolved go to allowlist with `ownerSignOff: null`]
+- G3 bench budgets: [RESOLVED: existing budgets +20% headroom for projectile/rocket-heavy levels; measure and adjust, record accepted regressions]
+- W1 bundle threshold: [RESOLVED: 25% main-chunk gzip regression flag (no gate); measure and adjust]
+- [DEFERRED] Boosters, rage, tutorials 1-3, boss/Draw-only levels, cargo, PvP, meta, skins; importing the rest of TW 24-340.
 - [RESOLVED: locked] Unsolved levels allowed with reason; `ownerSignOff: null`; owner spot-checks sample.
-- Risk: later SPs change versions/locks after 09 starts; 09 final sweep runs after all rebases, version-chain check catches drift.
-- Risk: cross-Node hash drift on new mechanics; nightly runs Node 22 and 24.
+- Risk: later SPs change versions/locks after 09 starts; 09 runs after all rebases, version-chain check catches drift.
+- Risk: cross-Node hash drift on new mechanics; pre-release run covers Node 22 and 24.
 
 ## Acceptance Criteria
-- Census 4-340: every position imported, or listed in LEVELS_GUIDE with class and reason; class (a) = 0.
+- Coverage table: every element >=10 shipped levels (or documented shortfall), spread rule met; each element introduced alone (or exception row).
+- Curve check passes (R1.7) or exceptions listed; display numbering contiguous 1..N; `source.position` present on every level; selection table in LEVELS_GUIDE lists selection, reasons, skipped positions, themes present.
 - `pnpm run ci` green on Node 22 and 24; `validate:levels --all` green or only allowlisted; `levels-lock.json` hashes identical across Node versions; `PARKED` empty; `check:docs`, `check:rules`, `check:manifest` green.
 - `RULES_VERSION` 3.7.0, `BOT_VERSION` 2.7.0 (or documented renumber), content hash matches lock.
-- `campaign:verify --sample` green; nightly `--all` green; picker/save at 337 verified.
-- Docs: tracker generated, deviations ledger complete, FUTURES pruned, README/AGENTS/tools README current, CREDITS audit 0 warnings.
-- `owner-pass.md` written with concrete positions; unsolved rows all listed.
+- `campaign:verify --sample` green; manual `--all` green; picker/save at N verified.
+- Docs: selection table generated/checked, deviations ledger complete, FUTURES pruned, README/AGENTS/tools README current, CREDITS audit 0 warnings.
+- `owner-pass.md` written with concrete display numbers + positions; unsolved rows all listed.

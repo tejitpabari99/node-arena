@@ -1,12 +1,12 @@
 ---
 status: draft
-summary: Tower War full campaign — 9 sub-project PRDs (design only), positions 4–340
+summary: Tower War curated campaign — 9 sub-project PRDs (design only), shipped 20 + selection from TW Common 24–340 (>=10 levels per new element)
 date: 2026-10-27
 ---
 # Tower War full campaign (feat/tw-full-campaign)
 
 ## Goal
-Port all remaining Tower War campaign components. Common campaign 4–23 -> 4–340 (railway at 330 is the last new feature, +10). Design only: PRDs, no code yet.
+Port all remaining Tower War campaign components (walls, mines, WT3 artillery, resource piles, rivers/bridges/ROBS, rocket + capture rocket towers, selectable fortress, trolley, railway, 4 new themes) and ship a **curated** Common campaign: the existing 20 levels (TW positions 4–23, unchanged) followed by a selection from the TW pool (Common positions 24–340), every new element in >=10 levels, difficulty/newness rising throughout. Estimated ~100–150 levels total (fewer is fine). Not all 4–340 are imported. Design only: PRDs, no code yet.
 
 ## Prerequisite
 TW extract (`/root/projects/tower-war/_extract`) was deleted and is being rebuilt (UnityPy + Il2CppDumper + Ghidra headless, `decomp.sh` per class). All decode spikes, imports, asset copies and the census depend on it.
@@ -14,15 +14,15 @@ TW extract (`/root/projects/tower-war/_extract`) was deleted and is being rebuil
 ## Sub-projects
 | # | Name | PRD | Scope | Depends on | Phase/PR | Status |
 |---|---|---|---|---|---|---|
-| 01 | Themes + campaign scale | [PRD](01-themes-campaign-scale/PRD.md) | Lava/Mine/Jungle/DarkMine themes, lazy level loading + picker worlds, gate subset/nightly split, `pnpm census`, import of no-new-mechanic levels | none | A | draft |
-| 02 | Walls + mines | [PRD](02-walls-mines/PRD.md) | Wall (hp sponge) + mine (0.1 s delayed kill) on a generic element-state/crossing facility; re-import position 23 with wall; RULES 3.1.0 | 01 soft | A | draft |
-| 03 | Resource piles | [PRD](03-resource-piles/PRD.md) | Neutral depletable pile building; pickup, return channel, reinforce `1 + gold`; AI targets piles (BOT bump); RULES 3.2.0 | 02, 01 soft | A | draft |
-| 04 | Projectile core + artillery | [PRD](04-projectiles-artillery/PRD.md) | Deterministic projectile/blast core + WT3 artillery house/unit; RULES 3.3.0 | 01, 02, 03 | B | draft |
-| 05 | Rivers + bridges + ROBS | [PRD](05-rivers-bridges/PRD.md) | Non-blocking rivers, plank ceils, turn-around via return channel, river obstacles; RULES 3.4.0 | 02, 03, 01 | B | draft |
-| 06 | Rocket + capture rocket tower | [PRD](06-rocket-towers/PRD.md) | Aim/ClearAim commands, staged volleys, capture-rocket charge; AI rocket targeting; RULES 3.5.0 | 04, 02, 05, 03 | C | draft |
-| 07 | Selectable fortress | [PRD](07-selectable-fortress/PRD.md) | House-like source + 8 guns + parachute cargo cycle, no new command; RULES 3.6.0 | 03, 04, 06 soft | C | draft |
-| 08 | Trolley + railway | [PRD](08-trolley-railway/PRD.md) | Ready-gated cart that deletes target building; rails with `RailMove` + AI AiRM; RULES 3.7.0, BOT minor | 02–07 | D | draft |
-| 09 | Final import, gates, docs | [PRD](09-import-gates-docs/PRD.md) | Residual import triage, gates at ~337 levels, docs/FUTURES cleanup, owner acceptance package | all | D | draft |
+| 01 | Themes + campaign scale | [PRD](01-themes-campaign-scale/PRD.md) | Lava/Mine/Jungle/DarkMine themes, lazy level loading + picker worlds, gate timing at curated size, `pnpm census` = candidate-pool tool (features, blocked reasons, difficulty metrics) | none | A | draft |
+| 02 | Walls + mines | [PRD](02-walls-mines/PRD.md) | Wall (hp sponge) + mine (0.1 s delayed kill) on a generic element-state/crossing facility; re-import position 23 with wall; select >=10 wall + >=10 mine levels; RULES 3.1.0 | 01 soft | A | draft |
+| 03 | Resource piles | [PRD](03-resource-piles/PRD.md) | Neutral depletable pile building; pickup, return channel, reinforce `1 + gold`; AI targets piles (BOT bump); select >=10 pile levels; RULES 3.2.0 | 02, 01 soft | A | draft |
+| 04 | Projectile core + artillery | [PRD](04-projectiles-artillery/PRD.md) | Deterministic projectile/blast core + WT3 artillery house/unit; select >=10 WT3 levels; RULES 3.3.0 | 01, 02, 03 | B | draft |
+| 05 | Rivers + bridges + ROBS | [PRD](05-rivers-bridges/PRD.md) | Non-blocking rivers, plank ceils, turn-around via return channel, river obstacles; select >=10 river + >=10 ROBS levels; RULES 3.4.0 | 02, 03, 01 | B | draft |
+| 06 | Rocket + capture rocket tower | [PRD](06-rocket-towers/PRD.md) | Aim/ClearAim commands, staged volleys, capture-rocket charge; AI rocket targeting; select >=10 rocket + >=10 capture-rocket levels; RULES 3.5.0 | 04, 02, 05, 03 | C | draft |
+| 07 | Selectable fortress | [PRD](07-selectable-fortress/PRD.md) | House-like source + 8 guns + parachute cargo cycle, no new command; select >=10 fortress levels; RULES 3.6.0 | 03, 04, 06 soft | C | draft |
+| 08 | Trolley + railway | [PRD](08-trolley-railway/PRD.md) | Ready-gated cart that deletes target building; rails with `RailMove` + AI AiRM; select >=10 trolley + >=10 railway levels; RULES 3.7.0, BOT minor | 02–07 | D | draft |
+| 09 | Final curation, gates, docs | [PRD](09-import-gates-docs/PRD.md) | Per-element >=10 coverage check, order + difficulty-curve check, gap fill, contiguous numbering, selection table, gates at curated size, docs/FUTURES cleanup, owner acceptance package | all | D | draft |
 
 ## Execution order
 01 ∥ 02 -> 03 ∥ 04 -> 05 ∥ 06 -> 07 ∥ 08 -> 09. Max 2 concurrent agents. Real data dependencies still serialize merges (see chain below).
@@ -44,24 +44,41 @@ Phase PRs to main:
 | C | 06 + 07 | SP07 |
 | D | 08 + 09 | SP09 |
 
+## Curation (owner decisions D1, D2)
+Rules (binding on all PRDs):
+- **Scope.** Ship the existing 20 levels (positions 4–23, unchanged; 23 re-imported with its wall by SP02) followed by a selection from TW Common 24–340. No bulk import. Target size = whatever satisfies coverage + curve (~100–150 estimated; fewer is fine). All mechanics, themes, assets stay in scope; only the level count shrinks.
+- **Coverage.** Each new element appears in >=10 shipped levels, spread through the campaign after its introduction: walls, mines, artillery house WT3, resource piles, capture rocket tower, rivers (+bridges), river obstacles (ROBS), selectable fortress, rocket tower, trolley, railway; also AI behaviours Random (BT2) and Defense (BT1) where levels use them.
+- **Newness + difficulty.** An element's first level introduces it (ideally the only new thing). Order by TW position (inherits TW's introduction curve), then check difficulty with proxy/balance metrics (proxy win rate, median win time, AI/player start-level ratio, number of AIs) as a windowed non-decreasing trend per ~10 levels (local dips allowed); fix by reordering within the constraint "first-introduction order preserved". Concrete metric and thresholds: SP09 R1.
+- **Prefer proxy-solvable candidates**; avoid levels needing allowlisting when an alternative with the same feature exists.
+- **Numbering (D2).** Display numbering is contiguous (Level 1..N). TW source position is metadata (`source.position`). Unselected/unimportable positions are simply not imported (D5); LEVELS_GUIDE lists the selection and why. Themes rotate by display position every 20 levels (all 6 appear if N >= 101; all 4 new theme art sets ship regardless, LEVELS_GUIDE notes which appear).
+
+Who does what:
+| Who | Does |
+|---|---|
+| SP01 | Candidate-pool tool (`pnpm census`): TW 24–340 features, blocked reasons, difficulty metrics; themes; client/gate scale at ~150 |
+| SP02–SP08 | Each selects >=10 pool levels featuring its element(s) per these rules, imports them, prints the coverage line (`element: n levels, first at display N`). Self-contained; selection is provisional |
+| SP09 | Final curation + assembly: coverage confirm, order + difficulty-curve check, gap fill, contiguous numbering, LEVELS_GUIDE selection table; then gates, docs, owner-pass (one level per element intro + every allowlisted level) |
+
 ## Locked decisions (owner)
 - IN: artillery (WT3); capture rocket tower, selectable fortress, rocket tower, trolley; walls, mines, resource piles, rivers + bridges, river obstacles, railway; AI as TW uses it; Lava/Mine/Jungle/DarkMine themes; TW assets copied, copyright cleared by owner, non-commercial, inspiration credit.
 - OUT: boosters (bomb/speed/trooper), rage skills, artefacts/research/meta/currencies/gacha/payments/ads, skins/colour patterns, PvP, tutorials, Boss/Draw-only content (boss tower, flag, plain fortress, gates, sheep, speed tower). Cargo stays dropped.
 - Fidelity: exact TW where decoded; else time-boxed decode spike; else pick a sensible value and record the deviation in GAME_RULES + PRD (no YouTube matching).
 - Acceptance: proxy-unsolvable level -> `tools/unsolved-by-proxy.json`, `ownerSignOff: null`, owner spot-checks later; CI green.
+- Scope (D1/D2): curated campaign, not all 4–340 (see Curation). Display numbering contiguous; TW position is metadata.
 - Delivery: one PR per phase.
 
 ## Cross-cutting resolutions (orchestrator; binding over individual PRDs on conflict)
 1. **Version chain.** Merge order 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08. `RULES_VERSION` = next minor at merge time (indicative 3.1.0 … 3.7.0). `BOT_VERSION` bumps only when bot identity changes, next minor at merge time. Numbers in PRDs are indicative, not pinned.
 2. **Position 23** (`levelview-100-es`): SP02 re-imports it with its wall — the only expected change to shipped-20 locks/hashes. All later SPs assert "shipped 20 unchanged except 23 per SP02".
 3. **Phase-table amendments** land in order 06 (7d) -> 07 (4b, 7b guns) -> 08; each rebases on the previous.
-4. **Census.** SP01 owns the tool, output format and `census-sp-map.json`; each SP updates its own row and publishes its delta table in its own PR (SP08 included).
+4. **Candidate-pool tool (`pnpm census`).** SP01 owns the tool, output format and `census-sp-map.json`; each SP selects its element's levels from it and publishes its coverage line in its own PR (SP08 included); SP09 owns the coverage/curve emitters.
 5. **Shared data files** (`levels-lock.json`, `unsolved-by-proxy.json`, CREDITS rows, `feature-map.json`): each SP appends/edits only its own entries; merges are serialized.
 6. **FUTURES.** Each SP removes its own shipped entries (SP03 piles entries; SP08 closes CrossingSource seam); SP09 does the final sweep only.
-7. **campaign:verify.** SP01 owns scaling (sample/all modes); each SP adds its feature-introduction positions to the sample set.
-8. **`validate:levels --all`** before each phase PR, run by the phase's last task (A: SP03, B: later of 04/05, C: SP07, D: SP09).
-9. **Existing unsolved-by-proxy entries** (positions 5, 14, 16, 17, 18, 19) are re-validated by each phase's `--all` run; stale entries pruned in SP09.
-10. **Prefab-only campaign ids**: count <=340 unverified (repo has 2 prefab ext files: positions 10, 23; SP01 text says 12). SP01 census determines it after the extract rebuild.
+7. **campaign:verify.** SP09 owns sample/all modes; each SP adds its element-introduction level to the sample set.
+8. **`validate:levels --all`** before each phase PR, run by the phase's last task (A: SP03, B: later of 04/05, C: SP07, D: SP09). At curated size (~150 levels, ~5–8 min at 2.1 s/level) no sharding/nightly split is planned; SP01 measures, `--jobs` only if the PR delta exceeds +6 min.
+9. **Existing unsolved-by-proxy entries** (positions 5, 14, 16, 17, 18, 19) are re-validated by each phase's `--all` run; stale entries pruned in SP09. Newly selected levels prefer proxy-solvable candidates over allowlisting.
+10. **Prefab-only ids** {35, 66, 137, 215, 221, 266, 329} (10, 23 shipped) matter only if selected; a selected id that fails `parse-prefab` is swapped for an equal-feature alternative.
+11. **Selection ownership.** SP02–SP08 selections are provisional; only SP09 sets final order and display numbers. Intermediate PRs may use provisional ids; no SP renumbers shipped levels 1–20.
 
 ## Open questions (consolidated)
 O = owner decision, S = spike-resolvable (needs rebuilt extract), D = design default, confirm at review.
@@ -69,9 +86,9 @@ O = owner decision, S = spike-resolvable (needs rebuilt extract), D = design def
 **01**
 - S: exact `EnvironmentData` prefab/material names for 4 themes; river/ROBS materials per-env vs shared (fallback: tinted green).
 - S: rebuilt extract pathIDs vs `env.ts` values (fail loudly).
-- D: PR subset sample rate/budget (10%, +3 min); `check:content` cost at 337; ground texture size.
-- S: `themeFor` vs TW for all positions (census lists themes for eyeballing).
-- D: how many levels SP01 alone unlocks (census answers).
+- D: PR budget +6 min (`--jobs` fallback); `check:content` cost at curated size; ground texture size.
+- S: `themeFor` vs TW for pool positions (pool tool lists themes; shipped theme follows display position, D2).
+- D: lazy loading kept at ~150 (Task 1 may flip to eager if cheap); gate sharding dropped (measure).
 
 **02**
 - S: S1 wall/mine trigger size + wall length vs Hp; S2 layer (blocks lines?); S3 owner gate/tank/AI trigger; S4 per-theme materials.
@@ -91,11 +108,11 @@ O = owner decision, S = spike-resolvable (needs rebuilt extract), D = design def
 
 **06**
 - S: 1 capture charge rate; 2 rocket spacing; 3 capture second predicate; 4 disabled semantics; 5 capture projectile speed; 8 aim range clamp; 9 tower `rocketWeight`; 10 capture vs trolley ready flag.
-- **O: 6 human aim persistence UX** (persist until `ClearAim` vs retract after one volley).
+- [RESOLVED: persists until `ClearAim` (owner delegated; revisit after playtest)] Human aim persistence.
 - D: 7 blast friendly fire.
 
 **07**
-- **O: no player-chosen fly target** — decomp says parachutes drop at fortress spawn points; confirm no new command/UX.
+- [RESOLVED: owner — copy TW] Parachutes drop at fortress spawn points, walk a fortress lane chosen round-robin, else add level; no command.
 - S: 1 wave repeat rule; 2 gun offsets; 3 gun gating/damage; 4 guns vs trolleys/houses; 7 TW AI fortress details; 8 no-line bonus per soldier.
 - D: 5 random vs round-robin lane; 6 alive cap vs airborne.
 
@@ -104,15 +121,15 @@ O = owner decision, S = spike-resolvable (needs rebuilt extract), D = design def
 - D: 7 trolley-only player loss rule.
 
 **09**
-- S: P1 prefab-only ids <=340 and reconstructing ext files (needs UnityPy).
-- **O: P2 accept a sparse campaign with gaps if some positions remain unimportable?** (vs contiguous prefix).
-- D: G1 sample rate/shards; G2 unsolved fraction threshold; G3 bench budgets; W1 bundle threshold (gate stays OUT).
+- S: P1 prefab-only ids matter only if selected (needs UnityPy only then).
+- [RESOLVED: owner — skip, contiguous display numbering (D2)] Unimportable positions.
+- D: G1 gate timing (no shards); G2 unsolved fraction threshold (10%); curve constants (SP09 R1.7); G3 bench budgets; W1 bundle threshold (gate stays OUT).
 
 ## Owner manual steps
 - Review/approve PRDs.
-- Triage `[OPEN]` items in each PRD (`[RESOLVED: …]` / `[DEFERRED]`), starting with the O items above.
+- Triage done: no `[OPEN]` items remain (owner items D3–D5 resolved).
 - Provide rebuilt `TW_EXTRACT`.
-- Spot-check levels at the end (`owner-pass.md` from SP09); sign off unsolved rows.
+- Spot-check levels at the end (`owner-pass.md` from SP09: one level per element intro + every allowlisted level); sign off unsolved rows.
 - Approve each phase PR.
 
 ## Next

@@ -1,11 +1,11 @@
 ---
 status: draft
-summary: Walls (hp sponge that consumes troops) and mines (one-shot, 0.1 s delayed kill) as content-driven element modules on a new generic "element crossing + element state" facility that SP03/05/08 reuse; flips the Wall/Mine importer rows, re-imports levelview-100-es with its wall, and unlocks every wall/mine-only level.
+summary: Walls (hp sponge that consumes troops) and mines (one-shot, 0.1 s delayed kill) as content-driven element modules on a new generic "element crossing + element state" facility that SP03/05/08 reuse; flips the Wall/Mine importer rows, re-imports levelview-100-es with its wall, and imports >=10 curated levels per element (wall, mine).
 date: 2026-10-27
 ---
 # PRD: 02 Walls + mines
 
-Repo/branch: node-arena, `feat/tw-full-campaign` (Phase A PR = SP01+02+03) · Depends on: 01 soft (census for the delta table; themes only matter for levels >= 41) · Feeds: 03 (element hp + crossing helper), 05 (rivers reuse crossing helper), 08 (trolley takes mine damage), 09 (docs, final gates)
+Repo/branch: node-arena, `feat/tw-full-campaign` (Phase A PR = SP01+02+03) · Depends on: 01 soft (pool tool for selection; themes only matter for levels >= 41) · Feeds: 03 (element hp + crossing helper), 05 (rivers reuse crossing helper), 08 (trolley takes mine damage), 09 (docs, final gates)
 Owns: `docs/GAME_RULES.md` (new areas `ELM`, `WAL`, `MIN`, phase-6 row, changelog), `packages/content/src/versioning.ts` (RULES_VERSION), `packages/defs/src/modules/{absorbs,detonates}.def.ts` + registry + event defs (`WallHit`, `WallDestroyed`, `MineTriggered`), `packages/content/data/elements/{wall,mine}.json` + element/level schema bits, `packages/sim/src/{elements.ts,state.ts,hash.ts,snapshot}` (element state columns) + `modules/{absorbs,detonates}.ts`, `tools/src/import-tw/{feature-map.json,map-level.ts}` (Wall/Mine rows + emitters), `apps/web/src/render/*` (wall/mine renderers, fx), `apps/web/src/editor/*` (library items), `tools/src/assets-tw/*` (wall/mine model rows), imported levels, `tools/levels-lock.json`, `tools/unsolved-by-proxy.json` rows.
 Does not own: bots (unchanged), resource piles (03), rivers/bridges (05), trolley (08), themes (01).
 
@@ -69,7 +69,7 @@ TW AI ignores walls and mines [verified: 04-ai-bots.md §port-gaps: "obstacle co
 ### R6 Importer
 - `feature-map.json`: `Wall` -> `{action: map, kind: element, archetype: "wall"}`, `Mine` -> `"mine"`; delete `onlyLevels` and the recorded `wall` token. Emitters `emitWalls` (pos `P`, yaw `R`, `params.hp = Hp`, `punchStrength = PS`) and `emitMines` in `map-level.ts`; inactive (`S` false) entries are omitted as for obstacles. Parser already reads both [verified: parse-raw.ts L39-40].
 - Re-import `levelview-100-es` (position 23): wall now present; update `source.dropped`, `levels-lock.json`, `hashes.lock.json`; refresh the state-v2 test and any golden referencing it [verified: grep lists `tools/levels-lock.json`, `apps/web/test/sp08/state-v2.test.ts`, `campaign-results.json`]. Level plays harder -> re-run solvability.
-- Import every position <= 340 now unblocked (wall/mine + earlier features); census delta from `pnpm census` (SP01 R4), not guessed. Unsolvable by proxy -> `tools/unsolved-by-proxy.json` (reason, `ownerSignOff: null`).
+- Curated import: select >=10 TW-pool levels (Common 24-340) featuring walls and mines (>=10 each; re-imported position 23 counts as a wall level) per README Curation rules (candidates and metrics from SP01 pool tool; the first selected level introduces walls and mines (>=10 each; re-imported position 23 counts as a wall level) with no other new element; spread across later positions; prefer proxy-solvable, allowlist only if no equal-feature alternative); import only those; show the coverage line in the PR (`walls and mines (>=10 each; re-imported position 23 counts as a wall level): n levels, first at display N`). Selection is provisional; SP09 finalizes order and numbering. Unsolvable by proxy -> `tools/unsolved-by-proxy.json` (reason, `ownerSignOff: null`).
 - Content version bump + `content:lock`.
 
 ## Architecture (high level)
@@ -104,12 +104,12 @@ TW AI ignores walls and mines [verified: 04-ai-bots.md §port-gaps: "obstacle co
 - [RESOLVED: decode spike first (task: decomp wall/mine renderers or materials via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use reuse the base theme obstacle material tinted per theme and record it as a deviation in GAME_RULES + the deviations ledger] S4: per-theme wall/mine materials (asset rows only).
 - [RESOLVED: bump sim snapshot/hash schema version for element columns; no persisted sim snapshots exist (save stores progress only, verified in LEVELS_GUIDE/save notes), so no migration] O4.
 - [RESOLVED: decode spike first (task: decomp the clash/element update order via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use element pass after clash and record it as a deviation in GAME_RULES + the deviations ledger] Ordering of element pass vs clash (Decision 3); calibrate against TW playthrough refs in the golden task and lock after.
-- [RESOLVED: census answers in task 1; recorded in the SP02 PR delta table] How many positions <= 340 unblock.
+- [RESOLVED: selection count is driven by README Curation (>=10 per element); pool tool lists candidates; recorded in the SP02 PR coverage line] How many wall/mine levels to ship.
 
 ## Acceptance Criteria
 - `R-ELM-01`, `R-WAL-01..03`, `R-MIN-01..03` in GAME_RULES with `covers R-...` tests; `pnpm check:rules` green; RULES_VERSION 3.1.0 + changelog.
 - Unit tests: wall hp drain with soldiers and tanks (clamp), multiple troops in one tick, mid-ring removal, mine 2-tick delayed kill incl. troop dying first, arrival during delay, inactive mine ignored, determinism (replay hash equal across runs), snapshot round-trip with element state.
 - `levelview-100-es` imports with its wall; `source.dropped` has no `wall`; locks refreshed; all other level hashes unchanged.
-- Newly unlocked levels imported; each solvable by proxy or in `unsolved-by-proxy.json` with `ownerSignOff: null`; census delta table recorded.
+- Selected levels (>=10 wall, >=10 mine) imported; each solvable by proxy or in `unsolved-by-proxy.json` with `ownerSignOff: null`; coverage line recorded.
 - Web: wall/mine render in-game, hp/destroy fx fire from events, editor places both and exports valid JSON; `assets:tw:check` and `check:manifest` green.
 - `pnpm bench:sim` within budget on a mine-heavy level; `pnpm run ci` green.
