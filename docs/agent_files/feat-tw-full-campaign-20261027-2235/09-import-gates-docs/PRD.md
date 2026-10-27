@@ -33,17 +33,17 @@ Does not own: any rule text or mechanic (02-08 own `GAME_RULES.md` areas; 09 onl
 ## Requirements
 ### R1 Import sweep
 - Run `pnpm census` then `pnpm import:tw --range 4-340`; classify every non-imported position as: (a) importable now (miss: fix), (b) blocked by an OUT feature (boosters/boss/Draw-only/cargo-only), (c) parse failure (long/v0 dialect, missing prefab). (a) must be 0.
-- **Prefab-only ids**: list them from the extract (`census` should print them); for each <=340 either commit an `*.ext.json` + `colliders.json` rows via UnityPy (`dump_colliders.py`), or record it as blocked-with-reason. [OPEN P1]
-- **Residual triage** table in LEVELS_GUIDE §5: position, blocker, class (a/b/c), decision. Blocked positions leave the campaign sparse (`--skip-blocked`) only if the owner accepts gaps [OPEN P2].
+- **Prefab-only ids**: list them from the extract (`census` should print them); for each <=340 either commit an `*.ext.json` + `colliders.json` rows via UnityPy (`dump_colliders.py`), or record it as blocked-with-reason. [P1 see Risks]
+- **Residual triage** table in LEVELS_GUIDE §5: position, blocker, class (a/b/c), decision. Blocked positions leave the campaign sparse (`--skip-blocked`) per the owner decision on unimportable positions (see Risks; recommended: skip and keep contiguous display numbering) [P2 OWNER].
 - **`level-overrides.json` policy**: file today holds playtest tuning for shipped levels (bot delays, building nudges, with `reason`). Policy: imports 24-340 ship **un-tuned** (faithful TW); overrides only for a level that fails proxy solvability for a *fixable cause* (placement, delay) and require `reason`; unsolvable stays in `unsolved-by-proxy.json` instead of being tuned away. Overrides reviewed in the sweep; none added speculatively.
 - Reconcile counts: `common.json` entries == files in `data/levels` (minus `na-*`) == `levels-lock.json` keys == census `imported`.
 
 ### R2 Gates at scale
-- `validate:levels`: PR = SP01 subset (changed + first-of-world + 10% sample) + seed-1 lock for all levels; nightly = full seeds x delays, 4-way shards. 09 measures wall time on the final tree and tunes the sample rate/shards to keep the PR delta <= +3 min [OPEN G1].
+- `validate:levels`: PR = SP01 subset (changed + first-of-world + 10% sample) + seed-1 lock for all levels; nightly = full seeds x delays, 4-way shards. 09 measures wall time on the final tree and tunes the sample rate/shards to keep the PR delta <= +3 min [G1 see Risks].
 - `levels:lock` refreshed once at the end (single bulk commit, so per-SP `--levels` refreshes never conflict). `check:content --base HEAD` and `validate:content` timed at 337 (target <60 s combined, SP01).
-- **Unsolved allowlist review**: each row has reason (stalemate / eliminated / cap-hit), mechanic tag, and `ownerSignOff`. Rows whose reason is "proxy cannot use feature X" (e.g. rockets, rail) are grouped; if >~15% of levels are unsolved, flag as proxy weakness, not level fault [OPEN G2].
+- **Unsolved allowlist review**: each row has reason (stalemate / eliminated / cap-hit), mechanic tag, and `ownerSignOff`. Rows whose reason is "proxy cannot use feature X" (e.g. rockets, rail) are grouped; if >~15% of levels are unsolved, flag as proxy weakness, not level fault [G2 see Risks].
 - **Goldens/replays**: one `sim:golden` per new mechanic family, small hand-built scenario (wall/mine, pile, artillery, river, rocket, capture rocket, fortress, trolley, rail move) if the owning SP did not already add one; `bots:golden` adds the BOT-changing SPs (03 piles, 06 rockets, 08 AiRM). `replay:verify golden` scans all. Existing 20-level hashes may move only where SP02 re-imported position 23.
-- `bench:sim`/`bench:bots`: re-run on the largest level (most units/projectiles) and a rocket-heavy one; budgets unchanged unless a measured regression is explained and accepted [OPEN G3].
+- `bench:sim`/`bench:bots`: re-run on the largest level (most units/projectiles) and a rocket-heavy one; budgets unchanged unless a measured regression is explained and accepted [G3 see Risks].
 - Version chain check (script or `check:docs` assertion): RULES 3.7.0, BOT 2.7.0, content version/hash consistent with locks; no stray bump between SPs.
 - Parked scaffold: `PARKED` must be empty; `check:parked --strict` passes.
 
@@ -60,7 +60,7 @@ Does not own: any rule text or mechanic (02-08 own `GAME_RULES.md` areas; 09 onl
 ### R4 Web at scale
 - `campaign:verify` gets modes: `--sample` (default PR: first/last of each 20-level world + first level per feature introduction + changed levels, ~40) and `--all` (nightly, sharded). Existing 5 s dwell + browser-error check + screenshot kept; `acceptance.spec.ts` HUD-safe-frame test stays on a sample, not 337.
 - Manual check: picker at 337 (world grouping, scroll-to-current, unlock O(1)), save size, boot loads one level (SP01 AC).
-- Perf/bundle: record main-chunk gzip size and largest level chunk in the PR; **bundle budget gate decided OUT** (record numbers in tools/README, keep FUTURES entry) unless main chunk regressed >25% vs pre-initiative [OPEN W1].
+- Perf/bundle: record main-chunk gzip size and largest level chunk in the PR; **bundle budget gate decided OUT** (record numbers in tools/README, keep FUTURES entry) unless main chunk regressed >25% vs pre-initiative [W1 see Risks].
 
 ### R5 Owner acceptance package
 - `owner-pass.md` (template, model on previous port's): header (commit, versions, census summary), section A feature-introduction levels (one per: base, towers, wall, mine, WT3 artillery, pile, river, ROBS, capture rocket, fortress, rocket tower, trolley, rail, each new theme), section B every unsolved-by-proxy row (checkbox: winnable / too hard / broken / sign-off), section C visual (theme screenshots vs `ref/`), D picker/save/mobile-touch drag-aim, E sign-off line.
@@ -83,12 +83,12 @@ No code architecture beyond: census as single source of truth feeding (1) import
 - Provide `TW_EXTRACT` (rebuilt) for census/import/assets; run `owner-pass.md`; decide P2 gaps; sign off unsolved rows (`ownerSignOff`).
 
 ## Risks / Open Questions
-- [OPEN P1] Which of the 12 prefab-only ids are <=340, and can their ext files be reconstructed (UnityPy needed on the machine)? Only 2 exist today.
-- [OPEN P2] Accept a sparse campaign (gaps) vs insist on contiguous prefix? Importer today ends the prefix at a blocked row unless `--skip-blocked`.
-- [OPEN G1] PR subset sample rate and nightly shard count after real timing.
-- [OPEN G2] Unsolved fraction threshold that triggers "improve proxy" instead of allowlisting.
-- [OPEN G3] Bench budgets for projectile/rocket-heavy levels.
-- [OPEN W1] Bundle regression threshold; gate stays OUT.
+- P1 prefab-only ids: [RESOLVED: campaign ids <=340 with prefab-only levels are positions 10, 23, 35, 66, 137, 215, 221, 266, 329 (10, 23 shipped). Converter `tools/src/import-tw/parse-prefab.ts` exists; extract being rebuilt; convert remaining 7 via parse-prefab in SP09/SP01 import. Any that fail go to the residual triage table with reason]
+- [OPEN] OWNER: unimportable positions — skip position and keep contiguous display numbering, list skipped positions in LEVELS_GUIDE (recommended) vs. show gaps vs. block merge until all import
+- G1 PR sample rate/shards: [RESOLVED: start 10% sample + 4 nightly shards; measure in task and adjust to keep PR delta <= +3 min]
+- G2 unsolved threshold: [RESOLVED: start 15% of levels unsolved => flag proxy weakness; measure in task and adjust. Proxy-unsolvable levels go to allowlist with `ownerSignOff: null`]
+- G3 bench budgets: [RESOLVED: start with existing budgets +20% headroom for projectile/rocket-heavy levels; measure in task and adjust, record accepted regressions]
+- W1 bundle threshold: [RESOLVED: start 25% main-chunk gzip regression flag (no gate); measure in task and adjust]
 - [DEFERRED] Boosters, rage, tutorials 1-3, boss/Draw-only levels, cargo, PvP, meta, skins.
 - [RESOLVED: locked] Unsolved levels allowed with reason; `ownerSignOff: null`; owner spot-checks sample.
 - Risk: later SPs change versions/locks after 09 starts; 09 final sweep runs after all rebases, version-chain check catches drift.

@@ -32,9 +32,9 @@ Does not own: boosters/rage, cargo (dropped), projectile semantics (04), rocket/
 
 ## Requirements
 **R1 Rules (written first; ids `R-TRL-01..06`, `R-RAIL-01..06`)**
-- `TRL-01` Loading: own troop arrival adds `defense` to level; if `level + defense > maxLevel` the trolley becomes `ready` (level clamps to max). Starts ready if `startLevel == maxLevel`. Enemy arrival damages it house-like; capture = house rule [OPEN 1]. `ignoreForWin = true`. [decomp §8.7]
-- `TRL-02` Slot: `slots = ready ? 1 : 0`. `DrawLine` from a ready trolley uses normal validation (R-LIN-*, blocking from 04). Draw clears `ready`, places one `cart` troop on the channel, hp = current level. Line is not cuttable (`CutLine` rejects `no-line`/`not-cuttable`), spawns no further troops. Draw to a pile, own or neutral building allowed [OPEN 3].
-- `TRL-03` Cart contact: any troop it touches (head-on or crossing pass, either owner) dies via `killTroop(cause:'cart')`; carts never take troop damage. Mines subtract 1 hp (`MINE_DAMAGE_FOR_TROLLEY`), cart removed at hp <= 0 with no effect; walls ignored [OPEN 4]. Tower shots and 04 projectiles with `hits:'trolley'` target a cart *or* a loaded trolley building; a ready/launched one at hp <= 0 explodes (removed, no effect on others). Before ready they only decrement.
+- `TRL-01` Loading: own troop arrival adds `defense` to level; if `level + defense > maxLevel` the trolley becomes `ready` (level clamps to max). Starts ready if `startLevel == maxLevel`. Enemy arrival damages it house-like; capture = house rule [Q1 see Risks]. `ignoreForWin = true`. [decomp §8.7]
+- `TRL-02` Slot: `slots = ready ? 1 : 0`. `DrawLine` from a ready trolley uses normal validation (R-LIN-*, blocking from 04). Draw clears `ready`, places one `cart` troop on the channel, hp = current level. Line is not cuttable (`CutLine` rejects `no-line`/`not-cuttable`), spawns no further troops. Draw to a pile, own or neutral building allowed [Q3 see Risks].
+- `TRL-03` Cart contact: any troop it touches (head-on or crossing pass, either owner) dies via `killTroop(cause:'cart')`; carts never take troop damage. Mines subtract 1 hp (`MINE_DAMAGE_FOR_TROLLEY`), cart removed at hp <= 0 with no effect; walls ignored [Q4 see Risks]. Tower shots and 04 projectiles with `hits:'trolley'` target a cart *or* a loaded trolley building; a ready/launched one at hp <= 0 explodes (removed, no effect on others). Before ready they only decrement.
 - `TRL-04` Arrival (phase 8): the target building is **removed**: its lines are cut, troops on them killed, `removed=1`. Any level/owner (towers, forts, houses); exception: pile with amount 0 is untouched; a pile with amount > 0 is zeroed and removed. The launching trolley is removed at launch+arrival. Binary, not level-scaled. [decomp]
 - `TRL-05` Removed buildings: excluded from targets, `canDraw` (`removed` reject), win participation; indices stay dense; hashed. A player with no remaining buildings loses (R-WIN-01).
 - `RAIL-01` State `Lock | Active | Moving` per rail, hashed. `Lock` while the building's owner is Neutral; Active otherwise; Moving during a hop. Capturing a railway tower changes who may command it (no controller flag in sim: ownership check only). [decomp]
@@ -42,7 +42,7 @@ Does not own: boosters/rage, cargo (dropped), projectile semantics (04), rocket/
 - `RAIL-03` Moving building: no draw to/from (`moving` reject), tower does not fire, still a win participant, still capturable? **no**: no incoming lines exist, so unreachable. Troops cannot arrive.
 - `RAIL-04` Move end (phase 1 of the end tick, before commands): set `posX/posZ` to the point, rebuild pair caches incident to the building, state Active. Order among rails: ascending building index.
 - `RAIL-05` Two rail buildings on one rail cannot share a point (`bad-point`). Rail geometry is not an obstacle; the building's own footprint is unchanged.
-- `RAIL-06` `moveTicks` content default 10 (0.5 s) for all seats [OPEN 2].
+- `RAIL-06` `moveTicks` content default 10 (0.5 s) for all seats [Q2 see Risks].
 
 **R2 Content/defs**: archetype `trolley` (modules `trolley{maxLevel, startLevel, cartSpeedMt 50}`, `drawsLines` 1 slot, `ignoreForWin`); level key `railways: [{pos, connectedBuilding, points[], startPoint}]` (id-keyed); `rides` module on the connected building (a flag + rail ref). Footprint 1.31 (trolley) from 03 §8.7.
 
@@ -77,15 +77,15 @@ Does not own: boosters/rage, cargo (dropped), projectile semantics (04), rocket/
 - Play-feel check of drag-to-snap UX and `moveTicks`.
 
 ## Risks / Open Questions
-- [OPEN 1] Can enemy troops capture a loaded trolley (house-like) or only damage? Spike: `TrolleyBuilding.OnWarriorCollided/SetNewOwner`.
-- [OPEN 2] Human drag: does TW cut lines during human drag, and is movement continuous while firing? Spike `HumanRailwayMovementController` + `RailwayModelOnStateChanged`. Default here: cut at move start.
-- [OPEN 3] Trolley line target set (piles? own buildings? other trolleys?). Spike `WayTrolley` target filter / `ValidBuildingTypesToCreateWay` target side.
-- [OPEN 4] Wall vs cart interaction; mine kill rule exact (`DoDamageFromMine` ready gate). Default: mines -1, walls ignored.
-- [OPEN 5] AI trolley targeting: does `Attack` pick weakest-first for trolley sources, or highest level? Spike `AiPlayerController.Attack` lambdas; default weakest-first.
-- [OPEN 6] Cart hp = level vs fixed; tower/artillery damage interplay. Default level.
-- [OPEN 7] Does a removed `ignoreForWin` trolley/loser rule (all buildings removed) hit AI seats with only trolleys? Default: trolley ignored for win/loss counts.
-- [OPEN 8] Exact `TryFindAttackPositionForTower` / `IsPathClear` geometry (not transcribed in research). Default: integer attack-radius + `canDraw` as clearance; record deviation.
-- [OPEN 9] Rail path-point coordinates per level are world-space; confirm `P` offset convention in importer.
+- Q1 capture loaded trolley [RESOLVED: decode spike first (task: decomp TrolleyBuilding OnWarriorCollided/SetNewOwner via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use house-like capture (enemy arrival damages, capture at <0) and record it as a deviation in GAME_RULES + the deviations ledger]
+- Q2 human drag cut/continuous movement [RESOLVED: decode spike first (task: decomp HumanRailwayMovementController + RailwayModelOnStateChanged via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use cut lines at move start, non-continuous movement and record it as a deviation in GAME_RULES + the deviations ledger]
+- Q3 trolley line target set [RESOLVED: decode spike first (task: decomp WayTrolley (target filter / ValidBuildingTypesToCreateWay) via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use piles, own and neutral buildings allowed; other trolleys not and record it as a deviation in GAME_RULES + the deviations ledger]
+- Q4 wall vs cart, mine rule [RESOLVED: decode spike first (task: decomp TrolleyBuilding DoDamageFromMine via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use mines -1 hp, walls ignored and record it as a deviation in GAME_RULES + the deviations ledger]
+- Q5 AI trolley targeting [RESOLVED: decode spike first (task: decomp AiPlayerController.Attack lambdas via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use weakest-first and record it as a deviation in GAME_RULES + the deviations ledger]
+- Q6 cart hp [RESOLVED: decode spike first (task: decomp TrolleyBuilding cart hp / tower damage via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use hp = level at draw and record it as a deviation in GAME_RULES + the deviations ledger]
+- Q7 `ignoreForWin` loss rule: [RESOLVED: trolley ignored for win/loss counts; verify via decomp TrolleyBuilding in the Q1 spike, else keep this and record deviation]
+- Q8 attack geometry [RESOLVED: decode spike first (task: decomp TryFindAttackPositionForTower / IsPathClear via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use integer attack-radius + `canDraw` as clearance and record it as a deviation in GAME_RULES + the deviations ledger]
+- Q9 rail path-point offset [RESOLVED: decode spike first (task: decomp level rail path-point serialization (importer, `P` offset) via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use world-space coordinates with importer-verified `P` offset convention; fix on first imported rail level and record it as a deviation in GAME_RULES + the deviations ledger]
 - [DEFERRED] Booster 1.3x cart speed, continuous drag, cart vs wall hp.
 - Risk: pair rebuild on move end is correct only if every cache is derived from building coordinates; test with golden that moves then draws.
 - Risk: proxy may fail many rail levels; log, do not tune.
