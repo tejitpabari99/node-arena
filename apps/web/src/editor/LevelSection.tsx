@@ -3,12 +3,13 @@ import { useState } from 'preact/hooks';
 import { contentFiles } from '../app/boot.js';
 import { useEditor } from './EditorContext.js';
 import { canAddAi, canDeleteAi, MIN_DELAY, ownedCount, toDraft, addAi, deleteAi } from './level-draft.js';
+import { isHouseArchetype } from './houses.js';
 import { playerLabel } from './labels.js';
 import type { LevelProperties } from './model.js';
 import { LiveFieldError, useLiveField } from './useLiveField.js';
 
 type Player = LevelProperties['players'][number];
-const houseTypes = new Set(Object.entries(contentFiles()).filter(([path]) => path.startsWith('data/buildings/')).map(([, value]) => JSON.parse(value as string) as NextBuilding).filter(arch => arch.modules.drawsLines !== undefined).map(arch => arch.id));
+const houseTypes = new Set(Object.entries(contentFiles()).filter(([path]) => path.startsWith('data/buildings/')).map(([, value]) => JSON.parse(value as string) as NextBuilding).filter(isHouseArchetype).map(arch => arch.id));
 const integerIn = (text: string, min: number, max: number) => text.trim() !== '' && Number.isInteger(Number(text)) && Number(text) >= min && Number(text) <= max;
 
 function LevelFields() {

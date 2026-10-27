@@ -1,6 +1,8 @@
 import type { SeatBot } from '@node-arena/content';
 import { expect, it } from 'vitest';
-import { blankDocument } from '../../src/editor/document.js';
+import { blankDocument as blankWithHouses } from '../../src/editor/document.js';
+/** These reducer tests start from a map with no buildings. */
+const blankDocument: typeof blankWithHouses = (...args) => ({ ...blankWithHouses(...args), buildings: [] });
 import * as model from '../../src/editor/model.js';
 
 it('places neutral archetype defaults with unique identities without mutating snapshots', () => {

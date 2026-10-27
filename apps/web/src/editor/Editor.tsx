@@ -3,6 +3,7 @@ import { validateEditorDocument } from '../../../../tools/src/editor-validation.
 import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { combineIssues, ownershipIssues } from './ownership.js';
 import { PlayOverlay } from './PlayOverlay.js';
 import { LeftPanel } from './LeftPanel.js';
 import { Toasts, type ToastNotice } from './Toasts.js';
@@ -142,6 +143,14 @@ export function Editor() {
     }, 300);
     return () => { active = false; clearTimeout(timer); };
   }, [doc]);
+  // Ownership gaps are sync, not part of save validation (drafts stay saveable), but block Play, Check and Finalize.
+  const ownership = useMemo(() => doc ? ownershipIssues(doc) : [], [doc]);
+  const shownIssues = useMemo(() => combineIssues(validation.issues, ownership), [validation.issues, ownership]);
+  function blockedByOwnership(): boolean {
+    if (!ownership.length) return false;
+    notice({ kind: 'error', testId: 'ownership-blocked', message: ownership.map(issue => issue.message).join('\n') });
+    return true;
+  }
   const dirty = !!doc && isDirty(doc, savedDoc);
   const armed = savedDoc !== null || attempted;
   const failureActive = !!failure && !!doc && (failure.doc === doc || stableStringify(failure.doc) === stableStringify(doc));
@@ -168,7 +177,7 @@ export function Editor() {
     return () => { active = false; };
   }, [ui.share, busy]);
   async function finalize() {
-    if (!doc || busy || finalizingRef.current) return;
+    if (!doc || busy || finalizingRef.current || blockedByOwnership()) return;
     const seq = openSeq.current;
     finalizingRef.current = true;
     setBusy(true); setJob('finalize'); shareOpen(true); setUi(state => ({ ...state, flyout: false })); setError(''); setFinalizeError(''); setFinalizeEvents([]); setLockStatus('checking');
@@ -283,8 +292,8 @@ export function Editor() {
     paste() { if (!clipboard) return; pasteCount.current++; dispatch({ type: 'edit', op: { type: 'paste', clipboard, offset: { x: .5 * pasteCount.current, z: .5 * pasteCount.current } }, area }); },
     save: doSave, saveState, dirty,
   } : null;
-  const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar failureSeq={manualFailures} issues={validation.issues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel}
-    onBack={() => guard(leave, 'back')} onPlay={() => { setUi(closedUi); setPlaying(true); }}
+  const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar failureSeq={manualFailures} issues={shownIssues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel}
+    onBack={() => guard(leave, 'back')} onPlay={() => { if (blockedByOwnership()) return; setUi(closedUi); setPlaying(true); }}
     file={{ open: ui.menu, onOpenChange: menu => setUi(state => ({ ...state, menu, share: false, flyout: false })), onCreate: () => setUi(state => ({ ...state, dialog: 'create' })), onOpen: () => setUi(state => ({ ...state, dialog: 'open' })), onDuplicate: () => guard(duplicate, 'duplicate') }}
     share={<><SharePanel open={ui.share} onOpenChange={shareOpen} savedDoc={savedDoc} locked={busy} busy={busy} job={job} onSave={() => void doSave('manual')} onCheck={() => void solvable()} onCancel={() => proxyAbort.current?.abort()} onFinalize={() => void finalize()} onDetails={showDetails} proxyEvents={proxyEvents} hasCheckProblem={issues.length > 0 || !!checkError} finalizeEvents={finalizeEvents} finalizeError={finalizeError} lockStatus={lockStatus} lockOutput={lockOutput} flyoutOpen={ui.flyout} flyoutRef={flyoutRef} panelRef={panelRef} detailsRef={detailsRef} />
       <CheckFlyout open={ui.share && ui.flyout} onOpenChange={flyout => setUi(state => ({ ...state, flyout }))} panelRef={panelRef} flyoutRef={flyoutRef} detailsRef={detailsRef} job={job} onCancel={() => proxyAbort.current?.abort()} checkIssues={issues} issueLabel={issueLabel} checkError={checkError} proxyEvents={proxyEvents} /></>} /></EditorCtx.Provider>;

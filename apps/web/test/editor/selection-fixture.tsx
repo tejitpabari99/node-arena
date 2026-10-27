@@ -6,7 +6,7 @@ import { blankDocument } from '../../src/editor/document.js';
 import { createHistory, historyReducer, type HistoryAction } from '../../src/editor/model.js';
 import type { Selection } from '../../src/editor/picking.js';
 
-const initial = blankDocument('na-selection', 'green', 'medium');
+const initial = { ...blankDocument('na-selection', 'green', 'medium'), buildings: [] as ReturnType<typeof blankDocument>['buildings'] };
 initial.buildings = [
   { id: 'house', archetype: 'house-wt1', pos: { x: 0, z: 0 }, owner: 'p1', level: 10, ignoreForWin: false, params: { level: { maxLevel: 32 }, grows: { growTime: 2 }, spawns: { lineSpawnPenalty: .7 } } },
   { id: 'tower', archetype: 'tower', pos: { x: 4, z: 0 }, owner: null, level: 5, ignoreForWin: false },

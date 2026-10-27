@@ -1,6 +1,7 @@
 import { TICK_RATE } from '@node-arena/sim';
 import type { ContentIssue } from '@node-arena/content';
 import type { EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
+import { isOwnershipIssue } from './ownership.js';
 
 /** Presentation-only helpers for Check details; nothing here changes sim, bot or report data. */
 export type CheckRun = Extract<EditorProxyEvent, { type: 'progress' }>['run'];
@@ -108,6 +109,7 @@ function plainMessage(message: string): string {
 export function formatIssue(issue: ContentIssue, label?: string): { text: string; raw: string } {
   const raw = `${label ?? issue.pointer}: ${issue.message}`;
   if (issue.pointer === '/buildings' && (/fewer than 1 item/.test(issue.message) || /^add at least one building/i.test(issue.message))) return { text: 'Add at least one building', raw };
+  if (isOwnershipIssue(issue)) return { text: issue.message, raw };
   const where = label && !label.startsWith('/') ? label : TOP_LEVEL.has(issue.pointer.slice(1)) || label === undefined || label.startsWith('/') ? words(issue.pointer) : label;
   const message = plainMessage(issue.message);
   return { text: message === issue.message && !issue.message.startsWith('must') ? `${label ?? issue.pointer}: ${issue.message}` : `${where}: ${message}`, raw };

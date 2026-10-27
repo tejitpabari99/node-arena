@@ -1,4 +1,4 @@
-import { save as editorSave, openFile, openCopied } from './editor-helpers.js';
+import { save as editorSave, openFile, openCopied, clearBuildings } from './editor-helpers.js';
 import { test, expect as browserExpect, expect } from '@playwright/test';
 
 const development = process.env.WEB_TEST_SERVER === 'dev';
@@ -24,9 +24,10 @@ test('starts blank drafts and copies without retaining source identity', async (
   await browserExpect(page.getByLabel('Level id', { exact: true })).toHaveText('na-blank');
   await browserExpect(page.getByLabel('Level theme', { exact: true })).toHaveValue('snow');
   await browserExpect(page.locator('.ed-shell')).toHaveAttribute('data-players', '2');
+  await clearBuildings(page);
   await editorSave(page);
   await browserExpect(page.getByTestId('save-chip')).toHaveText(/^\d+ issues$/);
-  await browserExpect(page.getByTestId('save-popover')).toContainText('Add at least one building');
+  await browserExpect(page.getByTestId('save-popover')).toContainText('Human has no building');
   await openFile(page, 'create');
   await page.getByLabel('Copy existing level', { exact: true }).selectOption('levelview-1');
   await page.getByLabel('New level id').fill('levelview-1');

@@ -1,4 +1,4 @@
-import { compileLevel, computeRequires, loadCatalog, loadLevel, type Catalog, type CompiledLevel, type ManifestV2 } from '@node-arena/content';
+import { compileLevel, computeRequires, convertAuthored, loadCatalog, loadLevel, type Catalog, type CompiledLevel, type ManifestV2 } from '@node-arena/content';
 import { create, createTroopBuffer, type Sim } from '@node-arena/sim';
 import { Box3, Object3D, PerspectiveCamera, Raycaster, TextureLoader, Vector2, Vector3 } from 'three';
 import { contentFiles } from '../app/boot.js';
@@ -307,7 +307,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       // requires is derived; don't mutate the editable document merely to preview it.
       // A blank draft (zero buildings) fails the schema's minItems, but must still render its ground; compile it unvalidated.
       const authored = { ...doc, requires: computeRequires(loaded.catalog, doc) };
-      const parsed = doc.buildings.length ? loadLevel(loaded.catalog, authored) : { level: authored as unknown as Parameters<typeof compileLevel>[1] };
+      const parsed = doc.buildings.length ? loadLevel(loaded.catalog, authored) : { level: convertAuthored<Parameters<typeof compileLevel>[1]>(`data/levels/${doc.id}.json`, authored, 'level') };
       const next = compileLevel(loaded.catalog, parsed.level), nextSim = create(next, 1);
       const compiledAt = performance.now();
       if (scene && level?.theme !== next.theme) clearScene();

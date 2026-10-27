@@ -13,7 +13,7 @@ export function mount() {
   Object.assign(host.style, { position: 'fixed', inset: '0', zIndex: '1000', background: 'white' });
   document.body.append(host);
   function Fixture() {
-    const [history, setHistory] = useState(() => createHistory(blankDocument('na-level-section', 'green', 'small')));
+    const [history, setHistory] = useState(() => createHistory({ ...blankDocument('na-level-section', 'green', 'small'), buildings: [] as ReturnType<typeof blankDocument>['buildings'] }));
     const edit: EditorContext['edit'] = (op, merge) => setHistory(state => {
       const actual = typeof op === 'function' ? op(state.present) : op;
       ops.push(actual);

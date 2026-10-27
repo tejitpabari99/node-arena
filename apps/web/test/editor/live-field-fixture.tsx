@@ -10,7 +10,7 @@ function Field({ id, history, dispatch }: { id: string; history: ReturnType<type
 }
 
 function Fixture() {
-  const [history, setHistory] = useState(() => createHistory(blankDocument('na-live', 'green', 'medium')));
+  const [history, setHistory] = useState(() => createHistory({ ...blankDocument('na-live', 'green', 'medium'), buildings: [] as ReturnType<typeof blankDocument>['buildings'] }));
   const [item, setItem] = useState('name'), [visible, setVisible] = useState(true);
   const dispatch = (action: HistoryAction) => setHistory(state => historyReducer(state, action));
   return <><button onClick={() => setItem(item === 'name' ? 'other' : 'name')}>Switch selection</button>

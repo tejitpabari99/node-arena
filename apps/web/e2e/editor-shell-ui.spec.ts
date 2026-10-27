@@ -1,4 +1,4 @@
-import { undo as editorUndo, save as editorSave, openFile, share, openCopied } from './editor-helpers.js';
+import { undo as editorUndo, save as editorSave, clearBuildings, openFile, share, openCopied } from './editor-helpers.js';
 import { test, expect, type Page, type Route } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { acceptDialogs } from './helpers.js';
@@ -53,10 +53,11 @@ test('blank document Save lists issues in the status popover; left panel exposes
   const chip = page.getByTestId('save-chip');
   await expect(page.getByLabel('Level id', { exact: true })).toHaveText('na-chip-blank');
   await expect(chip).toHaveText('Unsaved');
+  await clearBuildings(page);
   await editorSave(page);
   await expect(chip).toHaveText(/^\d+ issues$/);
   await expect(page.getByTestId('save-popover')).toBeVisible();
-  await expect(page.getByTestId('save-popover')).toContainText('Add at least one building');
+  await expect(page.getByTestId('save-popover')).toContainText('Human has no building');
   await expect(page.getByTestId('save-popover').locator('li[data-item]').first()).toBeVisible();
 });
 

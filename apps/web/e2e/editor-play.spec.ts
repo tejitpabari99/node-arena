@@ -1,4 +1,4 @@
-import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, share, openCopied, flushEdits } from './editor-helpers.js';
+import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, share, openCopied, flushEdits, clearBuildings } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { SeatBot } from '@node-arena/content';
 import type { LevelDoc } from '../src/editor/document.js';
@@ -79,6 +79,7 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
   await page.getByLabel('New level id').fill('na-play-browser');
   await page.getByTestId('create-confirm').click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+  await clearBuildings(page);
   for (const [index, fraction] of [[0, .4], [1, .6]]) {
     const button = page.getByRole('button', { name: 'Place house-wt1', exact: true });
     await button.scrollIntoViewIfNeeded();
@@ -89,7 +90,7 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
     await expect(page.getByTestId('viewport-status')).toContainText('Ready');
     await page.getByLabel('Selected item', { exact: true }).selectOption(`building:b${index}`);
     await page.locator('[data-section=selection] summary', { hasText: 'Owner and level' }).click();
-    await page.getByLabel('Owner', { exact: true }).selectOption('p2');
+    await page.getByLabel('Owner', { exact: true }).selectOption(index === 0 ? 'p1' : 'p2');
     await flushEdits(page);
   }
   await editorSave(page);

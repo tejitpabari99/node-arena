@@ -7,7 +7,7 @@ import { placeCenter, reduceDocument } from '../../src/editor/model.js';
 
 let catalog: Catalog;
 beforeAll(async () => { const { 'content.json': _meta, ...files } = await loadFiles(resolve('../../packages/content')); catalog = loadCatalog(files); });
-const blank = () => blankDocument('na-center', 'green', 'medium');
+const blank = () => ({ ...blankDocument('na-center', 'green', 'medium'), buildings: [] as ReturnType<typeof blankDocument>['buildings'] });
 it('uses the snapped buildable-area center for a free spot without mutating the document', () => {
   const doc = blank(); doc.bounds = { minX: 1.12, maxX: 2.12, minZ: 2.12, maxZ: 3.12 };
   expect(placeCenter(doc, 'tower', catalog)).toEqual({ type: 'place', item: 'tower', pos: { x: 1.5, z: 2.5 } });

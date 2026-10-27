@@ -22,7 +22,7 @@ const SIZE = 128, HELPER = { x: 6, z: 6 };
 const frame = () => new Promise<void>(done => requestAnimationFrame(() => requestAnimationFrame(() => done())));
 
 function itemDoc(item: LibraryItem, theme: string): LevelDoc {
-  const doc = blankDocument('na-thumb', theme, 'small');
+  const doc = { ...blankDocument('na-thumb', theme, 'small'), buildings: [] as LevelDoc['buildings'] };
   const obstacle = item.startsWith('obstacle-');
   // Obstacles need a building for the level to compile; it is hidden and framing ignores it.
   doc.buildings.push({ id: 'b0', archetype: obstacle ? 'house-wt1' : item, pos: obstacle ? HELPER : { x: 0, z: 0 }, owner: null, level: 1, ignoreForWin: false } as LevelDoc['buildings'][number]);

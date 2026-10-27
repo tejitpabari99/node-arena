@@ -8,7 +8,7 @@ import { createHistory } from '../../src/editor/model.js';
 import { createWebGlThumbnailRenderer } from '../../src/editor/thumbnails.js';
 import '../../src/editor/style.css';
 
-const initial = blankDocument('na-toolbar', 'green', 'small');
+const initial = { ...blankDocument('na-toolbar', 'green', 'small'), buildings: [] as ReturnType<typeof blankDocument>['buildings'] };
 function Fixture() {
   const [locked, setLocked] = useState(false), [share, setShare] = useState(false), [file, setFile] = useState(false);
   const [calls, setCalls] = useState<string[]>([]), [images, setImages] = useState<Record<string, string>>({});

@@ -1,5 +1,5 @@
 import type { ErrorObject } from 'ajv';
-import { convertFixedPoint, escapePointerSegment, type ContentIssue, type NumericSchema } from './fixed-point.js';
+import { ContentLoadError, convertFixedPoint, escapePointerSegment, type ContentIssue, type NumericSchema } from './fixed-point.js';
 import { createAjv } from './validate.js';
 import { NextSchemas } from './schemas.js';
 
@@ -30,4 +30,12 @@ export function parseAndConvert<T>(file: string, source: ContentSource, name: Ne
   const valid = validate(authored);
   const issues = [...numeric, ...(valid ? [] : (validate.errors ?? []).map((e) => schemaIssue(file, e)))];
   return issues.length ? { issues } : { value: converted as T, issues };
+}
+
+/** Fixed-point conversion without schema validation, for previewing drafts that fail only structural rules (e.g. zero buildings). Numeric problems still throw. */
+export function convertAuthored<T>(file: string, source: object, name: NextSchemaName): T {
+  const numeric: ContentIssue[] = [];
+  const converted = convertFixedPoint(source, compiled[name].schema, file, '', numeric);
+  if (numeric.length) throw new ContentLoadError(numeric);
+  return converted as T;
 }

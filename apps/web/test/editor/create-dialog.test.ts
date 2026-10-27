@@ -46,7 +46,7 @@ it('creates, copies and opens levels with accessible reusable dialogs in Chromiu
     await dialog.getByLabel('Size', { exact: true }).selectOption('small'); await create.click();
     await browserExpect(page.getByTestId('result')).toContainText('na-new');
     let result = JSON.parse(await page.getByTestId('result').innerText());
-    expect(result).toMatchObject({ saved: false, doc: { theme: 'snow', bounds: { maxX: 6 }, buildings: [] } });
+    expect(result).toMatchObject({ saved: false, doc: { theme: 'snow', bounds: { maxX: 6 }, buildings: [{ owner: 'p1' }, { owner: 'p2' }] } });
     await dialog.getByLabel('Theme', { exact: true }).selectOption('green');
     await dialog.getByLabel('Copy existing level').selectOption('na-custom-1');
     await browserExpect(dialog.getByLabel('Theme', { exact: true })).toBeDisabled();

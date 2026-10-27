@@ -16,11 +16,11 @@ it('double-click places and selects exactly one centered item, repeated clicks n
   await page.getByTestId('create-confirm').click();
   const tile = page.getByRole('button', { name: 'Place tower', exact: true }), selected = page.getByLabel('Selected item', { exact: true });
   const buildings = selected.locator('option[value^="building:"]');
-  await tile.dblclick(); await domExpect(buildings).toHaveCount(1); await domExpect(selected).toHaveValue('building:b0');
-  await domExpect(page.getByTestId('viewport-selection')).toHaveText('building: b0');
-  await tile.dblclick(); await domExpect(buildings).toHaveCount(2); await domExpect(selected).toHaveValue('building:b1');
+  await tile.dblclick(); await domExpect(buildings).toHaveCount(3); await domExpect(selected).toHaveValue('building:b2');
+  await domExpect(page.getByTestId('viewport-selection')).toHaveText('building: b2');
+  await tile.dblclick(); await domExpect(buildings).toHaveCount(4); await domExpect(selected).toHaveValue('building:b3');
   await domExpect(page.getByTestId('viewport-status')).toContainText('Ready');
   expect(await page.locator('.editor-ghost:not([hidden])').count()).toBe(0);
-  await page.getByTestId('file-menu-button').click(); await page.getByTestId('menu-undo').click(); await domExpect(buildings).toHaveCount(1);
-  await page.getByTestId('file-menu-button').click(); await page.getByTestId('menu-undo').click(); await domExpect(buildings).toHaveCount(0);
+  await page.getByTestId('file-menu-button').click(); await page.getByTestId('menu-undo').click(); await domExpect(buildings).toHaveCount(3);
+  await page.getByTestId('file-menu-button').click(); await page.getByTestId('menu-undo').click(); await domExpect(buildings).toHaveCount(2); // the two base houses remain
 }, 20000);

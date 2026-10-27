@@ -1,4 +1,4 @@
-import { save as editorSave, share, openCopied, flushEdits } from './editor-helpers.js';
+import { save as editorSave, share, openCopied, flushEdits, clearBuildings } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
@@ -71,11 +71,14 @@ for (const invalid of [true, false]) test(`Finalize aborts and surfaces ${invali
   if (invalid) {
     await page.getByLabel('New level id').fill('na-finalize-invalid');
     await page.getByTestId('create-confirm').click();
+    await clearBuildings(page);
   }
   await share(page);
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
+  if (invalid) { await expect(page.getByTestId('ownership-blocked')).toContainText('Human has no building'); await page.getByTestId('save-chip').click(); }
   await expect(page.getByTestId('save-chip')).toHaveText(invalid ? /^\d+ issues$/ : "Can't save");
-  await expect(page.getByTestId('save-popover')).toContainText(invalid ? 'Add at least one building' : 'disk full');
+  await expect(page.getByTestId('save-popover')).toContainText(invalid ? 'Human has no building' : 'disk full');
+  if (invalid) await share(page);
   await expect(page.getByRole('button', { name: 'Finalize', exact: true })).toBeEnabled();
   expect(saves).toBe(invalid ? 0 : 1); expect(finalizes).toBe(0);
 });

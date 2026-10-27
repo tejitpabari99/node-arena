@@ -117,7 +117,7 @@ test('double-click rows place, edit and play as one item, nudge occupied centers
   await expect(page.getByTestId('los-status')).toContainText(/clear/i);
 });
 
-test('Save accepts a player without a house; real Check and Finalize fail before changing locks', async ({ page }) => {
+test('Save accepts a player without a house; real Check fails and Finalize is blocked before changing locks', async ({ page }) => {
   test.setTimeout(90000);
   const custom = resolve(data, 'campaigns/custom.json'), original = await readFile(custom, 'utf8');
   let createdId = '';
@@ -143,12 +143,9 @@ test('Save accepts a player without a house; real Check and Finalize fail before
       await page.getByRole('link', { name: `Edit ${createdId}`, exact: true }).click();
       await expect(page.getByLabel('Level id', { exact: true })).toHaveText(createdId);
     }).toPass({ timeout: 60000 });
+    // Finalize is blocked in the editor (before any save or lock change) and names the player.
     await share(page); await page.getByRole('button', { name: 'Finalize', exact: true }).click();
-    const panel = page.getByTestId('share-panel');
-    await expect(panel.getByRole('alert')).toContainText('validate', { timeout: 30000 });
-    await panel.getByText('Finalize output', { exact: true }).click();
-    await expect(panel).toContainText('AI2 has no starting house');
-    await expect(panel).not.toContainText('→ contentVersion');
+    await expect(page.getByTestId('ownership-blocked')).toContainText('AI2 has no building — add one and set its owner to AI2');
   } finally {
     await writeFile(custom, original);
     if (createdId) await rm(resolve(data, 'levels', `${createdId}.json`), { force: true });

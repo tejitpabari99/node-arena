@@ -51,3 +51,11 @@ export async function openCopied(page: Page, source = 'levelview-1') {
 export async function flushEdits(page: Page) {
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
 }
+/** Blank levels start with a base house per player; tests that need an empty map delete them. */
+export async function clearBuildings(page: Page) {
+  await page.getByLabel('Selected item', { exact: true }).selectOption('multi');
+  await page.getByRole('button', { name: 'Select all', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '0');
+  await page.getByLabel('Selected item', { exact: true }).selectOption('');
+}
