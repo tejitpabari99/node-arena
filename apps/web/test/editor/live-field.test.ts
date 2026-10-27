@@ -68,3 +68,13 @@ it('normalizes valid text locally before committing and ignores repeated equival
   field.input('invalid'); field.finish(); expect(field.value).toBe('invalid'); expect(field.error).toBe('Enter a number');
   expect(commits).toEqual(['30', '45']);
 });
+it('normalizing fields do not commit or rewrite local text on debounce; they settle on finish', () => {
+  vi.useFakeTimers();
+  const commits: string[] = [];
+  const field = createLiveField({ value: '0', mergeKey: 'row:rotation', validate: () => undefined, normalize: text => String(Math.round(Number(text) / 15) * 15), commit: text => commits.push(text), endBurst() {} }, () => undefined);
+  field.input('4'); vi.advanceTimersByTime(500);
+  expect(field.value).toBe('4'); expect(commits).toEqual([]);
+  field.input('45'); vi.advanceTimersByTime(500);
+  expect(field.value).toBe('45'); field.finish();
+  expect(field.value).toBe('45'); expect(commits).toEqual(['45']);
+});

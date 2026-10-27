@@ -104,3 +104,14 @@ it('deletes AI immediately after confirmation, neutralizes its buildings, and un
   const undone = await readDoc(); expect(undone.players).toHaveLength(3);
   expect(undone.buildings.filter((b: { owner: string | null }) => b.owner === 'p3')).toHaveLength(1);
 });
+it('confirm delete is a no-op without an undo step once deleting is no longer allowed', async () => {
+  await reset();
+  await page.getByRole('button', { name: 'Add AI', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete AI1', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click(); // only one AI left; the dialog stays open
+  await domExpect(page.getByTestId('past')).toHaveText('0');
+  await page.getByRole('button', { name: 'Confirm delete', exact: true }).click();
+  expect((await readDoc()).players).toHaveLength(2);
+  await domExpect(page.getByTestId('past')).toHaveText('0');
+  await domExpect(page.getByRole('alertdialog')).toHaveCount(0);
+});

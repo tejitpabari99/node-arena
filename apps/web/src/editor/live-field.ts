@@ -14,11 +14,12 @@ export function createLiveField(initial: LiveFieldOptions, changed: () => void) 
   let pending = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   function cancel() { clearTimeout(timer); timer = undefined; }
-  function flush() {
+  /** Normalizing fields skip the debounce commit so snapping never rewrites text mid-typing; they commit at blur/Enter. */
+  function flush(settle = true) {
     cancel();
     if (!pending) return;
     error = options.validate(value);
-    if (!error) {
+    if (!error && (settle || !options.normalize)) {
       pending = false;
       value = options.normalize?.(value) ?? value;
       if (value !== committed) { committed = value; options.commit(value, options.mergeKey); }
@@ -38,9 +39,9 @@ export function createLiveField(initial: LiveFieldOptions, changed: () => void) 
     },
     input(text: string) {
       value = text; pending = true; error = options.validate(text);
-      cancel(); timer = setTimeout(flush, 400); changed();
+      cancel(); timer = setTimeout(() => flush(false), 400); changed();
     },
-    flush,
+    flush: () => flush(),
     finish() { flush(); options.endBurst(); },
   };
 }

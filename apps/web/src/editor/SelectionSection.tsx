@@ -53,7 +53,7 @@ function NumberField({ label, tooltip, fieldKey, value, spec, optional = false, 
       if (spec.maximum !== undefined && number > spec.maximum) return `Maximum: ${spec.maximum}`;
       return undefined;
     },
-    normalize: text => normalize && text.trim() ? String(normalize(Number(text))) : text,
+    ...normalize && { normalize: (text: string) => text.trim() ? String(normalize(Number(text))) : text },
     commit: (text, merge) => commit(text.trim() ? Number(text) : undefined, merge), endBurst: endEditBurst,
   });
   return <label title={tooltip}>{label}<input aria-label={label} type="number" required={!optional} min={spec.exclusiveMinimum !== undefined ? spec.exclusiveMinimum + .001 : spec.minimum} max={spec.maximum} step={spec.type === 'integer' ? '1' : '.001'} placeholder={placeholder} {...field.inputProps} /><LiveFieldError field={field} /></label>;

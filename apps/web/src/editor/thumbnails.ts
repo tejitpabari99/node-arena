@@ -53,6 +53,7 @@ export const createWebGlThumbnailRenderer: ThumbnailRendererFactory = async () =
   let scene: ReturnType<typeof createLevelScene> | undefined;
   return {
     async render(item) {
+      textureLoads.length = 0; textureError = undefined; // a failure or stale loads from an earlier item must not poison this one
       const { level, sim } = compile(item);
       if (!scene) { scene = createLevelScene({ level, view: sim.view, manifest, parent: host, worldOptions: { textureLoader } }); await scene.ready; }
       else await scene.world.setLevel(level, level.theme);

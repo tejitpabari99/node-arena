@@ -111,3 +111,25 @@ it('repeated equivalent rotation text snaps on Enter and blur without adding ano
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await domExpect(rotation).toHaveValue('0');
 });
+
+it('typing rotation with pauses never rewrites the focused input; snaps once on blur as one undo step', async () => {
+  await reset();
+  await page.getByLabel('Selected item').selectOption('obstacle:row');
+  await page.getByText('Shape', { exact: true }).click();
+  const rotation = page.getByLabel('Rotation', { exact: true });
+  await rotation.click(); await page.keyboard.press('Control+a');
+  await page.keyboard.type('4'); await page.waitForTimeout(600);
+  await domExpect(rotation).toHaveValue('4');
+  await page.keyboard.type('5'); await rotation.blur();
+  await domExpect(rotation).toHaveValue('45');
+  expect((await doc()).elements[1]).toMatchObject({ yawDeg: 45 });
+  await domExpect(page.getByTestId('past')).toHaveText('1');
+  await rotation.click(); await page.keyboard.press('Control+a');
+  await page.keyboard.type('1'); await page.waitForTimeout(600);
+  await page.keyboard.type('35'); await rotation.blur();
+  await domExpect(rotation).toHaveValue('135');
+  expect((await doc()).elements[1]).toMatchObject({ yawDeg: 135 });
+  await domExpect(page.getByTestId('past')).toHaveText('2');
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await domExpect(rotation).toHaveValue('45');
+});

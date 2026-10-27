@@ -62,7 +62,7 @@ export function LevelSection() {
       <PlayerCard player={p} expanded={open === p.id} onToggle={() => setOpen(open === p.id ? null : p.id)} onDelete={() => setConfirm(p.id)} />
       {confirm === p.id && <div class="ed-confirm" role="alertdialog" aria-label={`Confirm delete ${playerLabel(doc.players, p.id)}`}>
         <p>Delete {playerLabel(doc.players, p.id)}?{ownedCount(doc, p.id) > 0 && ` Its ${ownedCount(doc, p.id)} building${ownedCount(doc, p.id) === 1 ? '' : 's'} become Neutral.`}</p>
-        <button type="button" class="ed-btn" onClick={() => { edit(current => ({ type: 'level-properties', value: deleteAi(toDraft(current), p.id) })); setConfirm(null); setOpen(null); }}>Confirm delete</button>{' '}
+        <button type="button" class="ed-btn" onClick={() => { if (canDeleteAi(doc.players, p.id)) edit(current => ({ type: 'level-properties', value: deleteAi(toDraft(current), p.id) })); setConfirm(null); setOpen(null); }}>Confirm delete</button>{' '}
         <button type="button" class="ed-btn" onClick={() => setConfirm(null)}>Cancel</button>
       </div>}
     </div>)}</div>
