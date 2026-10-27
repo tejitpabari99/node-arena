@@ -1,0 +1,35 @@
+name: Deploy
+# Production build to Firebase Hosting (node-arena-99) on every push to main.
+# Needs repo secret FIREBASE_SERVICE_ACCOUNT (service account JSON key).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: deploy-live
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:prerequisites
+      - run: pnpm build:web
+      - name: Deploy to live channel
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          creds_file="$RUNNER_TEMP/firebase-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$creds_file"
+          export GOOGLE_APPLICATION_CREDENTIALS="$creds_file"
+          trap 'rm -f "$creds_file"' EXIT
+          npx firebase-tools@15.34.1 deploy --only hosting --project node-arena-99
