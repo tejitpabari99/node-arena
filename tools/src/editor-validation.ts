@@ -29,7 +29,11 @@ export function validateEditorDocument(catalog: Catalog, input: unknown, id: str
     }
   }
   const shape = parseAndConvert<NextLevel>(file, authored, 'level');
-  if (!shape.value) throw new ContentLoadError(shape.issues);
+  if (!shape.value) {
+    // A fresh blank draft has no buildings yet; say so plainly instead of the raw schema message.
+    const friendly = shape.issues.map(issue => issue.pointer === '/buildings' && /fewer than 1/.test(issue.message) ? { ...issue, message: 'Add at least one building' } : issue);
+    throw new ContentLoadError(friendly);
+  }
   authored.requires = computeRequires(catalog, authored);
   const loaded = loadLevel(catalog, authored, file);
   return { level: authored, warnings: loaded.warnings };

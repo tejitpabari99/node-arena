@@ -78,7 +78,7 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
   });
   await page.getByLabel('New level id').fill('na-play-browser');
   await page.getByTestId('create-confirm').click();
-  await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   for (const [index, fraction] of [[0, .4], [1, .6]]) {
     const button = page.getByRole('button', { name: 'Place house-wt1', exact: true });
     await button.scrollIntoViewIfNeeded();

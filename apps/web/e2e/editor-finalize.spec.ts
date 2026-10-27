@@ -75,7 +75,7 @@ for (const invalid of [true, false]) test(`Finalize aborts and surfaces ${invali
   await share(page);
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
   await expect(page.getByTestId('save-chip')).toHaveText(invalid ? /^\d+ issues$/ : "Can't save");
-  await expect(page.getByTestId('save-popover')).toContainText(invalid ? 'must NOT have fewer than 1 items' : 'disk full');
+  await expect(page.getByTestId('save-popover')).toContainText(invalid ? 'Add at least one building' : 'disk full');
   await expect(page.getByRole('button', { name: 'Finalize', exact: true })).toBeEnabled();
   expect(saves).toBe(invalid ? 0 : 1); expect(finalizes).toBe(0);
 });

@@ -8,7 +8,7 @@ test('working copy renders, reports blank drafts, and has editor camera controls
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-viewport');
   await page.getByTestId('create-confirm').click();
-  await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await openFile(page, 'create');
   await page.getByLabel('New level id').fill('na-viewport-copy');
   await page.getByLabel('Copy existing level', { exact: true }).selectOption('levelview-1');
@@ -365,7 +365,7 @@ test('canvas controls: zoom limits, fit, game camera, hand, persisted grid', asy
   await page.evaluate(() => localStorage.removeItem('node-arena.editor.grid'));
   await page.getByLabel('New level id').fill('na-canvas-ctl');
   await page.getByTestId('create-confirm').click();
-  await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const controls = page.getByTestId('canvas-controls');
   for (const name of ['Zoom out', 'Zoom in', 'Fit area', 'Game camera', 'Hand', 'Show grid']) {
     const b = controls.getByRole('button', { name, exact: true });

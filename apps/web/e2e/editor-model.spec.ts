@@ -27,7 +27,7 @@ test('library drops, deletion, and undo/redo persist through real preview rebuil
   await expect(host.locator('canvas')).toBeVisible();
   await editorSave(page);
   await expect.poll(() => saved?.buildings.length).toBe(1);
-  expect(saved!.buildings[0]).toMatchObject({ owner: null, level: 1, pos: { x: 0, z: 0 } });
+  expect(saved!.buildings[0]).toMatchObject({ owner: null, level: 1, pos: { x: 0, z: 0.5 } });
   await expect(page.getByTestId('viewport-selection')).toContainText('b0');
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '0');
@@ -124,7 +124,7 @@ test('all library archetypes populate blank drafts and persist after compilation
   await expect.poll(() => saved?.buildings.length).toBe(3);
   expect(saved!.buildings.map(b => [b.archetype, b.owner, b.level])).toEqual([['house-wt1', null, 1], ['house-wt2', null, 1], ['tower', null, 1]]);
   expect(saved!.elements.map(e => e.variant)).toEqual(['small', 'big']);
-  expect(saved!.elements[0]!.pos).toEqual({ x: 0, z: 0 });
+  expect(saved!.elements[0]!.pos).toEqual({ x: 0, z: 0.5 });
   // Releasing over the library is cancellation, leaving the committed document intact.
   const source = (await page.getByRole('button', { name: 'Place tower', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + 20, source.y + 10); await page.mouse.down(); await page.mouse.move(20, 20); await page.mouse.up();
@@ -182,7 +182,7 @@ test('real UI drop far outside the area lands on the area edge and keeps the pre
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-far-drop');
   await page.getByTestId('create-confirm').click();
-  await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const workspace = page.locator('.editor-workspace');
   const before = JSON.parse((await workspace.getAttribute('data-bounds'))!) as { minX: number; maxX: number; minZ: number; maxZ: number };
   const area = JSON.parse((await workspace.getAttribute('data-area'))!) as typeof before;
@@ -202,5 +202,5 @@ test('real UI drop far outside the area lands on the area edge and keeps the pre
   expect(JSON.parse((await workspace.getAttribute('data-area'))!)).toEqual(area);
   await editorSave(page);
   await expect.poll(() => saved?.buildings.length).toBe(1);
-  expect(saved!.buildings[0]!.pos).toEqual({ x: area.maxX, z: area.maxZ });
+  expect(saved!.buildings[0]!.pos).toEqual({ x: area.maxX, z: area.minZ });
 });

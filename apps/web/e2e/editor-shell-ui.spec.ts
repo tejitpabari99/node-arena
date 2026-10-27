@@ -56,7 +56,7 @@ test('blank document Save lists issues in the status popover; left panel exposes
   await editorSave(page);
   await expect(chip).toHaveText(/^\d+ issues$/);
   await expect(page.getByTestId('save-popover')).toBeVisible();
-  await expect(page.getByTestId('save-popover')).toContainText('must NOT have fewer than 1 items');
+  await expect(page.getByTestId('save-popover')).toContainText('Add at least one building');
   await expect(page.getByTestId('save-popover').locator('li[data-item]').first()).toBeVisible();
 });
 
