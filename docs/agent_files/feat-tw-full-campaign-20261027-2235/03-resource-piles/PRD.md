@@ -58,7 +58,7 @@ Piles gate 412 of 1,012 campaign levels (first at 67) [verified: 06-gap-map §1;
 
 ### R3 Sim
 - **Ring**: add `carry: Int32Array` column (hashed, shifted by `removeAt`, zeroed in `clear`). No change to `progressOf` (`p0 + (tick - t0)*speed`), `indexOfSeq`, FIFO. [verified: ring.ts, state.ts L54]
-- **Return channels**: created at `compile` as the reverse of every line whose target is a pile (cold, deterministic: ascending `(pile, source)`), keyed `pile x n + source`; lane geometry reuses `makeLane`. They sit in `channels` in key order so iteration and hash order are stable. [OPEN O1: channels are per-line or per-pair today? decides whether companions are static or created on first pickup]
+- **Return channels**: created at `compile` as the reverse of every line whose target is a pile (cold, deterministic: ascending `(pile, source)`), keyed `pile x n + source`; lane geometry reuses `makeLane`. They sit in `channels` in key order so iteration and hash order are stable. [RESOLVED O1: sim channels are keyed per ordered pair (`from*n+to`, lazily created via state.ts); return-channel companions are static at compile, as written above]
 - Move = `removeAt(i)` on forward + `push` on return; same-tick arrivals push in overshoot-desc order, so descending-progress ring order holds without sorted insert (all troops same kind speed; if SP04/05 add per-troop speed, revisit).
 - Head-on: a returner is never hostile to the forward traffic of its own line; hostile lines crossing its lane fight via the crossing pass (R-CMB-04). Cut/capture of the home house kills its returners via the existing "source building captured" sweep (add `pile -> house` channels to the sweep).
 - Hash: ring `carry`, `amount` (building level), return channels. No new RNG draw.
@@ -72,7 +72,7 @@ Piles gate 412 of 1,012 campaign levels (first at 67) [verified: 06-gap-map §1;
 - Update FUTURES: remove the two "dropped" entries.
 
 ### R5 Web
-- Assets (`tools/src/assets-tw`): `Resources{6,12,14,18,24,32,60,100,154,224}` pile prefabs + `Gold` carried token; `assets:tw:check` byte-identical; manifest ids `building.resource.<amount>` (nearest-size model by amount band if prefab count < variants) and `fx.gold`; credits rows. [OPEN O4: prefab-per-amount vs scale]
+- Assets (`tools/src/assets-tw`): `Resources{6,12,14,18,24,32,60,100,154,224}` pile prefabs + `Gold` carried token; `assets:tw:check` byte-identical; manifest ids `building.resource.<amount>` (nearest-size model by amount band if prefab count < variants) and `fx.gold`; credits rows. [RESOLVED O4: see Risks]
 - Render: pile mesh scaled/swapped by remaining `amount` bands, shrink on `PileHit`, fade on `PileDepleted`; returning troop shows gold bag when `carry > 0`; `TroopReturned` plays existing reinforce pop with `+N`. Reuse building renderer; no HUD.
 - Editor: library item `resource pile` (amount select from the 10 values, snap to prefab list); owner fixed neutral; exports `owner: null`.
 
@@ -106,18 +106,14 @@ Piles gate 412 of 1,012 campaign levels (first at 67) [verified: 06-gap-map §1;
 - Owner spot-check of new `unsolved-by-proxy.json` rows (`ownerSignOff` null).
 
 ## Risks / Open Questions
-- [OPEN] S1: `RESOURCE_DISABLE_TIME 4`, `DestroyWayToResource` condition, empty-pile arrival, hostile-owner pickup. Fallback: R-PIL-04 as written; log deviations in GAME_RULES + LEVELS_GUIDE.
-- [OPEN] S2: pile footprint size and whether it blocks lines. Fallback: circle r = 0.5 x house.
-- [OPEN] S3: tie order for equal-amount piles in the AI list (TW `id` vs list order). Affects pile-level bot goldens only.
-- [OPEN] O1: are sim channels per line or per ordered pair; companion channels static vs lazy.
-- [OPEN] O2: does a returner count toward the alive cap's per-house spawn limit? Default: yes, unchanged global cap.
-- [OPEN] O3: a returner's carried gold on surplus (R-CAP-03): dropped by default.
-- [OPEN] O4: pile model per amount vs scaling one prefab.
-- [OPEN] Phase A combined replay hash churn is limited to new levels; confirm with `replay:verify golden`.
-- [RESOLVED: locked decision] Gold has no currency use.
-- [RESOLVED: verified] No shipped level has `WOD`; existing locks unaffected.
-- [DEFERRED] `addResourceBonus` talent; `isAttackedIncreased`.
-- Risk: pile levels shift weakest-first on 412 levels; validate per level via `validate:levels`, accept unsolved rows.
+- [RESOLVED: decode spike first (task: decomp ResourceBuilding / resource pile classes via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use R-PIL-04 as written with `RESOURCE_DISABLE_TIME 4`, DestroyWayToResource off, empty-pile arrival returns without pickup, hostile-owner pickup allowed and record it as a deviation in GAME_RULES + the deviations ledger] S1.
+- [RESOLVED: decode spike first (task: decomp pile prefab collider via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use circle r = 0.5 x house, non-blocking for lines and record it as a deviation in GAME_RULES + the deviations ledger] S2: pile footprint size and line blocking.
+- [RESOLVED: decode spike first (task: decomp the AI pile target list via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use list order and record it as a deviation in GAME_RULES + the deviations ledger] S3: tie order for equal-amount piles (TW `id` vs list order); affects pile-level bot goldens only.
+- [RESOLVED: sim channels are per ordered pair (`from*n+to`, verified in packages/sim/src/state.ts, commands.ts); companion return channels static at compile] O1.
+- [RESOLVED: yes, a returner counts toward the per-house spawn limit; global alive cap unchanged; revisit only if the decode spike contradicts] O2.
+- [RESOLVED: decode spike first (task: decomp returner/gold surplus handling via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use carried gold dropped on surplus (R-CAP-03) and record it as a deviation in GAME_RULES + the deviations ledger] O3.
+- [RESOLVED: decode spike first (task: decomp Resources prefabs via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use scale one nearest-size prefab by amount band and record it as a deviation in GAME_RULES + the deviations ledger] O4: pile model per amount vs scaling one prefab.
+- [RESOLVED: Phase A hash churn limited to new levels is verified by `replay:verify golden` in the final SP03 task; any other change is a bug] Phase A combined replay hash churn.
 
 ## Acceptance Criteria
 - `R-PIL-01..05` in GAME_RULES with `covers R-...` tests; `check:rules` green; RULES_VERSION 3.2.0 + changelog.

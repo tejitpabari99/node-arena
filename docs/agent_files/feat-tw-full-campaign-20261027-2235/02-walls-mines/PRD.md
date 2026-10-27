@@ -52,7 +52,7 @@ Wall and mine levels are blocked at import: 397 / 291 of 1,012 TW levels carry t
 - Events: `WallHit{element,hp,x,z}`, `WallDestroyed`, `MineTriggered{element,troop,dueTick}`; `KillCause` += `wall | mine` (counted in `killed`, not `died`, like towers).
 
 ### R3 Sim
-- `SimModule` gains `elementState?: Record<string, number>`; `createState` allocates `Int32Array(elements x fields)` per module, included in `hash`/snapshot (new state version; old snapshots rebuildable since fields are derivable from tick 0 only on fresh games -> bump snapshot schema, no migration of live saves needed [OPEN O4]).
+- `SimModule` gains `elementState?: Record<string, number>`; `createState` allocates `Int32Array(elements x fields)` per module, included in `hash`/snapshot (new state version; old snapshots rebuildable since fields are derivable from tick 0 only on fresh games -> bump snapshot schema, no migration of live saves needed [RESOLVED: see O4 in Risks]).
 - `elements.ts`: cold `create`-time precompute of `crossIntervals[element][channel]` using the existing `geometry.ts` lane-interval primitive (extend with `pad = troopRadius`); BigInt only at create, per-tick Numbers (same budget as SP04 R1). Hot path: skip channels with no troops (bench gate), skip inactive elements.
 - `contactsPass` calls `elementPass(state)` after `crossingPass`; `elementPass` iterates modules via `MODULE_ORDER`. Mid-ring kill uses `killTroop` (ring supports removal at any index [verified: `indexOfSeq` + `removeAt`]).
 - Mine pending kills: a small sorted queue in module state (`dueTick, channel, seq`), processed at the start of `elementPass`. Reuse `timers.ts` if it fits; else a ring-free array. Fully hashed.
@@ -98,17 +98,13 @@ TW AI ignores walls and mines [verified: 04-ai-bots.md §port-gaps: "obstacle co
 - Pre-merge full `validate:levels --all` (SP01 R3) for the Phase A PR.
 
 ## Risks / Open Questions
-- [OPEN] S1: wall/mine trigger sizes and wall length vs Hp. Fallback: wall box 1.2 x 0.4 yawed by `R` regardless of Hp, mine circle r 350; log as deviation in GAME_RULES + LEVELS_GUIDE.
-- [OPEN] S2: wall/mine layer (obstacle layer would block drawing and AI). Decision 1 flips to `blocksLines` if confirmed; bots then need the existing `canDraw` only.
-- [OPEN] S3: owner gate; do enemy-owned and AI troops both trigger? Do mines trigger on tanks? Default yes.
-- [OPEN] S4: per-theme wall/mine materials (Lava/Mine themes); affects asset rows only.
-- [OPEN] O4: snapshot/hash schema bump for element columns; confirm no persisted sim snapshots (save stores progress only [verified: LEVELS_GUIDE/save notes]).
-- [OPEN] Ordering of element pass vs clash (Decision 3) has no decoded evidence; lock after first calibration against TW playthrough refs.
-- [OPEN] How many positions <= 340 unblock: census answers.
-- [RESOLVED: derived] Wall `PS` has no sim effect; stored as presentation.
-- [RESOLVED: locked decision] Rocket/area damage to walls and mines is SP06.
-- [DEFERRED] `destroyWallBonus` / `mineBlockBonus` modifiers (FUTURES).
-- Risk: dense mine fields (dozens per level) x lanes inflate create-time precompute; mitigate with per-channel interval cache and bench (`bench:sim`) gate.
+- [RESOLVED: decode spike first (task: decomp wall/mine trigger classes (Wall, Mine) via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use wall box 1.2 x 0.4 yawed by `R` regardless of Hp, mine circle r 350 and record it as a deviation in GAME_RULES + the deviations ledger] S1: wall/mine trigger sizes and wall length vs Hp.
+- [RESOLVED: decode spike first (task: decomp wall/mine layer setup via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use non-blocking layer (do not block drawing or AI); if the decode shows an obstacle layer, flip Decision 1 to `blocksLines` and bots use existing `canDraw` only and record it as a deviation in GAME_RULES + the deviations ledger] S2: wall/mine layer.
+- [RESOLVED: decode spike first (task: decomp wall/mine trigger handlers via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use both enemy-owned and AI troops trigger, and mines trigger on tanks and record it as a deviation in GAME_RULES + the deviations ledger] S3: owner gate and tank/AI triggering.
+- [RESOLVED: decode spike first (task: decomp wall/mine renderers or materials via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use reuse the base theme obstacle material tinted per theme and record it as a deviation in GAME_RULES + the deviations ledger] S4: per-theme wall/mine materials (asset rows only).
+- [RESOLVED: bump sim snapshot/hash schema version for element columns; no persisted sim snapshots exist (save stores progress only, verified in LEVELS_GUIDE/save notes), so no migration] O4.
+- [RESOLVED: decode spike first (task: decomp the clash/element update order via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use element pass after clash and record it as a deviation in GAME_RULES + the deviations ledger] Ordering of element pass vs clash (Decision 3); calibrate against TW playthrough refs in the golden task and lock after.
+- [RESOLVED: census answers in task 1; recorded in the SP02 PR delta table] How many positions <= 340 unblock.
 
 ## Acceptance Criteria
 - `R-ELM-01`, `R-WAL-01..03`, `R-MIN-01..03` in GAME_RULES with `covers R-...` tests; `pnpm check:rules` green; RULES_VERSION 3.1.0 + changelog.

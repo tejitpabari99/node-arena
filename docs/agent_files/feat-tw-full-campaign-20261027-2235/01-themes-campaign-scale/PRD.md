@@ -55,7 +55,7 @@ New mechanics (02-08). Cargo/Wall `onlyLevels` re-opening beyond review (see D9)
 - Lock + unsolved files: stay one JSON each, sorted keys (diff-friendly); `levels:lock` supports `--levels <ids>` so SPs refresh only their own.
 
 ### R4 Census (`pnpm census`)
-- `tools/src/census/` reads `TW_EXTRACT` level list + the importer's `featuresOf`/`computeBlocked` (reuse `gate.ts`; no second source of truth) for campaign positions 4-340 (incl. 12 prefab-only ids via `parse-prefab.ts`).
+- `tools/src/census/` reads `TW_EXTRACT` level list + the importer's `featuresOf`/`computeBlocked` (reuse `gate.ts`; no second source of truth) for campaign positions 4-340 (incl. the 9 prefab-only ids <=340 {10, 23, 35, 66, 137, 215, 221, 266, 329}, 10 and 23 already shipped, via `parse-prefab.ts`).
 - Output: `docs/agent_files/.../census.json` + markdown table: per position `{id, theme, features[], blockedBy[], status: imported|blocked}`; summary by blocker (first-blocker and any-blocker counts) and **cumulative unlock by SP** (SP-> feature map, taken from a small `census-sp-map.json`).
 - Without `TW_EXTRACT`: exits 0 with notice (same convention as `check:import`); `--check` compares to committed `census.json` only when env set.
 - Replaces the static snapshot in LEVELS_GUIDE §5 (09 does the doc edit; SP01 provides the file + a docs link).
@@ -64,7 +64,7 @@ New mechanics (02-08). Cargo/Wall `onlyLevels` re-opening beyond review (see D9)
 - Run `pnpm import:tw --range 4-340` after R1; accept levels whose blocked list is empty; blocked ones remain in the census with reasons.
 - Drop-policy review recorded in LEVELS_GUIDE (or census notes): cargo stays dropped; `wall` `onlyLevels` (position 23 only) is left unchanged until SP02 flips the wall row; theme-only blockers disappear; `sc`,`MinRD/MaxRD` stay dropped.
 - For each imported level: `validate:levels` solvable or an `unsolved-by-proxy.json` entry with reason, `ownerSignOff: null`. Bump content version/hash; refresh `levels-lock.json`.
-- Expected count: census-derived. The static tracker puts base-only (houses+tower+obstacles+scripts) at <=312 of 1,012 TW levels; of positions <=340 only the fraction with no wall/mine/WT3/WOD/BT2/river/rocket/... blocks (OPEN, census answers).
+- Expected count: census-derived. The static tracker puts base-only (houses+tower+obstacles+scripts) at <=312 of 1,012 TW levels; of positions <=340 only the fraction with no wall/mine/WT3/WOD/BT2/river/rocket/... blocks (census answers; [RESOLVED: measured by `pnpm census` in task 1 and recorded in the SP01 PR delta table]).
 
 ## Architecture (high level)
 - Theme pipeline stays generator-owned: `assets-tw` (spec rows) -> `manifest.fragment` -> `manifest.json#themes`; `ThemeSpec` list is the single source, `THEME_IDS` derived. The gate's `registeredThemes` reads the manifest, so registering a theme automatically unblocks levels - no gate code change.
@@ -92,15 +92,13 @@ New mechanics (02-08). Cargo/Wall `onlyLevels` re-opening beyond review (see D9)
 - Run full `validate:levels --all` locally/nightly before Phase A merge; set `TW_EXTRACT` for census/import/assets.
 
 ## Risks / Open Questions
-- [OPEN] Exact `EnvironmentData` prefab/material names for Lava/Mine/Jungle/DarkMine, and whether river/ROBS materials are per-env or shared; resolve via `ENV` decode in rebuilt extract (`decomp.sh 'EnvironmentData'`); fallback: reuse green's river material tinted per theme (deviation recorded in GAME_RULES/CREDITS).
-- [OPEN] Rebuilt extract may differ in pathIDs vs `env.ts` verified values; census/assets scripts must fail loudly on mismatch.
-- [OPEN] Level count actually unlocked by SP01 (census answer); if tiny (<30) the PR stays small - acceptable.
-- [OPEN] Subset sample rate and budget (10% / +3 min) - tune after measuring 337-level timing; per-level time may exceed the 2.1 s estimate.
-- [OPEN] `check:content` / lock-file diff size at 337 levels (levels-lock ~ 100 B x 337 = 34 KB): fine, but `validate:content --base` git-diff cost unmeasured.
-- [OPEN] Ground texture size per theme; if over budget, downscale (`downscale()` exists) at a recorded deviation.
-- [OPEN] Whether `themeFor` for levels with `envShift` quirks (prefab-only ids, position mapping) matches TW for all 337 - census to list themes per position for owner eyeballing.
-- [DEFERRED] Next-level prefetch, thumbnails, search/jump-to-level.
-- [RESOLVED: locked] Unsolved-by-proxy levels are allowed with reasons.
+- [RESOLVED: decode spike first (task: decomp EnvironmentData via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use reuse green's river/ROBS material tinted per theme and record it as a deviation in GAME_RULES + the deviations ledger] Exact `EnvironmentData` prefab/material names for Lava/Mine/Jungle/DarkMine, and whether river/ROBS materials are per-env or shared.
+- [RESOLVED: census/assets scripts compare rebuilt-extract pathIDs against `env.ts` verified values and fail loudly on mismatch; on mismatch re-derive values in the rebuilt extract and update `env.ts` in the same task] Rebuilt extract may differ in pathIDs.
+- [RESOLVED: census answers the count in task 1; if <30 levels the PR stays small, acceptable] Level count actually unlocked by SP01.
+- [RESOLVED: start at 10% sample / +3 min budget; measure 337-level timing in the gate-split task and adjust; record result in tools/README] Subset sample rate and budget; per-level time may exceed the 2.1 s estimate.
+- [RESOLVED: lock ~34 KB is fine; measure `validate:content --base` / `check:content` git-diff cost at 337 levels in the gate-split task and adjust (e.g. shard); record result] `check:content` / lock-file diff cost.
+- [RESOLVED: measure per-theme ground texture sizes in the assets task; if over budget downscale via existing `downscale()` and record as a deviation in the ledger] Ground texture size per theme.
+- [RESOLVED: decode spike first (task: decomp EnvironmentData / level env selection via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use existing `themeFor` mapping and record it as a deviation in GAME_RULES + the deviations ledger] `themeFor` vs TW for levels with `envShift` quirks (prefab-only ids, position mapping); census lists themes per position as a cross-check.
 
 ## Acceptance Criteria
 - Manifest has 6 themes; `check:manifest`, `assets:tw:check` green; budgets and CREDITS pass; screenshot of each theme ground+obstacles in `ref/`.
