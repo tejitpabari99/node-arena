@@ -1,5 +1,5 @@
 import { boundsFromPositions } from '@node-arena/content';
-import type { SeatBot } from '@node-arena/content';
+import type { Catalog, CompiledFootprint, SeatBot } from '@node-arena/content';
 import type { LevelDoc } from './document.js';
 import { playerLabel } from './labels.js';
 import { roundCoordinate, type Point, type Selection } from './picking.js';
@@ -10,6 +10,7 @@ export type DocOp =
   | { type: 'move-selection'; targets: Selection[]; delta: Point }
   | { type: 'paste'; clipboard: Clipboard; offset: Point }
   | { type: 'level-properties'; value: LevelProperties }
+  | { type: 'add-ai'; player: LevelDoc['players'][number]; ownBuilding: string | null }
   | { type: 'building-properties'; id: string; value: Partial<Pick<LevelDoc['buildings'][number], 'owner' | 'level' | 'ignoreForWin'> & { params: LevelDoc['buildings'][number]['params'] | undefined }> }
   | { type: 'obstacle-properties'; id: string; value: Partial<{ variant: LevelDoc['elements'][number]['variant'] | undefined; yawDeg: number; footprint: LevelDoc['elements'][number]['footprint'] | undefined }> }
   | { type: 'place'; item: LibraryItem; pos: Point }
@@ -24,6 +25,41 @@ export function buildableArea(bounds: Area): Area {
   const cx = quarter((bounds.minX + bounds.maxX) / 2), cz = quarter((bounds.minZ + bounds.maxZ) / 2);
   return { minX: cx - AREA_W / 2, maxX: cx + AREA_W / 2, minZ: cz - AREA_H / 2, maxZ: cz + AREA_H / 2 };
 }
+
+/** Nearest unoccupied quarter-grid spot; spiral order breaks equal-distance ties deterministically. */
+export function placeCenter(doc: LevelDoc, item: LibraryItem, catalog: Pick<Catalog, 'buildings' | 'elements'>, area = buildableArea(doc.bounds)): Extract<DocOp, { type: 'place' }> | null {
+  const center = { x: quarter((area.minX + area.maxX) / 2), z: quarter((area.minZ + area.maxZ) / 2) };
+  const obstacles = [
+    ...doc.buildings.map(building => ({ pos: building.pos, footprint: catalog.buildings[building.archetype]?.footprint, scale: .001, yaw: 0 })),
+    ...doc.elements.map(element => ({ pos: element.pos, footprint: element.footprint ?? catalog.elements[element.archetype]?.footprint, scale: element.footprint ? 1 : .001, yaw: element.yawDeg })),
+  ];
+  function occupied(point: Point) {
+    return obstacles.some(obstacle => {
+      const dx = point.x - obstacle.pos.x, dz = point.z - obstacle.pos.z;
+      if (dx === 0 && dz === 0) return true;
+      const footprint: CompiledFootprint | undefined = obstacle.footprint;
+      if (!footprint) return false;
+      if (footprint.shape === 'circle') return dx * dx + dz * dz <= ((footprint.radius ?? 0) * obstacle.scale) ** 2;
+      const angle = obstacle.yaw * Math.PI / 180, c = Math.cos(angle), s = Math.sin(angle);
+      return Math.abs(c * dx - s * dz) <= (footprint.w ?? 0) * obstacle.scale / 2 && Math.abs(s * dx + c * dz) <= (footprint.d ?? 0) * obstacle.scale / 2;
+    });
+  }
+  let best: Point | undefined, distance = Infinity;
+  function consider(x: number, z: number) {
+    const point = { x: center.x + x * .25, z: center.z + z * .25 }, squared = (x * x + z * z) / 16;
+    if (squared >= distance || point.x < area.minX || point.x > area.maxX || point.z < area.minZ || point.z > area.maxZ || occupied(point)) return;
+    best = point; distance = squared;
+  }
+  consider(0, 0);
+  const rings = Math.ceil(Math.max(Math.abs(area.minX - center.x), Math.abs(area.maxX - center.x), Math.abs(area.minZ - center.z), Math.abs(area.maxZ - center.z)) * 4);
+  for (let ring = 1; ring <= rings && ring * ring / 16 < distance; ring++) {
+    for (let x = -ring; x <= ring; x++) consider(x, -ring);
+    for (let z = -ring + 1; z <= ring; z++) consider(ring, z);
+    for (let x = ring - 1; x >= -ring; x--) consider(x, ring);
+    for (let z = ring - 1; z > -ring; z--) consider(-ring, z);
+  }
+  return best ? { type: 'place', item, pos: best } : null;
+}
 export const clampPoint = (p: Point, area: Area): Point => ({ x: Math.min(area.maxX, Math.max(area.minX, p.x)), z: Math.min(area.maxZ, Math.max(area.minZ, p.z)) });
 /** Per-axis delta keeping the group's extent inside the area; 0 on an axis where the group is wider than the area. */
 export function clampDelta(points: Point[], delta: Point, area: Area): Point {
@@ -35,8 +71,8 @@ export function clampDelta(points: Point[], delta: Point, area: Area): Point {
   };
   return { x: axis(points.map(q => q.x), delta.x, area.minX, area.maxX), z: axis(points.map(q => q.z), delta.z, area.minZ, area.maxZ) };
 }
-export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[] }
-export type HistoryAction = { type: 'edit'; op: DocOp; area?: Area } | { type: 'undo' } | { type: 'redo' };
+export interface DocHistory { past: LevelDoc[]; present: LevelDoc; future: LevelDoc[]; merge?: string | undefined }
+export type HistoryAction = { type: 'edit'; op: DocOp; area?: Area; merge?: string } | { type: 'end-edit' } | { type: 'undo' } | { type: 'redo' };
 export const createHistory = (present: LevelDoc): DocHistory => ({ past: [], present, future: [] });
 const GROWING: ReadonlySet<DocOp['type']> = new Set(['place', 'move', 'move-selection', 'paste']);
 /** Grow-only bounds: only items outside the bounds drive growth (2-unit pad); never shrinks; same doc when nothing is outside. */
@@ -80,6 +116,10 @@ function applyOp(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
       elements: doc.elements.map(item => selected('obstacle', item.id) ? { ...item, pos: position(item.pos) } : item),
     };
   }
+  if (op.type === 'add-ai') {
+    if (doc.players.some(player => player.id === op.player.id)) return doc;
+    return { ...doc, players: [...doc.players, op.player], buildings: doc.buildings.map(item => item.id === op.ownBuilding && item.owner === null ? { ...item, owner: op.player.id } : item) };
+  }
   if (op.type === 'level-properties') {
     const ids = new Set(op.value.players.map(player => player.id));
     return { ...doc, ...op.value, buildings: doc.buildings.map(item => item.owner !== null && !ids.has(item.owner) ? { ...item, owner: null } : item) };
@@ -97,7 +137,7 @@ function applyOp(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
     let index = 0; while (ids.has(`${prefix}${index}`)) index++;
     const at = area ? clampPoint(op.pos, area) : op.pos;
     const id = `${prefix}${index}`, pos = { x: roundCoordinate(at.x), z: roundCoordinate(at.z) };
-    if (obstacle) return { ...doc, elements: [...doc.elements, { id, archetype: 'obstacle', variant: op.item === 'obstacle-big' ? 'big' : 'small', pos, yawDeg: 0 }] };
+    if (obstacle) return { ...doc, elements: [...doc.elements, { id, archetype: 'obstacle', variant: op.item === 'obstacle-big' ? 'big' : 'small', pos, yawDeg: 0, footprint: { shape: 'box', w: 3.565, d: .713 } }] };
     return { ...doc, buildings: [...doc.buildings, { id, archetype: op.item, pos, owner: null, level: 1, ignoreForWin: false }] };
   }
   const key = op.target.kind === 'building' ? 'buildings' : 'elements';
@@ -120,16 +160,18 @@ function applyOp(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
 
 /** D8: at most 100 undo snapshots; immutable docs also make redo exact. */
 export function historyReducer(state: DocHistory, action: HistoryAction): DocHistory {
+  if (action.type === 'end-edit') return state.merge === undefined ? state : { ...state, merge: undefined };
   if (action.type === 'undo') {
     const present = state.past.at(-1);
-    return present ? { past: state.past.slice(0, -1), present, future: [state.present, ...state.future].slice(0, 100) } : state;
+    return present ? { past: state.past.slice(0, -1), present, future: [state.present, ...state.future].slice(0, 100) } : { ...state, merge: undefined };
   }
   if (action.type === 'redo') {
     const present = state.future[0];
-    return present ? { past: [...state.past, state.present].slice(-100), present, future: state.future.slice(1) } : state;
+    return present ? { past: [...state.past, state.present].slice(-100), present, future: state.future.slice(1) } : { ...state, merge: undefined };
   }
   const present = reduceDocument(state.present, action.op, action.area);
-  return present === state.present ? state : { past: [...state.past, state.present].slice(-100), present, future: [] };
+  if (present === state.present) return state.merge === undefined || action.merge === state.merge ? state : { ...state, merge: undefined };
+  return { past: action.merge && action.merge === state.merge ? state.past : [...state.past, state.present].slice(-100), present, future: [], merge: action.merge };
 }
 
 function stepReferences(node: { own?: string | null; target?: string | null; then?: unknown[] }, id: string): boolean {

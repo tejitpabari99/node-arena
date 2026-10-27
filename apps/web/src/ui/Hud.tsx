@@ -5,7 +5,7 @@ import { OwnershipBar } from './OwnershipBar';
 import { PausePopup } from './PausePopup';
 import { ResultPopup } from './ResultPopup';
 /** State publications are tick-throttled by the controller; the canvas never awaits Preact. */
-export function Hud({state,app,onMute}:{state:AppSnapshot;app:AppController;onMute():void}){
+export function Hud({state,app,onMute,onEditLevel}:{state:AppSnapshot;app:AppController;onMute():void;onEditLevel?:(()=>void)|undefined}){
   const view=app.driver?.sim.view;
   const muted=state.save.settings.musicMute&&state.save.settings.sfxMute;
   const levels=state.customLevels.some(l=>l.id===state.levelId)?state.customLevels:state.levels;
@@ -24,6 +24,6 @@ export function Hud({state,app,onMute}:{state:AppSnapshot;app:AppController;onMu
       <button class="mute-button battle-mute" aria-label={muted?'Unmute sound':'Mute sound'} aria-pressed={muted} onClick={onMute}><img src={uiSprites[muted?'soundOff':'soundOn']} alt=""/></button>
     </div>
     {state.restartPopup&&<PausePopup onResume={()=>app.resume()} onRestart={()=>{void app.restart();}} onLevels={()=>app.openPicker()}/>}
-    {state.screen==='result'&&<ResultPopup won={won} hasNext={hasNext} custom={custom} onNext={()=>{void app.next();}} onReplay={()=>{void app.restart();}} onLevels={()=>app.openPicker()}/>}
+    {state.screen==='result'&&<ResultPopup won={won} hasNext={hasNext} custom={custom} onNext={()=>{void app.next();}} onReplay={()=>{void app.restart();}} onLevels={()=>app.openPicker()} onEditLevel={onEditLevel}/>}
   </>;
 }

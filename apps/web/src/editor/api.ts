@@ -16,13 +16,24 @@ export const readLevel = (id: string): Promise<LevelDoc> => get(`level/${encodeU
 export class EditorApiError extends Error {
   constructor(message: string, readonly issues: ContentIssue[] = [], readonly status = 0) { super(message); }
 }
-export async function saveLevel(level: LevelDoc): Promise<{ level: LevelDoc; warnings: ContentIssue[] }> {
+export async function saveLevel(level: LevelDoc): Promise<{ level: LevelDoc; warnings: ContentIssue[]; changed: boolean }> {
   const response = await fetch('/__editor/save', {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-NA-Editor': '1' },
     body: JSON.stringify({ id: level.id, level }),
   });
-  const body = await response.json() as { level: LevelDoc; warnings: ContentIssue[]; error?: string; issues?: ContentIssue[] };
+  const body = await response.json() as { level: LevelDoc; warnings: ContentIssue[]; changed: boolean; error?: string; issues?: ContentIssue[] };
   if (!response.ok) throw new EditorApiError(body.error ?? `Save failed (${response.status})`, body.issues, response.status);
+  return body;
+}
+
+export const versionOf = (level: LevelDoc): string => level.editorVersion ?? '0.0.0';
+export async function duplicateLevel(id: string): Promise<{ level: LevelDoc; warnings: ContentIssue[] }> {
+  const response = await fetch('/__editor/duplicate', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-NA-Editor': '1' },
+    body: JSON.stringify({ id }),
+  });
+  const body = await response.json() as { level: LevelDoc; warnings: ContentIssue[]; error?: string; issues?: ContentIssue[] };
+  if (!response.ok) throw new EditorApiError(body.error ?? `Duplicate failed (${response.status})`, body.issues, response.status);
   return body;
 }
 

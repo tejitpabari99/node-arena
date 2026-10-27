@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import type { RefObject } from 'preact';
 import { useEditor } from './EditorContext.js';
+import { nativeCopyWins } from './shortcut-guard.js';
 
 const typing = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(t.tagName));
 
@@ -26,7 +27,7 @@ export function useShortcuts(host: RefObject<HTMLElement>) {
       const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
       if (!mod && !e.altKey && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); c.deleteSelection(); }
       else if (!mod && e.key === 'Escape') { if (!engine()?.cancelPlacement() && c.selection.length) c.select([]); }
-      else if (mod && !e.altKey && k === 'c') { e.preventDefault(); c.copy(); }
+      else if (mod && !e.altKey && k === 'c') { if (nativeCopyWins(getSelection())) return; e.preventDefault(); c.copy(); }
       else if (mod && !e.altKey && k === 'v') { e.preventDefault(); c.paste(); }
       else if (mod && !e.altKey && k === 's') { e.preventDefault(); void c.save('manual'); }
       else if (mod && !e.altKey && k === 'z') { e.preventDefault(); c.dispatch({ type: e.shiftKey ? 'redo' : 'undo' }); }

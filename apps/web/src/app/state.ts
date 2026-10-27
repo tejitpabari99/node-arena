@@ -5,7 +5,7 @@ import { loadManifest } from '../manifest/load';
 import { createSaveStore, type SaveData, type SaveSettings, type SaveStore } from '../save';
 /** Presentation-only pause between the sim reporting game over and showing the result popup. */
 export const RESULT_DELAY_MS = 1250;
-export type PickerView = 'main' | 'campaign' | 'custom' | 'templates';
+export type PickerView = 'main' | 'campaign' | 'custom';
 export type Screen = 'boot' | 'picker' | 'playing' | 'result' | 'error';
 export interface CampaignLevel { id: string; position: number; number: number; name: string }
 export interface AppSnapshot {

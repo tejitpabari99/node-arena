@@ -1,53 +1,24 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
-import type { ContentIssue } from '@node-arena/content';
-import { chipText } from './save-core.js';
+import type { ComponentChildren } from 'preact';
+import { FileMenu, type FileMenuProps } from './FileMenu.js';
+import { SaveStatus, type SaveStatusProps } from './SaveStatus.js';
 import { useEditor } from './EditorContext.js';
 
-export interface TopBarProps {
-  /** Increments on each failed manual save; opens the popover. */
-  failureSeq: number;
-  issues: ContentIssue[];
-  warnings: ContentIssue[];
-  /** Non-issue save failure (network etc.) for the current revision. */
-  saveMessage: string;
-  issueLabel(issue: ContentIssue): string;
-  onName(): void;
+export interface TopBarProps extends Omit<SaveStatusProps, 'saveState'> {
+  file: FileMenuProps;
+  onBack(): void;
   onPlay(): void;
-  extras: preact.ComponentChildren;
+  share: ComponentChildren;
 }
-
-/** Editor top bar: navigation, name, undo/redo, save chip + Save, Play. Check/Finalize arrive via `extras` until they move. */
-export function TopBar({ failureSeq, issues, warnings, saveMessage, issueLabel, onName, onPlay, extras }: TopBarProps) {
-  const { doc, history, dispatch, locked, save, saveState } = useEditor();
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLSpanElement>(null);
-  const seen = useRef(failureSeq);
-  useEffect(() => { if (failureSeq !== seen.current) { seen.current = failureSeq; setOpen(true); } }, [failureSeq]);
-  useEffect(() => {
-    if (!open) return;
-    const away = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
-    const key = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
-    document.addEventListener('pointerdown', away); document.addEventListener('keydown', key);
-    return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', key); };
-  }, [open]);
-  const count = issues.length || 1;
+/** Minimal toolbar; controlled surfaces and job state live in Editor. */
+export function TopBar({ file, onBack, onPlay, share, ...status }: TopBarProps) {
+  const { locked, saveState, save } = useEditor();
   return <>
-    <a href="/" class="ed-btn">← Game</a>
-    <button class="ed-btn" data-testid="level-name" title={doc.id} disabled={locked} onClick={onName}>{doc.name || doc.id}</button>
-    <button class="ed-btn" disabled={locked || !history.past.length} onClick={() => dispatch({ type: 'undo' })}>Undo</button>
-    <button class="ed-btn" disabled={locked || !history.future.length} onClick={() => dispatch({ type: 'redo' })}>Redo</button>
+    <button type="button" class="ed-btn" data-testid="back" disabled={locked} onClick={onBack}>← Back</button>
+    <FileMenu {...file} />
     <span class="ed-top-spacer" />
-    <span ref={root} class="ed-chip-wrap">
-      <button class="ed-chip" role="status" data-testid="save-chip" data-state={saveState} aria-expanded={open} onClick={() => setOpen(value => !value)}>{chipText(saveState, count)}</button>
-      {open && <div class="ed-popover ed-save-popover" data-testid="save-popover">
-        {issues.length === 0 && warnings.length === 0 && !saveMessage && <p>No issues.</p>}
-        {saveMessage && <p data-testid="save-message">{saveMessage}</p>}
-        {issues.length > 0 && <ul aria-label="Save errors">{issues.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
-        {warnings.length > 0 && <ul aria-label="Save warnings">{warnings.map((issue, index) => <li key={index} data-item={issue.pointer}>{issueLabel(issue)}: {issue.message}</li>)}</ul>}
-      </div>}
-    </span>
-    {extras}
-    <button class="ed-btn" disabled={locked} onClick={onPlay}>Play</button>
-    <button class="ed-btn ed-btn-primary" disabled={locked} onClick={() => void save('manual')}>Save</button>
+    <SaveStatus {...status} saveState={saveState} />
+    <button type="button" class="ed-btn ed-btn-primary" disabled={locked} onClick={() => { void save('manual'); }}>Save</button>
+    <button type="button" class="ed-btn ed-btn-icon" aria-label="Play" title="Play" disabled={locked} onClick={onPlay}><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11L13 8z" /></svg></button>
+    {share}
   </>;
 }

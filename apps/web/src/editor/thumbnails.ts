@@ -1,6 +1,6 @@
 import { compileLevel, computeRequires, loadCatalog, loadLevel } from '@node-arena/content';
-import { create } from '@node-arena/sim';
-import { Box3, Vector3 } from 'three';
+import { create, createTroopBuffer } from '@node-arena/sim';
+import { Box3, TextureLoader, Vector3 } from 'three';
 import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
 import { fitCamera } from '../render/camera.js';
@@ -22,7 +22,7 @@ const SIZE = 128, HELPER = { x: 6, z: 6 };
 const frame = () => new Promise<void>(done => requestAnimationFrame(() => requestAnimationFrame(() => done())));
 
 function itemDoc(item: LibraryItem, theme: string): LevelDoc {
-  const doc = blankDocument('na-thumb', theme, 'small');
+  const doc = { ...blankDocument('na-thumb', theme, 'small'), buildings: [] as LevelDoc['buildings'] };
   const obstacle = item.startsWith('obstacle-');
   // Obstacles need a building for the level to compile; it is hidden and framing ignores it.
   doc.buildings.push({ id: 'b0', archetype: obstacle ? 'house-wt1' : item, pos: obstacle ? HELPER : { x: 0, z: 0 }, owner: null, level: 1, ignoreForWin: false } as LevelDoc['buildings'][number]);
@@ -35,6 +35,13 @@ export const createWebGlThumbnailRenderer: ThumbnailRendererFactory = async () =
   const manifest = await loadManifest();
   const catalog = loadCatalog(contentFiles(), { themes: Object.keys(manifest.themes), colorKeys: Object.keys(manifest.palettes) });
   const theme = Object.keys(manifest.themes)[0]!;
+  const loader = new TextureLoader(), textureLoads: Promise<void>[] = [];
+  let textureError: unknown;
+  const textureLoader = (path: string) => {
+    let loaded!: () => void;
+    textureLoads.push(new Promise<void>(resolve => { loaded = resolve; }));
+    return loader.load(`/${path}`, loaded, undefined, error => { textureError ??= error; loaded(); });
+  };
   const host = document.createElement('div');
   Object.assign(host.style, { position: 'fixed', left: '-9999px', top: '0', width: `${SIZE}px`, height: `${SIZE}px`, pointerEvents: 'none' });
   document.body.appendChild(host);
@@ -46,9 +53,15 @@ export const createWebGlThumbnailRenderer: ThumbnailRendererFactory = async () =
   let scene: ReturnType<typeof createLevelScene> | undefined;
   return {
     async render(item) {
+      textureLoads.length = 0; textureError = undefined; // a failure or stale loads from an earlier item must not poison this one
       const { level, sim } = compile(item);
-      if (!scene) { scene = createLevelScene({ level, view: sim.view, manifest, parent: host }); await scene.ready; }
+      if (!scene) { scene = createLevelScene({ level, view: sim.view, manifest, parent: host, worldOptions: { textureLoader } }); await scene.ready; }
       else await scene.world.setLevel(level, level.theme);
+      // Initial sim state applies neutral team textures and selects the one visible building stage.
+      scene.world.setShowTowerRanges(false);
+      scene.update({ view: sim.view, troops: createTroopBuffer(0), n: 0, alpha: 0 }, [], 0);
+      await Promise.all(textureLoads);
+      if (textureError) throw textureError;
       await frame(); // let the scene's ResizeObserver run before we override the camera
       const obstacle = item.startsWith('obstacle-');
       const hidden = obstacle ? 'b0' : undefined;

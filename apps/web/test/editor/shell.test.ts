@@ -1,7 +1,8 @@
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { createServer, request, type Server } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { createEditorMiddleware } from '../../src/dev/editor-middleware.js';
+import { blankDocument, copyDocument } from '../../src/editor/document.js';
 
 let server: Server;
 let base: string;
@@ -58,4 +59,32 @@ it('caps POST bodies at 1 MiB before parsing Save payloads', async () => {
   expect(oversized.status).toBe(413);
   const allowed = await fetch(`${base}__editor/save`, { method: 'POST', headers, body: '{}' });
   expect(allowed.status).toBe(400);
+});
+
+it('starts blank and template copies without a server-owned editorVersion', () => {
+  const blank = blankDocument('na-blank', 'green', 'small');
+  expect(blank).not.toHaveProperty('editorVersion');
+  const source = { ...blank, editorVersion: '0.0.7', source: { game: 'test', gameVersion: '1', asset: 'level' } };
+  const copy = copyDocument(source, 'na-template');
+  expect(copy).not.toHaveProperty('editorVersion');
+  expect(copy).not.toHaveProperty('source');
+  expect(source.editorVersion).toBe('0.0.7');
+  expect(source.source.asset).toBe('level');
+});
+
+
+// The replacement panel keeps the SP02 Finalize lock contract.
+vi.mock('preact/hooks', () => ({ useRef: () => ({ current: null }), useLayoutEffect: () => undefined }));
+it('allows Finalize for a dirty document while still disabling competing jobs', async () => {
+  const { SharePanel } = await import('../../src/editor/SharePanel.js');
+  const props: import('../../src/editor/SharePanel.js').SharePanelProps = { open: true, onOpenChange() {}, savedDoc: null, locked: false, job: null, busy: false, onSave() {}, onCheck() {}, onCancel() {}, onFinalize() {}, onDetails() {}, proxyEvents: [], finalizeEvents: [], finalizeError: '', lockStatus: 'current', lockOutput: '' };
+  function button(busy: boolean) {
+    const root = SharePanel({ ...props, busy });
+    const panel = (root.props.children as preact.VNode[])[1]!;
+    const row = (panel.props as { children: preact.VNode[] }).children[2]!;
+    const action = (row.props as { children: preact.VNode[] }).children[0]!;
+    return ((action.props as { children: preact.VNode[] }).children[1]!.props as unknown as { disabled: boolean });
+  }
+  expect(button(false).disabled).toBe(false);
+  expect(button(true).disabled).toBe(true);
 });

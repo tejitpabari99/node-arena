@@ -1,0 +1,3713 @@
+
+> node-arena@ test /root/projects/node-arena/.worktrees/feat-editor-chrome-polish
+> pnpm --workspace-concurrency=1 --filter @node-arena/defs --filter @node-arena/content --filter @node-arena/sim --filter @node-arena/bots --filter @node-arena/tools --filter @node-arena/web test
+
+Scope: 6 of 7 workspace projects
+
+> @node-arena/defs@0.0.0 test /root/projects/node-arena/.worktrees/feat-editor-chrome-polish/packages/defs
+> tsx --test test/*.test.ts
+
+TAP version 13
+# Subtest: module ids match def ids and ruleIds exist in GAME_RULES.md
+ok 1 - module ids match def ids and ruleIds exist in GAME_RULES.md
+  ---
+  duration_ms: 1.890659
+  type: 'test'
+  ...
+# Subtest: PHASES is the 9-name tuple of GAME_RULES section 4
+ok 2 - PHASES is the 9-name tuple of GAME_RULES section 4
+  ---
+  duration_ms: 0.194312
+  type: 'test'
+  ...
+# Subtest: param builders embed x-unit tags; counts are untagged
+ok 3 - param builders embed x-unit tags; counts are untagged
+  ---
+  duration_ms: 0.218669
+  type: 'test'
+  ...
+# Subtest: module params validate TW defaults and reject unknown keys
+ok 4 - module params validate TW defaults and reject unknown keys
+  ---
+  duration_ms: 2.980872
+  type: 'test'
+  ...
+# Subtest: commands and events
+ok 5 - commands and events
+  ---
+  duration_ms: 1.537245
+  type: 'test'
+  ...
+# Subtest: objectives and visuals
+ok 6 - objectives and visuals
+  ---
+  duration_ms: 0.29338
+  type: 'test'
+  ...
+# Subtest: tw bot kind validates and lists building refs
+ok 7 - tw bot kind validates and lists building refs
+  ---
+  duration_ms: 4.973526
+  type: 'test'
+  ...
+# Subtest: CAPABILITIES = module ids + bot:<kind> + objective:<id>
+ok 8 - CAPABILITIES = module ids + bot:<kind> + objective:<id>
+  ---
+  duration_ms: 0.369526
+  type: 'test'
+  ...
+# Subtest: binding map: missing module impl is a compile error (checked by tsc)
+ok 9 - binding map: missing module impl is a compile error (checked by tsc)
+  ---
+  duration_ms: 0.545561
+  type: 'test'
+  ...
+# Subtest: FX_KINDS equals the 07 art-pipeline contract values
+ok 10 - FX_KINDS equals the 07 art-pipeline contract values
+  ---
+  duration_ms: 0.608041
+  type: 'test'
+  ...
+# Subtest: CommandRejected payload only accepts COMMANDS ids and reject reasons
+ok 11 - CommandRejected payload only accepts COMMANDS ids and reject reasons
+  ---
+  duration_ms: 1.662094
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 661.962826
+
+> @node-arena/content@0.0.0 test /root/projects/node-arena/.worktrees/feat-editor-chrome-polish/packages/content
+> tsx --test test/*.test.ts
+
+TAP version 13
+# Subtest: changed bot hashes require a strictly increasing semver even after locks regenerate
+ok 1 - changed bot hashes require a strictly increasing semver even after locks regenerate
+  ---
+  duration_ms: 1.567424
+  type: 'test'
+  ...
+# Subtest: Node adapter reads literal current and committed versions without executing source
+ok 2 - Node adapter reads literal current and committed versions without executing source
+  ---
+  duration_ms: 52.00993
+  type: 'test'
+  ...
+# Subtest: every source file passes the browser-boundary lint rules
+ok 3 - every source file passes the browser-boundary lint rules
+  ---
+  duration_ms: 1804.921603
+  type: 'test'
+  ...
+# Subtest: no Node built-in is imported or required anywhere in src/
+ok 4 - no Node built-in is imported or required anywhere in src/
+  ---
+  duration_ms: 34.310067
+  type: 'test'
+  ...
+# Subtest: catalog.ts rejects the Node import node:fs
+ok 5 - catalog.ts rejects the Node import node:fs
+  ---
+  duration_ms: 2.160405
+  type: 'test'
+  ...
+# Subtest: catalog.ts rejects the Node import node:path
+ok 6 - catalog.ts rejects the Node import node:path
+  ---
+  duration_ms: 0.822941
+  type: 'test'
+  ...
+# Subtest: catalog.ts rejects the Node import node:crypto
+ok 7 - catalog.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 0.726987
+  type: 'test'
+  ...
+# Subtest: catalog.ts rejects the Node import fs/promises
+ok 8 - catalog.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 0.673185
+  type: 'test'
+  ...
+# Subtest: level.ts rejects the Node import node:fs
+ok 9 - level.ts rejects the Node import node:fs
+  ---
+  duration_ms: 0.774259
+  type: 'test'
+  ...
+# Subtest: level.ts rejects the Node import node:path
+ok 10 - level.ts rejects the Node import node:path
+  ---
+  duration_ms: 0.773696
+  type: 'test'
+  ...
+# Subtest: level.ts rejects the Node import node:crypto
+ok 11 - level.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 1.28339
+  type: 'test'
+  ...
+# Subtest: level.ts rejects the Node import fs/promises
+ok 12 - level.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 1.338386
+  type: 'test'
+  ...
+# Subtest: compile.ts rejects the Node import node:fs
+ok 13 - compile.ts rejects the Node import node:fs
+  ---
+  duration_ms: 4.528125
+  type: 'test'
+  ...
+# Subtest: compile.ts rejects the Node import node:path
+ok 14 - compile.ts rejects the Node import node:path
+  ---
+  duration_ms: 1.356549
+  type: 'test'
+  ...
+# Subtest: compile.ts rejects the Node import node:crypto
+ok 15 - compile.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 0.671532
+  type: 'test'
+  ...
+# Subtest: compile.ts rejects the Node import fs/promises
+ok 16 - compile.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 6.854808
+  type: 'test'
+  ...
+# Subtest: content.ts rejects the Node import node:fs
+ok 17 - content.ts rejects the Node import node:fs
+  ---
+  duration_ms: 0.715817
+  type: 'test'
+  ...
+# Subtest: content.ts rejects the Node import node:path
+ok 18 - content.ts rejects the Node import node:path
+  ---
+  duration_ms: 3.884045
+  type: 'test'
+  ...
+# Subtest: content.ts rejects the Node import node:crypto
+ok 19 - content.ts rejects the Node import node:crypto
+  ---
+  duration_ms: 1.103617
+  type: 'test'
+  ...
+# Subtest: content.ts rejects the Node import fs/promises
+ok 20 - content.ts rejects the Node import fs/promises
+  ---
+  duration_ms: 0.674498
+  type: 'test'
+  ...
+# Subtest: CLI writes lock, detects stale output and rejects regenerated unversioned changes against git baseline
+ok 21 - CLI writes lock, detects stale output and rejects regenerated unversioned changes against git baseline
+  ---
+  duration_ms: 6761.998252
+  type: 'test'
+  ...
+# Subtest: missing content.json is refused and a baseline without a dataset cannot be erased
+ok 22 - missing content.json is refused and a baseline without a dataset cannot be erased
+  ---
+  duration_ms: 2966.507675
+  type: 'test'
+  ...
+# Subtest: CLI refuses regenerated bot hashes without a committed BOT_VERSION bump
+ok 23 - CLI refuses regenerated bot hashes without a committed BOT_VERSION bump
+  ---
+  duration_ms: 3076.176883
+  type: 'test'
+  ...
+# Subtest: readBaseline passes --end-of-options before every caller-supplied revision
+ok 24 - readBaseline passes --end-of-options before every caller-supplied revision
+  ---
+  duration_ms: 0.798275
+  type: 'test'
+  ...
+# Subtest: a dash-leading base revision is rejected, never parsed as a git option
+ok 25 - a dash-leading base revision is rejected, never parsed as a git option
+  ---
+  duration_ms: 1433.328231
+  type: 'test'
+  ...
+# Subtest: isCredited accepts plain, backticked, and link entries
+ok 26 - isCredited accepts plain, backticked, and link entries
+  ---
+  duration_ms: 1.335489
+  type: 'test'
+  ...
+# Subtest: isCredited never lets a longer filename credit a shorter one
+ok 27 - isCredited never lets a longer filename credit a shorter one
+  ---
+  duration_ms: 0.293179
+  type: 'test'
+  ...
+# Subtest: isCredited escapes regex metacharacters in the path
+ok 28 - isCredited escapes regex metacharacters in the path
+  ---
+  duration_ms: 0.174552
+  type: 'test'
+  ...
+# Subtest: a hand-authored obstacle without a footprint override compiles the real child-zero box
+ok 29 - a hand-authored obstacle without a footprint override compiles the real child-zero box
+  ---
+  duration_ms: 24.583076
+  type: 'test'
+  ...
+# Subtest: pure SHA-256 agrees with published vectors and UTF-8 including surrogate replacement
+ok 30 - pure SHA-256 agrees with published vectors and UTF-8 including surrogate replacement
+  ---
+  duration_ms: 59.130866
+  type: 'test'
+  ...
+# Subtest: canonical JSON sorts keys, preserves arrays and rejects noninteger sim values
+ok 31 - canonical JSON sorts keys, preserves arrays and rejects noninteger sim values
+  ---
+  duration_ms: 0.418809
+  type: 'test'
+  ...
+# Subtest: resolved rules, unit stats, positions, ownership, levels and time limits change sim identity
+ok 32 - resolved rules, unit stats, positions, ownership, levels and time limits change sim identity
+  ---
+  duration_ms: 174.730939
+  type: 'test'
+  ...
+# Subtest: names, source, visuals, metadata and bot tuning preserve sim identity; bot edits move only botHash
+ok 33 - names, source, visuals, metadata and bot tuning preserve sim identity; bot edits move only botHash
+  ---
+  duration_ms: 41.671764
+  type: 'test'
+  ...
+# Subtest: file key order is immaterial
+ok 34 - file key order is immaterial
+  ---
+  duration_ms: 32.14833
+  type: 'test'
+  ...
+# Subtest: compiled level: R5 shape, milli-ints, -1 neutral owner, referenced units sorted + dense
+ok 35 - compiled level: R5 shape, milli-ints, -1 neutral owner, referenced units sorted + dense
+  ---
+  duration_ms: 29.81267
+  type: 'test'
+  ...
+# Subtest: element footprint: instance override wins over the archetype footprint, is hashed; variant stays presentation
+ok 36 - element footprint: instance override wins over the archetype footprint, is hashed; variant stays presentation
+  ---
+  duration_ms: 8.802096
+  type: 'test'
+  ...
+# Subtest: hashes: stable across runs, pinned digests
+ok 37 - hashes: stable across runs, pinned digests
+  ---
+  duration_ms: 9.170959
+  type: 'test'
+  ...
+# Subtest: simHash excludes name, source, theme, colorKey, visual, variant, x-presentation params, bots; includes the rest
+ok 38 - simHash excludes name, source, theme, colorKey, visual, variant, x-presentation params, bots; includes the rest
+  ---
+  duration_ms: 60.899454
+  type: 'test'
+  ...
+# Subtest: botHash: keyed level\#player, moves with bot only
+ok 39 - botHash: keyed level\#player, moves with bot only
+  ---
+  duration_ms: 4.259732
+  type: 'test'
+  ...
+# Subtest: level validation: every failure reports file + JSON pointer
+ok 40 - level validation: every failure reports file + JSON pointer
+  ---
+  duration_ms: 15.075493
+  type: 'test'
+  ...
+# Subtest: warnings: footprint overlap and element outside bounds are logged, not fatal
+ok 41 - warnings: footprint overlap and element outside bounds are logged, not fatal
+  ---
+  duration_ms: 1.851244
+  type: 'test'
+  ...
+# Subtest: computeRequires: module ids + bot kinds + objective, sorted; derived from archetypes
+ok 42 - computeRequires: module ids + bot kinds + objective, sorted; derived from archetypes
+  ---
+  duration_ms: 0.841567
+  type: 'test'
+  ...
+# Subtest: bounds helper: AABB + exported pad, floor/ceil outward
+ok 43 - bounds helper: AABB + exported pad, floor/ceil outward
+  ---
+  duration_ms: 0.665141
+  type: 'test'
+  ...
+# Subtest: catalog failures carry file + pointer
+ok 44 - catalog failures carry file + pointer
+  ---
+  duration_ms: 3.884748
+  type: 'test'
+  ...
+# Subtest: loadCatalog ignores level files and never reads them; loadLevel needs only the catalog
+ok 45 - loadCatalog ignores level files and never reads them; loadLevel needs only the catalog
+  ---
+  duration_ms: 0.826747
+  type: 'test'
+  ...
+# Subtest: loadContent: aggregates level errors and campaign refs
+ok 46 - loadContent: aggregates level errors and campaign refs
+  ---
+  duration_ms: 7.555836
+  type: 'test'
+  ...
+# Subtest: loadContent: campaign -> level refs are checked even when no level file is present
+ok 47 - loadContent: campaign -> level refs are checked even when no level file is present
+  ---
+  duration_ms: 0.42421
+  type: 'test'
+  ...
+# Subtest: loadContent: inherited names do not satisfy missing campaign level refs
+ok 48 - loadContent: inherited names do not satisfy missing campaign level refs
+  ---
+  duration_ms: 0.705898
+  type: 'test'
+  ...
+# Subtest: loadContent: an authored constructor level resolves to its loaded and compiled data
+ok 49 - loadContent: an authored constructor level resolves to its loaded and compiled data
+  ---
+  duration_ms: 0.684387
+  type: 'test'
+  ...
+# Subtest: real data files load as a catalog
+ok 50 - real data files load as a catalog
+  ---
+  duration_ms: 23.98919
+  type: 'test'
+  ...
+# Subtest: version 2.0.0; fixture validates schema + cross-checks
+ok 51 - version 2.0.0; fixture validates schema + cross-checks
+  ---
+  duration_ms: 7.80913
+  type: 'test'
+  ...
+# Subtest: row: visuals.kind is a registered render kind (open string replaced by defs set)
+ok 52 - row: visuals.kind is a registered render kind (open string replaced by defs set)
+  ---
+  duration_ms: 3.575567
+  type: 'test'
+  ...
+# Subtest: row: model {parts,budget in BUDGET_CLASSES}; stages[] has no minLevel
+ok 53 - row: model {parts,budget in BUDGET_CLASSES}; stages[] has no minLevel
+  ---
+  duration_ms: 0.752708
+  type: 'test'
+  ...
+# Subtest: row: stages length must equal thresholds + 1 (cross-check)
+ok 54 - row: stages length must equal thresholds + 1 (cross-check)
+  ---
+  duration_ms: 0.905139
+  type: 'test'
+  ...
+# Subtest: row: team tintMask {base, mask}; no stray textures; palette keys cover levels
+ok 55 - row: team tintMask {base, mask}; no stray textures; palette keys cover levels
+  ---
+  duration_ms: 0.580559
+  type: 'test'
+  ...
+# Subtest: row: team textureSwap with blue/green/red/yellow/gray
+ok 56 - row: team textureSwap with blue/green/red/yellow/gray
+  ---
+  duration_ms: 0.469717
+  type: 'test'
+  ...
+# Subtest: row: anim node-tracks with run/death clips; bob removed
+ok 57 - row: anim node-tracks with run/death clips; bob removed
+  ---
+  duration_ms: 0.488602
+  type: 'test'
+  ...
+# Subtest: row: themes shape {ground,obstacle,light,fog?,sky,fx?}; levelVisuals/colorblind/build removed
+ok 58 - row: themes shape {ground,obstacle,light,fog?,sky,fx?}; levelVisuals/colorblind/build removed
+  ---
+  duration_ms: 0.929484
+  type: 'test'
+  ...
+# Subtest: row: fx registry {texture,kind in FX_KINDS,params}; events known and map to fx ids
+ok 59 - row: fx registry {texture,kind in FX_KINDS,params}; events known and map to fx ids
+  ---
+  duration_ms: 1.076085
+  type: 'test'
+  ...
+# Subtest: row: palettes single set incl. gray; camera
+ok 60 - row: palettes single set incl. gray; camera
+  ---
+  duration_ms: 0.739753
+  type: 'test'
+  ...
+# Subtest: row: level -> theme and visuals by kind; colorKey needs texture
+ok 61 - row: level -> theme and visuals by kind; colorKey needs texture
+  ---
+  duration_ms: 0.396106
+  type: 'test'
+  ...
+# Subtest: cross-checks look up own keys only: "constructor" is not a visual, theme, palette, texture, fx or event
+ok 62 - cross-checks look up own keys only: "constructor" is not a visual, theme, palette, texture, fx or event
+  ---
+  duration_ms: 0.348987
+  type: 'test'
+  ...
+# Subtest: ruleIds parity: every MODULES/COMMANDS/OBJECTIVES ruleId is an active GAME_RULES heading
+ok 63 - ruleIds parity: every MODULES/COMMANDS/OBJECTIVES ruleId is an active GAME_RULES heading
+  ---
+  duration_ms: 2.472872
+  type: 'test'
+  ...
+# Subtest: glossary parity: the 13 R10 keys equal the module schema params, both directions
+ok 64 - glossary parity: the 13 R10 keys equal the module schema params, both directions
+  ---
+  duration_ms: 0.742167
+  type: 'test'
+  ...
+# Subtest: golden levelview-1: serialization is JSON.stringify(...,null,2)+"\\n" in 05 R5 key order
+ok 65 - golden levelview-1: serialization is JSON.stringify(...,null,2)+"\\n" in 05 R5 key order
+  ---
+  duration_ms: 1.464326
+  type: 'test'
+  ...
+# Subtest: golden levelview-1: source.dropped lists cargo and the booster-only `sc` key (05 R2), sorted
+ok 66 - golden levelview-1: source.dropped lists cargo and the booster-only `sc` key (05 R2), sorted
+  ---
+  duration_ms: 0.211884
+  type: 'test'
+  ...
+# Subtest: golden levelview-1: Frame contract rotation, bounds from the shared pad constant
+ok 67 - golden levelview-1: Frame contract rotation, bounds from the shared pad constant
+  ---
+  duration_ms: 0.706909
+  type: 'test'
+  ...
+# Subtest: golden levelview-1: loads, compiles and hashes stably
+ok 68 - golden levelview-1: loads, compiles and hashes stably
+  ---
+  duration_ms: 19.455245
+  type: 'test'
+  ...
+# Subtest: golden levelview-1: campaign common.json entry resolves through loadContent
+ok 69 - golden levelview-1: campaign common.json entry resolves through loadContent
+  ---
+  duration_ms: 61.257878
+  type: 'test'
+  ...
+# Subtest: synthetic obstacle+tower: obstacle outside bounds validates and is only logged
+ok 70 - synthetic obstacle+tower: obstacle outside bounds validates and is only logged
+  ---
+  duration_ms: 3.160182
+  type: 'test'
+  ...
+# Subtest: synthetic obstacle+tower: a building outside bounds fails; no non-ignored building fails
+ok 71 - synthetic obstacle+tower: a building outside bounds fails; no non-ignored building fails
+  ---
+  duration_ms: 2.536964
+  type: 'test'
+  ...
+# Subtest: generated schemas are committed and current
+ok 72 - generated schemas are committed and current
+  ---
+  duration_ms: 9.785493
+  type: 'test'
+  ...
+# Subtest: every authored data file validates against its schema and converts to milli-units
+ok 73 - every authored data file validates against its schema and converts to milli-units
+  ---
+  duration_ms: 68.944063
+  type: 'test'
+  ...
+# Subtest: shipped values: balance thresholds 10/30, no boosters; unit and building facts
+ok 74 - shipped values: balance thresholds 10/30, no boosters; unit and building facts
+  ---
+  duration_ms: 3.934203
+  type: 'test'
+  ...
+# Subtest: Type.Partial instance overrides scale like archetype values (fx3 never under a combinator)
+ok 75 - Type.Partial instance overrides scale like archetype values (fx3 never under a combinator)
+  ---
+  duration_ms: 56.133324
+  type: 'test'
+  ...
+# Subtest: editorVersion is optional and accepts only three numeric version components
+ok 76 - editorVersion is optional and accepts only three numeric version components
+  ---
+  duration_ms: 37.331667
+  type: 'test'
+  ...
+# Subtest: no fx3-tagged field sits under oneOf/anyOf/allOf/if/then/else (walker contract)
+ok 77 - no fx3-tagged field sits under oneOf/anyOf/allOf/if/then/else (walker contract)
+  ---
+  duration_ms: 1.844121
+  type: 'test'
+  ...
+# Subtest: footprint: circle needs radius, box needs w and d, no mixing
+ok 78 - footprint: circle needs radius, box needs w and d, no mixing
+  ---
+  duration_ms: 19.759907
+  type: 'test'
+  ...
+# Subtest: seat bot is validated by BOT_KINDS; ai needs no bot at schema level, extra fields rejected
+ok 79 - seat bot is validated by BOT_KINDS; ai needs no bot at schema level, extra fields rejected
+  ---
+  duration_ms: 26.631137
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-02: all units.*.speed are equal (03 R2 invariant: one shared lane speed)
+ok 80 - covers R-ENT-02: all units.*.speed are equal (03 R2 invariant: one shared lane speed)
+  ---
+  duration_ms: 1.203058
+  type: 'test'
+  ...
+# Subtest: regenerating hashes still rejects a semantic edit without an increasing content version
+ok 81 - regenerating hashes still rejects a semantic edit without an increasing content version
+  ---
+  duration_ms: 118.228329
+  type: 'test'
+  ...
+# Subtest: lock shape: levels keyed by id, bots keyed by "<levelId>\#<playerId>"
+ok 82 - lock shape: levels keyed by id, bots keyed by "<levelId>\#<playerId>"
+  ---
+  duration_ms: 22.51143
+  type: 'test'
+  ...
+# Subtest: bot-only edits have separate lock identity and do not require a content version bump
+ok 83 - bot-only edits have separate lock identity and do not require a content version bump
+  ---
+  duration_ms: 36.22253
+  type: 'test'
+  ...
+# Subtest: level removal requires version bump; no baseline always passes
+ok 84 - level removal requires version bump; no baseline always passes
+  ---
+  duration_ms: 17.057316
+  type: 'test'
+  ...
+# Subtest: content.json is validated against the content schema; baselines only need contentVersion
+ok 85 - content.json is validated against the content schema; baselines only need contentVersion
+  ---
+  duration_ms: 5.206652
+  type: 'test'
+  ...
+# Subtest: rules header, exported constant and content metadata must agree
+ok 86 - rules header, exported constant and content metadata must agree
+  ---
+  duration_ms: 0.415072
+  type: 'test'
+  ...
+# Subtest: editorVersion metadata preserves compiled levels and content/bot hash locks without a version bump
+ok 87 - editorVersion metadata preserves compiled levels and content/bot hash locks without a version bump
+  ---
+  duration_ms: 46.97594
+  type: 'test'
+  ...
+1..87
+# tests 87
+# suites 0
+# pass 87
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14470.322674
+
+> @node-arena/sim@0.0.0 test /root/projects/node-arena/.worktrees/feat-editor-chrome-polish/packages/sim
+> node --test $(ls test/*.test.cjs | grep -v '/golden\.test\.cjs$')
+
+TAP version 13
+# Subtest: performance budgets reject each breached metric and CI tolerates only 5x
+ok 1 - performance budgets reject each breached metric and CI tolerates only 5x
+  ---
+  duration_ms: 2.681811
+  type: 'test'
+  ...
+# Subtest: stress fixture reaches 720 live troops (24 houses x alive cap 30) and reports min alive in the timed window, with head-on lines
+ok 2 - stress fixture reaches 720 live troops (24 houses x alive cap 30) and reports min alive in the timed window, with head-on lines
+  ---
+  duration_ms: 7423.36557
+  type: 'test'
+  ...
+# Subtest: realistic fixture has 12 buildings
+ok 3 - realistic fixture has 12 buildings
+  ---
+  duration_ms: 3.316031
+  type: 'test'
+  ...
+# Subtest: BENCH_SCENARIOS is the append point for SP04: named scenarios with a run()
+ok 4 - BENCH_SCENARIOS is the append point for SP04: named scenarios with a run()
+  ---
+  duration_ms: 1.023775
+  type: 'test'
+  ...
+# Subtest: geometry workload reaches 720 troops, >=40 hostile active crossings and three firing towers
+ok 5 - geometry workload reaches 720 troops, >=40 hostile active crossings and three firing towers
+  ---
+  duration_ms: 14694.708214
+  type: 'test'
+  ...
+# Subtest: shipped native ESM core matches every golden replay and event log
+ok 6 - shipped native ESM core matches every golden replay and event log
+  ---
+  duration_ms: 9149.403459
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-01: valid DrawLine draws the line, takes a slot, emits LineDrawn
+ok 7 - covers R-LIN-01: valid DrawLine draws the line, takes a slot, emits LineDrawn
+  ---
+  duration_ms: 141.958057
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-01: rejection goldens, pinned check order, atomic (hash unchanged except tick)
+ok 8 - covers R-LIN-01: rejection goldens, pinned check order, atomic (hash unchanged except tick)
+  ---
+  duration_ms: 493.155458
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-01: gameover rejects every command
+ok 9 - covers R-LIN-01: gameover rejects every command
+  ---
+  duration_ms: 18.658153
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-02: no auto-cut when the level drops; free may go negative
+ok 10 - covers R-LIN-02: no auto-cut when the level drops; free may go negative
+  ---
+  duration_ms: 18.4577
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-03: same-owner reverse is replaced, troops stay, fresh timer
+ok 11 - covers R-LIN-03: same-owner reverse is replaced, troops stay, fresh timer
+  ---
+  duration_ms: 30.30977
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-03: hostile reverse coexists (head-on)
+ok 12 - covers R-LIN-03: hostile reverse coexists (head-on)
+  ---
+  duration_ms: 38.027485
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-03: commands run in player idx then submission order; draws take drawSeq in that order
+ok 13 - covers R-TCK-03: commands run in player idx then submission order; draws take drawSeq in that order
+  ---
+  duration_ms: 48.575774
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-05: CutLine removes line, in-flight troops continue; rejections
+ok 14 - covers R-LIN-05: CutLine removes line, in-flight troops continue; rejections
+  ---
+  duration_ms: 66.048073
+  type: 'test'
+  ...
+# Subtest: cut then redraw: hash does not depend on history (drawSeq/timer zeroed)
+ok 15 - cut then redraw: hash does not depend on history (drawSeq/timer zeroed)
+  ---
+  duration_ms: 53.307559
+  type: 'test'
+  ...
+# Subtest: SP04 seams: hooks fire in order; validator slot reasons surface; stubs inert
+ok 16 - SP04 seams: hooks fire in order; validator slot reasons surface; stubs inert
+  ---
+  duration_ms: 49.493345
+  type: 'test'
+  ...
+# Subtest: malformed input fuzz never throws (step and canDraw)
+ok 17 - malformed input fuzz never throws (step and canDraw)
+  ---
+  duration_ms: 63.258698
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-05: E-EXCHANGE soldier vs tank: soldier dies, tank 2 -> 1; one round
+ok 18 - covers R-CMB-05: E-EXCHANGE soldier vs tank: soldier dies, tank 2 -> 1; one round
+  ---
+  duration_ms: 134.900972
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-05: soldier vs soldier and tank vs tank both die in round 1
+ok 19 - covers R-CMB-05: soldier vs soldier and tank vs tank both die in round 1
+  ---
+  duration_ms: 90.335886
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-05: second round runs when both survive (hp 3 vs hp 3, atk 1)
+ok 20 - covers R-CMB-05: second round runs when both survive (hp 3 vs hp 3, atk 1)
+  ---
+  duration_ms: 41.854101
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-05: same-owner fronts never fight
+ok 21 - covers R-CMB-05: same-owner fronts never fight
+  ---
+  duration_ms: 24.952371
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-01: E-HEADON threshold progA + progB >= length - contact*tickRate; Clash event shape
+ok 22 - covers R-CMB-01: E-HEADON threshold progA + progB >= length - contact*tickRate; Clash event shape
+  ---
+  duration_ms: 21.454353
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-01: after an exchange new fronts are retested; troops behind wait; cut lines do not protect
+ok 23 - covers R-CMB-01: after an exchange new fronts are retested; troops behind wait; cut lines do not protect
+  ---
+  duration_ms: 25.281289
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-01: a surviving head-on pair fights max 2 rounds per tick and re-tests next tick (hp 3, attack 1)
+ok 24 - covers R-CMB-01: a surviving head-on pair fights max 2 rounds per tick and re-tests next tick (hp 3, attack 1)
+  ---
+  duration_ms: 36.565273
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-01: same-owner opposing fronts (replaced line) do not fight; tick wiring runs head-on in phase 6
+ok 25 - covers R-CMB-01: same-owner opposing fronts (replaced line) do not fight; tick wiring runs head-on in phase 6
+  ---
+  duration_ms: 67.450261
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-02: arrival order overshoot desc, then channel key, then FIFO
+ok 26 - covers R-CMB-02: arrival order overshoot desc, then channel key, then FIFO
+  ---
+  duration_ms: 27.483102
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-02, R-CPT-02: E-ARRIVAL ownership re-evaluated per arrival; captured-source arrival cancelled
+ok 27 - covers R-CMB-02, R-CPT-02: E-ARRIVAL ownership re-evaluated per arrival; captured-source arrival cancelled
+  ---
+  duration_ms: 29.439858
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-02, R-CPT-01: arrival queued from the captured source is cancelled (no TroopArrived)
+ok 28 - covers R-CMB-02, R-CPT-01: arrival queued from the captured source is cancelled (no TroopArrived)
+  ---
+  duration_ms: 26.47657
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-03, R-CAP-01: E-CAPTURE soldier and tank damage; capture only when damage > level
+ok 29 - covers R-CMB-03, R-CAP-01: E-CAPTURE soldier and tank damage; capture only when damage > level
+  ---
+  duration_ms: 144.862872
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-03: neutral building hit and captured by a player troop; neutral level reduced
+ok 30 - covers R-CMB-03: neutral building hit and captured by a player troop; neutral level reduced
+  ---
+  duration_ms: 19.573571
+  type: 'test'
+  ...
+# Subtest: covers R-CAP-01: friendly reinforce L = L + defense (soldier and tank), no fwd draw, effect reinforce
+ok 31 - covers R-CAP-01: friendly reinforce L = L + defense (soldier and tank), no fwd draw, effect reinforce
+  ---
+  duration_ms: 32.510541
+  type: 'test'
+  ...
+# Subtest: covers R-CAP-01, R-CAP-03: E-OVERFLOW L=63 +1 no surplus; L=64 surplus forwarded: one fwd draw picks k-th line
+ok 32 - covers R-CAP-01, R-CAP-03: E-OVERFLOW L=63 +1 no surplus; L=64 surplus forwarded: one fwd draw picks k-th line
+  ---
+  duration_ms: 80.810078
+  type: 'test'
+  ...
+# Subtest: covers R-CAP-03: surplus lost with no draw when no outgoing line or at alive cap
+ok 33 - covers R-CAP-03: surplus lost with no draw when no outgoing line or at alive cap
+  ---
+  duration_ms: 55.413939
+  type: 'test'
+  ...
+# Subtest: covers R-CPT-01: capture flips owner, cuts outgoing lines (reason captured), kills all troops from source incl. cut lines, resets growth, clears ignoreForWin, keeps incoming lines
+ok 34 - covers R-CPT-01: capture flips owner, cuts outgoing lines (reason captured), kills all troops from source incl. cut lines, resets growth, clears ignoreForWin, keeps incoming lines
+  ---
+  duration_ms: 24.7688
+  type: 'test'
+  ...
+# Subtest: covers R-CPT-01: tower cooldown untouched by capture (no tower column changed)
+ok 35 - covers R-CPT-01: tower cooldown untouched by capture (no tower column changed)
+  ---
+  duration_ms: 16.543566
+  type: 'test'
+  ...
+# Subtest: conservation holds across a full run with contacts and arrivals (spawn, head-on, arrive, capture)
+ok 36 - conservation holds across a full run with contacts and arrivals (spawn, head-on, arrive, capture)
+  ---
+  duration_ms: 39.219962
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: X crossing exchanges soldiers and tank vs soldier preserves tank hp 2 -> 1
+ok 37 - covers R-CMB-04: X crossing exchanges soldiers and tank vs soldier preserves tank hp 2 -> 1
+  ---
+  duration_ms: 164.199311
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: fast tanks sweep through the crossing without tunnelling
+ok 38 - covers R-CMB-04: fast tanks sweep through the crossing without tunnelling
+  ---
+  duration_ms: 42.502649
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: parallel lanes 500 milli apart fight; 701 do not; exact 700 tangent fights
+ok 39 - covers R-CMB-04: parallel lanes 500 milli apart fight; 701 do not; exact 700 tangent fights
+  ---
+  duration_ms: 89.057224
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: same troop owner ignores changed source ownership and hostile source does not override friendly troops
+ok 40 - covers R-CMB-04: same troop owner ignores changed source ownership and hostile source does not override friendly troops
+  ---
+  duration_ms: 19.27405
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: cut lines retain combat; channel pair then seq ordering lets survivors continue
+ok 41 - covers R-CMB-04: cut lines retain combat; channel pair then seq ordering lets survivors continue
+  ---
+  duration_ms: 23.90468
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: fresh spawns have no negative-progress sweep; shared endpoints still fight
+ok 42 - covers R-CMB-04: fresh spawns have no negative-progress sweep; shared endpoints still fight
+  ---
+  duration_ms: 50.039028
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: exact swept brute-force all-pairs oracle matches 50 seeds, mixed speeds, cuts and capture
+ok 43 - covers R-CMB-04: exact swept brute-force all-pairs oracle matches 50 seeds, mixed speeds, cuts and capture
+  ---
+  duration_ms: 1375.678272
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: replay-to-tick-N mid-fight rebuilds derived caches with event hash parity
+ok 44 - covers R-CMB-04: replay-to-tick-N mid-fight rebuilds derived caches with event hash parity
+  ---
+  duration_ms: 41.508161
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: three lanes use channel-pair order and surviving troops continue
+ok 45 - covers R-CMB-04: three lanes use channel-pair order and surviving troops continue
+  ---
+  duration_ms: 18.509149
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: large oblique rational lanes match BigInt oracle; draw/cut/spawn/contact tick paths never call BigInt
+ok 46 - covers R-CMB-04: large oblique rational lanes match BigInt oracle; draw/cut/spawn/contact tick paths never call BigInt
+  ---
+  duration_ms: 36.818136
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: per-pass motion reuse preserves mixed-owner rows and liveness after an earlier pair kills a row
+ok 47 - covers R-CMB-04: per-pass motion reuse preserves mixed-owner rows and liveness after an earlier pair kills a row
+  ---
+  duration_ms: 20.703728
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: certified rounded sweep agrees with exact oracle in the three-milli band, oblique fractional progress and clamped/fresh motion
+ok 48 - covers R-CMB-04: certified rounded sweep agrees with exact oracle in the three-milli band, oblique fractional progress and clamped/fresh motion
+  ---
+  duration_ms: 679.078323
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: certified sweep handles radii below three with zero relative velocity
+ok 49 - covers R-CMB-04: certified sweep handles radii below three with zero relative velocity
+  ---
+  duration_ms: 350.818497
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: rounded sweep uncertainty band at radius plus/minus one, two and three is exact
+ok 50 - covers R-CMB-04: rounded sweep uncertainty band at radius plus/minus one, two and three is exact
+  ---
+  duration_ms: 154.279611
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-04: private crossing scratch resets after death/refill, cut, capture and redraw with new owners and kinds
+ok 51 - covers R-CMB-04: private crossing scratch resets after death/refill, cut, capture and redraw with new owners and kinds
+  ---
+  duration_ms: 32.903632
+  type: 'test'
+  ...
+# Subtest: sim exposes a reusable determinism preset
+ok 52 - sim exposes a reusable determinism preset
+  ---
+  duration_ms: 1.374765
+  type: 'test'
+  ...
+# Subtest: rejects Math.random(1);
+ok 53 - rejects Math.random(1);
+  ---
+  duration_ms: 78.601091
+  type: 'test'
+  ...
+# Subtest: rejects Math.sqrt(1);
+ok 54 - rejects Math.sqrt(1);
+  ---
+  duration_ms: 5.502105
+  type: 'test'
+  ...
+# Subtest: rejects Math.sin(1);
+ok 55 - rejects Math.sin(1);
+  ---
+  duration_ms: 4.052326
+  type: 'test'
+  ...
+# Subtest: rejects Math.cos(1);
+ok 56 - rejects Math.cos(1);
+  ---
+  duration_ms: 3.55594
+  type: 'test'
+  ...
+# Subtest: rejects Math.tan(1);
+ok 57 - rejects Math.tan(1);
+  ---
+  duration_ms: 3.619992
+  type: 'test'
+  ...
+# Subtest: rejects Math.asin(1);
+ok 58 - rejects Math.asin(1);
+  ---
+  duration_ms: 4.718389
+  type: 'test'
+  ...
+# Subtest: rejects Math.acos(1);
+ok 59 - rejects Math.acos(1);
+  ---
+  duration_ms: 2.516124
+  type: 'test'
+  ...
+# Subtest: rejects Math.atan(1);
+ok 60 - rejects Math.atan(1);
+  ---
+  duration_ms: 2.513979
+  type: 'test'
+  ...
+# Subtest: rejects Math.atan2(1);
+ok 61 - rejects Math.atan2(1);
+  ---
+  duration_ms: 7.703879
+  type: 'test'
+  ...
+# Subtest: rejects Math.pow(1);
+ok 62 - rejects Math.pow(1);
+  ---
+  duration_ms: 5.168026
+  type: 'test'
+  ...
+# Subtest: rejects Math.exp(1);
+ok 63 - rejects Math.exp(1);
+  ---
+  duration_ms: 4.295561
+  type: 'test'
+  ...
+# Subtest: rejects Math.log(1);
+ok 64 - rejects Math.log(1);
+  ---
+  duration_ms: 2.99551
+  type: 'test'
+  ...
+# Subtest: rejects Math.hypot(1);
+ok 65 - rejects Math.hypot(1);
+  ---
+  duration_ms: 3.254794
+  type: 'test'
+  ...
+# Subtest: rejects Math.round(1);
+ok 66 - rejects Math.round(1);
+  ---
+  duration_ms: 5.145755
+  type: 'test'
+  ...
+# Subtest: rejects Math.floor(1);
+ok 67 - rejects Math.floor(1);
+  ---
+  duration_ms: 2.217083
+  type: 'test'
+  ...
+# Subtest: rejects Math.trunc(1);
+ok 68 - rejects Math.trunc(1);
+  ---
+  duration_ms: 8.449173
+  type: 'test'
+  ...
+# Subtest: rejects Math.imul(1);
+ok 69 - rejects Math.imul(1);
+  ---
+  duration_ms: 5.161104
+  type: 'test'
+  ...
+# Subtest: rejects Math["random"]();
+ok 70 - rejects Math["random"]();
+  ---
+  duration_ms: 2.740812
+  type: 'test'
+  ...
+# Subtest: rejects const { random } = Math;
+ok 71 - rejects const { random } = Math;
+  ---
+  duration_ms: 6.219316
+  type: 'test'
+  ...
+# Subtest: rejects new Date();
+ok 72 - rejects new Date();
+  ---
+  duration_ms: 2.704924
+  type: 'test'
+  ...
+# Subtest: rejects Date.now();
+ok 73 - rejects Date.now();
+  ---
+  duration_ms: 2.031007
+  type: 'test'
+  ...
+# Subtest: rejects performance.now();
+ok 74 - rejects performance.now();
+  ---
+  duration_ms: 3.781239
+  type: 'test'
+  ...
+# Subtest: rejects setTimeout(() => {}, 1);
+ok 75 - rejects setTimeout(() => {}, 1);
+  ---
+  duration_ms: 3.478352
+  type: 'test'
+  ...
+# Subtest: rejects setInterval(() => {}, 1);
+ok 76 - rejects setInterval(() => {}, 1);
+  ---
+  duration_ms: 2.246959
+  type: 'test'
+  ...
+# Subtest: rejects clearTimeout(1);
+ok 77 - rejects clearTimeout(1);
+  ---
+  duration_ms: 1.799435
+  type: 'test'
+  ...
+# Subtest: rejects queueMicrotask(() => {});
+ok 78 - rejects queueMicrotask(() => {});
+  ---
+  duration_ms: 2.729181
+  type: 'test'
+  ...
+# Subtest: rejects console.log(1);
+ok 79 - rejects console.log(1);
+  ---
+  duration_ms: 2.099008
+  type: 'test'
+  ...
+# Subtest: rejects new Intl.Collator();
+ok 80 - rejects new Intl.Collator();
+  ---
+  duration_ms: 1.745694
+  type: 'test'
+  ...
+# Subtest: rejects globalThis.Math.random();
+ok 81 - rejects globalThis.Math.random();
+  ---
+  duration_ms: 1.959461
+  type: 'test'
+  ...
+# Subtest: rejects globalThis.Date.now();
+ok 82 - rejects globalThis.Date.now();
+  ---
+  duration_ms: 3.638618
+  type: 'test'
+  ...
+# Subtest: rejects const n = 1.5;
+ok 83 - rejects const n = 1.5;
+  ---
+  duration_ms: 2.006802
+  type: 'test'
+  ...
+# Subtest: rejects const n = 1e-3;
+ok 84 - rejects const n = 1e-3;
+  ---
+  duration_ms: 5.441961
+  type: 'test'
+  ...
+# Subtest: rejects for (const key in {}) {}
+ok 85 - rejects for (const key in {}) {}
+  ---
+  duration_ms: 6.698069
+  type: 'test'
+  ...
+# Subtest: rejects [2, 1].sort();
+ok 86 - rejects [2, 1].sort();
+  ---
+  duration_ms: 9.570894
+  type: 'test'
+  ...
+# Subtest: rejects [2, 1]["sort"]();
+ok 87 - rejects [2, 1]["sort"]();
+  ---
+  duration_ms: 5.316791
+  type: 'test'
+  ...
+# Subtest: rejects import { compileLevel } from "@node-arena/content";
+ok 88 - rejects import { compileLevel } from "@node-arena/content";
+  ---
+  duration_ms: 5.354223
+  type: 'test'
+  ...
+# Subtest: rejects import type { Stats } from "node:fs";
+ok 89 - rejects import type { Stats } from "node:fs";
+  ---
+  duration_ms: 1.952678
+  type: 'test'
+  ...
+# Subtest: only src/math.ts can use integer Math helpers
+ok 90 - only src/math.ts can use integer Math helpers
+  ---
+  duration_ms: 10.588427
+  type: 'test'
+  ...
+# Subtest: hash paths cannot stringify JSON
+ok 91 - hash paths cannot stringify JSON
+  ---
+  duration_ms: 4.926516
+  type: 'test'
+  ...
+# Subtest: integer math, explicit sort, strings and content type imports remain valid
+ok 92 - integer math, explicit sort, strings and content type imports remain valid
+  ---
+  duration_ms: 6.884855
+  type: 'test'
+  ...
+# Subtest: defs value imports are allowed; other packages and content values are not
+ok 93 - defs value imports are allowed; other packages and content values are not
+  ---
+  duration_ms: 5.895196
+  type: 'test'
+  ...
+# Subtest: bots can import the preset with their own src/math.ts exception
+ok 94 - bots can import the preset with their own src/math.ts exception
+  ---
+  duration_ms: 17.830284
+  type: 'test'
+  ...
+# Subtest: division and division assignment are confined to src/math.ts
+ok 95 - division and division assignment are confined to src/math.ts
+  ---
+  duration_ms: 11.653379
+  type: 'test'
+  ...
+# Subtest: geometry golden behavior and per-tick event/replay parity: geometry-neutral-troop
+ok 96 - geometry golden behavior and per-tick event/replay parity: geometry-neutral-troop
+  ---
+  duration_ms: 71.689675
+  type: 'test'
+  ...
+# Subtest: geometry golden behavior and per-tick event/replay parity: geometry-neutral-house
+ok 97 - geometry golden behavior and per-tick event/replay parity: geometry-neutral-house
+  ---
+  duration_ms: 24.649302
+  type: 'test'
+  ...
+# Subtest: geometry golden behavior and per-tick event/replay parity: geometry-crossing-cut
+ok 98 - geometry golden behavior and per-tick event/replay parity: geometry-crossing-cut
+  ---
+  duration_ms: 57.408439
+  type: 'test'
+  ...
+# Subtest: geometry golden behavior and per-tick event/replay parity: geometry-obstacle-building
+ok 99 - geometry golden behavior and per-tick event/replay parity: geometry-obstacle-building
+  ---
+  duration_ms: 54.684176
+  type: 'test'
+  ...
+# Subtest: geometry intervals match independent exhaustive BigInt oracle, circles, boxes, yaw and pad
+ok 100 - geometry intervals match independent exhaustive BigInt oracle, circles, boxes, yaw and pad
+  ---
+  duration_ms: 235.201713
+  type: 'test'
+  ...
+# Subtest: tangency, inner strict radius, zero lanes and exact oriented corridor corners
+ok 101 - tangency, inner strict radius, zero lanes and exact oriented corridor corners
+  ---
+  duration_ms: 1.8221
+  type: 'test'
+  ...
+# Subtest: Number rational distances and projections agree with BigInt at campaign limits
+ok 102 - Number rational distances and projections agree with BigInt at campaign limits
+  ---
+  duration_ms: 91.692686
+  type: 'test'
+  ...
+# Subtest: corridor SAT matches independent rational BigInt separating-axis oracle on fuzzed yaw boxes
+ok 103 - corridor SAT matches independent rational BigInt separating-axis oracle on fuzzed yaw boxes
+  ---
+  duration_ms: 29.765941
+  type: 'test'
+  ...
+# Subtest: distance comparisons support unlike denominators through the full safe scalar range
+ok 104 - distance comparisons support unlike denominators through the full safe scalar range
+  ---
+  duration_ms: 4.204588
+  type: 'test'
+  ...
+# Subtest: checked Number sum-of-products comparator handles signed swept discriminant factors exactly
+ok 105 - checked Number sum-of-products comparator handles signed swept discriminant factors exactly
+  ---
+  duration_ms: 24.54322
+  type: 'test'
+  ...
+# Subtest: content yaw follows Unity +Y: non-square 30/150-degree boxes rotate +x toward -z
+ok 106 - content yaw follows Unity +Y: non-square 30/150-degree boxes rotate +x toward -z
+  ---
+  duration_ms: 0.604145
+  type: 'test'
+  ...
+# Subtest: all compiled campaign obstacle yaw values, including fractional authored angles, work in cold geometry
+ok 107 - all compiled campaign obstacle yaw values, including fractional authored angles, work in cold geometry
+  ---
+  duration_ms: 766.68046
+  type: 'test'
+  ...
+# Subtest: milli-degree Q20 axis error stays below one component unit across the complete accepted yaw domain
+ok 108 - milli-degree Q20 axis error stays below one component unit across the complete accepted yaw domain
+  ---
+  duration_ms: 2801.021606
+  type: 'test'
+  ...
+# Subtest: fractional signed 38.78/141.22 yaw retains Unity handedness for non-square boxes
+ok 109 - fractional signed 38.78/141.22 yaw retains Unity handedness for non-square boxes
+  ---
+  duration_ms: 0.776433
+  type: 'test'
+  ...
+# Subtest: scenario list is composed in all.ts; names unique, compiled levels hashed
+ok 110 - scenario list is composed in all.ts; names unique, compiled levels hashed
+  ---
+  duration_ms: 1.332224
+  type: 'test'
+  ...
+# Subtest: covers R-SPN-01, R-SPN-03: spawn table first departures = ceil(period/1000); E-SPAWN 18461/24000/20869 mt
+ok 111 - covers R-SPN-01, R-SPN-03: spawn table first departures = ceil(period/1000); E-SPAWN 18461/24000/20869 mt
+  ---
+  duration_ms: 2697.492342
+  type: 'test'
+  ...
+# Subtest: covers R-GRW-01: growth 64600 mt (L1) fires at tick 65, 45560 mt (L63) at tick 46
+ok 112 - covers R-GRW-01: growth 64600 mt (L1) fires at tick 65, 45560 mt (L63) at tick 46
+  ---
+  duration_ms: 3.383719
+  type: 'test'
+  ...
+# Subtest: covers R-CPT-01: exact L does not flip (level 0, still neutral); L+1 flips to level 0
+ok 113 - covers R-CPT-01: exact L does not flip (level 0, still neutral); L+1 flips to level 0
+  ---
+  duration_ms: 8.11773
+  type: 'test'
+  ...
+# Subtest: covers R-CPT-01: capture kills in-flight troops of the captured building, including those on a cut line
+ok 114 - covers R-CPT-01: capture kills in-flight troops of the captured building, including those on a cut line
+  ---
+  duration_ms: 4.231949
+  type: 'test'
+  ...
+# Subtest: covers R-CMB-05: soldier vs tank (tank hp 2 -> 1); tank vs tank both die in one round
+ok 115 - covers R-CMB-05: soldier vs tank (tank hp 2 -> 1); tank vs tank both die in one round
+  ---
+  duration_ms: 6.536229
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-03: reverse own line replaces (cut reason replaced), in-flight troops keep flying
+ok 116 - covers R-LIN-03: reverse own line replaces (cut reason replaced), in-flight troops keep flying
+  ---
+  duration_ms: 2.736945
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-02: level drop does not auto-cut; new draw rejected no-slot
+ok 117 - covers R-LIN-02: level drop does not auto-cut; new draw rejected no-slot
+  ---
+  duration_ms: 5.681938
+  type: 'test'
+  ...
+# Subtest: covers R-CAP-03: overflow forwards on a seeded line (cause forward); no line loses the surplus
+ok 118 - covers R-CAP-03: overflow forwards on a seeded line (cause forward); no line loses the surplus
+  ---
+  duration_ms: 27.120309
+  type: 'test'
+  ...
+# Subtest: covers R-SPN-02: alive cap 30 skips due spawns
+ok 119 - covers R-SPN-02: alive cap 30 skips due spawns
+  ---
+  duration_ms: 32.194077
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-01: win flips ignored buildings; R-WIN-02: loss does not; R-WIN-03: timeout
+ok 120 - covers R-WIN-01: win flips ignored buildings; R-WIN-02: loss does not; R-WIN-03: timeout
+  ---
+  duration_ms: 6.198345
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-04: rejection reasons in submission order grouped by tick
+ok 121 - covers R-ENT-04: rejection reasons in submission order grouped by tick
+  ---
+  duration_ms: 14.42488
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-02: signed division truncates exactly, without negative zero
+ok 122 - covers R-TCK-02: signed division truncates exactly, without negative zero
+  ---
+  duration_ms: 20.339002
+  type: 'test'
+  ...
+# Subtest: division and multiply-divide reject unsafe, fractional or zero-divisor arithmetic
+ok 123 - division and multiply-divide reject unsafe, fractional or zero-divisor arithmetic
+  ---
+  duration_ms: 19.140524
+  type: 'test'
+  ...
+# Subtest: integer square root floors at exact square boundaries through MAX_SAFE_INTEGER
+ok 124 - integer square root floors at exact square boundaries through MAX_SAFE_INTEGER
+  ---
+  duration_ms: 31.187686
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-02: fixed-point spike matches BigInt floor-length arrival at 20 Hz
+ok 125 - covers R-TCK-02: fixed-point spike matches BigInt floor-length arrival at 20 Hz
+  ---
+  duration_ms: 156.623307
+  type: 'test'
+  ...
+# Subtest: Sfc32 emits exact unsigned 32-bit words and snapshots copy all four lanes
+ok 126 - Sfc32 emits exact unsigned 32-bit words and snapshots copy all four lanes
+  ---
+  duration_ms: 7.833496
+  type: 'test'
+  ...
+# Subtest: mixSeed is reproducible, ordered and distinguishes trailing zero parts
+ok 127 - mixSeed is reproducible, ordered and distinguishes trailing zero parts
+  ---
+  duration_ms: 0.315293
+  type: 'test'
+  ...
+# Subtest: integer helpers stay exact at the safe-integer boundary and reject inexact intermediates
+ok 128 - integer helpers stay exact at the safe-integer boundary and reject inexact intermediates
+  ---
+  duration_ms: 4.840854
+  type: 'test'
+  ...
+# Subtest: state hash covers int32 column extremes exactly
+ok 129 - state hash covers int32 column extremes exactly
+  ---
+  duration_ms: 200.98796
+  type: 'test'
+  ...
+# Subtest: word hash is order-sensitive and wraps words to int32 deterministically
+ok 130 - word hash is order-sensitive and wraps words to int32 deterministically
+  ---
+  duration_ms: 0.36628
+  type: 'test'
+  ...
+# Subtest: covers R-OBS-01: strict corridor tangent, endpoints, third house and tower, obstacle module filter
+ok 131 - covers R-OBS-01: strict corridor tangent, endpoints, third house and tower, obstacle module filter
+  ---
+  duration_ms: 283.319614
+  type: 'test'
+  ...
+# Subtest: covers R-OBS-01: nearest blocker is directional and explanations use the first corridor entry
+ok 132 - covers R-OBS-01: nearest blocker is directional and explanations use the first corridor entry
+  ---
+  duration_ms: 18.870168
+  type: 'test'
+  ...
+# Subtest: covers R-OBS-01: 500 seeded cases match independent float OBB SAT and DrawLine acceptance
+ok 133 - covers R-OBS-01: 500 seeded cases match independent float OBB SAT and DrawLine acceptance
+  ---
+  duration_ms: 7390.682798
+  type: 'test'
+  ...
+# Subtest: covers R-OBS-02: obstacles remain inert and unowned, outside win participants and snapshots
+ok 134 - covers R-OBS-02: obstacles remain inert and unowned, outside win participants and snapshots
+  ---
+  duration_ms: 32.99738
+  type: 'test'
+  ...
+# Subtest: covers R-OBS-01: square sweep entry orders circle edge contacts before rounded-padding approximations
+ok 135 - covers R-OBS-01: square sweep entry orders circle edge contacts before rounded-padding approximations
+  ---
+  duration_ms: 14.821537
+  type: 'test'
+  ...
+# Subtest: covers R-OBS-01: blocker ties use stable ids, circle radicals order exactly, returned points cannot mutate cache
+ok 136 - covers R-OBS-01: blocker ties use stable ids, circle radicals order exactly, returned points cannot mutate cache
+  ---
+  duration_ms: 15.261137
+  type: 'test'
+  ...
+# Subtest: covers R-OBS-01: DrawLine, canDraw and explainDraw consume cold cache without BigInt or allocation leaks
+ok 137 - covers R-OBS-01: DrawLine, canDraw and explainDraw consume cold cache without BigInt or allocation leaks
+  ---
+  duration_ms: 26.696121
+  type: 'test'
+  ...
+# Subtest: covers R-SPN-01: spawnPeriodMt equals the BigInt oracle for random params; always >= 1000 (clamp)
+ok 138 - covers R-SPN-01: spawnPeriodMt equals the BigInt oracle for random params; always >= 1000 (clamp)
+  ---
+  duration_ms: 10.472334
+  type: 'test'
+  ...
+# Subtest: covers R-SPN-01: clamp binds at huge spawnSpeed*L; period non-increasing in level, non-decreasing in line count
+ok 139 - covers R-SPN-01: clamp binds at huge spawnSpeed*L; period non-increasing in level, non-decreasing in line count
+  ---
+  duration_ms: 7.058607
+  type: 'test'
+  ...
+# Subtest: covers R-GRW-01: growPeriodMt equals the BigInt oracle for random params; always >= 1000; non-increasing in level
+ok 140 - covers R-GRW-01: growPeriodMt equals the BigInt oracle for random params; always >= 1000; non-increasing in level
+  ---
+  duration_ms: 7.516612
+  type: 'test'
+  ...
+# Subtest: covers R-SPN-01: E-SPAWN pinned examples 18461 / 24000 / 20869 mt
+ok 141 - covers R-SPN-01: E-SPAWN pinned examples 18461 / 24000 / 20869 mt
+  ---
+  duration_ms: 0.225981
+  type: 'test'
+  ...
+# Subtest: covers R-SPN-03: engine TroopSpawned ticks equal a brute-force per-tick timer simulation (random level / draw schedule)
+ok 142 - covers R-SPN-03: engine TroopSpawned ticks equal a brute-force per-tick timer simulation (random level / draw schedule)
+  ---
+  duration_ms: 1482.112293
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-01: tickRate 20; one step = one tick; no wall clock; finished match accepts no changes
+ok 143 - covers R-TCK-01: tickRate 20; one step = one tick; no wall clock; finished match accepts no changes
+  ---
+  duration_ms: 149.478024
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-05: nine phases in order, outcome last; capture inline, killed troops do not arrive, new owner produces nothing that tick
+ok 144 - covers R-TCK-05: nine phases in order, outcome last; capture inline, killed troops do not arrive, new owner produces nothing that tick
+  ---
+  duration_ms: 29.412586
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-02: troop owner/source/type fixed at departure; hp/attack/defense flat per type from content, not owner or level
+ok 145 - covers R-ENT-02: troop owner/source/type fixed at departure; hp/attack/defense flat per type from content, not owner or level
+  ---
+  duration_ms: 24.007998
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-04: each player is its own team; ai vs ai hostile; humans and ai share identical validation
+ok 146 - covers R-ENT-04: each player is its own team; ai vs ai hostile; humans and ai share identical validation
+  ---
+  duration_ms: 44.544027
+  type: 'test'
+  ...
+# Subtest: covers R-CPT-02: capture keeps incoming lines; other buildings' troops unaffected; later arrivals re-evaluate against the new owner
+ok 147 - covers R-CPT-02: capture keeps incoming lines; other buildings' troops unaffected; later arrivals re-evaluate against the new owner
+  ---
+  duration_ms: 21.959127
+  type: 'test'
+  ...
+# Subtest: covers R-LIN-04: straight centre-to-centre lines, free, no length cap; crossings alone do nothing
+ok 148 - covers R-LIN-04: straight centre-to-centre lines, free, no length cap; crossings alone do nothing
+  ---
+  duration_ms: 53.127454
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-05: random command streams keep every invariant each tick (int32, recount, level range, FIFO, ring <= cap, conservation)
+ok 149 - covers R-TCK-05: random command streams keep every invariant each tick (int32, recount, level range, FIFO, ring <= cap, conservation)
+  ---
+  duration_ms: 1198.740299
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-03: 50 seeds, two runs each, identical per-tick hash sequences (events on/off does not matter)
+ok 150 - covers R-TCK-03: 50 seeds, two runs each, identical per-tick hash sequences (events on/off does not matter)
+  ---
+  duration_ms: 2407.656186
+  type: 'test'
+  ...
+# Subtest: replay round-trips submitted order, checkpoints and manually stopped tick
+ok 151 - replay round-trips submitted order, checkpoints and manually stopped tick
+  ---
+  duration_ms: 145.954366
+  type: 'test'
+  ...
+# Subtest: recorder clones submissions and detaches exported records
+ok 152 - recorder clones submissions and detaches exported records
+  ---
+  duration_ms: 78.146032
+  type: 'test'
+  ...
+# Subtest: pause, split and twice-per-driver-interval yield identical replay hashes
+ok 153 - pause, split and twice-per-driver-interval yield identical replay hashes
+  ---
+  duration_ms: 65.67889
+  type: 'test'
+  ...
+# Subtest: header versions, identity, seed format and malformed records are refused
+ok 154 - header versions, identity, seed format and malformed records are refused
+  ---
+  duration_ms: 422.972909
+  type: 'test'
+  ...
+# Subtest: rulesVersion requires equal major.minor only; patch may differ, minor and major refused
+ok 155 - rulesVersion requires equal major.minor only; patch may differ, minor and major refused
+  ---
+  duration_ms: 73.255745
+  type: 'test'
+  ...
+# Subtest: checkpoint reports first observable divergent tick; final hash mismatch fails
+ok 156 - checkpoint reports first observable divergent tick; final hash mismatch fails
+  ---
+  duration_ms: 96.488171
+  type: 'test'
+  ...
+# Subtest: lossy and cyclic submissions are refused atomically before stepping
+ok 157 - lossy and cyclic submissions are refused atomically before stepping
+  ---
+  duration_ms: 42.609894
+  type: 'test'
+  ...
+# Subtest: resolveLevel source resolves by header level id; an untimed level imposes no tick bound
+ok 158 - resolveLevel source resolves by header level id; an untimed level imposes no tick bound
+  ---
+  duration_ms: 52.580199
+  type: 'test'
+  ...
+# Subtest: v1 replays are rejected: 1.x rulesVersion, v1 outcome shape (winnerTeam/draw), v1 header fields
+ok 159 - v1 replays are rejected: 1.x rulesVersion, v1 outcome shape (winnerTeam/draw), v1 header fields
+  ---
+  duration_ms: 97.66589
+  type: 'test'
+  ...
+# Subtest: a finite time limit bounds finalTick; limit 0 (null) imposes none; outcome carries winner
+ok 160 - a finite time limit bounds finalTick; limit 0 (null) imposes none; outcome carries winner
+  ---
+  duration_ms: 153.038662
+  type: 'test'
+  ...
+# Subtest: hash round-trips through playReplay and includes seed-dependent stream states
+ok 161 - hash round-trips through playReplay and includes seed-dependent stream states
+  ---
+  duration_ms: 42.127453
+  type: 'test'
+  ...
+# Subtest: authoritative rejection count includes unreported and silent rejections (sim)
+ok 162 - authoritative rejection count includes unreported and silent rejections (sim)
+  ---
+  duration_ms: 21.457397
+  type: 'test'
+  ...
+# Subtest: authoritative rejection count includes unreported and silent rejections (recorder)
+ok 163 - authoritative rejection count includes unreported and silent rejections (recorder)
+  ---
+  duration_ms: 39.325183
+  type: 'test'
+  ...
+# Subtest: create on compiled levelview-1 exposes the view skeleton
+ok 164 - create on compiled levelview-1 exposes the view skeleton
+  ---
+  duration_ms: 94.262621
+  type: 'test'
+  ...
+# Subtest: buildingStatic.kind comes from the compiled archetype kind, not module inference
+ok 165 - buildingStatic.kind comes from the compiled archetype kind, not module inference
+  ---
+  duration_ms: 53.823684
+  type: 'test'
+  ...
+# Subtest: step advances tick; events:false and events:true return arrays and hash identically
+ok 166 - step advances tick; events:false and events:true return arrays and hash identically
+  ---
+  duration_ms: 40.95821
+  type: 'test'
+  ...
+# Subtest: hash is deterministic across instances and sensitive to tick
+ok 167 - hash is deterministic across instances and sensitive to tick
+  ---
+  duration_ms: 36.035692
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-02: Sfc32.below is in range, unbiased-shaped and rejects bad n
+ok 168 - covers R-TCK-02: Sfc32.below is in range, unbiased-shaped and rejects bad n
+  ---
+  duration_ms: 7.56817
+  type: 'test'
+  ...
+# Subtest: fnv1a32 matches published vectors
+ok 169 - fnv1a32 matches published vectors
+  ---
+  duration_ms: 0.268963
+  type: 'test'
+  ...
+# Subtest: streams: entity-keyed, order-independent, purpose ids distinct for fwd and bot.tw
+ok 170 - streams: entity-keyed, order-independent, purpose ids distinct for fwd and bot.tw
+  ---
+  duration_ms: 1.228966
+  type: 'test'
+  ...
+# Subtest: state: fwd stream per building, initial tower cooldown, seat columns, no channels yet
+ok 171 - state: fwd stream per building, initial tower cooldown, seat columns, no channels yet
+  ---
+  duration_ms: 97.132942
+  type: 'test'
+  ...
+# Subtest: ring: push, FIFO order, removeAt shifts and zeroes tail, capacity, hp column
+ok 172 - ring: push, FIFO order, removeAt shifts and zeroes tail, capacity, hp column
+  ---
+  duration_ms: 0.545172
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-04: channel length is symmetric isqrt in progress units; key = from*n+to; lazy
+ok 173 - covers R-TCK-04: channel length is symmetric isqrt in progress units; key = from*n+to; lazy
+  ---
+  duration_ms: 39.730427
+  type: 'test'
+  ...
+# Subtest: hash ignores lazily created idle channels and is sensitive to channel/ring/stream/module state
+ok 174 - hash ignores lazily created idle channels and is sensitive to channel/ring/stream/module state
+  ---
+  duration_ms: 45.812537
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-03: liveChannels iterate by ascending channelKey; hash is independent of channel creation order and of the seed-less history
+ok 175 - covers R-TCK-03: liveChannels iterate by ascending channelKey; hash is independent of channel creation order and of the seed-less history
+  ---
+  duration_ms: 89.983322
+  type: 'test'
+  ...
+# Subtest: killTroop is canonical removal: shifts ring, alive--, ledger, TroopDied event
+ok 176 - killTroop is canonical removal: shifts ring, alive--, ledger, TroopDied event
+  ---
+  duration_ms: 24.217898
+  type: 'test'
+  ...
+# Subtest: troopPosition interpolates along the lane and clamps at the target
+ok 177 - troopPosition interpolates along the lane and clamps at the target
+  ---
+  duration_ms: 26.20853
+  type: 'test'
+  ...
+# Subtest: assertInvariants rejects each broken invariant
+ok 178 - assertInvariants rejects each broken invariant
+  ---
+  duration_ms: 209.153841
+  type: 'test'
+  ...
+# Subtest: createState rejects hostile level numbers and unknown spawn troop ids at create
+ok 179 - createState rejects hostile level numbers and unknown spawn troop ids at create
+  ---
+  duration_ms: 393.878892
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-06, R-SPN-01: spawnPeriodMt matches BigInt oracle over a grid, clamp >= 1000
+ok 180 - covers R-TCK-06, R-SPN-01: spawnPeriodMt matches BigInt oracle over a grid, clamp >= 1000
+  ---
+  duration_ms: 11.370759
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-06, R-GRW-01: growPeriodMt matches BigInt oracle over a grid
+ok 181 - covers R-TCK-06, R-GRW-01: growPeriodMt matches BigInt oracle over a grid
+  ---
+  duration_ms: 8.092712
+  type: 'test'
+  ...
+# Subtest: covers R-SPN-01, R-GRW-01: pinned worked examples (E-SPAWN, E-GROWTH)
+ok 182 - covers R-SPN-01, R-GRW-01: pinned worked examples (E-SPAWN, E-GROWTH)
+  ---
+  duration_ms: 0.253444
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-06, R-SPN-03, R-ENT-01: E-TIMER fires at ticks 19, 37, 56 with remainders 539, 78, 617; draw tick accrues
+ok 183 - covers R-TCK-06, R-SPN-03, R-ENT-01: E-TIMER fires at ticks 19, 37, 56 with remainders 539, 78, 617; draw tick accrues
+  ---
+  duration_ms: 90.101618
+  type: 'test'
+  ...
+# Subtest: covers R-SPN-01, R-TCK-06: TroopSpawned event shape; troop at progress 0 with next seq
+ok 184 - covers R-SPN-01, R-TCK-06: TroopSpawned event shape; troop at progress 0 with next seq
+  ---
+  duration_ms: 28.472232
+  type: 'test'
+  ...
+# Subtest: covers R-TCK-06: mid-interval line add uses the new period on the carried timer
+ok 185 - covers R-TCK-06: mid-interval line add uses the new period on the carried timer
+  ---
+  duration_ms: 45.531472
+  type: 'test'
+  ...
+# Subtest: covers R-SPN-02: alive cap skips the spawn but consumes the timer
+ok 186 - covers R-SPN-02: alive cap skips the spawn but consumes the timer
+  ---
+  duration_ms: 30.577661
+  type: 'test'
+  ...
+# Subtest: covers R-SPN-03, R-ENT-02: neutral buildings and undrawn/cut lines never spawn; cut zeroes timer
+ok 187 - covers R-SPN-03, R-ENT-02: neutral buildings and undrawn/cut lines never spawn; cut zeroes timer
+  ---
+  duration_ms: 51.224452
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-03: only houses with spawns/grows modules run; tower (no spawns/grows) never spawns or grows
+ok 188 - covers R-ENT-03: only houses with spawns/grows modules run; tower (no spawns/grows) never spawns or grows
+  ---
+  duration_ms: 22.870095
+  type: 'test'
+  ...
+# Subtest: covers R-GRW-01: growth fires at period, resets timer, raises level and stage; paused (kept) while a line exists
+ok 189 - covers R-GRW-01: growth fires at period, resets timer, raises level and stage; paused (kept) while a line exists
+  ---
+  duration_ms: 27.135108
+  type: 'test'
+  ...
+# Subtest: covers R-GRW-01: fire resets timer to 0 (no remainder); neutral never grows; growth caps at maxLevel but timer still ticks
+ok 190 - covers R-GRW-01: fire resets timer to 0 (no remainder); neutral never grows; growth caps at maxLevel but timer still ticks
+  ---
+  duration_ms: 54.814836
+  type: 'test'
+  ...
+# Subtest: covers R-GRW-01: capture resets the growth timer
+ok 191 - covers R-GRW-01: capture resets the growth timer
+  ---
+  duration_ms: 19.020796
+  type: 'test'
+  ...
+# Subtest: covers R-GRW-02: stage derived from stageThresholds after growth
+ok 192 - covers R-GRW-02: stage derived from stageThresholds after growth
+  ---
+  duration_ms: 25.869302
+  type: 'test'
+  ...
+# Subtest: covers R-ENT-01: growth phase precedes spawn phase; same-tick determinism holds with invariants
+ok 193 - covers R-ENT-01: growth phase precedes spawn phase; same-tick determinism holds with invariants
+  ---
+  duration_ms: 83.366449
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-01: initial delay including L0, countdown, exact L1/10/30/64 reload
+ok 194 - covers R-TWR-01: initial delay including L0, countdown, exact L1/10/30/64 reload
+  ---
+  duration_ms: 260.001343
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-01: stage thresholds change public radius and select precomputed range without BigInt
+ok 195 - covers R-TWR-01: stage thresholds change public radius and select precomputed range without BigInt
+  ---
+  duration_ms: 44.938099
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-02, covers R-TWR-03: nearest middle-lane tank dies instantly; FIFO, alive and ledger preserved
+ok 196 - covers R-TWR-02, covers R-TWR-03: nearest middle-lane tank dies instantly; FIFO, alive and ledger preserved
+  ---
+  duration_ms: 45.199218
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-02: troop distance ties use owner then seq, independent of channel order; friendly skipped
+ok 197 - covers R-TWR-02: troop distance ties use owner then seq, independent of channel order; friendly skipped
+  ---
+  duration_ms: 70.654928
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-02: exact annulus excludes minRadius boundary and includes outer boundary; troopPad 0/350
+ok 198 - covers R-TWR-02: exact annulus excludes minRadius boundary and includes outer boundary; troopPad 0/350
+  ---
+  duration_ms: 150.625063
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-02: house footprint reach, level eligibility, nearest centre tie, floor and no capture
+ok 199 - covers R-TWR-02: house footprint reach, level eligibility, nearest centre tie, floor and no capture
+  ---
+  duration_ms: 69.689427
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-02: troop priority over closer house; other towers never targets; minRadius only filters troops
+ok 200 - covers R-TWR-02: troop priority over closer house; other towers never targets; minRadius only filters troops
+  ---
+  duration_ms: 71.973296
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-02: opponent house preferred over nearer neutral house; neutral shot only when no opponent in reach; troops first
+ok 201 - covers R-TWR-02: opponent house preferred over nearer neutral house; neutral shot only when no opponent in reach; troops first
+  ---
+  duration_ms: 72.822598
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-04: neutralFires and hitsNeutralHouses each support both settings and defaults
+ok 202 - covers R-TWR-04: neutralFires and hitsNeutralHouses each support both settings and defaults
+  ---
+  duration_ms: 128.457841
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-01, covers R-TWR-04: no-target stays ready, level change preserves cooldown, capture preserves cooldown
+ok 203 - covers R-TWR-01, covers R-TWR-04: no-target stays ready, level change preserves cooldown, capture preserves cooldown
+  ---
+  duration_ms: 20.674233
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-02: building order prevents shooting an earlier tower victim twice; event parity
+ok 204 - covers R-TWR-02: building order prevents shooting an earlier tower victim twice; event parity
+  ---
+  duration_ms: 71.494764
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-02: distance ranking uses exact lane fractions, rather than truncated event positions
+ok 205 - covers R-TWR-02: distance ranking uses exact lane fractions, rather than truncated event positions
+  ---
+  duration_ms: 21.692797
+  type: 'test'
+  ...
+# Subtest: covers R-TWR-02: a house hit crossing the stage threshold preserves both outgoing lines
+ok 206 - covers R-TWR-02: a house hit crossing the stage threshold preserves both outgoing lines
+  ---
+  duration_ms: 21.399698
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-01: human owning every non-ignored building wins in phase 9; ignored buildings flip
+ok 207 - covers R-WIN-01: human owning every non-ignored building wins in phase 9; ignored buildings flip
+  ---
+  duration_ms: 104.356415
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-01: one non-ignored hostile or neutral building prevents the win; ignored ones do not count
+ok 208 - covers R-WIN-01: one non-ignored hostile or neutral building prevents the win; ignored ones do not count
+  ---
+  duration_ms: 32.578952
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-02: human with no non-ignored building loses, winner null; troops in transit do not count; ignored owned does not save
+ok 209 - covers R-WIN-02: human with no non-ignored building loses, winner null; troops in transit do not count; ignored owned does not save
+  ---
+  duration_ms: 26.917122
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-03: timeLimitTicks = timeLimitSec * 20; timeout at tick >= limit; null/absent means none
+ok 210 - covers R-WIN-03: timeLimitTicks = timeLimitSec * 20; timeout at tick >= limit; null/absent means none
+  ---
+  duration_ms: 101.428605
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-01, R-WIN-03: order win -> loss -> timeout (last-tick win counts, Decision 6)
+ok 211 - covers R-WIN-01, R-WIN-03: order win -> loss -> timeout (last-tick win counts, Decision 6)
+  ---
+  duration_ms: 31.235797
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-03: outcome is final; later steps do not tick, change state, or re-emit; commands are gameover-rejected
+ok 212 - covers R-WIN-03: outcome is final; later steps do not tick, change state, or re-emit; commands are gameover-rejected
+  ---
+  duration_ms: 36.262113
+  type: 'test'
+  ...
+# Subtest: covers R-WIN-01: view.over mirrors outcome through sim.step
+ok 213 - covers R-WIN-01: view.over mirrors outcome through sim.step
+  ---
+  duration_ms: 48.441808
+  type: 'test'
+  ...
+# Subtest: R7 view: every field present and typed; columns borrowed (live), static data, units, ids
+ok 214 - R7 view: every field present and typed; columns borrowed (live), static data, units, ids
+  ---
+  duration_ms: 114.140705
+  type: 'test'
+  ...
+# Subtest: R7 view.lines refreshed per tick in ascending channel key; freeSlots = stage - lines (0 for non-drawers)
+ok 215 - R7 view.lines refreshed per tick in ascending channel key; freeSlots = stage - lines (0 for non-drawers)
+  ---
+  duration_ms: 23.794079
+  type: 'test'
+  ...
+# Subtest: R7 readTroops: columns, constant speed, progress at tick, capped by buffer, order by channel key
+ok 216 - R7 readTroops: columns, constant speed, progress at tick, capped by buffer, order by channel key
+  ---
+  duration_ms: 29.59234
+  type: 'test'
+  ...
+# Subtest: R7 readTroops: laneLength column = lane length (kept after the line is cut); channelEnds decodes channel keys; kind is a unit index
+ok 217 - R7 readTroops: laneLength column = lane length (kept after the line is cut); channelEnds decodes channel keys; kind is a unit index
+  ---
+  duration_ms: 29.711648
+  type: 'test'
+  ...
+# Subtest: Sim seams: explainDraw / towerRadiusMilli exist (SP04 fills); explainDraw never throws and is null until then
+ok 218 - Sim seams: explainDraw / towerRadiusMilli exist (SP04 fills); explainDraw never throws and is null until then
+  ---
+  duration_ms: 38.263295
+  type: 'test'
+  ...
+# Subtest: R7 snapshot: plain JSON, hash matches sim.hash(), round-trips; recorder forwards read API
+ok 219 - R7 snapshot: plain JSON, hash matches sim.hash(), round-trips; recorder forwards read API
+  ---
+  duration_ms: 70.354737
+  type: 'test'
+  ...
+# Subtest: R7 events: on/off hash parity across 10 seeds over a busy scenario; stream is deterministic
+ok 220 - R7 events: on/off hash parity across 10 seeds over a busy scenario; stream is deterministic
+  ---
+  duration_ms: 890.187077
+  type: 'test'
+  ...
+1..220
+# tests 220
+# suites 0
+# pass 220
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 31627.057387
+
+> @node-arena/bots@0.0.0 test /root/projects/node-arena/.worktrees/feat-editor-chrome-polish/packages/bots
+> node --test $(ls test/*.test.cjs | grep -v '/golden\.test\.cjs$')
+
+TAP version 13
+# Subtest: covers R3: source choice is uniform over free sources (fixed-seed histogram)
+ok 1 - covers R3: source choice is uniform over free sources (fixed-seed histogram)
+  ---
+  duration_ms: 29.66039
+  type: 'test'
+  ...
+# Subtest: covers R3: behavior parity - attackOnly equals full minus defense
+ok 2 - covers R3: behavior parity - attackOnly equals full minus defense
+  ---
+  duration_ms: 11.303571
+  type: 'test'
+  ...
+# Subtest: covers R2: web consumes createBotDriver from the bots package entry
+ok 3 - covers R2: web consumes createBotDriver from the bots package entry
+  ---
+  duration_ms: 1.239307
+  type: 'test'
+  ...
+# Subtest: covers R2: built dist driver matches source driver (commands + hash)
+ok 4 - covers R2: built dist driver matches source driver (commands + hash)
+  ---
+  duration_ms: 506.762065
+  type: 'test'
+  ...
+# Subtest: covers R2: driver builds one seat per level.bots entry
+ok 5 - covers R2: driver builds one seat per level.bots entry
+  ---
+  duration_ms: 203.762367
+  type: 'test'
+  ...
+# Subtest: covers R2: every seat is called every tick before step; same-tick re-call emits nothing
+ok 6 - covers R2: every seat is called every tick before step; same-tick re-call emits nothing
+  ---
+  duration_ms: 141.532874
+  type: 'test'
+  ...
+# Subtest: covers R2: no commands after game over
+ok 7 - covers R2: no commands after game over
+  ---
+  duration_ms: 44.76117
+  type: 'test'
+  ...
+# Subtest: covers R2: runMatch on campaign positions 4 and 6 terminates with 0 rejected
+ok 8 - covers R2: runMatch on campaign positions 4 and 6 terminates with 0 rejected
+  ---
+  duration_ms: 839.814833
+  type: 'test'
+  ...
+# Subtest: covers R2: same level+seed twice gives identical command log and final hash
+ok 9 - covers R2: same level+seed twice gives identical command log and final hash
+  ---
+  duration_ms: 573.899339
+  type: 'test'
+  ...
+# Subtest: covers R6: HUMAN_PROXY exact shape; createSeatBot exported
+ok 10 - covers R6: HUMAN_PROXY exact shape; createSeatBot exported
+  ---
+  duration_ms: 0.377772
+  type: 'test'
+  ...
+# Subtest: covers R2: runMatch truncates at maxTicks; rejects bad maxTicks
+ok 11 - covers R2: runMatch truncates at maxTicks; rejects bad maxTicks
+  ---
+  duration_ms: 29.126231
+  type: 'test'
+  ...
+# Subtest: covers R2: ScriptedController applies commands at their pre-step tick, in order
+ok 12 - covers R2: ScriptedController applies commands at their pre-step tick, in order
+  ---
+  duration_ms: 34.497276
+  type: 'test'
+  ...
+# Subtest: covers R2: controller validation (player range, duplicates, unordered, wrong player, bad shape)
+ok 13 - covers R2: controller validation (player range, duplicates, unordered, wrong player, bad shape)
+  ---
+  duration_ms: 0.379444
+  type: 'test'
+  ...
+# Subtest: covers R2: controller override replaces default seat; unspecified level bots stay active
+ok 14 - covers R2: controller override replaces default seat; unspecified level bots stay active
+  ---
+  duration_ms: 50.129771
+  type: 'test'
+  ...
+# Subtest: covers R2: bot may not command for another player; BotContext guards hidden reads
+ok 15 - covers R2: bot may not command for another player; BotContext guards hidden reads
+  ---
+  duration_ms: 14.196906
+  type: 'test'
+  ...
+# Subtest: covers R2: stats on a campaign level are consistent
+ok 16 - covers R2: stats on a campaign level are consistent
+  ---
+  duration_ms: 23.449331
+  type: 'test'
+  ...
+# Subtest: runMatch rejects unknown runtime command types (unrecorded)
+ok 17 - runMatch rejects unknown runtime command types (unrecorded)
+  ---
+  duration_ms: 6.574222
+  type: 'test'
+  ...
+# Subtest: runMatch rejects unknown runtime command types (recorded)
+ok 18 - runMatch rejects unknown runtime command types (recorded)
+  ---
+  duration_ms: 6.619569
+  type: 'test'
+  ...
+# Subtest: BotContext hides authoritative rejection diagnostics
+ok 19 - BotContext hides authoritative rejection diagnostics
+  ---
+  duration_ms: 15.278532
+  type: 'test'
+  ...
+# Subtest: root lint rejects Math.random();
+ok 20 - root lint rejects Math.random();
+  ---
+  duration_ms: 973.899988
+  type: 'test'
+  ...
+# Subtest: root lint rejects Math.sqrt(4);
+ok 21 - root lint rejects Math.sqrt(4);
+  ---
+  duration_ms: 8.679492
+  type: 'test'
+  ...
+# Subtest: root lint rejects new Date();
+ok 22 - root lint rejects new Date();
+  ---
+  duration_ms: 9.372395
+  type: 'test'
+  ...
+# Subtest: root lint rejects const n = 1.5;
+ok 23 - root lint rejects const n = 1.5;
+  ---
+  duration_ms: 8.485572
+  type: 'test'
+  ...
+# Subtest: root lint rejects import fs from "node:fs";
+ok 24 - root lint rejects import fs from "node:fs";
+  ---
+  duration_ms: 15.518167
+  type: 'test'
+  ...
+# Subtest: root lint rejects import { loadContent } from "@node-arena/content";
+ok 25 - root lint rejects import { loadContent } from "@node-arena/content";
+  ---
+  duration_ms: 7.345475
+  type: 'test'
+  ...
+# Subtest: root lint rejects import { create } from "@node-arena/sim/src/state.js";
+ok 26 - root lint rejects import { create } from "@node-arena/sim/src/state.js";
+  ---
+  duration_ms: 5.588239
+  type: 'test'
+  ...
+# Subtest: root lint rejects import { create } from "../../sim/src/state.js";
+ok 27 - root lint rejects import { create } from "../../sim/src/state.js";
+  ---
+  duration_ms: 9.083123
+  type: 'test'
+  ...
+# Subtest: root lint rejects export { create } from "../../sim/src/state.js";
+ok 28 - root lint rejects export { create } from "../../sim/src/state.js";
+  ---
+  duration_ms: 25.131552
+  type: 'test'
+  ...
+# Subtest: root lint rejects import("node:fs");
+ok 29 - root lint rejects import("node:fs");
+  ---
+  duration_ms: 6.001308
+  type: 'test'
+  ...
+# Subtest: root lint allows public sim imports and content types
+ok 30 - root lint allows public sim imports and content types
+  ---
+  duration_ms: 5.980949
+  type: 'test'
+  ...
+# Subtest: package lint rejects Math.random();
+ok 31 - package lint rejects Math.random();
+  ---
+  duration_ms: 4.57782
+  type: 'test'
+  ...
+# Subtest: package lint rejects Math.sqrt(4);
+ok 32 - package lint rejects Math.sqrt(4);
+  ---
+  duration_ms: 3.525181
+  type: 'test'
+  ...
+# Subtest: package lint rejects new Date();
+ok 33 - package lint rejects new Date();
+  ---
+  duration_ms: 3.270234
+  type: 'test'
+  ...
+# Subtest: package lint rejects const n = 1.5;
+ok 34 - package lint rejects const n = 1.5;
+  ---
+  duration_ms: 3.630862
+  type: 'test'
+  ...
+# Subtest: package lint rejects import fs from "node:fs";
+ok 35 - package lint rejects import fs from "node:fs";
+  ---
+  duration_ms: 6.788853
+  type: 'test'
+  ...
+# Subtest: package lint rejects import { loadContent } from "@node-arena/content";
+ok 36 - package lint rejects import { loadContent } from "@node-arena/content";
+  ---
+  duration_ms: 6.717074
+  type: 'test'
+  ...
+# Subtest: package lint rejects import { create } from "@node-arena/sim/src/state.js";
+ok 37 - package lint rejects import { create } from "@node-arena/sim/src/state.js";
+  ---
+  duration_ms: 12.265327
+  type: 'test'
+  ...
+# Subtest: package lint rejects import { create } from "../../sim/src/state.js";
+ok 38 - package lint rejects import { create } from "../../sim/src/state.js";
+  ---
+  duration_ms: 5.412193
+  type: 'test'
+  ...
+# Subtest: package lint rejects export { create } from "../../sim/src/state.js";
+ok 39 - package lint rejects export { create } from "../../sim/src/state.js";
+  ---
+  duration_ms: 2.953278
+  type: 'test'
+  ...
+# Subtest: package lint rejects import("node:fs");
+ok 40 - package lint rejects import("node:fs");
+  ---
+  duration_ms: 3.083356
+  type: 'test'
+  ...
+# Subtest: package lint allows public sim imports and content types
+ok 41 - package lint allows public sim imports and content types
+  ---
+  duration_ms: 6.77696
+  type: 'test'
+  ...
+# Subtest: covers R1: bots src has no CutLine, Math.random or Date
+ok 42 - covers R1: bots src has no CutLine, Math.random or Date
+  ---
+  duration_ms: 1.140547
+  type: 'test'
+  ...
+# Subtest: covers R2: bot match is deterministic across runs (record, hash, commands)
+ok 43 - covers R2: bot match is deterministic across runs (record, hash, commands)
+  ---
+  duration_ms: 693.219302
+  type: 'test'
+  ...
+# Subtest: covers R2: recorded bot match verifies via playReplay and reproduces final hash
+ok 44 - covers R2: recorded bot match verifies via playReplay and reproduces final hash
+  ---
+  duration_ms: 515.539405
+  type: 'test'
+  ...
+# Subtest: covers R2: tampered bot replay is detected
+ok 45 - covers R2: tampered bot replay is detected
+  ---
+  duration_ms: 60.341276
+  type: 'test'
+  ...
+# Subtest: covers R4 (pin): delay 8000 done T+161; head op T=-1 -> done tick 160, handoff call tick 161
+ok 46 - covers R4 (pin): delay 8000 done T+161; head op T=-1 -> done tick 160, handoff call tick 161
+  ---
+  duration_ms: 2.757395
+  type: 'test'
+  ...
+# Subtest: covers R4 (pin): delay then line: line starts on delay-done tick, draws 121 later
+ok 47 - covers R4 (pin): delay then line: line starts on delay-done tick, draws 121 later
+  ---
+  duration_ms: 5.600843
+  type: 'test'
+  ...
+# Subtest: covers R4: line afterMs 0 draws at first update
+ok 48 - covers R4: line afterMs 0 draws at first update
+  ---
+  duration_ms: 0.255208
+  type: 'test'
+  ...
+# Subtest: covers R4: line skipped when own initial owner != me; uses no tick; consecutive skips start same T
+ok 49 - covers R4: line skipped when own initial owner != me; uses no tick; consecutive skips start same T
+  ---
+  duration_ms: 0.358394
+  type: 'test'
+  ...
+# Subtest: covers R4: skip is by INITIAL owner, not current owner
+ok 50 - covers R4: skip is by INITIAL owner, not current owner
+  ---
+  duration_ms: 3.427183
+  type: 'test'
+  ...
+# Subtest: covers R4: scriptLine fallback; <2 towers stop; target null; null own
+ok 51 - covers R4: scriptLine fallback; <2 towers stop; target null; null own
+  ---
+  duration_ms: 0.527457
+  type: 'test'
+  ...
+# Subtest: covers R4: fallback respects noLineBetween (any owner/direction) and free slots
+ok 52 - covers R4: fallback respects noLineBetween (any owner/direction) and free slots
+  ---
+  duration_ms: 0.465929
+  type: 'test'
+  ...
+# Subtest: covers R4 (pin): steps root starts T+1 (tick 0 from head), fire = start+max(1,ceil(d/50))
+ok 53 - covers R4 (pin): steps root starts T+1 (tick 0 from head), fire = start+max(1,ceil(d/50))
+  ---
+  duration_ms: 0.450862
+  type: 'test'
+  ...
+# Subtest: covers R4 (pin): steps timing from head (T=-1): root start tick 0, fire tick 0+1+..
+ok 54 - covers R4 (pin): steps timing from head (T=-1): root start tick 0, fire tick 0+1+..
+  ---
+  duration_ms: 2.150646
+  type: 'test'
+  ...
+# Subtest: covers R4: steps skip-if-lost at start: node done, children still start (same tick)
+ok 55 - covers R4: steps skip-if-lost at start: node done, children still start (same tick)
+  ---
+  duration_ms: 0.781662
+  type: 'test'
+  ...
+# Subtest: covers R4: steps re-checks ownership at fire (lost between start and fire -> no action, children start)
+ok 56 - covers R4: steps re-checks ownership at fire (lost between start and fire -> no action, children start)
+  ---
+  duration_ms: 0.499073
+  type: 'test'
+  ...
+# Subtest: covers R4: parallel children start in same call as parent finishing, in list order
+ok 57 - covers R4: parallel children start in same call as parent finishing, in list order
+  ---
+  duration_ms: 0.32984
+  type: 'test'
+  ...
+# Subtest: covers R4: ledger prevents double-use of slots/pairs within a tick
+ok 58 - covers R4: ledger prevents double-use of slots/pairs within a tick
+  ---
+  duration_ms: 0.281999
+  type: 'test'
+  ...
+# Subtest: covers R4 (pin): capture polls F+20, F+40; done when target.owner == me
+ok 59 - covers R4 (pin): capture polls F+20, F+40; done when target.owner == me
+  ---
+  duration_ms: 2.157439
+  type: 'test'
+  ...
+# Subtest: covers R4: capture done when own lost at a poll
+ok 60 - covers R4: capture done when own lost at a poll
+  ---
+  duration_ms: 0.543437
+  type: 'test'
+  ...
+# Subtest: covers R4 (pin): capture null target completes at fire tick F, no poll
+ok 61 - covers R4 (pin): capture null target completes at fire tick F, no poll
+  ---
+  duration_ms: 0.212406
+  type: 'test'
+  ...
+# Subtest: covers R4 (pin): capture null own is not skipped; first poll finishes it
+ok 62 - covers R4 (pin): capture null own is not skipped; first poll finishes it
+  ---
+  duration_ms: 0.469307
+  type: 'test'
+  ...
+# Subtest: covers R4: steps with all nodes skipped at start completes in the first update
+ok 63 - covers R4: steps with all nodes skipped at start completes in the first update
+  ---
+  duration_ms: 0.151539
+  type: 'test'
+  ...
+# Subtest: covers R2/R4: no script-op tick runs default logic; zero towers freezes script timers
+ok 64 - covers R2/R4: no script-op tick runs default logic; zero towers freezes script timers
+  ---
+  duration_ms: 0.287008
+  type: 'test'
+  ...
+# Subtest: covers R4: unresolved ids behave as null
+ok 65 - covers R4: unresolved ids behave as null
+  ---
+  duration_ms: 0.144536
+  type: 'test'
+  ...
+# Subtest: covers R2/R4: script -> default handoff with timer 0 through createSeatBot; scripts use no RNG
+ok 66 - covers R2/R4: script -> default handoff with timer 0 through createSeatBot; scripts use no RNG
+  ---
+  duration_ms: 0.949703
+  type: 'test'
+  ...
+# Subtest: covers R5: seat with empty/absent script goes straight to default
+ok 67 - covers R5: seat with empty/absent script goes straight to default
+  ---
+  duration_ms: 0.259856
+  type: 'test'
+  ...
+# Subtest: covers R3: timer check-then-add with carry acts at ticks 34, 69, 104 (AD 1700)
+ok 68 - covers R3: timer check-then-add with carry acts at ticks 34, 69, 104 (AD 1700)
+  ---
+  duration_ms: 2.58216
+  type: 'test'
+  ...
+# Subtest: covers R3: AD 1720 acts 35, 70, 106 (carry 30 then 10)
+ok 69 - covers R3: AD 1720 acts 35, 70, 106 (carry 30 then 10)
+  ---
+  duration_ms: 0.404973
+  type: 'test'
+  ...
+# Subtest: covers R3: sort key is L, or idiv(2L+1,3) for special; tie by index
+ok 70 - covers R3: sort key is L, or idiv(2L+1,3) for special; tie by index
+  ---
+  duration_ms: 0.607499
+  type: 'test'
+  ...
+# Subtest: covers R3: targets include neutrals, towers and all non-own owners, never own
+ok 71 - covers R3: targets include neutrals, towers and all non-own owners, never own
+  ---
+  duration_ms: 0.156118
+  type: 'test'
+  ...
+# Subtest: covers R3: noLineBetween covers either direction and any owner
+ok 72 - covers R3: noLineBetween covers either direction and any owner
+  ---
+  duration_ms: 0.437215
+  type: 'test'
+  ...
+# Subtest: covers R3: canDraw failure removes the candidate and tries the next
+ok 73 - covers R3: canDraw failure removes the candidate and tries the next
+  ---
+  duration_ms: 0.214449
+  type: 'test'
+  ...
+# Subtest: covers R3: one rng.below(n) per candidate source tested
+ok 74 - covers R3: one rng.below(n) per candidate source tested
+  ---
+  duration_ms: 0.297939
+  type: 'test'
+  ...
+# Subtest: covers R3: defense picks nearest own, index tie-break; full only
+ok 75 - covers R3: defense picks nearest own, index tie-break; full only
+  ---
+  duration_ms: 0.608433
+  type: 'test'
+  ...
+# Subtest: covers R3: attack preferred over defense; non-drawers and full seats excluded from sources
+ok 76 - covers R3: attack preferred over defense; non-drawers and full seats excluded from sources
+  ---
+  duration_ms: 0.41913
+  type: 'test'
+  ...
+# Subtest: covers R2: zero-tower seat freezes timer and decides nothing
+ok 77 - covers R2: zero-tower seat freezes timer and decides nothing
+  ---
+  duration_ms: 0.762786
+  type: 'test'
+  ...
+# Subtest: covers R2: emits only DrawLine, never CutLine
+ok 78 - covers R2: emits only DrawLine, never CutLine
+  ---
+  duration_ms: 0.651925
+  type: 'test'
+  ...
+# Subtest: covers R2: seat with empty script hands to default with timer 0; script hook then default
+ok 79 - covers R2: seat with empty script hands to default with timer 0; script hook then default
+  ---
+  duration_ms: 131.089997
+  type: 'test'
+  ...
+# Subtest: covers R2: fixed-seed decision sequence on fixture level (levelview-1, AD 1700)
+ok 80 - covers R2: fixed-seed decision sequence on fixture level (levelview-1, AD 1700)
+  ---
+  duration_ms: 68.59126
+  type: 'test'
+  ...
+# Subtest: covers R2: no sim RNG touched by the bot (sim snapshot streams equal with/without bot reads)
+ok 81 - covers R2: no sim RNG touched by the bot (sim snapshot streams equal with/without bot reads)
+  ---
+  duration_ms: 36.962622
+  type: 'test'
+  ...
+# Subtest: covers R2: runMatch drives level bots end-to-end with 0 rejected, deterministic
+ok 82 - covers R2: runMatch drives level bots end-to-end with 0 rejected, deterministic
+  ---
+  duration_ms: 104.564263
+  type: 'test'
+  ...
+# Subtest: startDelayMs: idles until delay elapsed, then normal cadence; absent = unchanged
+ok 83 - startDelayMs: idles until delay elapsed, then normal cadence; absent = unchanged
+  ---
+  duration_ms: 0.511437
+  type: 'test'
+  ...
+1..83
+# tests 83
+# suites 0
+# pass 83
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4296.683277
+
+> @node-arena/tools@0.0.0 test /root/projects/node-arena/.worktrees/feat-editor-chrome-polish/tools
+> tsx --test $(ls test/*.test.ts src/import-tw/test/*.test.ts | grep -v '/rules-repo\.test\.ts$' | grep -v '/replay-golden\.test\.ts$')
+
+TAP version 13
+# Subtest: campaign position is the 1-based index; tutorials occupy 1-3
+ok 1 - campaign position is the 1-based index; tutorials occupy 1-3
+  ---
+  duration_ms: 1.75923
+  type: 'test'
+  ...
+# Subtest: campaignRange 4-23 yields 20 entries in order
+ok 2 - campaignRange 4-23 yields 20 entries in order
+  ---
+  duration_ms: 0.65528
+  type: 'test'
+  ...
+# Subtest: levels may be an inline array or object; duplicates and bad shapes error
+ok 3 - levels may be an inline array or object; duplicates and bad shapes error
+  ---
+  duration_ms: 0.323447
+  type: 'test'
+  ...
+# Subtest: parseArgs: range/only/flags; bad input throws
+ok 4 - parseArgs: range/only/flags; bad input throws
+  ---
+  duration_ms: 1.782865
+  type: 'test'
+  ...
+# Subtest: check:import without TW_EXTRACT skips with exit 0; import:tw exits 2
+ok 5 - check:import without TW_EXTRACT skips with exit 0; import:tw exits 2
+  ---
+  duration_ms: 5434.795329
+  type: 'test'
+  ...
+# Subtest: determinism (TW_EXTRACT): two runs identical; input order (--only and campaign/file listing) does not change level bytes
+ok 6 - determinism (TW_EXTRACT): two runs identical; input order (--only and campaign/file listing) does not change level bytes # SKIP TW_EXTRACT not set
+  ---
+  duration_ms: 0.138945
+  type: 'test'
+  ...
+# Subtest: colliders.json: every obstacle child has box size + yaw + variant
+ok 7 - colliders.json: every obstacle child has box size + yaw + variant
+  ---
+  duration_ms: 1.701037
+  type: 'test'
+  ...
+# Subtest: colliders.json: building box, tower trigger, layer matrix
+ok 8 - colliders.json: building box, tower trigger, layer matrix
+  ---
+  duration_ms: 1.553907
+  type: 'test'
+  ...
+# Subtest: TW_EXTRACT unset or blank -> null
+ok 9 - TW_EXTRACT unset or blank -> null
+  ---
+  duration_ms: 0.872647
+  type: 'test'
+  ...
+# Subtest: requireTwExtract exits 2 with a one-line message when unset
+ok 10 - requireTwExtract exits 2 with a one-line message when unset
+  ---
+  duration_ms: 0.587031
+  type: 'test'
+  ...
+# Subtest: levelview-1 passes against the full catalog; cargo is a drop token
+ok 11 - levelview-1 passes against the full catalog; cargo is a drop token
+  ---
+  duration_ms: 11.052292
+  type: 'test'
+  ...
+# Subtest: catalog without tower blocks levelview-1 with a reason; importable() filters it out
+ok 12 - catalog without tower blocks levelview-1 with a reason; importable() filters it out
+  ---
+  duration_ms: 1.790578
+  type: 'test'
+  ...
+# Subtest: theme gate: the registered set is explicit and required; catalog.themes is ignored
+ok 13 - theme gate: the registered set is explicit and required; catalog.themes is ignored
+  ---
+  duration_ms: 4.59299
+  type: 'test'
+  ...
+# Subtest: wall: dropped only for levelview-100-es, blocked for any other level
+ok 14 - wall: dropped only for levelview-100-es, blocked for any other level
+  ---
+  duration_ms: 2.99082
+  type: 'test'
+  ...
+# Subtest: null-archetype and block rows block; house WT3 blocks as absent
+ok 15 - null-archetype and block rows block; house WT3 blocks as absent
+  ---
+  duration_ms: 2.113255
+  type: 'test'
+  ...
+# Subtest: fortess / speed_tower have block rows; AiRM records ai-rail-move, MinRD/MaxRD are not recorded
+ok 16 - fortess / speed_tower have block rows; AiRM records ai-rail-move, MinRD/MaxRD are not recorded
+  ---
+  duration_ms: 1.704214
+  type: 'test'
+  ...
+# Subtest: unlisted construct is a parse error (level kind and map row)
+ok 17 - unlisted construct is a parse error (level kind and map row)
+  ---
+  duration_ms: 1.315632
+  type: 'test'
+  ...
+# Subtest: feature-map.json: required rows and validation
+ok 18 - feature-map.json: required rows and validation
+  ---
+  duration_ms: 0.496949
+  type: 'test'
+  ...
+# Subtest: every fixture level has only listed features
+ok 19 - every fixture level has only listed features
+  ---
+  duration_ms: 2.290123
+  type: 'test'
+  ...
+# Subtest: single resolver: house archetype by warriorType (default key), plain rows, null rows
+ok 20 - single resolver: house archetype by warriorType (default key), plain rows, null rows
+  ---
+  duration_ms: 0.647667
+  type: 'test'
+  ...
+# Subtest: golden: raw LevelView 1 -> mapped -> serialized == levelview-1.json bytes
+ok 21 - golden: raw LevelView 1 -> mapped -> serialized == levelview-1.json bytes
+  ---
+  duration_ms: 6.817596
+  type: 'test'
+  ...
+# Subtest: invariants on fixtures: human first, 1-3 AI, unique ids, bounds contain buildings, BD order kept; loadLevel accepts
+ok 22 - invariants on fixtures: human first, 1-3 AI, unique ids, bounds contain buildings, BD order kept; loadLevel accepts
+  ---
+  duration_ms: 14.687232
+  type: 'test'
+  ...
+# Subtest: order rule: human-first flag only reorders buildings; default keeps P order
+ok 23 - order rule: human-first flag only reorders buildings; default keeps P order
+  ---
+  duration_ms: 1.460749
+  type: 'test'
+  ...
+# Subtest: obstacles: active children only, ids o<cluster>-<child>, box + variant; inactive logged not dropped
+ok 24 - obstacles: active children only, ids o<cluster>-<child>, box + variant; inactive logged not dropped
+  ---
+  duration_ms: 0.979139
+  type: 'test'
+  ...
+# Subtest: blocked level yields no level; ledger counts blocked entries
+ok 25 - blocked level yields no level; ledger counts blocked entries
+  ---
+  duration_ms: 0.593874
+  type: 'test'
+  ...
+# Subtest: no human -> MapError; duplicate slug -> error
+ok 26 - no human -> MapError; duplicate slug -> error
+  ---
+  duration_ms: 1.005239
+  type: 'test'
+  ...
+# Subtest: bot hook: botScript fills script; behavior BT 0 -> full, else attackOnly
+ok 27 - bot hook: botScript fills script; behavior BT 0 -> full, else attackOnly
+  ---
+  duration_ms: 0.678976
+  type: 'test'
+  ...
+# Subtest: conservation over positions 4-23 (TW_EXTRACT)
+ok 28 - conservation over positions 4-23 (TW_EXTRACT) # SKIP TW_EXTRACT not set
+  ---
+  duration_ms: 0.131721
+  type: 'test'
+  ...
+# Subtest: script merge: 3_AB delay+line ordered by I; 8_ES nested steps; ids b<id>
+ok 29 - script merge: 3_AB delay+line ordered by I; 8_ES nested steps; ids b<id>
+  ---
+  duration_ms: 1.910829
+  type: 'test'
+  ...
+# Subtest: script merge: gap/duplicate = error; unresolved ref -> null; AiRM keeps index but emits no op
+ok 30 - script merge: gap/duplicate = error; unresolved ref -> null; AiRM keeps index but emits no op
+  ---
+  duration_ms: 0.914676
+  type: 'test'
+  ...
+# Subtest: scripted levels 4-23 (TW_EXTRACT): every bot ref resolves to a building or null; loadLevel accepts
+ok 31 - scripted levels 4-23 (TW_EXTRACT): every bot ref resolves to a building or null; loadLevel accepts # SKIP TW_EXTRACT not set
+  ---
+  duration_ms: 0.200643
+  type: 'test'
+  ...
+# Subtest: ledger comes from the output: AI list rows exist and a mapper that loses an entry fails
+ok 32 - ledger comes from the output: AI list rows exist and a mapper that loses an entry fails
+  ---
+  duration_ms: 1.693923
+  type: 'test'
+  ...
+# Subtest: AI list rows: each op is counted from the emitted script; AiRM is dropped
+ok 33 - AI list rows: each op is counted from the emitted script; AiRM is dropped
+  ---
+  duration_ms: 1.478033
+  type: 'test'
+  ...
+# Subtest: emitter registry: a map row with an archetype but no emitter is a MapError (Mine -> obstacle)
+ok 34 - emitter registry: a map row with an archetype but no emitter is a MapError (Mine -> obstacle)
+  ---
+  duration_ms: 1.102744
+  type: 'test'
+  ...
+# Subtest: obstacle yaw = rotate(OCR.Y) only: collider yaw is not added
+ok 35 - obstacle yaw = rotate(OCR.Y) only: collider yaw is not added
+  ---
+  duration_ms: 1.445629
+  type: 'test'
+  ...
+# Subtest: inactive obstacle children are reported by id
+ok 36 - inactive obstacle children are reported by id
+  ---
+  duration_ms: 0.79106
+  type: 'test'
+  ...
+# Subtest: the 2 frozen prefab levels load, flagged as hand data
+ok 37 - the 2 frozen prefab levels load, flagged as hand data
+  ---
+  duration_ms: 2.260275
+  type: 'test'
+  ...
+# Subtest: prefab levels sit at campaign positions 10 (182_NB) and 23 (100_ES)
+ok 38 - prefab levels sit at campaign positions 10 (182_NB) and 23 (100_ES)
+  ---
+  duration_ms: 0.752817
+  type: 'test'
+  ...
+# Subtest: non-prefab or malformed ext documents are rejected
+ok 39 - non-prefab or malformed ext documents are rejected
+  ---
+  duration_ms: 1.017142
+  type: 'test'
+  ...
+# Subtest: parseRaw LevelView 1: fixture parses without the extract and equals the converted/ext reference
+ok 40 - parseRaw LevelView 1: fixture parses without the extract and equals the converted/ext reference
+  ---
+  duration_ms: 6.120195
+  type: 'test'
+  ...
+# Subtest: parseRaw LevelView 3_AB: fixture parses without the extract and equals the converted/ext reference
+ok 41 - parseRaw LevelView 3_AB: fixture parses without the extract and equals the converted/ext reference
+  ---
+  duration_ms: 1.466971
+  type: 'test'
+  ...
+# Subtest: parseRaw LevelView 8_ES: fixture parses without the extract and equals the converted/ext reference
+ok 42 - parseRaw LevelView 8_ES: fixture parses without the extract and equals the converted/ext reference
+  ---
+  duration_ms: 0.934725
+  type: 'test'
+  ...
+# Subtest: parseRaw LevelView 1: typed values (players, order, rotation inputs untouched)
+ok 43 - parseRaw LevelView 1: typed values (players, order, rotation inputs untouched)
+  ---
+  duration_ms: 0.576661
+  type: 'test'
+  ...
+# Subtest: fixture with scripts and obstacles keeps AI steps and OBS fields
+ok 44 - fixture with scripts and obstacles keeps AI steps and OBS fields
+  ---
+  duration_ms: 0.473654
+  type: 'test'
+  ...
+# Subtest: file match is anchored on the signed integer suffix
+ok 45 - file match is anchored on the signed integer suffix
+  ---
+  duration_ms: 0.246311
+  type: 'test'
+  ...
+# Subtest: 0 matches and >1 matches are errors
+ok 46 - 0 matches and >1 matches are errors
+  ---
+  duration_ms: 0.702652
+  type: 'test'
+  ...
+# Subtest: asset names are matched literally (regex metacharacters)
+ok 47 - asset names are matched literally (regex metacharacters)
+  ---
+  duration_ms: 0.202888
+  type: 'test'
+  ...
+# Subtest: v0 dialect is refused explicitly
+ok 48 - v0 dialect is refused explicitly
+  ---
+  duration_ms: 0.48151
+  type: 'test'
+  ...
+# Subtest: long dialect is refused explicitly
+ok 49 - long dialect is refused explicitly
+  ---
+  duration_ms: 0.710757
+  type: 'test'
+  ...
+# Subtest: boss family and boss player are refused
+ok 50 - boss family and boss player are refused
+  ---
+  duration_ms: 0.508211
+  type: 'test'
+  ...
+# Subtest: unknown dialect and malformed input are refused
+ok 51 - unknown dialect and malformed input are refused
+  ---
+  duration_ms: 0.24146
+  type: 'test'
+  ...
+# Subtest: unknown player type / colour and missing map-object keys error
+ok 52 - unknown player type / colour and missing map-object keys error
+  ---
+  duration_ms: 0.552074
+  type: 'test'
+  ...
+# Subtest: UTF-8 BOM is tolerated
+ok 53 - UTF-8 BOM is tolerated
+  ---
+  duration_ms: 0.520894
+  type: 'test'
+  ...
+# Subtest: unrecognised keys are kept (extra), never silently dropped
+ok 54 - unrecognised keys are kept (extra), never silently dropped
+  ---
+  duration_ms: 0.365318
+  type: 'test'
+  ...
+# Subtest: covers R-rotation: position (x,z)->(z,-x), golden value
+ok 55 - covers R-rotation: position (x,z)->(z,-x), golden value
+  ---
+  duration_ms: 1.685268
+  type: 'test'
+  ...
+# Subtest: position: -0 normalised
+ok 56 - position: -0 normalised
+  ---
+  duration_ms: 0.224229
+  type: 'test'
+  ...
+# Subtest: position: 4x rotation is identity
+ok 57 - position: 4x rotation is identity
+  ---
+  duration_ms: 0.218028
+  type: 'test'
+  ...
+# Subtest: yaw: (Y+90) mod 360, wrap, 2 dp (Frame contract)
+ok 58 - yaw: (Y+90) mod 360, wrap, 2 dp (Frame contract)
+  ---
+  duration_ms: 0.268354
+  type: 'test'
+  ...
+# Subtest: bounds: AABB + pad, integer outward; pad is the content constant
+ok 59 - bounds: AABB + pad, integer outward; pad is the content constant
+  ---
+  duration_ms: 0.451453
+  type: 'test'
+  ...
+# Subtest: out-of-bounds elements are only reported
+ok 60 - out-of-bounds elements are only reported
+  ---
+  duration_ms: 0.242182
+  type: 'test'
+  ...
+# Subtest: golden bounds follow the rule from its own building positions
+ok 61 - golden bounds follow the rule from its own building positions
+  ---
+  duration_ms: 0.356901
+  type: 'test'
+  ...
+# Subtest: serialize: re-serializing the parsed golden reproduces its bytes
+ok 62 - serialize: re-serializing the parsed golden reproduces its bytes
+  ---
+  duration_ms: 0.443126
+  type: 'test'
+  ...
+# Subtest: serialize: scrambled key order is canonicalised; array order kept
+ok 63 - serialize: scrambled key order is canonicalised; array order kept
+  ---
+  duration_ms: 1.388973
+  type: 'test'
+  ...
+# Subtest: serialize: 2-space + trailing newline; campaign order
+ok 64 - serialize: 2-space + trailing newline; campaign order
+  ---
+  duration_ms: 0.590779
+  type: 'test'
+  ...
+# Subtest: mergeCampaign: a range after the first level keeps earlier entries (no wipe)
+ok 65 - mergeCampaign: a range after the first level keeps earlier entries (no wipe)
+  ---
+  duration_ms: 1.920717
+  type: 'test'
+  ...
+# Subtest: mergeCampaign: hand-authored entries survive; an importer row on one is an error
+ok 66 - mergeCampaign: hand-authored entries survive; an importer row on one is an error
+  ---
+  duration_ms: 0.682282
+  type: 'test'
+  ...
+# Subtest: mergeCampaign: a blocked level ends the contiguous prefix relative to the merged campaign; skipBlocked is sparse
+ok 67 - mergeCampaign: a blocked level ends the contiguous prefix relative to the merged campaign; skipBlocked is sparse
+  ---
+  duration_ms: 0.395285
+  type: 'test'
+  ...
+# Subtest: mergeCampaign: unknown entry fields (e.g. loop) are preserved
+ok 68 - mergeCampaign: unknown entry fields (e.g. loop) are preserved
+  ---
+  duration_ms: 0.376519
+  type: 'test'
+  ...
+# Subtest: registeredThemes: ids of the v2 manifest themes; no fallback (absent, unreadable or v1 manifest throws)
+ok 69 - registeredThemes: ids of the v2 manifest themes; no fallback (absent, unreadable or v1 manifest throws)
+  ---
+  duration_ms: 4.397716
+  type: 'test'
+  ...
+# Subtest: safeTarget refuses paths outside the content dir
+ok 70 - safeTarget refuses paths outside the content dir
+  ---
+  duration_ms: 0.36649
+  type: 'test'
+  ...
+# Subtest: per-level failures do not abort the batch: a missing raw file is blocked with a prefab hint
+ok 71 - per-level failures do not abort the batch: a missing raw file is blocked with a prefab hint
+  ---
+  duration_ms: 59.66176
+  type: 'test'
+  ...
+# Subtest: campaign merge end to end: --range after 4 keeps 4-23; hand-authored entry kept; blocked range writes no change
+ok 72 - campaign merge end to end: --range after 4 keeps 4-23; hand-authored entry kept; blocked range writes no change
+  ---
+  duration_ms: 52.155309
+  type: 'test'
+  ...
+# Subtest: check mode: default range = importer-owned positions of the committed campaign; orphan level files are stale
+ok 73 - check mode: default range = importer-owned positions of the committed campaign; orphan level files are stale
+  ---
+  duration_ms: 26.340893
+  type: 'test'
+  ...
+# Subtest: --only normalisation reuses slugify (asset name, slug, spacing and case)
+ok 74 - --only normalisation reuses slugify (asset name, slug, spacing and case)
+  ---
+  duration_ms: 37.47505
+  type: 'test'
+  ...
+# Subtest: real extract: --range 24-25 is blocked and writes nothing; --range 5-6 does not make common.json stale
+ok 75 - real extract: --range 24-25 is blocked and writes nothing; --range 5-6 does not make common.json stale # SKIP TW_EXTRACT not set
+  ---
+  duration_ms: 0.234277
+  type: 'test'
+  ...
+# Subtest: raw -> TwLevel equals converted/ext for every v1-short file; long/boss are refused
+ok 76 - raw -> TwLevel equals converted/ext for every v1-short file; long/boss are refused # SKIP TW_EXTRACT not set
+  ---
+  duration_ms: 0.77013
+  type: 'test'
+  ...
+# Subtest: campaign order: 1,024 ids, LevelView 1 at 4, prefab levels at 10 and 23
+ok 77 - campaign order: 1,024 ids, LevelView 1 at 4, prefab levels at 10 and 23 # SKIP TW_EXTRACT not set
+  ---
+  duration_ms: 0.181175
+  type: 'test'
+  ...
+# Unknown option --bogus
+# Subtest: lists every original file field with TW/stock labels, skips scalars
+ok 78 - lists every original file field with TW/stock labels, skips scalars
+  ---
+  duration_ms: 1.90635
+  type: 'test'
+  ...
+# Subtest: fields under art/ are counted but not listed
+ok 79 - fields under art/ are counted but not listed
+  ---
+  duration_ms: 0.283442
+  type: 'test'
+  ...
+# Subtest: --strict exit codes via CLI
+ok 80 - --strict exit codes via CLI
+  ---
+  duration_ms: 2.014325
+  type: 'test'
+  ...
+# assets:tw: TW_EXTRACT is not set (or not a directory); skipping (needs the Tower War extract).
+# assets:tw:check: TW_EXTRACT is not set (or not a directory); skipping (needs the Tower War extract).
+# assets:tw:check: TW_EXTRACT is not set (or not a directory); skipping (needs the Tower War extract).
+# Unknown option --bogus
+# Subtest: parseObj: RAW conversion undoes UnityPy (x negate, face reversal), keeps UV v flip
+ok 81 - parseObj: RAW conversion undoes UnityPy (x negate, face reversal), keeps UV v flip
+  ---
+  duration_ms: 2.222534
+  type: 'test'
+  ...
+# Subtest: parseObj: rejects quads and mismatched v/vt/vn indices
+ok 82 - parseObj: rejects quads and mismatched v/vt/vn indices
+  ---
+  duration_ms: 0.735845
+  type: 'test'
+  ...
+# Subtest: parseJsonExact: unsafe integers (Unity pathIDs) keep their exact digits
+ok 83 - parseJsonExact: unsafe integers (Unity pathIDs) keep their exact digits
+  ---
+  duration_ms: 0.24067
+  type: 'test'
+  ...
+# Subtest: runImport: outputs sorted by path, lock lists every input read (sorted, hashed), duplicate outputs rejected
+ok 84 - runImport: outputs sorted by path, lock lists every input read (sorted, hashed), duplicate outputs rejected
+  ---
+  duration_ms: 1.956416
+  type: 'test'
+  ...
+# Subtest: writeResult/diffResult: identical tree is clean; changed, missing and stale files and a changed lock are reported
+ok 85 - writeResult/diffResult: identical tree is clean; changed, missing and stale files and a changed lock are reported
+  ---
+  duration_ms: 3.43594
+  type: 'test'
+  ...
+# Subtest: assets:tw and assets:tw:check skip cleanly (exit 0) without TW_EXTRACT
+ok 86 - assets:tw and assets:tw:check skip cleanly (exit 0) without TW_EXTRACT
+  ---
+  duration_ms: 0.9742
+  type: 'test'
+  ...
+# Subtest: oracle: soldier node count, tri count and per-part bbox match the RAW prototype
+ok 87 - oracle: soldier node count, tri count and per-part bbox match the RAW prototype # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.176738
+  type: 'test'
+  ...
+# Subtest: oracle: tank node count, tri count and per-part bbox match the RAW prototype
+ok 88 - oracle: tank node count, tri count and per-part bbox match the RAW prototype # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.096414
+  type: 'test'
+  ...
+# Subtest: soldier LOD1: same part nodes + UV/team texture inputs, 150..450 tris, no clips, no tank LOD
+ok 89 - soldier LOD1: same part nodes + UV/team texture inputs, 150..450 tris, no clips, no tank LOD # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.311194
+  type: 'test'
+  ...
+# Subtest: oracle: soldier Run clip equals the prototype Run (RAW values), Death keeps only decoded channels
+ok 90 - oracle: soldier Run clip equals the prototype Run (RAW values), Death keeps only decoded channels # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.36759
+  type: 'test'
+  ...
+# Subtest: RAW: node transforms are the prefab values verbatim (no x negate, no quaternion conjugation)
+ok 91 - RAW: node transforms are the prefab values verbatim (no x negate, no quaternion conjugation) # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.179013
+  type: 'test'
+  ...
+# Subtest: oracle: barracks stage0..2 equal the prototype stageMesh_0..2; the prototype double-counts stage 0
+ok 92 - oracle: barracks stage0..2 equal the prototype stageMesh_0..2; the prototype double-counts stage 0 # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.081867
+  type: 'test'
+  ...
+# Subtest: oracle: tower stage0..2 equal the prototype stageMesh_0..2; the prototype double-counts stage 0
+ok 93 - oracle: tower stage0..2 equal the prototype stageMesh_0..2; the prototype double-counts stage 0 # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.060786
+  type: 'test'
+  ...
+# Subtest: oracle: factory parts equal the prototype (minus its three duplicate stageMesh_N nodes); stages are enable-lists
+ok 94 - oracle: factory parts equal the prototype (minus its three duplicate stageMesh_N nodes); stages are enable-lists # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.088049
+  type: 'test'
+  ...
+# Subtest: inventory: exactly the PRD R1 outputs; models embed no texture; textures are original PNG bytes
+ok 95 - inventory: exactly the PRD R1 outputs; models embed no texture; textures are original PNG bytes # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.067769
+  type: 'test'
+  ...
+# Subtest: env: ground (500-tri budget, 200 tris) and obstacle (300-tri budget) GLBs per theme; textures resized to 256px
+ok 96 - env: ground (500-tri budget, 200 tris) and obstacle (300-tri budget) GLBs per theme; textures resized to 256px # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.082007
+  type: 'test'
+  ...
+# Subtest: env: Obstacle.prefab 8 children (index = level OCP/OCR/S index) match the frozen collider dump variants and scales
+ok 97 - env: Obstacle.prefab 8 children (index = level OCP/OCR/S index) match the frozen collider dump variants and scales # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.060105
+  type: 'test'
+  ...
+# Subtest: determinism: two full runs are byte-identical
+ok 98 - determinism: two full runs are byte-identical # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.053022
+  type: 'test'
+  ...
+# Subtest: manifest fragment: deterministic, equals the committed manifest.tw.json, themes registered for green + snow
+ok 99 - manifest fragment: deterministic, equals the committed manifest.tw.json, themes registered for green + snow # SKIP TW_EXTRACT not set (Tower War extract)
+  ---
+  duration_ms: 0.05208
+  type: 'test'
+  ...
+# Subtest: writeResult(prune): stale cleanup never touches art/ or manifest.art.json
+ok 100 - writeResult(prune): stale cleanup never touches art/ or manifest.art.json
+  ---
+  duration_ms: 2.44084
+  type: 'test'
+  ...
+# Subtest: signedVolume: sign follows winding
+ok 101 - signedVolume: sign follows winding
+  ---
+  duration_ms: 1.519481
+  type: 'test'
+  ...
+# Subtest: signedVolumeAsSeen: mirror root flips raw-world sign but three.js flips winding back
+ok 102 - signedVolumeAsSeen: mirror root flips raw-world sign but three.js flips winding back
+  ---
+  duration_ms: 0.359466
+  type: 'test'
+  ...
+# Subtest: normalAgreement: detects reversed winding vs authored normals
+ok 103 - normalAgreement: detects reversed winding vs authored normals
+  ---
+  duration_ms: 0.434268
+  type: 'test'
+  ...
+# Subtest: uvRange flags out-of-range and tolerates epsilon
+ok 104 - uvRange flags out-of-range and tolerates epsilon
+  ---
+  duration_ms: 0.84901
+  type: 'test'
+  ...
+# Subtest: bbox applies transform; bboxWithin is tolerance + axis-order based
+ok 105 - bbox applies transform; bboxWithin is tolerance + axis-order based
+  ---
+  duration_ms: 0.325521
+  type: 'test'
+  ...
+# Subtest: texel probe: nearestVertex, texelAt (v down, clamped), opacity
+ok 106 - texel probe: nearestVertex, texelAt (v down, clamped), opacity
+  ---
+  duration_ms: 0.303349
+  type: 'test'
+  ...
+# Subtest: poseDelta/quatAngle: seam metric between bind and frame 0
+ok 107 - poseDelta/quatAngle: seam metric between bind and frame 0
+  ---
+  duration_ms: 0.301255
+  type: 'test'
+  ...
+# Subtest: muzzleSide: far end of weapon relative to the body, projected on the right axis
+ok 108 - muzzleSide: far end of weapon relative to the body, projected on the right axis
+  ---
+  duration_ms: 0.204741
+  type: 'test'
+  ...
+# Subtest: campaign balance rows per proxy action delay + idle; byte identical for jobs 1 and 2 in both formats
+ok 109 - campaign balance rows per proxy action delay + idle; byte identical for jobs 1 and 2 in both formats
+  ---
+  duration_ms: 14606.075574
+  type: 'test'
+  ...
+# Subtest: default proxy set is AD 1000/2000/4000 + idle; arena mode drives every seat with tw
+ok 110 - default proxy set is AD 1000/2000/4000 + idle; arena mode drives every seat with tw
+  ---
+  duration_ms: 6781.812137
+  type: 'test'
+  ...
+# Subtest: balance rejects malformed options
+ok 111 - balance rejects malformed options
+  ---
+  duration_ms: 11165.33447
+  type: 'test'
+  ...
+# Subtest: validate-content adapter catches regenerated bot locks and locates the required BOT_VERSION bump
+ok 112 - validate-content adapter catches regenerated bot locks and locates the required BOT_VERSION bump
+  ---
+  duration_ms: 377.969966
+  type: 'test'
+  ...
+# Subtest: CI without the source extract runs both optional checks and surfaces two skip notices
+ok 113 - CI without the source extract runs both optional checks and surfaces two skip notices
+  ---
+  duration_ms: 3415.477427
+  type: 'test'
+  ...
+# Subtest: CI propagates a real check:import failure when an extract path is supplied
+ok 114 - CI propagates a real check:import failure when an extract path is supplied
+  ---
+  duration_ms: 2683.886923
+  type: 'test'
+  ...
+# Subtest: CI propagates a real assets:tw:check failure when an extract path is supplied
+ok 115 - CI propagates a real assets:tw:check failure when an extract path is supplied
+  ---
+  duration_ms: 1043.786679
+  type: 'test'
+  ...
+# Subtest: CI propagates a failing committed-manifest gate even without an extract
+ok 116 - CI propagates a failing committed-manifest gate even without an extract
+  ---
+  duration_ms: 154.414489
+  type: 'test'
+  ...
+# Subtest: release CI clears the branch version override and enforces strict parked closure
+ok 117 - release CI clears the branch version override and enforces strict parked closure
+  ---
+  duration_ms: 3428.268598
+  type: 'test'
+  ...
+# Subtest: Common stays exactly positions 4–23 while custom levels satisfy the file union and all-selection
+ok 118 - Common stays exactly positions 4–23 while custom levels satisfy the file union and all-selection
+  ---
+  duration_ms: 245.977187
+  type: 'test'
+  ...
+# Subtest: file union rejects an orphan level and cross-list duplicates
+ok 119 - file union rejects an orphan level and cross-list duplicates
+  ---
+  duration_ms: 35.005085
+  type: 'test'
+  ...
+# Subtest: custom reporting position can be omitted; Common reporting position remains required
+ok 120 - custom reporting position can be omitted; Common reporting position remains required
+  ---
+  duration_ms: 291.348904
+  type: 'test'
+  ...
+# Subtest: allowlist permits custom position omission only, and validates custom ids against the union
+ok 121 - allowlist permits custom position omission only, and validates custom ids against the union
+  ---
+  duration_ms: 264.155975
+  type: 'test'
+  ...
+# Subtest: balance all remains Common-only while explicit custom selection is supported
+ok 122 - balance all remains Common-only while explicit custom selection is supported
+  ---
+  duration_ms: 4165.696738
+  type: 'test'
+  ...
+# Subtest: levels:lock selected merge reruns only custom and preserves untouched entry bytes
+ok 123 - levels:lock selected merge reruns only custom and preserves untouched entry bytes
+  ---
+  duration_ms: 2910.784792
+  type: 'test'
+  ...
+# Subtest: levels:lock merge refuses missing, malformed and invalid existing locks without overwriting
+ok 124 - levels:lock merge refuses missing, malformed and invalid existing locks without overwriting
+  ---
+  duration_ms: 12325.754818
+  type: 'test'
+  ...
+# Subtest: serializeLevel places editorVersion after name regardless of input key order
+ok 125 - serializeLevel places editorVersion after name regardless of input key order
+  ---
+  duration_ms: 0.622879
+  type: 'test'
+  ...
+# Subtest: valid docs resolve root, doc-relative, brace and glob paths without treating shell/env/code as paths
+ok 126 - valid docs resolve root, doc-relative, brace and glob paths without treating shell/env/code as paths
+  ---
+  duration_ms: 31.607848
+  type: 'test'
+  ...
+# Subtest: script coverage requires a complete command mention, not substring or prose
+ok 127 - script coverage requires a complete command mention, not substring or prose
+  ---
+  duration_ms: 8.514797
+  type: 'test'
+  ...
+# Subtest: missing concrete path, empty glob and missing brace alternative fail with located diagnostics
+ok 128 - missing concrete path, empty glob and missing brace alternative fail with located diagnostics
+  ---
+  duration_ms: 6.856331
+  type: 'test'
+  ...
+# Subtest: obsolete command and link references fail across maintained Markdown; detector source fixtures and history are excluded
+ok 129 - obsolete command and link references fail across maintained Markdown; detector source fixtures and history are excluded
+  ---
+  duration_ms: 14.908886
+  type: 'test'
+  ...
+# Subtest: CLI reports JSON and Markdown with success/failure exit status and rejects unknown options
+ok 130 - CLI reports JSON and Markdown with success/failure exit status and rejects unknown options
+  ---
+  duration_ms: 8739.114363
+  type: 'test'
+  ...
+# Subtest: Finalize versions use actual AI identity map, preserve pre-bumps, and are byte-idempotent vs HEAD
+ok 131 - Finalize versions use actual AI identity map, preserve pre-bumps, and are byte-idempotent vs HEAD
+  ---
+  duration_ms: 8329.727613
+  type: 'test'
+  ...
+# Subtest: repo content passes with a JSON report
+ok 132 - repo content passes with a JSON report
+  ---
+  duration_ms: 2319.980457
+  type: 'test'
+  ...
+# Subtest: stale sim and bot locks fail without modifying files
+ok 133 - stale sim and bot locks fail without modifying files
+  ---
+  duration_ms: 4992.164437
+  type: 'test'
+  ...
+# Subtest: malformed content and invalid baseline emit JSON diagnostics and exit one
+ok 134 - malformed content and invalid baseline emit JSON diagnostics and exit one
+  ---
+  duration_ms: 4565.961479
+  type: 'test'
+  ...
+# Subtest: default human output reports a failed gate and rejects unknown options
+ok 135 - default human output reports a failed gate and rejects unknown options
+  ---
+  duration_ms: 2165.537153
+  type: 'test'
+  ...
+# Subtest: regenerated sim lock still requires a contentVersion increase over explicit baseline
+ok 136 - regenerated sim lock still requires a contentVersion increase over explicit baseline
+  ---
+  duration_ms: 5574.090389
+  type: 'test'
+  ...
+# Subtest: rulesVersion mismatch fails with metadata location
+ok 137 - rulesVersion mismatch fails with metadata location
+  ---
+  duration_ms: 2321.329684
+  type: 'test'
+  ...
+# Subtest: content symlinks cannot silently skip validation
+ok 138 - content symlinks cannot silently skip validation
+  ---
+  duration_ms: 2162.837079
+  type: 'test'
+  ...
+# Subtest: check:manifest reports an uncredited asset as a warning and exits 0
+ok 139 - check:manifest reports an uncredited asset as a warning and exits 0
+  ---
+  duration_ms: 2371.735691
+  type: 'test'
+  ...
+# Subtest: Common campaign stays exactly 20 levels, one human seat per level
+ok 140 - Common campaign stays exactly 20 levels, one human seat per level
+  ---
+  duration_ms: 37.915551
+  type: 'test'
+  ...
+# Subtest: solvable level passes (a)-(c): no rejects, idle never wins, seed-1 rerun equal
+ok 141 - solvable level passes (a)-(c): no rejects, idle never wins, seed-1 rerun equal
+  ---
+  duration_ms: 331.265816
+  type: 'test'
+  ...
+# Subtest: allowlisted level that the proxy can solve is reported as a warning, not a failure
+ok 142 - allowlisted level that the proxy can solve is reported as a warning, not a failure
+  ---
+  duration_ms: 88.548823
+  type: 'test'
+  ...
+# Subtest: unsolvable level fails unless allowlisted (warning); capped runs are not failures
+ok 143 - unsolvable level fails unless allowlisted (warning); capped runs are not failures
+  ---
+  duration_ms: 188.170978
+  type: 'test'
+  ...
+# Subtest: idle human victory fails the gate even when all proxies win
+ok 144 - idle human victory fails the gate even when all proxies win
+  ---
+  duration_ms: 25.68482
+  type: 'test'
+  ...
+# Subtest: rejected command exceptions fail every affected idle/proxy run, despite allowlisting
+ok 145 - rejected command exceptions fail every affected idle/proxy run, despite allowlisting
+  ---
+  duration_ms: 20.943487
+  type: 'test'
+  ...
+# Subtest: simulation invariant exceptions fail every affected idle/proxy run, despite allowlisting
+ok 146 - simulation invariant exceptions fail every affected idle/proxy run, despite allowlisting
+  ---
+  duration_ms: 1.695087
+  type: 'test'
+  ...
+# Subtest: default 20000-tick cap is accepted and printed as Capped for an allowlisted stalemate
+ok 147 - default 20000-tick cap is accepted and printed as Capped for an allowlisted stalemate
+  ---
+  duration_ms: 1026.629933
+  type: 'test'
+  ...
+# Subtest: validateLevels rejects an allowlist id that is not a campaign level and bad seeds
+ok 148 - validateLevels rejects an allowlist id that is not a campaign level and bad seeds
+  ---
+  duration_ms: 134.996935
+  type: 'test'
+  ...
+# Subtest: levels lock: matching, stale and missing entries
+ok 149 - levels lock: matching, stale and missing entries
+  ---
+  duration_ms: 104.688037
+  type: 'test'
+  ...
+# Subtest: unsolved-by-proxy.json schema: committed file is valid and ids exist; bad shapes fail
+ok 150 - unsolved-by-proxy.json schema: committed file is valid and ids exist; bad shapes fail
+  ---
+  duration_ms: 67.66408
+  type: 'test'
+  ...
+# Subtest: validate:levels CLI: one level, JSON report with levels payload; bad options fail
+ok 151 - validate:levels CLI: one level, JSON report with levels payload; bad options fail
+  ---
+  duration_ms: 7260.628464
+  type: 'test'
+  ...
+# Subtest: committed manifest: files, lock hashes (no extract), budgets, textures, clips and fragment merge all pass
+ok 152 - committed manifest: files, lock hashes (no extract), budgets, textures, clips and fragment merge all pass
+  ---
+  duration_ms: 97.550711
+  type: 'test'
+  ...
+# Subtest: check:manifest CLI passes with TW_EXTRACT unset
+ok 153 - check:manifest CLI passes with TW_EXTRACT unset
+  ---
+  duration_ms: 2215.193841
+  type: 'test'
+  ...
+# Subtest: a changed or stale importer output is reported against the lock
+ok 154 - a changed or stale importer output is reported against the lock
+  ---
+  duration_ms: 84.574476
+  type: 'test'
+  ...
+# Subtest: missing referenced file, unknown stage node and unknown clip are reported
+ok 155 - missing referenced file, unknown stage node and unknown clip are reported
+  ---
+  duration_ms: 41.949023
+  type: 'test'
+  ...
+# Subtest: triangle budgets are enforced per named class (unit 1100, building 1200, obstacle 300, ground 500)
+ok 156 - triangle budgets are enforced per named class (unit 1100, building 1200, obstacle 300, ground 500)
+  ---
+  duration_ms: 78.756798
+  type: 'test'
+  ...
+# Subtest: texture size above 256px is rejected
+ok 157 - texture size above 256px is rejected
+  ---
+  duration_ms: 82.135298
+  type: 'test'
+  ...
+# Subtest: mergeManifest: idempotent, keeps hand-owned palettes/camera, fragment wins its parts, default sfx replace base sfx, drops stale events
+ok 158 - mergeManifest: idempotent, keeps hand-owned palettes/camera, fragment wins its parts, default sfx replace base sfx, drops stale events
+  ---
+  duration_ms: 0.683154
+  type: 'test'
+  ...
+# Subtest: mergeManifest: no art / empty art is a no-op
+ok 159 - mergeManifest: no art / empty art is a no-op
+  ---
+  duration_ms: 0.219599
+  type: 'test'
+  ...
+# Subtest: mergeManifest: art applies after fragment; objects deep-merge, arrays and scalars replace; inputs untouched
+ok 160 - mergeManifest: art applies after fragment; objects deep-merge, arrays and scalars replace; inputs untouched
+  ---
+  duration_ms: 0.882335
+  type: 'test'
+  ...
+# Subtest: mergeManifest: art team patch switching mode to tintMask replaces team (no stray textures); same-mode patch deep-merges
+ok 161 - mergeManifest: art team patch switching mode to tintMask replaces team (no stray textures); same-mode patch deep-merges
+  ---
+  duration_ms: 0.717148
+  type: 'test'
+  ...
+# Subtest: mergeManifest: art sfx overrides the default; removing it restores the default
+ok 162 - mergeManifest: art sfx overrides the default; removing it restores the default
+  ---
+  duration_ms: 0.307667
+  type: 'test'
+  ...
+# Subtest: loadArt / assets:manifest: absent = undefined; fixture patch validates and merge stays a fixed point; bad keys rejected
+ok 163 - loadArt / assets:manifest: absent = undefined; fixture patch validates and merge stays a fixed point; bad keys rejected
+  ---
+  duration_ms: 15.758366
+  type: 'test'
+  ...
+# Subtest: committed manifest.json is a fixed point of its merge with manifest.tw.json
+ok 164 - committed manifest.json is a fixed point of its merge with manifest.tw.json
+  ---
+  duration_ms: 0.361009
+  type: 'test'
+  ...
+# Subtest: lightDirFromQuat: TW directional light (quat 0.5016,0.3786,-0.2589,0.7335) points down; dir is toward the light
+ok 165 - lightDirFromQuat: TW directional light (quat 0.5016,0.3786,-0.2589,0.7335) points down; dir is toward the light
+  ---
+  duration_ms: 0.313899
+  type: 'test'
+  ...
+# Subtest: lightDirToDataFrame: raw Unity (x,z) -> data frame (z,-x) quarter turn; y and length unchanged
+ok 166 - lightDirToDataFrame: raw Unity (x,z) -> data frame (z,-x) quarter turn; y and length unchanged
+  ---
+  duration_ms: 0.143534
+  type: 'test'
+  ...
+# Subtest: art: a valid override passes with no warnings
+ok 167 - art: a valid override passes with no warnings
+  ---
+  duration_ms: 57.156937
+  type: 'test'
+  ...
+# Subtest: art: unknown key fails loudly
+ok 168 - art: unknown key fails loudly
+  ---
+  duration_ms: 48.372415
+  type: 'test'
+  ...
+# Subtest: art: missing stage node, missing clip, over-budget tris and PNG >256px all fail
+ok 169 - art: missing stage node, missing clip, over-budget tris and PNG >256px all fail
+  ---
+  duration_ms: 68.998386
+  type: 'test'
+  ...
+# Subtest: art: a path into importer-owned models/tw fails
+ok 170 - art: a path into importer-owned models/tw fails
+  ---
+  duration_ms: 43.034495
+  type: 'test'
+  ...
+# Subtest: art: stale target is an error naming the field
+ok 171 - art: stale target is an error naming the field
+  ---
+  duration_ms: 50.061841
+  type: 'test'
+  ...
+# Subtest: art: unknown visual id names the art patch (checkManifestAssets); assets:manifest refuses and writes nothing; check:manifest reports it
+ok 172 - art: unknown visual id names the art patch (checkManifestAssets); assets:manifest refuses and writes nothing; check:manifest reports it
+  ---
+  duration_ms: 2226.753662
+  type: 'test'
+  ...
+# Subtest: art: switching a textureSwap team to tintMask passes (team is the target)
+ok 173 - art: switching a textureSwap team to tintMask passes (team is the target)
+  ---
+  duration_ms: 74.496003
+  type: 'test'
+  ...
+# Subtest: art: unsafe relative paths (.. / absolute / backslash) fail even when they start with art/
+ok 174 - art: unsafe relative paths (.. / absolute / backslash) fail even when they start with art/
+  ---
+  duration_ms: 109.071497
+  type: 'test'
+  ...
+# Subtest: art: orphan file and oversized audio warn; bad audio extension fails
+ok 175 - art: orphan file and oversized audio warn; bad audio extension fails
+  ---
+  duration_ms: 47.804833
+  type: 'test'
+  ...
+# Subtest: tintMask base and mask refs are size-checked (tolerant of the not-yet-typed mode)
+ok 176 - tintMask base and mask refs are size-checked (tolerant of the not-yet-typed mode)
+  ---
+  duration_ms: 65.442547
+  type: 'test'
+  ...
+# Subtest: art: selected building model nodes are required and stage checks stay inside the selected subtree
+ok 177 - art: selected building model nodes are required and stage checks stay inside the selected subtree
+  ---
+  duration_ms: 269.522732
+  type: 'test'
+  ...
+# Subtest: art: unit parts and LOD suffixes are rejected and cannot bypass full-scene budget, clip or LOD checks
+ok 178 - art: unit parts and LOD suffixes are rejected and cannot bypass full-scene budget, clip or LOD checks
+  ---
+  duration_ms: 104.267374
+  type: 'test'
+  ...
+# Subtest: art: owner ground requires a mesh and ground family extras; valid Blender export passes
+ok 179 - art: owner ground requires a mesh and ground family extras; valid Blender export passes
+  ---
+  duration_ms: 215.89931
+  type: 'test'
+  ...
+# Subtest: art: ground sizing and UV metadata cannot yield nonfinite values or zero divisors
+ok 180 - art: ground sizing and UV metadata cannot yield nonfinite values or zero divisors
+  ---
+  duration_ms: 214.434002
+  type: 'test'
+  ...
+# Subtest: art: tower replacement must preserve BulletPosition for shots and range
+ok 181 - art: tower replacement must preserve BulletPosition for shots and range
+  ---
+  duration_ms: 64.277804
+  type: 'test'
+  ...
+# Subtest: parseParked reads active entries and ignores comments
+ok 182 - parseParked reads active entries and ignores comments
+  ---
+  duration_ms: 1.73847
+  type: 'test'
+  ...
+# Subtest: parseParked rejects entries without an SP owner and missing arrays
+ok 183 - parseParked rejects entries without an SP owner and missing arrays
+  ---
+  duration_ms: 0.450459
+  type: 'test'
+  ...
+# Subtest: default mode lists and passes
+ok 184 - default mode lists and passes
+  ---
+  duration_ms: 0.305463
+  type: 'test'
+  ...
+# Subtest: strict mode fails when non-empty and passes when empty
+ok 185 - strict mode fails when non-empty and passes when empty
+  ---
+  duration_ms: 0.260959
+  type: 'test'
+  ...
+# Subtest: CLI check:parked --strict runs on the real ci.sh and rejects unknown flags
+ok 186 - CLI check:parked --strict runs on the real ci.sh and rejects unknown flags
+  ---
+  duration_ms: 4200.86388
+  type: 'test'
+  ...
+# Subtest: strict mode also fails on parked artifacts even when the PARKED list is empty
+ok 187 - strict mode also fails on parked artifacts even when the PARKED list is empty
+  ---
+  duration_ms: 0.273933
+  type: 'test'
+  ...
+# Subtest: parkedArtifacts reports _parked dirs and a non-empty refusal list
+ok 188 - parkedArtifacts reports _parked dirs and a non-empty refusal list
+  ---
+  duration_ms: 0.550291
+  type: 'test'
+  ...
+# Subtest: PARKED_COMMANDS owners agree with ci.sh PARKED entries; the real repo has no tools artifacts left
+ok 189 - PARKED_COMMANDS owners agree with ci.sh PARKED entries; the real repo has no tools artifacts left
+  ---
+  duration_ms: 0.369104
+  type: 'test'
+  ...
+# Subtest: standalone file and recursive directory resolve levels from content without bots
+ok 190 - standalone file and recursive directory resolve levels from content without bots
+  ---
+  duration_ms: 4674.067843
+  type: 'test'
+  ...
+# Subtest: tampered checkpoints report the first divergence tick and final hashes report final tick
+ok 191 - tampered checkpoints report the first divergence tick and final hashes report final tick
+  ---
+  duration_ms: 4707.973557
+  type: 'test'
+  ...
+# Subtest: header identity, unknown levels, malformed JSON and empty directories fail
+ok 192 - header identity, unknown levels, malformed JSON and empty directories fail
+  ---
+  duration_ms: 12350.584189
+  type: 'test'
+  ...
+# Subtest: directory traversal cannot silently skip malformed replay objects among good records
+ok 193 - directory traversal cannot silently skip malformed replay objects among good records
+  ---
+  duration_ms: 2102.395579
+  type: 'test'
+  ...
+# Subtest: auxiliary golden command-only logs coexist with recordings without running their commands
+ok 194 - auxiliary golden command-only logs coexist with recordings without running their commands
+  ---
+  duration_ms: 2193.013772
+  type: 'test'
+  ...
+# Subtest: check:rules fails untested headings and unknown title tags
+ok 195 - check:rules fails untested headings and unknown title tags
+  ---
+  duration_ms: 2064.969933
+  type: 'test'
+  ...
+# Subtest: rule coverage ignores body references, code fences, tombstones and helper/comment tags
+ok 196 - rule coverage ignores body references, code fences, tombstones and helper/comment tags
+  ---
+  duration_ms: 4260.464573
+  type: 'test'
+  ...
+# Subtest: disabled suite ancestry cannot satisfy rule coverage while matching active suites do
+ok 197 - disabled suite ancestry cannot satisfy rule coverage while matching active suites do
+  ---
+  duration_ms: 886.476513
+  type: 'test'
+  ...
+# Subtest: disabled suite pruning preserves active siblings and their unknown rule diagnostics
+ok 198 - disabled suite pruning preserves active siblings and their unknown rule diagnostics
+  ---
+  duration_ms: 5.245014
+  type: 'test'
+  ...
+# Subtest: coverage traversal skips build/dependencies and refuses test symlinks
+ok 199 - coverage traversal skips build/dependencies and refuses test symlinks
+  ---
+  duration_ms: 4107.613048
+  type: 'test'
+  ...
+# Subtest: committed UI assets verify without source extract
+ok 200 - committed UI assets verify without source extract
+  ---
+  duration_ms: 982.613163
+  type: 'test'
+  ...
+# Subtest: check detects changed font, sprite, stale output and manifest drift without rewriting
+ok 201 - check detects changed font, sprite, stale output and manifest drift without rewriting
+  ---
+  duration_ms: 951.395881
+  type: 'test'
+  ...
+# Subtest: shared merge preserves SP07 assets while restoring UI manifest
+ok 202 - shared merge preserves SP07 assets while restoring UI manifest
+  ---
+  duration_ms: 979.440485
+  type: 'test'
+  ...
+1..202
+# tests 202
+# suites 0
+# pass 183
+# fail 0
+# cancelled 0
+# skipped 19
+# todo 0
+# duration_ms 70690.910111
+
+> @node-arena/web@0.0.0 test /root/projects/node-arena/.worktrees/feat-editor-chrome-polish/apps/web
+> vitest run
+
+
+ RUN  v5.0.3 /root/projects/node-arena/.worktrees/feat-editor-chrome-polish/apps/web
+
+
+ Test Files  48 passed (48)
+      Tests  354 passed (354)
+   Start at  18:15:07
+   Duration  23.45s (tests 70%, import 25%, transform 4%)
+
+    Isolate  48 workers spawned · ~126ms startup each (spawn + environment, per file)
+             at least ~1.90s faster with isolate: false — reuses workers across files instead of one per file

@@ -1,0 +1,130 @@
+[
+  {
+    "gate": "typecheck",
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "started": "2026-10-26T22:39:37.013708+00:00",
+    "finished": "2026-10-26T22:40:10.534415+00:00",
+    "log": "/tmp/node-arena-sp06-final-typecheck.log"
+  },
+  {
+    "gate": "lint",
+    "command": "pnpm lint",
+    "exitCode": 0,
+    "started": "2026-10-26T22:40:10.535050+00:00",
+    "finished": "2026-10-26T22:40:20.732198+00:00",
+    "log": "/tmp/node-arena-sp06-final-lint.log"
+  },
+  {
+    "gate": "test",
+    "command": "pnpm test",
+    "exitCode": 0,
+    "started": "2026-10-26T22:40:20.732814+00:00",
+    "finished": "2026-10-26T22:43:08.521142+00:00",
+    "log": "/tmp/node-arena-sp06-final-test.log",
+    "passed": 1011,
+    "skipped": 19,
+    "failed": 0,
+    "packages": {
+      "defs": 11,
+      "content": 87,
+      "sim": 220,
+      "bots": 83,
+      "tools": 186,
+      "web": 424
+    },
+    "webTestFiles": 65,
+    "notes": "19 source-extract-only tools tests skipped because TW_EXTRACT is absent."
+  },
+  {
+    "gate": "content",
+    "command": "pnpm check:content --base HEAD",
+    "exitCode": 0,
+    "started": "2026-10-26T22:43:08.521799+00:00",
+    "finished": "2026-10-26T22:43:10.349945+00:00",
+    "log": "/tmp/node-arena-sp06-final-content.log"
+  },
+  {
+    "gate": "preview-e2e",
+    "command": "pnpm test:web:e2e",
+    "exitCode": 0,
+    "started": "2026-10-26T22:43:10.350577+00:00",
+    "finished": "2026-10-26T22:45:11.688982+00:00",
+    "log": "/tmp/node-arena-sp06-final-preview-e2e.log",
+    "passed": 24,
+    "skipped": 77,
+    "failed": 0,
+    "notes": "77 development-only cases skipped in preview."
+  },
+  {
+    "gate": "dev-e2e",
+    "command": "WEB_TEST_SERVER=dev pnpm --filter @node-arena/web exec playwright test --workers=1",
+    "exitCode": 1,
+    "started": "2026-10-26T22:45:11.689419+00:00",
+    "finished": "2026-10-26T22:52:26.189701+00:00",
+    "log": "/tmp/node-arena-sp06-final-dev-e2e.log",
+    "passed": 96,
+    "skipped": 2,
+    "failed": 3,
+    "notes": "Initial run retained as failure evidence; test migrations fixed in dev-e2e-failing-subset and dev-e2e-rerun."
+  },
+  {
+    "gate": "dev-e2e-failing-subset",
+    "command": "WEB_TEST_SERVER=dev pnpm --filter @node-arena/web exec playwright test e2e/editor-create-handoff.spec.ts e2e/editor-finalize.spec.ts e2e/editor-viewport.spec.ts --grep 'Custom create opens|Finalize waits behind|Space key in' --workers=1",
+    "exitCode": 0,
+    "finished": "2026-10-26T23:06:48.672216+00:00",
+    "log": "/tmp/node-arena-sp06-dev-failing-subset.log",
+    "passed": 3,
+    "skipped": 0,
+    "notes": "Three migrated assertions/flows corrected: dirty guard instead of blank-document validation chip, both Save buttons locked, fresh canvas pointer entry after Create."
+  },
+  {
+    "gate": "dev-e2e-rerun",
+    "command": "WEB_TEST_SERVER=dev pnpm --filter @node-arena/web exec playwright test --workers=1",
+    "started": "2026-10-26T23:06:48.673117+00:00",
+    "log": "/tmp/node-arena-sp06-final-dev-e2e-rerun.log",
+    "exitCode": 0,
+    "finished": "2026-10-26T23:13:55.436444+00:00",
+    "passed": 99,
+    "skipped": 2,
+    "failed": 0,
+    "notes": "Full suite after the three scoped test-flow corrections; both skips are preview-only cases."
+  },
+  {
+    "gate": "visual-evidence",
+    "result": "Five committed captures accepted during Task 10 visual verification.",
+    "reproduceCommand": "SP06_SHOT_DIR=<06-editor-amendments/screens absolute path> WEB_TEST_SERVER=dev pnpm --filter @node-arena/web exec playwright test e2e/z-editor-amendments.spec.ts --workers=1",
+    "screenshots": [
+      {
+        "file": "screens/bar.png",
+        "width": 1440,
+        "height": 56,
+        "sha256": "56e5002514d55ae543f23e9e602736754a359e45245af10d705745b8dfa3dcac"
+      },
+      {
+        "file": "screens/check-error.png",
+        "width": 1440,
+        "height": 1000,
+        "sha256": "986b80fe283dd9817529a998309e14c9f8fb19980e00295e7981d2b68a73c123"
+      },
+      {
+        "file": "screens/grey-library.png",
+        "width": 275,
+        "height": 290,
+        "sha256": "a6d850a823c81e5c20d027472321463e5a6b0b52312ef6844f35546ce5131d44"
+      },
+      {
+        "file": "screens/level.png",
+        "width": 275,
+        "height": 685,
+        "sha256": "61fecfe7b4da5cefe158c901a0ef1ba54fc38ad02f7d6601feca86e742c642d3"
+      },
+      {
+        "file": "screens/row-selection.png",
+        "width": 1440,
+        "height": 1000,
+        "sha256": "22a3c75112c3c09552e2e5ed9d5ab728df17e4cde06e17cdcb840b9b807b3bc8"
+      }
+    ]
+  }
+]

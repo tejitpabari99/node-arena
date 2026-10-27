@@ -1,6 +1,8 @@
 import type { SeatBot } from '@node-arena/content';
 import { expect, it } from 'vitest';
-import { blankDocument } from '../../src/editor/document.js';
+import { blankDocument as blankWithHouses } from '../../src/editor/document.js';
+/** These reducer tests start from a map with no buildings. */
+const blankDocument: typeof blankWithHouses = (...args) => ({ ...blankWithHouses(...args), buildings: [] });
 import * as model from '../../src/editor/model.js';
 
 it('places neutral archetype defaults with unique identities without mutating snapshots', () => {
@@ -15,6 +17,18 @@ it('places neutral archetype defaults with unique identities without mutating sn
   ]);
   expect(state.present.elements.map(e => [e.variant, e.pos])).toEqual([['small', { x: 2.35, z: -3.46 }], ['big', { x: 2.35, z: -3.46 }]]);
   expect(new Set([...state.present.buildings, ...state.present.elements].map(e => e.id)).size).toBe(5);
+});
+it('places one five-tile row with a single identity and deletes/undoes the whole row', () => {
+  const empty = model.createHistory(blankDocument('na-row', 'green', 'medium'));
+  for (const item of ['obstacle-small', 'obstacle-big'] as const) {
+    const placed = model.historyReducer(empty, { type: 'edit', op: { type: 'place', item, pos: { x: 0, z: 0 } } });
+    expect(placed.present.elements).toHaveLength(1);
+    expect(placed.present.elements[0]).toMatchObject({ variant: item === 'obstacle-small' ? 'small' : 'big', yawDeg: 0, footprint: { shape: 'box', w: 3.565, d: .713 } });
+    expect(placed.past).toHaveLength(1);
+    const deleted = model.historyReducer(placed, { type: 'edit', op: { type: 'delete', target: { kind: 'obstacle', id: placed.present.elements[0]!.id } } });
+    expect(deleted.present.elements).toEqual([]);
+    expect(model.historyReducer(deleted, { type: 'undo' }).present).toEqual(placed.present);
+  }
 });
 it('moves and deletes identified items; undo/redo restores exact documents and new edits clear redo', () => {
   let state = model.createHistory(blankDocument('na-model', 'green', 'medium'));
@@ -136,4 +150,45 @@ it('partial building/obstacle properties leave other fields intact; undefined cl
   const cleared = model.reduceDocument(doc, { type: 'obstacle-properties', id: 'e0', value: { variant: undefined } }).elements[0]!;
   expect('variant' in cleared).toBe(false);
   expect(cleared.yawDeg).toBe(45);
+});
+
+it('coalesces consecutive commits to one item field and undoes the whole typing burst', () => {
+  const doc = blankDocument('na-merge', 'green', 'medium');
+  let state = model.createHistory(doc);
+  for (const name of ['A', 'Arena', 'Arena name']) state = model.historyReducer(state, { type: 'edit', merge: 'level:name', op: { type: 'level-properties', value: { ...state.present, name } } });
+  expect(state.past).toHaveLength(1);
+  expect(state.present.name).toBe('Arena name');
+  state = model.historyReducer(state, { type: 'undo' });
+  expect(state.present).toBe(doc);
+  expect(model.historyReducer(state, { type: 'redo' }).present.name).toBe('Arena name');
+});
+
+it('ends merging at blur boundaries, other fields, discrete edits, and undo', () => {
+  const doc = blankDocument('na-boundary', 'green', 'medium');
+  const change = (state: model.DocHistory, name: string, merge?: string) => model.historyReducer(state, { type: 'edit', ...(merge ? { merge } : {}), op: { type: 'level-properties', value: { ...state.present, name } } });
+  let state = change(model.createHistory(doc), 'One', 'level:name');
+  state = model.historyReducer(state, { type: 'end-edit' });
+  state = change(state, 'Two', 'level:name');
+  expect(state.past).toHaveLength(2);
+  state = change(state, 'Three', 'other:name');
+  state = change(state, 'Four');
+  state = change(state, 'Five', 'level:name');
+  expect(state.past).toHaveLength(5);
+  state = model.historyReducer(state, { type: 'undo' });
+  state = change(state, 'Six', 'level:name');
+  expect(state.past).toHaveLength(5);
+  expect(state.future).toEqual([]);
+  expect(model.historyReducer(state, { type: 'undo' }).present.name).toBe('Four');
+});
+
+it('adds an AI and its chosen neutral starting house as one reversible edit', () => {
+  const doc = blankDocument('na-add-ai', 'green', 'medium');
+  doc.buildings = [{ id: 'house', archetype: 'house-wt1', pos: { x: 0, z: 0 }, owner: null, level: 1, ignoreForWin: false }];
+  const player = { id: 'p3', kind: 'ai' as const, colorKey: 'green', bot: { kind: 'tw' as const, actionDelayMs: 4000, behavior: 'full' as const } };
+  const state = model.historyReducer(model.createHistory(doc), { type: 'edit', op: { type: 'add-ai', player, ownBuilding: 'house' } });
+  expect(state.present.players.map(p => p.id)).toEqual(['p1', 'p2', 'p3']);
+  expect(state.present.buildings[0]!.owner).toBe('p3'); expect(state.past).toHaveLength(1);
+  expect(model.historyReducer(state, { type: 'undo' }).present).toEqual(doc);
+  const noHouse = model.historyReducer(model.createHistory(doc), { type: 'edit', op: { type: 'add-ai', player, ownBuilding: null } });
+  expect(noHouse.present.players).toHaveLength(3); expect(noHouse.present.buildings[0]!.owner).toBeNull();
 });

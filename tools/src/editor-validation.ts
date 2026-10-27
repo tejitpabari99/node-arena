@@ -1,4 +1,15 @@
 import { ContentLoadError, computeRequires, loadLevel, parseAndConvert, type Catalog, type NextLevel } from '@node-arena/content';
+import { isHouseArchetype } from '../../apps/web/src/editor/houses.js';
+import { playerLabel } from '../../apps/web/src/editor/labels.js';
+
+/** Playability check for editor Check/Finalize only; incomplete drafts remain saveable. */
+export function assertPlayersHaveHouses(catalog: Catalog, level: NextLevel): void {
+  const owners = new Set(level.buildings.filter(building => isHouseArchetype(catalog.buildings[building.archetype])).map(building => building.owner));
+  const errors = level.players.flatMap((player, index) => owners.has(player.id) ? [] : [{
+    file: `data/levels/${level.id}.json`, pointer: `/players/${index}`, message: `${playerLabel(level.players, player.id)} has no starting house`,
+  }]);
+  if (errors.length) throw new ContentLoadError(errors);
+}
 
 /** Browser-safe, synchronous validation shared by Save and future editor jobs. Values remain authored units. */
 export function validateEditorDocument(catalog: Catalog, input: unknown, id: string, copy = false) {
@@ -19,7 +30,11 @@ export function validateEditorDocument(catalog: Catalog, input: unknown, id: str
     }
   }
   const shape = parseAndConvert<NextLevel>(file, authored, 'level');
-  if (!shape.value) throw new ContentLoadError(shape.issues);
+  if (!shape.value) {
+    // A fresh blank draft has no buildings yet; say so plainly instead of the raw schema message.
+    const friendly = shape.issues.map(issue => issue.pointer === '/buildings' && /fewer than 1/.test(issue.message) ? { ...issue, message: 'Add at least one building' } : issue);
+    throw new ContentLoadError(friendly);
+  }
   authored.requires = computeRequires(catalog, authored);
   const loaded = loadLevel(catalog, authored, file);
   return { level: authored, warnings: loaded.warnings };

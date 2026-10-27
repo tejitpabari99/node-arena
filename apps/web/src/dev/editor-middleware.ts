@@ -4,7 +4,7 @@ import { isAbsolute, relative, resolve } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Connect, Plugin } from 'vite';
 import { ContentLoadError } from '@node-arena/content';
-import { EditorSaveError, saveEditorLevel } from '../../../../tools/src/editor-ops.js';
+import { duplicateEditorLevel, EditorSaveError, saveEditorLevel } from '../../../../tools/src/editor-ops.js';
 import { prepareEditorProxy, runEditorProxy, type EditorProxyRunner, type EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
 
 import { editorFinalizeStatus, finalizeEditorLevel, type EditorFinalizeRunner } from '../../../../tools/src/editor-finalize.js';
@@ -84,7 +84,22 @@ export function createEditorJobGate() {
   }, snapshot() { return { busy: busy || saves > 0, revision }; } };
 }
 const editorJobs = createEditorJobGate();
-export function createEditorMiddleware(levelsDir: string, options: { runProxy?: EditorProxyRunner; runFinalize?: EditorFinalizeRunner; runStatus?: typeof editorFinalizeStatus; jobs?: ReturnType<typeof createEditorJobGate> } = {}): Connect.NextHandleFunction {
+
+/** Marks the window in which editor Save/Duplicate content writes are expected, so the dev server can skip its full reload for them. */
+export function createEditorWriteGuard(graceMs = 2000, now: () => number = Date.now) {
+  let active = 0, until = 0;
+  return {
+    begin() { active++; return () => { active--; until = now() + graceMs; }; },
+    isEditorWrite() { return active > 0 || now() < until; },
+  };
+}
+const editorWrites = createEditorWriteGuard();
+const isEditorContentFile = (file: string) => /\/data\/levels\/[^/]+\.json$/.test(file.replaceAll('\\', '/')) || file.replaceAll('\\', '/').endsWith('/data/campaigns/custom.json');
+/** Vite hook body: swallow hot updates only for files the editor itself just wrote. */
+export function shouldSkipEditorHotUpdate(file: string, guard: { isEditorWrite(): boolean } = editorWrites): boolean {
+  return guard.isEditorWrite() && isEditorContentFile(file);
+}
+export function createEditorMiddleware(levelsDir: string, options: { runProxy?: EditorProxyRunner; runFinalize?: EditorFinalizeRunner; runStatus?: typeof editorFinalizeStatus; jobs?: ReturnType<typeof createEditorJobGate>; writes?: ReturnType<typeof createEditorWriteGuard> } = {}): Connect.NextHandleFunction {
   let statusInFlight: { revision: number; promise: ReturnType<typeof editorFinalizeStatus> } | undefined;
   async function readLevel(id: string): Promise<{ id: string; name: string }> {
     const path = await editorLevelPath(levelsDir, id);
@@ -144,7 +159,8 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
           const controller = new AbortController();
           const cancel = () => { if (!res.writableEnded) controller.abort(); };
           res.on('close', cancel);
-          const emit = (event: EditorProxyEvent) => { if (!res.destroyed) res.write(JSON.stringify(event) + '\n'); };
+          let forwardedError = false;
+          const emit = (event: EditorProxyEvent) => { if (event.type === 'error') forwardedError = true; if (!res.destroyed) res.write(JSON.stringify(event) + '\n'); };
           try {
             const input = await prepareEditorProxy(resolve(levelsDir, '../..'), value.id, value.level);
             if (controller.signal.aborted) return;
@@ -153,9 +169,25 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
             res.setHeader('X-Accel-Buffering', 'no');
             emit({ type: 'started', id: value.id });
             try { await (options.runProxy ?? runEditorProxy)(input, emit, controller.signal); }
-            catch { if (!controller.signal.aborted) emit({ type: 'error', error: 'Proxy check failed' }); }
+            catch (error) {
+              if (!controller.signal.aborted) {
+                console.error('[editor] proxy check', error);
+                if (!forwardedError) emit({ type: 'error', error: error instanceof Error ? error.message : String(error) });
+              }
+            }
             res.end();
           } finally { res.off('close', cancel); release(); }
+          return;
+        }
+        if (path === '/__editor/duplicate') {
+          let value: { id?: unknown };
+          try { value = JSON.parse(body) as typeof value; }
+          catch { throw new EditorHttpError(400, 'Invalid JSON'); }
+          if (!value || typeof value.id !== 'string') throw new EditorHttpError(400, 'Duplicate requires an id');
+          await editorLevelPath(levelsDir, value.id);
+          const release = (options.jobs ?? editorJobs).acquireSave(), done = (options.writes ?? editorWrites).begin();
+          try { json(res, 200, await duplicateEditorLevel(resolve(levelsDir, '../..'), value.id)); }
+          finally { release(); done(); }
           return;
         }
         if (path === '/__editor/save') {
@@ -164,9 +196,9 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
           catch { throw new EditorHttpError(400, 'Invalid JSON'); }
           if (!value || typeof value.id !== 'string' || (value.copy !== undefined && typeof value.copy !== 'boolean')) throw new EditorHttpError(400, 'Save requires an id, level and optional copy flag');
           await editorLevelPath(levelsDir, value.id, true);
-          const release = (options.jobs ?? editorJobs).acquireSave();
+          const release = (options.jobs ?? editorJobs).acquireSave(), done = (options.writes ?? editorWrites).begin();
           try { json(res, 200, await saveEditorLevel(resolve(levelsDir, '../..'), value.id, value.level, value.copy === true)); }
-          finally { release(); }
+          finally { release(); done(); }
           return;
         }
       }
@@ -200,5 +232,7 @@ export function editorPlugin(levelsDir: string): Plugin {
     name: 'node-arena-editor',
     apply: 'serve',
     configureServer(server) { server.middlewares.use(createEditorMiddleware(levelsDir)); },
+    // Editor Save rewrites eagerly-globbed content JSON; without this Vite full-reloads the page.
+    handleHotUpdate({ file }) { if (shouldSkipEditorHotUpdate(file)) return []; },
   };
 }

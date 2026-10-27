@@ -94,7 +94,7 @@ test('golden levelview-1: serialization is JSON.stringify(...,null,2)+"\\n" in 0
   const text = goldenText();
   const obj = JSON.parse(text) as Record<string, unknown>;
   assert.equal(JSON.stringify(obj, null, 2) + '\n', text);
-  assert.deepEqual(Object.keys(obj), [...content.KEY_ORDER.level]);
+  assert.deepEqual(Object.keys(obj), content.KEY_ORDER.level.filter((key) => key !== 'editorVersion'));
   // nested objects follow the same exported orders (known keys in order, a subset of the order list)
   const inOrder = (o: object, order: readonly string[]): void => { const k = Object.keys(o); assert.deepEqual(k, order.filter((x) => k.includes(x))); };
   const lv = obj as { source: object; bounds: object; players: object[]; buildings: Array<{ pos: object }> };

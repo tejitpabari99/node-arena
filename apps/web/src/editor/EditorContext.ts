@@ -1,7 +1,7 @@
 import { createContext } from 'preact';
 import { useContext } from 'preact/hooks';
 import type { LevelDoc } from './document.js';
-import type { Area, Clipboard, DocHistory, DocOp, HistoryAction } from './model.js';
+import type { Area, Clipboard, DocHistory, DocOp, HistoryAction, LibraryItem } from './model.js';
 import type { Selection } from './picking.js';
 import type { EditorViewport, ViewportStatus } from './viewport-engine.js';
 
@@ -10,9 +10,13 @@ export type EditorArea = Area;
 /** Shared editor state: Editor.tsx provides it; Viewport and panels consume it. */
 export interface EditorContext {
   doc: LevelDoc;
+  /** Last server response/opened document; version display must read this baseline. null until first save. */
+  savedDoc: LevelDoc | null;
   history: DocHistory;
   dispatch(a: HistoryAction): void;
-  edit(op: DocOp): void;
+  edit(op: DocOp | ((doc: LevelDoc) => DocOp), merge?: string): void;
+  endEditBurst(): void;
+  placeCenter(item: LibraryItem): void;
   deleteSelection(): void;
   area: EditorArea;
   selection: Selection[];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { blankDocument } from '../../src/editor/document.js';
-import { addAi, aiCount, canAddAi, canApply, canDeleteAi, deleteAi, duplicateColors, ownedCount, toDraft } from '../../src/editor/level-draft.js';
+import { addAi, aiCount, canAddAi, canDeleteAi, deleteAi, delayValid, duplicateColors, ownedCount, toDraft } from '../../src/editor/level-draft.js';
 
 const keys = ['blue', 'red', 'green', 'yellow', 'pink'];
 const doc = blankDocument('na-x', 'grass', 'small'); // p1 human blue, p2 ai red
@@ -28,15 +28,14 @@ describe('level draft', () => {
     expect(deleteAi(toDraft(doc), 'p2').players).toHaveLength(2);
     expect(canDeleteAi(addAi(toDraft(doc), keys).players, 'p1')).toBe(false);
   });
-  it('duplicate colors / unchanged / invalid block Apply', () => {
+  it('finds duplicate colors and validates AI delay bounds', () => {
     const dup = { ...toDraft(doc), players: doc.players.map(p => ({ ...p, colorKey: 'red' })) };
     expect(duplicateColors(dup.players)).toEqual(['red']);
-    expect(canApply(doc, dup)).toBe(false);
-    expect(canApply(doc, toDraft(doc))).toBe(false);
-    expect(canApply(doc, { ...toDraft(doc), name: 'New' })).toBe(true);
-    expect(canApply(doc, { ...toDraft(doc), name: ' ' })).toBe(false);
-    const slow = toDraft(doc); (slow.players[1]!.bot as { actionDelayMs: number }).actionDelayMs = 10;
-    expect(canApply(doc, slow)).toBe(false);
+    for (const [value, valid] of [[49, false], [50, true], [50.5, false], [2147483647, true], [2147483648, false]] as const) {
+      const player = structuredClone(doc.players[1]!);
+      (player.bot as { actionDelayMs: number }).actionDelayMs = value;
+      expect(delayValid(player)).toBe(valid);
+    }
   });
   it('counts owned buildings', () => {
     expect(ownedCount({ buildings: [{ owner: 'p2' }, { owner: null }, { owner: 'p2' }] as never }, 'p2')).toBe(2);

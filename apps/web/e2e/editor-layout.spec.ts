@@ -1,7 +1,8 @@
+import { undo as editorUndo, save as editorSave, copyFrom, flushEdits } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { LevelDoc } from '../src/editor/document.js';
 
-test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and persist only on Save', async ({ page }) => {
+test('layout tools update a draft, snap rotation live, show actual blocked LOS, and persist only on Save', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev-only editor');
   let writes = 0, original: LevelDoc['bounds'] | undefined, saved: LevelDoc | undefined;
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
@@ -20,9 +21,7 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
     await route.fulfill({ json: { level: saved, warnings: [] } });
   });
   await page.goto('/editor.html');
-  await page.getByLabel('New level id').fill('na-layout-browser');
-  await page.getByLabel('Copy level').selectOption('levelview-1');
-  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await copyFrom(page, 'levelview-1', 'na-layout-browser');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await page.getByLabel('Selected item', { exact: true }).selectOption('building:b0');
   await page.locator('[data-section=selection] summary', { hasText: 'Line of sight' }).click();
@@ -33,18 +32,18 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await expect(page.locator('.editor-los circle')).toBeVisible();
   await page.getByLabel('Selected item', { exact: true }).selectOption('obstacle:e0');
   await page.locator('[data-section=selection] summary', { hasText: 'Shape' }).click();
-  await page.getByLabel('Yaw (degrees)').fill('23');
-  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('23');
-  await page.getByRole('button', { name: 'Apply shape' }).click();
-  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
+  await page.getByLabel('Rotation').fill('23');
+  await expect(page.getByLabel('Rotation')).toHaveValue('23');
+  await flushEdits(page);
+  await expect(page.getByLabel('Rotation')).toHaveValue('30');
   // Yaw always snaps to 15 degrees.
-  await page.getByLabel('Yaw (degrees)').fill('23');
-  await page.getByRole('button', { name: 'Apply shape' }).click();
-  await expect(page.getByLabel('Yaw (degrees)')).toHaveValue('30');
+  await page.getByLabel('Rotation').fill('23');
+  await flushEdits(page);
+  await expect(page.getByLabel('Rotation')).toHaveValue('30');
   await page.getByRole('button', { name: 'Copy', exact: true }).click();
   await page.getByRole('button', { name: 'Paste', exact: true }).click();
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '2');
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '1');
   await page.getByLabel('Selected item', { exact: true }).selectOption('multi');
   await page.getByRole('button', { name: 'Select all', exact: true }).click();
@@ -53,7 +52,7 @@ test('layout tools update a draft, snap Apply yaw, show actual blocked LOS, and 
   await expect(page.getByTestId('bounds-preview')).toHaveCount(0);
   await expect(page.getByRole('button', { name: /auto-fit/i })).toHaveCount(0);
   expect(writes).toBe(0);
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await editorSave(page);
   await expect.poll(() => writes).toBe(1);
   expect(saved!.buildings.map(b => [b.pos, b.owner])).toEqual([[{ x: -4, z: 0 }, 'p1'], [{ x: 4, z: 0 }, 'p2']]);
   expect(saved!.elements[0]!.yawDeg).toBe(30);

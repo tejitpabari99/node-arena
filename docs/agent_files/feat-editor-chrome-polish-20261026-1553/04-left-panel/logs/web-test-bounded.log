@@ -1,0 +1,16 @@
+
+> @node-arena/web@0.0.0 test /root/projects/node-arena/.worktrees/feat-editor-chrome-polish/apps/web
+> vitest run
+
+
+ RUN  v5.0.3 /root/projects/node-arena/.worktrees/feat-editor-chrome-polish/apps/web
+
+
+ Test Files  48 passed (48)
+      Tests  354 passed (354)
+   Start at  18:16:02
+   Duration  32.74s (tests 70%, import 26%, transform 4%)
+
+     Import  221 modules were evaluated 488 times · 15.33s total, 26% of tracked time
+             ~2.31s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation

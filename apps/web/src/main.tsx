@@ -19,7 +19,7 @@ async function main(){
   const unsubscribe=app.subscribe(()=>{const state=app.snapshot();arena.hidden=state.screen!=='playing'&&state.screen!=='result'&&!app.driver;});
   const unmount=mountApp(app,root),audio=connectAppAudio(app);
   if(harness)window.__na=harness.connect(app);
-  await app.boot();await harness?.autoLoad(app);
+  await app.boot();if(new URLSearchParams(location.search).get('view')==='custom')app.setPickerView('custom');await harness?.autoLoad(app);
   if(import.meta.hot)import.meta.hot.dispose(()=>{window.__na?.dispose();delete window.__na;audio.dispose();unsubscribe();unmount();app.dispose();arena.remove();});
 }
 void main();

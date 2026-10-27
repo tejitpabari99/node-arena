@@ -1,5 +1,55 @@
+import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, share, openCopied, flushEdits, clearBuildings } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
+import type { SeatBot } from '@node-arena/content';
 import type { LevelDoc } from '../src/editor/document.js';
+
+test('persistent editor banners stay below Play and return above the editor canvas', async ({ page }) => {
+  test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev editor');
+  await page.route('**/__editor/level/levelview-1', async route => {
+    const doc = await (await route.fetch()).json() as LevelDoc;
+    doc.buildings = [
+      { id: 'b0', archetype: 'house-wt1', pos: { x: -3, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
+      { id: 'b1', archetype: 'house-wt1', pos: { x: 3, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
+      { id: 'b2', archetype: 'house-wt1', pos: { x: 3, z: 3 }, owner: 'p2', level: 1, ignoreForWin: false },
+    ];
+    (doc.players[1]!.bot! as SeatBot).script = [{ op: 'line', own: 'b2', target: 'b0', afterMs: 0 }];
+    await route.fulfill({ json: doc });
+  });
+  await openCopied(page);
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+  await page.getByLabel('Selected item', { exact: true }).selectOption('building:b2');
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  const banner = page.getByTestId('script-removal-banner');
+  await expect(banner).toContainText('AI1 script removed');
+  const message = await banner.textContent();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.locator('.editor-play-arena canvas')).toBeVisible();
+  await expect(page.locator('.ed-shell')).toHaveAttribute('inert', '');
+  expect(await banner.evaluate(element => {
+    const shell = element.closest<HTMLElement>('.ed-shell')!;
+    const rect = element.getBoundingClientRect();
+    // Inert suppresses hit testing, not painting. Remove it synchronously so this
+    // checks the actual layer order, then restore before any input can run.
+    shell.inert = false;
+    try {
+      return !!document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('.editor-play-overlay');
+    } finally { shell.inert = true; }
+  })).toBe(true);
+  await page.getByRole('button', { name: 'Back to editor', exact: true }).click();
+  await expect(page.locator('.editor-play-overlay')).toHaveCount(0);
+  await expect(banner).toHaveText(message!);
+  expect(await banner.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+  })).toBe(true);
+  await share(page);
+  const popover = page.getByTestId('share-panel');
+  await expect(popover).toBeVisible();
+  expect(await popover.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return element.contains(document.elementFromPoint(rect.right - 10, rect.bottom - 10));
+  })).toBe(true);
+});
 
 test('new → place → Save → real Play defeat → back → reload custom; main progress and mute stay untouched', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev editor');
@@ -27,8 +77,9 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
     return JSON.stringify({ ...localStorage });
   });
   await page.getByLabel('New level id').fill('na-play-browser');
-  await page.getByRole('button', { name: 'Create blank', exact: true }).click();
-  await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
+  await page.getByTestId('create-confirm').click();
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+  await clearBuildings(page);
   for (const [index, fraction] of [[0, .4], [1, .6]]) {
     const button = page.getByRole('button', { name: 'Place house-wt1', exact: true });
     await button.scrollIntoViewIfNeeded();
@@ -39,11 +90,11 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
     await expect(page.getByTestId('viewport-status')).toContainText('Ready');
     await page.getByLabel('Selected item', { exact: true }).selectOption(`building:b${index}`);
     await page.locator('[data-section=selection] summary', { hasText: 'Owner and level' }).click();
-    await page.getByLabel('Owner', { exact: true }).selectOption('p2');
-    await page.getByRole('button', { name: 'Apply owner and level', exact: true }).click();
+    await page.getByLabel('Owner', { exact: true }).selectOption(index === 0 ? 'p1' : 'p2');
+    await flushEdits(page);
   }
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByTestId('save-chip')).toHaveText('Saved ✓');
+  await editorSave(page);
+  await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.locator('.editor-play-arena canvas')).toBeVisible();
   await expect(page.getByRole('dialog', { name: 'Defeat', exact: true })).toBeVisible({ timeout: 20000 });
@@ -51,10 +102,10 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
   await page.getByRole('button', { name: 'Back to editor', exact: true }).click();
   await expect(page.locator('.editor-play-overlay')).toHaveCount(0);
   await expect(page.getByLabel('Selected item', { exact: true })).toHaveValue('building:b1');
-  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await historyDisabled(page, 'undo')).toBe(false);
+  await editorUndo(page);
   await expect(page.getByLabel('Owner', { exact: true })).toHaveValue('');
-  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await editorRedo(page);
   await expect(page.getByLabel('Owner', { exact: true })).toHaveValue('p2');
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '2');
   expect(await page.evaluate(() => JSON.stringify({ ...localStorage }))).toBe(baseline);
@@ -136,7 +187,9 @@ test('overlay uses real input, identical initial hash, private completions/mute,
   expect(state.save.completed['na-runtime-browser']).toBeDefined();
   expect(await page.evaluate(() => localStorage.getItem('nodearena:save'))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem('nodearena:save.bak'))).toBeNull();
-  await page.getByRole('button', { name: 'Levels', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Replay', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Levels', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit level', exact: true }).click();
   await expect(page.locator('.editor-play-overlay')).toHaveCount(0);
   expect(await page.evaluate(() => window.__editorPlayTest.disposals)).toEqual({ runtime: 1, driver: 1, exited: 1 });
   expect(await page.evaluate(() => window.__editorPlayTest.play.app.driver)).toBeNull();

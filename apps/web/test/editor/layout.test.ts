@@ -3,7 +3,7 @@ import { blankDocument } from '../../src/editor/document.js';
 import { copySelection, createHistory, historyReducer, reduceDocument, snapPosition, snapYaw } from '../../src/editor/model.js';
 
 function fixture() {
-  const doc = blankDocument('na-layout', 'green', 'medium');
+  const doc = { ...blankDocument('na-layout', 'green', 'medium'), buildings: [] as ReturnType<typeof blankDocument>['buildings'] };
   doc.bounds = { minX: -4, maxX: 8, minZ: -6, maxZ: 10 };
   doc.buildings = [
     { id: 'b0', archetype: 'house-wt1', pos: { x: 1, z: 3 }, owner: 'p1', level: 1, ignoreForWin: false, params: { level: { maxLevel: 5 } } },
@@ -70,7 +70,7 @@ it('clampDelta clamps per axis, passes inside deltas, zeroes axes of groups wide
   expect(clampDelta([{ x: -30, z: 0 }, { x: 30, z: 2 }], { x: 5, z: 50 }, A)).toEqual({ x: 0, z: 13 });
 });
 it('reducer clamps place/move/move-selection/paste only when an area is carried', () => {
-  const doc = blankDocument('na-clamp', 'green', 'medium');
+  const doc = { ...blankDocument('na-clamp', 'green', 'medium'), buildings: [] as ReturnType<typeof blankDocument>['buildings'] };
   const far = { x: 50, z: -50 };
   const placed = (area?: typeof A) => historyReducer(createHistory(doc), { type: 'edit', op: { type: 'place', item: 'tower', pos: far }, ...(area ? { area } : {}) }).present;
   expect(placed(A).buildings[0]!.pos).toEqual({ x: 20, z: -15 });

@@ -1,3 +1,4 @@
+import { undo as editorUndo, openFile, openCopied } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 const development = process.env.WEB_TEST_SERVER === 'dev';
@@ -6,13 +7,13 @@ test('working copy renders, reports blank drafts, and has editor camera controls
   test.skip(!development, 'Editor API is dev-only');
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-viewport');
-  await page.getByRole('button', { name: 'Create blank' }).click();
-  await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
-  await page.getByTestId('level-name').click();
-  await page.getByLabel('New level id').fill('na-viewport');
-  await page.getByLabel('Copy level').selectOption('levelview-1');
-  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
-  await page.getByRole('button', { name: 'Discard and continue', exact: true }).click();
+  await page.getByTestId('create-confirm').click();
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
+  await openFile(page, 'create');
+  await page.getByLabel('New level id').fill('na-viewport-copy');
+  await page.getByLabel('Copy existing level', { exact: true }).selectOption('levelview-1');
+  await page.getByTestId('create-confirm').click();
+  await page.getByTestId('confirm-discard').click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await expect(page.getByLabel('Edit viewport').locator('canvas')).toBeVisible();
   await page.getByTestId('canvas-controls').getByRole('button', { name: 'Zoom in', exact: true }).click();
@@ -144,8 +145,8 @@ test('textures that finish after scene readiness appear without touching the cam
   await page.route('**/textures/tw/*-blue.png', async route => { await held; await route.continue(); });
   await page.goto('/editor.html');
   await page.getByLabel('New level id').fill('na-late-textures');
-  await page.getByLabel('Copy level').selectOption('levelview-20');
-  await page.getByRole('button', { name: 'Copy level', exact: true }).click();
+  await page.getByLabel('Copy existing level', { exact: true }).selectOption('levelview-20');
+  await page.getByTestId('create-confirm').click();
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const canvas = page.getByLabel('Edit viewport').locator('canvas');
   const before = await canvas.screenshot();
@@ -165,7 +166,7 @@ test('failed rebuild keeps the last scene with an error badge, disables picking,
     doc.elements = [];
     await route.fulfill({ json: doc });
   });
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   const status = page.getByTestId('viewport-status'), badge = page.getByTestId('preview-error');
   await expect(status).toContainText('Ready');
   const box = (await page.getByLabel('Edit viewport').boundingBox())!, src = (await page.getByRole('button', { name: 'Place tower', exact: true }).boundingBox())!;
@@ -190,7 +191,7 @@ test('failed rebuild keeps the last scene with an error badge, disables picking,
   await page.mouse.click(drop.x, drop.y);
   await expect(page.getByTestId('viewport-selection')).toHaveText('No selection');
   // Undo restores a valid document; the badge clears and picking works again.
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await editorUndo(page);
   await expect(badge).toHaveCount(0);
   await expect(status).toContainText('Ready');
   await page.getByLabel('Selected item', { exact: true }).selectOption('');
@@ -332,7 +333,7 @@ test('pan gestures: hand mode, Space, middle/right drag, marquee with hand off, 
   // Grid overlay.
   await expect(page.locator('.editor-grid-line')).toHaveCount(0);
   await page.evaluate(() => window.__editorViewport!.setGrid(true));
-  expect(await page.locator('.editor-grid-line').count()).toBeGreaterThan(40);
+  await expect.poll(() => page.locator('.editor-grid-line').count()).toBeGreaterThan(40);
   expect(await page.locator('.editor-grid-major').count()).toBeGreaterThan(0);
   await page.evaluate(() => window.__editorViewport!.fitArea()); // 40x30 area at fit: spacing may fall under 8px
   await page.evaluate(() => window.__editorViewport!.setGrid(false));
@@ -341,9 +342,11 @@ test('pan gestures: hand mode, Space, middle/right drag, marquee with hand off, 
 
 test('Space key in the editor pans only while the pointer is over the canvas', async ({ page }) => {
   test.skip(!development, 'Dev-only editor');
-  await page.goto('/editor.html?template=levelview-1');
+  await openCopied(page);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const ws = page.locator('.editor-workspace'), box = (await ws.boundingBox())!;
+  // Create closes beneath the pointer; establish a fresh canvas entry for shortcuts.
+  await page.mouse.move(2, 2);
   await page.mouse.move(box.x + 50, box.y + 50);
   await page.keyboard.down('Space');
   expect(await ws.evaluate(e => (e as HTMLElement).style.cursor)).toBe('grab');
@@ -361,13 +364,41 @@ test('canvas controls: zoom limits, fit, game camera, hand, persisted grid', asy
   await page.goto('/editor.html');
   await page.evaluate(() => localStorage.removeItem('node-arena.editor.grid'));
   await page.getByLabel('New level id').fill('na-canvas-ctl');
-  await page.getByRole('button', { name: 'Create blank' }).click();
-  await expect(page.getByTestId('viewport-status')).toContainText('Add a building');
+  await page.getByTestId('create-confirm').click();
+  await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   const controls = page.getByTestId('canvas-controls');
   for (const name of ['Zoom out', 'Zoom in', 'Fit area', 'Game camera', 'Hand', 'Show grid']) {
     const b = controls.getByRole('button', { name, exact: true });
     await expect(b).toBeVisible(); await expect(b).toHaveAttribute('title', name);
   }
+  await expect(controls).toHaveAttribute('role', 'group');
+  await expect(controls).toHaveAccessibleName('Canvas controls');
+  expect(await controls.getByRole('button').evaluateAll(buttons => buttons.map(b => b.getAttribute('aria-label'))))
+    .toEqual(['Zoom in', 'Zoom out', 'Fit area', 'Game camera', 'Hand', 'Show grid']);
+  const canvasBox = (await page.locator('.ed-canvas').boundingBox())!;
+  const controlBox = (await controls.boundingBox())!;
+  expect(controlBox.y - canvasBox.y).toBeCloseTo(12, 1);
+  expect(canvasBox.x + canvasBox.width - controlBox.x - controlBox.width).toBeCloseTo(12, 1);
+  const buttons = controls.getByRole('button');
+  const buttonBoxes = await Promise.all((await buttons.all()).map(async button => (await button.boundingBox())!));
+  for (const [i, box] of buttonBoxes.entries()) {
+    expect(box.x).toBeCloseTo(controlBox.x, 1);
+    expect(box.width).toBeCloseTo(36, 1);
+    expect(box.height).toBeCloseTo(36, 1);
+    if (i > 0) expect(box.y).toBeGreaterThan(buttonBoxes[i - 1]!.y);
+  }
+  const cards = controls.locator('.canvas-card');
+  await expect(cards).toHaveCount(5);
+  const cardBoxes = await Promise.all((await cards.all()).map(async card => (await card.boundingBox())!));
+  for (const [i, box] of cardBoxes.entries()) {
+    expect(box.x).toBeCloseTo(controlBox.x, 1);
+    expect(box.width).toBeCloseTo(36, 1);
+    expect(box.height).toBeCloseTo(i === 0 ? 72 : 36, 1);
+    if (i > 0) expect(box.y - cardBoxes[i - 1]!.y - cardBoxes[i - 1]!.height).toBeCloseTo(8, 1);
+    await expect(cards.nth(i).getByRole('button')).toHaveCount(i === 0 ? 2 : 1);
+  }
+  expect(buttonBoxes[1]!.y - buttonBoxes[0]!.y).toBeCloseTo(36, 1);
+  expect(controlBox.height).toBeCloseTo(248, 1);
   const zin = controls.getByRole('button', { name: 'Zoom in', exact: true }), zout = controls.getByRole('button', { name: 'Zoom out', exact: true });
   await expect(page.getByRole('button', { name: 'Zoom in', exact: true })).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Game camera', exact: true })).toHaveCount(1);
@@ -391,9 +422,9 @@ test('canvas controls: zoom limits, fit, game camera, hand, persisted grid', asy
   await expect(page.locator('.editor-grid-line')).toHaveCount(0);
   await grid.click();
   await expect(grid).toHaveAttribute('aria-pressed', 'true');
-  expect(await page.locator('.editor-grid-line').count()).toBeGreaterThan(0);
+  await expect(page.locator('.editor-grid-line').first()).toBeAttached();
   await page.goto('/editor.html?level=na-trial');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await expect(controls.getByRole('button', { name: 'Show grid', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  expect(await page.locator('.editor-grid-line').count()).toBeGreaterThan(0);
+  await expect(page.locator('.editor-grid-line').first()).toBeAttached();
 });

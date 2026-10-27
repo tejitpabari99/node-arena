@@ -15,7 +15,8 @@ import { childIndex, createElementRenderer, placeObstacles, type ChildExtra, typ
 import { createLaneRenderer, laneTiles, LANE_SCROLL } from '../../src/render/lane-renderer.js';
 import { createEnvironment } from '../../src/render/environment.js';
 import manifestJson from '../../assets/manifest.json';
-import type { ManifestV2 } from '@node-arena/content';
+import { compileLevel, computeRequires, loadCatalog, loadLevel, type ManifestV2, type NextLevel } from '@node-arena/content';
+import { loadFiles } from '../../../../tools/src/files.js';
 
 const manifest = manifestJson as unknown as ManifestV2;
 const loadGlb = async (file: string): Promise<LoadedGltf> => {
@@ -94,6 +95,59 @@ describe('obstacles', () => {
     const p = placeObstacles([el('o1-0', 0, 0, 0), el('o1-2', 0, 0, 0)], 'element.obstacle', children); // k=1 inactive, not emitted
     expect(p.map(q => q.variant)).toEqual(['big', 'big']);
     expect(placeObstacles([el('o1-7', 0, 0, 0)], 'element.obstacle', children)[0]!.scale).toEqual([1, 1, 1]);
+  });
+  it.each([
+    { yaw: 0, first: [1.287, 3], last: [2.713, 3] },
+    { yaw: 90000, first: [2, 3.713], last: [2, 2.287] },
+    { yaw: -90000, first: [2, 2.287], last: [2, 3.713] },
+    { yaw: 45000, first: [1.495832864, 3.504167136], last: [2.504167136, 2.495832864] },
+  ])('places a three-tile row centered along rotated local x at yaw $yaw', ({ yaw, first, last }) => {
+    const placements = placeObstacles([{ ...el('row', 2000, 3000, yaw, 'small'), footprint: { shape: 'box', w: 2139, d: 713 } }], 'element.obstacle', children);
+    expect(placements).toHaveLength(3);
+    expect(placements[0]!.x).toBeCloseTo(first[0]!); expect(placements[0]!.z).toBeCloseTo(first[1]!);
+    expect(placements[1]).toMatchObject({ x: 2, z: 3, variant: 'small', scale: [1, 1, 1] });
+    expect(placements[2]!.x).toBeCloseTo(last[0]!); expect(placements[2]!.z).toBeCloseTo(last[1]!);
+    expect(placements.every(p => p.yaw === yaw / 1000 * Math.PI / 180 && p.variant === 'small')).toBe(true);
+  });
+  it('rounds row tile counts, centers even rows, and retains one tile for default/non-box footprints', () => {
+    const base = el('row', 0, 0, 0, 'big');
+    const even = placeObstacles([{ ...base, footprint: { shape: 'box', w: 1426, d: 713 } }], 'element.obstacle', []);
+    expect(even.map(p => p.x)).toEqual([-.3565, .3565]);
+    for (const footprint of [undefined, { shape: 'circle' as const, radius: 3000 }, { shape: 'box' as const, w: 713, d: 713 }, { shape: 'box' as const, w: 100, d: 713 }]) {
+      expect(placeObstacles([{ ...base, ...(footprint ? { footprint } : {}) }], 'element.obstacle', [])).toEqual([{ variant: 'big', x: 0, z: 0, yaw: 0, scale: [1, 1, 1] }]);
+    }
+    expect(placeObstacles([{ ...base, footprint: { shape: 'box', w: 2000, d: 713 } }], 'element.obstacle', [])).toHaveLength(3);
+    expect(placeObstacles([{ ...base, footprint: { shape: 'box', w: 14260, d: 713 } }], 'element.obstacle', [])).toHaveLength(20);
+  });
+  it('builds one mesh instance per row tile and clears the entire row together', async () => {
+    for (const theme of ['green', 'snow'] as const) {
+      const r = createElementRenderer(ctx('element.obstacle'));
+      await r.setLevel([{ ...el('row', 1000, 2000, 90000, 'big'), footprint: { shape: 'box', w: 2139, d: 713 } }], manifest.themes[theme]!.obstacle, theme);
+      expect(r.counts).toEqual({ small: 0, big: 3 }); expect(r.drawCalls).toBe(1);
+      const mesh = r.root.children[0] as import('three').InstancedMesh;
+      const matrix = new Matrix4(), position = new Vector3();
+      mesh.getMatrixAt(0, matrix); position.setFromMatrixPosition(matrix);
+      expect(position.x).toBeCloseTo(1); expect(position.z).toBeCloseTo(2.713);
+      mesh.getMatrixAt(2, matrix); position.setFromMatrixPosition(matrix);
+      expect(position.x).toBeCloseTo(1); expect(position.z).toBeCloseTo(1.287);
+      await r.setLevel([], manifest.themes[theme]!.obstacle, theme);
+      expect(r.root.children).toHaveLength(0); r.dispose();
+    }
+  });
+  it('renders authored row widths through the shared editor/game compiler while legacy elements remain single tiles', async () => {
+    const { 'content.json': _meta, ...files } = await loadFiles(path.resolve(__dirname, '../../../../packages/content'));
+    const catalog = loadCatalog(files);
+    const authored = JSON.parse(files['data/levels/levelview-1.json'] as string) as NextLevel;
+    authored.elements = [
+      { id: 'row', archetype: 'obstacle', variant: 'small', pos: { x: 0, z: 0 }, yawDeg: 45, footprint: { shape: 'box', w: 3.565, d: .713 } },
+      { id: 'legacy', archetype: 'obstacle', variant: 'big', pos: { x: 4, z: 4 }, yawDeg: 0 },
+    ];
+    authored.requires = computeRequires(catalog, authored);
+    const compiled = compileLevel(catalog, loadLevel(catalog, authored).level);
+    expect(compiled.elements[0]!.footprint).toEqual({ shape: 'box', w: 3565, d: 713 });
+    const placements = placeObstacles(compiled.elements, 'element.obstacle', []);
+    expect(placements.filter(p => p.variant === 'small')).toHaveLength(5);
+    expect(placements.filter(p => p.variant === 'big')).toEqual([{ variant: 'big', x: 4, z: 4, yaw: 0, scale: [1, 1, 1] }]);
   });
   it('instances real GLB meshes per variant (2 draws max), matrix = T*Ry*S*base', async () => {
     for (const theme of ['green', 'snow'] as const) {

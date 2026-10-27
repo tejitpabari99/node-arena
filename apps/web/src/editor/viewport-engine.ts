@@ -1,4 +1,4 @@
-import { compileLevel, computeRequires, loadCatalog, loadLevel, type Catalog, type CompiledLevel, type ManifestV2 } from '@node-arena/content';
+import { compileLevel, computeRequires, convertAuthored, loadCatalog, loadLevel, type Catalog, type CompiledLevel, type ManifestV2 } from '@node-arena/content';
 import { create, createTroopBuffer, type Sim } from '@node-arena/sim';
 import { Box3, Object3D, PerspectiveCamera, Raycaster, TextureLoader, Vector2, Vector3 } from 'three';
 import { contentFiles } from '../app/boot.js';
@@ -297,7 +297,6 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     const newDoc = frameDocId !== doc.id;
     workingDoc = doc;
     choose(nextSelection);
-    if (!doc.buildings.length) { clearScene(); frameBox = undefined; frameDocId = doc.id; if (newDoc) intent = 'reset'; frameCamera(); report({ message: 'Add a building to preview this blank level.' }); return; }
     report({ message: 'Loading preview…' });
     try {
       resources ??= loadManifest().then(value => ({ manifest: value, catalog: loadCatalog(contentFiles(), { themes: Object.keys(value.themes), colorKeys: Object.keys(value.palettes) }) }));
@@ -306,7 +305,9 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
       manifest = loaded.manifest;
       const start = performance.now();
       // requires is derived; don't mutate the editable document merely to preview it.
-      const parsed = loadLevel(loaded.catalog, { ...doc, requires: computeRequires(loaded.catalog, doc) });
+      // A blank draft (zero buildings) fails the schema's minItems, but must still render its ground; compile it unvalidated.
+      const authored = { ...doc, requires: computeRequires(loaded.catalog, doc) };
+      const parsed = doc.buildings.length ? loadLevel(loaded.catalog, authored) : { level: convertAuthored<Parameters<typeof compileLevel>[1]>(`data/levels/${doc.id}.json`, authored, 'level') };
       const next = compileLevel(loaded.catalog, parsed.level), nextSim = create(next, 1);
       const compiledAt = performance.now();
       if (scene && level?.theme !== next.theme) clearScene();

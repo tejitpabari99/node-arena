@@ -24,7 +24,7 @@ export function mountEditorPlay(parent: HTMLElement, files: ContentFiles, doc: L
     loadManifest: async () => { const manifest = await loadManifest(); loadStart = performance.now(); return manifest; },
     createRuntime: context => createBrowserRuntime(context, arena, (ctx, stage) => createInputController({ canvas: stage.canvas, sim: ctx.driver.sim, camera: stage.camera, world: stage.world, worldRoot: stage.worldRoot, scene: stage.scene, driver: ctx.driver, isEnabled: () => ctx.enabled() && !ctx.driver.paused })),
   });
-  const unmount = mountApp(app, ui), audio = connectAppAudio(app);
+  const unmount = mountApp(app, ui, exit), audio = connectAppAudio(app);
   const unsubscribe = app.subscribe(() => { if (started && app.snapshot().screen === 'picker') exit(); });
   function dispose() {
     if (disposed) return; disposed = true;

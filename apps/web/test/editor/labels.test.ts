@@ -29,7 +29,7 @@ describe('labels', () => {
   it('counts per owner and noun in doc order; obstacles per variant', () => {
     const labels = itemLabels(fixture());
     expect([...labels.values()]).toEqual(['Human tower 1', 'AI1 house 1', 'AI1 house 2', 'AI2 tower 1', 'Neutral house 1', 'AI2 tower 2',
-      'Small obstacle 1', 'Big obstacle 1', 'Small obstacle 2', 'Obstacle 1']);
+      'Small row 1', 'Big row 1', 'Small row 2', 'Obstacle 1']);
   });
   it('relabels after an owner change (renumbered in the new group)', () => {
     const doc = fixture(); doc.buildings[2] = { ...doc.buildings[2]!, owner: null };

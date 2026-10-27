@@ -37,9 +37,9 @@ it('runs real proxies on the unsaved working copy, streams runs and preserves di
   expect(report).toMatchObject({ id: 'na-proxy', solvable: true, ok: true, deterministic: true, runs: 12 });
   expect(report.totalWins).toBeGreaterThan(0);
   const lose = structuredClone(source); lose.buildings.forEach(building => { building.owner = 'p2'; });
-  const losing = events(await (await check(lose)).text()).at(-1).report;
-  expect(losing).toMatchObject({ solvable: false, totalWins: 0, ok: false });
-  expect(losing.errors.join(' ')).toContain('Unsolvable by proxy');
+  const missingHouse = await check(lose);
+  expect(missingHouse.status).toBe(422);
+  expect(await missingHouse.json()).toMatchObject({ issues: [{ message: 'Human has no starting house' }] });
   expect(await readdir(join(dir, 'data/levels'))).toEqual(files);
   expect(await readFile(join(dir, 'data/campaigns/custom.json'), 'utf8')).toBe(campaign);
 }, 30000);
@@ -79,7 +79,7 @@ it('rejects concurrent jobs, streams failure, and releases the gate for retry', 
     expect((await fetch(`${url}/__editor/levels`)).status).toBe(200);
     finish();
     let rest = ''; for (;;) { const chunk = await reader.read(); if (chunk.done) break; rest += new TextDecoder().decode(chunk.value); }
-    expect(events(rest)).toEqual([{ type: 'error', error: 'Proxy check failed' }]);
+    expect(events(rest)).toEqual([{ type: 'error', error: 'private/internal/path' }]);
     const retry = await send(); expect(retry.status).toBe(200); await retry.text();
   } finally { finish(); await new Promise<void>(done => local.close(() => done())); }
 });
@@ -104,8 +104,9 @@ it('disconnect cancels the job before permitting a replacement', async () => {
 });
 
 it('preserves unsolved allowlist semantics without presenting validation-ok as a proxy win', async () => {
-  const lose = structuredClone(source); lose.buildings.forEach(building => { building.owner = 'p2'; });
-  const input = await prepareEditorProxy(dir, 'na-proxy-listed', lose);
+  const input = await prepareEditorProxy(dir, 'na-proxy-listed', source);
+  // Exercise the worker's allowlist independently of editor playability validation.
+  input.level.buildings.forEach(building => { building.owner = 1; });
   input.unsolved = { id: 'na-proxy-listed', reason: 'Owner manual fixture', ownerSignOff: null };
   const output: EditorProxyEvent[] = [];
   await runEditorProxy(input, event => output.push(event), new AbortController().signal);
@@ -123,3 +124,9 @@ it('aborting a real running proxy process settles cancellation before returning'
   }, controller.signal)).rejects.toThrow('cancelled');
   expect(progress).toBe(1);
 });
+
+it('surfaces the real worker error instead of a generic failure', async () => {
+  const seen: EditorProxyEvent[] = [];
+  await expect(runEditorProxy({ level: null, unsolved: null } as never, event => seen.push(event), new AbortController().signal)).rejects.toThrow(/TypeError|Cannot|undefined|null/);
+  expect(seen.some(event => event.type === 'error' && event.error !== 'Proxy check failed' && event.error.length > 0)).toBe(true);
+}, 60_000);
