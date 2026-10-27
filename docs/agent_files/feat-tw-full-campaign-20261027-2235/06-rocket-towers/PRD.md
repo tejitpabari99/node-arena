@@ -60,7 +60,7 @@ Does not own: projectile core semantics (04), fortress/turrets/parachutes (07), 
 | 4 | Capture | Level -> 0, not flip | Flip ownership | Decomp: no ownership change |
 | 5 | Delay formula | Integer `480000/(L+120)` ms | Float | Exactly equals decoded formula, deterministic |
 | 6 | AI weight | Content `rocketWeight` x10 int | Hard-coded by type | Decoded per-prefab constants |
-| 7 | Blast ownership | Enemy-of-owner only (04 PRJ-03) | Hit friends | Research silent [OPEN 7] |
+| 7 | Blast ownership | Enemy-of-owner only (04 PRJ-03) | Hit friends | Research silent; see RESOLVED 7 |
 | 8 | Version | RULES 3.5.0 minor, BOT minor | Major | Additive, old levels unaffected |
 
 ## Manual steps
@@ -68,16 +68,16 @@ Does not own: projectile core semantics (04), fortress/turrets/parachutes (07), 
 - Calibrate against a TW playthrough of positions 89 and 216 (owner approval at end).
 
 ## Risks / Open Questions
-- [OPEN 1] Capture charge rate: points per `cc` 3.0 s tick (UI view undecompiled). Spike: `decomp.sh 'CaptureRocketTowerUiView'`; default 1 pt/tick (20/s), idle gap `cc` after firing.
-- [OPEN 2] Rocket spacing within a volley (`AttackCoroutine` loop delay); default 150 ms apart.
-- [OPEN 3] Capture second targeting predicate (own vs enemy; neutral buildings with owner field). Default: enemy-of-owner incl. neutral.
-- [OPEN 4] Disabled semantics: does capture of a rocket tower also disable it (task brief) or only level-0 by rocket projectile (research)? Default: only rocket-projectile level-0; can be aimed again after.
-- [OPEN 5] Capture projectile `projectileSpeed 0.5` unit; default fixed 1.0 s travel.
-- [OPEN 6] Does a human aim persist or retract after one volley? Default persist (AI emits `ClearAim`); spike `RocketTower.WayPath*`.
-- [OPEN 7] Blast friendly fire; whether rockets hit own buildings. Default none.
-- [OPEN 8] Max aim range / playfield clamp (`out-of-bounds` only, no range). Spike `TryCreateWayPath`.
-- [OPEN 9] Tower archetype weight `rocketWeight` (research lists none for Tower); default 1.0.
-- [OPEN 10] Capture rocket vs defense-less target bridge/trolley states (needs 08 ready flag).
+- [RESOLVED 1: decode spike first (task: decomp CaptureRocketTowerUiView via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: 1 pt per tick (20/s), idle gap `cc` after firing and record it as a deviation in GAME_RULES + the deviations ledger] Capture charge rate (points per `cc` 3.0 s tick). Spike: `CaptureRocketTowerUiView`.
+- [RESOLVED 2: decode spike first (task: decomp RocketTower AttackCoroutine via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: 150 ms apart and record it as a deviation in GAME_RULES + the deviations ledger] Rocket spacing within a volley (`AttackCoroutine` loop delay).
+- [RESOLVED 3: decode spike first (task: decomp capture-rocket targeting class via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: enemy-of-owner incl. neutral and record it as a deviation in GAME_RULES + the deviations ledger] Capture second targeting predicate.
+- [RESOLVED 4: decode spike first (task: decomp RocketTower disable path via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: only level-0 by rocket-type projectile disables (5.0 s); can be aimed again after and record it as a deviation in GAME_RULES + the deviations ledger] Disabled semantics: capture also disables vs only level-0 by rocket projectile.
+- [RESOLVED 5: decode spike first (task: decomp capture-rocket projectile class via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: fixed 1.0 s travel and record it as a deviation in GAME_RULES + the deviations ledger] Capture projectile `projectileSpeed 0.5` unit.
+- [OPEN] OWNER: human rocket aim persists after volley (recommended) vs resets. Recommended/current default: persists until `ClearAim` (AI emits `ClearAim`). Spike `RocketTower.WayPath*` result, if any, is input to the owner, not the decision.
+- [RESOLVED 7: decode spike first (task: decomp RocketTower blast class via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: no friendly fire, enemy-of-owner only and record it as a deviation in GAME_RULES + the deviations ledger] Blast friendly fire / rockets hitting own buildings.
+- [RESOLVED 8: decode spike first (task: decomp TryCreateWayPath via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: clamp to playfield bounds only (`out-of-bounds`), no range limit and record it as a deviation in GAME_RULES + the deviations ledger] Max aim range / playfield clamp. Spike `TryCreateWayPath`.
+- [RESOLVED 9: decode spike first (task: decomp AI weight constants for Tower via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: `rocketWeight` 1.0 and record it as a deviation in GAME_RULES + the deviations ledger] Tower archetype weight `rocketWeight`.
+- [RESOLVED 10: owned by SP08] Capture rocket vs defense-less target bridge/trolley states; needs SP08 ready flag.
 - [RESOLVED: locked decision] Armageddon/boosters, upgrades, rage out of scope.
 - [DEFERRED] Rocket-vs-sheep, multi-aim, rocket tower AI "useless attack" retarget.
 - Risk: rt-heavy levels unwinnable by proxy -> list in `unsolved-by-proxy.json`. Risk: 07 and 06 both edit phase table, commands parse, input gestures: merge 06 first; rebase 07.

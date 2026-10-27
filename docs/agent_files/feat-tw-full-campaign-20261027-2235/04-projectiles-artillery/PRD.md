@@ -66,13 +66,13 @@ Non-Goals: rage skills (Hail, BurningEarth), shield absorb (5.4, not in scope li
 - Calibration vs. a TW playthrough ref of position 45 (owner approval at end).
 
 ## Risks / Open Questions
-- [OPEN 1] Does the artillery unit stop to fire or keep walking? Decomp shows only Update/cooldown (no movement lock); assumed walking. Spike: `decomp.sh 'WarriorArtilleryController'`.
-- [OPEN 2] Artillery speed/maxSpeed vs soldier (research gives hp config only); default = soldier 5.
-- [OPEN 3] WT3 house `ws/cwc/sc/gl` deltas vs WT1; read from imported WT3 level params, spike if uniform.
-- [OPEN 4] Does TW AI treat WT3 differently? Time-boxed decomp of AI target scoring; if yes, BOT 2.6.0.
-- [OPEN 5] Impact-vs-arrival and clash ordering unverified; calibrate on ref.
-- [OPEN 6] Buildings as shell targets: damage amount (`GetDamage(type)`, likely level -1 like tower), whether artillery targets enemy towers/neutral houses. Default: troops only in SP04; building/tower targeting behind param `hits`, enabled when decoded.
-- [OPEN 7] "Every target per volley" (medium confidence); fallback = nearest only; param `volleyAll`.
+- [RESOLVED 1: decode spike first (task: decomp WarriorArtilleryController via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: keeps walking (no movement lock) and record it as a deviation in GAME_RULES + the deviations ledger] Artillery stop-vs-walk. Spike: `WarriorArtilleryController`.
+- [RESOLVED 2: decode spike first (task: decomp WarriorArtilleryController via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: speed 5 = soldier and record it as a deviation in GAME_RULES + the deviations ledger] Artillery speed/maxSpeed vs soldier.
+- [RESOLVED 3: decode spike first (task: decomp house/level WT3 params via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: read ws/cwc/sc/gl from imported WT3 level params; if uniform, clone wt1 values and record it as a deviation in GAME_RULES + the deviations ledger] WT3 house `ws/cwc/sc/gl` deltas vs WT1.
+- [RESOLVED 4: decode spike first (task: decomp AI target-scoring class via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: no TW difference, WT3 scored like WT1, `BOT_VERSION` stays 2.5.0; bump to 2.6.0 only if the spike shows a difference and record it as a deviation in GAME_RULES + the deviations ledger] Does TW AI treat WT3 differently? Spike: AI target scoring.
+- [RESOLVED 5: decode spike first (task: decomp WarriorArtilleryController via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: ordering 7a impacts -> 7b tower shots -> 7c launches -> 8 arrivals as designed, calibrate on ref screenshots and record it as a deviation in GAME_RULES + the deviations ledger] Impact-vs-arrival and clash ordering.
+- [RESOLVED 6: decode spike first (task: decomp WarriorArtilleryController / shell damage via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: troops only in SP04; building/tower targeting behind param `hits`, default off; if enabled, damage = level -1 like tower and record it as a deviation in GAME_RULES + the deviations ledger] Buildings as shell targets (damage amount, which targets).
+- [RESOLVED 7: decode spike first (task: decomp WarriorArtilleryController via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: every target per volley, param `volleyAll=true` (switch to nearest-only if spike says so) and record it as a deviation in GAME_RULES + the deviations ledger] "Every target per volley".
 - [RESOLVED: locked decision] Rage variants (Hail, BurningEarth) out of scope.
 - [DEFERRED] Visible tower cannonball using the same render path; tower migration; shield absorb.
 - Risk: levels with large artillery counts make levels unwinnable by proxy -> list in `unsolved-by-proxy.json`.

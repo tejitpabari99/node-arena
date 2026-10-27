@@ -104,14 +104,14 @@ River levels gate 440 of 1,012 TW levels, ROBS 242 [verified: 03 §corpus counts
 - Pre-merge `validate:levels --all` for Phase B.
 
 ## Risks / Open Questions
-- [OPEN] S1: planks per troop/kind, pause time on activation, `CheckRightWay` strictness, role of `W`/`D`. Fallback: 1 plank per troop, strict order, instant, `W`/`D` presentation-only; log deviation in GAME_RULES + LEVELS_GUIDE.
-- [OPEN] S2: river collider shapes for `T` 0-17 (curved/circle/corner). Fallback: flatten each shape to a polyline of boxes from mesh bounds; calibrate on levelview refs.
-- [OPEN] S3: bridge lifetime on cut, shared use by enemy troops (same channel only in this design), re-draw rebuilding. Fallback: per-channel, reset on redraw.
-- [OPEN] S4: ROBS layer. If Obstacle (10) -> `blocksLines`, `canDraw` already handles it (bot-affecting -> `BOT_VERSION` bump + lock refresh).
-- [OPEN] S5: AI never reads river state (only mask). Needs `decomp.sh` confirmation.
-- [OPEN] 6: Rocket/area damage to ceils (`BridgeCeil.GetDamage`): needs a SP06 hook; default none until SP06 lands, mask clear-bit API stubbed.
-- [OPEN] 7: Return-channel arrival of turned-back troops when the source house was captured meanwhile: follow SP03's rule.
-- [OPEN] Playability: strict k-troop bridge cost may make long rivers (large `T`) near-unwinnable for proxy; census/validate:levels decides; deviations in `unsolved-by-proxy.json`.
+- [RESOLVED S1: decode spike first (task: decomp BridgeController / plank classes via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback as stated; log deviation in GAME_RULES + LEVELS_GUIDE and record it as a deviation in GAME_RULES + the deviations ledger] Planks per troop/kind, pause on activation, `CheckRightWay` strictness, role of `W`/`D`. Fallback: 1 plank per troop, strict order, instant, `W`/`D` presentation-only.
+- [RESOLVED S2: decode spike first (task: decomp river prefab collider classes via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: flatten each shape to a polyline of boxes from mesh bounds; calibrate on levelview refs and record it as a deviation in GAME_RULES + the deviations ledger] River collider shapes for `T` 0-17.
+- [RESOLVED S3: decode spike first (task: decomp bridge classes via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: per-channel bridge state, same-channel enemy troops only, reset on redraw, cleared on cut and record it as a deviation in GAME_RULES + the deviations ledger] Bridge lifetime on cut, shared use by enemy troops, re-draw rebuilding.
+- [RESOLVED S4: decode spike first (task: decomp ROBS prefab/layer via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: ROBS non-blocking (decorative, layer not Obstacle), no `BOT_VERSION` bump and record it as a deviation in GAME_RULES + the deviations ledger] ROBS layer; if Obstacle (10) -> `blocksLines` and `canDraw` already handles it (bot-affecting -> `BOT_VERSION` bump + lock refresh).
+- [RESOLVED S5: decode spike first (task: decomp AI target-scoring class / `_isBlocked` readers via /root/projects/tower-war/_tools/decomp.sh, time-box ~1 h); if inconclusive use fallback: AI ignores river state, `BOT_VERSION` unchanged and record it as a deviation in GAME_RULES + the deviations ledger] AI never reads river state (only mask).
+- [RESOLVED 6: owned by SP06] Rocket/area damage to ceils (`BridgeCeil.GetDamage`). SP05 ships only the mask clear-bit API stub; default no damage until SP06 lands.
+- [RESOLVED 7: owned by SP03] Return-channel arrival of turned-back troops when source house captured meanwhile: follow SP03's rule.
+- [RESOLVED playability: tooling/measure] Strict k-troop bridge cost may make long rivers near-unwinnable for proxy. Starting value: no rule change; run `validate:levels` + census in task, adjust; unsolvable levels go on the `unsolved-by-proxy.json` allowlist with `ownerSignOff: null`.
 - [RESOLVED: derived] Rivers do not block (03 §8.4); first river at 103, ROBS at 140.
 - [RESOLVED: locked decision] Plank talents/boosters OUT; rocket vs ceils is SP06.
 - [DEFERRED] Generic `CrossingSource` (FUTURES) to SP08 outcome.
