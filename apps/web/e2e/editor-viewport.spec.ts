@@ -333,7 +333,7 @@ test('pan gestures: hand mode, Space, middle/right drag, marquee with hand off, 
   // Grid overlay.
   await expect(page.locator('.editor-grid-line')).toHaveCount(0);
   await page.evaluate(() => window.__editorViewport!.setGrid(true));
-  expect(await page.locator('.editor-grid-line').count()).toBeGreaterThan(40);
+  await expect.poll(() => page.locator('.editor-grid-line').count()).toBeGreaterThan(40);
   expect(await page.locator('.editor-grid-major').count()).toBeGreaterThan(0);
   await page.evaluate(() => window.__editorViewport!.fitArea()); // 40x30 area at fit: spacing may fall under 8px
   await page.evaluate(() => window.__editorViewport!.setGrid(false));
@@ -422,9 +422,9 @@ test('canvas controls: zoom limits, fit, game camera, hand, persisted grid', asy
   await expect(page.locator('.editor-grid-line')).toHaveCount(0);
   await grid.click();
   await expect(grid).toHaveAttribute('aria-pressed', 'true');
-  expect(await page.locator('.editor-grid-line').count()).toBeGreaterThan(0);
+  await expect(page.locator('.editor-grid-line').first()).toBeAttached();
   await page.goto('/editor.html?level=na-trial');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await expect(controls.getByRole('button', { name: 'Show grid', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  expect(await page.locator('.editor-grid-line').count()).toBeGreaterThan(0);
+  await expect(page.locator('.editor-grid-line').first()).toBeAttached();
 });
