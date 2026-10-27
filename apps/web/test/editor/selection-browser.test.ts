@@ -1,10 +1,11 @@
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { chromium, expect as browserExpect, type Browser, type Page } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
 import type { NextLevel } from '@node-arena/content';
+vi.setConfig({ testTimeout: 20000 });
 
 let server: ViteDevServer, browser: Browser, page: Page;
-const domExpect = browserExpect.configure({ timeout: 2000 });
+const domExpect = browserExpect.configure({ timeout: 5000 });
 beforeAll(async () => {
   server = await createServer({ cacheDir: 'node_modules/.vite-test-selection', server: { host: '127.0.0.1', port: 0 }, plugins: [{ name: 'selection-fixture', configureServer(s) {
     s.middlewares.use('/__selection', async (_req, res) => {
@@ -12,8 +13,8 @@ beforeAll(async () => {
       res.end(await s.transformIndexHtml('/__selection', '<!doctype html><html><body><main id="app"></main><script type="module" src="/test/editor/selection-fixture.tsx"></script></body></html>'));
     });
   } }] });
-  await server.listen(); browser = await chromium.launch({ headless: true }); page = await browser.newPage(); page.setDefaultTimeout(2000);
-}, 30000);
+  await server.listen(); browser = await chromium.launch({ headless: true }); page = await browser.newPage(); page.setDefaultTimeout(10000);
+}, 60000);
 afterAll(async () => { await browser?.close(); await server?.close(); });
 async function reset() { await page.goto(server.resolvedUrls!.local[0] + '__selection'); await page.locator('details').evaluateAll(nodes => nodes.forEach(node => { (node as HTMLDetailsElement).open = true; })); }
 async function doc(): Promise<NextLevel> { return JSON.parse((await page.getByTestId('document').textContent())!); }

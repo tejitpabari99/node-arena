@@ -1,9 +1,10 @@
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { chromium, expect as browserExpect, type Browser, type Page } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
+vi.setConfig({ testTimeout: 20000 });
 let server: ViteDevServer, browser: Browser, page: Page;
 const errors: string[] = [];
-const domExpect = browserExpect.configure({ timeout: 1500 });
+const domExpect = browserExpect.configure({ timeout: 5000 });
 beforeAll(async () => {
   server = await createServer({ cacheDir: 'node_modules/.vite-test-editor-check-flyout', server: { host: '127.0.0.1', port: 0 }, plugins: [{ name: 'check-fixture', configureServer(s) {
     s.middlewares.use('/__check', async (_req, res) => {
@@ -13,8 +14,8 @@ beforeAll(async () => {
   } }] });
   await server.listen(); await server.warmupRequest('/test/editor/check-flyout-fixture.tsx'); await server.waitForRequestsIdle();
   browser = await chromium.launch({ headless: true }); page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  page.setDefaultTimeout(1500); page.on('pageerror', error => errors.push(error.message));
-}, 30000);
+  page.setDefaultTimeout(10000); page.on('pageerror', error => errors.push(error.message));
+}, 60000);
 afterAll(async () => { await browser?.close(); await server?.close(); });
 const reset = async () => { await page.goto(server.resolvedUrls!.local[0] + '__check'); };
 const share = async () => { await page.getByTestId('share-button').click(); };

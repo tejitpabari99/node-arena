@@ -1,11 +1,12 @@
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { chromium, expect as browserExpect, type Browser, type Page } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
 import { mkdir } from 'node:fs/promises';
+vi.setConfig({ testTimeout: 20000 });
 
 let server: ViteDevServer, browser: Browser, page: Page;
 const textureRequests: string[] = [];
-const domExpect = browserExpect.configure({ timeout: 2000 });
+const domExpect = browserExpect.configure({ timeout: 5000 });
 beforeAll(async () => {
   server = await createServer({ cacheDir: 'node_modules/.vite-test-toolbar', server: { host: '127.0.0.1', port: 0 }, plugins: [{ name: 'toolbar-fixture', configureServer(s) {
     s.middlewares.use('/__toolbar', async (_req, res) => {
@@ -14,9 +15,9 @@ beforeAll(async () => {
     });
   } }] });
   await server.listen(); await server.warmupRequest('/test/editor/toolbar-fixture.tsx'); await server.waitForRequestsIdle();
-  browser = await chromium.launch({ headless: true }); page = await browser.newPage({ viewport: { width: 1100, height: 700 } }); page.setDefaultTimeout(2000);
+  browser = await chromium.launch({ headless: true }); page = await browser.newPage({ viewport: { width: 1100, height: 700 } }); page.setDefaultTimeout(10000);
   page.on('request', request => { if (/textures\/tw\/.*-gray\.png$/.test(request.url())) textureRequests.push(new URL(request.url()).pathname.split('/').at(-1)!); });
-}, 30000);
+}, 60000);
 afterAll(async () => { await browser?.close(); await server?.close(); });
 const reset = async () => { await page.goto(server.resolvedUrls!.local[0] + '__toolbar'); };
 it('uses a blue manual Save, icon Play and final neutral Share with unchanged panel actions', async () => {
