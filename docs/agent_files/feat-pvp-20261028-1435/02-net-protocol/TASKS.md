@@ -8,15 +8,15 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/02-net-protocol/PRD.md.
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | [M1] Scaffold packages/net + lint/determinism/build wiring | none | todo |
-| 2 | [M1] Message catalogue, versions, codec | 1 | todo |
-| 3 | [M1] Strict parse/validate (client + server messages) | 2 | todo |
-| 4 | [M1] Handshake version checks | 2, 3 | todo |
-| 5 | [M1] CommandLog | 1 | todo |
-| 6 | [M1] LockstepServer | 3, 5 | todo |
-| 7 | [M1] LockstepClient | 2 | todo |
-| 8 | [M1] Outcome adapter (toWireOutcome) | 2, SP01#8 | todo |
-| 9 | [M1] Server/client lockstep integration + replay test | 6, 7, 8 | todo |
+| 1 | [M1] Scaffold packages/net + lint/determinism/build wiring | none | done |
+| 2 | [M1] Message catalogue, versions, codec | 1 | done |
+| 3 | [M1] Strict parse/validate (client + server messages) | 2 | done |
+| 4 | [M1] Handshake version checks | 2, 3 | done |
+| 5 | [M1] CommandLog | 1 | done |
+| 6 | [M1] LockstepServer | 3, 5 | done |
+| 7 | [M1] LockstepClient | 2 | done |
+| 8 | [M1] Outcome adapter (toWireOutcome) | 2, SP01#8 | done |
+| 9 | [M1] Server/client lockstep integration + replay test | 6, 7, 8 | done |
 | 10 | [M2] Catch-up runner + local-join-late helper | 5, 7 | todo |
 | 11 | [M2] Rate limiter | 6 | todo |
 | 12 | [M2] Lagging-client `ticks` batching | 5, 6 | todo |
