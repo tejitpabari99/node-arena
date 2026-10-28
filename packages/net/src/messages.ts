@@ -1,4 +1,5 @@
 import type { Command } from '@node-arena/defs';
+import type { EndOutcome } from './outcome.js';
 
 /** Wire message catalogue (PRD 02 R1). Discriminator `t`. Types only; validation lives in validate.ts. */
 
@@ -19,8 +20,7 @@ export type LobbySeat = SeatConfig & { occupant?: { nick: string; ready: boolean
 export type StartSeat = { player: number; kind: SeatKind; team: number; nick: string; difficulty?: string };
 export type TickCmds = { tick: number; cmd: Command };
 export type RoomClosedReason = 'shutdown' | 'server-restart' | 'internal' | 'idle' | (string & {});
-/** Placeholder; Task 8 refines via toWireOutcome. Mirrors sim pvp `over`. */
-export type EndOutcome = { outcome: 'victory' | 'timeLimit' | 'draw'; winners: number[]; winner: number | null };
+export type { EndOutcome } from './outcome.js';
 
 // Client -> Server
 export type HelloMsg = { t: 'hello'; pv: number; versions: Versions; nick: string; token: string; auth?: string };
