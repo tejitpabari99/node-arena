@@ -86,3 +86,37 @@ graph LR
 | `PROTOCOL_VERSION` | new, int | 02 | Bumped on any wire break after first ship. |
 | `SCHEMA_VERSION` | stays 2.0.0 | 01 | Additive optional fields; bumping breaks replay headers. |
 Recommended merge order: 01 -> (02 || 03) -> 04 -> 05 -> 06; each locks/regenerates after rebasing on the previous.
+
+## Tasks
+Per-SP task breakdowns (all Status `todo`). Cross-SP deps use `SPxx#N`; no cycles, no M1 task depends on M2/M3 (verified by script).
+
+| SP | TASKS | M1 | M2 | M3 | Total |
+|---|---|---|---|---|---|
+| 01 | [01-seat-rules](01-seat-rules/TASKS.md) | 10 | 2 | 0 | 12 |
+| 02 | [02-net-protocol](02-net-protocol/TASKS.md) | 9 | 3 | 1 | 13 |
+| 03 | [03-pvp-maps](03-pvp-maps/TASKS.md) | 5 | 5 | 0 | 10 |
+| 04 | [04-game-server](04-game-server/TASKS.md) | 9 | 9 | 2 | 20 |
+| 05 | [05-web-netplay](05-web-netplay/TASKS.md) | 10 | 5 | 3 | 18 |
+| 06 | [06-deploy-e2e](06-deploy-e2e/TASKS.md) | 5 | 10 | 0 | 15 |
+| | **Total** | **48** | **34** | **6** | **88** |
+
+### M1 execution order
+Topological waves; `||` = independent, run at most 2 at a time (parallelism cap).
+1. `SP01#1 || SP02#1` (SP05#2 also ready, no deps; slot it in when a lane frees)
+2. `SP01#2 || SP02#2` ; then `SP02#5`, `SP04#1`, `SP05#1`
+3. `SP01#3 || SP01#4` ; `SP02#3`, `SP02#7`, `SP04#3`
+4. `SP01#5`, `SP01#6`, `SP01#7` (all after #4) ; `SP02#4`, `SP02#6` ; `SP03#1`, `SP04#2`, `SP05#4`
+5. `SP01#8` ; `SP03#2` ; `SP04#4` ; `SP05#3`
+6. `SP01#9` ; `SP02#8` ; `SP03#3` ; `SP04#5`
+7. `SP01#10` ; `SP02#9` ; `SP03#4` ; `SP04#6` ; `SP05#5`
+8. `SP03#5` ; `SP04#7` ; `SP04#9` ; `SP05#6`
+9. `SP04#8` ; `SP05#7` ; `SP06#1`
+10. Tail, serial: `SP05#8 → SP05#9 → SP05#10 → SP06#2 → SP06#3 → SP06#4 → SP06#5` (M1 owner play-test)
+
+Pair within a wave only when files do not conflict (e.g. SP01 sim tasks vs SP02/SP04 packages are safe; SP01#5/#6/#7 all touch sim, run serially or in 2 lanes with care; root `package.json` edits in SP02#1/SP04#1/SP06#1 conflict, keep them serial).
+
+### M2 headline order
+SP02#10 → SP01#11, SP01#12, SP03#8 → SP04#11 → SP04#10, SP04#13, SP03#9, SP03#10 → SP04#12, SP04#14, SP04#15, SP02#11, SP02#12, SP05#13 → SP03#6, SP03#7, SP04#16, SP05#11, SP05#14 → SP04#17, SP04#18, SP05#12 → SP05#15, SP06#6, SP06#9 → SP06#7 → SP06#8 → SP06#10..#13, SP06#15 → SP06#14.
+
+### M3 headline order
+SP02#13 → SP04#19 → SP04#20 → SP05#17 → SP05#16 → SP05#18.

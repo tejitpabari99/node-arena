@@ -4,7 +4,7 @@ summary: 20 tasks (9 M1, 8 M2, 3 M3) for apps/server - hub, rooms, 20 Hz global 
 date: 2026-10-28
 ---
 # Tasks: Game Server (apps/server)
-Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. Transport-agnostic `Hub` over a `Socket` interface with injected clock; one thin `ws` adapter. SP01/SP02 deps use real task numbers; SP03 has no TASKS.md yet, so its dependency is named `SP03 (Duel S)`. No [OPEN] items in the PRD.
+Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. Transport-agnostic `Hub` over a `Socket` interface with injected clock; one thin `ws` adapter. SP01/SP02 deps use real task numbers; SP03 deps use real task numbers (SP03#2 Duel S, SP03#6 Duel M, SP03#7 Cross). No [OPEN] items in the PRD.
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
@@ -15,7 +15,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. 
 | 5 | [M1] Room lobby (2 seats), create/join, start | 4, SP01#4 | todo |
 | 6 | [M1] Match: referee, lockstep, tick, hash check, end | 3, 5, SP02#6, SP02#8, SP01#8 | todo |
 | 7 | [M1] ws adapter, /healthz, real-socket smoke | 6 | todo |
-| 8 | [M1] Two-client acceptance on fixture + Duel S | 7, SP02#9, SP03 (Duel S) | todo |
+| 8 | [M1] Two-client acceptance on fixture + Duel S | 7, SP02#9, SP03#2 | todo |
 | 9 | [M1] Command and input rejection hardening | 6 | todo |
 | 10 | [M2] Bots: presets, seat driver, BOT_VERSION 2.5.0 | SP01#9, SP01#12 | todo |
 | 11 | [M2] Full lobby editing and start validation | 5, SP01#3 | todo |
@@ -25,7 +25,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. 
 | 15 | [M2] Limits and abuse controls | 7, SP02#11, SP02#12 | todo |
 | 16 | [M2] Ops: env validation, health detail, SIGTERM drain | 7, 15 | todo |
 | 17 | [M2] Dockerfile, .dockerignore, fly.toml | 16 | todo |
-| 18 | [M2] Lobby-shape scenario suite | 12, 13, 14, SP03 (Cross, Duel M) | todo |
+| 18 | [M2] Lobby-shape scenario suite | 12, 13, 14, SP03#6, SP03#7 | todo |
 | 19 | [M3] Disconnect grace, bot takeover, resume, reclaim | 12, 13, 14 | todo |
 | 20 | [M3] Auto-resync and load smoke | 19, SP02#13 | todo |
 

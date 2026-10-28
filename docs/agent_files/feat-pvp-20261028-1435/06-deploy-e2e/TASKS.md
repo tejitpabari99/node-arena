@@ -4,12 +4,12 @@ summary: Tasks for PvP dev script, 2-browser e2e harness and CI job (M1), then F
 date: 2026-10-28
 ---
 # Tasks: Deploy, CI and E2E for PvP
-Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M1 = local one-command dev + 2-browser e2e + CI steps + doc stubs; M2 = Fly deploy chain, Docker job, origins, more specs, full docs, runbook. SP05 TASKS.md did not exist when written, so SP05 deps are by topic (test hooks/testids, server-URL var, mismatch UX); swap in real `SP05#N` when it lands.
+Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M1 = local one-command dev + 2-browser e2e + CI steps + doc stubs; M2 = Fly deploy chain, Docker job, origins, more specs, full docs, runbook. SP05 deps use real task numbers (SP05#10 test hooks/testids, SP05#3+#15 mismatch UX, SP05#14 watch, SP05#15 rematch).
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
 | 1 | [M1] `dev:pvp` script + server URL env wiring | SP04#1, SP04#7 | todo |
-| 2 | [M1] PvP e2e harness (config, build:test:pvp, script) | 1, SP05 (testids + test hooks) | todo |
+| 2 | [M1] PvP e2e harness (config, build:test:pvp, script) | 1, SP05#10 | todo |
 | 3 | [M1] Scripted-attack helper + Duel S 1v1 spec | 2, SP03#2, SP04#8 | todo |
 | 4 | [M1] CI: ci.sh checklist + `pvp-e2e` job | 3, SP02#1, SP04#1 | todo |
 | 5 | [M1] Doc stubs + M1 play-test runbook | 1, 4 | todo |
@@ -18,8 +18,8 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M
 | 8 | [M2] `VITE_PVP_SERVER_URL` in deploy + preview builds | 7 | todo |
 | 9 | [M2] `ALLOWED_ORIGINS` in fly.toml | SP04#17 | todo |
 | 10 | [M2] `docker` CI job | SP04#17, 4 | todo |
-| 11 | [M2] Version-mismatch UX verification | 8, SP05 (mismatch UX) | todo |
-| 12 | [M2] e2e specs: spectator + rematch | 3, SP04#13, SP04#14, SP05 (watch/rematch) | todo |
+| 11 | [M2] Version-mismatch UX verification | 8, SP05#3, SP05#15 | todo |
+| 12 | [M2] e2e specs: spectator + rematch | 3, SP04#13, SP04#14, SP05#14, SP05#15 | todo |
 | 13 | [M2] e2e specs: bot-seat lobby + 2v2 Cross | 3, SP04#12, SP03#7 | todo |
 | 14 | [M2] Full docs pass | 5, 9, 12, 13 | todo |
 | 15 | [M2] `docs/PVP_OPS.md` owner runbook | 7, 8, 9 | todo |

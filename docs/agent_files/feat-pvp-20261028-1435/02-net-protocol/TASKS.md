@@ -4,7 +4,7 @@ summary: Task breakdown for packages/net - scaffold, wire catalogue + strict val
 date: 2026-10-28
 ---
 # Tasks: Net Protocol (packages/net)
-Source of truth: docs/agent_files/feat-pvp-20261028-1435/02-net-protocol/PRD.md. New pure package `@node-arena/net` shared by apps/server and apps/web; no sockets/DOM/Node APIs. SP01 task numbers are not yet published; SP01 deps are named by topic.
+Source of truth: docs/agent_files/feat-pvp-20261028-1435/02-net-protocol/PRD.md. New pure package `@node-arena/net` shared by apps/server and apps/web; no sockets/DOM/Node APIs. SP01 deps reference real task numbers (SP01#8 = pvp outcome / view.over).
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
@@ -15,7 +15,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/02-net-protocol/PRD.md.
 | 5 | [M1] CommandLog | 1 | todo |
 | 6 | [M1] LockstepServer | 3, 5 | todo |
 | 7 | [M1] LockstepClient | 2 | todo |
-| 8 | [M1] Outcome adapter (toWireOutcome) | 2, SP01 (view.over) | todo |
+| 8 | [M1] Outcome adapter (toWireOutcome) | 2, SP01#8 | todo |
 | 9 | [M1] Server/client lockstep integration + replay test | 6, 7, 8 | todo |
 | 10 | [M2] Catch-up runner + local-join-late helper | 5, 7 | todo |
 | 11 | [M2] Rate limiter | 6 | todo |
