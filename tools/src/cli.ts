@@ -82,11 +82,12 @@ async function main(): Promise<void> {
     const lockPath = resolve(opts['--lock'] ?? resolve(root, 'tools/levels-lock.json'));
     const unsolved = await readUnsolved(resolve(opts['--unsolved'] ?? resolve(root, 'tools/unsolved-by-proxy.json')));
     const maxTicks = positive('--max-ticks', String(DEFAULT_MAX_TICKS));
+    const symmetry = await (await import('./pvp-symmetry.js')).readSymmetry(resolve(root, 'tools/pvp-symmetry.json'));
     if (command === 'levels:lock') {
       const selected = opts['--levels'] ?? 'all';
       const previous = selected === 'all' ? {} : parseLevelsLock(await readJson(lockPath, 'tools/levels-lock.json'));
-      report.levels = validateLevels(data, unsolved, selected, 1, maxTicks);
-      const broken = report.levels.filter(level => !level.deterministic || level.errors.some(e => /rejected|rerun|Idle/.test(e)));
+      report.levels = validateLevels(data, unsolved, selected, 1, maxTicks, symmetry);
+      const broken = report.levels.filter(level => !level.deterministic || level.errors.some(e => /rejected|rerun|Idle|Symmetry|symmetry|terminate/.test(e)));
       for (const level of broken) report.errors.push({ file: `data/levels/${level.id}.json`, pointer: '', message: level.errors.join('; ') });
       if (broken.length) return;
       await writeFile(lockPath, `${JSON.stringify({ ...previous, ...buildLock(report.levels) }, null, 2)}\n`);
@@ -94,7 +95,7 @@ async function main(): Promise<void> {
     }
     report.summary = await checkLock(files, dir, root, opts['--base'] ?? (process.env.VERSION_GUARD_BASE || 'HEAD'));
     const seeds = positive('--seeds', '4');
-    report.levels = validateLevels(data, unsolved, opts['--levels'] ?? 'all', seeds, maxTicks);
+    report.levels = validateLevels(data, unsolved, opts['--levels'] ?? 'all', seeds, maxTicks, symmetry);
     for (const level of report.levels) {
       for (const message of level.errors) report.errors.push({ file: `data/levels/${level.id}.json`, pointer: '', message });
       for (const message of level.warnings) report.warnings.push({ file: `data/levels/${level.id}.json`, pointer: '', message });
