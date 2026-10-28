@@ -22,7 +22,7 @@ Non-goals: auth (slot only), matchmaking, chat, persistence, server replays, mul
 | R1 | `pnpm --filter @node-arena/server` build/test/lint/typecheck; `pnpm dev:server` runs it with tsx watch | M1 |
 | R2 | Boot loads content from disk (no Vite), exposes all `objective==='pvp'` levels; refuses to start on content error | M1 |
 | R3 | `room.create` -> 4-char code (31-char unambiguous alphabet, `crypto.randomInt`), creator = host, seat 0. `room.join` play/watch by code. Unknown code -> `room-not-found` | M1 |
-| R4 | Lobby: host edits level/seats(kind, difficulty, team)/time limit; non-host only `lobby.ready`; start requires every seat human-occupied+ready or bot (no `empty`), valid teams (SP01 R2) | M1 (2 seats), M2 (full) |
+| R4 | Lobby: host edits level/seats(kind, difficulty, team) (time limit is per map, not editable); non-host only `lobby.ready`; start requires every seat human-occupied+ready or bot (no `empty`), valid teams (SP01 R2) | M1 (2 seats), M2 (full) |
 | R5 | `lobby.start`: server draws seed (u32, `crypto.randomInt`), builds referee, sends `start` (countdown 3 s), clock begins after countdown | M1 |
 | R6 | 20 Hz tick: exactly one `tick` per tick to players + spectators, identical bytes; empty ticks included | M1 |
 | R7 | Server stamps `player` and tick (via LockstepServer); only connected human seats may send `cmd` | M1 |
@@ -45,12 +45,12 @@ Non-goals: auth (slot only), matchmaking, chat, persistence, server replays, mul
 **Content.** `content.ts` reads `CONTENT_DIR` (default `packages/content/data`; Docker: `/app/content-data`) into `ContentFiles` as raw strings (same shape as web's `import.meta.glob ?raw` [verified: apps/web/src/app/boot.ts:2]) and calls `loadContent` [verified: content/src/content.ts]. Versions for handshake: `RULES_VERSION`, schema, `content.json` version, `BOT_VERSION`. `compiled[levelId]` is shared read-only across rooms.
 
 **Room state machine.** `lobby -> countdown -> running -> ended -> lobby (rematch)`; any state -> `closed`.
-- Lobby model: `{host, levelId, timeLimitSec, seats[{kind, difficulty, team, occupant?:{playerId,nick,ready,status}}], spectators[]}`. Changing level resets seats to defaults (seat 0 host human; others human open; teams identity). Joiner takes first open human seat, else `room-full`; `watch` -> spectator (`spectators-full` at 8).
+- Lobby model: `{host, levelId, timeLimitSec (read-only, from map), seats[{kind, difficulty, team, occupant?:{playerId,nick,ready,status}}], spectators[]}`. Changing level resets seats to defaults (seat 0 host human; others human open; teams identity). Joiner takes first open human seat, else `room-full`; `watch` -> spectator (`spectators-full` at 8).
 - Host may flip a human-occupied seat to bot: occupant is kicked to spectator.
 - Lobby disconnect: seat freed after 30 s (same timer), host transfer per R12. Empty-of-sockets lobby GC 2 min; `ended` GC 10 min; running room with no connected sockets and no human seats GC 60 s; hard cap match = limit + 2 min.
 - Per-room `try/catch` around tick work: failure logs, sends `error internal` + `room.closed`, other rooms unaffected.
 
-**Match.** On start: `sim = create(level, seed, {teams[, timeLimitTicks]})`; `lockstep = new LockstepServer(...)`; `bots = createSeatDriver(level, seed)`; `setBot(seat, preset)` for bot seats. Tick `n`:
+**Match.** On start: `sim = create(level, seed, {teams})` (time limit comes from the map level only); `lockstep = new LockstepServer(...)`; `bots = createSeatDriver(level, seed)`; `setBot(seat, preset)` for bot seats. Tick `n`:
 1. `botCmds = bots.commands(sim)` (state after n-1)  2. `{n, cmds} = lockstep.closeTick(botCmds)`  3. `sim.step(cmds, {events:false})`  4. if `sim.view.tick % 20 === 0` -> `lockstep.recordCheckpoint(tick, sim.hash())`  5. `encode({t:'tick',n,c})` once, write to every non-behind socket  6. if `sim.view.over` -> `end` via net `toWireOutcome`, `finalHash = sim.hash()`.
 Server never waits for any client. Client `hash` -> `lockstep.onHash`.
 
@@ -77,11 +77,11 @@ Server never waits for any client. Client `hash` -> `lockstep.onHash`.
 - SIGTERM/SIGINT: stop accepting, send `room.closed{reason:'shutdown'}`, close sockets 1001, exit within 8 s. Single machine => a deploy drops live matches (accepted; owner schedules deploys).
 - Env: `PORT`(8080) `HOST`(0.0.0.0) `ALLOWED_ORIGINS` `INPUT_DELAY`(3, 1..10) `MAX_ROOMS` `MAX_CONNS` `CONTENT_DIR` `ALLOW_NO_ORIGIN` `LOG_LEVEL`; validated at boot, bad value = exit 1.
 - `apps/server/Dockerfile` (build context = repo root): stage 1 `node:22-slim`, corepack pnpm 10.34.6, `pnpm install --frozen-lockfile`, build defs/content/sim/bots/net/server, `pnpm --filter @node-arena/server deploy --prod --legacy /out` (pnpm 10 needs `--legacy` without `inject-workspace-packages` [to verify at impl]); copy `packages/content/data` + `content.json` to `/out/content-data`; stage 2 runtime `USER node`, `NODE_OPTIONS=--max-old-space-size=192`, `CMD node dist/main.js`. Root `.dockerignore` excludes `node_modules`, `.worktrees`, `docs`, `apps/web`, assets.
-- `apps/server/fly.toml`: app `node-arena-server`, `primary_region = "ewr"`, `[build] dockerfile`, `[http_service] internal_port=8080 force_https=true auto_stop_machines='off' auto_start_machines=false min_machines_running=1`, `[[vm]] shared-cpu-1x 256mb`, `[[http_service.checks]] GET /healthz`, `[deploy] strategy='immediate'`. Single machine (`fly scale count 1`).
+- `apps/server/fly.toml`: app `node-arena-server`, `primary_region = "ewr"`, `[build] dockerfile`, `[http_service] internal_port=8080 force_https=true auto_stop_machines='off' auto_start_machines=false min_machines_running=1`, `[[vm]] shared-cpu-1x 256mb`, `[[http_service.checks]] GET /healthz`, `[deploy] strategy='immediate'`, `[env] ALLOWED_ORIGINS = "https://node-arena-99.web.app,https://node-arena-99.firebaseapp.com,https://node-arena-99--*.web.app"` (versioned, not secret; SP06 assumes it). Single machine (`fly scale count 1`).
 
 **Cross-project contract (asks)**
-- SP01: `create(level, seed, setup)`; **[OPEN-1]** `SeatSetup` needs optional `timeLimitTicks` (lobby time limit; also in replay header) - else server would clone the level and break `simHash`. `view.over` shape per SP01. Sim `player` index == lobby seat index.
-- SP02: `LockstepServer`, `CommandLog.range`, `toWireOutcome`, `encode`; need (a) `room.closed{reason}` field, (b) `lobby.state` carrying seat occupant `{nick,ready,status}`, `timeLimitSec`, spectator count, (c) `start` also delivered to spectators with `youPlayer:null`, (d) `seat.status` for lobby disconnects.
+- SP01: `create(level, seed, {teams})`; no `timeLimitTicks` in `SeatSetup` (time limit per map only). `view.over` shape per SP01. Sim `player` index == lobby seat index (confirmed by SP02).
+- SP02 (consumed, now in the SP02 catalogue): `LockstepServer`, `CommandLog.range`, `toWireOutcome`, `encode`; `room.closed{reason}`; `lobby.state` with per-seat occupant `{nick,ready,status}`, `timeLimitSec` (from map) and spectator count; `start` also sent to spectators with `youPlayer:null`; `seat.status` also during lobby.
 - SP03: pvp levels loaded from `packages/content/data/levels`; Duel S must land for the M1 gate. Until then M1 tests use a fixture level in `apps/server/test/fixtures` via `CONTENT_EXTRA_LEVELS`-style test option (test-only).
 - SP05: consumes `catchup` rebuild path for resync; receives no clock beyond `tick`.
 - SP06: image/fly.toml are inputs; workflow, secret `FLY_API_TOKEN`, `ALLOWED_ORIGINS` secret/var, web server-URL build var are theirs.
@@ -107,7 +107,7 @@ Server never waits for any client. Client `hash` -> `lockstep.onHash`.
 - Owner: `fly apps create`, confirm app name/region, set `FLY_API_TOKEN` GitHub secret (06 consumes), set `ALLOWED_ORIGINS`.
 
 ## Risks / Open Questions
-- [OPEN-1] SeatSetup `timeLimitTicks` (above). Recommend add to SP01.
+- [RESOLVED: orchestrator - no lobby time-limit override; time limit per map only, no `SeatSetup.timeLimitTicks`]
 - [RESOLVED: lobby `empty` kind accepted in edits but start refuses it, matching SP01 D8 — agent recommendation]
 - [RESOLVED: bots only seat-driven server side; clients never need bot code — agent recommendation]
 - Risk: CPU burst credits on shared-cpu-1x. Mitigation: M3 load smoke; per-room cost est ~1% CPU (0.3 ms sim + serialize); MAX_ROOMS 40.

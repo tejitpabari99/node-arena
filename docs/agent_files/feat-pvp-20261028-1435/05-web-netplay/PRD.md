@@ -10,7 +10,7 @@ Owns: `apps/web/src/{net/**,pvp/**,ui/pvp/**}`, small edits to `apps/web/src/{ma
 ## TL;DR
 - Separate `NetDriver` (not a GameDriver mode): ticks advance only from server `tick`s via `LockstepClient`; no pause/speed/auto-pause. Both drivers satisfy a small `MatchDriver` interface that runtime + input consume, so campaign code paths stay byte-for-byte.
 - A separate `PvpController` (own state, subscribe/events API like `AppController`) owns connection, lobby, match, result. `App.tsx` renders its screens when active; `AppController` is not extended.
-- Identity/prefs live in a NEW localStorage key `nodearena:pvp` (nick, token); `nodearena:save` is untouched, so no schema bump/migration.
+- Identity: nickname in localStorage key `nodearena:pvp`; player token in `sessionStorage` (per tab, survives reload in the same tab -> reconnect; two tabs in one profile = two players). `nodearena:save` is untouched, so no schema bump/migration.
 - Deep links `?room=ABCD` / `&watch`, server URL via `VITE_PVP_SERVER_URL`, `window.__na.pvp` + `data-testid`s for SP06.
 - No local prediction in v1 (150 ms input delay is server-side).
 
@@ -40,7 +40,7 @@ Non-goals: prediction, chat, accounts/Firebase (hello `auth` slot only), mobile 
 ## Architecture
 **Layout** (all new unless noted)
 - `src/net/connection.ts`: `PvpConnection` over injectable `WebSocketLike` factory. States above; backoff 0.5/1/2/4/8 s (cap 8 s, +-20% jitter via injected `rand`), give up after ~60 s -> `lost` (manual Retry). Frames pass through net `parseServerMessage`; sends via net `encode`. Sends `hello{pv,versions,nick,token}` on every open. No reconnect on close 4000 or `version-mismatch`.
-- `src/net/identity.ts`: `nodearena:pvp` = `{v:1, nick, token}`; token = 32 hex from `crypto.getRandomValues`; all access try/catch (private mode -> in-memory token, no persistence). Invalid blob -> regenerate token, keep nick if string.
+- `src/net/identity.ts`: nick persisted in localStorage `nodearena:pvp` = `{v:1, nick}`; token (32 hex from `crypto.getRandomValues`) persisted in `sessionStorage` (key `nodearena:pvp:token`), so each tab is a distinct player and a reload in the same tab reconnects as the same player (required for the M1 2-tab play-test in one browser profile); all access try/catch (blocked storage -> in-memory token). Invalid blob -> regenerate token, keep nick if string.
 - `src/net/links.ts`: `parseRoomLink(search)` -> `{code, role}|null` (`/^[A-Za-z0-9]{4}$/`, uppercased, `watch` flag presence); `shareLinks(origin, path, code)`.
 - `src/driver/net-driver.ts`: `NetDriver implements MatchDriver`.
 - `src/pvp/controller.ts`: `PvpController` — `snapshot()/subscribe()/subscribeEvents()` shape matching `AppController`, plus actions (`create, join, watch, updateLobby, ready, start, rematch, leave, retry`). Owns connection, `NetDriver`, runtime lifecycle (same generation-token pattern as `startLevel`). Takes `files`/`manifest`/`createRuntime` from the app so content+assets are shared.
@@ -71,14 +71,14 @@ Resync/reconnect: dispose client+sim, create fresh `create(level, seed, {teams})
 
 **Multi-seat visuals.** `ownership()` is already N-player [verified: ui/ownership.ts]; PvP bar adds team grouping (adjacent segments of one team separated by a thin gap). Seat legend marks "you" and allies (team badge letter/number + color ring; not color alone). World-space team rings/you-marker [DEFERRED]; "you" is conveyed by legend + own-building draw affordance (existing hover/select feedback). Seat colors from level `colorKey` (blue, red, green, yellow per SP03).
 
-**Test hooks (for SP06).** Existing gate: `window.__na` only when DEV or `VITE_TEST_HOOKS=1` [verified: main.tsx, test-harness/gate.ts]. Add `window.__na.pvp = { state(), actions: {create,join,watch,start,ready,rematch,leave}, tick, hash(), queued, submit(cmd), connection(), setServer(url) }` plus stable `data-testid`s: `pvp-play`, `pvp-nick`, `pvp-create`, `pvp-code-input`, `pvp-join`, `pvp-watch`, `lobby-code`, `lobby-share-play`, `lobby-share-watch`, `lobby-map-<levelId>`, `lobby-seat-<i>`, `seat-kind-<i>`, `seat-difficulty-<i>`, `seat-team-<i>`, `lobby-ready`, `lobby-start`, `lobby-spectators`, `conn-state`, `catchup-progress`, `match-timer`, `seat-legend-<i>`, `pvp-result`, `result-placement-<i>`, `pvp-rematch`, `pvp-leave`, `toast-desync`. Test builds honor `?server=ws://...` and `?nick=`. Existing `window.__na.hash()/view/submit` keep working by pointing `app.driver` hooks at the active `MatchDriver` when pvp is playing (`__na.hash()` falls back to `pvp` driver).
+**Test hooks (for SP06).** Existing gate: `window.__na` only when DEV or `VITE_TEST_HOOKS=1` [verified: main.tsx, test-harness/gate.ts]. Add `window.__na.screen` (pvp screen name, e.g. `menu|lobby|countdown|playing|result`), and in netplay mode `window.__na.view` / `window.__na.submit(cmd)` / `window.__na.hash()` point at the active `NetDriver` (SP06 relies on these exact names). Also `window.__na.pvp = { state(), actions: {create,join,watch,start,ready,rematch,leave}, tick, hash(), queued, submit(cmd), connection(), setServer(url) }` plus stable `data-testid`s: `pvp-play`, `pvp-nick`, `pvp-create`, `pvp-code-input`, `pvp-join`, `pvp-watch`, `lobby-code`, `lobby-share-play`, `lobby-share-watch`, `lobby-map-<levelId>`, `lobby-seat-<i>`, `seat-kind-<i>`, `seat-difficulty-<i>`, `seat-team-<i>`, `lobby-ready`, `lobby-start`, `lobby-spectators`, `conn-state`, `catchup-progress`, `match-timer`, `seat-legend-<i>`, `pvp-result`, `result-placement-<i>`, `pvp-rematch`, `pvp-leave`, `toast-desync`. Test builds honor `?server=ws://...` and `?nick=`. Existing `window.__na.hash()/view/submit` keep working by pointing `app.driver` hooks at the active `MatchDriver` when pvp is playing (`__na.hash()` falls back to `pvp` driver). Names SP06 uses (verbatim): `pvp-create`, `pvp-code-input`, `pvp-join`, `lobby-code`, `lobby-seat-<i>`, `lobby-ready`, `lobby-start`, `lobby-map-<levelId>`, `pvp-result`, `pvp-rematch`, `conn-state`.
 
 ## Decisions
 | # | Decision | Choice | Alternatives | Why |
 |---|---|---|---|---|
 | 1 | Driver | Separate `NetDriver` + `MatchDriver` interface | `GameDriver` with tick-source flag | GameDriver is pause/speed/bot/hidden-pause-centric; flag-ifying risks campaign regressions [RESOLVED: agent recommendation] |
 | 2 | State owner | Separate `PvpController` | Extend `AppController` | state.ts is dense, single-human, 150 lines of invariants; isolation = zero campaign risk [RESOLVED] |
-| 3 | Persistence | New key `nodearena:pvp` | Add nick to `nodearena:save` (v3 + migration) | Save validator is exact-field and discards unknown shapes; avoids wiping progress [RESOLVED] |
+| 3 | Persistence | Nick in localStorage `nodearena:pvp`; token in `sessionStorage` | Add nick to `nodearena:save` (v3 + migration); token in localStorage | Save validator is exact-field and discards unknown shapes; per-tab token lets two tabs in one profile be two players [RESOLVED: orchestrator] |
 | 4 | Prediction | None | Local ghost line until echoed | Server-side delay 150 ms is consistent and simple; revisit after M1 play-test [RESOLVED] |
 | 5 | Jitter buffer | Step on arrival, hold alpha | Fixed 100 ms playout buffer | Server delay already hides jitter; buffer would add latency [RESOLVED] |
 | 6 | Hidden tab | Never pause; catch up on return | Auto-pause | Locked: no pause in PvP; server never waits |
@@ -95,14 +95,14 @@ Resync/reconnect: dispose client+sim, create fresh `create(level, seed, {teams})
 - Risk: catch-up of an 8 min match at 6-8 ms/frame budget: 9600 ticks x ~0.25 ms = ~2.4 s CPU -> 5-6 s overlay on mid-range hardware. Acceptable; SP02 `createCatchup` same budget.
 - Risk: background-throttled tab sends hash late -> false desync? Server compares per checkpoint when received; late hash for old tick is still valid. [RESOLVED: SP04 compares by tick]
 - Risk: `Math.random`/`Date` in web code is fine (determinism lint covers sim/net/bots only) but nothing in NetDriver may feed them into the sim.
-- [OPEN] Does SP02 `LockstepClient` own the `Sim` (so resync = new client) or only queue ticks? Assumed queue-only (`push/drain/after/queued`) per SP02 PRD; recommend keep, web owns the sim.
+- [RESOLVED: orchestrator - SP02 `LockstepClient` only queues ticks (`push/drain/after/queued`); it does not own the `Sim`. Web (NetDriver) owns the sim; resync = rebuild sim + new client]
 - [DEFERRED] Ghost line for pending command; world team rings; per-seat camera orientation; sound cues for elimination; hidden-tab background stepping.
 
 ## Acceptance Criteria
 - M1: `NetDriver` unit tests with fake `LockstepClient`/environment: steps only on pushed ticks; never pauses when hidden; hash message emitted at every 20th tick; `submit` emits `cmd` without `player`/tick; `alpha` clamps; catch-up respects time budget.
 - M1: connection tests with fake WebSocket: hello on open, backoff schedule, no reconnect on 4000/version-mismatch, malformed frame ignored not thrown.
 - M1: two browser tabs vs local server: create room, join by code, both Ready, host Start, play Duel S; both show same `__na.hash()` at tick 200; result popup per seat shows Victory/Defeat from `end`.
-- M1: `parseRoomLink` table tests; identity storage survives blocked localStorage; `nodearena:save` byte-unchanged by PvP actions.
+- M1: `parseRoomLink` table tests; identity storage survives blocked localStorage/sessionStorage; token is per-tab (second tab gets a different token, reload keeps it); `nodearena:save` byte-unchanged by PvP actions.
 - M1: campaign regression: `pnpm test`, `test:web:e2e`, `campaign:verify`, `typecheck`, `lint` green; `GameDriver` tests unchanged.
 - M2: component tests (existing `test/sp08` pattern): lobby host vs non-host controls, disabled Start reasons, share-link copy, 4-seat legend with teams, N-seat + draw result rendering, deep-link flow incl. invalid code.
 - M2: spectator via `&watch` sees catch-up progress then live hash equal to players'; input disabled; rematch returns to lobby and starts with new seed.

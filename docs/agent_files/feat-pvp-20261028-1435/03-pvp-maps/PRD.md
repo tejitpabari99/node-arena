@@ -55,7 +55,7 @@ Non-goals: new archetypes/art (reuse `house-wt1`, `tower`, `obstacle`) [verified
 | D1 | Where maps live | `na-pvp-*` + `campaigns/pvp.json` | Flag on level; stuff in `custom.json` | Reuses catalog integrity checks, editor-compatible id, keeps single-player lists clean [RESOLVED: agent recommendation] |
 | D2 | Symmetry type | Duel D2, Cross D4 | Duel mirror-x only; Cross rot90 only | Fair under any team assignment, any seat [RESOLVED] |
 | D3 | Symmetry declaration | Sidecar `tools/pvp-symmetry.json` | New level schema field | Keeps SP01 schema frozen at 2.0.0 [RESOLVED] |
-| D4 | Cross default teams | `[0,1,0,1]` | `[0,0,1,1]` | Rot90-invariant up to team swap; D4 makes either fair |
+| D4 | Cross default teams | `[0,1,0,1]` | `[0,0,1,1]` | Rot90-invariant up to team swap; D4 makes either fair [RESOLVED: orchestrator] |
 | D5 | Fairness smoke | Exact symmetry gated; self-play report-only + loose gated bounds | Gate strict win-rate | Bot changes would flake strict gates |
 | D6 | Neutral tower | Duel M, Cross excludes (house centre) | Towers everywhere | Neutral towers fire (`neutralFires`) so a tower is a hazard, not just a prize; one per map max, M1 Duel S has none [verified: tower.json] |
 | D7 | Time limit | Explicit 480 in every file | `null` (compile fills) | Visible to owner in editor |
@@ -70,7 +70,7 @@ Non-goals: new archetypes/art (reuse `house-wt1`, `tower`, `obstacle`) [verified
 - Cross 4-player line crossings plus ally-blocking could stall; check in 2v2 smoke run. [RESOLVED: include 2v2 `[0,1,0,1]` and `[0,0,1,1]` in the pvp smoke]
 - Editor finalize/golden refresh path may not understand pvp outcomes. [RESOLVED: verify in M2 task; fix in tools/editor-finalize]
 - Seat color vs team readability (blue+green vs red+yellow) is SP05's team-ring problem. [DEFERRED]
-- [OPEN] Ship Cross with default `[0,1,0,1]` vs `[0,0,1,1]`? Recommend `[0,1,0,1]`; only affects the lobby default.
+- [RESOLVED: orchestrator - Cross ships with default teams `[0,1,0,1]`; only affects the lobby default]
 
 ## Acceptance Criteria
 - `pnpm validate:levels` green including three pvp levels; symmetry test fails when any building/element is nudged by 0.001 or an owner swapped (unit test with mutated copy). M1 (Duel S) / M2

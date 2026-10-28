@@ -10,7 +10,7 @@ Owns: `docs/GAME_RULES.md`, `packages/defs/src/{objectives,events}.ts`, `package
 ## TL;DR
 - New objective `pvp`; `captureAll` code path and semantics untouched. Win/elimination logic is branched on `level.objective`.
 - Teams are a per-match `SeatSetup {teams[]}` given to `create()`; allies never fight, troops arriving at an ally building reinforce it (owner unchanged).
-- PvP outcome = last team standing; at the time limit, rank teams by buildings then troops in transit; exact tie = draw.
+- PvP outcome = last team standing; at the time limit, rank teams by buildings then total troops owned (garrisons in owned buildings + troops in transit); exact tie = draw.
 - Campaign proof: team column defaults to identity; pvp-only hash tail; campaign `simHash`/state hash/outcomes unchanged. Goldens change only in the `rulesVersion` metadata field (3.0.0 to 3.1.0).
 
 ## Problem
@@ -32,7 +32,7 @@ Non-goals: lobby/net/UI (SP02/04/05); the three maps (SP03); bot difficulty pres
 | R5 | `DrawLine` to an ally building is valid (R-LIN-01 has no owner restriction); an ally's reverse line coexists (R-LIN-03 replacement stays same-owner only). | M1 |
 | R6 | Seat elimination: owns no building AND owns no troops in transit; final; recorded `eliminatedAt` tick; event `SeatEliminated`. Evaluated phase 9, ascending seat. | M1 |
 | R7 | Last team standing: when exactly one team has a non-eliminated seat, outcome `victory`, winners = all seats of that team (eliminated teammates included). | M1 |
-| R8 | Time limit: `tick >= limit` after R7 check. Rank teams by non-neutral buildings (desc), then troops in transit (desc). Unique best = `timeLimit`; tied best = `draw` with winners = tied teams' seats. Zero teams alive = `draw`, winners `[]`. | M1 |
+| R8 | Time limit: `tick >= limit` after R7 check. Rank teams by non-neutral buildings (desc), then total troops owned (desc) = garrisons in owned buildings + troops in transit. Unique best = `timeLimit`; tied best = `draw` with winners = the tied top teams' seats (also when 3+ teams exist and only the top teams tie). Zero teams alive = `draw`, winners `[]`. | M1 |
 | R9 | Placement: `ranking[]` per team: eliminated teams ranked below live ones, later `eliminatedAt` better, equal values share rank. | M2 |
 | R10 | Bot targeting ignores allies (candidate targets exclude same-team buildings; reinforcing allies is not a bot behaviour in v1). | M2 |
 | R11 | Campaign (`captureAll`) behaviour, `simHash`, state hashes, replays: unchanged. | M1 |
@@ -74,11 +74,11 @@ type Over =
 | # | Decision | Choice | Alternatives | Why |
 |---|---|---|---|---|
 | D1 | Campaign preservation | Branch on objective; identity teams; conditional hash tail | New hash domain; always hash teams | Keeps goldens/levels-lock bytes identical |
-| D2 | Where teams live | `SeatSetup` at `create` + replay header | In level JSON only | Lobby picks teams at runtime [RESOLVED: agent recommendation] |
+| D2 | Where teams live | `SeatSetup {teams}` at `create` + replay header; no `timeLimitTicks` in setup (time limit per map only; lobby override rejected) | In level JSON only; setup with time limit | Lobby picks teams at runtime [RESOLVED: agent recommendation] |
 | D3 | Human/bot seat kind | Outside sim (server/lobby); pvp level kind = placeholder | `kind` in setup | No mechanical privilege (R-ENT-04); sim stays pure |
 | D4 | Old rule text | Amend in place + `Amended` line | Tombstone + renumber | Preserves existing `covers` tests |
 | D5 | Outcome names | `victory`/`timeLimit`/`draw` + `winners` | Reuse won/lost/timeout | Campaign save/UI treat `won` as level completion |
-| D6 | Timeout tie-break "troops" | Troops in transit | Garrison levels | Matches locked decision literally; garrison variant to FUTURES [RESOLVED: agent recommendation] |
+| D6 | Timeout tie-break "troops" | Total troops owned (garrisons + in transit) | Transit only | Transit-only is near-always 0 at timeout and would make draws common; total is the meaningful strength measure [RESOLVED: orchestrator] |
 | D7 | Schema version | Unchanged | 2.1.0 | Exact-match replay header |
 | D8 | Empty seats | Not in sim; lobby fills every level seat (human or bot) | Neutral seat | Keeps map symmetry; Cross is always 4 seats [RESOLVED: agent recommendation] |
 | D9 | Ally lines into a captured ally building | Keep; now hostile | Auto-cut | Emergent, no new rule |
@@ -86,13 +86,14 @@ type Over =
 ## Risks / Open Questions
 - Golden envelopes change (`rulesVersion` only) because replay compat is exact major.minor [verified: replay.ts:114]; reviewer must confirm diffs contain no hash/outcome change. [RESOLVED: expected]
 - Perf: `hostile()` in contact loops; gate on `pnpm bench:sim` (<0.3 ms mean, <1 ms p99, hash <0.5 ms). [RESOLVED: fast path when teams identity]
-- `ranking.troops` reflects in-flight only; snowball tie-breaks at 8 min may be common on symmetric maps (draws). [DEFERRED: tune after M1 play-test]
+- `ranking.troops` = total troops owned (garrisons + in transit); exact ties on symmetric maps still possible (draws). [DEFERRED: tune after M1 play-test]
 - Bot allies in v1 never reinforce; mixed human+bot teams are valid. [DEFERRED]
-- [OPEN] Should draw on timeout be shown as draw even when 3 teams exist and only the top two tie? Recommend yes (`draw`, winners = tied top teams).
+- [RESOLVED: orchestrator - timeout with 3+ teams where only the top teams tie = `draw`, winners = tied top teams' seats]
+- [RESOLVED: orchestrator - no `SeatSetup.timeLimitTicks`: time limit is per map only (`level.timeLimitSec`); lobby override rejected as alternative (would diverge from `simHash`/level data)]
 
 ## Acceptance Criteria
 - `pnpm check:rules` green: every new id has a test titled `covers R-...` (unit: hostility, ally arrival, tower skip, crossing skip, elimination, victory, timeout ranking, tie/draw, placement). M1
-- Scripted matches via `runMatch`: 1v1; 4-seat FFA; 2v2 (`teams [0,0,1,1]`); 3v1; each ends with expected `outcome`/`winners`/`ranking`; replay round-trips with `teams` in header. M1/M2
+- Scripted matches via `runMatch`: 1v1; 4-seat FFA; 2v2 (`teams [0,0,1,1]`); 3v1; each ends with expected `outcome`/`winners`/`ranking` (timeout tests cover garrison-based tie-break and 3-team top-tie draw); replay round-trips with `teams` in header. M1/M2
 - `pnpm sim:golden`, `pnpm bots:golden`, `pnpm replay:verify golden`, `pnpm levels:lock` check: only `rulesVersion` metadata differs; all hashes/outcomes identical. M1
 - `pnpm validate:content --base HEAD`, `check:schemas`, `validate:levels` green; invalid pvp level (1 seat, 5 seats, bot block, single team, absent limit filled with 480) rejected or defaulted per R1/R2. M1
 - `pnpm bench:sim` within budget; `pnpm typecheck`, `lint` (determinism rules) green. M1

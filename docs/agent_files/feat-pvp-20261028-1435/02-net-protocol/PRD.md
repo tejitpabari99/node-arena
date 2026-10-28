@@ -39,19 +39,19 @@ Non-goals: sockets (04), UI/rendering/jitter smoothing (05), lobby state machine
 |---|---|---|
 | C>S | `hello` | `pv`, `versions{rules,schema,content,bot}`, `nick` (1-20, trimmed printable), `token` (32 hex), `auth?` (string <=2048, future Firebase ID token, ignored now) |
 | C>S | `room.create` / `room.join{code,role:'play'\|'watch'}` / `room.leave` | code `^[A-Z0-9]{4}$` |
-| C>S | `lobby.update` (host) | `levelId`, `seats[{kind:'human'\|'bot'\|'empty', difficulty?, team}]`, `timeLimitSec?` |
+| C>S | `lobby.update` (host) | `levelId`, `seats[{kind:'human'\|'bot'\|'empty', difficulty?, team}]` (no time limit field: read from map) |
 | C>S | `lobby.ready{ready}`, `lobby.start`, `rematch` | |
 | C>S | `cmd` | `c:{type:'DrawLine'\|'CutLine', from, to}`, `cid?` |
 | C>S | `hash` | `tick` (multiple of 20), `h` (16 hex) |
 | C>S | `resync{}` / `ping{id}` | |
 | S>C | `welcome` | `pv`, `playerId`, `resume?{code,seat}`, `serverVersions` |
-| S>C | `room.joined` / `lobby.state` / `room.closed` | code, you{seat\|null,host}, lobby snapshot |
-| S>C | `start` | `matchId`, `levelId`, `simHash`, `seed` u32, `seats[{player,kind,team,nick,difficulty?}]`, `youPlayer\|null`, `inputDelay`, `countdownMs`, `timeLimitTicks`, `hashInterval:20` |
+| S>C | `room.joined` / `lobby.state` / `room.closed` | `room.joined`: code, you{seat\|null,host}. `lobby.state`: `levelId`, `timeLimitSec` (read from map), `host`, `seats[{kind,difficulty?,team,occupant?{nick,ready,status:'connected'\|'grace'\|'bot'}}]`, `spectators` (count). `room.closed{reason}` (e.g. `shutdown`, `server-restart`, `internal`, `idle`) |
+| S>C | `start` | `matchId`, `levelId`, `simHash`, `seed` u32, `seats[{player,kind,team,nick,difficulty?}]`, `youPlayer\|null` (also sent to spectators, with `null`), `inputDelay`, `countdownMs`, `timeLimitTicks`, `hashInterval:20` |
 | S>C | `tick` | `n`, `c:[Command...]` (omit `c` when empty) |
 | S>C | `catchup` | `from`, `to`, `cmds:[{tick,cmd}]` sparse, `done:boolean` (chunks of <=2000 ticks) |
 | S>C | `ticks` | batch `{from,to,cmds}` for lagging live clients (same shape as catchup chunk) |
 | S>C | `desync` | `tick`, `serverHash` |
-| S>C | `seat.status` | `player`, `status:'connected'\|'grace'\|'bot'`, `graceMs?` |
+| S>C | `seat.status` | `player`, `status:'connected'\|'grace'\|'bot'`, `graceMs?` (also emitted during lobby, for lobby disconnects) |
 | S>C | `end` | outcome (see assumption), `finalTick`, `finalHash` |
 | S>C | `pong` | `id`, `tick` |
 | S>C | `error` | `code`, `detail?` |
@@ -66,7 +66,7 @@ Error codes: `bad-json, too-large, bad-message, unknown-type, version-mismatch, 
 - `onHash(player, tick, h)`: compares against stored referee checkpoint `-> ok | desync`. Checkpoints stored via `recordCheckpoint(tick, hash)` (<=480 entries for 8 min).
 - Canonical order: arrival order within a tick. Sim itself sorts by (player, submission index) (`sim/src/commands.ts`), so server and clients, receiving the identical array, agree.
 
-**LockstepClient**: `push(msg)` queues contiguous tick/ticks/catchup entries; `drain(maxSteps) -> {n,cmds}[]` (caller calls `sim.step(cmds)` then `after(n)`); `after(n)` returns a `hash` message when `(n+1) % 20 === 0` (hash taken post-step, tick = `sim.view.tick`, same semantics as replay checkpoints). Exposes `queued()` for HUD/jitter policy. Never steps ahead of received ticks. Outgoing `cmd` has no tick; the client does not predict.
+**LockstepClient**: `push(msg)` queues contiguous tick/ticks/catchup entries; `drain(maxSteps) -> {n,cmds}[]` (caller calls `sim.step(cmds)` then `after(n)`); `after(n)` returns a `hash` message when `(n+1) % 20 === 0` (hash taken post-step, tick = `sim.view.tick`, same semantics as replay checkpoints). Exposes `queued()` for HUD/jitter policy. **LockstepClient only queues ticks; it does not own or step the `Sim`** (the caller, SP05 NetDriver, owns the sim, steps it, and rebuilds it on resync). Never steps ahead of received ticks. Outgoing `cmd` has no tick; the client does not predict.
 
 **CommandLog**: flat `{tick, cmd}[]` identical to `ReplayRecord.commands`, so a server log feeds `playReplay` unchanged (golden-style determinism test). Bounded: hard cap `timeLimitTicks + 200` ticks and `cmdCap` (~20k) entries; rate limits keep real matches < ~5k entries (<300 KB). `range(from,to,maxTicks)` yields chunks.
 
@@ -97,10 +97,13 @@ Error codes: `bad-json, too-large, bad-message, unknown-type, version-mismatch, 
 | 8 | Log format | `ReplayRecord.commands` shape | custom | reuse `playReplay` for tests/debug dumps |
 | 9 | Clock injection | caller passes `now` | net reads clock | determinism lint, testability |
 | 10 | Lobby msg naming | `lobby.update` (c>s host), `lobby.state` (s>c) | same name both | unambiguous |
+| 11 | Seat/player/team ids | sim player index == lobby seat index; team ids 0..n-1 | mapping layer | no translation bugs [RESOLVED: orchestrator] |
+| 12 | Lobby time limit | none on wire; read from map | `timeLimitSec` in `lobby.update` | per-map only (rejected: SP01 `SeatSetup.timeLimitTicks`) [RESOLVED: orchestrator] |
 
 ## Risks / Open Questions
 - [RESOLVED: net owns `toWireOutcome` adapter and assumes the shape above; 01's PRD wins on names — agent recommendation]
-- [OPEN] Contract with 01/04: confirm sim player index == lobby seat index and that `team` ids are 0..3. Recommend yes (no mapping layer).
+- [RESOLVED: orchestrator - sim player index == lobby seat index; `team` ids are 0..n-1 (n = seat count); no mapping layer]
+- [RESOLVED: orchestrator - SP04 asks accepted and folded into the catalogue: `room.closed{reason}`, richer `lobby.state`, `start` to spectators with `youPlayer:null`, `seat.status` in lobby]
 - [RESOLVED: jitter/playout buffer policy belongs to 05; net only exposes `queued()` — agent recommendation]
 - [RESOLVED: auto-resync on desync is M3; M1 client logs + toasts on `desync` — agent recommendation]
 - [DEFERRED] Compression, binary frames, `auth` verification, dedupe via `cid` acks.
