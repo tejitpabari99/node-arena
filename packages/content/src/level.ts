@@ -74,11 +74,30 @@ export function validateLevel(catalog: Catalog, level: NextLevel, file: string):
     if (colors.has(p.colorKey)) err(`/players/${i}/colorKey`, `Duplicate colorKey "${p.colorKey}"`);
     colors.add(p.colorKey);
     if (catalog.colorKeys && !catalog.colorKeys.includes(p.colorKey)) err(`/players/${i}/colorKey`, `Unknown colorKey "${p.colorKey}"`);
-    if (p.kind === 'human') { humans++; if (i !== 0) err(`/players/${i}/kind`, 'The human player must be first in players[]'); if (p.bot) err(`/players/${i}/bot`, 'Human players cannot have a bot'); }
+    if (p.kind === 'human') { humans++; if (i !== 0 && 'human' in objective.seats) err(`/players/${i}/kind`, 'The human player must be first in players[]'); if (p.bot) err(`/players/${i}/bot`, 'Human players cannot have a bot'); }
     else { ais++; if (!p.bot) err(`/players/${i}`, 'AI players require a bot block'); }
   });
-  // pvp ({min,max} seats) validation lands in a later task; only the human+AI shape is checked here.
-  if ('human' in objective.seats) {
+  if (!('human' in objective.seats)) {
+    // pvp: 2..4 seats, `human` placeholder kind, no bots, all buildings count, optional dense teams.
+    const { min, max } = objective.seats;
+    if (level.players.length < min || level.players.length > max) err('/players', `Expected ${min}..${max} players, found ${level.players.length}`);
+    level.players.forEach((p, i) => {
+      if (p.kind !== 'human') err(`/players/${i}/kind`, 'pvp seats must use kind "human" (placeholder)');
+      if (p.bot) err(`/players/${i}/bot`, 'pvp levels cannot have bot blocks');
+    });
+    level.buildings.forEach((bd, i) => { if (bd.ignoreForWin) err(`/buildings/${i}/ignoreForWin`, 'pvp buildings must have ignoreForWin=false'); });
+    const teams = level.players.map((p) => p.team);
+    const authored = teams.filter((t) => t !== undefined) as number[];
+    if (authored.length > 0) {
+      if (authored.length !== teams.length) err('/players', 'team must be set on all players or none');
+      else {
+        const distinct = [...new Set(authored)].sort((a, b) => a - b);
+        if (distinct.length < 2) err('/players', 'pvp needs at least 2 distinct teams');
+        if (distinct.some((t, k) => t !== k)) err('/players', 'team ids must be dense 0..k-1');
+      }
+    }
+  } else {
+    level.players.forEach((p, i) => { if (p.team !== undefined) err(`/players/${i}/team`, 'team is only valid for pvp levels'); });
     if (humans !== objective.seats.human) err('/players', `Expected exactly ${objective.seats.human} human player(s), found ${humans}`);
     if (ais < 1 || ais > objective.seats.aiMax) err('/players', `Expected 1..${objective.seats.aiMax} AI players, found ${ais}`);
   }

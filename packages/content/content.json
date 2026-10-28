@@ -2,5 +2,5 @@
   "$schema": "schemas/content.schema.json",
   "schemaVersion": "2.0.0",
   "contentVersion": "2.3.4",
-  "rulesVersion": "3.0.0"
+  "rulesVersion": "3.1.0"
 }

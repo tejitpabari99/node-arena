@@ -116,8 +116,16 @@
       "additionalProperties": false
     },
     "objective": {
-      "type": "string",
-      "const": "captureAll"
+      "anyOf": [
+        {
+          "type": "string",
+          "const": "captureAll"
+        },
+        {
+          "type": "string",
+          "const": "pvp"
+        }
+      ]
     },
     "timeLimitSec": {
       "anyOf": [
@@ -345,6 +353,11 @@
               }
             },
             "additionalProperties": false
+          },
+          "team": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
           }
         },
         "additionalProperties": false

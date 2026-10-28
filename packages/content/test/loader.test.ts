@@ -283,3 +283,45 @@ test('real data files load as a catalog', async () => {
 // Pinned: moving these means simulation-affecting compile semantics changed.
 const PINNED_SIM = 'a0a1dda78bc746113c400cf4c74d8007636f6afa08f2128adf693d2bac7fb4f2';
 const PINNED_BOT = 'a378728773bfbf5f6493cc6ddb6acc37ada5c58f04878b2dcb2d75fa8beca554';
+
+function pvpLevel(n = 2): any {
+  const l = level();
+  l.objective = 'pvp';
+  l.requires = ['blocksLines', 'drawsLines', 'grows', 'level', 'objective:pvp', 'shoots', 'spawns'];
+  l.buildings[2].ignoreForWin = false;
+  l.players = ['p1', 'p2', 'p3', 'p4', 'p5'].slice(0, n).map((id, i) => ({ id, kind: 'human', colorKey: `c${i}` }));
+  return l;
+}
+
+test('pvp level: validation (2-4 human seats, no bots, teams) and 480 s default', () => {
+  const F = 'data/levels/lv-test.json';
+  const bad = (mutate: (l: any) => void, pointer: string, text: RegExp, n = 2) => {
+    const l = pvpLevel(n); mutate(l);
+    expectIssue(() => content.loadLevel(cat(), l), F, pointer, text);
+  };
+  for (const n of [2, 3, 4]) content.loadLevel(cat(), pvpLevel(n));
+  bad(() => {}, '/players', /fewer than 2 items/, 1); // schema minItems
+  bad(() => {}, '/players', /Expected 2\.\.4 players, found 5/, 5);
+  bad((l) => { l.players[1].bot = { kind: 'tw', actionDelayMs: 12000, behavior: 'full', script: [] }; l.requires.push('bot:tw'); l.requires.sort(); }, '/players/1/bot', /cannot have bot/);
+  bad((l) => { l.players[1].kind = 'ai'; }, '/players/1/kind', /kind "human"/);
+  bad((l) => { l.buildings[2].ignoreForWin = true; }, '/buildings/2/ignoreForWin', /ignoreForWin=false/);
+  bad((l) => { l.players[0].team = 0; l.players[1].team = 0; }, '/players', /at least 2 distinct/);
+  bad((l) => { l.players[0].team = 0; l.players[1].team = 2; }, '/players', /dense/);
+  bad((l) => { l.players[0].team = 0; }, '/players', /all players or none/);
+  bad((l) => { const q = level(); Object.assign(l, { objective: 'captureAll' }); l.players = q.players; l.players[0].team = 0; l.requires = q.requires; }, '/players/0/team', /only valid for pvp/);
+
+  const c = compile(pvpLevel(2));
+  assert.equal(c.timeLimitSec, 480);
+  assert.equal(c.rules.timeLimitSec, 480);
+  assert.deepEqual(c.players[0], { id: 'p1', kind: 'human', colorKey: 'c0' }); // no team unless authored
+  const l = pvpLevel(2); l.timeLimitSec = 300;
+  assert.equal(compile(l).timeLimitSec, 300);
+  const t = pvpLevel(4); t.players.forEach((p: any, i: number) => { p.team = i % 2; });
+  assert.deepEqual(compile(t).players.map((p) => p.team), [0, 1, 0, 1]);
+});
+
+test('campaign compile unchanged by team field: no team key, null limit stays null', () => {
+  const c = compile();
+  assert.equal(c.timeLimitSec, null);
+  assert.ok(c.players.every((p) => !('team' in p)));
+});
