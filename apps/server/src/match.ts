@@ -6,6 +6,8 @@ import type { MatchStart, Room } from './room.js';
 
 export const CHECKPOINT_INTERVAL = 20;
 export const DESYNC_MIN_GAP_MS = 10_000;
+/** Max accepted `cmd`s per seat per target tick; excess gets `rate-limited` (full token bucket is M2). */
+export const MAX_CMDS_PER_SEAT_PER_TICK = 8;
 
 export interface MatchDeps {
   clock: Pick<Clock, 'add' | 'remove'>;
@@ -24,7 +26,7 @@ export interface MatchController {
 /** Authoritative loop per room: referee sim + lockstep, driven by the shared clock. Never waits on clients. */
 export function createMatchController(deps: MatchDeps): MatchController {
   const { clock, now, log } = deps;
-  const active = new Map<Room, { lockstep: LockstepServer; lastDesync: Map<number, number> }>();
+  const active = new Map<Room, { lockstep: LockstepServer; lastDesync: Map<number, number>; perTick: Map<number, { tick: number; n: number }>; total: Map<number, number>; seatBudget: number }>();
 
   const frameTo = (match: MatchStart, frame: string): void => {
     for (const c of match.players.values()) {
@@ -39,7 +41,8 @@ export function createMatchController(deps: MatchDeps): MatchController {
     const lockstep = new LockstepServer({
       seats: kinds, inputDelay: match.inputDelay, buildingCount: sim.view.ids.buildings.length, log: { timeLimitTicks: match.timeLimitTicks },
     });
-    active.set(room, { lockstep, lastDesync: new Map() });
+    const seatBudget = Math.max(1, Math.floor(lockstep.log.cmdCap / Math.max(1, kinds.length)));
+    active.set(room, { lockstep, lastDesync: new Map(), perTick: new Map(), total: new Map(), seatBudget });
 
     const stop = (): void => { clock.remove(clockRoom); active.delete(room); };
     const abort = (err: unknown): void => {
@@ -83,12 +86,28 @@ export function createMatchController(deps: MatchDeps): MatchController {
     if (msg.t !== 'cmd' && msg.t !== 'hash') return false;
     const m = active.get(room);
     if (m === undefined || (room.state !== 'running' && room.state !== 'countdown')) {
-      conn.sendError('internal', 'no running match');
+      conn.sendError(msg.t === 'cmd' ? 'not-your-seat' : 'internal', 'no running match');
       return true;
     }
     if (msg.t === 'cmd') {
+      // Commands only while running (not lobby/countdown), from the human seat's own connection.
+      if (room.state !== 'running' || room.seats[seat]?.kind !== 'human' || room.match?.players.get(seat) !== conn) {
+        conn.sendError('not-your-seat');
+        return true;
+      }
+      // Per-seat caps so one spammer cannot saturate the shared CommandLog (cap breach aborts the room).
+      const tick = m.lockstep.nextTick + m.lockstep.inputDelay;
+      const pt = m.perTick.get(seat);
+      const n = pt !== undefined && pt.tick === tick ? pt.n : 0;
+      const total = m.total.get(seat) ?? 0;
+      if (n >= MAX_CMDS_PER_SEAT_PER_TICK || total >= m.seatBudget) {
+        conn.sendError('rate-limited');
+        return true;
+      }
       const r = m.lockstep.submit(seat, msg.c);
-      if (!r.accepted) conn.sendError(r.rejected);
+      if (!r.accepted) { conn.sendError(r.rejected); return true; }
+      m.perTick.set(seat, { tick, n: n + 1 });
+      m.total.set(seat, total + 1);
       return true;
     }
     const r = m.lockstep.onHash(seat, msg.tick, msg.h);
