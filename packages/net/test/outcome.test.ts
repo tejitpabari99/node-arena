@@ -38,7 +38,7 @@ test('null and campaign outcomes rejected (null, no throw)', () => {
 });
 
 test('real pvp sim run to end -> valid end message round-trips', () => {
-  const { pvpLevel } = createRequire(import.meta.url)('../../bots/test/pvp-fixture.cjs');
+  const { pvpLevel } = createRequire(import.meta.url)('./pvp-fixture.cjs');
   const level = pvpLevel([0, 1], [0, 1], { limit: 60, levels: [30, 2] });
   const sim = create(level, 1, { teams: [0, 1] });
   const dl: Command = { type: 'DrawLine', player: 0, from: 0, to: 1 };

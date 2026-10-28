@@ -17,6 +17,12 @@ export const DEFAULT_CMD_CAP = 20000;
 export const DEFAULT_CHECKPOINT_CAP = 480;
 export const DEFAULT_SLACK_TICKS = 200;
 export const MAX_CHUNK_TICKS = 2000;
+/**
+ * Max entries per chunk. Worst-case entry is ~100 B encoded ({tick,cmd} with 10-digit ints), so 10000 entries
+ * stay under the client's 1 MiB MAX_SERVER_BYTES. A single tick holding more than this is still one chunk
+ * (a tick cannot be split across chunks).
+ */
+export const MAX_CHUNK_CMDS = 10000;
 
 /** Bounded append-only command log. Never throws on overflow; returns a result. */
 export class CommandLog {
@@ -47,16 +53,29 @@ export class CommandLog {
     return { ok: true };
   }
 
-  /** Contiguous chunks covering [from, to) with no gap or overlap, each <= maxTicks (clamped to 1..2000). */
+  /**
+   * Contiguous chunks covering [from, to) with no gap or overlap, each <= maxTicks (clamped to 1..2000; non-finite
+   * -> 2000) and <= MAX_CHUNK_CMDS entries (except a single tick holding more, which stays whole).
+   */
   range(from: number, to: number, maxTicks: number = MAX_CHUNK_TICKS): LogChunk[] {
-    const span = Math.max(1, Math.min(maxTicks - (maxTicks % 1), MAX_CHUNK_TICKS));
+    const span = Number.isFinite(maxTicks) ? Math.max(1, Math.min(maxTicks - (maxTicks % 1), MAX_CHUNK_TICKS)) : MAX_CHUNK_TICKS;
     const chunks: LogChunk[] = [];
     let i = this.lowerBound(from);
-    for (let start = from; start < to; start += span) {
-      const end = Math.min(start + span, to);
-      const cmds: LogEntry[] = [];
-      while (i < this.entries.length && this.entries[i]!.tick < end) cmds.push(this.entries[i++]!);
-      chunks.push({ from: start, to: end, cmds });
+    let start = from;
+    while (start < to) {
+      let end = Math.min(start + span, to);
+      let j = this.lowerBound(end);
+      if (j - i > MAX_CHUNK_CMDS) {
+        // Cut at the tick boundary of the first entry past the cap.
+        const cut = this.entries[i + MAX_CHUNK_CMDS]!.tick;
+        const first = this.entries[i]!.tick;
+        end = cut > first ? cut : first + 1;
+        if (end <= start) end = start + 1;
+        j = this.lowerBound(end);
+      }
+      chunks.push({ from: start, to: end, cmds: this.entries.slice(i, j) });
+      i = j;
+      start = end;
     }
     return chunks;
   }

@@ -3,7 +3,9 @@ import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import { createReplayRecorder, playReplay, type ReplayRecord } from '@node-arena/sim';
 import type { Command } from '@node-arena/defs';
-import { CommandLog } from '../src/log.js';
+import { byteSize, encodeServer } from '../src/codec.js';
+import { CommandLog, MAX_CHUNK_CMDS } from '../src/log.js';
+import { MAX_SERVER_BYTES, parseServerMessage } from '../src/validate.js';
 
 const draw = (player: number, from: number, to: number): Command => ({ type: 'DrawLine', player, from, to });
 
@@ -80,4 +82,41 @@ test('log feeds playReplay unchanged (ReplayRecord.commands)', () => {
   const merged = log.range(0, 120, 50).flatMap(c => c.cmds);
   const res2 = playReplay({ metadata: fx.metadata, level: fx.compiledGolden() }, { ...recorded, commands: merged as ReplayRecord['commands'] });
   assert.equal(res2.ok, true);
+});
+
+test('range: non-finite maxTicks falls back to 2000', () => {
+  const log = new CommandLog({ timeLimitTicks: 10000 });
+  for (const m of [Infinity, NaN, -Infinity]) {
+    const ch = log.range(0, 4500, m);
+    assert.deepEqual(ch.map((c) => [c.from, c.to]), [[0, 2000], [2000, 4000], [4000, 4500]]);
+  }
+});
+
+test('range: chunks split by entry count, contiguous, and worst-case chunk fits MAX_SERVER_BYTES', () => {
+  const log = new CommandLog({ timeLimitTicks: 100000, cmdCap: 25000 });
+  const big = 2147483647;
+  const maxCmd = (): Command => ({ type: 'DrawLine', player: 7, from: big, to: big });
+  // 25 cmds per tick over 1000 ticks, ticks near the int ceiling is not allowed by tick cap; use max 5-digit ticks.
+  for (let t = 0; t < 1000; t++) for (let k = 0; k < 25; k++) assert.ok(log.append(t, maxCmd()).ok);
+  const chunks = log.range(0, 1000);
+  assert.ok(chunks.length >= 3);
+  let next = 0, total = 0;
+  for (const c of chunks) {
+    assert.equal(c.from, next);
+    assert.ok(c.to > c.from);
+    assert.ok(c.cmds.length <= MAX_CHUNK_CMDS);
+    for (const e of c.cmds) assert.ok(e.tick >= c.from && e.tick < c.to);
+    total += c.cmds.length;
+    next = c.to;
+  }
+  assert.equal(next, 1000);
+  assert.equal(total, 25000);
+});
+
+test('worst-case max chunk (MAX_CHUNK_CMDS max-size cmds, 10-digit ticks) < MAX_SERVER_BYTES', () => {
+  const big = 2147483647;
+  const cmds = Array.from({ length: MAX_CHUNK_CMDS }, () => ({ tick: big, cmd: { type: 'DrawLine', player: 7, from: big, to: big } as Command }));
+  const raw = encodeServer({ t: 'catchup', from: big - 1, to: big, cmds, done: false });
+  assert.ok(byteSize(raw) < MAX_SERVER_BYTES, `${byteSize(raw)}`);
+  assert.equal(parseServerMessage(raw).ok, true);
 });

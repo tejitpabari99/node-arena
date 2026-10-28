@@ -162,3 +162,9 @@ test('fuzz: never throws, always well-formed result', () => {
     check(parseClientMessage(raw)); check(parseServerMessage(raw) as ReturnType<typeof parseClientMessage>);
   }
 });
+
+test('server: start.hashInterval must be 20; client hash tick % 20', () => {
+  const start = { t: 'start', matchId: 'm', levelId: 'l', simHash: '0123456789abcdef', seed: 1, youPlayer: 0, inputDelay: 3, countdownMs: 3000, timeLimitTicks: 6000, hashInterval: 20, seats: [] };
+  assert.equal(parseServerMessage(JSON.stringify(start)).ok, true);
+  for (const v of [10, 0, 40, '20', null]) assert.equal(code(parseServerMessage(JSON.stringify({ ...start, hashInterval: v }))), 'bad-message');
+});

@@ -1,5 +1,5 @@
 import type { Command } from '@node-arena/defs';
-import { CommandLog, type CommandLogOptions } from './log.js';
+import { CommandLog, type AppendResult, type CommandLogOptions } from './log.js';
 import type { DesyncMsg, ErrorCode, SeatKind } from './messages.js';
 import { MAX_INT } from './validate.js';
 
@@ -18,6 +18,7 @@ export interface LockstepServerOptions {
 }
 
 export type SubmitResult = { accepted: true; tick: number } | { accepted: false; rejected: ErrorCode };
+export type DropReason = Extract<AppendResult, { ok: false }>['reason'];
 export type HashResult = { result: 'ok' } | { result: 'pending' } | { result: 'desync'; msg: DesyncMsg };
 
 /**
@@ -68,17 +69,24 @@ export class LockstepServer {
   /**
    * Close tick `nextTick`: buffered human cmds (arrival order) then `botCmds` (already player-stamped, they land on
    * this tick with no delay). Only cmds that were logged are returned, so the log, the referee and every client
-   * always see the identical array. Advances `nextTick`.
+   * always see the identical array. Advances `nextTick`. `dropped` counts cmds the log refused (`firstDrop` = first
+   * reason); non-zero means the log is saturated and the caller (SP04) should abort the room.
    */
-  closeTick(botCmds: readonly Command[] = []): { n: number; cmds: Command[] } {
+  closeTick(botCmds: readonly Command[] = []): { n: number; cmds: Command[]; dropped: number; firstDrop?: DropReason } {
     const n = this.next;
     const humans = this.buffer.get(n) ?? [];
     this.buffer.delete(n);
     this.pending -= humans.length;
     const cmds: Command[] = [];
-    for (const cmd of [...humans, ...botCmds]) if (this.log.append(n, cmd).ok) cmds.push(cmd);
+    let dropped = 0;
+    let firstDrop: DropReason | undefined;
+    for (const cmd of [...humans, ...botCmds]) {
+      const r = this.log.append(n, cmd);
+      if (r.ok) cmds.push(cmd);
+      else { dropped++; if (firstDrop === undefined) firstDrop = r.reason; }
+    }
     this.next = n + 1;
-    return { n, cmds };
+    return firstDrop === undefined ? { n, cmds, dropped } : { n, cmds, dropped, firstDrop };
   }
 
   /** Referee hash after stepping, `tick` = sim.view.tick (same semantics as client `hash` msgs). */

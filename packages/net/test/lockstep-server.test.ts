@@ -79,3 +79,16 @@ test('hash: ok, desync, pending', () => {
   assert.deepEqual(s.onHash(0, 20, 'a'.repeat(16)), { result: 'ok' });
   assert.deepEqual(s.onHash(1, 20, 'b'.repeat(16)), { result: 'desync', msg: { t: 'desync', tick: 20, serverHash: 'a'.repeat(16) } });
 });
+
+test('closeTick reports dropped bot cmds when the log refuses them', () => {
+  const s = new LockstepServer({ seats: ['human', 'bot'], buildingCount: 4, log: { timeLimitTicks: 100, cmdCap: 2 } });
+  const bot = (): Command => ({ type: 'DrawLine', player: 1, from: 0, to: 1 });
+  const r = s.closeTick([bot(), bot(), bot(), bot()]);
+  assert.equal(r.cmds.length, 2);
+  assert.equal(r.dropped, 2);
+  assert.equal(r.firstDrop, 'cmd-cap');
+  assert.equal(s.log.size, 2);
+  const ok = mk().closeTick([bot()]);
+  assert.equal(ok.dropped, 0);
+  assert.equal('firstDrop' in ok, false);
+});

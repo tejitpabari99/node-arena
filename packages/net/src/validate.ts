@@ -200,7 +200,7 @@ function serverMsg(o: Rec): ServerMessage {
         t: 'start', matchId: str(o.matchId), levelId: str(o.levelId), simHash: hash16(o.simHash), seed: int(o.seed),
         seats: arr(o.seats, MAX_SEATS, startSeat), youPlayer: o.youPlayer === null ? null : int(o.youPlayer),
         inputDelay: int(o.inputDelay), countdownMs: int(o.countdownMs), timeLimitTicks: int(o.timeLimitTicks),
-        hashInterval: int(o.hashInterval),
+        hashInterval: o.hashInterval === HASH_INTERVAL ? HASH_INTERVAL : bad(),
       };
     case 'tick':
       return withOpt({ t: 'tick', n: int(o.n) }, { c: opt(o, 'c', (x) => arr(x, MAX_CMDS, command)) }) as ServerMessage;

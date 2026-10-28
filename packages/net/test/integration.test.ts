@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import { create, createReplayRecorder, playReplay, type ReplayRecord } from '@node-arena/sim';
 import { encodeClient, encodeServer, encodeTick, endMessage, LockstepClient, LockstepServer, parseClientMessage, parseServerMessage, type ClientMessage, type ServerMessage } from '../src/index.js';
 
-const { pvpLevel } = createRequire(import.meta.url)('../../bots/test/pvp-fixture.cjs');
+const { pvpLevel } = createRequire(import.meta.url)('./pvp-fixture.cjs');
 const metadata = { rulesVersion: '2.0.0', schemaVersion: '9.0.0', contentVersion: '9.0.0' };
 const SEED = 7;
 const TEAMS = [0, 1];

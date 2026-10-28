@@ -22,11 +22,9 @@ export class LockstepClient {
   private head = 0;
   private resync = false;
   private lastReason: PushError | null = null;
-  private readonly interval: number;
 
-  constructor(startTick = 0, hashInterval: number = HASH_INTERVAL) {
+  constructor(startTick = 0) {
     this.next = startTick;
-    this.interval = hashInterval;
   }
 
   /** Next tick number expected from the wire. */
@@ -70,7 +68,8 @@ export class LockstepClient {
   /** Release up to `maxSteps` contiguous ticks, in order; never ahead of what has arrived. */
   drain(maxSteps: number): ClientTick[] {
     if (this.resync || !(maxSteps > 0)) return [];
-    const take = Math.min(maxSteps - (maxSteps % 1), this.queued());
+    // Infinity (or anything >= queued) drains all; avoid `Infinity % 1` = NaN poisoning `head`.
+    const take = maxSteps >= this.queued() ? this.queued() : maxSteps - (maxSteps % 1);
     const out = this.queue.slice(this.head, this.head + take);
     this.head += take;
     if (this.head === this.queue.length) { this.queue = []; this.head = 0; }
@@ -78,11 +77,11 @@ export class LockstepClient {
   }
 
   /**
-   * Call after stepping tick `n`. Returns a `hash` message when `(n+1) % interval === 0`, with
+   * Call after stepping tick `n`. Returns a `hash` message when `(n+1) % HASH_INTERVAL === 0`, with
    * tick = n+1 = sim.view.tick post-step (same as replay checkpoints). `hash` is lazy: only invoked when due.
    */
   after(n: number, hash: () => string): HashMsg | null {
-    if ((n + 1) % this.interval !== 0) return null;
+    if ((n + 1) % HASH_INTERVAL !== 0) return null;
     return { t: 'hash', tick: n + 1, h: hash() };
   }
 

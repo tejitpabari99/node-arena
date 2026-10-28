@@ -88,3 +88,18 @@ test('real sim: hash ticks equal replay checkpoint ticks and hashes', () => {
   assert.deepEqual(got, expected);
   assert.equal(client.queued(), 0);
 });
+
+test('drain(Infinity) drains all; NaN/negative/0 are no-ops; later pushes still work', () => {
+  const c = new LockstepClient();
+  for (let n = 0; n < 5; n++) c.push(tick(n));
+  assert.deepEqual(c.drain(NaN), []);
+  assert.deepEqual(c.drain(-1), []);
+  assert.deepEqual(c.drain(0), []);
+  assert.equal(c.queued(), 5);
+  assert.deepEqual(c.drain(Infinity).map((t) => t.n), [0, 1, 2, 3, 4]);
+  assert.equal(c.queued(), 0);
+  c.push(tick(5)); c.push(tick(6));
+  assert.equal(c.queued(), 2);
+  assert.deepEqual(c.drain(Infinity).map((t) => t.n), [5, 6]);
+  assert.equal(c.needsResync, false);
+});

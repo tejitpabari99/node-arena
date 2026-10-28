@@ -25,7 +25,7 @@ Non-goals: sockets (04), UI/rendering/jitter smoothing (05), lobby state machine
 | R4 | Server stamps cmd tick = `nextTick + inputDelay` (default 3, configurable 1..10); clients never choose ticks | M1 |
 | R5 | `player` is server-authored: client `cmd` has no `player` field; server fills the sender's seat player index. Spectators / empty / bot seats cannot send cmds | M1 |
 | R6 | Client steps tick N only after receiving tick N, strictly in order; gap or duplicate = protocol error -> resync | M1 |
-| R7 | Catch-up: replay log from tick 0 under a per-frame time budget, then continue live without gap | M2 (reconnect/spectator), M1 for local-join-late helper |
+| R7 | Catch-up: replay log from tick 0 under a per-frame time budget, then continue live without gap | M2 (reconnect/spectator, incl. local-join-late helper, Task 10) |
 | R8 | Hash checkpoint every 20 ticks client->server; server compares to referee; mismatch -> `desync` | M1 detect, M3 auto-resync |
 | R9 | Per-seat rate limits (cmds/tick, cmds/s), hash and ping limits; abuse -> `error` then disconnect advice | M2 |
 | R10 | `end` carries server-decided outcome; clients display it, do not derive it | M1 |
@@ -62,7 +62,7 @@ Error codes: `bad-json, too-large, bad-message, unknown-type, version-mismatch, 
 
 **LockstepServer** (pure, no timers; 04 owns `setInterval`/drift-correct clock):
 - `submit(player, cmd) -> {accepted, tick} | {rejected: code}`: validates, stamps `player`, target `= nextTick + inputDelay`, appends to `buffer[target]`. Because the server stamps on receipt there are no late commands; latency just shifts which tick a click lands on.
-- `closeTick(botCmds?) -> {n, cmds}`: pops buffer for `nextTick`, appends bot commands (bots decide from referee state after tick n-1, so they land on tick n directly, no delay), appends to `CommandLog`, increments. Caller steps referee with the same array and broadcasts the same JSON string to everyone (identical bytes).
+- `closeTick(botCmds?) -> {n, cmds, dropped, firstDrop?}` (`cmds` = logged only; `dropped` > 0 means the log refused cmds, e.g. bot cmd-cap, and SP04 should abort the room): pops buffer for `nextTick`, appends bot commands (bots decide from referee state after tick n-1, so they land on tick n directly, no delay), appends to `CommandLog`, increments. Caller steps referee with the same array and broadcasts the same JSON string to everyone (identical bytes).
 - `onHash(player, tick, h)`: compares against stored referee checkpoint `-> ok | desync`. Checkpoints stored via `recordCheckpoint(tick, hash)` (<=480 entries for 8 min).
 - Canonical order: arrival order within a tick. Sim itself sorts by (player, submission index) (`sim/src/commands.ts`), so server and clients, receiving the identical array, agree.
 
@@ -72,7 +72,7 @@ Error codes: `bad-json, too-large, bad-message, unknown-type, version-mismatch, 
 
 **Catch-up** (`catchup.ts`): `createCatchup(level, seed)` -> `{sim, feed(chunk), run(budgetMs, now)}`; `now` injected (net has no clock), steps with `{events:false}`, stops when it reaches `to` of the final chunk; hands back to live queue. Progress `{tick, target}` for a "Catching up" UI. Server uses the same helper to rebuild bots/referee in tests. Level lookup is caller-supplied (`resolveLevel`); `simHash` mismatch with `start.simHash` throws `version-mismatch`.
 
-**Catch-up without stalling others**: server never waits on a client. Live clock continues; per-socket `bufferedAmount` above 256 KB marks it behind, pauses its tick writes, and on drain sends one `ticks` batch from `CommandLog` then resumes live. Rejoin: `catchup` chunks to `M`, then subscribe to live from `M+1` in the same event-loop turn (ws is ordered, so no gap).
+**Catch-up without stalling others**: server never waits on a client. Live clock continues; per-socket `bufferedAmount` above 256 KB marks it behind, pauses its tick writes, and on drain sends one `ticks` batch from `CommandLog` then resumes live. Rejoin: send `catchup` chunks from `range(0, nextTick)` (chunk `to` is exclusive, so they cover ticks `0..nextTick-1`), then subscribe to live from `nextTick`, all in the same event-loop turn (ws is ordered, so no gap). Chunks are also split at 10000 entries so each stays under the client's 1 MiB cap.
 
 **Versioning / handshake.** `PROTOCOL_VERSION` = single int, bumped on any wire break, exact match required. Rules compared major.minor (same rule as `playReplay`), schema and content exact. `versions.bot` is sent and logged but NOT a refusal: bots run only server-side and clients only receive their commands. Stronger per-match guard: `start.simHash` vs client's compiled level. Refusal = `error{version-mismatch}` with server versions so web shows "reload to update".
 
