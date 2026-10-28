@@ -12,7 +12,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/03-pvp-maps/PRD.md. Cam
 | 2 | [M1] Duel S level + pvp campaign + levels-gate listing | 1 | done |
 | 3 | [M1] validate:levels pvp branch + lock outcomes | 2, SP01#8 | done |
 | 4 | [M1] Self-play fairness: balance mode + gated smoke (Duel S) | 3 | done |
-| 5 | [M1] Versions, locks, LEVELS_GUIDE PvP section | 3, 4, SP01#10 | todo |
+| 5 | [M1] Versions, locks, LEVELS_GUIDE PvP section | 3, 4, SP01#10 | done |
 | 6 | [M2] Duel M level | 5 | todo |
 | 7 | [M2] Cross level + 2v2 smoke | 6 | todo |
 | 8 | [M2] listPvpMaps helper | 2 | todo |
