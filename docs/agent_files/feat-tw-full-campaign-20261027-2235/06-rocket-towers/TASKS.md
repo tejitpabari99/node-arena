@@ -8,7 +8,7 @@ Source of truth: [PRD](PRD.md). Adds the rocket tower (aimed persistent point, s
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Decode spike: charge, spacing, capture targeting, disable, speed, blast, range, weight | none | todo |
+| 1 | Decode spike: spacing, disable, blast, range, weight (capture charge/targeting/speed decoded) | none | todo |
 | 2 | Rules text: R-RKT / R-CRK, commands, phase 7d, RULES_VERSION | 1 | todo |
 | 3 | Defs, events, building/projectile JSON, schema, content version | 2, SP02 T2a | todo |
 | 4 | Projectile core extension (additive, agreed with SP04) | 3 | todo |
@@ -23,14 +23,14 @@ Source of truth: [PRD](PRD.md). Adds the rocket tower (aimed persistent point, s
 | 13 | Import selected levels, solvability, locks | 7, 8, 9, 12 | todo |
 | 14 | Perf, e2e, campaign:verify sample, calibration, CI | 10, 11, 13 | todo |
 
-## Task 1 — Decode spike: charge, spacing, capture targeting, disable, speed, blast, range, weight
-What it is / what it means: PRD Risks 1–5, 7–9 (all RESOLVED as "spike first, else fallback"). Capture charge rate, in-volley rocket spacing, capture second predicate, disabled semantics, capture projectile speed unit, blast friendly fire, aim range clamp and tower `rocketWeight` are undecoded. Also record any `RocketTower.WayPath*` finding as input to the post-playtest aim-persistence revisit.
-What changes at a high level: Time-boxed (~1 h each) decomp via `/root/projects/tower-war/_tools/decomp.sh` of `CaptureRocketTowerUiView`, RocketTower `AttackCoroutine`, capture targeting class, disable path, capture projectile, blast class, `TryCreateWayPath` and AI weight constants. No product code.
-Done when: findings recorded per item. Each inconclusive item records its fallback as a deviation in GAME_RULES and the deviations ledger: 1 pt per tick with idle gap `cc`; 150 ms spacing; enemy-of-owner incl. neutral; only level 0 by rocket-type projectile disables for 5.0 s; fixed 1.0 s capture travel; no friendly fire; clamp to playfield only; `rocketWeight` 1.0. Needs `TW_EXTRACT`.
+## Task 1 — Decode spike: spacing, disable, blast, range, weight
+What it is / what it means: PRD Risks 2, 4, 7–9 (RESOLVED as "spike first, else fallback"). In-volley rocket spacing, disabled semantics, blast friendly fire, aim range clamp and tower `rocketWeight` are undecoded. Capture charge rate, targeting predicate and projectile speed (Risks 1, 3, 5) are already [decoded] (CRK-01..04) and need no spike. Also record any `RocketTower.WayPath*` finding as input to the post-playtest aim-persistence revisit.
+What changes at a high level: Time-boxed (~1 h each) decomp via `/root/projects/tower-war/_tools/decomp.sh` of RocketTower `AttackCoroutine`, disable path, blast class, `TryCreateWayPath` and AI weight constants. No product code.
+Done when: findings recorded per item. Each inconclusive item records its fallback as a deviation in GAME_RULES and the deviations ledger: 150 ms spacing; only level 0 by rocket-type projectile disables for 5.0 s; no friendly fire; clamp to playfield only; `rocketWeight` 1.0. Needs `TW_EXTRACT`.
 
 ## Task 2 — Rules text: R-RKT / R-CRK, commands, phase 7d, RULES_VERSION
 What it is / what it means: PRD R1, R3, Decisions 1–5, 7. Rules authority comes first.
-What changes at a high level: `docs/GAME_RULES.md` gains areas RKT (aim persistence, cadence `ceil(480000/(level+120))` ms with 250 ms first volley, stage by level, closed-disc 1.15 blast, level delta without flip, disable, no soldier lines) and CRK (charging predicate, charge/reset, target sort `(level desc, index asc)`, entity-aim projectile, level to 0 at impact, 3.0 troop-only blast). Command section 4.1 gains `Aim`/`ClearAim` with reject reasons; phase row 7d added; spike results and deviations written in; changelog; `RULES_VERSION` bumped to the next minor (indicative 3.5.0; rebase onto SP05's 3.4.0).
+What changes at a high level: `docs/GAME_RULES.md` gains areas RKT (aim persistence, cadence `ceil(480000/(level+120))` ms with 250 ms first volley, stage by level, closed-disc 1.15 blast, level delta without flip, disable, no soldier lines) and CRK (decoded charging: active iff owner non-neutral, `chargingPower` from `scp`, +current level per `cc`=60 ticks, fire at `>= mcp` after 4-tick tween, `-= mcp` carry, hold when no target; decoded target score own -1 / neutral level+1 / other level+100, first with level >= 1 and not own, ties by index; entity-aim projectile 40 ticks, level to 0 at impact, 3.0 troop-only blast; deviations: charge in sim state, 4-tick tween, impact-time zeroing). Command section 4.1 gains `Aim`/`ClearAim` with reject reasons; phase row 7d added; spike results and deviations written in; changelog; `RULES_VERSION` bumped to the next minor (indicative 3.5.0; rebase onto SP05's 3.4.0).
 Done when: `pnpm check:rules` accepts the new IDs as untested stubs per repo convention; changelog and version present.
 
 ## Task 3 — Defs, events, building/projectile JSON, schema, content version
@@ -55,8 +55,8 @@ Done when: tests `covers R-RKT-01..06`: cadence at L=1, 10, 30, 64; stage thresh
 
 ## Task 7 — Capture rocket module
 What it is / what it means: PRD R-CRK-01..05, Decision 4.
-What changes at a high level: `captureRocket` module: charge `scp -> mcp` while owner non-neutral and level > 0, reset to `scp` plus `cc` idle gap after firing; stable-sort target pick `(level desc, index asc)` over the Task 1 predicate; entity-aim projectile that still hits a building recaptured in flight; target level set to 0 at impact (deviation from TW tween recorded); 3.0 blast kills enemy troops only; ownership never changes; tower keeps firing while captured and level > 0.
-Done when: tests `covers R-CRK-01..05`: charge/reset, neutral and level-0 pause, sort and tie, recapture in flight, blast owner filter; `check:rules` fully green for RKT and CRK.
+What changes at a high level: `captureRocket` module: [decoded] `chargingPower` init `scp`, +current level every `cc`=60 ticks while owner non-neutral (owner change keeps it); at `>= mcp` a 4-tick tween then try fire, on success `-= mcp` (carry); no target: hold, retry per tick, `cc` timer paused; target = decoded score (own -1, neutral level+1, other owner level+100) descending, first with level >= 1 and not own, ties by building index; entity-aim projectile 40 ticks; entity-aim projectile that still hits a building recaptured in flight; target level set to 0 at impact (deviation from TW tween recorded); 3.0 blast kills enemy troops only; ownership never changes; tower keeps firing while captured and level > 0.
+Done when: tests `covers R-CRK-01..05`: level-10 tower, scp 100, mcp 300 fires first at tick 1204 (20 adds x 60 ticks = 1200, +4 tween), `chargingPower` 0 after, overflow carry, no-target hold then fire, owner change keeps charge, neutral pause, enemy beats higher-level neutral, never own, tie by index, recapture in flight, blast owner filter; `check:rules` fully green for RKT and CRK.
 
 ## Task 8 — Bots: rocket weight, Aim / ClearAim, scripts, BOT_VERSION
 What it is / what it means: PRD R4, Decision 6. The proxy shares the TW AI, so it aims rocket levels automatically.
