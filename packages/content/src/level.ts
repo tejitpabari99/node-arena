@@ -77,8 +77,11 @@ export function validateLevel(catalog: Catalog, level: NextLevel, file: string):
     if (p.kind === 'human') { humans++; if (i !== 0) err(`/players/${i}/kind`, 'The human player must be first in players[]'); if (p.bot) err(`/players/${i}/bot`, 'Human players cannot have a bot'); }
     else { ais++; if (!p.bot) err(`/players/${i}`, 'AI players require a bot block'); }
   });
-  if (humans !== objective.seats.human) err('/players', `Expected exactly ${objective.seats.human} human player(s), found ${humans}`);
-  if (ais < 1 || ais > objective.seats.aiMax) err('/players', `Expected 1..${objective.seats.aiMax} AI players, found ${ais}`);
+  // pvp ({min,max} seats) validation lands in a later task; only the human+AI shape is checked here.
+  if ('human' in objective.seats) {
+    if (humans !== objective.seats.human) err('/players', `Expected exactly ${objective.seats.human} human player(s), found ${humans}`);
+    if (ais < 1 || ais > objective.seats.aiMax) err('/players', `Expected 1..${objective.seats.aiMax} AI players, found ${ais}`);
+  }
 
   // Buildings.
   const buildingIds = new Set<string>();

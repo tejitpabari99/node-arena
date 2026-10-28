@@ -75,7 +75,13 @@ test('commands and events', () => {
 });
 
 test('objectives and visuals', () => {
-  assert.deepEqual(Object.keys(OBJECTIVES), ['captureAll']);
+  assert.deepEqual(Object.keys(OBJECTIVES), ['captureAll', 'pvp']);
+  assert.deepEqual(OBJECTIVES.pvp.seats, { min: 2, max: 4 });
+  assert.deepEqual(OBJECTIVES.pvp.ruleIds, ['R-SEA-01', 'R-TEM-01', 'R-TEM-02', 'R-TEM-03', 'R-ELM-01', 'R-WIN-04', 'R-WIN-05', 'R-WIN-06', 'R-WIN-07']);
+  for (const outcome of ['victory', 'timeLimit', 'draw']) assert.ok(Value.Check(EVENTS.MatchOver.payload, { outcome, winner: null, winners: [0, 2] }), outcome);
+  assert.ok(!Value.Check(EVENTS.MatchOver.payload, { outcome: 'draw', winner: null, winners: [-1] }));
+  assert.ok(Value.Check(EVENTS.SeatEliminated.payload, { player: 1 }));
+  assert.ok(!Value.Check(EVENTS.SeatEliminated.payload, { player: 1, x: 0 }));
   assert.deepEqual(OBJECTIVES.captureAll.seats, { human: 1, aiMax: 3 });
   assert.deepEqual([...VISUAL.RENDER_KINDS], ['unit', 'building', 'element', 'ground', 'lane', 'fx']);
   assert.deepEqual(Object.keys(VISUAL.BUDGET_CLASSES), ['unit', 'building', 'obstacle', 'ground']);
@@ -102,7 +108,7 @@ test('tw bot kind validates and lists building refs', () => {
 });
 
 test('CAPABILITIES = module ids + bot:<kind> + objective:<id>', () => {
-  assert.deepEqual([...CAPABILITIES].sort(), ['blocksLines', 'bot:tw', 'drawsLines', 'grows', 'level', 'objective:captureAll', 'shoots', 'spawns']);
+  assert.deepEqual([...CAPABILITIES].sort(), ['blocksLines', 'bot:tw', 'drawsLines', 'grows', 'level', 'objective:captureAll', 'objective:pvp', 'shoots', 'spawns']);
 });
 
 test('binding map: missing module impl is a compile error (checked by tsc)', () => {
