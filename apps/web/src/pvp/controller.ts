@@ -255,6 +255,8 @@ export function createPvpController(options: PvpOptions) {
     get runtime() { return runtime; },
     get manifest() { return matchManifest; },
     get options() { return options; },
+    /** Compiled level by id (for lobby seat colours). */
+    level(id: string) { return getLevel(id); },
     get connection() { return conn; },
     get welcomed() { return welcomed; },
     open() { if (disposed || state.screen !== 'idle') return; publish({ screen: 'menu', error: null }); },
