@@ -60,13 +60,14 @@ Non-goals: new archetypes/art (reuse `house-wt1`, `tower`, `obstacle`) [verified
 | D6 | Neutral tower | Duel M, Cross excludes (house centre) | Towers everywhere | Neutral towers fire (`neutralFires`) so a tower is a hazard, not just a prize; one per map max, M1 Duel S has none [verified: tower.json] |
 | D7 | Time limit | Explicit 480 in every file | `null` (compile fills) | Visible to owner in editor |
 | D8 | Version bump | `contentVersion` minor | Patch | New levels = additive content |
+| D9 | Seat bias fix | PvP-only nearest-own-building distance tie-break in tw-ai target sort (`createSeatBot` gates on `objective==='pvp'`), BOT_VERSION 2.4.6 patch | Map tweak; accept bias | Self-play showed seat 1 100% on Duel S from shared target order, not sim/map; campaign bot output unchanged (golden diff = version fields only); SP04 2.5.0 subsumes |
 
 ## Manual steps
 - Owner play-test of Duel S (M1 gate), then Duel M/Cross; tuning of levels/positions after (decision only the owner can make).
 
 ## Risks / Open Questions
 - 1v1 snowball / mirror-first-strike dominance on small map; timeout draws common on symmetric maps. [DEFERRED: tune after M1 play-test; levers: starting levels, centre level, timeLimit]
-- Seat-order command bias in simultaneous ticks may skew self-play. [RESOLVED: report seat shares; smoke rotates seats; any real bias goes to SP01/FUTURES]
+- Seat-order command bias in simultaneous ticks may skew self-play. [RESOLVED: report seat shares; smoke rotates seats; any real bias goes to SP01/FUTURES] [RESOLVED: bias found in bot target order, fixed by D9]
 - Cross 4-player line crossings plus ally-blocking could stall; check in 2v2 smoke run. [RESOLVED: include 2v2 `[0,1,0,1]` and `[0,0,1,1]` in the pvp smoke]
 - Editor finalize/golden refresh path may not understand pvp outcomes. [RESOLVED: verify in M2 task; fix in tools/editor-finalize]
 - Seat color vs team readability (blue+green vs red+yellow) is SP05's team-ring problem. [DEFERRED]
