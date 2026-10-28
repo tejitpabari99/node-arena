@@ -11,7 +11,7 @@
     "maxZ": 5.5
   },
   "objective": "pvp",
-  "timeLimitSec": 480,
+  "timeLimitSec": 60,
   "players": [
     {
       "id": "p1",

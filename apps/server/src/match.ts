@@ -21,11 +21,14 @@ export interface MatchController {
   onStart(room: Room, match: MatchStart): void;
   /** Routes `cmd` / `hash` from a seated player. Returns false if the message is not match-related. */
   onMessage(room: Room, conn: Conn, seat: number, msg: ClientMessage): boolean;
+  /** Test-visible: the room's lockstep server (command log survives match end). */
+  inspect(room: Room): LockstepServer | undefined;
 }
 
 /** Authoritative loop per room: referee sim + lockstep, driven by the shared clock. Never waits on clients. */
 export function createMatchController(deps: MatchDeps): MatchController {
   const { clock, now, log } = deps;
+  const servers = new WeakMap<Room, LockstepServer>();
   const active = new Map<Room, { lockstep: LockstepServer; lastDesync: Map<number, number>; perTick: Map<number, { tick: number; n: number }>; total: Map<number, number>; seatBudget: number }>();
 
   const frameTo = (match: MatchStart, frame: string): void => {
@@ -41,6 +44,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
     const lockstep = new LockstepServer({
       seats: kinds, inputDelay: match.inputDelay, buildingCount: sim.view.ids.buildings.length, log: { timeLimitTicks: match.timeLimitTicks },
     });
+    servers.set(room, lockstep);
     const seatBudget = Math.max(1, Math.floor(lockstep.log.cmdCap / Math.max(1, kinds.length)));
     active.set(room, { lockstep, lastDesync: new Map(), perTick: new Map(), total: new Map(), seatBudget });
 
@@ -123,5 +127,5 @@ export function createMatchController(deps: MatchDeps): MatchController {
     return true;
   };
 
-  return { onStart, onMessage };
+  return { onStart, onMessage, inspect: (room) => servers.get(room) };
 }
