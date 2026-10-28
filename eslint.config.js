@@ -1,6 +1,7 @@
 import tseslint from 'typescript-eslint';
 import { createBotsPreset } from './packages/bots/eslint.config.js';
 import { createNetPreset } from './packages/net/eslint.config.js';
+import { createServerPreset } from './apps/server/eslint.config.js';
 import determinism from './packages/sim/eslint.determinism.cjs';
 
 const nodeOnly = ['fs', 'fs/*', 'node:fs', 'node:fs/*', 'path', 'path/*', 'node:path', 'node:path/*', 'crypto', 'crypto/*', 'node:crypto', 'node:crypto/*'];
@@ -8,6 +9,7 @@ const nodeOnly = ['fs', 'fs/*', 'node:fs', 'node:fs/*', 'path', 'path/*', 'node:
 export default [
   ...createBotsPreset('packages/bots/src'),
   ...createNetPreset('packages/net/src'),
+  ...createServerPreset('apps/server'),
   ...determinism.createPreset({
     sourceFiles: ['packages/sim/src/**/*.ts'],
     mathFiles: ['packages/sim/src/math.ts'],
