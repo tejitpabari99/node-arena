@@ -10,6 +10,7 @@ Browser tower-strategy game: draw persistent routes, capture buildings and compl
 - `packages/content/` — browser-safe schemas, validation, compilation, content data and hash locks.
 - `packages/sim/` — deterministic integer simulation, replay playback, goldens and benchmarks.
 - `packages/bots/` — default/scripted AI and human proxy.
+- `packages/net/` — transport-free multiplayer protocol/session core (scaffold).
 - `apps/web/` — Vite + Preact + Three.js client, local progress/audio settings and browser tests.
 - `tools/` — importers, asset pipeline, gates, level determinism and balance reports; [commands and gate semantics](tools/README.md).
 - `docs/GAME_RULES.md` — mechanics contract, stable rule IDs and version history.

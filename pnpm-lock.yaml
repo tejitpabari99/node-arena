@@ -92,6 +92,18 @@ importers:
         specifier: 1.3.36
         version: 1.3.36
 
+  packages/net:
+    dependencies:
+      '@node-arena/content':
+        specifier: workspace:*
+        version: link:../content
+      '@node-arena/defs':
+        specifier: workspace:*
+        version: link:../defs
+      '@node-arena/sim':
+        specifier: workspace:*
+        version: link:../sim
+
   packages/sim:
     dependencies:
       '@node-arena/content':

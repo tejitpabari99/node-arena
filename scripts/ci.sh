@@ -99,11 +99,13 @@ step build:defs pnpm build:defs
 step build:content pnpm build:content
 step build:sim pnpm build:sim
 step build:bots pnpm build:bots
+step build:net pnpm build:net
 step build:web pnpm build:web
 step typecheck:defs pnpm typecheck:defs
 step typecheck:content pnpm typecheck:content
 step typecheck:sim pnpm typecheck:sim
 step typecheck:bots pnpm typecheck:bots
+step typecheck:net pnpm typecheck:net
 step typecheck:tools pnpm typecheck:tools
 step typecheck:web pnpm typecheck:web
 step test:defs pnpm test:defs
@@ -112,6 +114,7 @@ step test:sim pnpm test:sim
 step test:sim:golden pnpm --filter @node-arena/sim test:golden
 step test:bots pnpm test:bots
 step test:bots:golden pnpm --filter @node-arena/bots test:golden
+step test:net pnpm test:net
 step test:tools pnpm test:tools
 step test:tools:replay pnpm --filter @node-arena/tools test:replay
 step test:tools:rules pnpm --filter @node-arena/tools test:rules
