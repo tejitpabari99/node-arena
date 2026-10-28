@@ -1,15 +1,19 @@
 ---
-status: draft
+status: archived
 summary: Tower War curated campaign — 8 active sub-project PRDs + 1 deferred (design only), shipped 20 + selection from TW Common 24–340 (>=10 levels per new element)
 date: 2026-10-27
 ---
 # Tower War full campaign (feat/tw-full-campaign)
 
+> **ARCHIVED 2026-10-28 — tabled by owner; design agreed, no code started. Resume by un-archiving.**
+> All PRD/TASKS statuses are `archived` inside this archive; SP08 is `deferred` (it was deferred before archiving).
+
 ## Goal
 Port all remaining Tower War campaign components (walls, mines, WT3 artillery, resource piles, rivers/bridges/ROBS, rocket + capture rocket towers, selectable fortress, 4 new themes; trolley + railway deferred by owner D6) and ship a **curated** Common campaign: the existing 20 levels (TW positions 4–23, unchanged) followed by a selection from the TW pool (Common positions 24–340), every new element in >=10 levels, difficulty/newness rising throughout. Estimated ~100–150 levels total (fewer is fine). Not all 4–340 are imported. Design only: PRDs, no code yet.
 
 ## Prerequisite
-TW extract (`/root/projects/tower-war/_extract`) was deleted and is being rebuilt (UnityPy + Il2CppDumper + Ghidra headless, `decomp.sh` per class). All decode spikes, imports, asset copies and the census depend on it.
+TW extract **rebuilt 2026-10-28** at `/root/projects/tower-war/_extract` (tools at `/root/projects/tower-war/_tools`; on-demand Ghidra via `decomp.sh`). 158 classes are pre-decompiled; index: `/root/projects/tower-war/_extract/decomp/MANIFEST.md` (each SP's spike task points to its classes). Actual TW class names: `DestroyedWallItem` (= wall), `MineItem`, `Resource`, `RiverBridge`/`BridgeCeil`, `RocketTower`/`WayRocket`/`RocketPathDraw`, `CaptureRocketTower`/`CaptureRocketTowerUiView`, `SelectableFortess`/`FortessCargoWithWarriors`/`FortessTower`, `DefaultBehavior`/`AiPlayerController`.
+Owner-pending: `pnpm assets:tw` lock regeneration. `assets:tw:check` fails only on `tools/assets/tw-extract.lock.json` input hashes (11/86 inputs re-serialized differently; all 52 outputs byte-identical). Folded into SP01 Task 1 as a step.
 
 ## Sub-projects
 | # | Name | PRD | Scope | Depends on | Phase/PR | Status |
@@ -19,7 +23,7 @@ TW extract (`/root/projects/tower-war/_extract`) was deleted and is being rebuil
 | 03 | Resource piles | [PRD](03-resource-piles/PRD.md) | Neutral depletable pile building; pickup, return channel, reinforce `1 + gold`; AI targets piles (BOT bump); select >=10 pile levels; RULES 3.2.0 | 02, 01 soft | A | draft |
 | 04 | Projectile core + artillery | [PRD](04-projectiles-artillery/PRD.md) | Deterministic projectile/blast core + WT3 artillery house/unit; select >=10 WT3 levels; RULES 3.3.0 | 01, 02, 03 | B | draft |
 | 05 | Rivers + bridges + ROBS | [PRD](05-rivers-bridges/PRD.md) | Non-blocking rivers, plank ceils, turn-around via return channel, river obstacles; select >=10 river + >=10 ROBS levels; RULES 3.4.0 | 02, 03, 01 | B | draft |
-| 06 | Rocket + capture rocket tower | [PRD](06-rocket-towers/PRD.md) | Aim/ClearAim commands, staged volleys, capture-rocket charge; AI rocket targeting; select >=10 rocket + >=10 capture-rocket levels; RULES 3.5.0 | 04, 02, 05, 03 | C | draft |
+| 06 | Rocket + capture rocket tower | [PRD](06-rocket-towers/PRD.md) | Aim/ClearAim commands, staged volleys, capture rocket = level-as-charge redesign; AI rocket targeting; select >=10 rocket + >=10 capture-rocket levels; RULES 3.5.0 | 04, 02, 05, 03 | C | draft |
 | 07 | Selectable fortress | [PRD](07-selectable-fortress/PRD.md) | House-like source + 8 guns + parachute cargo cycle, no new command; select >=10 fortress levels; RULES 3.6.0 | 03, 04, 06 soft | C | draft |
 | 08 | Trolley + railway | [PRD](08-trolley-railway/PRD.md) | **DEFERRED by owner 2026-10-28 (D6) — not in this initiative; kept for future.** Trolley, railway, AI rail moves (AiRM) dropped for now | - | - | deferred |
 | 09 | Final curation, gates, docs | [PRD](09-import-gates-docs/PRD.md) | Per-element >=10 coverage check, order + difficulty-curve check, gap fill, contiguous numbering, selection table, gates at curated size, docs/FUTURES cleanup, owner acceptance package | 02-07 | D | draft |
@@ -42,6 +46,18 @@ Phase PRs to main:
 | B | 04 + 05 | later of 04/05 |
 | C | 06 + 07 | SP07 |
 | D | 09 | SP09 |
+
+## Elements and scope
+- **In scope (elements):** walls, mines, artillery (WT3), resource piles (gold), rivers + bridges, river obstacles (ROBS), rocket tower, capture rocket tower (redesigned, below), selectable fortress (parachutes copy TW). Themes Lava/Mine/Jungle/DarkMine.
+- **Deferred:** trolley, railway, AiRM (SP08 deferred).
+- **Out:** boosters, rage, meta, skins, PvP, tutorials, Boss/Draw-only content (plain fortress, flag, boss helicopter, speed tower), cargo.
+- **Themes are visual only:** `EnvironmentData` = ground prefab, obstacle meshes, river/ROBS materials; no gameplay effect.
+- **AI:** BT1/BT2 already implemented in bots (attack-only); the census/coverage treats them as an attribute only (no work).
+- **Rocket tower human aim** = drag a path (TW `WayRocket`/`RocketPathDraw`); aim persists until `ClearAim`.
+- **Base types** (Building/Troop/Element/Path/Projectile) with a derivation rule: see Cross-cutting 12 (SP02 Task 2a generalises `extends`).
+
+## Capture rocket tower redesign (owner, 2026-10-28, binding)
+Intentional design deviation from TW (replaces the decoded `scp/mcp/cc` charge model as shipped behaviour; decoded model kept as reference in SP06 PRD). The tower's level is its charge: `maxLevel` 100 (this archetype only; others stay 64); +1 level per arriving own troop; +1.0 level/s while owned (none while neutral); at level 100 a 3 s windup ("armed" pulse, level number is the meter) then one shot and level resets to 10; holds at 100 if no target. Shot effect and targeting unchanged (target level -> 0, enemy troops within 3.0 killed, ~2.0 s flight, highest-level enemy, never own). Per-map overridable params: `fireLevel` 100, `resetLevel` 10, `chargePerTroop` 1, `growthPerSecond` 1.0, `windupMs` 3000; importer ignores TW `scp/mcp/cc`. Fill 10->100: unfed ~90 s, fed by 1/2/3/4 houses ~43/28/21/17 s. Recorded in SP06 Decisions and the SP09 deviations ledger.
 
 ## Curation (owner decisions D1, D2)
 Rules (binding on all PRDs):
@@ -109,7 +125,7 @@ O = owner decision, S = spike-resolvable (needs rebuilt extract), D = design def
 - D: 6 ceil damage hook (SP06); 7 turn-back when source captured (follow SP03); playability of long rivers.
 
 **06**
-- S: 1 capture charge rate; 2 rocket spacing; 3 capture second predicate; 4 disabled semantics; 5 capture projectile speed; 8 aim range clamp; 9 tower `rocketWeight`.
+- S: 2 rocket spacing; 4 disabled semantics; 8 aim range clamp; 9 tower `rocketWeight` (capture charge/predicate/speed decoded or redesigned, no longer open).
 - [RESOLVED: persists until `ClearAim` (owner delegated; revisit after playtest)] Human aim persistence.
 - D: 7 blast friendly fire.
 
@@ -130,7 +146,8 @@ O = owner decision, S = spike-resolvable (needs rebuilt extract), D = design def
 ## Owner manual steps
 - Review/approve PRDs.
 - Triage done: no `[OPEN]` items remain (owner items D3–D5 resolved).
-- Provide rebuilt `TW_EXTRACT`.
+- Provide rebuilt `TW_EXTRACT` (done 2026-10-28).
+- Regenerate `pnpm assets:tw` lock (`tools/assets/tw-extract.lock.json`) - step in SP01 Task 1.
 - Spot-check levels at the end (`owner-pass.md` from SP09: one level per element intro + every allowlisted level); sign off unsolved rows.
 - Approve each phase PR.
 - Trolley/railway: deferred (D6); revisit via FUTURES when wanted.

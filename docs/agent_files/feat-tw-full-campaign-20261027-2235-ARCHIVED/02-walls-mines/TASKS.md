@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: 12 tasks — decode spike, rules text, defs/content, generic element-state facility, wall/mine modules, importer + position-23 re-import, web render, editor, curated selection and import of >=10 wall + >=10 mine levels, perf/ci gate
 date: 2026-10-27
 ---
@@ -24,6 +24,7 @@ Source of truth: [PRD](PRD.md). Adds walls (hp sponge) and mines (0.1 s delayed 
 ## Task 1 — Decode spike: trigger size, layer, owner gate, update order
 What it is / what it means: PRD Risks S1, S2, S3 and element-vs-clash ordering (all RESOLVED as "spike first, else fallback"). Wall/mine trigger shapes, wall length vs `Hp`, collision layer, who triggers them, and update order are undecoded.
 What changes at a high level: Time-boxed (~1 h each) decomp via `/root/projects/tower-war/_tools/decomp.sh` of the Wall/Mine trigger classes, layer setup, trigger handlers and clash/element update order. No product code.
+Spike pointer: start from the pre-decompiled classes in `/root/projects/tower-war/_extract/decomp/MANIFEST.md` (158 classes; on-demand Ghidra via `/root/projects/tower-war/_tools/decomp.sh`): `DestroyedWallItem` (= wall), `MineItem`.
 Done when: findings recorded per item. Each inconclusive item records its fallback as a deviation in GAME_RULES and the deviations ledger: wall box 1.2 x 0.4 yawed by `R` regardless of Hp, mine circle r 350; non-blocking layer (flip Decision 1 to `blocksLines` if the decode shows an obstacle layer); enemy-owned and AI troops trigger, mines hit tanks; element pass after clash. Needs `TW_EXTRACT`.
 
 ## Task 2 — Rules text: R-ELM / R-WAL / R-MIN, phase row, RULES_VERSION

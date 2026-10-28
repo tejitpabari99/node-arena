@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: Resource piles (TW WOD) as neutral, non-capturable, depletable line targets; a soldier/tank that reaches one picks up gold, turns around on a companion return channel, and reinforces its home house by 1 + gold; AI targets piles as TW does (BOT_VERSION bump); no shipped level has piles, so existing locks/goldens do not move.
 date: 2026-10-27
 ---

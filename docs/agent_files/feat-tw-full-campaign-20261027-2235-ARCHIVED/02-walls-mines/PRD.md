@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: Walls (hp sponge that consumes troops) and mines (one-shot, 0.1 s delayed kill) as content-driven element modules on a new generic "element crossing + element state" facility that SP03/05 reuse; flips the Wall/Mine importer rows, re-imports levelview-100-es with its wall, and imports >=10 curated levels per element (wall, mine).
 date: 2026-10-27
 ---

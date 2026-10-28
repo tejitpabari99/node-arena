@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: 10 tasks — 4 themes (+river/ROBS slots), lazy level loading, world picker, gate timing at curated size, candidate-pool tool (pnpm census)
 date: 2026-10-27
 ---
@@ -22,7 +22,9 @@ Source of truth: [PRD](PRD.md). Ships Lava/Mine/Jungle/DarkMine themes, makes th
 ## Task 1 — Decode spike: EnvironmentData + themeFor + pathID check
 What it is / what it means: PRD R1 + Risks. Exact prefab/material names for the 4 themes, whether river/ROBS materials are per-env or shared, and how TW selects env per position (`envShift` quirks), are not yet known from the rebuilt extract.
 What changes at a high level: Time-boxed (~1 h) decomp of `EnvironmentData` and level env selection via `/root/projects/tower-war/_tools/decomp.sh`. Compare rebuilt-extract pathIDs with the verified `env.ts` values; on mismatch re-derive and update `env.ts` (scripts fail loudly).
+Spike pointer: start from the pre-decompiled classes in `/root/projects/tower-war/_extract/decomp/MANIFEST.md` (158 classes; on-demand Ghidra via `/root/projects/tower-war/_tools/decomp.sh`): `EnvironmentData`, level env selection (see MANIFEST.md for exact class names).
 Done when: findings recorded (names, per-env vs shared river materials, themeFor cross-check). If inconclusive: fallback recorded as a deviation in GAME_RULES and the deviations ledger (green river/ROBS material tinted per theme; existing `themeFor` mapping). pathID check fails loudly on mismatch.
+Owner-pending step folded in (TW extract was rebuilt 2026-10-28): regenerate `tools/assets/tw-extract.lock.json` with `pnpm assets:tw` against the rebuilt extract. Today `assets:tw:check` fails only on that lock's input hashes (11/86 inputs re-serialized differently by the rebuild; all 52 outputs are byte-identical), so the lock refresh must change input hashes only; any output diff is a failure to investigate. `assets:tw:check` green after.
 
 ## Task 2 — Theme registry + manifest river slots
 What it is / what it means: PRD R1, Architecture, Decisions 1–2. Theme ids are hard-coded in two lists; SP05 needs river/ROBS slots from the manifest.

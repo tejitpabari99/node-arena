@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: 14 tasks — decode spike, rules text, defs/content, multi-gun shoots, cargo schedule, landings, bot check, importer, web, editor, curated selection and import of >=10 fortress levels, perf/ci gate, phase C validate:levels --all
 date: 2026-10-27
 ---
@@ -26,6 +26,7 @@ Source of truth: [PRD](PRD.md). Adds the selectable fortress (house-like line so
 ## Task 1 — Decode spike: wave repeat, gun geometry, gun gating, alive cap, AI hook, no-line bonus
 What it is / what it means: PRD Q1, Q2, Q3, Q6, Q7, Q8 (all RESOLVED as "spike first, else fallback"). Next-wave rule, gun offsets, gun level gating and damage, alive-cap timing for airborne troops, the TW AI `special` level-scaling hook for the fortress, and the per-soldier level bonus with no lines are undecoded.
 What changes at a high level: Time-boxed (~1 h each) decomp via `/root/projects/tower-war/_tools/decomp.sh` of `_SpawnFlyWarriors_d__28`, `SelectableFortess` (prefab gun transforms via UnityPy; gun logic; landing `AddLevel`) and `AiPlayerController`. No product code.
+Spike pointer: start from the pre-decompiled classes in `/root/projects/tower-war/_extract/decomp/MANIFEST.md` (158 classes; on-demand Ghidra via `/root/projects/tower-war/_tools/decomp.sh`): `SelectableFortess`, `FortessCargoWithWarriors`, `FortessTower`, `DefaultBehavior`/`AiPlayerController`.
 Done when: findings recorded per item. Each inconclusive item records its fallback as a deviation in GAME_RULES and the deviations ledger: next wave after the previous wave's troops are gone plus `dtsc` (else one wave per owner epoch); one disc at fortress centre r 3.0; all 8 guns active, instakill; alive cap checked at landing; mirror `drawsLines` and include fortress in `special` scaling (BOT bump only if calibration changes output); +1 level per soldier. Needs `TW_EXTRACT`.
 
 ## Task 2 — Rules text: R-FRT, phase rows 4b / 7b, RULES_VERSION

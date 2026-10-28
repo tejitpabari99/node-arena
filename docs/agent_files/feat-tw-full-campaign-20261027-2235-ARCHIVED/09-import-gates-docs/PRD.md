@@ -1,12 +1,12 @@
 ---
-status: draft
+status: archived
 summary: Final curation + assembly of the curated Common campaign (20 shipped + selection from TW Common 24-340, ~100-150 levels): confirm per-element >=10 coverage, order by TW position with a concrete difficulty-curve check, fill gaps, contiguous display numbering, LEVELS_GUIDE selection table; then gates re-baselined at curated size, docs consolidated (rules changelog 3.1-3.6, deviations ledger, FUTURES cleanup, credits, README/AGENTS), web smoke, and an owner acceptance package.
 date: 2026-10-27
 ---
 # PRD: 09 Final curation, gates, docs
 
 Repo/branch: node-arena, `feat/tw-full-campaign` (Phase D PR = SP09 only) · Depends on: all (01-07 merged or in the same branch; runs last) · Feeds: release (curated campaign, Level 1..N)
-Owns: `packages/content/data/campaigns/common.json` (final order/numbering), `docs/LEVELS_GUIDE.md` (selection table, deviations ledger, dropped data), `docs/FUTURES.md` (cleanup), `docs/CONTENT_GUIDE.md` (cross-links only), `docs/CREDITS.md` (audit; rows are added by 01/02-07), `README.md`, `AGENTS.md` project section, `tools/README.md`, `tools/unsolved-by-proxy.json` (final review), `tools/levels-lock.json` (final refresh), `tools/src/import-tw/level-overrides.json` policy, `.github/workflows/{ci,balance}.yml` (tuning only), `apps/web/e2e` + `playwright.campaign.config.ts` (campaign smoke), `docs/agent_files/feat-tw-full-campaign-20261027-2235/{census.json,owner-pass.md,README.md}`.
+Owns: `packages/content/data/campaigns/common.json` (final order/numbering), `docs/LEVELS_GUIDE.md` (selection table, deviations ledger, dropped data), `docs/FUTURES.md` (cleanup), `docs/CONTENT_GUIDE.md` (cross-links only), `docs/CREDITS.md` (audit; rows are added by 01/02-07), `README.md`, `AGENTS.md` project section, `tools/README.md`, `tools/unsolved-by-proxy.json` (final review), `tools/levels-lock.json` (final refresh), `tools/src/import-tw/level-overrides.json` policy, `.github/workflows/{ci,balance}.yml` (tuning only), `apps/web/e2e` + `playwright.campaign.config.ts` (campaign smoke), `docs/agent_files/feat-tw-full-campaign-20261027-2235-ARCHIVED/{census.json,owner-pass.md,README.md}`.
 Does not own: any rule text or mechanic (02-07 own `GAME_RULES.md` areas; 09 only reviews the consolidated changelog and fixes wording, no behaviour), importer rows (each SP flips its own), the pool tool (01), lazy loading and picker (01).
 
 ## TL;DR
@@ -62,7 +62,7 @@ Does not own: any rule text or mechanic (02-07 own `GAME_RULES.md` areas; 09 onl
 | Doc | Action |
 |---|---|
 | `GAME_RULES.md` | Review-only: changelog 3.1.0-3.6.0 complete and ordered; phase table rows (6, 7a-7d, 4b, 8) consistent; every new `R-*` has `covers` tests (`check:rules`); no behaviour fix |
-| `LEVELS_GUIDE.md` | §5 = selection table + coverage table (R1) + link to `census.json`; deviations ledger = one table of every spike "picked value" (SP, quantity, TW source or "not decoded", chosen value, rationale), including curve constants; dropped-data table updated (cargo, sc, tutorial scripts; wall no longer dropped); "Imported levels (20)" wording updated |
+| `LEVELS_GUIDE.md` | §5 = selection table + coverage table (R1) + link to `census.json`; deviations ledger = one table of every spike "picked value" (SP, quantity, TW source or "not decoded", chosen value, rationale), including curve constants and the SP06 capture rocket owner redesign (2026-10-28, intentional deviation from TW); dropped-data table updated (cargo, sc, tutorial scripts; wall no longer dropped); "Imported levels (20)" wording updated |
 | `FUTURES.md` | Remove shipped: walls/mines, rivers/bridges, rockets/fortress, resource piles, themes beyond Green/Snow, census. Add one **"Deferred by owner (2026-10-28)"** entry: trolley (ready-gated cart), railway (`RailMove`, rail-mounted buildings), AI rail moves (AiRM, `TryMoveTowerOnRailway`), and the generic `CrossingSource` seam (no second consumer); reference `08-trolley-railway/` as the kept design. TW positions using trolley/railway/AiRM stay importer-blocked. Keep boosters, tutorials, meta, PvP, cargo, shield/ranged modules, bundle gate, mobile/portrait, hosting, editor items. Add: "import more of TW 24-340" as a deferred idea |
 | `CREDITS.md` | Audit only: every file under `apps/web/assets/**` covered (`check:manifest` warning count 0) |
 | `README.md`, `AGENTS.md` | "20-level" -> curated campaign of N levels (20 shipped + selection from TW 24-340), themes list, mechanics list; script inventory current |

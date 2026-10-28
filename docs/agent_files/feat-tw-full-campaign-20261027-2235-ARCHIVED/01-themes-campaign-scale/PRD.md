@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: Add Lava/Mine/Jungle/DarkMine themes, make client boot, picker and save handle the curated campaign (~100-150 levels; 20 shipped + selection from TW Common 24-340), keep gates cheap at that size, and add the candidate-pool tool (`pnpm census`: per TW position 24-340 features, blocked reasons, difficulty metrics) that drives level selection.
 date: 2026-10-27
 ---

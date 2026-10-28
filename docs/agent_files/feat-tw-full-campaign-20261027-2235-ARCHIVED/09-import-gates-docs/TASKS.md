@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: 11 tasks — census coverage/curve emitters, coverage + gap fill, order + curve check, numbering + overrides policy, selection table, gates at curated size, goldens/benches/version chain, docs sweep, campaign smoke modes, final lock refresh + Node 22/24 run, owner-pass.md
 date: 2026-10-27
 ---
@@ -43,7 +43,8 @@ Done when: `common.json` entries == level files (minus `na-*`) == `levels-lock.j
 ## Task 5 — Selection table + deviations ledger in LEVELS_GUIDE
 What it is / what it means: PRD R1.11, R3. LEVELS_GUIDE section 5 is currently a static tracker.
 What changes at a high level: replace with generated selection table between markers (display number, TW position, theme, features incl. AI behaviours, D, proxy status, reason, exceptions), coverage table, skipped-positions note, which themes appear (all 6 only if N >= 101), link to `census.json`. One deviations ledger collecting every spike "picked value" (SP, quantity, TW source or "not decoded", chosen value, rationale) plus final curve and spread constants. Update dropped-data table (cargo, sc, tutorial scripts; wall no longer dropped) and the "Imported levels (20)" wording. `CONTENT_GUIDE.md` cross-links only.
-Done when: `check:docs` verifies the marker block; ledger covers every SP deviation.
+Ledger must include the SP06 capture rocket owner redesign (dated 2026-10-28, intentional design deviation from TW: level is charge, maxLevel 100, +1 per own troop, +1/s while owned, 3 s windup, fire, reset to 10; TW `scp/mcp/cc` ignored; fill times unfed ~90 s, fed by 1/2/3/4 houses ~43/28/21/17 s).
+Done when: `check:docs` verifies the marker block; ledger covers every SP deviation including the capture rocket redesign.
 
 ## Task 6 — Gates at curated size: unsolved allowlist review, timing
 What it is / what it means: PRD R2, G1, G2.

@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: 12 tasks — decode spike, rules text, defs/content, projectile store, impact/blast core (stable consumer API), ranged module + ring column, bot check, importer, web render, curated selection and import of >=10 WT3 levels, perf/ci gate
 date: 2026-10-27
 ---
@@ -24,6 +24,7 @@ Source of truth: [PRD](PRD.md). Adds a deterministic projectile/blast core (cons
 ## Task 1 — Decode spike: artillery behaviour, WT3 params, AI scoring, ordering
 What it is / what it means: PRD Risks 1–7 (all RESOLVED as "spike first, else fallback"). Artillery stop-vs-walk, speed, WT3 `ws/cwc/sc/gl`, whether TW AI treats WT3 differently, impact-vs-arrival ordering, building shell targets/damage, and "every target per volley" are undecoded.
 What changes at a high level: Time-boxed (~1 h each) decomp via `/root/projects/tower-war/_tools/decomp.sh` of `WarriorArtilleryController`, house/level WT3 params and the AI target-scoring class. No product code.
+Spike pointer: start from the pre-decompiled classes in `/root/projects/tower-war/_extract/decomp/MANIFEST.md` (158 classes; on-demand Ghidra via `/root/projects/tower-war/_tools/decomp.sh`): WT3 artillery house/unit, `DefaultBehavior`/`AiPlayerController`.
 Done when: findings recorded per item. Each inconclusive item records its fallback as a deviation in GAME_RULES and the deviations ledger: keeps walking; speed 5 = soldier; WT3 params from imported level data (clone wt1 if uniform); no AI difference (BOT stays); ordering 7a -> 7b -> 7c -> 8; troops only with `hits` building/tower default off (damage = level - 1 if enabled); `volleyAll=true`. Needs `TW_EXTRACT`.
 
 ## Task 2 — Rules text: R-PRJ / R-ART, phase 7 sub-steps, RULES_VERSION

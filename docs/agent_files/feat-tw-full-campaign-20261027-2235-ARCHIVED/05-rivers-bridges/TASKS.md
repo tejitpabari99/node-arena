@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: 13 tasks — decode spike (S1–S5), rules text, defs/content, importer + collider dump, bridge state + planks columns, bridgeable module + turn-around, conditional bot check, web render, editor, curated selection and import of >=10 river + >=10 ROBS levels, perf/ci gate, Phase B full validate
 date: 2026-10-27
 ---
@@ -25,6 +25,7 @@ Source of truth: [PRD](PRD.md). Adds non-blocking rivers whose crossing lines bu
 ## Task 1 — Decode spike: planks, collider shapes, bridge lifetime, ROBS layer, AI river reads
 What it is / what it means: PRD Risks S1–S5 (all RESOLVED as "spike first, else fallback"). Planks per troop/kind, `CheckRightWay` strictness, role of `W`/`D`, the 18 river collider shapes, bridge lifetime on cut and sharing, ROBS layer and AI reads of river state are undecoded.
 What changes at a high level: Time-boxed (~1 h each) decomp via `/root/projects/tower-war/_tools/decomp.sh` of `BridgeCeil`, `RiverBridgeController`, `WayBaseController`, river/ROBS prefab collider classes and AI target scoring, plus a UnityPy collider dump. No product code.
+Spike pointer: start from the pre-decompiled classes in `/root/projects/tower-war/_extract/decomp/MANIFEST.md` (158 classes; on-demand Ghidra via `/root/projects/tower-war/_tools/decomp.sh`): `RiverBridge`, `BridgeCeil`, river obstacle (ROBS).
 Done when: findings recorded per item. Each inconclusive item records its fallback as a deviation in GAME_RULES, LEVELS_GUIDE and the deviations ledger: 1 plank per troop, strict order, instant activation, `W`/`D` presentation-only; shapes flattened to box polylines from mesh bounds (calibrated on levelview refs); per-channel bridge, same-channel enemy troops only, reset on redraw, cleared on cut; ROBS non-blocking; AI ignores river state, `BOT_VERSION` unchanged. Needs `TW_EXTRACT`.
 
 ## Task 2 — Rules text: R-RIV-01..05, phase 6 row, RULES_VERSION

@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: Selectable fortress (TW `s_f`, 335 uses) as a house-like line source with 8 tower-style guns and a periodic parachute-reinforcement cycle; decomp shows the parachute lands AT the fortress (no player-chosen fly target), so no new command is needed. Includes proxy/TW-AI use, web model + parachute fx, importer row flip.
 date: 2026-10-27
 ---

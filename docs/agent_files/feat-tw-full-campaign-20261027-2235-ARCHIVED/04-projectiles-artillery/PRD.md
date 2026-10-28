@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: Generic deterministic projectile/scheduled-effect core (integer travel time, area blast, direct-hit and point targets) that SP06/07 consume, plus TW artillery (WT3 house + ranged unit that volleys at in-range enemy troops); tower shots stay instant.
 date: 2026-10-27
 ---

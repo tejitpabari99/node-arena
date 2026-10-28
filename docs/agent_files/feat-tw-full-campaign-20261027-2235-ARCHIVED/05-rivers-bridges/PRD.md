@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: Rivers as non-blocking water bands whose crossing lines build plank bridges (ceils activated one plank per troop; plankless troops turn around via SP03's return channel), plus river obstacles (ROBS); adds per-channel bridge state next to SP02's element facility, no generic CrossingSource, no bot change.
 date: 2026-10-27
 ---

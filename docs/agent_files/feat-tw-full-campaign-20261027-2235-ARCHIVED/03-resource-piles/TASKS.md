@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 summary: 12 tasks — decode spike, R-PIL rules 3.2.0, defs/content, ring carry + return channels, pickup/return sim, AI pile targeting (BOT 2.5.0), importer, web, editor, >=10 pile levels, Phase A closing run
 date: 2026-10-27
 ---
@@ -24,6 +24,7 @@ Source of truth: [PRD](PRD.md). Neutral depletable pile building; troops pick up
 ## Task 1 — Decode spike: pile lifecycle, footprint, tie order, surplus, models
 What it is / what it means: PRD risks S1, S2, S3, O3, O4. Disable time, `DestroyWayToResource`, empty-pile arrival, hostile pickup, footprint, AI tie order, surplus-gold handling and per-amount models are undecoded. Needs `TW_EXTRACT`.
 What changes at a high level: One ~1 h time-boxed decomp per item via `/root/projects/tower-war/_tools/decomp.sh` (Resource classes, collider, AI pile list, returner surplus, Resources prefabs). Record each finding.
+Spike pointer: start from the pre-decompiled classes in `/root/projects/tower-war/_extract/decomp/MANIFEST.md` (158 classes; on-demand Ghidra via `/root/projects/tower-war/_tools/decomp.sh`): `Resource` (pile), `DestroyWayToResource`.
 Done when: each of S1/S2/S3/O3/O4 has a recorded result, or its fallback is adopted and logged as a deviation in GAME_RULES and the deviations ledger (4 s disable ignored, DestroyWayToResource off, empty arrival returns without pickup, hostile pickup allowed; circle r = 0.5 x house, non-blocking; list-order ties; gold dropped on surplus; one prefab scaled by amount band). O2 (returner counts toward spawn limit) stays as resolved unless contradicted.
 
 ## Task 2 — Rules text: R-PIL-01..05, cross-refs, RULES_VERSION
