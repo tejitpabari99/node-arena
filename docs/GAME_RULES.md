@@ -1,12 +1,12 @@
 # Node Arena — Game Rules
 
-RULES_VERSION: 3.0.0
+RULES_VERSION: 3.1.0
 
 This is the mechanics contract for Node Arena, motivated by Tower War (APK 1.29.3). It is a full rewrite; there are no profiles and no v1 compatibility. Rules own **structure and formulas**; every tunable number (speeds, coefficients, caps, radii, thresholds) lives in authored content under a named parameter, and rules only name the resolved parameter. The simulation must follow these rules; presentation, bots and tools consume the same mechanics. Tower War defaults appear only in the §7 glossary and in the §5 worked examples.
 
 ## 1. Conventions
 
-**Rule IDs and areas.** Rule IDs have the form `R-<AREA>-<NN>` and are permanent. Areas: `TCK` ticks and determinism, `ENT` entities, `SPN` spawn, `GRW` growth, `LIN` lines, `CAP` level and overflow, `CMB` combat, `CPT` capture, `TWR` towers, `OBS` obstacles, `WIN` outcomes. Retired areas `GEN` (generation) and `SND` (sending) exist only as tombstones.
+**Rule IDs and areas.** Rule IDs have the form `R-<AREA>-<NN>` and are permanent. Areas: `TCK` ticks and determinism, `ENT` entities, `SPN` spawn, `GRW` growth, `LIN` lines, `CAP` level and overflow, `CMB` combat, `CPT` capture, `TWR` towers, `OBS` obstacles, `WIN` outcomes, `SEA` seats, `TEM` teams, `ELM` elimination. Retired areas `GEN` (generation) and `SND` (sending) exist only as tombstones.
 
 **Id policy.** A rewritten topic keeps its id and records `Since: 2.0.0` plus `Supersedes:` when v1 text meant something different. A dead topic is tombstoned and its id is never reused or reassigned. Tombstones stay listed under "Retired ids" in §3: GEN-01, GEN-02, SND-01, SND-02, CAP-02. Every active rule needs a test whose title contains `covers R-…` (ownership table in §8). A heading is an active rule unless it is marked tombstone; §6 contains no rule headings until an element ships.
 
@@ -22,7 +22,7 @@ This is the mechanics contract for Node Arena, motivated by Tower War (APK 1.29.
 - *Line*: an owner-drawn directed channel from a source house to a target building (v1 "channel"). Lines are free to draw.
 - *Troop*: a unit walking a line; types `soldier` and `tank` (artillery reserved, §6). Type, owner and source building are fixed at departure.
 - *Stage*: 1, 2 or 3 as a building level is below the first threshold, between the two, or at or above the second threshold of `stageThresholds` (default `[10, 30]`, §7). Stage drives line slots, tower radius and art (R-GRW-02).
-- *Hostile*: different owner. Every non-self owner is hostile, AI against AI included; a neutral building is hostile to every non-neutral troop.
+- *Hostile*: different team (R-ENT-04). With no `SeatSetup` every player is its own team, so every non-self owner is hostile, AI against AI included; a neutral building is hostile to every non-neutral troop. Same-team owners are *allies* (R-TEM-01).
 
 **Versioning.** `RULES_VERSION` uses semver: major for a change to replay outcomes for existing content, minor for an additive rule or element, patch for a clarification. Replay compatibility requires an exact major.minor match; content identity and the replay header must also pass the content/replay validation contract. The content metadata mirrors this header. A mechanics change updates this document and its changelog, then tests (`covers R-…`), then code. A value change edits content and its content version/hash, not a rule. Tunable numbers live in content (`balance.json` and level data).
 
@@ -150,7 +150,7 @@ A line has an owner, a source house, a target building, its own spawn timer (R-S
 
 ### R-ENT-04
 
-A player's identity is its team: each player id is its own team. Player kinds are human, ai and neutral. Every owner that is not the same owner is hostile, including AI against AI; a neutral building is hostile to every non-neutral troop. Human players, AI and bots submit identical commands, pass identical validation and receive no mechanical privileges.
+A player's identity is its team unless a `SeatSetup` assigns teams (R-TEM-01): each player id is its own team. Player kinds are human, ai and neutral. Two owners are hostile when they are on different teams, so with the default teams every owner that is not the same owner is hostile, including AI against AI; a neutral building is hostile to every non-neutral troop. Human players, AI and bots submit identical commands, pass identical validation and receive no mechanical privileges.
 
 *Source:* 03#5.2.
 
@@ -161,6 +161,8 @@ A player's identity is its team: each player id is its own team. Player kinds ar
 *Since:* 2.0.0.
 
 *Supersedes:* v1 R-ENT-04 (team field).
+
+*Amended:* 3.1.0 (team = player id unless a `SeatSetup` assigns teams; hostile = different team). Campaign behaviour unchanged.
 
 ## 3. Rules by area
 
@@ -494,9 +496,69 @@ Obstacles are static, unowned, take no part in winning and do not interact with 
 
 *Since:* 2.0.0.
 
+### R-SEA-01
+
+A `pvp` match has 2 to 4 seats; every seat is occupied for the whole match and there are no empty or neutral-seat placeholders. Whether a seat is driven by a person or a bot is decided outside the simulation (lobby or server): the level's player `kind` is a slot placeholder, and every seat submits the same commands under the same validation with no mechanical privilege (R-ENT-04). `create(level, seed, setup?)` takes an optional `SeatSetup` whose `teams[i]` is the team id of seat `i`. The simulation never reads seat kinds to decide an outcome.
+
+*Source:* Node Arena (PvP design, SP01).
+
+*Params:* `level.players`, `SeatSetup.teams`, `timeLimitSec` (pvp default 480, i.e. 9600 ticks).
+
+*Examples:* none.
+
+*Since:* 3.1.0.
+
+### R-TEM-01
+
+Teams are static for a match. `SeatSetup.teams[i]` (integers `0..n-1`, at least two distinct) names seat `i`'s team; a level may carry default teams, and an absent setup means identity (each seat is its own team). Two seats are allies when their team ids are equal and hostile otherwise (R-ENT-04). The neutral owner is never an ally. Teams do not change during a match, and ally buildings are never shared or jointly controlled: each building has exactly one owner.
+
+*Source:* Node Arena (PvP design, SP01).
+
+*Params:* `SeatSetup.teams`, optional level player `team`.
+
+*Examples:* none.
+
+*Since:* 3.1.0.
+
+### R-TEM-02
+
+Allies never fight. Same-team troops skip head-on exchanges (R-CMB-01) and crossing exchanges (R-CMB-04), and towers neither target nor shoot ally troops or ally houses (R-TWR-02). Hostility is re-evaluated at each contact and shot, so a building captured by an enemy is hostile to its former allies from then on.
+
+*Source:* Node Arena (PvP design, SP01).
+
+*Params:* None.
+
+*Examples:* none.
+
+*Since:* 3.1.0.
+
+### R-TEM-03
+
+A troop that arrives at a building whose owner is on the troop owner's team reinforces it: `defense` is added as in R-CMB-02, subject to the cap and overflow of R-CAP-01 and R-CAP-03. The building's owner is unchanged and the arrival never captures. Ownership is re-evaluated per arrival (R-CMB-02), so a line to an ally building that an enemy has since captured attacks it. `DrawLine` to an ally building is valid (R-LIN-01 has no owner restriction), an ally's reverse line coexists, and R-LIN-03 replacement stays within the same owner.
+
+*Source:* Node Arena (PvP design, SP01).
+
+*Params:* `units.*.defense`, `maxLevel`.
+
+*Examples:* none.
+
+*Since:* 3.1.0.
+
+### R-ELM-01
+
+In a `pvp` match a seat is eliminated when it owns no building and owns no troops in transit. Elimination is final (a seat never returns) and records `eliminatedAt` as the tick; the event `SeatEliminated` is emitted. Seats are evaluated at phase 9 by ascending index. A seat with no building has no troops in transit in practice (R-CPT-01 kills troops sourced at a captured building), so the troop condition is defensive.
+
+*Source:* Node Arena (PvP design, SP01).
+
+*Params:* None.
+
+*Examples:* none.
+
+*Since:* 3.1.0.
+
 ### R-WIN-01
 
-The human wins when every building with `ignoreForWin = false` (neutral buildings included) is owned by the human. The remaining ignored buildings then flip to the human.
+In objective `captureAll`, the human wins when every building with `ignoreForWin = false` (neutral buildings included) is owned by the human. The remaining ignored buildings then flip to the human.
 
 *Source:* 03#7.2.
 
@@ -508,9 +570,11 @@ The human wins when every building with `ignoreForWin = false` (neutral building
 
 *Supersedes:* v1 R-WIN-01 (elimination by towers and troops in transit).
 
+*Amended:* 3.1.0 (scoped to objective `captureAll`; objective `pvp` uses R-WIN-04..07).
+
 ### R-WIN-02
 
-The human loses when they own no building with `ignoreForWin = false`. Troops in transit do not count. There is no draw outcome. A win marks the campaign level completed; loss and timeout do not.
+In objective `captureAll`, the human loses when they own no building with `ignoreForWin = false`. Troops in transit do not count. In `captureAll` there is no draw outcome. A win marks the campaign level completed; loss and timeout do not.
 
 *Source:* 03#7.2.
 
@@ -522,9 +586,11 @@ The human loses when they own no building with `ignoreForWin = false`. Troops in
 
 *Supersedes:* v1 R-WIN-02 (mutual-defeat `draw`).
 
+*Amended:* 3.1.0 (scoped to objective `captureAll`; the no-draw statement applies to `captureAll` only, `pvp` may draw, R-WIN-06).
+
 ### R-WIN-03
 
-A level may set `timeLimitSec`; when absent there is no limit (no campaign level sets one). At phase 9, `tick >= timeLimitSec × tickRate` ends the match as a timeout loss, evaluated after win and loss in that tick (order win → loss → timeout: a win on the final tick counts as a win). Harness step caps are not outcomes. Once recorded, an outcome is final.
+In objective `captureAll`, a level may set `timeLimitSec`; when absent there is no limit (no campaign level sets one). At phase 9, `tick >= timeLimitSec × tickRate` ends the match as a timeout loss, evaluated after win and loss in that tick (order win → loss → timeout: a win on the final tick counts as a win). Harness step caps are not outcomes. Once recorded, an outcome is final.
 
 *Source:* v1 R-WIN-03; 03#7.2.
 
@@ -535,6 +601,56 @@ A level may set `timeLimitSec`; when absent there is no limit (no campaign level
 *Since:* 2.0.0.
 
 *Supersedes:* v1 R-WIN-03 (300 s default limit).
+
+*Amended:* 3.1.0 (scoped to objective `captureAll`; the `pvp` time limit is R-WIN-05).
+
+### R-WIN-04
+
+In objective `pvp`, at phase 9 after elimination (R-ELM-01), when exactly one team has a non-eliminated seat the outcome is `victory` and the winners are all seats of that team, eliminated teammates included. `winner` is the lowest winning seat index. This check precedes the time limit (R-WIN-05): a last-team-standing result on the final tick is a `victory`. Once recorded, an outcome is final.
+
+*Source:* Node Arena (PvP design, SP01).
+
+*Params:* None.
+
+*Examples:* none.
+
+*Since:* 3.1.0.
+
+### R-WIN-05
+
+In objective `pvp`, when `tick >= timeLimitSec × tickRate` and no `victory` has occurred (R-WIN-04), the match ends. Teams are ranked by non-neutral buildings owned (descending), then by total troops owned (descending), which is the sum of garrison levels of owned buildings plus troops in transit. A unique best team ends the match as `timeLimit` with that team's seats as winners. If the top teams tie on both keys the outcome is a `draw` (R-WIN-06). `timeLimitSec` comes from the level (pvp default 480) and cannot be overridden by `SeatSetup`.
+
+*Source:* Node Arena (PvP design, SP01).
+
+*Params:* `timeLimitSec`.
+
+*Examples:* none.
+
+*Since:* 3.1.0.
+
+### R-WIN-06
+
+In objective `pvp` the outcome `draw` occurs when (a) at the time limit two or more teams tie for best under R-WIN-05, including when 3 or more teams exist and only the top teams tie, with winners = the seats of all tied top teams (a shared first place); or (b) no team has a non-eliminated seat, with winners `[]`. `winner` is the lowest winning seat index, or null when there are no winners.
+
+*Source:* Node Arena (PvP design, SP01).
+
+*Params:* None.
+
+*Examples:* none.
+
+*Since:* 3.1.0.
+
+### R-WIN-07
+
+At the end of a `pvp` match the result carries a `ranking` of one placement per team (seats, rank, buildings, troops, `eliminatedAt`). Non-eliminated teams rank above eliminated teams; among non-eliminated teams the R-WIN-05 order applies, with equal buildings and troops sharing a rank. Among eliminated teams a later `eliminatedAt` (a team's tick is that of its last eliminated seat) ranks better, and equal values share a rank. `ranking` is derived at match end and is not hashed.
+
+*Source:* Node Arena (PvP design, SP01).
+
+*Params:* None.
+
+*Examples:* none.
+
+*Since:* 3.1.0. Text lands with 3.1.0; its test lands in a later task.
 
 ### Retired ids
 
@@ -571,10 +687,10 @@ R-TCK-05 fixes this order. Iteration and ties follow R-TCK-03 throughout. A read
 | 3 | Growth | R-GRW-01, R-GRW-02, R-TCK-06 | Buildings by ascending index. | Advance growth timers of owned houses (those with `grows`; towers never grow) with zero lines; fire raises level by one up to `maxLevel`. |
 | 4 | Spawn / departures | R-SPN-01..03, R-TCK-06 | Buildings by index; within a building lines by target index. | Advance each line's spawn timer; fire departs one troop at progress 0 with the next `seq`, or skips under the alive cap. |
 | 5 | Movement | R-TCK-04 | None (analytic). | Evaluate every troop's progress for this tick; no state is mutated per troop. |
-| 6 | Contacts | R-CMB-01, R-CMB-04, R-CMB-05 | Head-on pass first, pairs by ascending ordered channel key; then crossing pass by ascending `(channelKeyA, channelKeyB)`, then `(seqA, seqB)`. | Resolve exchanges (R-CMB-05); dead troops are removed immediately; survivors may fight again in the same pass. |
-| 7 | Tower shots | R-TWR-01..04 | Towers by ascending building index, sequentially (a troop killed by an earlier tower cannot be shot again). | Decrement cooldowns, then each ready tower fires once (target tie: distance, owner index, troop `seq`). |
-| 8 | Arrivals + capture | R-CMB-02, R-CMB-03, R-CAP-01, R-CAP-03, R-CPT-01, R-CPT-02 | Arrivals ordered by overshoot descending, then channel order (source index, target index), then FIFO `seq`. Ownership is re-evaluated per arrival. | Apply reinforcement or damage; capture inline; forward overflow on the `fwd` stream; troops removed by a capture do not arrive. |
-| 9 | Win / loss / time | R-WIN-01..03 | Players by ascending index. | Evaluate outcome and the optional time limit; expose final state. Outcome is final. |
+| 6 | Contacts | R-CMB-01, R-CMB-04, R-CMB-05, R-TEM-02 | Head-on pass first, pairs by ascending ordered channel key; then crossing pass by ascending `(channelKeyA, channelKeyB)`, then `(seqA, seqB)`. | Resolve exchanges (R-CMB-05); dead troops are removed immediately; survivors may fight again in the same pass. |
+| 7 | Tower shots | R-TWR-01..04, R-TEM-02 | Towers by ascending building index, sequentially (a troop killed by an earlier tower cannot be shot again). | Decrement cooldowns, then each ready tower fires once (target tie: distance, owner index, troop `seq`). |
+| 8 | Arrivals + capture | R-CMB-02, R-CMB-03, R-CAP-01, R-CAP-03, R-CPT-01, R-CPT-02, R-TEM-03 | Arrivals ordered by overshoot descending, then channel order (source index, target index), then FIFO `seq`. Ownership is re-evaluated per arrival. | Apply reinforcement or damage; capture inline; forward overflow on the `fwd` stream; troops removed by a capture do not arrive. |
+| 9 | Win / loss / time | R-WIN-01..03, R-ELM-01, R-WIN-04..07 | Players by ascending index. | Evaluate outcome and the optional time limit; expose final state. Outcome is final. |
 
 Captured buildings neither grow nor spawn for the new owner before the next tick, because capture happens after phases 3–4. Level drops never cut lines (R-LIN-02).
 
@@ -590,6 +706,8 @@ Human players, scripted AI and bots submit the same commands, pass the same vali
 ### 4.2 Hash surface
 
 The state hash covers, in index order: per building owner, level, growth timer, `ignoreForWin` and tower cooldown (initialised to `delayMt(L0)` at match start, R-TWR-01); per line owner, endpoints, draw sequence and spawn timer; per troop owner, source building, type, line, progress, hit points and `seq`; and the state of every sim random stream. Presentation-only state (bullet flight, art stage) is not hashed.
+
+For objective `pvp` only, the hash appends after the words above: the per-seat `team` words, the per-seat `eliminatedAt` words, and, in the over block, the winners count followed by the winner seat ids. Objective `captureAll` emits no extra words, so campaign state hashes and replays are unchanged. The domain stays `sim-state-v2`.
 
 ## 5. Worked examples and edge cases
 
@@ -686,6 +804,7 @@ One row per content key: the key rules name, its Tower War source, the rule ids 
 
 | RULES_VERSION | Date | Change |
 |---|---|---|
+| 3.1.0 | 2026-10-28 | Additive; campaign replays unchanged. New objective `pvp`: seats and teams (R-SEA-01, R-TEM-01), ally non-aggression and reinforcement (R-TEM-02, R-TEM-03), seat elimination (R-ELM-01), last-team victory, timeout ranking, draw and placement (R-WIN-04..07). Amended in place: R-ENT-04 (team = player id unless a `SeatSetup` assigns teams), R-WIN-01..03 scoped to `captureAll`. Hash gains a pvp-only tail (§4.2). `SCHEMA_VERSION` unchanged. |
 | 3.0.0 | 2026-10-23 | **Replay outcomes may change.** R-TWR-02: a ready tower with no troop target shoots in-reach opponent (non-neutral hostile) houses before neutral houses; neutral houses only when no opponent house is in reach. Deviation from decomp ordering, justified by playtest. Troop targeting unchanged. |
 | 2.0.0 | 2026-10-22 | Full rewrite as the Tower War (APK 1.29.3) rules contract, replacing v1. **Replay outcomes change**: v1 replays and goldens are invalid and must be regenerated. Per-line spawn timers, zero-line growth, stage-based slots with no auto-cut, tank/soldier hp and attack, capture by damage greater than level with overshoot discarded and the source building's troops killed, overflow forwarded, crossing combat, shooting towers, lane blocking by obstacles, optional time limit; draw outcome and 300 s default limit removed; integer milli-tick timers. **Retired ids:** GEN-01, GEN-02, SND-01, SND-02, CAP-02 (tombstones). Rewritten ids keep their numbers (`Since: 2.0.0`); new areas SPN, GRW, TWR, OBS. Boosters deferred (§6). |
 | 1.0.0 | 2026-10-08 | Initial mechanics contract (generation/sending, strict slots with auto-cut, no-bank capacity, front-only head-on combat, leftover capture, elimination outcomes). Superseded. |
@@ -711,7 +830,8 @@ Booster aim count (1 versus 3, 03#8.10 against 05#4.6) is not settled here becau
 
 | Area | Tests written by |
 |---|---|
-| TCK, ENT, SPN, GRW, LIN, CAP, CMB-01/02/03/05, CPT, WIN | SP03 (`packages/sim/test`) |
+| TCK, ENT, SPN, GRW, LIN, CAP, CMB-01/02/03/05, CPT, WIN-01..03 | SP03 (`packages/sim/test`) |
+| SEA, TEM, ELM, WIN-04..07 | PvP SP01 seat-rules (`packages/sim/test`; WIN-07 placement test lands after the text) |
 | CMB-04, TWR, OBS | SP04 |
 | Content validation of rule params | SP02 (`packages/content/test`) |
 | Stale v1 `covers` tags (sim step/rules/economy tests, content components, tools/test, apps/web) | Deleted by the SP that deletes that file; SP09 verifies none remain |
