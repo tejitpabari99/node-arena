@@ -82,13 +82,13 @@ export function validateLevel(level: CompiledLevel, position: number | undefined
 /** Margin (ticks) past the authored time limit before a pvp run counts as non-terminating. */
 export const PVP_CAP_MARGIN = 100;
 export const PVP_DELAYS = [1000, 2000] as const;
-export interface PvpRunReport { outcome: string; ticks: number; finalHash: string }
+export interface PvpRunReport { outcome: string; ticks: number; finalHash: string; winners?: number[]; rejected?: number }
 export type PlayPvp = (level: CompiledLevel, seed: number, actionDelayMs: number | 'idle', maxTicks: number) => PvpRunReport;
 /** Every seat of a pvp level is driven alike: idle, or a human-proxy bot at the given delay. Never consults humanSeat(). */
 export function playPvp(level: CompiledLevel, seed: number, actionDelayMs: number | 'idle', maxTicks: number): PvpRunReport {
   const controllers = level.players.map((_, seat) => proxyController(level, seed, seat, actionDelayMs));
   const result = runMatch({ level, seed, maxTicks, controllers, record: false });
-  return { outcome: result.outcome.outcome, ticks: result.ticks, finalHash: result.stats.finalHash };
+  return { outcome: result.outcome.outcome, ticks: result.ticks, finalHash: result.stats.finalHash, winners: [...('winners' in result.outcome ? result.outcome.winners ?? [] : [])], rejected: result.stats.rejected };
 }
 /** 03 R8: pvp branch. Symmetry (sidecar), idle seed 1 = draw, seeds x PVP_DELAYS all-seat proxy matches terminate with no rejects, seed-1/2000 lock + rerun. */
 export function validatePvpLevel(level: CompiledLevel, position: number | undefined, seeds: number, symmetry: SymmetryKind | undefined, runPvp: PlayPvp = playPvp, maxTicksFallback = DEFAULT_MAX_TICKS): LevelReport {

@@ -73,8 +73,8 @@ async function main(): Promise<void> {
   };
   if (command === 'balance') {
     const { balance } = await import('./balance.js');
-    report.balance = await balance(data, meta, { levels: opts['--levels'] ?? 'all', ...(opts['--proxy'] ? { proxy: opts['--proxy'] } : {}), seeds: positive('--seeds', '20'), jobs: positive('--jobs', '2'), mode: (opts['--mode'] ?? 'campaign') as 'campaign' | 'arena' });
-    report.ok = true; report.summary = `${report.balance.rows.length} balance rows (report only, no targets).`; return;
+    report.balance = await balance(data, meta, { levels: opts['--levels'] ?? 'all', ...(opts['--proxy'] ? { proxy: opts['--proxy'] } : {}), seeds: positive('--seeds', opts['--mode'] === 'pvp' ? '40' : '20'), jobs: positive('--jobs', '2'), mode: (opts['--mode'] ?? 'campaign') as 'campaign' | 'arena' | 'pvp' });
+    report.ok = true; report.summary = `${report.balance.rows.length + (report.balance.pvp?.length ?? 0)} balance rows (report only, no targets).`; return;
   }
   if (command === 'validate:levels' || command === 'levels:lock') {
     const { validateLevels, buildLock, checkLevelsLock, parseLevelsLock, DEFAULT_MAX_TICKS } = await import('./levels.js');
