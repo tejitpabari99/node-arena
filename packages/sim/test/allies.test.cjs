@@ -83,3 +83,53 @@ test('covers R-TEM-02: neutral stays hostile to everyone (towers still target ne
   assert.equal(api.hostile(s, -1, 0), true);
   assert.equal(api.hostile(s, 1, -1), true);
 });
+
+// R-TEM-03: ally arrival reinforcement
+const arrive = (s, from, to, kind = 0) => { const ch = api.getChannel(s, from, to); put(s, from, to, ch.length + 10, kind); api.arrivalPass(s); };
+const arrivals = (s) => s.events.filter((e) => e.type === 'TroopArrived');
+test('covers R-TEM-03: ally arrival reinforces (cap/overflow), owner unchanged', () => {
+  const s = mk([0, 0, 1]);
+  const def = s.level.units[0].defense;
+  s.buildings.level[1] = 1; s.buildings.maxLevel[1] = 10;
+  arrive(s, 0, 1);
+  assert.equal(s.buildings.level[1], 1 + def);
+  assert.equal(s.buildings.owner[1], 1);
+  assert.equal(arrivals(s)[0].effect, 'reinforce');
+  s.buildings.level[1] = s.buildings.maxLevel[1]; s.events = [];
+  arrive(s, 0, 1);
+  assert.equal(s.buildings.level[1], 10);
+  assert.equal(s.buildings.owner[1], 1);
+  assert.equal(arrivals(s)[0].effect, 'overflow');
+  api.assertInvariants(s);
+});
+
+test('covers R-TEM-03: enemy arrival still attacks (identity and distinct teams)', () => {
+  for (const teams of [[0, 1, 1], [0, 1, 2]]) {
+    const s = mk(teams);
+    s.buildings.level[1] = 5;
+    arrive(s, 0, 1);
+    assert.equal(arrivals(s)[0].effect, 'hit', JSON.stringify(teams));
+    assert.equal(s.buildings.level[1], 5 - s.level.units[0].attack);
+  }
+});
+
+test('covers R-TEM-03: line to ally building, enemy captures it, later arrivals attack', () => {
+  const s = mk([0, 0, 1]);
+  s.buildings.level[1] = 1; s.buildings.maxLevel[1] = 10;
+  arrive(s, 0, 1);
+  assert.equal(arrivals(s)[0].effect, 'reinforce');
+  s.buildings.owner[1] = 2; // enemy captured
+  s.events = [];
+  arrive(s, 0, 1);
+  assert.equal(arrivals(s)[0].effect, 'hit');
+});
+
+test('covers R-TEM-03: DrawLine to ally valid; ally reverse line coexists', () => {
+  const s = mk([0, 0, 1]);
+  assert.equal(api.canDraw(s, 0, 0, 1), null);
+  assert.equal(api.canDraw(s, 1, 1, 0), null);
+  api.runCommands(s, [{ type: 'DrawLine', player: 0, from: 0, to: 1 }, { type: 'DrawLine', player: 1, from: 1, to: 0 }]);
+  assert.equal(api.getChannel(s, 0, 1).drawn, 1);
+  assert.equal(api.getChannel(s, 1, 0).drawn, 1);
+  assert.equal(s.rejected, 0);
+});

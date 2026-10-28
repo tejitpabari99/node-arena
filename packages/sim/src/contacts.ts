@@ -160,7 +160,7 @@ export function arrivalPass(state: SimState): void {
     b.alive[ch.from]!--;
     state.counters.arrived++;
     const base = { channel: ch.key, seq, owner, kind: unit.id };
-    if (b.owner[to] === owner) {
+    if (!hostile(state, b.owner[to]!, owner)) {
       const sum = b.level[to]! + unit.defense, surplus = sum - b.maxLevel[to]!;
       setLevel(state, to, Math.min(sum, b.maxLevel[to]!));
       emit(state, { type: 'TroopArrived', ...base, effect: surplus > 0 ? 'overflow' : 'reinforce' });
