@@ -1,7 +1,7 @@
 import type { CompiledLevel } from '@node-arena/content';
 import {
   create, createReplayRecorder, type Command, type ReplayMetadata,
-  type ReplayRecord, type Sim, type SimView,
+  type ReplayRecord, type SeatSetup, type Sim, type SimView,
 } from '@node-arena/sim';
 import { guardBotContext, type Bot } from './index.js';
 import { createSeatBot } from './seat.js';
@@ -21,6 +21,8 @@ export interface MatchOptions {
   maxTicks?: number;
   /** Authoritative content envelope versions; omitted/false disables recording. */
   record?: ReplayMetadata | false;
+  /** Team id per seat (pvp). Absent = identity; recorded in the replay header only when given. */
+  teams?: readonly number[];
 }
 export type MatchOutcome = NonNullable<SimView['over']> | { outcome: 'truncated'; winner: null };
 export interface MatchPlayerStats {
@@ -124,8 +126,9 @@ function statsFor(sim: Sim, rejected: number, commandCount: number): MatchStats 
 export function runMatch(options: MatchOptions): MatchResult {
   if (options.maxTicks !== undefined && !validTick(options.maxTicks)) throw new RangeError('Invalid maxTicks');
   const controllers = controllersFor(options);
-  const recorder = options.record ? createReplayRecorder(options.level, options.seed, options.record) : null;
-  const sim: Sim = recorder ?? create(options.level, options.seed);
+  const setup: SeatSetup | undefined = options.teams ? { teams: options.teams } : undefined;
+  const recorder = options.record ? createReplayRecorder(options.level, options.seed, options.record, setup) : null;
+  const sim: Sim = recorder ?? create(options.level, options.seed, setup);
   if (options.maxTicks === undefined && sim.view.timeLimitTicks === 0) throw new RangeError('maxTicks required for an untimed level');
   const maxTicks = options.maxTicks ?? sim.view.timeLimitTicks;
   let commandCount = 0;

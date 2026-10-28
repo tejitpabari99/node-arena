@@ -57,7 +57,8 @@ function json(value: unknown, ancestors = new Set<unknown>()): value is ReplayJs
 }
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
 function overValid(value: unknown): value is GameOver | null {
-  return value === null || (object(value) && ['won', 'lost', 'timeout'].includes(value.outcome as string) && (value.winner === null || (typeof value.winner === 'number' && Number.isInteger(value.winner) && value.winner >= 0)));
+  return value === null || (object(value) && ['won', 'lost', 'timeout', 'victory', 'timeLimit', 'draw'].includes(value.outcome as string) && (value.winner === null || (typeof value.winner === 'number' && Number.isInteger(value.winner) && value.winner >= 0)) &&
+    (value.winners === undefined || (Array.isArray(value.winners) && value.winners.every(w => typeof w === 'number' && Number.isInteger(w) && w >= 0))));
 }
 function validate(rec: unknown): asserts rec is ReplayRecord {
   if (!object(rec) || !headerValid(rec.header) || !tick(rec.finalTick) || !validHash(rec.finalHash) || !overValid(rec.outcome) || !Array.isArray(rec.commands) || !Array.isArray(rec.checkpoints)) invalid();
@@ -116,6 +117,7 @@ export function playReplay(content: ReplaySource, rec: ReplayRecord): ReplayResu
   for (const key of ['schemaVersion', 'contentVersion'] as const) if (rec.header[key] !== content.metadata[key]) invalid();
   const level = content.level ?? content.resolveLevel(rec.header.levelId);
   if (level.id !== rec.header.levelId || level.simHash !== rec.header.simHash) invalid();
+  if (level.objective !== 'pvp' && (rec.outcome !== null && !['won', 'lost', 'timeout'].includes(rec.outcome.outcome) || rec.outcome?.winners !== undefined)) invalid();
   const sim = create(level, rec.header.seed, rec.header.teams !== undefined ? { teams: rec.header.teams } : undefined);
   if (sim.view.timeLimitTicks > 0 && rec.finalTick > sim.view.timeLimitTicks) invalid();
   let commandIndex = 0, checkpointIndex = 0;
