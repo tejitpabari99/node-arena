@@ -15,7 +15,7 @@ async function main(){
     const [{testHookRequest},{createTestHarness}]=await Promise.all([import('./test-harness/gate'),import('./test-harness')]);
     harness=createTestHarness(files,testHookRequest(location.search,true));
   }
-  const app=createAppController({files,...harness?.options,createRuntime:context=>createBrowserRuntime(context,arena,(ctx,stage)=>createInputController({canvas:stage.canvas,sim:ctx.driver.sim,camera:stage.camera,world:stage.world,worldRoot:stage.worldRoot,scene:stage.scene,driver:ctx.driver,isEnabled:()=>ctx.enabled()&&!ctx.driver.paused}))});
+  const app=createAppController({files,...harness?.options,createRuntime:context=>createBrowserRuntime(context,arena,(ctx,stage)=>createInputController({canvas:stage.canvas,sim:ctx.driver.sim,camera:stage.camera,world:stage.world,worldRoot:stage.worldRoot,scene:stage.scene,driver:ctx.driver,seat:ctx.seat,isEnabled:()=>ctx.enabled()&&!ctx.driver.paused}))});
   const unsubscribe=app.subscribe(()=>{const state=app.snapshot();arena.hidden=state.screen!=='playing'&&state.screen!=='result'&&!app.driver;});
   const unmount=mountApp(app,root),audio=connectAppAudio(app);
   if(harness)window.__na=harness.connect(app);

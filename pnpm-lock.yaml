@@ -57,6 +57,9 @@ importers:
       '@node-arena/content':
         specifier: workspace:*
         version: link:../../packages/content
+      '@node-arena/net':
+        specifier: workspace:*
+        version: link:../../packages/net
       '@node-arena/sim':
         specifier: workspace:*
         version: link:../../packages/sim

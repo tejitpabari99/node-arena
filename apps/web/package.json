@@ -20,6 +20,7 @@
   "dependencies": {
     "@node-arena/bots": "workspace:*",
     "@node-arena/content": "workspace:*",
+    "@node-arena/net": "workspace:*",
     "@node-arena/sim": "workspace:*",
     "preact": "10.29.8",
     "three": "0.186.1"

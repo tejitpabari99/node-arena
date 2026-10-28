@@ -1,6 +1,6 @@
 import { loadContent, type ContentFiles, type CompiledLevel, type ManifestV2, type LoadedContent } from '@node-arena/content';
 import { TICK_RATE, type SimView } from '@node-arena/sim';
-import { GameDriver, type FrameUpdate, type TickUpdate, type GameDriverOptions } from '../driver';
+import { GameDriver, type MatchDriver, type FrameUpdate, type TickUpdate, type GameDriverOptions } from '../driver';
 import { loadManifest } from '../manifest/load';
 import { createSaveStore, type SaveData, type SaveSettings, type SaveStore } from '../save';
 /** Presentation-only pause between the sim reporting game over and showing the result popup. */
@@ -20,7 +20,7 @@ export interface LevelRuntime {
   frame(update: FrameUpdate): void; tick(update: TickUpdate): void;
   refresh(): void; cancel(): boolean; dispose(): void; setZoom?(zoomed: boolean): void;
 }
-export interface RuntimeContext { level: CompiledLevel; manifest: ManifestV2; driver: GameDriver; enabled(): boolean; zoomed: boolean }
+export interface RuntimeContext { level: CompiledLevel; manifest: ManifestV2; driver: MatchDriver; /** Controlled seat; omitted = campaign human lookup, null = spectator. */ seat?: number | null | undefined; enabled(): boolean; zoomed: boolean }
 export interface AppOptions {
   files: ContentFiles; campaignId?: string; loadManifest?: () => Promise<ManifestV2>; save?: SaveStore;
   autoStart?: boolean; resultDelayMs?: number; createSim?: GameDriverOptions['createSim']; createBotDriver?: GameDriverOptions['createBotDriver'];

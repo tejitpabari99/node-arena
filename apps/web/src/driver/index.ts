@@ -1,4 +1,4 @@
-import { ownership } from '../ui/ownership';
+import { ownership, type OwnershipSegment } from '../ui/ownership';
 import type { CompiledLevel } from '@node-arena/content';
 import { create, TICK_RATE, type Command, type Sim, type SimEvent } from '@node-arena/sim';
 import { createBotDriver, type BotDriver, type CreateBotDriver } from './bot';
@@ -43,6 +43,21 @@ export interface GameDriverOptions {
   onPauseChange?: (reason: PauseReason) => void;
 }
 
+/** Seam consumed by runtime/input; GameDriver (campaign) and the net driver implement it. */
+export interface MatchDriver {
+  readonly sim: Sim;
+  readonly alpha: number;
+  readonly paused: boolean;
+  readonly ownership: OwnershipSegment[];
+  readonly lastStepMs: number;
+  submit(cmd: Command): unknown;
+  start(): void;
+  stop(): void;
+  dispose(): void;
+  step?(n: number): number;
+  setSpeed?(s: 1 | 2): void;
+}
+
 /** Undefined outside a browser: the public manual/frame API remains usable in Node. */
 function browserEnvironment(): DriverEnvironment | undefined {
   if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
@@ -58,7 +73,7 @@ function browserEnvironment(): DriverEnvironment | undefined {
 }
 
 /** Owns level lifetime and all steps. Consumers read sim/view and submit commands. */
-export class GameDriver {
+export class GameDriver implements MatchDriver {
   private currentSim: Sim;
   private stepMs = 0;
   get lastStepMs(): number { return this.stepMs; }
