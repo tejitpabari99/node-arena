@@ -1,0 +1,11 @@
+{
+  "$schema": "../../schemas/campaign.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "pvp",
+  "entries": [
+    {
+      "level": "na-pvp-duel-s",
+      "position": 1
+    }
+  ]
+}

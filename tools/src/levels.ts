@@ -76,17 +76,20 @@ export function validateLevel(level: CompiledLevel, position: number | undefined
   report.ok = report.errors.length === 0; return report;
 }
 export interface CampaignLevel { id: string; position: number }
-/** Common only; every level file must be listed exactly once across Common and custom. */
+/** Common only; every level file must be listed exactly once across Common, custom and pvp. */
 export function campaignLevels(data: ContentFiles): CampaignLevel[] {
   const loaded = loadContent(data);
   const entries = [...loaded.catalog.campaigns['common']!.entries].sort((a, b) => a.position - b.position).map(e => ({ id: e.level, position: e.position }));
   const files = Object.keys(data).filter(name => /^data\/levels\/[^/]+\.json$/.test(name)).map(name => name.slice('data/levels/'.length, -'.json'.length)).sort();
-  const listed = [...entries.map(e => e.id), ...(loaded.catalog.campaigns['custom']?.entries ?? []).map(e => e.level)].sort();
-  if (canonicalJson(files) !== canonicalJson(listed)) throw new LocatedError('data/campaigns/common.json', `Common + custom campaign entries (${listed.length}) differ from data/levels files (${files.length})`);
+  const listed = [...entries.map(e => e.id), ...(loaded.catalog.campaigns['custom']?.entries ?? []).map(e => e.level), ...(loaded.catalog.campaigns['pvp']?.entries ?? []).map(e => e.level)].sort();
+  if (canonicalJson(files) !== canonicalJson(listed)) throw new LocatedError('data/campaigns/common.json', `Common + custom + pvp campaign entries (${listed.length}) differ from data/levels files (${files.length})`);
   return entries;
 }
 export function customLevels(data: ContentFiles): CampaignLevel[] {
   return [...(loadContent(data).catalog.campaigns['custom']?.entries ?? [])].sort((a, b) => a.position - b.position).map(e => ({ id: e.level, position: e.position }));
+}
+export function pvpLevels(data: ContentFiles): CampaignLevel[] {
+  return [...(loadContent(data).catalog.campaigns['pvp']?.entries ?? [])].sort((a, b) => a.position - b.position).map(e => ({ id: e.level, position: e.position }));
 }
 export function selectLevels(data: ContentFiles, selected = 'all'): { levels: CampaignLevel[]; compiled: Record<string, CompiledLevel> } {
   const levels = [...campaignLevels(data), ...customLevels(data)];

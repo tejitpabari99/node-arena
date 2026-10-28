@@ -6,9 +6,10 @@ import { loadContent } from '@node-arena/content';
 import { runMatch } from '@node-arena/bots';
 import { loadFiles } from '../src/files.js';
 import { splitFiles } from '../src/content.js';
-import { buildLock, campaignLevels, checkLevelsLock, humanSeat, selectLevels, validateLevel, validateLevels, type playProxy } from '../src/levels.js';
+import { buildLock, campaignLevels, customLevels, pvpLevels, checkLevelsLock, humanSeat, selectLevels, validateLevel, validateLevels, type playProxy } from '../src/levels.js';
 import { levelsMarkdown } from '../src/levels-output.js';
 import { parseUnsolved, readUnsolved, type UnsolvedEntry } from '../src/unsolved.js';
+import { checkSymmetry, readSymmetry } from '../src/pvp-symmetry.js';
 
 const root = resolve(import.meta.dirname, '../..');
 const { data } = splitFiles(await loadFiles(resolve(root, 'packages/content')));
@@ -115,4 +116,18 @@ test('validate:levels CLI: one level, JSON report with levels payload; bad optio
   const report = JSON.parse(ok.stdout); assert.equal(report.levels.length, 1); assert.equal(report.levels[0].id, 'levelview-1');
   assert.equal(run('--seeds', '0').status, 1);
   assert.equal(run('--levels', 'unknown', '--seeds', '1').status, 1);
+});
+
+test('pvp Duel S compiles, is listed in pvp only, and is d2-symmetric', async () => {
+  const loaded = loadContent(data);
+  const level = loaded.compiled['na-pvp-duel-s']!;
+  assert.ok(level);
+  assert.equal(level.objective, 'pvp');
+  assert.equal(level.buildings.length, 7);
+  assert.deepEqual(pvpLevels(data), [{ id: 'na-pvp-duel-s', position: 1 }]);
+  assert.equal(campaignLevels(data).length, 20);
+  assert.ok(!campaignLevels(data).some(l => l.id.startsWith('na-pvp-')));
+  assert.ok(!customLevels(data).some(l => l.id.startsWith('na-pvp-')));
+  const kinds = await readSymmetry(resolve(root, 'tools/pvp-symmetry.json'));
+  assert.equal(checkSymmetry(level, kinds['na-pvp-duel-s']!).ok, true);
 });
