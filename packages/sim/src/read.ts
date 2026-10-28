@@ -38,7 +38,7 @@ export function createView(state: SimState): SimView {
     bounds: level.bounds,
     ids: { buildings: level.buildings.map((x) => x.id), players: level.players.map((x) => x.id), elements: level.elements.map((x) => x.id) },
     players: level.players.map((p, i) => ({ kind: p.kind, colorKey: p.colorKey, team: state.team[i]! })),
-    eliminatedAt: new Int32Array(level.players.length).fill(-1),
+    eliminatedAt: state.players.eliminatedAt,
     buildings: b,
     buildingStatic: level.buildings.map((x) => ({
       x: x.x, z: x.z, kind: x.kind, archetype: x.archetype, visual: x.visual, footprint: x.footprint,

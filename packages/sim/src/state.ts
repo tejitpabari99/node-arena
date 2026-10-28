@@ -110,7 +110,7 @@ export function createState(level: CompiledLevel, seed: number, setup?: SeatSetu
     buildings.ignoreForWin[i] = b.ignoreForWin ? 1 : 0;
   });
   const streams = createStreams(seed);
-  const players = { n: level.players.length, kind: Int32Array.from(level.players, (p) => (p.kind === 'human' ? 0 : 1)) };
+  const players = { n: level.players.length, kind: Int32Array.from(level.players, (p) => (p.kind === 'human' ? 0 : 1)), eliminatedAt: new Int32Array(level.players.length).fill(-1) };
   const fwd = Array.from({ length: n }, (_, i) => streams.fork('fwd', i));
   const carrierMap = {} as Record<ModuleId, Int32Array>;
   for (const id of MODULE_ORDER) carrierMap[id] = carriers(level, id);

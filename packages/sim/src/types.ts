@@ -23,7 +23,11 @@ export interface Buildings {
 }
 
 /** Seat columns (int32). `kind`: 0 human, 1 ai. colorKey is view-only and lives in the level. */
-export interface Players { readonly n: number; readonly kind: Int32Array }
+export interface Players {
+  readonly n: number; readonly kind: Int32Array;
+  /** Tick a seat was eliminated (R-ELM-01), -1 while alive. Written only for objective `pvp`. */
+  readonly eliminatedAt: Int32Array;
+}
 
 /** Ordered pair `from -> to`, key `from*n+to`, created lazily. Owner is derived (`owner[from]`). */
 export interface Channel {
@@ -51,7 +55,7 @@ export interface SimState {
   /** Per module id: indexes of buildings carrying it (static; computed once at create). */
   readonly carriers: Readonly<Record<ModuleId, Int32Array>>;
   tick: number;
-  over: { outcome: Outcome; winner: number | null } | null;
+  over: { outcome: Outcome; winner: number | null; winners?: readonly number[] } | null;
   drawSeq: number;
   troopSeq: number;
   rejected: number;

@@ -27,9 +27,30 @@ export function evaluateOutcome(state: SimState): Outcome | null {
   return null;
 }
 
+/** R-ELM-01 (pvp): ascending seat; no building and no troop in transit means eliminated, final. Troops are scanned only for building-less seats. */
+function eliminationPass(state: SimState): void {
+  const p = state.players, b = state.buildings;
+  const owns = new Uint8Array(p.n);
+  for (let i = 0; i < b.n; i++) { const o = b.owner[i]!; if (o >= 0 && o < p.n) owns[o] = 1; }
+  for (let s = 0; s < p.n; s++) {
+    if (p.eliminatedAt[s]! >= 0 || owns[s] !== 0) continue;
+    // Defensive: R-CPT-01 kills troops sourced at a captured building, so a building-less seat has none in practice.
+    let transit = false;
+    for (const ch of state.channels.values()) {
+      const r = ch.troops;
+      for (let i = 0; i < r.len && !transit; i++) if (r.owner[i] === s) transit = true;
+      if (transit) break;
+    }
+    if (transit) continue;
+    p.eliminatedAt[s] = state.tick;
+    state.events?.push({ type: 'SeatEliminated', player: s });
+  }
+}
+
 /** Phase 9: record the outcome once (final), flip ignored buildings on a win, emit `MatchOver`. */
 export function winPass(state: SimState): void {
   if (state.over) return;
+  if (state.level.objective === 'pvp') eliminationPass(state);
   const over = evaluateOutcome(state);
   if (!over) return;
   if (over.outcome === 'won') {
