@@ -1,7 +1,7 @@
 {
   "format": 1,
   "metadata": {
-    "rulesVersion": "3.0.0",
+    "rulesVersion": "3.1.0",
     "schemaVersion": "2.0.0",
     "contentVersion": "2.3.4"
   },
@@ -5242,7 +5242,7 @@
       "name": "spawn-table",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-spawn-table",
@@ -5427,7 +5427,7 @@
       "name": "growth",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-growth",
@@ -5459,7 +5459,7 @@
       "name": "capture-exact-no-flip",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-capture-exact",
@@ -5506,7 +5506,7 @@
       "name": "capture-flip-overshoot",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-capture-flip",
@@ -5557,7 +5557,7 @@
       "name": "capture-kills-troops",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-capture-kills",
@@ -5635,7 +5635,7 @@
       "name": "exchange-soldier-vs-tank",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-exchange-st",
@@ -5686,7 +5686,7 @@
       "name": "exchange-tank-vs-tank",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-exchange-tt",
@@ -5733,7 +5733,7 @@
       "name": "reverse-replace",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-reverse-replace",
@@ -5788,7 +5788,7 @@
       "name": "no-auto-cut-level-drop",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-no-auto-cut",
@@ -5857,7 +5857,7 @@
       "name": "overflow-forward",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-overflow-forward",
@@ -5947,7 +5947,7 @@
       "name": "alive-cap-skip",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-alive-cap",
@@ -6055,7 +6055,7 @@
       "name": "win-ignored-flip",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-win",
@@ -6105,7 +6105,7 @@
       "name": "loss",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-loss",
@@ -6155,7 +6155,7 @@
       "name": "timeout",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-timeout",
@@ -6200,7 +6200,7 @@
       "name": "rejections",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-rejections",
@@ -6360,7 +6360,7 @@
       "name": "geometry-neutral-troop",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-neutral-troop",
@@ -6410,7 +6410,7 @@
       "name": "geometry-neutral-house",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-neutral-house",
@@ -6450,7 +6450,7 @@
       "name": "geometry-crossing-cut",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-geometry-crossing",
@@ -6535,7 +6535,7 @@
       "name": "geometry-obstacle-building",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "golden-geometry-obstacle",

@@ -1,7 +1,7 @@
 {
-  "botVersion": "2.4.4",
+  "botVersion": "2.4.5",
   "metadata": {
-    "rulesVersion": "3.0.0",
+    "rulesVersion": "3.1.0",
     "schemaVersion": "2.0.0",
     "contentVersion": "2.3.4"
   },
@@ -1366,7 +1366,7 @@
       "name": "pos4-levelview-1-seed-1",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "levelview-1",
@@ -1732,7 +1732,7 @@
       "name": "pos6-levelview-3-ab-seed-2",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "levelview-3-ab",
@@ -2232,7 +2232,7 @@
       "name": "pos11-levelview-8-es-seed-3",
       "replay": {
         "header": {
-          "rulesVersion": "3.0.0",
+          "rulesVersion": "3.1.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.3.4",
           "levelId": "levelview-8-es",
