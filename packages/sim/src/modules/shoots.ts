@@ -1,7 +1,7 @@
 import { compareDistanceSq, compareRadiusSq, distanceSq, laneIntervals, makeLane } from '../geometry.js';
 import type { DistanceSq, Interval, Lane, Point } from '../geometry.js';
 import { checked, idiv } from '../math.js';
-import { killTroop, liveChannels, progressOf, setLevel, troopPosition } from '../state.js';
+import { hostile, killTroop, liveChannels, progressOf, setLevel, troopPosition } from '../state.js';
 import { TICK_MT } from '../timers.js';
 import type { SimModuleFor, SimState } from '../types.js';
 
@@ -84,7 +84,7 @@ export const shoots: SimModuleFor<'shoots'> = {
           const ring = ch.troops;
           for (let row = 0; row < ring.len; row++) {
             const owner = ring.owner[row]!, seq = ring.seq[row]!;
-            if (owner === b.owner[i]!) continue;
+            if (!hostile(state, owner, b.owner[i]!)) continue;
             const progress = Math.min(progressOf(state, ch, row), ch.length);
             if (!intervals.some(([lo, hi]) => progress >= lo && progress <= hi)) continue;
             const distance = distanceSq(cache.lanes[ch.key]!, point, progress);
@@ -99,7 +99,7 @@ export const shoots: SimModuleFor<'shoots'> = {
           state.events?.push({ type: 'TowerShot', tower: i, target: { kind: 'troop', channel: best.channel, seq: best.seq }, ...best.point });
         } else {
           // Opponents' houses first; neutral houses only when no opponent house is in reach (R-TWR-02).
-          const eligible = (j: number) => b.owner[j]! !== b.owner[i]! && b.level[j]! >= 1;
+          const eligible = (j: number) => hostile(state, b.owner[j]!, b.owner[i]!) && b.level[j]! >= 1;
           const target = stage.houses.find(j => eligible(j) && b.owner[j]! >= 0)
             ?? ((p.hitsNeutralHouses ?? true) ? stage.houses.find(j => eligible(j) && b.owner[j]! < 0) : undefined);
           if (target === undefined) continue;
