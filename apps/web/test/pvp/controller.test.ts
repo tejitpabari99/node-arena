@@ -64,13 +64,6 @@ describe('PvpController lobby flow', () => {
     g.ctl.ready(); g.ctl.start();
     expect(g.sent.slice(1)).toEqual([{ t: 'lobby.start' }]);
   });
-  it('start message -> countdown, stores StartMsg', () => {
-    const h = setup(); h.ctl.open(); h.ctl.create(); h.c.push(welcome);
-    h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 0, host: true } });
-    const start: ServerMessage = { t: 'start', matchId: 'm', levelId: 'l', simHash: 'x', seed: 1, seats: [], youPlayer: 0, inputDelay: 3, countdownMs: 3000, timeLimitTicks: 10, hashInterval: 5 };
-    h.c.push(start);
-    expect(h.ctl.snapshot()).toMatchObject({ screen: 'countdown', start });
-  });
   it('error during connecting returns to menu with string; in lobby keeps screen', () => {
     const h = setup(); h.ctl.open(); h.ctl.join('ZZZZ'); h.c.push(welcome);
     h.c.push({ t: 'error', code: 'room-not-found' });
@@ -116,5 +109,71 @@ describe('web versions', () => {
     const meta = parseContentMeta(readFileSync(new URL('../../../../packages/content/content.json', import.meta.url), 'utf8'));
     expect(webVersions()).toEqual({ rules: RULES_VERSION, schema: meta.schemaVersion, content: meta.contentVersion, bot: BOT_VERSION });
     expect(versionsFromMeta(JSON.stringify({ $schema: 'schemas/content.schema.json', schemaVersion: meta.schemaVersion, contentVersion: meta.contentVersion, rulesVersion: meta.rulesVersion }))).toEqual(webVersions());
+  });
+});
+
+describe('PvpController match lifecycle', () => {
+  const level = { simHash: '0123456789abcdef0000' } as never;
+  const startMsg = (over: Partial<Extract<ServerMessage, { t: 'start' }>> = {}): ServerMessage => ({ t: 'start', matchId: 'm', levelId: 'l', simHash: '0123456789abcdef', seed: 7, seats: [{ player: 1, kind: 'human', team: 1, nick: 'b' }, { player: 0, kind: 'human', team: 0, nick: 'a' }], youPlayer: 1, inputDelay: 2, countdownMs: 3000, timeLimitTicks: 100, hashInterval: 10, ...over });
+  function game() {
+    const f = fake();
+    const timers: Array<{ fn: () => void; ms: number; id: number; live: boolean }> = [];
+    const simArgs: unknown[] = [];
+    const view = { tick: 0, over: null as unknown };
+    const sim = { view, step: () => { view.tick++; if (view.tick === 3) view.over = { outcome: 'victory', winners: [0], winner: 0 }; return []; }, hash: () => `h${view.tick}` };
+    const rt = { frame: 0, ticks: 0, disposed: 0, ctx: null as unknown, cancel: () => false, tick() { rt.ticks++; }, frame_: 0 };
+    const runtime = { frame() { rt.frame++; }, tick: () => rt.ticks++, refresh() {}, cancel: () => false, dispose() { rt.disposed++; } };
+    const ctl = createPvpController({
+      identity: createIdentity({ local: null, session: null }), serverUrl: 'ws://x', versions, createSocket: () => { throw new Error('no'); },
+      createConnection: () => f.c, getLevel: () => level, manifest: () => ({}) as never,
+      createSim: (_l, seed, setup) => { simArgs.push(seed, setup); return sim as never; },
+      createRuntime: (ctx) => { rt.ctx = ctx; return runtime; }, raf: () => 0, caf: () => {}, now: () => 0,
+      setTimer: (fn, ms) => { const t = { fn, ms, id: timers.length, live: true }; timers.push(t); return t.id; }, clearTimer: (id) => { timers[id as number]!.live = false; },
+    });
+    ctl.open(); ctl.create(); f.c.push(welcome); f.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
+    const tickMsg = (n: number): ServerMessage => ({ t: 'tick', n });
+    const endMsg = (finalTick: number): ServerMessage => ({ t: 'end', outcome: { outcome: 'victory', winners: [0], winner: 0 }, finalTick, finalHash: 'x' });
+    return { ...f, ctl, timers, simArgs, view, rt, tickMsg, endMsg };
+  }
+  const flush = () => new Promise((r) => setTimeout(r, 0));
+
+  it('start -> countdown -> playing on first tick -> result at finalTick', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    expect(g.ctl.snapshot().screen).toBe('countdown');
+    expect(g.simArgs).toEqual([7, { teams: [0, 1] }]);
+    expect((g.rt.ctx as { seat: number }).seat).toBe(1);
+    g.c.push(g.tickMsg(0)); g.c.push(g.tickMsg(1)); g.ctl.driver!.advance();
+    expect(g.ctl.snapshot().screen).toBe('playing');
+    g.c.push(g.endMsg(3)); expect(g.ctl.snapshot().screen).toBe('playing'); expect(g.ctl.snapshot().end?.finalTick).toBe(3);
+    g.c.push(g.tickMsg(2)); g.ctl.driver!.advance();
+    expect(g.ctl.snapshot().screen).toBe('result');
+    expect(g.timers.every((t) => !t.live)).toBe(true);
+  });
+  it('3 s fallback shows result and logs mismatch', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    g.c.push(g.endMsg(50));
+    expect(g.timers.at(-1)).toMatchObject({ ms: 3000, live: true });
+    const errs: unknown[] = []; const orig = console.error; console.error = (...a) => { errs.push(a); };
+    try { g.timers.at(-1)!.fn(); } finally { console.error = orig; }
+    expect(g.ctl.snapshot().screen).toBe('result'); expect(errs.length).toBe(1);
+  });
+  it('desync emits event and warns', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    const got: unknown[] = []; g.ctl.subscribePvpEvents((e) => got.push(e));
+    const orig = console.warn; let warned = 0; console.warn = () => { warned++; };
+    try { g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }); } finally { console.warn = orig; }
+    expect(got).toEqual([{ t: 'desync', tick: 10, serverHash: 'abc', localTick: 0, localHash: 'h0' }]); expect(warned).toBe(1);
+  });
+  it('seat.status stored; simHash mismatch leaves; room.closed/leave dispose', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    g.c.push({ t: 'seat.status', player: 0, status: 'grace', graceMs: 5000 });
+    expect(g.ctl.snapshot().seatStatus[0]).toEqual({ status: 'grace', graceMs: 5000 });
+    g.c.push({ t: 'room.closed', reason: 'idle' });
+    expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.rt.disposed).toBe(1); expect(g.ctl.driver).toBeNull();
+    const h = game(); h.c.push(startMsg()); await flush(); h.ctl.leave();
+    expect(h.ctl.snapshot().screen).toBe('menu'); expect(h.rt.disposed).toBe(1);
+    const m = game(); m.c.push(startMsg({ simHash: 'ffffffffffffffff' })); await flush();
+    expect(m.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'Game content differs from the server. Reload to update.' });
+    expect(m.sent.at(-1)).toEqual({ t: 'room.leave' }); expect(m.simArgs).toEqual([]);
   });
 });

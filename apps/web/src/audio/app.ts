@@ -1,5 +1,6 @@
 import type { ManifestV2 } from '@node-arena/content';
-import type { AppController } from '../app/state';
+import type { TickUpdate } from '../driver';
+import type { SaveSettings } from '../save';
 import { createAudio, type AudioOptions } from './index';
 export interface BrowserAudioOptions extends AudioOptions {
   fetcher?: typeof fetch;
@@ -17,9 +18,17 @@ export async function loadAudioBuffers(manifest:ManifestV2,signal:AbortSignal,op
   }finally{if(context)await context.close().catch(()=>{});}
   return buffers;
 }
+/** Minimal event source; AppController satisfies it, PvpController needs a settings adapter (snapshot().save.settings). */
+export interface AudioSource {
+  snapshot(): { save: { settings: SaveSettings } };
+  readonly driver: object | null;
+  readonly manifest: ManifestV2 | undefined;
+  subscribe(fn: () => void): () => void;
+  subscribeEvents(fn: (u: TickUpdate) => void): () => void;
+}
 /** Audio follows the driver lifetime. No AssetSession/v1 renderer dependencies. Manifest v2 has no music entry. */
-export function connectAppAudio(app:AppController,options:BrowserAudioOptions={}) {
-  const audio=createAudio(options);let driver:AppController['driver']=null,abort:AbortController|undefined,disposed=false;
+export function connectAppAudio(app:AudioSource,options:BrowserAudioOptions={}) {
+  const audio=createAudio(options);let driver:object|null=null,abort:AbortController|undefined,disposed=false;
   function sync(){
     audio.settings(app.snapshot().save.settings);
     if(driver===app.driver)return;
