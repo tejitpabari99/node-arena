@@ -49,9 +49,9 @@ test('covers R-WIN-05: timeout ranks by troops when buildings tie', () => {
 
 test('covers R-WIN-06: exact timeout tie is a draw with the tied top seats', () => {
   const two = play({ owners: [0, 1], teams: [0, 1], levels: [10, 10], limit: 5 });
-  assert.deepEqual(two.outcome, { outcome: 'draw', winner: 0, winners: [0, 1] });
+  assert.deepEqual(two.outcome, { outcome: 'draw', winner: null, winners: [0, 1] });
   const three = play({ owners: [0, 1, 2], teams: [0, 1, 2], levels: [10, 10, 2], limit: 5 });
-  assert.deepEqual(three.outcome, { outcome: 'draw', winner: 0, winners: [0, 1] });
+  assert.deepEqual(three.outcome, { outcome: 'draw', winner: null, winners: [0, 1] });
 });
 
 test('covers R-SEA-01: teams absent leaves campaign headers and hashes untouched', () => {

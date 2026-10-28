@@ -66,6 +66,7 @@ export function freeSlots(state: SimState, building: number): number {
 function resolveTeams(level: CompiledLevel, setup: SeatSetup | undefined): Int32Array {
   const n = level.players.length;
   if (setup !== undefined) {
+    if (level.objective !== 'pvp') throw new Error(`invalid SeatSetup: applies to objective pvp only, not ${level.objective}`);
     const t = (setup as { teams?: unknown }).teams;
     if (!Array.isArray(t) || t.length !== n) throw new Error(`invalid SeatSetup: teams length ${Array.isArray(t) ? t.length : String(t)} != players ${n}`);
     for (let i = 0; i < n; i++) {

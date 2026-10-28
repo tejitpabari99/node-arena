@@ -21,20 +21,21 @@ test('covers R-TEM-01: no setup means identity teams; hostility equals !== for e
 });
 
 test('covers R-TEM-01: level default teams applied; setup overrides; allies not hostile; neutral always hostile', () => {
-  const s = api.createState(level3([0, 1, 1]), 1);
+  const pv = (t) => { const l = level3(t); l.objective = 'pvp'; return l; };
+  const s = api.createState(pv([0, 1, 1]), 1);
   assert.deepEqual(Array.from(s.team), [0, 1, 1]);
   assert.equal(api.hostile(s, 1, 2), false);
   assert.equal(api.hostile(s, 0, 1), true);
   assert.equal(api.hostile(s, 1, -1), true);
   assert.equal(api.hostile(s, -1, -1), false);
-  const o = api.createState(level3([0, 1, 1]), 1, { teams: [0, 0, 2] });
+  const o = api.createState(pv([0, 1, 1]), 1, { teams: [0, 0, 2] });
   assert.deepEqual(Array.from(o.team), [0, 0, 2]);
   assert.equal(api.hostile(o, 0, 1), false);
   assert.equal(api.hostile(o.team, 1, 2), true);
 });
 
 test('covers R-SEA-01: SeatSetup validation rejects bad length, out-of-range, non-integer and single team', () => {
-  const l = level3();
+  const l = level3(); l.objective = 'pvp';
   for (const teams of [[0, 1], [0, 1, 1, 0], [0, 1, 3], [0, 1, -1], [0, 1, 0.5], [0, 0, 0], [0, 1, '1'], [0, 1, NaN]]) {
     assert.throws(() => api.create(l, 1, { teams }), /SeatSetup/, JSON.stringify(teams));
   }
@@ -42,9 +43,20 @@ test('covers R-SEA-01: SeatSetup validation rejects bad length, out-of-range, no
   assert.doesNotThrow(() => api.create(l, 1, { teams: [0, 1, 2] }));
 });
 
-test('covers R-SEA-01: setup does not change campaign hash; replay header carries teams only when given and playback honors them', () => {
-  const l = compiledGolden();
-  assert.equal(api.create(l, 3).hash(), api.create(l, 3, { teams: [0, 1] }).hash());
+test('covers R-SEA-01: SeatSetup on a captureAll level throws; crafted campaign replay with header teams is rejected', () => {
+  const c = compiledGolden();
+  assert.notEqual(c.objective, 'pvp');
+  assert.throws(() => api.create(c, 3, { teams: [0, 1] }), /SeatSetup/);
+  assert.throws(() => api.createReplayRecorder(c, 3, metadata, { teams: [0, 1] }));
+  const rec = api.createReplayRecorder(c, 3, metadata);
+  rec.step([]);
+  const r = rec.record();
+  r.header.teams = [0, 1];
+  assert.throws(() => api.playReplay({ metadata, level: c }, r), /Invalid/i);
+});
+
+test('covers R-SEA-01: replay header carries teams only when given and playback honors them', () => {
+  const l = compiledGolden(); l.objective = 'pvp';
   const plain = api.createReplayRecorder(l, 3, metadata);
   assert.equal('teams' in plain.record().header, false);
   const rec = api.createReplayRecorder(l, 3, metadata, { teams: [0, 1] });
@@ -171,22 +183,15 @@ test('covers R-WIN-06: exact tie at limit is draw with both teams as winners', (
   const s = pvpN([0, 1], [0, 1]);
   s.buildings.level[0] = 2; s.buildings.level[1] = 2; s.tick = limitTick(s);
   const ev = win(s);
-  assert.deepEqual(s.over, { outcome: 'draw', winner: 0, winners: [0, 1] });
+  assert.deepEqual(s.over, { outcome: 'draw', winner: null, winners: [0, 1] });
   assert.equal(ev.find((e) => e.type === 'MatchOver').outcome, 'draw');
 });
 
 test('covers R-WIN-06: 3 teams, top two tie, third excluded', () => {
-  const s = pvpN([0, 1, 2, 2], [0, 1, 2]);
-  s.buildings.level[0] = 2; s.buildings.level[1] = 2; s.buildings.level[2] = 0; s.buildings.level[3] = 0;
-  s.buildings.owner[3] = 2;
-  s.buildings.owner[0] = 0; s.buildings.owner[1] = 1;
-  s.tick = limitTick(s); win(s);
-  // team 2 owns 2 buildings -> best; make it fewer: reassign
-  assert.equal(s.over.outcome, 'timeLimit');
   const t = pvpN([0, 1, 2], [0, 1, 2]);
   for (let i = 0; i < 3; i++) t.buildings.level[i] = 3;
   t.buildings.level[2] = 1; t.tick = limitTick(t); win(t);
-  assert.deepEqual(t.over, { outcome: 'draw', winner: 0, winners: [0, 1] });
+  assert.deepEqual(t.over, { outcome: 'draw', winner: null, winners: [0, 1] });
 });
 
 test('covers R-WIN-06: zero teams alive is draw with empty winners and null winner', () => {

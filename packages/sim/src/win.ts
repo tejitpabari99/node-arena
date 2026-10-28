@@ -58,7 +58,7 @@ function pvpOutcome(state: SimState): Outcome | null {
     const winners: number[] = [];
     for (const t of teams) winners.push(...seatsOf.get(t)!);
     winners.sort((x, y) => x - y);
-    return { outcome, winner: winners.length > 0 ? winners[0]! : null, winners };
+    return { outcome, winner: outcome !== 'draw' && winners.length > 0 ? winners[0]! : null, winners };
   };
   if (alive.length === 1) return result('victory', alive);
   if (alive.length === 0) return result('draw', []);

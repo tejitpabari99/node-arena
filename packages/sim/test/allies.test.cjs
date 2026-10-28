@@ -5,7 +5,7 @@ const api = require('../src/internal.ts');
 const { shoots } = require('../src/modules/shoots.ts');
 const { compiledGolden } = require('./fixtures.cjs');
 
-const withP3 = (l) => { l.players.push({ id: 'p3', kind: 'ai', colorKey: 'green' }); return l; };
+const withP3 = (l) => { l.players.push({ id: 'p3', kind: 'ai', colorKey: 'green' }); l.objective = 'pvp'; return l; };
 const put = (s, from, to, progress, kind = 0) => {
   const seq = api.spawnTroop(s, from, to, kind);
   const r = api.getChannel(s, from, to).troops;

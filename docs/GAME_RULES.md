@@ -510,7 +510,7 @@ A `pvp` match has 2 to 4 seats; every seat is occupied for the whole match and t
 
 ### R-TEM-01
 
-Teams are static for a match. `SeatSetup.teams[i]` (integers `0..n-1`, at least two distinct) names seat `i`'s team; a level may carry default teams, and an absent setup means identity (each seat is its own team). Two seats are allies when their team ids are equal and hostile otherwise (R-ENT-04). The neutral owner is never an ally. Teams do not change during a match, and ally buildings are never shared or jointly controlled: each building has exactly one owner.
+Teams are static for a match. `SeatSetup.teams[i]` (integers `0..n-1`, at least two distinct) names seat `i`'s team; a level may carry default teams, and an absent setup means identity (each seat is its own team). Two seats are allies when their team ids are equal and hostile otherwise (R-ENT-04). `SeatSetup` applies to objective `pvp` only: `create` rejects a setup for any other objective and replay playback rejects a header `teams` on a non-pvp level. The neutral owner is never an ally. Teams do not change during a match, and ally buildings are never shared or jointly controlled: each building has exactly one owner.
 
 *Source:* Node Arena (PvP design, SP01).
 
@@ -618,7 +618,7 @@ In objective `pvp`, at phase 9 after elimination (R-ELM-01), when exactly one te
 
 ### R-WIN-05
 
-In objective `pvp`, when `tick >= timeLimitSec × tickRate` and no `victory` has occurred (R-WIN-04), the match ends. Teams are ranked by non-neutral buildings owned (descending), then by total troops owned (descending), which is the sum of garrison levels of owned buildings plus troops in transit. A unique best team ends the match as `timeLimit` with that team's seats as winners. If the top teams tie on both keys the outcome is a `draw` (R-WIN-06). `timeLimitSec` comes from the level (pvp default 480) and cannot be overridden by `SeatSetup`.
+In objective `pvp`, when `tick >= timeLimitSec × tickRate` and no `victory` has occurred (R-WIN-04), the match ends. Teams are ranked by non-neutral buildings owned (descending), then by total troops owned (descending), which is the sum of garrison levels of owned buildings plus troops in transit. A unique best team ends the match as `timeLimit` with that team's seats as winners (`winner` is the lowest winning seat). If the top teams tie on both keys the outcome is a `draw` (R-WIN-06). `timeLimitSec` comes from the level (pvp default 480) and cannot be overridden by `SeatSetup`.
 
 *Source:* Node Arena (PvP design, SP01).
 
@@ -630,7 +630,7 @@ In objective `pvp`, when `tick >= timeLimitSec × tickRate` and no `victory` has
 
 ### R-WIN-06
 
-In objective `pvp` the outcome `draw` occurs when (a) at the time limit two or more teams tie for best under R-WIN-05, including when 3 or more teams exist and only the top teams tie, with winners = the seats of all tied top teams (a shared first place); or (b) no team has a non-eliminated seat, with winners `[]`. `winner` is the lowest winning seat index, or null when there are no winners.
+In objective `pvp` the outcome `draw` occurs when (a) at the time limit two or more teams tie for best under R-WIN-05, including when 3 or more teams exist and only the top teams tie, with winners = the seats of all tied top teams (a shared first place); or (b) no team has a non-eliminated seat, with winners `[]`. `winner` is always null on a draw; `winners` lists the tied seats (empty in case b).
 
 *Source:* Node Arena (PvP design, SP01).
 
@@ -707,7 +707,7 @@ Human players, scripted AI and bots submit the same commands, pass the same vali
 
 The state hash covers, in index order: per building owner, level, growth timer, `ignoreForWin` and tower cooldown (initialised to `delayMt(L0)` at match start, R-TWR-01); per line owner, endpoints, draw sequence and spawn timer; per troop owner, source building, type, line, progress, hit points and `seq`; and the state of every sim random stream. Presentation-only state (bullet flight, art stage) is not hashed.
 
-For objective `pvp` only, the hash appends after the words above: the per-seat `team` words, the per-seat `eliminatedAt` words, and, in the over block, the winners count followed by the winner seat ids. Objective `captureAll` emits no extra words, so campaign state hashes and replays are unchanged. The domain stays `sim-state-v2`.
+For objective `pvp` only, the hash appends after the words above: the per-seat `team` words, the per-seat `eliminatedAt` words, and, appended at the end of the tail, the winners count followed by the winner seat ids (zero when the match is not over). Objective `captureAll` emits no extra words, so campaign state hashes and replays are unchanged. The domain stays `sim-state-v2`.
 
 ## 5. Worked examples and edge cases
 

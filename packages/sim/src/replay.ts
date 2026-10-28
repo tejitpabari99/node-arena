@@ -82,6 +82,7 @@ function validate(rec: unknown): asserts rec is ReplayRecord {
 export function createReplayRecorder(level: CompiledLevel, seed: number, metadata: ReplayMetadata, setup?: SeatSetup): ReplayRecorder {
   const header: ReplayHeader = { rulesVersion: metadata?.rulesVersion, schemaVersion: metadata?.schemaVersion, contentVersion: metadata?.contentVersion, levelId: level.id, simHash: level.simHash, seed, ...(setup !== undefined ? { teams: [...setup.teams] } : {}) };
   if (!headerValid(header)) invalid();
+  if (setup !== undefined && level.objective !== 'pvp') invalid();
   const sim = create(level, seed, setup);
   const commands: ReplayRecord['commands'] = [], checkpoints: ReplayRecord['checkpoints'] = [];
   return {
@@ -118,6 +119,7 @@ export function playReplay(content: ReplaySource, rec: ReplayRecord): ReplayResu
   const level = content.level ?? content.resolveLevel(rec.header.levelId);
   if (level.id !== rec.header.levelId || level.simHash !== rec.header.simHash) invalid();
   if (level.objective !== 'pvp' && (rec.outcome !== null && !['won', 'lost', 'timeout'].includes(rec.outcome.outcome) || rec.outcome?.winners !== undefined)) invalid();
+  if (rec.header.teams !== undefined && level.objective !== 'pvp') invalid();
   const sim = create(level, rec.header.seed, rec.header.teams !== undefined ? { teams: rec.header.teams } : undefined);
   if (sim.view.timeLimitTicks > 0 && rec.finalTick > sim.view.timeLimitTicks) invalid();
   let commandIndex = 0, checkpointIndex = 0;

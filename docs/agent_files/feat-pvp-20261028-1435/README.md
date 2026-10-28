@@ -82,7 +82,7 @@ graph LR
 |---|---|---|---|
 | `RULES_VERSION` | 3.0.0 -> 3.1.0 (minor) | 01 | Only SP01 touches it. Goldens/replays/`levels-lock`/`content.json` change `rulesVersion` metadata only. |
 | `contentVersion` | 2.3.4 -> 2.4.0 (minor) | 03 | SP01 also edits content schemas/compile and `content.json` rulesVersion; if `check:content` demands a content bump for SP01, do it in SP01 and have SP03 bump relative to the result (conflict: same constant, two SPs). Sequence 01 then 03; regenerate `content:lock` and `levels:lock` after 03 on top of 01. |
-| `BOT_VERSION` | 2.4.4 -> 2.5.0 (minor) | 04 | CONFLICT risk: SP01 may patch-bump to 2.4.5 (ally filter) and SP03 may need a bump if `check:content` demands. Sequence 01 -> 03 -> 04 so SP04 lands 2.5.0 last; any earlier patch is subsumed. Regenerate bot goldens only if identity map changes. |
+| `BOT_VERSION` | 2.4.5 -> 2.5.0 (minor) | 04 | SP01 already landed 2.4.5 (ally filter). Possible conflict:  SP03 may need a bump if `check:content` demands. Sequence 01 -> 03 -> 04 so SP04 lands 2.5.0 last; any earlier patch is subsumed. Regenerate bot goldens only if identity map changes. |
 | `PROTOCOL_VERSION` | new, int | 02 | Bumped on any wire break after first ship. |
 | `SCHEMA_VERSION` | stays 2.0.0 | 01 | Additive optional fields; bumping breaks replay headers. |
 Recommended merge order: 01 -> (02 || 03) -> 04 -> 05 -> 06; each locks/regenerates after rebasing on the previous.
