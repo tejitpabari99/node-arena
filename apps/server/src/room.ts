@@ -68,6 +68,7 @@ export interface RoomManager extends HubHandler {
   room(code: string): Room | undefined;
   roomOf(conn: Conn): Room | undefined;
   roomCount(): number;
+  runningCount(): number;
 }
 
 export function createRoomManager(deps: RoomManagerDeps): RoomManager {
@@ -243,6 +244,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     room: (code) => rooms.get(code),
     roomOf: (conn) => byPlayer.get(conn.playerId ?? ''),
     roomCount: () => rooms.size,
+    runningCount: () => { let n = 0; for (const r of rooms.values()) if (r.state === 'running') n++; return n; },
     onClientMessage(conn, msg) {
       switch (msg.t) {
         case 'room.create': return create_(conn);
