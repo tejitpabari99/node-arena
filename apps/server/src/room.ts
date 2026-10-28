@@ -60,6 +60,8 @@ export interface RoomManagerDeps {
   randomInt?: (min: number, max: number) => number;
   /** Seam for Task 6: called once per room when lobby -> countdown. */
   onStart?: (room: Room, match: MatchStart) => void;
+  /** Task 6: routes `cmd`/`hash` from a seated player to the match; returns true if handled. */
+  onMatchMessage?: (room: Room, conn: Conn, seat: number, msg: ClientMessage) => boolean;
 }
 
 export interface RoomManager extends HubHandler {
@@ -253,7 +255,14 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
           if (msg.t === 'lobby.ready') return ready(conn, room, msg.ready);
           return start(conn, room);
         }
-        default: return conn.sendError('internal', 'not supported yet'); // cmd/hash/ping/rematch/resync: Task 6+
+        case 'cmd': case 'hash': {
+          const room = byPlayer.get(conn.playerId!);
+          const i = room === undefined ? -1 : seatOf(room, conn);
+          if (room === undefined || i < 0) return conn.sendError('not-your-seat');
+          if (deps.onMatchMessage?.(room, conn, i, msg)) return;
+          return conn.sendError('internal', 'not supported yet');
+        }
+        default: return conn.sendError('internal', 'not supported yet'); // ping/rematch/resync: later tasks
       }
     },
     onDisconnect(conn, reason) {
