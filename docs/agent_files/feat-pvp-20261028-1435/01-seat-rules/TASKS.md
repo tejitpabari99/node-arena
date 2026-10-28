@@ -78,5 +78,5 @@ Done when: tests green; hashes unchanged versus task 8.
 
 ## Task 12 — [M2] bots: ally filter in tw-ai
 What it is / what it means: Bots must not target teammates (R10); reinforcing allies stays out of scope.
-What changes at a high level: `tw-ai.ts` candidate target list excludes same-team buildings using `view.players[].team`. Campaign behaviour identical (identity teams). Test: bot in a 2v2 never draws lines to ally buildings. Patch-bump `BOT_VERSION` 2.4.4 to 2.4.5 and regenerate bot goldens only if the identity map changes; SP04 owns the final bump.
+What changes at a high level: `tw-ai.ts` candidate target list excludes same-team buildings using `view.players[].team`. Campaign behaviour identical (identity teams). Test: bot in a 2v2 never draws lines to ally buildings. `BOT_VERSION` already 2.4.5 (SP01 Task 10); regenerate bot goldens only if the identity map changes; SP04 owns the final bump.
 Done when: `bots:golden` outcomes unchanged; tests green.
