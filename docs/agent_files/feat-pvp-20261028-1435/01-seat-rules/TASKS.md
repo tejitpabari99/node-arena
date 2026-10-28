@@ -8,16 +8,16 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/01-seat-rules/PRD.md. R
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | [M1] Rules doc + RULES_VERSION 3.1.0 | none | todo |
-| 2 | [M1] defs: pvp objective + events | 1 | todo |
-| 3 | [M1] content: pvp level validation, team field, 480 s default | 2 | todo |
-| 4 | [M1] sim: SeatSetup, teams state, hostility helper, view/replay header | 2 | todo |
-| 5 | [M1] sim: ally non-aggression | 4 | todo |
-| 6 | [M1] sim: ally reinforcement + ally lines | 4 | todo |
-| 7 | [M1] sim: elimination + pvp hash tail | 4 | todo |
-| 8 | [M1] sim: pvp outcome (victory, timeout rank, draw) | 7 | todo |
-| 9 | [M1] bots harness teams + scripted match suite | 3, 5, 6, 8 | todo |
-| 10 | [M1] Refresh goldens/locks + gate sweep | 9 | todo |
+| 1 | [M1] Rules doc + RULES_VERSION 3.1.0 | none | done |
+| 2 | [M1] defs: pvp objective + events | 1 | done |
+| 3 | [M1] content: pvp level validation, team field, 480 s default | 2 | done |
+| 4 | [M1] sim: SeatSetup, teams state, hostility helper, view/replay header | 2 | done |
+| 5 | [M1] sim: ally non-aggression | 4 | done |
+| 6 | [M1] sim: ally reinforcement + ally lines | 4 | done |
+| 7 | [M1] sim: elimination + pvp hash tail | 4 | done |
+| 8 | [M1] sim: pvp outcome (victory, timeout rank, draw) | 7 | done |
+| 9 | [M1] bots harness teams + scripted match suite | 3, 5, 6, 8 | done |
+| 10 | [M1] Refresh goldens/locks + gate sweep | 9 | done |
 | 11 | [M2] sim: placement ranking | 8, 9 | todo |
 | 12 | [M2] bots: ally filter in tw-ai | 4, 9 | todo |
 
