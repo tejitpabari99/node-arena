@@ -115,3 +115,91 @@ test('covers R-ELM-01: pvp hash tail reacts to eliminatedAt and winners; capture
   assert.equal(api.hashState(c), hc2);
   assert.notEqual(hc, hc2); // over block itself differs; tail words absent
 });
+
+// --- pvp outcome (R-WIN-04..06) ---
+const pvpN = (owners, teams, limit = 10) => {
+  const l = structuredClone(compiledGolden());
+  while (l.players.length < teams.length) l.players.push({ id: `p${l.players.length + 1}`, kind: 'ai', colorKey: 'green' });
+  l.players.forEach((p, i) => { p.team = teams[i]; });
+  l.objective = 'pvp';
+  l.timeLimitSec = limit;
+  owners.forEach((o, i) => { l.buildings[i].owner = o; });
+  return api.createState(l, 1);
+};
+const win = (s) => { s.events = []; api.winPass(s); const e = s.events; s.events = null; return e; };
+const limitTick = (s) => s.level.timeLimitSec * 20;
+
+test('covers R-WIN-04: 1v1 last team standing is victory; event + view carry winners', () => {
+  const s = pvpN([0, 0, 1], [0, 1]);
+  assert.equal(s.over, null);
+  s.buildings.owner[2] = 0;
+  const ev = win(s);
+  assert.deepEqual(s.over, { outcome: 'victory', winner: 0, winners: [0] });
+  assert.deepEqual(ev.find((e) => e.type === 'MatchOver'), { type: 'MatchOver', outcome: 'victory', winner: 0, winners: [0] });
+});
+
+test('covers R-WIN-04: 2v2 eliminated teammate still a winner; victory beats time limit on final tick', () => {
+  const s = pvpN([0, 1, 2, 3], [0, 0, 1, 1]);
+  s.tick = 5; s.buildings.owner[3] = 1; s.buildings.owner[2] = 1; // team 1 gone; seat 0,1 keep one each
+  const ev = win(s);
+  assert.deepEqual(s.players.eliminatedAt.slice(0), Int32Array.from([-1, -1, 5, 5]));
+  assert.deepEqual(s.over, { outcome: 'victory', winner: 0, winners: [0, 1] });
+  assert.equal(ev.find((e) => e.type === 'MatchOver').winners.length, 2);
+  const t = pvpN([0, 0, 1], [0, 1]); t.tick = limitTick(t); t.buildings.owner[2] = 0;
+  win(t); assert.equal(t.over.outcome, 'victory');
+});
+
+test('covers R-WIN-05: timeout unique leader by buildings; no outcome before the limit', () => {
+  const s = pvpN([0, 0, 1], [0, 1]);
+  s.tick = limitTick(s) - 1; win(s); assert.equal(s.over, null);
+  s.tick = limitTick(s); win(s);
+  assert.deepEqual(s.over, { outcome: 'timeLimit', winner: 0, winners: [0] });
+});
+
+test('covers R-WIN-05: building tie broken by garrison (levels) plus troops in transit', () => {
+  const s = pvpN([0, 1], [0, 1]);
+  s.buildings.level[0] = 2; s.buildings.level[1] = 2;
+  s.tick = limitTick(s);
+  api.getChannel(s, 1, 0).troops.push(0, 0, 1, 0, 1, 1); // seat 1 troop in transit
+  win(s);
+  assert.deepEqual(s.over, { outcome: 'timeLimit', winner: 1, winners: [1] });
+  const g = pvpN([0, 1], [0, 1]); g.buildings.level[0] = 3; g.buildings.level[1] = 1; g.tick = limitTick(g);
+  win(g); assert.deepEqual(g.over, { outcome: 'timeLimit', winner: 0, winners: [0] });
+});
+
+test('covers R-WIN-06: exact tie at limit is draw with both teams as winners', () => {
+  const s = pvpN([0, 1], [0, 1]);
+  s.buildings.level[0] = 2; s.buildings.level[1] = 2; s.tick = limitTick(s);
+  const ev = win(s);
+  assert.deepEqual(s.over, { outcome: 'draw', winner: 0, winners: [0, 1] });
+  assert.equal(ev.find((e) => e.type === 'MatchOver').outcome, 'draw');
+});
+
+test('covers R-WIN-06: 3 teams, top two tie, third excluded', () => {
+  const s = pvpN([0, 1, 2, 2], [0, 1, 2]);
+  s.buildings.level[0] = 2; s.buildings.level[1] = 2; s.buildings.level[2] = 0; s.buildings.level[3] = 0;
+  s.buildings.owner[3] = 2;
+  s.buildings.owner[0] = 0; s.buildings.owner[1] = 1;
+  s.tick = limitTick(s); win(s);
+  // team 2 owns 2 buildings -> best; make it fewer: reassign
+  assert.equal(s.over.outcome, 'timeLimit');
+  const t = pvpN([0, 1, 2], [0, 1, 2]);
+  for (let i = 0; i < 3; i++) t.buildings.level[i] = 3;
+  t.buildings.level[2] = 1; t.tick = limitTick(t); win(t);
+  assert.deepEqual(t.over, { outcome: 'draw', winner: 0, winners: [0, 1] });
+});
+
+test('covers R-WIN-06: zero teams alive is draw with empty winners and null winner', () => {
+  const s = pvpN([0, 1], [0, 1]);
+  s.tick = 3; s.buildings.owner[0] = -1; s.buildings.owner[1] = -1;
+  win(s);
+  assert.deepEqual(s.over, { outcome: 'draw', winner: null, winners: [] });
+});
+
+test('covers R-WIN-01: captureAll outcomes unchanged and carry no winners', () => {
+  const s = api.createState(level3(), 1);
+  s.buildings.owner.fill(0);
+  const ev = win(s);
+  assert.deepEqual(s.over, { outcome: 'won', winner: 0 });
+  assert.deepEqual(ev.find((e) => e.type === 'MatchOver'), { type: 'MatchOver', outcome: 'won', winner: 0 });
+});

@@ -7,7 +7,7 @@ export type CompiledLevel = ContentCompiledLevel;
 export type LineCutReason = 'player' | 'replaced' | 'captured';
 /** Per-match seat setup: `teams[i]` = team id of seat i (R-TEM-01). */
 export interface SeatSetup { readonly teams: readonly number[] }
-export type Outcome = 'won' | 'lost' | 'timeout';
+export type Outcome = 'won' | 'lost' | 'timeout' | 'victory' | 'timeLimit' | 'draw';
 
 /** Building columns (int32, one slot per building). `col` holds `<module>.<field>` columns. */
 export interface Buildings {
@@ -55,7 +55,7 @@ export interface SimState {
   /** Per module id: indexes of buildings carrying it (static; computed once at create). */
   readonly carriers: Readonly<Record<ModuleId, Int32Array>>;
   tick: number;
-  over: { outcome: Outcome; winner: number | null; winners?: readonly number[] } | null;
+  over: { outcome: Outcome; winner: number | null; winners?: number[] } | null;
   drawSeq: number;
   troopSeq: number;
   rejected: number;
