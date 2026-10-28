@@ -5,7 +5,7 @@ import { createCrossings, refreshCrossings } from './crossings.js';
 import { TroopRing } from './ring.js';
 import { createStreams } from './streams.js';
 import { IMPLS, MODULE_ORDER } from './modules/index.js';
-import type { Buildings, Channel, CompiledLevel, SimState } from './types.js';
+import type { Buildings, Channel, CompiledLevel, SeatSetup, SimState } from './types.js';
 
 const MAX_ALIVE_CAP = 1000;
 
@@ -62,8 +62,34 @@ export function freeSlots(state: SimState, building: number): number {
   return (state.level.buildings[building]!.modules['drawsLines'] !== undefined ? b.stage[building]! : 0) - b.lines[building]!;
 }
 
-export function createState(level: CompiledLevel, seed: number): SimState {
+/** Resolve team ids: validated setup, else level default (all players authored), else identity (R-TEM-01). */
+function resolveTeams(level: CompiledLevel, setup: SeatSetup | undefined): Int32Array {
+  const n = level.players.length;
+  if (setup !== undefined) {
+    const t = (setup as { teams?: unknown }).teams;
+    if (!Array.isArray(t) || t.length !== n) throw new Error(`invalid SeatSetup: teams length ${Array.isArray(t) ? t.length : String(t)} != players ${n}`);
+    for (let i = 0; i < n; i++) {
+      const v: unknown = t[i];
+      if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v >= n) throw new Error(`invalid SeatSetup: teams[${i}] ${String(v)} not an integer in [0, ${n - 1}]`);
+    }
+    if (new Set(t).size < 2) throw new Error('invalid SeatSetup: needs at least 2 distinct teams');
+    return Int32Array.from(t as number[]);
+  }
+  if (n > 0 && level.players.every((p) => p.team !== undefined)) return Int32Array.from(level.players, (p) => p.team!);
+  return Int32Array.from({ length: n }, (_, i) => i);
+}
+
+/** Hostility (R-ENT-04): different owners on different teams; neutral (< 0) is hostile to every other owner. Identity teams equal `a !== b`. */
+export function hostile(state: SimState | Int32Array, a: number, b: number): boolean {
+  if (a === b) return false;
+  if (a < 0 || b < 0) return true;
+  const team = state instanceof Int32Array ? state : state.team;
+  return team[a] !== team[b];
+}
+
+export function createState(level: CompiledLevel, seed: number, setup?: SeatSetup): SimState {
   const unitOf = validateLevel(level);
+  const team = resolveTeams(level, setup);
   const n = level.buildings.length;
   const col: Record<string, Int32Array> = {};
   for (const id of MODULE_ORDER) {
@@ -89,7 +115,7 @@ export function createState(level: CompiledLevel, seed: number): SimState {
   const carrierMap = {} as Record<ModuleId, Int32Array>;
   for (const id of MODULE_ORDER) carrierMap[id] = carriers(level, id);
   const state: SimState = {
-    level, seed, unitOf, carriers: carrierMap, tick: 0, over: null, drawSeq: 0, troopSeq: 0, rejected: 0, buildings, players,
+    level, seed, unitOf, carriers: carrierMap, tick: 0, over: null, drawSeq: 0, troopSeq: 0, rejected: 0, buildings, players, team,
     channels: new Map(), fwd, counters: { spawned: 0, arrived: 0, died: 0, killed: 0 }, events: null,
   };
   for (const id of MODULE_ORDER) IMPLS[id].init?.(state, carrierMap[id]);

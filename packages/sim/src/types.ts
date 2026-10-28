@@ -5,6 +5,8 @@ import type { ModuleId, Phase, RejectReason, SimEvent } from '@node-arena/defs';
 
 export type CompiledLevel = ContentCompiledLevel;
 export type LineCutReason = 'player' | 'replaced' | 'captured';
+/** Per-match seat setup: `teams[i]` = team id of seat i (R-TEM-01). */
+export interface SeatSetup { readonly teams: readonly number[] }
 export type Outcome = 'won' | 'lost' | 'timeout';
 
 /** Building columns (int32, one slot per building). `col` holds `<module>.<field>` columns. */
@@ -55,6 +57,8 @@ export interface SimState {
   rejected: number;
   readonly buildings: Buildings;
   readonly players: Players;
+  /** Static team id per seat (R-TEM-01); not hashed or mutated. */
+  readonly team: Int32Array;
   /** Lazy channels by key; hashed in ascending key order, only while live (drawn or holding troops). */
   readonly channels: Map<number, Channel>;
   /** Eager per-building surplus-forward streams (`fwd`, idx = building). */

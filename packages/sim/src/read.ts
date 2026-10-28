@@ -11,7 +11,9 @@ export interface SimView {
   readonly timeLimitTicks: number;
   readonly bounds: CompiledLevel['bounds'];
   readonly ids: { readonly buildings: readonly string[]; readonly players: readonly string[]; readonly elements: readonly string[] };
-  readonly players: readonly { readonly kind: 'human' | 'ai'; readonly colorKey: string }[];
+  readonly players: readonly { readonly kind: 'human' | 'ai'; readonly colorKey: string; readonly team: number }[];
+  /** Per seat elimination tick; -1 = alive. Filled by seat elimination (later task). */
+  readonly eliminatedAt: ReadColumn;
   readonly buildings: {
     readonly owner: ReadColumn; readonly level: ReadColumn; readonly maxLevel: ReadColumn; readonly stage: ReadColumn;
     readonly lines: ReadColumn; readonly alive: ReadColumn; readonly ignoreForWin: ReadColumn; readonly col: Readonly<Record<string, ReadColumn>>;
@@ -35,7 +37,8 @@ export function createView(state: SimState): SimView {
     timeLimitTicks: level.timeLimitSec === null ? 0 : level.timeLimitSec * TICK_RATE,
     bounds: level.bounds,
     ids: { buildings: level.buildings.map((x) => x.id), players: level.players.map((x) => x.id), elements: level.elements.map((x) => x.id) },
-    players: level.players.map((p) => ({ kind: p.kind, colorKey: p.colorKey })),
+    players: level.players.map((p, i) => ({ kind: p.kind, colorKey: p.colorKey, team: state.team[i]! })),
+    eliminatedAt: new Int32Array(level.players.length).fill(-1),
     buildings: b,
     buildingStatic: level.buildings.map((x) => ({
       x: x.x, z: x.z, kind: x.kind, archetype: x.archetype, visual: x.visual, footprint: x.footprint,

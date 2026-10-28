@@ -6,7 +6,7 @@ import { explainDraw } from './modules/blocksLines.js';
 import { towerRadiusMilli } from './modules/shoots.js';
 import { createState } from './state.js';
 import { step } from './tick.js';
-import type { CompiledLevel, DrawExplanation } from './types.js';
+import type { CompiledLevel, DrawExplanation, SeatSetup } from './types.js';
 
 export interface Sim {
   readonly view: SimView;
@@ -26,8 +26,8 @@ export interface Sim {
 }
 
 /** Engine on CompiledLevel (skeleton: phases fill in with SP03/SP04). */
-export function create(level: CompiledLevel, seed: number): Sim {
-  const state = createState(level, seed);
+export function create(level: CompiledLevel, seed: number, setup?: SeatSetup): Sim {
+  const state = createState(level, seed, setup);
   const view = createView(state);
   refreshView(view, state);
   return {

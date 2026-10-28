@@ -12,6 +12,8 @@ export interface ReplayHeader {
   levelId: string;
   simHash: string;
   seed: number;
+  /** pvp only: per-seat team ids (SeatSetup). Absent for campaign and identity teams. */
+  teams?: number[];
 }
 /** `levels`: level id -> simHash; `bots`: `<levelId>#<playerId>` -> botHash. */
 export interface HashesLock { levels: Record<string, string>; bots: Record<string, string> }

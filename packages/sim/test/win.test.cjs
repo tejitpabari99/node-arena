@@ -100,7 +100,7 @@ test('R7 view: every field present and typed; columns borrowed (live), static da
   for (const k of ['tick', 'over', 'timeLimitSec' in l ? 'timeLimitTicks' : 'timeLimitTicks', 'bounds', 'ids', 'players', 'buildings', 'buildingStatic', 'elements', 'lines', 'units', 'freeSlots']) assert.ok(k in v, k);
   assert.deepEqual(v.ids.players, l.players.map((p) => p.id));
   assert.deepEqual(v.ids.elements, l.elements.map((e) => e.id));
-  assert.deepEqual(v.players, l.players.map((p) => ({ kind: p.kind, colorKey: p.colorKey })));
+  assert.deepEqual(v.players, l.players.map((p, i) => ({ kind: p.kind, colorKey: p.colorKey, team: i })));
   for (const k of ['owner', 'level', 'maxLevel', 'stage', 'lines', 'alive', 'ignoreForWin']) assert.equal(v.buildings[k].length, N(), k);
   assert.ok(Object.keys(v.buildings.col).length > 0);
   const st = v.buildingStatic[0];
