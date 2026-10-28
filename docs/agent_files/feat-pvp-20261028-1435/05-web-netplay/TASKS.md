@@ -8,11 +8,11 @@ Source of truth: [PRD.md](PRD.md). Client for online PvP: separate NetDriver and
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | [M1] MatchDriver seam + seat-aware input + net dep | SP02#1 | todo |
-| 2 | [M1] Identity, room links, server URL | none | todo |
-| 3 | [M1] PvpConnection | SP02#2, SP02#3, SP02#4 | todo |
-| 4 | [M1] NetDriver (live stepping) | 1, SP02#7, SP01#4 | todo |
-| 5 | [M1] PvpController: connection, lobby, start | 2, 3, SP04#5 | todo |
+| 1 | [M1] MatchDriver seam + seat-aware input + net dep | SP02#1 | done |
+| 2 | [M1] Identity, room links, server URL | none | done |
+| 3 | [M1] PvpConnection | SP02#2, SP02#3, SP02#4 | done |
+| 4 | [M1] NetDriver (live stepping) | 1, SP02#7, SP01#4 | done |
+| 5 | [M1] PvpController: connection, lobby, start | 2, 3, SP04#5 | in-progress |
 | 6 | [M1] PvpController: match lifecycle + end | 1, 4, 5, SP04#6, SP03#2 | todo |
 | 7 | [M1] PvP menu, 2-seat lobby, App/main wiring | 5, 6 | todo |
 | 8 | [M1] PvpHud (ownership bar, timer, Esc leave) + toast | 6, 7 | todo |

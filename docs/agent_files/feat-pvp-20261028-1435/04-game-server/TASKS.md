@@ -8,15 +8,15 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. 
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | [M1] Scaffold apps/server + root scripts | SP02#1 | todo |
-| 2 | [M1] Config, logger, content loader | 1, SP01#3 | todo |
-| 3 | [M1] Global clock | 1 | todo |
-| 4 | [M1] Hub, connection, identity, hello | 2, SP02#3, SP02#4 | todo |
-| 5 | [M1] Room lobby (2 seats), create/join, start | 4, SP01#4 | todo |
-| 6 | [M1] Match: referee, lockstep, tick, hash check, end | 3, 5, SP02#6, SP02#8, SP01#8 | todo |
-| 7 | [M1] ws adapter, /healthz, real-socket smoke | 6 | todo |
-| 8 | [M1] Two-client acceptance on fixture + Duel S | 7, SP02#9, SP03#2 | todo |
-| 9 | [M1] Command and input rejection hardening | 6 | todo |
+| 1 | [M1] Scaffold apps/server + root scripts | SP02#1 | done |
+| 2 | [M1] Config, logger, content loader | 1, SP01#3 | done |
+| 3 | [M1] Global clock | 1 | done |
+| 4 | [M1] Hub, connection, identity, hello | 2, SP02#3, SP02#4 | done |
+| 5 | [M1] Room lobby (2 seats), create/join, start | 4, SP01#4 | done |
+| 6 | [M1] Match: referee, lockstep, tick, hash check, end | 3, 5, SP02#6, SP02#8, SP01#8 | done |
+| 7 | [M1] ws adapter, /healthz, real-socket smoke | 6 | done |
+| 8 | [M1] Two-client acceptance on fixture + Duel S | 7, SP02#9, SP03#2 | done |
+| 9 | [M1] Command and input rejection hardening | 6 | done |
 | 10 | [M2] Bots: presets, seat driver, BOT_VERSION 2.5.0 | SP01#9, SP01#12 | todo |
 | 11 | [M2] Full lobby editing and start validation | 5, SP01#3 | todo |
 | 12 | [M2] Bot seats in match | 6, 10, 11 | todo |
