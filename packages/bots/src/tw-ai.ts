@@ -25,11 +25,25 @@ export function targetKey(view: SimView, i: number): number {
   return view.buildingStatic[i]!.special ? idiv(2 * level + 1, 3) : level;
 }
 
-/** All non-own buildings (neutral, hostile, towers included) ascending by (key, index). */
-export function sortedTargets(view: SimView, me: number): number[] {
-  const keyed: { i: number; key: number }[] = [];
-  for (let i = 0; i < view.ids.buildings.length; i++) if (!owned(view, me, i)) keyed.push({ i, key: targetKey(view, i) });
-  return keyed.sort((a, b) => a.key - b.key || a.i - b.i).map(e => e.i);
+/** Squared distance from `i` to the nearest building `me` owns (0 when `me` owns none: ties fall to index). */
+function nearestOwnDist2(view: SimView, me: number, i: number): number {
+  let best = -1;
+  for (let o = 0; o < view.ids.buildings.length; o++) {
+    if (!owned(view, me, o)) continue;
+    const d = dist2(view, i, o);
+    if (best < 0 || d < best) best = d;
+  }
+  return best < 0 ? 0 : best;
+}
+
+/**
+ * All non-own buildings (neutral, hostile, towers included) ascending by (key, index).
+ * `byDistance` (pvp only) inserts a tie-break: (key, dist2 to nearest own building, index), so mirrored seats pick mirrored targets.
+ */
+export function sortedTargets(view: SimView, me: number, byDistance = false): number[] {
+  const keyed: { i: number; key: number; d: number }[] = [];
+  for (let i = 0; i < view.ids.buildings.length; i++) if (!owned(view, me, i)) keyed.push({ i, key: targetKey(view, i), d: byDistance ? nearestOwnDist2(view, me, i) : 0 });
+  return keyed.sort((a, b) => a.key - b.key || a.d - b.d || a.i - b.i).map(e => e.i);
 }
 
 /** Own line-drawing buildings with a free slot, ascending index. */
@@ -49,8 +63,8 @@ export function countOwned(view: SimView, me: number): number {
 
 const draw = (player: number, from: number, to: number): Command => ({ type: 'DrawLine', player, from, to });
 
-function attack(view: SimView, canDraw: CanDraw, rng: SeatRng, me: number, free: readonly number[]): Command | null {
-  for (const t of sortedTargets(view, me)) {
+function attack(view: SimView, canDraw: CanDraw, rng: SeatRng, me: number, free: readonly number[], byDistance: boolean): Command | null {
+  for (const t of sortedTargets(view, me, byDistance)) {
     const cand = free.slice();
     while (cand.length > 0) {
       const k = rng.below(cand.length);
@@ -87,7 +101,7 @@ function defense(view: SimView, canDraw: CanDraw, rng: SeatRng, me: number, free
  * Zero-building seat: timer frozen, no decision. Emits at most one `DrawLine`, never a cut.
  */
 export function decideDefault(
-  view: SimView, canDraw: CanDraw, rng: SeatRng, me: number, state: DefaultState, params: Pick<SeatBot, 'actionDelayMs' | 'behavior'> & { startDelayMs?: number },
+  view: SimView, canDraw: CanDraw, rng: SeatRng, me: number, state: DefaultState, params: Pick<SeatBot, 'actionDelayMs' | 'behavior'> & { startDelayMs?: number; /** pvp objective: distance tie-break in target order. */ pvpTieBreak?: boolean },
 ): Command[] {
   if (view.over || countOwned(view, me) === 0) return [];
   const startDelay = params.startDelayMs ?? 0;
@@ -95,7 +109,7 @@ export function decideDefault(
   if (state.timer < params.actionDelayMs) { state.timer += MS_PER_TICK; return []; }
   state.timer -= params.actionDelayMs;
   const free = freeSources(view, me);
-  const drawn = attack(view, canDraw, rng, me, free);
+  const drawn = attack(view, canDraw, rng, me, free, params.pvpTieBreak === true);
   if (drawn) return [drawn];
   if (params.behavior === 'full') {
     const d = defense(view, canDraw, rng, me, free);

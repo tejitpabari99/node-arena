@@ -105,8 +105,8 @@
     "finalHash": "076df6ca20233bc8"
   },
   "na-pvp-duel-s": {
-    "outcome": "timeLimit",
-    "ticks": 9600,
-    "finalHash": "f2c91f76f8ce42f2"
+    "outcome": "victory",
+    "ticks": 3938,
+    "finalHash": "a8d4b97bde8616ad"
   }
 }

@@ -17,7 +17,7 @@ export type ScriptRunner = (ctx: BotContext, tick: number, me: number, rng: Seat
 
 /** One seat's TW AI. Randomness: `streams.fork('bot.tw', seatIndex)` only; sim RNG is never touched. */
 export function createSeatBot(
-  _level: CompiledLevel, matchSeed: number, seatIndex: number, params: SeatBot, script?: ScriptRunner,
+  level: CompiledLevel, matchSeed: number, seatIndex: number, params: SeatBot, script?: ScriptRunner,
 ): Bot {
   const rng = createStreams(matchSeed).fork('bot.tw', seatIndex);
   const runner = script ?? (params.script && params.script.length > 0 ? createScriptRunner(params.script) : undefined);
@@ -31,7 +31,7 @@ export function createSeatBot(
         state.scriptDone = true;
         state.timer = 0;
       }
-      return decideDefault(ctx.view, ctx.canDraw, rng, seatIndex, state, params);
+      return decideDefault(ctx.view, ctx.canDraw, rng, seatIndex, state, level.objective === 'pvp' ? { ...params, pvpTieBreak: true } : params);
     },
   };
 }
