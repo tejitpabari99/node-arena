@@ -5,7 +5,7 @@ date: 2026-10-27
 ---
 # PRD: 05 Rivers + bridges + river obstacles
 
-Repo/branch: node-arena, `feat/tw-full-campaign` (Phase B PR = SP04+05) · Depends on: 02 (element facility: `elements.ts` crossing helper, phase-6 element pass, hashed state; `RULES_VERSION` 3.1.0), 03 (companion return channel for turned-around troops; unit `carry`), 01 (pool tool; `themes.<t>.river`/`riverObstacle` material slots) · Feeds: 08 (railway may share per-channel state), 09 (docs, final gates). Parallel with 04 in Phase B.
+Repo/branch: node-arena, `feat/tw-full-campaign` (Phase B PR = SP04+05) · Depends on: 02 (element facility: `elements.ts` crossing helper, phase-6 element pass, hashed state; `RULES_VERSION` 3.1.0), 03 (companion return channel for turned-around troops; unit `carry`), 01 (pool tool; `themes.<t>.river`/`riverObstacle` material slots) · Feeds: 09 (docs, final gates). Parallel with 04 in Phase B.
 Owns: `docs/GAME_RULES.md` (new area `RIV`, edits R-OBS-02 / R-LIN-04 cross-refs, phase-6 row, changelog), `packages/content/src/versioning.ts` (`RULES_VERSION` 3.3.0 -> **3.4.0**), `packages/defs/src/modules/bridgeable.def.ts` + registry + events (`BridgeCeilBuilt`, `TroopTurnedBack`), `packages/content/data/elements/{river,river-obstacle}.json` + schema bits, `packages/sim/src/{bridges.ts,state.ts,hash.ts,snapshot}` + `modules/bridgeable.ts` (+ geometry extension if needed), `tools/src/import-tw/{feature-map.json,map-level.ts}` (River/ROBS rows, emitters), `tools/src/import-tw/prefab/{dump_colliders.py,colliders.json}` (river/ROBS rows), `apps/web/src/render/*` (water, ceils, planks), `apps/web/src/editor/*`, `tools/src/assets-tw/*` (bridge/plank model rows), imported levels, `tools/levels-lock.json`, `tools/unsolved-by-proxy.json`.
 Does not own: theme river materials (01), resource piles (03), artillery vs ceils (04, rocket destroying ceils is 06), bots (unchanged), sheep/gates (OUT).
 
@@ -79,6 +79,7 @@ River levels gate 440 of 1,012 TW levels, ROBS 242 [verified: 03 §corpus counts
 - Content version bump + `content:lock`; `levels:lock`; `validate:levels`.
 
 ## Architecture
+- **Base derivation (D7).** River, river obstacle (ROBS) and bridge ceil archetypes `extend` `element-base` (footprint, layer, per-element state; SP02) and add `bridgeable`/blocking modules only. Data-driven, no TS class hierarchy.
 - **Seam, no new abstraction.** River needs three things: lane-interval geometry (`laneIntervals`, exists), a per-tick "troop passed progress s on channel c" visit (SP02 `forEachCrossing` already iterates channels and troops front-first), and per-(channel, element) state. The first two exist; the third is one extra column. `bridges.ts` owns it; `elements.ts` gains only `channelElementState(state, moduleId)`.
 - Bridge state keyed to channel because ring and lines are dynamic while SP02 element state is keyed to static elements. This is the one conceptual deviation from SP02; documented in R-RIV-04.
 - Determinism: integer milli progress, ticks, no RNG, fixed iteration (channel key, troop ring order, ceil order), all new state hashed.
@@ -88,7 +89,7 @@ River levels gate 440 of 1,012 TW levels, ROBS 242 [verified: 03 §corpus counts
 | # | Decision | Choice | Alternatives | Why |
 |---|---|---|---|---|
 | 1 | River blocks drawing? | No | Block, bridge-only crossing | Decoded: rivers do not block (03 §8.4); AI unmasked |
-| 2 | `CrossingSource` seam (FUTURES) | **Not built**; reuse SP02 helper + one column | Generic crossing-source registry | Only rivers need per-channel state; railway (SP08) decides if a second consumer appears. Update FUTURES entry in SP09 |
+| 2 | `CrossingSource` seam (FUTURES) | **Not built**; reuse SP02 helper + one column | Generic crossing-source registry | Only rivers need per-channel state; trolley/railway are deferred by owner so no second consumer is planned. FUTURES entry stays deferred; SP09 records it |
 | 3 | State owner | Per (channel, river) mask | Per-element state (SP02) | Bridges die with lines; two lines over one river build independently |
 | 4 | Plankless troop | Turn around via SP03 return channel | Instant death; stall | Decoded reverse-else-kill; reuses motion |
 | 5 | Ceil count | `ceil(len/550)` | Count from W/D | `PLANK_OFFSET` decoded; W/D constant in data |
@@ -114,7 +115,7 @@ River levels gate 440 of 1,012 TW levels, ROBS 242 [verified: 03 §corpus counts
 - [RESOLVED playability: tooling/measure] Strict k-troop bridge cost may make long rivers near-unwinnable for proxy. Starting value: no rule change; run `validate:levels` + pool-tool metrics in task; prefer proxy-solvable river candidates, adjust; unsolvable levels go on the `unsolved-by-proxy.json` allowlist with `ownerSignOff: null`.
 - [RESOLVED: derived] Rivers do not block (03 §8.4); first river at 103, ROBS at 140.
 - [RESOLVED: locked decision] Plank talents/boosters OUT; rocket vs ceils is SP06.
-- [DEFERRED] Generic `CrossingSource` (FUTURES) to SP08 outcome.
+- [DEFERRED] Generic `CrossingSource` stays in FUTURES (no second consumer after trolley/railway were deferred by owner).
 - Risk: precompute cost = pairs x rivers; mitigate with AABB reject and bench gate. Risk: 32-ceil mask cap; assert at create.
 
 ## Acceptance Criteria

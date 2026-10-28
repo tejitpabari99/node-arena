@@ -10,7 +10,7 @@ Source of truth: [PRD](PRD.md). Adds the selectable fortress (house-like line so
 |---|---|---|---|
 | 1 | Decode spike: wave repeat, gun geometry, gun gating, alive cap, AI hook, no-line bonus | none | todo |
 | 2 | Rules text: R-FRT, phase rows 4b / 7b, RULES_VERSION | 1 | todo |
-| 3 | Defs, events, building JSON, schema, content version | 2 | todo |
+| 3 | Defs, events, building JSON, schema, content version | 2, SP02 T2a | todo |
 | 4 | Multi-gun extension of shoots + gunCd column | 3 | todo |
 | 5 | Cargo module: cycle, pending ring, phase 4b scheduling | 3 | todo |
 | 6 | Landings: lane round-robin, level bonus, alive cap, cancellation | 5 | todo |
@@ -35,7 +35,7 @@ Done when: `pnpm check:rules` accepts the new IDs as untested stubs per repo con
 
 ## Task 3 — Defs, events, building JSON, schema, content version
 What it is / what it means: PRD R2. The fortress is a content-driven archetype composed of existing and two new module shapes.
-What changes at a high level: `guns` (or `shoots` extension) and `cargo` module defs with events for gun shots, cargo launch and landing; `buildings/selectable-fortress.json` (`drawsLines, grows, spawns`, guns, cargo with the PRD defaults); per-level overrides `l, ml, cbi, ws, cwc, sc, ac, bs, swc, wcpr, dtsc, wt` in the level schema; rocket weight 3.0 on the building. Content version/hash bump and `content:lock`.
+What changes at a high level: `guns` (or `shoots` extension) and `cargo` module defs with events for gun shots, cargo launch and landing; `buildings/selectable-fortress.json` (`drawsLines, grows, spawns`, guns, cargo with the PRD defaults); per-level overrides `l, ml, cbi, ws, cwc, sc, ac, bs, swc, wcpr, dtsc, wt` in the level schema; rocket weight 3.0 on the building. Content version/hash bump and `content:lock`. Base derivation (D7). `selectable-fortress` = house base (`extends` the house archetype: level, owner, capture, footprint, `drawsLines`, `grows`, `spawns`) + multi-gun `shoots` style + `cargo` (parachute) module. Uses `extends` from SP02 Task 2a.
 Done when: schemas regenerated, `check:schemas`, `validate:content`, typecheck green; shipped level hashes unchanged.
 
 ## Task 4 — Multi-gun extension of shoots + gunCd column

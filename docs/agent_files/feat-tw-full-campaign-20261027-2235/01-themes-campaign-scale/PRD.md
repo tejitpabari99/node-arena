@@ -7,7 +7,7 @@ date: 2026-10-27
 
 Repo/branch: node-arena, `feat/tw-full-campaign` (Phase A PR = SP01+02+03) · Depends on: none · Feeds: 02-09 (themes, candidate-pool tool, lazy loading)
 Owns: `tools/src/assets-tw/{env,manifest-fragment}.ts` (theme lists/specs), `apps/web/assets/{models,textures}/tw/*-{lava,mine,jungle,darkmine}*`, `apps/web/assets/manifest.json` `themes` (generated), `docs/CREDITS.md` rows, `apps/web/src/app/{boot,state}.ts` + `ui/Picker.tsx` + `save/` (campaign scale), `tools/src/levels*.ts` + `cli.ts` (gate timing only), new `tools/src/census/**` (candidate-pool tool), `packages/content/data/{levels,campaigns/common.json}` (imported rows), `tools/levels-lock.json`, `tools/unsolved-by-proxy.json`.
-Does not own: mechanics (02-08), `feature-map.json` rows for new features (each SP flips its own), river/ROBS behaviour (05), final docs (09).
+Does not own: mechanics (02-07), `feature-map.json` rows for new features (each SP flips its own), river/ROBS behaviour (05), final docs (09).
 
 ## TL;DR
 Today the game holds 20 levels and 2 themes. Owner decision D1: the campaign is curated, not all of 4-340 (README Curation). This SP (a) ships the 4 missing themes (incl. river/ROBS materials for SP05), (b) keeps client boot cheap at ~150 levels (lazy per-level loading kept, see Decisions 3), (c) measures the gate cost at the curated size and decides sharding is unneeded unless measured otherwise, (d) turns `pnpm census` into the CANDIDATE-POOL tool (per TW Common position 24-340: features, blocked reasons, difficulty metrics; used for selection), (e) imports nothing by itself except what curation selects with no new mechanic. Final N is set by SP09.
@@ -29,7 +29,7 @@ Today the game holds 20 levels and 2 themes. Owner decision D1: the campaign is 
 6. The 20 shipped levels unchanged by this SP; any curated level needing only themes/already-supported features can be imported on SP09 request.
 
 ## Non-Goals
-New mechanics (02-08). Cargo/Wall `onlyLevels` re-opening beyond review (see D9). Level thumbnails per card. Cloud save. Skins/boosters. Positions >340 (wrapping is TW's `skip + loop`; not needed). Importing every TW level (D1: curated only).
+New mechanics (02-07). Cargo/Wall `onlyLevels` re-opening beyond review (see D9). Level thumbnails per card. Cloud save. Skins/boosters. Positions >340 (wrapping is TW's `skip + loop`; not needed). Importing every TW level (D1: curated only).
 
 ## Requirements
 
@@ -69,7 +69,7 @@ New mechanics (02-08). Cargo/Wall `onlyLevels` re-opening beyond review (see D9)
 - Content API: catalog (rules data) vs level (per-file) split; compile cost moves from boot to select (< 50 ms/level expected; measure). Vite emits per-level chunks; service worker/prefetch of the next level is optional (DEFERRED).
 - Gate runner: pure `validateLevel` unchanged; optional `--jobs` pool only if measurement demands it.
 - Candidate-pool tool imports gate functions; proxy metrics call the existing validate runner; no sim change.
-- Coordination: SP05 reads `themes.<t>.river*` slots (schema owned here); SP02-08 each flip their `feature-map.json` rows and use the pool tool to select candidates; `levels:lock --levels` avoids lock-file merge conflicts (same file, different keys).
+- Coordination: SP05 reads `themes.<t>.river*` slots (schema owned here); SP02-07 each flip their `feature-map.json` rows and use the pool tool to select candidates; `levels:lock --levels` avoids lock-file merge conflicts (same file, different keys).
 
 ## Decisions
 | # | Decision | Choice | Alternatives | Why |

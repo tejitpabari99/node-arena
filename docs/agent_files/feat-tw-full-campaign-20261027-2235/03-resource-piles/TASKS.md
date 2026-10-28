@@ -10,7 +10,7 @@ Source of truth: [PRD](PRD.md). Neutral depletable pile building; troops pick up
 |---|---|---|---|
 | 1 | Decode spike: pile lifecycle, footprint, tie order, surplus, models | none | todo |
 | 2 | Rules text: R-PIL-01..05, cross-refs, RULES_VERSION | 1, SP02 T2 | todo |
-| 3 | Defs, events, pile JSON, schema, content version | 2 | todo |
+| 3 | Defs, events, pile JSON, schema, content version | 2, SP02 T2a | todo |
 | 4 | Ring carry column + return channels + hash | 3, SP02 T4 | todo |
 | 5 | Depletes + carries modules, arrival dispatch | 4 | todo |
 | 6 | Bots: pile targets, script THId, BOT_VERSION | 5 | todo |
@@ -33,7 +33,7 @@ Done when: `check:rules` green with stable IDs; version bumped as minor (additiv
 
 ## Task 3 — Defs, events, pile JSON, schema, content version
 What it is / what it means: PRD R2. Pile is data plus two modules.
-What changes at a high level: `depletes` and `carries` module defs; events `PileHit`, `PileDepleted`, `TroopReturned`; `resource-pile.json` building (no grows/lines/spawns/shoots, footprint per S2); unit `carry` (soldier 1, tank 2, artillery 1); `balance.json` `pile.addResourceBonus: 0`; level `requires` gains both modules; schemas regenerated; content version/hash bumped.
+What changes at a high level: `depletes` and `carries` module defs; events `PileHit`, `PileDepleted`, `TroopReturned`; `resource-pile.json` building (no grows/lines/spawns/shoots, footprint per S2); unit `carry` (soldier 1, tank 2, artillery 1); `balance.json` `pile.addResourceBonus: 0`; level `requires` gains both modules; schemas regenerated; content version/hash bumped. Base derivation (D7). `resource-pile` archetype `extends` `building-base` (level, owner, capture, footprint; created here, first building-kind base) plus `depletes`/`carries`; `carries` rides the base unit (`unit-base` hp/attack/defense/speed) unchanged. Uses `extends` from SP02 Task 2a.
 Done when: `content:schemas`/`check:schemas`, `validate:content --base HEAD`, `check:content` green; shipped-20 level hashes unchanged apart from SP02's position 23.
 
 ## Task 4 — Ring carry column + return channels + hash

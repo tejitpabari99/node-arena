@@ -1,8 +1,10 @@
 ---
-status: draft
+status: deferred
 summary: Trolley (a ready-gated one-shot cart that rides a drawn line, kills every troop it meets and deletes the building it hits) and railway (rail-mounted buildings that hop between discrete path points via a new RailMove command; moving cuts the building's lines), with AI rail moves (AiRM + TryMoveTowerOnRailway). Closes the CrossingSource seam as "not built".
 date: 2026-10-27
 ---
+> DEFERRED by owner 2026-10-28 — not in this initiative; kept for future
+
 # PRD: 08 Trolley + railway
 
 Repo/branch: node-arena, `feat/tw-full-campaign` (Phase D PR = SP08+09) · Depends on: 04 (projectile hits may target trolley; `hits:'trolley'`), 02 (element facility; mine/wall helper), 03 (ring column pattern, return channel), 05 (river passes), 06 (command parse table, `RULES_VERSION` 3.5.0, BOT 2.6.0), 07 (3.6.0). Takes **RULES 3.7.0**, next BOT minor (**2.7.0**). Feeds: 09 (final curation, docs, gates).

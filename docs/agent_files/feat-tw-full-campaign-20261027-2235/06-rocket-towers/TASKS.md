@@ -10,7 +10,7 @@ Source of truth: [PRD](PRD.md). Adds the rocket tower (aimed persistent point, s
 |---|---|---|---|
 | 1 | Decode spike: charge, spacing, capture targeting, disable, speed, blast, range, weight | none | todo |
 | 2 | Rules text: R-RKT / R-CRK, commands, phase 7d, RULES_VERSION | 1 | todo |
-| 3 | Defs, events, building/projectile JSON, schema, content version | 2 | todo |
+| 3 | Defs, events, building/projectile JSON, schema, content version | 2, SP02 T2a | todo |
 | 4 | Projectile core extension (additive, agreed with SP04) | 3 | todo |
 | 5 | Aim / ClearAim commands + rocket state columns | 3 | todo |
 | 6 | Rocket tower module + phase 7d launches | 4, 5 | todo |
@@ -35,7 +35,7 @@ Done when: `pnpm check:rules` accepts the new IDs as untested stubs per repo con
 
 ## Task 3 — Defs, events, building/projectile JSON, schema, content version
 What it is / what it means: PRD R2. Both towers are content-driven modules on the SP04 `projectile` registry.
-What changes at a high level: `rocketTower` and `captureRocket` module defs (params per PRD R2) with events; `Aim`/`ClearAim` added to the command defs; `buildings/rocket-tower.json`, `capture-rocket-tower.json`, `projectiles/rocket.json`, `capture-rocket.json`; shared `rocketWeight` building param (x10 int); per-level overrides `ds, lup, scp, mcp, cc` in the level schema. Content version/hash bump and `content:lock`.
+What changes at a high level: `rocketTower` and `captureRocket` module defs (params per PRD R2) with events; `Aim`/`ClearAim` added to the command defs; `buildings/rocket-tower.json`, `capture-rocket-tower.json`, `projectiles/rocket.json`, `capture-rocket.json`; shared `rocketWeight` building param (x10 int); per-level overrides `ds, lup, scp, mcp, cc` in the level schema. Content version/hash bump and `content:lock`. Base derivation (D7). `rocket-tower` and `capture-rocket-tower` `extend` a shared base tower archetype (`tower`/`building-base`: level, owner, capture, footprint, `shoots`-free) and add `rocketTower` / `captureRocket` modules; rocket and capture shot `extend` SP04's `projectile-base` (aim path = base Path/line type used by `Aim`). Uses `extends` from SP02 Task 2a.
 Done when: schemas regenerated, `check:schemas`, `validate:content`, typecheck green; shipped level hashes unchanged.
 
 ## Task 4 — Projectile core extension (additive, agreed with SP04)
@@ -55,7 +55,7 @@ Done when: tests `covers R-RKT-01..06`: cadence at L=1, 10, 30, 64; stage thresh
 
 ## Task 7 — Capture rocket module
 What it is / what it means: PRD R-CRK-01..05, Decision 4.
-What changes at a high level: `captureRocket` module: charge `scp -> mcp` while owner non-neutral and level > 0, reset to `scp` plus `cc` idle gap after firing; stable-sort target pick `(level desc, index asc)` over the Task 1 predicate (ready trolleys reserved for SP08); entity-aim projectile that still hits a building recaptured in flight; target level set to 0 at impact (deviation from TW tween recorded); 3.0 blast kills enemy troops only; ownership never changes; tower keeps firing while captured and level > 0.
+What changes at a high level: `captureRocket` module: charge `scp -> mcp` while owner non-neutral and level > 0, reset to `scp` plus `cc` idle gap after firing; stable-sort target pick `(level desc, index asc)` over the Task 1 predicate; entity-aim projectile that still hits a building recaptured in flight; target level set to 0 at impact (deviation from TW tween recorded); 3.0 blast kills enemy troops only; ownership never changes; tower keeps firing while captured and level > 0.
 Done when: tests `covers R-CRK-01..05`: charge/reset, neutral and level-0 pause, sort and tie, recapture in flight, blast owner filter; `check:rules` fully green for RKT and CRK.
 
 ## Task 8 — Bots: rocket weight, Aim / ClearAim, scripts, BOT_VERSION

@@ -10,7 +10,7 @@ Source of truth: [PRD](PRD.md). Adds a deterministic projectile/blast core (cons
 |---|---|---|---|
 | 1 | Decode spike: artillery behaviour, WT3 params, AI scoring, ordering | none | todo |
 | 2 | Rules text: R-PRJ / R-ART, phase 7 sub-steps, RULES_VERSION | 1 | todo |
-| 3 | Defs, events, projectile/unit/house JSON, schema, content version | 2 | todo |
+| 3 | Defs, events, projectile/unit/house JSON, schema, content version | 2, SP02 T2a | todo |
 | 4 | Projectile store: launch API, hash, snapshot, overflow | 3 | todo |
 | 5 | Impact resolution + blast + phase 7a (core consumer contract frozen) | 4 | todo |
 | 6 | Ring rangedCd column + ranged module + phase 7c launches | 5 | todo |
@@ -33,7 +33,7 @@ Done when: `pnpm check:rules` accepts the new IDs as untested stubs per repo con
 
 ## Task 3 — Defs, events, projectile/unit/house JSON, schema, content version
 What it is / what it means: PRD Content/defs. Artillery and shells are content-driven; the registry is what SP06/SP07 extend.
-What changes at a high level: new `projectile` registry (aim, speed, blast radius, damage mode, `hits`, visual) with `artillery-shell`; `ranged` module def and optional unit `modules.ranged` schema; `units/artillery.json`; `house-wt3.json` (wt1 clone with `spawns.unit = artillery`, params per Task 1); events `ProjectileLaunched`, `ProjectileImpact`; `KillCause` gains `blast`. Content version/hash bump, `content:lock`.
+What changes at a high level: new `projectile` registry (aim, speed, blast radius, damage mode, `hits`, visual) with `artillery-shell`; `ranged` module def and optional unit `modules.ranged` schema; `units/artillery.json`; `house-wt3.json` (wt1 clone with `spawns.unit = artillery`, params per Task 1); events `ProjectileLaunched`, `ProjectileImpact`; `KillCause` gains `blast`. Content version/hash bump, `content:lock`. Base derivation (D7). SP04 owns `projectile-base` (aim path, speed, blast, damage mode, hits); `artillery-shell` `extends` it, and SP06 rocket / capture shot derive from the same base. Uses `extends` from SP02 Task 2a.
 Done when: schemas regenerated, `check:schemas`, `validate:content`, typecheck green; shipped level hashes unchanged.
 
 ## Task 4 — Projectile store: launch API, hash, snapshot, overflow

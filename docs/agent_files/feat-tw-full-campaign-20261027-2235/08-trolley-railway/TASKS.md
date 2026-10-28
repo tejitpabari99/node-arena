@@ -1,8 +1,10 @@
 ---
-status: draft
+status: deferred
 summary: 13 tasks — decode spike, rules text, defs/content, building removal + position state, trolley + cart, rails + RailMove, bots, importer, web, editor, curated selection and import of >=10 trolley + >=10 railway levels, perf/ci gate and CrossingSource closure
 date: 2026-10-27
 ---
+> DEFERRED by owner 2026-10-28 — not in this initiative; kept for future
+
 # Tasks: 08 Trolley + railway
 Source of truth: [PRD](PRD.md). Adds the trolley (ready-gated one-shot cart on the troop ring that kills troops and deletes its target building), railways (discrete hops via new `RailMove`, lines cut at move start), AI rail behaviour (AiRM script step, `TryMoveTowerOnRailway`), and a provisional >=10 trolley + >=10 railway level selection. Mechanics order: rule text + changelog + version bump, then tests, then code. Tasks 1, 8, 9, 11, 12 need the rebuilt TW extract (`TW_EXTRACT`); Task 11 also needs SP01's `pnpm census`. Phase D PR = 08 + 09 (08 lands first; 09 rebases onto it and owns the phase `validate:levels --all`). Version numbers are indicative (RULES 3.7.0, BOT next minor at merge time). 08 closes the FUTURES `CrossingSource` entry as "not built". Sibling SPs are referenced only; 06 owns the command parse table, 07 the preceding phase-row amendments.
 

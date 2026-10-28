@@ -1,16 +1,17 @@
 ---
 status: draft
-summary: 11 tasks — decode spike, rules text, defs/content, generic element-state facility, wall/mine modules, importer + position-23 re-import, web render, editor, curated selection and import of >=10 wall + >=10 mine levels, perf/ci gate
+summary: 12 tasks — decode spike, rules text, defs/content, generic element-state facility, wall/mine modules, importer + position-23 re-import, web render, editor, curated selection and import of >=10 wall + >=10 mine levels, perf/ci gate
 date: 2026-10-27
 ---
 # Tasks: 02 Walls + mines
-Source of truth: [PRD](PRD.md). Adds walls (hp sponge) and mines (0.1 s delayed kill) on a generic element-state/crossing facility that SP03/05/08 reuse, re-imports position 23 with its wall, and imports a provisional >=10 wall + >=10 mine level selection. Mechanics order: rule text + changelog + version bump, then tests, then code. Tasks 1, 6, 7, 9 need the rebuilt TW extract (`TW_EXTRACT`); Task 9 also needs SP01's `pnpm census`. No bot changes.
+Source of truth: [PRD](PRD.md). Adds walls (hp sponge) and mines (0.1 s delayed kill) on a generic element-state/crossing facility that SP03/05 reuse, re-imports position 23 with its wall, and imports a provisional >=10 wall + >=10 mine level selection. Mechanics order: rule text + changelog + version bump, then tests, then code. Tasks 1, 6, 7, 9 need the rebuilt TW extract (`TW_EXTRACT`); Task 9 also needs SP01's `pnpm census`. No bot changes.
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
 | 1 | Decode spike: trigger size, layer, owner gate, update order | none | todo |
 | 2 | Rules text: R-ELM / R-WAL / R-MIN, phase row, RULES_VERSION | 1 | todo |
-| 3 | Defs, events, element JSON, schema, content version | 2 | todo |
+| 2a | Generalise archetype `extends` to all content kinds (D7) | 2 | todo |
+| 3 | Defs, events, element JSON, schema, content version | 2, 2a | todo |
 | 4 | Element state columns + crossing helper | 3 | todo |
 | 5 | Absorbs + detonates modules, element pass | 4 | todo |
 | 6 | Importer rows, emitters, position 23 re-import | 3 | todo |
@@ -30,13 +31,18 @@ What it is / what it means: PRD R1, Decisions 3–5, 10, Acceptance. Rules autho
 What changes at a high level: `docs/GAME_RULES.md` gains areas ELM (swept crossing, deterministic iteration order), WAL (hp init, min(attack, hp) removal, troop consumed, neutral, hits every owner) and MIN (first crossing deactivates, 2-tick delayed kill, delayed troop still fights/arrives, air immune). Phase 6 row and R-OBS-02 cross-reference updated; spike results and any deviations written in; changelog; `RULES_VERSION` bumped to the next minor (indicative 3.1.0; rebase if SP03 lands first).
 Done when: `pnpm check:rules` accepts the new IDs as untested stubs per repo convention; changelog and version present.
 
+## Task 2a — Generalise archetype `extends` (D7)
+What it is / what it means: README cross-cutting resolution 12. Verified: no `extends` in `packages/content` (schemas/loader/compile); building/unit/element archetypes are flat module bags and only level entries override params. Every later SP derives new types from a base, so the mechanism comes first.
+What changes at a high level: archetype files of every content kind (building, unit, element; projectile kind registered by SP04) accept optional `extends: <archetype id>` and `abstract: true` (not placeable in levels). Loader/compile resolves the chain (same kind only, cycles and unknown ids rejected with exact messages), child `modules` params deep-merge over the parent, then the flattened archetype feeds `simHash` unchanged. Schemas regenerated. Add abstract bases `building-base`, `unit-base`, `element-base` only if derived content exists (element-base used by Task 3); existing archetypes are not required to migrate and, if migrated, must keep `simHash` identical. Document in `docs/CONTENT_GUIDE.md` (pointer only; SP09 consolidates). No sim/TS class hierarchy.
+Done when: unit tests for merge order, cycle, cross-kind and unknown-parent errors; a derived archetype compiles to the same flattened JSON as its hand-flattened equivalent; `check:schemas`, `validate:content` green; all shipped level hashes unchanged.
+
 ## Task 3 — Defs, events, element JSON, schema, content version
 What it is / what it means: PRD R2, Decision 2. Walls and mines are content-driven modules, not hard-coded sim.
-What changes at a high level: `absorbs` (hp, consumesTroop) and `detonates` (delayMs, destroyOnTrigger) defs with `appliesTo: 'element'`, rule ids and registry entries; events `WallHit`, `WallDestroyed`, `MineTriggered`; `KillCause` gains `wall | mine`; `elements/wall.json` and `mine.json` (neither `blocksLines`, unless Task 1 flipped it); level `requires` accepts both; `params.hp` and `punchStrength` (presentation only) in the schema. Content version/hash bump and `content:lock`.
+What changes at a high level: `absorbs` (hp, consumesTroop) and `detonates` (delayMs, destroyOnTrigger) defs with `appliesTo: 'element'`, rule ids and registry entries; events `WallHit`, `WallDestroyed`, `MineTriggered`; `KillCause` gains `wall | mine`; `elements/wall.json` and `mine.json` (neither `blocksLines`, unless Task 1 flipped it); level `requires` accepts both; `params.hp` and `punchStrength` (presentation only) in the schema. Content version/hash bump and `content:lock`. Wall and mine archetypes `extends` `element-base` (D7).
 Done when: schemas regenerated, `check:schemas`, `validate:content`, typecheck green; shipped level hashes unchanged apart from expected locks.
 
 ## Task 4 — Element state columns + crossing helper
-What it is / what it means: PRD R3, Architecture, O4 resolution. The only new sim facility; reused by SP03/05/08.
+What it is / what it means: PRD R3, Architecture, O4 resolution. The only new sim facility; reused by SP03/05.
 What changes at a high level: `SimModule.elementState` allocates per-module Int32 columns per element, included in hash and snapshot with a schema version bump (no migration; no persisted sim snapshots). `elements.ts` precomputes cold crossing intervals per element/channel using the lane-interval primitive padded by troop radius, and exposes a generic `forEachCrossing` hook plus state accessor with no wall/mine-specific code. Skips empty channels and inactive elements.
 Done when: tests titled `covers R-ELM-01` for ordering, mid-ring removal and spawn-tick inclusion; snapshot round-trip with element state; levels without elements replay bit-identically.
 

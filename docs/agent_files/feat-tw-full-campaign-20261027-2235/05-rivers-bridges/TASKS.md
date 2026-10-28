@@ -10,7 +10,7 @@ Source of truth: [PRD](PRD.md). Adds non-blocking rivers whose crossing lines bu
 |---|---|---|---|
 | 1 | Decode spike: planks, collider shapes, bridge lifetime, ROBS layer, AI river reads | none | todo |
 | 2 | Rules text: R-RIV-01..05, phase 6 row, RULES_VERSION | 1, SP02 T2, SP03 T2 | todo |
-| 3 | Defs, events, river/ROBS JSON, schema, content version | 2 | todo |
+| 3 | Defs, events, river/ROBS JSON, schema, content version | 2, SP02 T2a | todo |
 | 4 | Importer rows, emitters, river/ROBS collider dump | 1, 3 | todo |
 | 5 | Bridge state: crossing geometry, bridgeMask + planks columns, hash/snapshot | 3, SP02 T4, SP03 T4 | todo |
 | 6 | Bridgeable module, bridge pass, turn-around | 5, SP03 T5 | todo |
@@ -34,7 +34,7 @@ Done when: `pnpm check:rules` accepts the new IDs as untested stubs per repo con
 
 ## Task 3 — Defs, events, river/ROBS JSON, schema, content version
 What it is / what it means: PRD R2. Rivers are content-driven, not hard-coded sim.
-What changes at a high level: `bridgeable` module def (`ceilSpacingMilli`, `planksPerTroop`, `appliesTo: 'element'`, phase `contacts`) and registry entry; events `BridgeCeilBuilt`, `TroopTurnedBack`; `KillCause` gains `river`; `elements/river.json` (footprints per shape `T`, values from Task 1) and `river-obstacle.json` (4-child cluster; `blocksLines` only if Task 1 flipped it); `planks` on unit JSON; level `requires` accepts `bridgeable`; `shape`/`bridgeWidth`/`distance` params in the schema. Content version/hash bump and `content:lock`.
+What changes at a high level: `bridgeable` module def (`ceilSpacingMilli`, `planksPerTroop`, `appliesTo: 'element'`, phase `contacts`) and registry entry; events `BridgeCeilBuilt`, `TroopTurnedBack`; `KillCause` gains `river`; `elements/river.json` (footprints per shape `T`, values from Task 1) and `river-obstacle.json` (4-child cluster; `blocksLines` only if Task 1 flipped it); `planks` on unit JSON; level `requires` accepts `bridgeable`; `shape`/`bridgeWidth`/`distance` params in the schema. Content version/hash bump and `content:lock`. Base derivation (D7). River, river obstacle (ROBS) and bridge ceil archetypes `extend` `element-base` (footprint, layer, per-element state; SP02) and add `bridgeable`/blocking modules only. Uses `extends` from SP02 Task 2a.
 Done when: schemas regenerated, `check:schemas`, `validate:content`, typecheck green; shipped level hashes unchanged apart from expected locks.
 
 ## Task 4 — Importer rows, emitters, river/ROBS collider dump

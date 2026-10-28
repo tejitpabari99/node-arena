@@ -1,13 +1,13 @@
 ---
 status: draft
-summary: Walls (hp sponge that consumes troops) and mines (one-shot, 0.1 s delayed kill) as content-driven element modules on a new generic "element crossing + element state" facility that SP03/05/08 reuse; flips the Wall/Mine importer rows, re-imports levelview-100-es with its wall, and imports >=10 curated levels per element (wall, mine).
+summary: Walls (hp sponge that consumes troops) and mines (one-shot, 0.1 s delayed kill) as content-driven element modules on a new generic "element crossing + element state" facility that SP03/05 reuse; flips the Wall/Mine importer rows, re-imports levelview-100-es with its wall, and imports >=10 curated levels per element (wall, mine).
 date: 2026-10-27
 ---
 # PRD: 02 Walls + mines
 
-Repo/branch: node-arena, `feat/tw-full-campaign` (Phase A PR = SP01+02+03) · Depends on: 01 soft (pool tool for selection; themes only matter for levels >= 41) · Feeds: 03 (element hp + crossing helper), 05 (rivers reuse crossing helper), 08 (trolley takes mine damage), 09 (docs, final gates)
+Repo/branch: node-arena, `feat/tw-full-campaign` (Phase A PR = SP01+02+03) · Depends on: 01 soft (pool tool for selection; themes only matter for levels >= 41) · Feeds: 03 (element hp + crossing helper), 05 (rivers reuse crossing helper), 09 (docs, final gates)
 Owns: `docs/GAME_RULES.md` (new areas `ELM`, `WAL`, `MIN`, phase-6 row, changelog), `packages/content/src/versioning.ts` (RULES_VERSION), `packages/defs/src/modules/{absorbs,detonates}.def.ts` + registry + event defs (`WallHit`, `WallDestroyed`, `MineTriggered`), `packages/content/data/elements/{wall,mine}.json` + element/level schema bits, `packages/sim/src/{elements.ts,state.ts,hash.ts,snapshot}` (element state columns) + `modules/{absorbs,detonates}.ts`, `tools/src/import-tw/{feature-map.json,map-level.ts}` (Wall/Mine rows + emitters), `apps/web/src/render/*` (wall/mine renderers, fx), `apps/web/src/editor/*` (library items), `tools/src/assets-tw/*` (wall/mine model rows), imported levels, `tools/levels-lock.json`, `tools/unsolved-by-proxy.json` rows.
-Does not own: bots (unchanged), resource piles (03), rivers/bridges (05), trolley (08), themes (01).
+Does not own: bots (unchanged), resource piles (03), rivers/bridges (05), themes (01).
 
 ## TL;DR
 - Wall = neutral static element with `hp`; each troop that reaches it is **consumed** and removes `min(attack, hp)` hp; gone at 0. Mine = neutral one-shot; first troop to touch it **dies 0.1 s (2 ticks) later**, mine destroyed at once. Neither blocks line drawing; both are invisible to bots. [verified: 03-core-mechanics §8.2-8.3, decomp refs there]
@@ -22,8 +22,8 @@ Wall and mine levels are blocked at import: 397 / 291 of 1,012 TW levels carry t
 | Goals | Non-Goals |
 |---|---|
 | Rules `R-ELM-*`, `R-WAL-*`, `R-MIN-*` text + tests + code | Talents/artefacts: `destroyWallBonus`, `mineBlockBonus` (meta OUT); keep a zero-default hook only |
-| Generic element state + `onCross` helper reusable by 03/05/08 | Rocket / area damage to walls and mines (SP06) |
-| Faithful decoded numbers (hp, delay, clamp, consume) | Trolley-vs-mine (SP08 consumes the helper) |
+| Generic element state + `onCross` helper reusable by 03/05 | Rocket / area damage to walls and mines (SP06) |
+| Faithful decoded numbers (hp, delay, clamp, consume) | Trolley (out of scope, deferred by owner) |
 | Web render + hp/destroy feedback; editor can place both | Wall-only sound design / new UI chrome |
 | Importer rows + newly unlocked levels, lock refresh | Bot behaviour change |
 
@@ -48,6 +48,7 @@ Wall and mine levels are blocked at import: 397 / 291 of 1,012 TW levels carry t
 ### R2 Defs / content
 - Two module defs (`appliesTo: 'element'`): `absorbs {hp, consumesTroop: true}` and `detonates {delayMs, destroyOnTrigger: true}`. `ruleIds` tagged; phase `contacts`.
 - `elements/wall.json` (`footprint` placeholder box, `modules.absorbs`), `elements/mine.json` (circle, `modules.detonates`). Neither lists `blocksLines`. Level element `params` (already in the level schema [verified]) carries `hp`; `punchStrength` kept as `x-presentation` (not hashed, no sim effect).
+- **Base derivation (D7, README resolution 12).** `elements/wall.json` and `elements/mine.json` declare `"extends": "element-base"` (abstract archetype: footprint, layer, per-element state hooks) and add only their behaviour module. The content `extends` mechanism does not exist yet (verified: no `extends` in `packages/content` schemas/loader; archetypes are flat module bags) so Task 2a generalises it to all content kinds first.
 - Level `requires` gains `absorbs`, `detonates`. Unit attack is `units/*.json attack` (soldier 1, tank 2) [verified].
 - Events: `WallHit{element,hp,x,z}`, `WallDestroyed`, `MineTriggered{element,troop,dueTick}`; `KillCause` += `wall | mine` (counted in `killed`, not `died`, like towers).
 
@@ -73,7 +74,8 @@ TW AI ignores walls and mines [verified: 04-ai-bots.md §port-gaps: "obstacle co
 - Content version bump + `content:lock`.
 
 ## Architecture (high level)
-- `elements.ts` is the shared seam: `forEachCrossing(state, moduleId, cb(elementIdx, channel, seq, tick))` plus `elementState(state, moduleId)`. `absorbs` implements `hp` drain; `detonates` queues delayed kills. SP03 resource piles add `onCross: carry/return` and an `absorbs`-style hp; SP05 river obstacles/bridge ceils and SP08 trolley mines call the same helper. Interface is **hooks + state columns, no wall/mine-specific code in `elements.ts`**.
+- **Base types (D7):** data-driven archetypes + modules, no TS class hierarchy in the sim. `element-base` is introduced here; later SPs (ROBS, piles, ceils) derive from it. Base Building/Unit/Projectile are introduced by the SP that first needs them (03/04), Path/line stays a sim-level shared type.
+- `elements.ts` is the shared seam: `forEachCrossing(state, moduleId, cb(elementIdx, channel, seq, tick))` plus `elementState(state, moduleId)`. `absorbs` implements `hp` drain; `detonates` queues delayed kills. SP03 resource piles add `onCross: carry/return` and an `absorbs`-style hp; SP05 river obstacles/bridge ceils call the same helper. Interface is **hooks + state columns, no wall/mine-specific code in `elements.ts`**.
 - Tick position: Contacts (6) = head-on -> crossing -> **element pass**; towers (7) then see survivors; arrivals (8) after. A troop killed by a clash cannot hit a wall; a troop eaten by a wall cannot be shot.
 - Determinism: integer milli progress, ticks not seconds, no RNG, deterministic iteration (R-ELM-01), all new state hashed.
 - Version impact: levels without walls/mines replay bit-identically; `levelview-100-es` content hash changes (expected), no other lock moves.
@@ -82,7 +84,7 @@ TW AI ignores walls and mines [verified: 04-ai-bots.md §port-gaps: "obstacle co
 | # | Decision | Choice | Alternatives | Why |
 |---|---|---|---|---|
 | 1 | Block line drawing? | No (default) pending S2 | Walls block like obstacles | A blocking wall is unreachable; box-cast mask would stop AI/human drawing |
-| 2 | Module split | `absorbs` + `detonates` modules on one helper | Single `hazard` module; hard-coded wall/mine in sim | Data-driven (06-gap-map §3.5), reuse by 03/05/08 |
+| 2 | Module split | `absorbs` + `detonates` modules on one helper | Single `hazard` module; hard-coded wall/mine in sim | Data-driven (06-gap-map §3.5), reuse by 03/05 |
 | 3 | Where in tick | Phase 6 after crossing pass | New phase; before clashes | Keeps phase numbers stable; matches "ForceKill after contact" |
 | 4 | Mine delay | 2 ticks, troop stays live | Instant kill; delay as float | 0.1 s decoded; integer ticks; delayed troop can still arrive |
 | 5 | Which troop hits | Every troop crossing, front-first | Front troop only | Wall consumes each entrant; mid-ring removal supported |

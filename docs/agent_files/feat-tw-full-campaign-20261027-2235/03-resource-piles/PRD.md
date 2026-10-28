@@ -5,7 +5,7 @@ date: 2026-10-27
 ---
 # PRD: 03 Resource piles
 
-Repo/branch: node-arena, `feat/tw-full-campaign` (Phase A PR = SP01+02+03) · Depends on: 02 (element hp/state columns, crossing helper, `RULES_VERSION` 3.1.0, ELM area), 01 soft (pool tool, themes for levels >= 41) · Feeds: 05 (rivers reuse the return-channel idea for plank-less troops), 08 (trolley), 09
+Repo/branch: node-arena, `feat/tw-full-campaign` (Phase A PR = SP01+02+03) · Depends on: 02 (element hp/state columns, crossing helper, `RULES_VERSION` 3.1.0, ELM area), 01 soft (pool tool, themes for levels >= 41) · Feeds: 05 (rivers reuse the return-channel idea for plank-less troops), 09
 Owns: `docs/GAME_RULES.md` (new area `PIL`, edits to R-ENT-01, R-LIN-01, R-CAP-01, R-WIN-01 cross-refs, phase table, changelog), `packages/content/src/versioning.ts` (RULES_VERSION 3.1.0 -> 3.2.0), `packages/defs/src/modules/{depletes,carries}.def.ts` + events (`PileHit`, `PileDepleted`, `TroopReturned`), `packages/content/data/buildings/resource-pile.json` + schema bits, `packages/sim/src/{ring.ts,state.ts,hash.ts,types.ts,read.ts}` + `modules/{depletes,carries}.ts`, `packages/bots/src/{tw-ai.ts,script.ts,version.ts}`, `tools/src/import-tw/{feature-map.json,map-level.ts,gate.ts}`, `apps/web/src/render/*` (pile + carried-gold), `apps/web/src/editor/*`, `tools/src/assets-tw/*` (Resources*/Gold rows), imported levels, `tools/levels-lock.json`, `tools/unsolved-by-proxy.json`.
 Does not own: walls/mines (02), rivers/planks (05), cargo (stays dropped), meta/currency use of gold (OUT).
 
@@ -82,6 +82,7 @@ Piles gate 412 of 1,012 campaign levels (first at 67) [verified: 06-gap-map §1;
 - LEVELS_GUIDE feature row "resource piles" updated; report 0 shipped-level hash movement.
 
 ## Architecture (high level)
+- **Base derivation (D7).** `resource-pile` archetype `extends` `building-base` (level, owner, capture, footprint; created here, first building-kind base) plus `depletes`/`carries`; `carries` rides the base unit (`unit-base` hp/attack/defense/speed) unchanged. Data-driven archetypes + modules, no TS class hierarchy. `extends` itself comes from SP02 Task 2a.
 - **Pile = building, carry = ring column, return = companion channel.** Everything pile-specific is data (`depletes`, `carries`) plus one arrival-dispatch branch; SP02's element crossings still apply to returners since they are ordinary ring troops. SP05 can reuse "turn around on companion channel" for bridge-less soldiers.
 - Why not element: lines/AI/view all key on `buildings`; making piles elements would force a parallel target path in `DrawLine`, win, bots and `read.ts`.
 - Determinism: integer progress/ticks, ordered channel keys, overshoot-desc pushes, no RNG; `carry` and `amount` hashed. Replays on non-pile levels bit-identical (verify via `replay:verify golden`).

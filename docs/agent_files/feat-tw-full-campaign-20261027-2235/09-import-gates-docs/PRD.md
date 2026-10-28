@@ -1,13 +1,13 @@
 ---
 status: draft
-summary: Final curation + assembly of the curated Common campaign (20 shipped + selection from TW Common 24-340, ~100-150 levels): confirm per-element >=10 coverage, order by TW position with a concrete difficulty-curve check, fill gaps, contiguous display numbering, LEVELS_GUIDE selection table; then gates re-baselined at curated size, docs consolidated (rules changelog 3.1-3.7, deviations ledger, FUTURES cleanup, credits, README/AGENTS), web smoke, and an owner acceptance package.
+summary: Final curation + assembly of the curated Common campaign (20 shipped + selection from TW Common 24-340, ~100-150 levels): confirm per-element >=10 coverage, order by TW position with a concrete difficulty-curve check, fill gaps, contiguous display numbering, LEVELS_GUIDE selection table; then gates re-baselined at curated size, docs consolidated (rules changelog 3.1-3.6, deviations ledger, FUTURES cleanup, credits, README/AGENTS), web smoke, and an owner acceptance package.
 date: 2026-10-27
 ---
 # PRD: 09 Final curation, gates, docs
 
-Repo/branch: node-arena, `feat/tw-full-campaign` (Phase D PR = SP08+09) · Depends on: all (01-08 merged or in the same branch; runs last) · Feeds: release (curated campaign, Level 1..N)
-Owns: `packages/content/data/campaigns/common.json` (final order/numbering), `docs/LEVELS_GUIDE.md` (selection table, deviations ledger, dropped data), `docs/FUTURES.md` (cleanup), `docs/CONTENT_GUIDE.md` (cross-links only), `docs/CREDITS.md` (audit; rows are added by 01/02-08), `README.md`, `AGENTS.md` project section, `tools/README.md`, `tools/unsolved-by-proxy.json` (final review), `tools/levels-lock.json` (final refresh), `tools/src/import-tw/level-overrides.json` policy, `.github/workflows/{ci,balance}.yml` (tuning only), `apps/web/e2e` + `playwright.campaign.config.ts` (campaign smoke), `docs/agent_files/feat-tw-full-campaign-20261027-2235/{census.json,owner-pass.md,README.md}`.
-Does not own: any rule text or mechanic (02-08 own `GAME_RULES.md` areas; 09 only reviews the consolidated changelog and fixes wording, no behaviour), importer rows (each SP flips its own), the pool tool (01), lazy loading and picker (01).
+Repo/branch: node-arena, `feat/tw-full-campaign` (Phase D PR = SP09 only) · Depends on: all (01-07 merged or in the same branch; runs last) · Feeds: release (curated campaign, Level 1..N)
+Owns: `packages/content/data/campaigns/common.json` (final order/numbering), `docs/LEVELS_GUIDE.md` (selection table, deviations ledger, dropped data), `docs/FUTURES.md` (cleanup), `docs/CONTENT_GUIDE.md` (cross-links only), `docs/CREDITS.md` (audit; rows are added by 01/02-07), `README.md`, `AGENTS.md` project section, `tools/README.md`, `tools/unsolved-by-proxy.json` (final review), `tools/levels-lock.json` (final refresh), `tools/src/import-tw/level-overrides.json` policy, `.github/workflows/{ci,balance}.yml` (tuning only), `apps/web/e2e` + `playwright.campaign.config.ts` (campaign smoke), `docs/agent_files/feat-tw-full-campaign-20261027-2235/{census.json,owner-pass.md,README.md}`.
+Does not own: any rule text or mechanic (02-07 own `GAME_RULES.md` areas; 09 only reviews the consolidated changelog and fixes wording, no behaviour), importer rows (each SP flips its own), the pool tool (01), lazy loading and picker (01).
 
 ## TL;DR
 - Nothing new in the sim. 09 is the final curation: take each SP's provisional selection, confirm every element has >=10 shipped levels spread through the campaign, order by TW position, run the difficulty-curve check, fill gaps, assign contiguous display numbers 1..N, and write the selection table (what and why) in LEVELS_GUIDE.
@@ -19,13 +19,13 @@ Does not own: any rule text or mechanic (02-08 own `GAME_RULES.md` areas; 09 onl
 ## Problem
 - Each mechanic SP selects "its" levels against a pool that moves under it; nobody owns the end state: coverage, order, difficulty trend, numbering, a static tracker [verified: `LEVELS_GUIDE.md` L98-100 "not recomputed"], README/AGENTS "20 levels" [verified: `README.md` L3, `AGENTS.md`].
 - `campaign:verify` and `acceptance.spec.ts` hard-code 20 levels [verified: `tools/README.md` L83, `e2e/acceptance.spec.ts` L6].
-- FUTURES still lists shipped work (walls/mines, rivers, rockets, fortress, trolley, piles, themes, census, CrossingSource) [verified: `FUTURES.md`].
+- FUTURES still lists shipped work (walls/mines, rivers, rockets, fortress, piles, themes, census; trolley/railway/CrossingSource are deferred, see R3) [verified: `FUTURES.md`].
 - Prefab-only ids matter only if selected (SP01 pool tool lists them; 10 and 23 shipped).
 
 ## Goals / Non-Goals
 | Goals | Non-Goals |
 |---|---|
-| Per-element coverage >=10 shipped levels (walls, mines, WT3 artillery, resource piles, capture rocket, rivers+bridges, ROBS, selectable fortress, rocket tower, trolley, railway; AI Random BT2 and Defense BT1 where levels use them), spread after first introduction | Importing every TW level (D1) |
+| Per-element coverage >=10 shipped levels (walls, mines, WT3 artillery, resource piles, capture rocket, rivers+bridges, ROBS, selectable fortress, rocket tower; AI Random BT2 and Defense BT1 where levels use them), spread after first introduction | Importing every TW level (D1) |
 | Order by TW position + difficulty trend per ~10-level window; each element introduced alone | Positions >340, tutorials 1-3, boss, Draw-only levels (OUT) |
 | `pnpm run ci` green on Node 22+24; `validate:levels --all` green or only allowlisted | Statistical balance gating (`balance` stays report-only) |
 | Docs match code; `check:docs` green | New mechanics or rule changes; owner sign-off itself (`ownerSignOff` stays null) |
@@ -52,18 +52,18 @@ Does not own: any rule text or mechanic (02-08 own `GAME_RULES.md` areas; 09 onl
 - `validate:levels`: SP01 measured the cost (2.1 s/level baseline); 09 re-measures on the final tree. [RESOLVED: no sharding or nightly split; PR delta budget +6 min, `--jobs` only if exceeded, per SP01]
 - `levels:lock` refreshed once at the end (single bulk commit). `check:content --base HEAD` and `validate:content` timed at curated size (target <30 s combined, SP01).
 - **Unsolved allowlist review**: each row has reason (stalemate / eliminated / cap-hit), mechanic tag, `ownerSignOff`. Rows whose reason is "proxy cannot use feature X" are grouped; if >~10% of shipped levels are unsolved, flag as proxy weakness, not level fault [G2].
-- **Goldens/replays**: one `sim:golden` per new mechanic family (wall/mine, pile, artillery, river, rocket, capture rocket, fortress, trolley, rail move) if the owning SP did not add one; `bots:golden` adds the BOT-changing SPs (03, 06, 08). `replay:verify golden` scans all. Shipped-20 hashes may move only where SP02 re-imported position 23.
+- **Goldens/replays**: one `sim:golden` per new mechanic family (wall/mine, pile, artillery, river, rocket, capture rocket, fortress) if the owning SP did not add one; `bots:golden` adds the BOT-changing SPs (03, 06 and any conditional bump). `replay:verify golden` scans all. Shipped-20 hashes may move only where SP02 re-imported position 23.
 - `bench:sim`/`bench:bots`: re-run on the largest selected level and a rocket-heavy one; budgets unchanged unless a measured regression is explained and accepted [G3].
-- Version chain check (script or `check:docs` assertion): RULES 3.7.0, BOT 2.7.0, content version/hash consistent with locks.
+- Version chain check (script or `check:docs` assertion): RULES 3.6.0 (SP07's), BOT per merge order (indicative 2.6.0), content version/hash consistent with locks.
 - Parked scaffold: `PARKED` empty; `check:parked --strict` passes.
 - Pre-release: a one-off full run (`validate:levels --all`, `campaign:verify --all`) on Node 22 and 24 via `workflow_dispatch` or locally; lock hashes identical.
 
 ### R3 Docs
 | Doc | Action |
 |---|---|
-| `GAME_RULES.md` | Review-only: changelog 3.1.0-3.7.0 complete and ordered; phase table rows (6, 7a-7d, 4b, 8) consistent; every new `R-*` has `covers` tests (`check:rules`); no behaviour fix |
+| `GAME_RULES.md` | Review-only: changelog 3.1.0-3.6.0 complete and ordered; phase table rows (6, 7a-7d, 4b, 8) consistent; every new `R-*` has `covers` tests (`check:rules`); no behaviour fix |
 | `LEVELS_GUIDE.md` | §5 = selection table + coverage table (R1) + link to `census.json`; deviations ledger = one table of every spike "picked value" (SP, quantity, TW source or "not decoded", chosen value, rationale), including curve constants; dropped-data table updated (cargo, sc, tutorial scripts; wall no longer dropped); "Imported levels (20)" wording updated |
-| `FUTURES.md` | Remove shipped: walls/mines, rivers/bridges, rockets/fortress, trolley/rail, resource piles, themes beyond Green/Snow, census, CrossingSource (closed as not built). Keep boosters, tutorials, meta, PvP, cargo, shield/ranged modules, bundle gate, mobile/portrait, hosting, editor items. Add: "import more of TW 24-340" as a deferred idea |
+| `FUTURES.md` | Remove shipped: walls/mines, rivers/bridges, rockets/fortress, resource piles, themes beyond Green/Snow, census. Add one **"Deferred by owner (2026-10-28)"** entry: trolley (ready-gated cart), railway (`RailMove`, rail-mounted buildings), AI rail moves (AiRM, `TryMoveTowerOnRailway`), and the generic `CrossingSource` seam (no second consumer); reference `08-trolley-railway/` as the kept design. TW positions using trolley/railway/AiRM stay importer-blocked. Keep boosters, tutorials, meta, PvP, cargo, shield/ranged modules, bundle gate, mobile/portrait, hosting, editor items. Add: "import more of TW 24-340" as a deferred idea |
 | `CREDITS.md` | Audit only: every file under `apps/web/assets/**` covered (`check:manifest` warning count 0) |
 | `README.md`, `AGENTS.md` | "20-level" -> curated campaign of N levels (20 shipped + selection from TW 24-340), themes list, mechanics list; script inventory current |
 | `tools/README.md` | pool tool (`census`, `--metrics`, `--coverage`), gate timing result, campaign smoke modes |
@@ -74,7 +74,7 @@ Does not own: any rule text or mechanic (02-08 own `GAME_RULES.md` areas; 09 onl
 - Perf/bundle: record main-chunk gzip size and largest level chunk in the PR; **bundle budget gate OUT** unless main chunk regressed >25% vs pre-initiative [W1].
 
 ### R5 Owner acceptance package
-- `owner-pass.md`: header (commit, versions, N, coverage table), section A **one level per element introduction** (base, towers, wall, mine, WT3 artillery, pile, river, ROBS, capture rocket, fortress, rocket tower, trolley, rail, BT1/BT2 where used, each new theme as it first appears), section B **every allowlisted (unsolved-by-proxy) level** (checkbox: winnable / too hard / broken / sign-off), section C visual (theme screenshots vs `ref/`), D picker/save/mobile-touch drag-aim, E sign-off line.
+- `owner-pass.md`: header (commit, versions, N, coverage table), section A **one level per element introduction** (base, towers, wall, mine, WT3 artillery, pile, river, ROBS, capture rocket, fortress, rocket tower, BT1/BT2 where used, each new theme as it first appears), section B **every allowlisted (unsolved-by-proxy) level** (checkbox: winnable / too hard / broken / sign-off), section C visual (theme screenshots vs `ref/`), D picker/save/mobile-touch drag-aim, E sign-off line.
 - Positions come from the generated selection table (display number + TW position), not memory.
 
 ## Architecture
@@ -113,7 +113,7 @@ No code architecture beyond: the pool tool as single source of truth feeding (1)
 - Coverage table: every element >=10 shipped levels (or documented shortfall), spread rule met; each element introduced alone (or exception row).
 - Curve check passes (R1.7) or exceptions listed; display numbering contiguous 1..N; `source.position` present on every level; selection table in LEVELS_GUIDE lists selection, reasons, skipped positions, themes present.
 - `pnpm run ci` green on Node 22 and 24; `validate:levels --all` green or only allowlisted; `levels-lock.json` hashes identical across Node versions; `PARKED` empty; `check:docs`, `check:rules`, `check:manifest` green.
-- `RULES_VERSION` 3.7.0, `BOT_VERSION` 2.7.0 (or documented renumber), content hash matches lock.
+- `RULES_VERSION` = SP07's (indicative 3.6.0), `BOT_VERSION` per merge order (indicative 2.6.0), content hash matches lock.
 - `campaign:verify --sample` green; manual `--all` green; picker/save at N verified.
 - Docs: selection table generated/checked, deviations ledger complete, FUTURES pruned, README/AGENTS/tools README current, CREDITS audit 0 warnings.
 - `owner-pass.md` written with concrete display numbers + positions; unsolved rows all listed.

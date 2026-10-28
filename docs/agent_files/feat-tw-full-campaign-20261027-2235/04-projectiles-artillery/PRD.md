@@ -23,7 +23,7 @@ Does not own: rocket/capture-rocket/fortress behaviour (06/07 define defs on thi
 
 ## Goals / Non-Goals
 Goals: reusable projectile core with a stable consumer interface; artillery faithful to decoded numbers; zero change to existing replays; bounded perf with hundreds of live shells.
-Non-Goals: rage skills (Hail, BurningEarth), shield absorb (5.4, not in scope list), Air/Ground location types, trolley as target (SP08 adds the target type), persistent beams/fire zones, redesigning tower.
+Non-Goals: rage skills (Hail, BurningEarth), shield absorb (5.4, not in scope list), Air/Ground location types, trolley as target (out of scope, deferred by owner), persistent beams/fire zones, redesigning tower.
 
 ## Requirements
 **Rules (GAME_RULES, written first)**
@@ -32,7 +32,7 @@ Non-Goals: rage skills (Hail, BurningEarth), shield absorb (5.4, not in scope li
 - `PRJ-03` blast: closed disc, integer `dx^2+dz^2 <= r^2` in milli-units (reuse `compareRadiusSq`; footprint-aware for buildings as in `shoots`). Hits **enemy-of-owner** targets only (owner check; neutrals are enemies of everyone, matching tower neutral-house rule R-TWR-02). Order inside one impact: troops by `(channelKey, seq)`, then buildings, then elements by index. Damage to troop = `damage` (default shooter hp at launch, frozen in the row); `hp -= damage`, remove at `<= 0` via `killTroop(cause:'blast')`.
 - `ART-01..03` cadence, targeting, effect (below). `damage`, `radius`, `speed`, `firstDelay`, `cooldown`, `detect` are content params.
 **Content/defs**
-- New registry `projectile` (def: `aim`, `speed`, `blastRadius`, `damageMode: 'shooter-hp'|'fixed'`, `hits: ('troop'|'building'|'element'|'trolley')[]`, `visual`). `artillery-shell`: speed 9.5, blast 1.0 [decomp §5.9].
+- New registry `projectile` (def: `aim`, `speed`, `blastRadius`, `damageMode: 'shooter-hp'|'fixed'`, `hits: ('troop'|'building'|'element')[]`, `visual`). `artillery-shell`: speed 9.5, blast 1.0 [decomp §5.9].
 - Unit schema gains optional `modules: { ranged: {...} }`; `ranged` params: `detectRadius 4.0, firstDelay 0.4, cooldown 1.2, projectile: 'artillery-shell'`. Unit `artillery`: speed 5 (TW default; (Risk 2)), hp/atk/def 1/1/1.
 - `house-wt3.json`: clone of wt1 (grows, spawns) with `spawns.unit = artillery`; params per decoded WT3 `ws/cwc/sc` (Risk 3).
 **Sim**: ring gains `rangedCd` column (artillery-only meaningful), hashed in channel digest; new columns (`id, def, owner, srcKind, src, aim, tx, tz, targetId, launchTick, impactTick, damage`) in a fixed-capacity store; capacity overflow = deterministic drop of the **launch** (counter `projDropped`, invariant test) not UB.
@@ -40,6 +40,7 @@ Non-Goals: rage skills (Hail, BurningEarth), shield absorb (5.4, not in scope li
 **Web**: artillery + house-wt3 models from TW; shell sprite/mesh pooled in `fx-pool` (instanced, interpolated from `(launch, impact)`), blast ring fx on `ProjectileImpact`.
 
 ## Architecture
+- **Base derivation (D7).** SP04 owns `projectile-base` (aim path, speed, blast, damage mode, hits); `artillery-shell` `extends` it, and SP06 rocket / capture shot derive from the same base. `house-wt3` `extends` the house base (`house-wt2`/`building-base` + modules), the artillery unit `extends` `unit-base` plus the `ranged` module. Data-driven archetypes + modules, no TS class hierarchy; `extends` from SP02 Task 2a.
 - **Projectile store** `packages/sim/src/projectiles.ts`: struct-of-arrays, kept sorted by append order (ids monotone), impact scan = linear over live rows (cap 512; typical < 50) so no heap/ordering hazards. `launch(state, spec)` and `resolveImpacts(state)` are the **only** consumer API; module files (06/07) call `launch` from their own phase and never touch the store. Pure integers; travel `ceil(distMilli*1000 / speedMilliPerSec) * tickRate` via `idiv`, `checked` math as in `shoots.ts`.
 - **Tick placement**: phase 7 becomes `7a impacts -> 7b tower shots -> 7c ranged launches`. Phase numbers unchanged (SP02 rule 3: stable numbers). SP02's element pass is phase 6, so elements are settled before blasts hit them; a mine triggered this tick (2-tick delayed kill) still resolves via its own timer. Arrivals (8) after blasts: a troop killed by a shell on its arrival tick does not arrive. [design; ordering unverified vs TW, OPEN 5]
 - **Artillery fire (7c)**: the ring is scanned only on channels where `ranged` units exist (per-channel `rangedCount` kept by spawn/removal) -> O(rangedTroops x enemyTroopsInCandidateChannels). Detect = Euclidean distance from artillery position to enemy troop position <= 4.0 (milli, integer sq compare), plus buildings/towers/fortresses of enemies per `_canAttackTypes` (Risk 6). Per volley: one shell per qualifying target, closest first, ties `(owner, seq)`. `rangedCd` decrements 50 ms/tick; fires at `<= 0`; reset to 1200 ms only if >= 1 shell launched (else stays 0 = ready next tick). [decomp: Attack/CooldownTick]
