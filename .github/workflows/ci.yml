@@ -78,3 +78,27 @@ jobs:
       - run: pnpm build:server
       - run: pnpm --filter @node-arena/web exec playwright install --with-deps chromium
       - run: pnpm test:pvp:e2e
+  docker:
+    name: Server Docker build and boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Build image
+        run: docker build -f apps/server/Dockerfile -t node-arena-server:ci .
+      - name: Boot and poll /healthz
+        run: |
+          docker run -d --name na-server -p 8080:8080 -e ALLOW_NO_ORIGIN=1 node-arena-server:ci
+          ok=0
+          for _ in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/healthz || true)
+            if [ "$code" = "200" ]; then ok=1; break; fi
+            sleep 2
+          done
+          if [ "$ok" != "1" ]; then echo "healthz never returned 200 (last: $code)"; exit 1; fi
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker logs na-server || true
+      - name: Stop container
+        if: always()
+        run: docker rm -f na-server || true
