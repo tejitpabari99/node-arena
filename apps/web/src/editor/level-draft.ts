@@ -6,7 +6,8 @@ import { firstUnusedColor, nextPlayerId } from './labels.js';
 type Player = LevelDoc['players'][number];
 export const MAX_AI = 3, MIN_DELAY = 50;
 
-export const toDraft = (doc: LevelDoc): LevelProperties => structuredClone({ name: doc.name, theme: doc.theme, timeLimitSec: doc.timeLimitSec ?? null, players: doc.players });
+export const toDraft = (doc: LevelDoc): LevelProperties => structuredClone({ name: doc.name, theme: doc.theme, timeLimitSec: doc.timeLimitSec ?? null, players: doc.players, objective: doc.objective });
+export const isPvp = (doc: Pick<LevelDoc, 'objective'>) => doc.objective === 'pvp';
 export const aiCount = (players: readonly Player[]) => players.filter(p => p.kind !== 'human').length;
 export const canAddAi = (players: readonly Player[], paletteKeys: readonly string[]) => aiCount(players) < MAX_AI && firstUnusedColor([...players], paletteKeys) !== undefined;
 export const canDeleteAi = (players: readonly Player[], id: string) => aiCount(players) > 1 && players.some(p => p.id === id && p.kind !== 'human');

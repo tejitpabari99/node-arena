@@ -10,6 +10,8 @@ export interface SharePanelProps {
   open: boolean;
   onOpenChange(open: boolean): void;
   savedDoc: LevelDoc | null;
+  /** PvP levels are checked by validate:levels; the proxy Check does not apply. */
+  pvp?: boolean;
   locked: boolean;
   busy: boolean;
   job: 'check' | 'finalize' | null;
@@ -74,8 +76,9 @@ export function SharePanel(p: SharePanelProps) {
       </section>
       <section class="ed-row ed-share-row ed-share-job" data-testid="check-row">
         <div class="ed-share-action"><span>Check</span><span class="ed-share-actions">
-          {checking && <button type="button" class="ed-btn" onClick={p.onCancel}>Cancel</button>}
-          <button type="button" class="ed-btn" disabled={p.busy} onClick={p.onCheck}>{checking && <Spinner />}Check</button>
+          {p.pvp ? <span class="ed-field-hint" data-testid="pvp-check-note">PvP: checked by validate:levels</span> : <>
+            {checking && <button type="button" class="ed-btn" onClick={p.onCancel}>Cancel</button>}
+            <button type="button" class="ed-btn" disabled={p.busy} onClick={p.onCheck}>{checking && <Spinner />}Check</button></>}
         </span></div>
         {hasReport && <button ref={p.detailsRef ?? null} type="button" class="ed-btn ed-btn-ghost ed-share-details" onClick={p.onDetails}>Details</button>}
       </section>

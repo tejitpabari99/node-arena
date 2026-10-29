@@ -4,7 +4,7 @@ import type { LevelDoc } from './document.js';
 import { playerLabel } from './labels.js';
 import { roundCoordinate, type Point, type Selection } from './picking.js';
 export type LibraryItem = 'house-wt1' | 'house-wt2' | 'tower' | 'obstacle-small' | 'obstacle-big';
-export type LevelProperties = Pick<LevelDoc, 'name' | 'theme' | 'timeLimitSec' | 'players'>;
+export type LevelProperties = Pick<LevelDoc, 'name' | 'theme' | 'timeLimitSec' | 'players'> & Partial<Pick<LevelDoc, 'objective'>>;
 export type Clipboard = Pick<LevelDoc, 'buildings' | 'elements'>;
 export type DocOp =
   | { type: 'move-selection'; targets: Selection[]; delta: Point }

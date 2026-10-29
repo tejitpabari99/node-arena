@@ -53,3 +53,16 @@ describe('labels', () => {
     expect(firstUnusedColor(players, ['blue', 'red', 'green'])).toBeUndefined();
   });
 });
+
+import { playerLabel as pl } from '../../src/editor/labels.js';
+import { toDraft as draftOf } from '../../src/editor/level-draft.js';
+import { blankDocument as blank } from '../../src/editor/document.js';
+it('pvp labels players Seat N; toDraft keeps objective and team', () => {
+  const d = { ...blank('na-t', 'grass', 'small'), objective: 'pvp' as const };
+  d.players = d.players.map((p, i) => ({ ...p, team: i })) as typeof d.players;
+  expect(pl(d.players, 'p2', 'pvp')).toBe('Seat 2');
+  expect(pl(d.players, 'p2')).toBe('AI1');
+  const draft = draftOf(d);
+  expect(draft.objective).toBe('pvp');
+  expect(draft.players.map(p => p.team)).toEqual([0, 1]);
+});

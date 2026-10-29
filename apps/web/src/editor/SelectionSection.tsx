@@ -30,7 +30,7 @@ function OwnerGroup({ item }: { item: Building }) {
   return <fieldset aria-label="Owner and level" disabled={locked}>
     <label>Owner<select aria-label="Owner" value={item.owner ?? ''} onChange={event => edit({ type: 'building-properties', id: item.id, value: { owner: event.currentTarget.value || null } })}>
       <option value="">Neutral</option>
-      {doc.players.map(p => <option key={p.id} value={p.id}>{playerLabel(doc.players, p.id)}</option>)}
+      {doc.players.map(p => <option key={p.id} value={p.id}>{playerLabel(doc.players, p.id, doc.objective)}</option>)}
       {item.owner && !doc.players.some(p => p.id === item.owner) && <option value={item.owner}>Unknown owner: {item.owner}</option>}
     </select></label>
     <NumberField label="Level" fieldKey={`${item.id}:level`} value={item.level} spec={{ type: 'integer', minimum: 1, maximum: maxLevel }} commit={(value, merge) => edit({ type: 'building-properties', id: item.id, value: { level: value! } }, merge)} />

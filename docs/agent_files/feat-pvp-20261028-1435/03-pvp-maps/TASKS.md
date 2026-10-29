@@ -16,7 +16,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/03-pvp-maps/PRD.md. Cam
 | 6 | [M2] Duel M level | 5 | done |
 | 7 | [M2] Cross level + 2v2 smoke | 6 | done |
 | 8 | [M2] listPvpMaps helper | 2 | done |
-| 9 | [M2] Editor routing for pvp levels | 2, 8 | todo |
+| 9 | [M2] Editor routing for pvp levels | 2, 8 | done |
 | 10 | [M2] Editor finalize: symmetry + pvp outcomes | 3, 9 | todo |
 
 ## Task 1 — [M1] Symmetry checker + sidecar

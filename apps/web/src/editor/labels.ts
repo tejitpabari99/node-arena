@@ -33,18 +33,19 @@ export function paramLabel(module: string, field: string): { label: string; tool
 }
 
 /** Human, or AI{k} where k is the 1-based position among AI players. Ids stay stable; labels are derived. */
-export function playerLabel(players: Players, id: string): string {
+export function playerLabel(players: Players, id: string, objective?: string): string {
   const player = players.find(p => p.id === id);
+  if (objective === 'pvp' && player) return `Seat ${players.indexOf(player) + 1}`;
   if (!player || player.kind === 'human') return 'Human';
   return `AI${players.filter(p => p.kind !== 'human').findIndex(p => p.id === id) + 1}`;
 }
 
 /** Labels by item id, in doc order: `{Owner} {noun} {n}`; obstacles `{Small|Big} row {n}` per variant. */
-export function itemLabels(doc: Pick<LevelDoc, 'players' | 'buildings' | 'elements'>): Map<string, string> {
+export function itemLabels(doc: Pick<LevelDoc, 'players' | 'buildings' | 'elements'> & { objective?: string }): Map<string, string> {
   const labels = new Map<string, string>(), counts = new Map<string, number>();
   const next = (key: string) => { const n = (counts.get(key) ?? 0) + 1; counts.set(key, n); return n; };
   for (const item of doc.buildings) {
-    const owner = item.owner === null || !doc.players.some(p => p.id === item.owner) ? 'Neutral' : playerLabel(doc.players, item.owner);
+    const owner = item.owner === null || !doc.players.some(p => p.id === item.owner) ? 'Neutral' : playerLabel(doc.players, item.owner, doc.objective);
     const noun = item.archetype === 'tower' ? 'tower' : 'house';
     labels.set(item.id, `${owner} ${noun} ${next(`${owner}|${noun}`)}`);
   }

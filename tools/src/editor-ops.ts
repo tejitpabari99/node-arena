@@ -68,12 +68,17 @@ export async function duplicateEditorLevel(contentDir: string, sourceId: string)
 }
 
 async function save(root: string, id: string, input: unknown, copy: boolean): Promise<EditorSaveResult> {
-  const file = `data/levels/${id}.json`, campaignFile = 'data/campaigns/custom.json';
-  const target = resolve(root, file), campaignTarget = resolve(root, campaignFile);
+  const file = `data/levels/${id}.json`;
+  const target = resolve(root, file);
   // Refuse symlinked parent directories as well as file aliases.
-  for (const path of [dirname(target), dirname(campaignTarget)]) if (await realpath(path) !== path) throw new EditorSaveError(403, 'Save directories must not be symlinks');
-  await regularTarget(target); await regularTarget(campaignTarget);
-  const originalLevel = await optionalText(target), originalCampaign = await optionalText(campaignTarget);
+  for (const path of [dirname(target), resolve(root, 'data/campaigns')]) if (await realpath(path) !== path) throw new EditorSaveError(403, 'Save directories must not be symlinks');
+  await regularTarget(target);
+  const originalLevel = await optionalText(target);
+  // Snapshot both candidate campaign files before validation so concurrent writes are detected.
+  const pvpFile = 'data/campaigns/pvp.json', customFile = 'data/campaigns/custom.json';
+  const [pvpTarget, customTarget] = [resolve(root, pvpFile), resolve(root, customFile)];
+  await regularTarget(pvpTarget); await regularTarget(customTarget);
+  const pvpText = await optionalText(pvpTarget), customText = await optionalText(customTarget);
   const { 'content.json': _meta, ...files } = await loadFiles(root);
   const manifest = JSON.parse(await readFile(new URL('../../apps/web/assets/manifest.json', import.meta.url), 'utf8')) as ManifestV2;
   const options = { themes: Object.keys(manifest.themes), colorKeys: Object.keys(manifest.palettes) };
@@ -82,6 +87,11 @@ async function save(root: string, id: string, input: unknown, copy: boolean): Pr
   const candidate = structuredClone(input);
   if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) delete (candidate as Record<string, unknown>).editorVersion;
   const { level: authored, warnings } = validateEditorDocument(catalog, candidate, id, copy);
+  // PvP maps live in pvp.json (listed there, or authored objective 'pvp'); never custom.json.
+  const listedPvp = pvpText !== undefined && (JSON.parse(pvpText) as NextCampaign).entries.some(entry => entry.level === id);
+  const campaignId = listedPvp || authored.objective === 'pvp' ? 'pvp' : 'custom';
+  const campaignFile = campaignId === 'pvp' ? pvpFile : customFile, campaignTarget = campaignId === 'pvp' ? pvpTarget : customTarget;
+  const originalCampaign = campaignId === 'pvp' ? pvpText : customText;
   const onDisk = originalLevel === undefined ? undefined : JSON.parse(originalLevel) as NextLevel;
   const contentText = (level: NextLevel) => {
     const { editorVersion: _version, ...content } = level;
@@ -93,7 +103,7 @@ async function save(root: string, id: string, input: unknown, copy: boolean): Pr
     authored.editorVersion = `${major}.${minor}.${BigInt(patch!) + 1n}`;
   }
   let campaign: NextCampaign;
-  if (originalCampaign === undefined) campaign = { $schema: '../../schemas/campaign.schema.json', schemaVersion: '2.0.0', id: 'custom', entries: [] };
+  if (originalCampaign === undefined) campaign = { $schema: '../../schemas/campaign.schema.json', schemaVersion: '2.0.0', id: campaignId, entries: [] };
   else campaign = JSON.parse(originalCampaign) as NextCampaign;
   const campaignChanged = !campaign.entries.some(entry => entry.level === id);
   if (campaignChanged) campaign.entries.push({ level: id, position: Math.max(0, ...campaign.entries.map(entry => entry.position)) + 1 });

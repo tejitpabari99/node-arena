@@ -6,7 +6,7 @@ import { playerLabel } from '../../apps/web/src/editor/labels.js';
 export function assertPlayersHaveHouses(catalog: Catalog, level: NextLevel): void {
   const owners = new Set(level.buildings.filter(building => isHouseArchetype(catalog.buildings[building.archetype])).map(building => building.owner));
   const errors = level.players.flatMap((player, index) => owners.has(player.id) ? [] : [{
-    file: `data/levels/${level.id}.json`, pointer: `/players/${index}`, message: `${playerLabel(level.players, player.id)} has no starting house`,
+    file: `data/levels/${level.id}.json`, pointer: `/players/${index}`, message: `${playerLabel(level.players, player.id, level.objective)} has no starting house`,
   }]);
   if (errors.length) throw new ContentLoadError(errors);
 }
