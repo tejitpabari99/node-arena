@@ -8,6 +8,9 @@ import { RateLimiter, type RateAdvice, type RateLimits } from './ratelimit.js';
 export const DEFAULT_INPUT_DELAY = 3;
 export const MIN_INPUT_DELAY = 1;
 export const MAX_INPUT_DELAY = 10;
+/** Log slots kept free for system `Forfeit` appends (>= 4 seats); callers size seat/bot budgets as `cmdCap - reserve`. */
+export const SYSTEM_CMD_RESERVE = 8;
+export type ForfeitCommand = Extract<Command, { type: 'Forfeit' }>;
 
 export interface LockstepServerOptions {
   /** Seat kind per player index. Only 'human' seats may submit; bot cmds arrive via `closeTick`. */
@@ -77,12 +80,13 @@ export class LockstepServer {
   }
 
   /**
-   * Close tick `nextTick`: buffered human cmds (arrival order) then `botCmds` (already player-stamped, they land on
+   * Close tick `nextTick`: `systemCmds` (server-issued `Forfeit`s, sorted ascending by seat, applied first), buffered
+   * human cmds (arrival order) then `botCmds` (already player-stamped, they land on
    * this tick with no delay). Only cmds that were logged are returned, so the log, the referee and every client
    * always see the identical array. Advances `nextTick`. `dropped` counts cmds the log refused (`firstDrop` = first
    * reason); non-zero means the log is saturated and the caller (SP04) should abort the room.
    */
-  closeTick(botCmds: readonly Command[] = []): { n: number; cmds: Command[]; dropped: number; firstDrop?: DropReason } {
+  closeTick(botCmds: readonly Command[] = [], systemCmds: readonly ForfeitCommand[] = []): { n: number; cmds: Command[]; dropped: number; firstDrop?: DropReason } {
     const n = this.next;
     const humans = this.buffer.get(n) ?? [];
     this.buffer.delete(n);
@@ -90,7 +94,8 @@ export class LockstepServer {
     const cmds: Command[] = [];
     let dropped = 0;
     let firstDrop: DropReason | undefined;
-    for (const cmd of [...humans, ...botCmds]) {
+    const system = [...systemCmds].sort((a, b) => a.player - b.player);
+    for (const cmd of [...system, ...humans, ...botCmds]) {
       const r = this.log.append(n, cmd);
       if (r.ok) cmds.push(cmd);
       else { dropped++; if (firstDrop === undefined) firstDrop = r.reason; }

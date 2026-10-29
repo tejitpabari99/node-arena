@@ -6,13 +6,17 @@ import type { EndOutcome } from './outcome.js';
 export const ERROR_CODES = [
   'bad-json', 'too-large', 'bad-message', 'unknown-type', 'version-mismatch', 'not-authed', 'not-in-room',
   'not-host', 'not-your-seat', 'rate-limited', 'room-full', 'room-not-found', 'spectators-full', 'bad-lobby',
-  'not-ready', 'match-in-progress', 'desync', 'internal',
+  'not-ready', 'match-in-progress', 'desync', 'internal', 'paused', 'no-match',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
 export type Versions = { rules: string; schema: string; content: string; bot: string };
 /** Client command: server fills `player`, so it is absent on the wire. */
-export type WireCommand = Command extends infer C ? (C extends Command ? Omit<C, 'player'> : never) : never;
+export type WireCommandType = 'DrawLine' | 'CutLine';
+/** Only seat commands cross the wire from a client; `Forfeit` is server-issued (system) only. */
+export type WireCommand = Command extends infer C ? (C extends { type: WireCommandType } ? Omit<C, 'player'> : never) : never;
+export type PauseReason = 'manual' | 'disconnect';
+export type PauseHold = { player: number; reason: PauseReason; connected: boolean; since: number };
 export type SeatKind = 'human' | 'bot' | 'empty';
 export type SeatStatus = 'connected' | 'grace' | 'bot';
 export type SeatConfig = { kind: SeatKind; difficulty?: string; team: number };
@@ -35,10 +39,13 @@ export type CmdMsg = { t: 'cmd'; c: WireCommand; cid?: number };
 export type HashMsg = { t: 'hash'; tick: number; h: string };
 export type ResyncMsg = { t: 'resync' };
 export type PingMsg = { t: 'ping'; id: number };
+export type PauseMsg = { t: 'pause' };
+export type ResumeMsg = { t: 'resume'; epoch: number };
+export type QuitMsg = { t: 'quit' };
 
 export type ClientMessage =
   | HelloMsg | RoomCreateMsg | RoomJoinMsg | RoomLeaveMsg | LobbyUpdateMsg | LobbyReadyMsg
-  | LobbyStartMsg | RematchMsg | CmdMsg | HashMsg | ResyncMsg | PingMsg;
+  | LobbyStartMsg | RematchMsg | CmdMsg | HashMsg | ResyncMsg | PingMsg | PauseMsg | ResumeMsg | QuitMsg;
 
 // Server -> Client
 export type WelcomeMsg = {
@@ -60,11 +67,17 @@ export type DesyncMsg = { t: 'desync'; tick: number; serverHash: string };
 export type SeatStatusMsg = { t: 'seat.status'; player: number; status: SeatStatus; graceMs?: number };
 export type EndMsg = { t: 'end'; outcome: EndOutcome; finalTick: number; finalHash: string };
 export type PongMsg = { t: 'pong'; id: number; tick: number };
+/** Full pause snapshot (SP07). `tick` = frozen tick (next to close); `budgets[i]` ms remaining, null = bot/unlimited. */
+export type PauseStateMsg = {
+  t: 'pause.state'; epoch: number; paused: boolean; tick: number; unlimited: boolean;
+  holds: PauseHold[]; budgets: (number | null)[];
+};
+export type StartCancelMsg = { t: 'start.cancel'; matchId: string };
 export type ErrorMsg = { t: 'error'; code: ErrorCode; detail?: string };
 
 export type ServerMessage =
   | WelcomeMsg | RoomJoinedMsg | LobbyStateMsg | RoomClosedMsg | StartMsg | TickMsg | CatchupMsg
-  | TicksMsg | DesyncMsg | SeatStatusMsg | EndMsg | PongMsg | ErrorMsg;
+  | TicksMsg | DesyncMsg | SeatStatusMsg | EndMsg | PongMsg | PauseStateMsg | StartCancelMsg | ErrorMsg;
 
 export type ClientMessageType = ClientMessage['t'];
 export type ServerMessageType = ServerMessage['t'];

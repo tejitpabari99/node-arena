@@ -49,7 +49,7 @@ test('arrival order within a tick', () => {
   const s = mk(1);
   s.submit(1, draw(1, 2)); s.submit(0, draw(3, 4)); s.submit(1, draw(5, 6));
   s.closeTick();
-  assert.deepEqual(s.closeTick().cmds.map((c) => [c.player, c.from]), [[1, 1], [0, 3], [1, 5]]);
+  assert.deepEqual(s.closeTick().cmds.map((c) => [c.player, (c as { from: number }).from]), [[1, 1], [0, 3], [1, 5]]);
 });
 
 test('non-human seats cannot submit', () => {

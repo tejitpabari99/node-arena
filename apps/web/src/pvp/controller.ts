@@ -51,6 +51,8 @@ export const ERROR_STRINGS: Record<ErrorCode, string> = {
   'match-in-progress': 'Match already in progress.',
   'desync': 'Game state desynced from the server.',
   'internal': 'Server error. Try again.',
+  'paused': 'The match is paused.',
+  'no-match': 'No match is running.',
 };
 export const errorString = (code: string): string => (ERROR_CODES as readonly string[]).includes(code) ? ERROR_STRINGS[code as ErrorCode] : 'Something went wrong.';
 

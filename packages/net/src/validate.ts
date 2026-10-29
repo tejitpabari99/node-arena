@@ -2,7 +2,7 @@ import type { Command } from '@node-arena/defs';
 import { byteSize } from './codec.js';
 import {
   ERROR_CODES, type ClientMessage, type ErrorCode, type LobbySeat, type SeatConfig, type SeatKind, type SeatStatus,
-  type ServerMessage, type StartSeat, type TickCmds, type Versions, type WireCommand,
+  type PauseHold, type ServerMessage, type StartSeat, type TickCmds, type Versions, type WireCommand,
 } from './messages.js';
 import { HASH_INTERVAL } from './version.js';
 
@@ -95,7 +95,13 @@ function wireCommand(v: unknown): WireCommand {
 /** Full command (server -> client): tolerant of unknown fields. */
 function command(v: unknown): Command {
   const o = rec(v);
+  // System command: server-issued only; never accepted from a client (wireCommand is DrawLine/CutLine only).
+  if (o.type === 'Forfeit') return { type: 'Forfeit', player: int(o.player) };
   return { type: oneOf(o.type, ['DrawLine', 'CutLine'] as const), player: int(o.player), from: int(o.from), to: int(o.to) };
+}
+function pauseHold(v: unknown): PauseHold {
+  const o = rec(v);
+  return { player: int(o.player), reason: oneOf(o.reason, ['manual', 'disconnect'] as const), connected: bool(o.connected), since: int(o.since) };
 }
 function tickCmds(v: unknown): TickCmds {
   const o = rec(v);
@@ -128,6 +134,7 @@ const CLIENT_FIELDS: Record<string, readonly string[]> = {
   'room.create': ['t'], 'room.join': ['t', 'code', 'role'], 'room.leave': ['t'],
   'lobby.update': ['t', 'levelId', 'seats'], 'lobby.ready': ['t', 'ready'], 'lobby.start': ['t'], rematch: ['t'],
   cmd: ['t', 'c', 'cid'], hash: ['t', 'tick', 'h'], resync: ['t'], ping: ['t', 'id'],
+  pause: ['t'], resume: ['t', 'epoch'], quit: ['t'],
 };
 
 function clientMsg(o: Rec): ClientMessage {
@@ -159,13 +166,16 @@ function clientMsg(o: Rec): ClientMessage {
       return { t, tick, h: hash16(o.h) };
     }
     case 'resync': return { t };
+    case 'pause': return { t };
+    case 'resume': return { t, epoch: int(o.epoch) };
+    case 'quit': return { t };
     default: return { t: 'ping', id: int(o.id) };
   }
 }
 
 const SERVER_TYPES = [
   'welcome', 'room.joined', 'lobby.state', 'room.closed', 'start', 'tick', 'catchup', 'ticks', 'desync',
-  'seat.status', 'end', 'pong', 'error',
+  'seat.status', 'end', 'pong', 'pause.state', 'start.cancel', 'error',
 ] as const;
 
 function serverMsg(o: Rec): ServerMessage {
@@ -223,6 +233,13 @@ function serverMsg(o: Rec): ServerMessage {
         },
       };
     }
+    case 'pause.state':
+      return {
+        t: 'pause.state', epoch: int(o.epoch), paused: bool(o.paused), tick: int(o.tick), unlimited: bool(o.unlimited),
+        holds: arr(o.holds, 4, pauseHold),
+        budgets: arr(o.budgets, 4, (x) => (x === null ? null : typeof x === 'number' && Number.isInteger(x) && x >= 0 && x <= 30000 ? x : bad())),
+      };
+    case 'start.cancel': return { t: 'start.cancel', matchId: str(o.matchId) };
     case 'pong': return { t: 'pong', id: int(o.id), tick: int(o.tick) };
     case 'error':
       return withOpt(
