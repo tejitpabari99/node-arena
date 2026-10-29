@@ -15,7 +15,7 @@ function driverSetup() {
   const view = { tick: 0, over: false };
   const sim = { view, step() { view.tick++; return []; }, hash: () => `h${view.tick}` } as unknown as Sim;
   const sent: ClientMessage[] = [], errs: string[] = [];
-  const d = new NetDriver({ sim, client: new LockstepClient(0), send: (m) => sent.push(m), now: () => 0, raf: () => 0, caf: () => {}, onProtocolError: (r, m) => errs.push(`${r}:${m.t}`) });
+  const d = new NetDriver({ sim, client: new LockstepClient(0), send: (m) => sent.push(m), now: () => 0, raf: () => 0, caf: () => {}, });
   return { d, view, sent, errs, tick: (n: number) => d.push({ t: 'tick', n }) };
 }
 
@@ -41,14 +41,17 @@ describe('NetDriver pause freeze', () => {
     s.d.advance(); s.d.advance();
     expect(s.view.tick).toBe(2);
   });
-  it('ticks past the frozen tick are a protocol error and not queued', () => {
+  it('frames past the frozen tick are queued, not stepped, then stepped on release', () => {
     const s = driverSetup();
     s.d.setFrozen(0);
     s.tick(0);
-    expect(s.errs).toEqual(['past-frozen:tick']);
-    expect(s.d.queued).toBe(0);
-    s.d.push({ t: 'ticks', from: 0, to: 2, cmds: [] });
-    expect(s.errs).toHaveLength(2);
+    s.d.push({ t: 'ticks', from: 1, to: 3, cmds: [] });
+    expect(s.d.queued).toBe(3);
+    expect(s.d.advance()).toBe(0);
+    expect(s.view.tick).toBe(0);
+    s.d.setFrozen(null);
+    s.d.advance(); s.d.advance();
+    expect(s.view.tick).toBe(3);
   });
   it('does not submit cmds while frozen', () => {
     const s = driverSetup();
@@ -121,11 +124,69 @@ describe('controller pause.state', () => {
     g.push(ps({ epoch: 1, tick: 0 }));
     expect(g.ctl.snapshot().pause).toMatchObject({ epoch: 1 });
   });
-  it('queued tick past the frozen tick surfaces sync-lost', async () => {
+  it('terminal forfeit while paused (server order): no sync-lost, final hash matches end', async () => {
     const g = game(); g.push(g.start()); await flush();
     const ev: string[] = []; g.ctl.subscribePvpEvents((e) => ev.push(e.t));
-    g.push(ps({ tick: 0 })); g.push({ t: 'tick', n: 0 });
-    expect(ev).toEqual(['sync-lost']);
+    for (let i = 0; i < 3; i++) g.push({ t: 'tick', n: i });
+    g.ctl.driver!.advance(); g.ctl.driver!.advance();
+    g.push(ps({ epoch: 1, tick: 3 }));
+    g.ctl.driver!.advance();
+    expect(g.view.tick).toBe(3);
+    g.push({ t: 'tick', n: 3, c: [{ type: 'Forfeit', player: 1 }] } as never);
+    expect(g.ctl.driver!.advance()).toBe(0);
+    expect(g.view.tick).toBe(3);
+    g.push(ps({ epoch: 2, paused: false, tick: 3, holds: [] }));
+    g.push({ t: 'end', outcome: { kind: 'win', winner: 0 } as never, finalTick: 4, finalHash: 'h4' });
+    g.ctl.driver!.advance();
+    expect(ev).toEqual([]);
+    expect(g.view.tick).toBe(4);
+    expect(g.ctl.driver!.sim.hash()).toBe('h4');
+    expect(g.ctl.snapshot().error).toBeNull();
+    expect(g.ctl.snapshot().screen).toBe('result');
+  });
+  it('end while still frozen releases the freeze and steps the queued tail', async () => {
+    const g = game(); g.push(g.start()); await flush();
+    g.push({ t: 'tick', n: 0 }); g.ctl.driver!.advance();
+    g.push(ps({ tick: 1 }));
+    g.push({ t: 'tick', n: 1 });
+    g.push({ t: 'end', outcome: { kind: 'draw' } as never, finalTick: 2, finalHash: 'h2' });
+    expect(g.ctl.driver!.frozenTick).toBeNull();
+    g.ctl.driver!.advance();
+    expect(g.ctl.snapshot().screen).toBe('result');
+  });
+  it('pause/resume/quit senders: seated, state-guarded, resume carries epoch', async () => {
+    const g = game();
+    g.ctl.pause(); g.ctl.quit(); g.ctl.resume();
+    expect(g.sent.filter((m) => m.t !== 'room.create')).toEqual([]);
+    g.push(g.start()); await flush();
+    g.push({ t: 'tick', n: 0 }); g.ctl.driver!.advance();
+    g.ctl.pause(); g.ctl.resume();
+    expect(g.sent.filter((m) => m.t !== 'room.create')).toEqual([{ t: 'pause' }]);
+    g.push(ps({ epoch: 7, tick: 1 }));
+    g.ctl.resume(); g.ctl.quit();
+    expect(g.sent.filter((m) => m.t !== 'room.create').slice(1)).toEqual([{ t: 'resume', epoch: 7 }, { t: 'quit' }]);
+  });
+  it('spectator sends nothing', async () => {
+    const g = game(); g.push({ t: 'room.joined', code: 'ABCD', you: { seat: null, host: false } });
+    g.push({ ...(g.start() as object), youPlayer: null } as never); await flush();
+    g.push({ t: 'tick', n: 0 }); g.ctl.driver!.advance();
+    g.ctl.pause(); g.ctl.quit(); g.ctl.resume();
+    expect(g.sent.filter((m) => m.t !== 'room.create')).toEqual([]);
+  });
+  it('start.cancel discards the match and returns to lobby; a later start works', async () => {
+    const g = game(); g.push(g.start('m1')); await flush();
+    const d = g.ctl.driver!;
+    expect(g.ctl.snapshot().screen).toBe('countdown');
+    g.push({ t: 'start.cancel', matchId: 'other' });
+    expect(g.ctl.snapshot().screen).toBe('countdown');
+    g.push({ t: 'start.cancel', matchId: 'm1' });
+    expect(g.ctl.snapshot()).toMatchObject({ screen: 'lobby', start: null, pause: null });
+    expect(g.ctl.driver).toBeNull();
+    expect(d.advance()).toBe(0);
+    g.push(g.start('m2')); await flush();
+    expect(g.ctl.snapshot()).toMatchObject({ screen: 'countdown' });
+    expect(g.ctl.snapshot().start?.matchId).toBe('m2');
+    expect(g.ctl.driver).not.toBe(d);
   });
 });
 

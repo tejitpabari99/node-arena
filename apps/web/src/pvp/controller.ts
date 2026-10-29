@@ -184,7 +184,6 @@ export function createPvpController(options: PvpOptions) {
           checkResult();
         },
         onFrame: (update) => { if (gen === generation) try { runtime?.frame(update); } catch (err) { console.error('[pvp] frame failed', err); } },
-        onProtocolError: (reason, msg) => { markSyncLost(gen, `${reason} ${msg.t}`); },
         onPushError: (result) => {
           if (gen !== generation) return;
           console.warn('[pvp] tick stream error', result);
@@ -251,12 +250,20 @@ export function createPvpController(options: PvpOptions) {
         publish({ pause: toPauseView(m, now()) });
         break;
       }
+      case 'start.cancel':
+        // Countdown cancelled server-side: discard sim/runtime/lockstep; the following lobby.state refreshes the lobby.
+        if (state.start?.matchId !== m.matchId || state.end) break;
+        clearMatch();
+        syncLost = false;
+        publish({ screen: 'lobby', start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null });
+        break;
       case 'seat.status':
         publish({ seatStatus: { ...state.seatStatus, [m.player]: m.graceMs === undefined ? { status: m.status } : { status: m.status, graceMs: m.graceMs } } });
         break;
       case 'end': {
         if (!driver || state.end) break;
         const gen = generation;
+        driver.setFrozen(null); // terminal forfeit while paused: step the queued tail so the final hash matches
         publish({ end: m });
         if (driver.sim.view.over || driver.tick >= m.finalTick) finishResult(gen);
         else fallbackTimer = setTimer(() => { fallbackTimer = null; finishResult(gen); }, options.resultFallbackMs ?? RESULT_FALLBACK_MS);
@@ -312,6 +319,12 @@ export function createPvpController(options: PvpOptions) {
     maps(): PvpMapInfo[] { if (options.maps) return options.maps(); const c = loaded(); return c ? listPvpMaps(c) : []; },
     /** Estimated remaining pause budget (ms) per seat now (display only; null = bot/unlimited). */
     pauseRemaining(at: number = now()) { return pauseRemaining(state.pause, at); },
+    /** Seated player opens a manual pause hold (server validates budget/state). */
+    pause() { if (state.screen === 'playing' && state.seat !== null) dispatch({ t: 'pause' }); },
+    /** Owner releases own hold; carries the epoch of the snapshot the UI showed. */
+    resume() { const p = state.pause; if (state.screen === 'playing' && state.seat !== null && p?.paused) dispatch({ t: 'resume', epoch: p.epoch }); },
+    /** Confirmed forfeit (running) or countdown cancel. The UI must confirm first. */
+    quit() { if ((state.screen === 'playing' || state.screen === 'countdown') && state.seat !== null) dispatch({ t: 'quit' }); },
     get connection() { return conn; },
     get welcomed() { return welcomed; },
     open() { if (disposed || state.screen !== 'idle') return; publish({ screen: 'menu', error: null }); },

@@ -25,8 +25,6 @@ export interface NetDriverOptions {
   /** Spectator: never sends hash or cmd (server rejects both with not-your-seat). */
   spectator?: boolean;
   onPushError?: (result: Extract<PushResult, { ok: false }>, msg: ServerMessage) => void;
-  /** A tick/ticks/catchup reaching past the frozen tick while paused (protocol error; message is dropped, not queued). */
-  onProtocolError?: (reason: 'past-frozen', msg: ServerMessage) => void;
 }
 
 /** Server-paced MatchDriver: steps only on ticks pushed from the socket; no pause, speed or hidden handling. */
@@ -66,7 +64,7 @@ export class NetDriver implements MatchDriver {
   }
   /** Server-frozen tick (SP07 pause) or null; stepping holds at `sim.view.tick === frozenTick`. */
   get frozenTick(): number | null { return this.frozen; }
-  /** Freeze at `tick` (pause.state paused) or release with null. Does not touch the queue. */
+  /** Freeze at `tick` (pause.state paused) or release with null. Frames beyond the frozen tick (the terminal-forfeit tick the server closes before its final pause.state) stay queued, unstepped, until released. */
   setFrozen(tick: number | null): void { this.frozen = tick; }
   private canStep(): boolean { return this.frozen === null || this.o.sim.view.tick < this.frozen; }
   get alpha(): number {
@@ -77,19 +75,11 @@ export class NetDriver implements MatchDriver {
   /** Feed a server message from the socket handler (not rAF). tick/ticks/catchup are queued. */
   push(msg: ServerMessage): PushResult {
     if (this.disposed) return { ok: true };
-    if (this.frozen !== null && this.pastFrozen(msg)) { this.o.onProtocolError?.('past-frozen', msg); return { ok: true }; }
     const r = this.o.client.push(msg);
     if (!r.ok) this.o.onPushError?.(r, msg);
     else if (msg.t === 'catchup') this.awaitingDone = !msg.done;
     this.updateCatchup();
     return r;
-  }
-
-  private pastFrozen(msg: ServerMessage): boolean {
-    const f = this.frozen!;
-    if (msg.t === 'tick') return msg.n >= f;
-    if (msg.t === 'ticks' || msg.t === 'catchup') return msg.to > f;
-    return false;
   }
 
   /** Sends `cmd` without `player`/tick; server stamps both. Returns the wire message. */

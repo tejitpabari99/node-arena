@@ -15,7 +15,7 @@ import { PvpHud } from '../../src/ui/pvp/PvpHud';
 // Node-only component tests inspect the first render before effects subscribe.
 vi.mock('preact/hooks', () => ({
   useState: (initial: unknown) => [initial, () => {}],
-  useEffect: () => {}, useLayoutEffect: () => {},
+  useEffect: () => {}, useLayoutEffect: () => {}, useRef: (v: unknown) => ({ current: v }),
 }));
 import { createIdentity } from '../../src/net/identity';
 
@@ -321,8 +321,19 @@ describe('PvpController match lifecycle', () => {
     (leave.props.onClick as () => void)();
     expect(h.ctl.snapshot().screen).toBe('menu'); expect(h.sent.at(-1)).toEqual({ t: 'room.leave' });
   });
-  it('Esc menu Leave component returns to the online menu', async () => {
+  it('seated Leave asks confirmation (no immediate leave); Yes sends quit', async () => {
     const g = game(); g.c.push(startMsg()); await flush();
+    g.c.push(g.tickMsg(0)); g.ctl.driver!.advance();
+    const node = PvpLayer({ pvp: g.ctl })!;
+    const hud = find((node.type as unknown as (props: unknown) => unknown)(node.props), n => n.type === PvpHud as unknown)[0]!;
+    const p = hud.props as unknown as Parameters<typeof PvpHud>[0];
+    p.onLeave();
+    expect(g.ctl.snapshot().screen).toBe('playing'); expect(g.sent.some(m => m.t === 'room.leave')).toBe(false);
+    p.onQuitNo!(); expect(g.sent.some(m => m.t === 'quit')).toBe(false);
+    p.onQuitYes!(); expect(g.sent.at(-1)).toEqual({ t: 'quit' }); expect(g.ctl.snapshot().screen).toBe('playing');
+  });
+  it('Esc menu Leave component returns to the online menu (spectator)', async () => {
+    const g = game(); g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: null, host: false } }); g.c.push(startMsg()); await flush();
     g.c.push(g.tickMsg(0)); g.ctl.driver!.advance();
     const node = PvpLayer({ pvp: g.ctl })!;
     const playing = (node.type as unknown as (props: unknown) => unknown)(node.props);

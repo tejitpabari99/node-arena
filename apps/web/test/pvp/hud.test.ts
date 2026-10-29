@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { VNode } from 'preact';
-import { PvpHud, formatTimer, type PvpHudProps } from '../../src/ui/pvp/PvpHud';
+import { PvpHud, buildPauseUi, formatTimer, type PvpHudProps } from '../../src/ui/pvp/PvpHud';
 import { Toast, DESYNC_TOAST } from '../../src/ui/pvp/Toast';
 import { BattlePopup } from '../../src/ui/PausePopup';
 import { OwnershipBar } from '../../src/ui/OwnershipBar';
@@ -88,5 +88,51 @@ describe('SeatLegend (SP05 T12)', () => {
     const spans = find(bar, (n) => n.type === 'span');
     expect(spans.map((s) => s.props['data-ownership-player'])).toEqual([0, 1, 2]);
     expect(spans.map((s) => s.props.class)).toEqual([undefined, undefined, 'team-gap']);
+  });
+});
+
+const pv = (o: Record<string, unknown> = {}) => ({ epoch: 3, paused: true, tick: 5, unlimited: false, holds: [{ player: 0, reason: 'manual' as const, connected: true, since: 0 }], budgets: [30000, 20000], receivedAt: 0, ...o });
+const nicks = { 0: 'Ann', 1: 'Bob' };
+describe('pause UI', () => {
+  it('buildPauseUi: owner sees hold + resume; remaining; unlimited hides countdown; spectator none', () => {
+    const own = buildPauseUi(pv(), [25000, 20000], 0, nicks, false);
+    expect(own).toMatchObject({ paused: true, ownHold: true, canPause: false, holds: [{ player: 0, nick: 'Ann', reason: 'manual', remainingMs: 25000 }] });
+    const other = buildPauseUi(pv(), [25000, 20000], 1, nicks, false);
+    expect(other).toMatchObject({ ownHold: false, canPause: true });
+    expect(buildPauseUi(pv({ unlimited: true }), [null, null], 1, nicks, false).holds[0]!.remainingMs).toBeNull();
+    expect(buildPauseUi(pv(), [25000, 20000], null, nicks, false)).toMatchObject({ ownHold: false, canPause: false });
+    expect(buildPauseUi(null, [], 0, nicks, false)).toMatchObject({ paused: false, canPause: true });
+    expect(buildPauseUi(null, [0, 5], 0, nicks, false).canPause).toBe(false); // 0 balance
+    expect(buildPauseUi(null, [100, 5], 0, nicks, true).canPause).toBe(false); // eliminated
+  });
+  it('Pause button: players only, disabled when not eligible', () => {
+    const onPause = vi.fn();
+    const ui = buildPauseUi(null, [100, 100], 0, nicks, false);
+    const b = byId(PvpHud(props({ pause: ui, onPause })), 'pvp-pause')!;
+    expect(b.props.disabled).toBe(false); (b.props.onClick as () => void)(); expect(onPause).toHaveBeenCalledOnce();
+    expect(byId(PvpHud(props({ pause: { ...ui, canPause: false }, onPause })), 'pvp-pause')!.props.disabled).toBe(true);
+    expect(byId(PvpHud(props({ seat: null, pause: ui, onPause })), 'pvp-pause')).toBeUndefined();
+  });
+  it('overlay lists owner/reason/remaining; Resume only for owner; unlimited has no countdown', () => {
+    const onResume = vi.fn();
+    const mk = (seat: number | null, p = pv(), rem: (number | null)[] = [25000, 20000]) => PvpHud(props({ seat, pause: buildPauseUi(p, rem, seat, nicks, false), onResume }));
+    const v = mk(0);
+    expect(text(byId(v, 'pvp-pause-hold-0'))).toBe('Ann paused 0:25');
+    (byId(v, 'pvp-resume')!.props.onClick as () => void)(); expect(onResume).toHaveBeenCalledOnce();
+    expect(byId(mk(1), 'pvp-resume')).toBeUndefined();
+    expect(byId(mk(null), 'pvp-resume')).toBeUndefined();
+    expect(byId(mk(1, pv({ unlimited: true }), [null, null]), 'pvp-pause-remaining-0')).toBeUndefined();
+    expect(text(byId(mk(1, pv({ holds: [{ player: 0, reason: 'disconnect', connected: false, since: 0 }] })), 'pvp-pause-hold-0'))).toContain('disconnected');
+    expect(byId(PvpHud(props({ pause: buildPauseUi(null, [], 0, nicks, false) })), 'pvp-pause-overlay')).toBeUndefined();
+  });
+  it('countdown at 0 renders 0:00 and nothing else changes', () => {
+    const v = PvpHud(props({ pause: buildPauseUi(pv(), [0, 20000], 1, nicks, false) }));
+    expect(text(byId(v, 'pvp-pause-remaining-0'))).toBe('0:00');
+  });
+  it('quit confirm: Yes/No wired; absent by default', () => {
+    expect(byId(PvpHud(props()), 'pvp-quit-yes')).toBeUndefined();
+    const y = vi.fn(), n = vi.fn(), v = PvpHud(props({ confirmQuit: true, onQuitYes: y, onQuitNo: n }));
+    (byId(v, 'pvp-quit-yes')!.props.onClick as () => void)(); (byId(v, 'pvp-quit-no')!.props.onClick as () => void)();
+    expect(y).toHaveBeenCalledOnce(); expect(n).toHaveBeenCalledOnce();
   });
 });
