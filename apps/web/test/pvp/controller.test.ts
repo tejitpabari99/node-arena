@@ -41,11 +41,11 @@ function fake() {
   };
   return { c, sent, isClosed: () => closed, retried: () => retried };
 }
-function setup(serverUrl: string | null = 'ws://x') {
+function setup(serverUrl: string | null = 'ws://x', clientVersions = versions) {
   const f = fake();
   const urls: string[] = [];
   const identity = createIdentity({ local: null, session: null });
-  const ctl = createPvpController({ identity, serverUrl, versions, createSocket: () => { throw new Error('no'); }, createConnection: (o) => { urls.push(o.url); return f.c; } });
+  const ctl = createPvpController({ identity, serverUrl, versions: clientVersions, createSocket: () => { throw new Error('no'); }, createConnection: (o) => { urls.push(o.url); return f.c; } });
   return { ctl, ...f, urls };
 }
 const welcome: ServerMessage = { t: 'welcome', pv: 1, playerId: 'p', serverVersions: versions };
@@ -169,7 +169,7 @@ describe('PvpController lobby flow', () => {
     const g = setup(); g.ctl.open(); g.ctl.create(); g.c.setState('superseded');
     expect(g.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'Opened in another tab.' });
     const r = setup(); r.ctl.open(); r.ctl.create(); r.c.setState('refused');
-    expect(r.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'New version: reload the page.' });
+    expect(r.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'A newer version of Node Arena is available - reload' });
   });
   it('no server url: create is a no-op; setNick persists via identity; subscribe notifies', () => {
     const h = setup(null); h.ctl.open(); h.ctl.create(); expect(h.ctl.snapshot().screen).toBe('menu');
@@ -387,4 +387,40 @@ describe('PvpController match lifecycle', () => {
     expect(m.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'Game content differs from the server. Reload to update.' });
     expect(m.sent.at(-1)).toEqual({ t: 'room.leave' }); expect(m.simArgs).toEqual([]);
   });
+});
+
+
+it('version refusal keeps a reload action reachable in the menu', () => {
+  const h = setup(); h.ctl.open(); h.ctl.create(); h.c.setState('refused');
+  expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', conn: 'refused', error: 'A newer version of Node Arena is available - reload' });
+});
+
+
+it('reload rechecks a mismatch, blocks room actions on repeat refusal, and recovers when compatible', () => {
+  const entries = new Map<string, string>();
+  vi.stubGlobal('sessionStorage', { getItem: (k: string) => entries.get(k) ?? null, setItem: (k: string, v: string) => entries.set(k, v), removeItem: (k: string) => entries.delete(k) });
+  try {
+    const first = setup(); first.ctl.open(); first.ctl.create(); first.c.setState('refused'); first.ctl.dispose();
+    const otherServer = setup('ws://different'); otherServer.ctl.open(); expect(otherServer.urls).toEqual([]);
+    const otherBuild = setup('ws://x', { ...versions, rules: 'new' }); otherBuild.ctl.open(); expect(otherBuild.urls).toEqual([]);
+    const linked = setup(); linked.ctl.setNick('Saved'); linked.ctl.openLink({ code: 'ABCD', role: 'play' }); linked.c.push(welcome);
+    expect(linked.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'play' }]);
+    linked.ctl.dispose();
+    // Recreate the failed-build marker after the successful link handshake.
+    const rejected = setup(); rejected.ctl.open(); rejected.ctl.create(); rejected.c.setState('refused'); rejected.ctl.dispose();
+    const reloaded = setup(); reloaded.ctl.open();
+    expect(reloaded.ctl.snapshot().screen).toBe('connecting');
+    reloaded.c.setState('refused');
+    expect(reloaded.ctl.snapshot()).toMatchObject({ screen: 'menu', pvpUnavailable: true, error: 'PvP unavailable: this build differs from the server' });
+    reloaded.ctl.create(); reloaded.ctl.join('ABCD');
+    expect(reloaded.urls).toHaveLength(1);
+    reloaded.ctl.dispose();
+    const compatible = setup(); compatible.ctl.open(); compatible.c.push(welcome);
+    expect(compatible.ctl.snapshot()).toMatchObject({ screen: 'menu', pvpUnavailable: false, error: null });
+    expect(compatible.sent).toEqual([]); // compatibility probe never creates a room
+    compatible.ctl.create(); compatible.c.push(welcome);
+    expect(compatible.sent).toEqual([{ t: 'room.create' }]);
+    compatible.ctl.dispose();
+    const next = setup(); next.ctl.open(); expect(next.urls).toEqual([]);
+  } finally { vi.unstubAllGlobals(); }
 });

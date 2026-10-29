@@ -69,7 +69,7 @@ describe('ConnBanner', () => {
     const rc = ConnBanner({ conn: 'reconnecting', onRetry: retry })!; expect(JSON.stringify(rc.props.children)).toContain('Reconnecting');
     const lost = ConnBanner({ conn: 'lost', onRetry: retry })!;
     (find(lost, (n) => n.props['data-testid'] === 'banner-retry')[0]!.props.onClick as () => void)(); expect(retry).toHaveBeenCalledOnce();
-    const ref = ConnBanner({ conn: 'refused', onRetry: retry })!; expect(JSON.stringify(ref.props.children)).toContain('New version');
+    const ref = ConnBanner({ conn: 'refused', onRetry: retry })!; expect(JSON.stringify(ref.props.children)).toContain('A newer version of Node Arena is available - reload');
     expect(find(ref, (n) => n.props['data-testid'] === 'banner-retry')).toHaveLength(0);
     expect(JSON.stringify(ConnBanner({ conn: 'superseded', onRetry: retry })!.props.children)).toContain('Opened in another tab');
   });

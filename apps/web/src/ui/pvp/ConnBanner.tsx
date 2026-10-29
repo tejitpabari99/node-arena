@@ -1,6 +1,6 @@
 import type { ConnState } from '../../net/connection';
 export const CONN_BANNER_TEXT: Partial<Record<ConnState, string>> = {
-  reconnecting: 'Reconnecting...', lost: 'Connection lost.', refused: 'New version: reload the page.', superseded: 'Opened in another tab.',
+  reconnecting: 'Reconnecting...', lost: 'Connection lost.', refused: 'A newer version of Node Arena is available - reload', superseded: 'Opened in another tab.',
 };
 /** Connection status banner; null when connected. refused/superseded are terminal (no retry). */
 export function ConnBanner({ conn, onRetry }: { conn: ConnState | null; onRetry(): void }) {

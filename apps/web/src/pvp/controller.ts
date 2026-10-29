@@ -1,4 +1,4 @@
-import { ERROR_CODES, LockstepClient, toWireOutcome, type ClientMessage, type EndMsg, type ErrorCode, type LobbyStateMsg, type SeatConfig, type SeatStatusMsg, type ServerMessage, type StartMsg, type Versions } from '@node-arena/net';
+import { PROTOCOL_VERSION, ERROR_CODES, LockstepClient, toWireOutcome, type ClientMessage, type EndMsg, type ErrorCode, type LobbyStateMsg, type SeatConfig, type SeatStatusMsg, type ServerMessage, type StartMsg, type Versions } from '@node-arena/net';
 import { listPvpMaps, loadContent, type PvpMapInfo, type CompiledLevel, type ContentFiles, type ManifestV2 } from '@node-arena/content';
 import { create, type Placement, type Sim } from '@node-arena/sim';
 import type { TickUpdate } from '../driver';
@@ -35,6 +35,7 @@ export interface PvpSnapshot {
   /** Short user-facing string; null when none. */
   error: string | null;
   serverUrl: string | null;
+  pvpUnavailable: boolean;
 }
 
 export const ERROR_STRINGS: Record<ErrorCode, string> = {
@@ -42,7 +43,7 @@ export const ERROR_STRINGS: Record<ErrorCode, string> = {
   'too-large': 'Message too large.',
   'bad-message': 'Protocol error. Reload the page.',
   'unknown-type': 'Protocol error. Reload the page.',
-  'version-mismatch': 'Game version differs from the server. Reload to update.',
+  'version-mismatch': 'A newer version of Node Arena is available - reload',
   'not-authed': 'Not connected yet. Try again.',
   'not-in-room': 'You are not in a room.',
   'not-host': 'Only the host can do that.',
@@ -66,7 +67,7 @@ const CLOSED_STRINGS: Record<string, string> = {
 };
 
 const CONN_STRINGS: Partial<Record<ConnState, string>> = {
-  lost: 'Connection lost.', refused: 'New version: reload the page.', superseded: 'Opened in another tab.',
+  lost: 'Connection lost.', refused: ERROR_STRINGS['version-mismatch'], superseded: 'Opened in another tab.',
 };
 
 export interface PvpOptions {
@@ -105,8 +106,15 @@ export const SYNC_LOST_STRING = 'Out of sync. Leave and rejoin.';
 type Pending = { t: 'room.create' } | { t: 'room.join'; code: string; role: PvpRole };
 
 export function createPvpController(options: PvpOptions) {
+  const mismatchKey = 'nodearena:pvp:mismatch';
+  const buildKey = JSON.stringify([options.serverUrl, PROTOCOL_VERSION, options.versions]);
+  const rememberMismatch = (value: boolean) => {
+    try { if (value) sessionStorage.setItem(mismatchKey, buildKey); else if (sessionStorage.getItem(mismatchKey) === buildKey) sessionStorage.removeItem(mismatchKey); } catch { /* storage unavailable */ }
+  };
+  let mismatchedBeforeReload = false;
+  try { mismatchedBeforeReload = sessionStorage.getItem(mismatchKey) === buildKey; } catch { /* storage unavailable */ }
   const listeners = new Set<() => void>(), events = new Set<(u: TickUpdate) => void>(), pvpEvents = new Set<(e: PvpEvent) => void>();
-  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, serverUrl: options.serverUrl });
+  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false });
   let state = initial();
   let conn: PvpConnection | null = null, offs: Array<() => void> = [];
   let lastEpoch = -1, autoResumed = -1, pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
@@ -223,6 +231,9 @@ export function createPvpController(options: PvpOptions) {
     switch (m.t) {
       case 'welcome':
         welcomed = true;
+        rememberMismatch(false);
+        mismatchedBeforeReload = false;
+        if (!pending && state.screen === 'connecting') publish({ screen: 'menu', error: null, pvpUnavailable: false });
         // A play-link reload may already own this seat; onAuthed replays room state.
         if (pending?.t === 'room.join' && pending.role === 'play' && m.resume?.code === pending.code) pending = null;
         if (pending) { const p = pending; dispatch(p); }
@@ -297,15 +308,21 @@ export function createPvpController(options: PvpOptions) {
   };
   const onState = (s: ConnState) => {
     const msg = CONN_STRINGS[s];
-    if (s === 'refused' || s === 'superseded') { reset(msg ?? null); return; }
+    if (s === 'refused') {
+      rememberMismatch(true);
+      reset(mismatchedBeforeReload ? 'PvP unavailable: this build differs from the server' : ERROR_STRINGS['version-mismatch']);
+      publish({ conn: 'refused', pvpUnavailable: mismatchedBeforeReload });
+      return;
+    }
+    if (s === 'superseded') { reset(msg ?? null); return; }
     publish({ conn: s, ...(msg ? { error: msg } : s === 'connected' || s === 'connecting' ? { error: state.error === CONN_STRINGS.lost ? null : state.error } : {}) });
   };
 
-  const connect = (action: Pending) => {
-    if (disposed || !options.serverUrl) return;
+  const connect = (action: Pending | null) => {
+    if (disposed || !options.serverUrl || state.pvpUnavailable) return;
     drop();
     pending = action;
-    state = { ...state, screen: 'connecting', code: null, seat: null, host: false, lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, role: action.t === 'room.join' ? action.role : 'play' };
+    state = { ...state, screen: 'connecting', code: null, seat: null, host: false, lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, role: action?.t === 'room.join' ? action.role : 'play' };
     const make = options.createConnection ?? createPvpConnection;
     conn = make({ url: options.serverUrl, nick: options.identity.nick, token: options.identity.token, versions: options.versions, createSocket: options.createSocket });
     offs = [conn.onMessage(onMessage), conn.onState(onState)];
@@ -337,13 +354,19 @@ export function createPvpController(options: PvpOptions) {
     quit() { if ((state.screen === 'playing' || state.screen === 'countdown') && state.seat !== null) dispatch({ t: 'quit' }); },
     get connection() { return conn; },
     get welcomed() { return welcomed; },
-    open() { if (disposed || state.screen !== 'idle') return; publish({ screen: 'menu', error: null }); },
+    open() {
+      if (disposed || state.screen !== 'idle') return;
+      publish({ screen: 'menu', error: null });
+      // Check compatibility again after reload, without creating or joining a room.
+      if (mismatchedBeforeReload) connect(null);
+    },
     setNick(nick: string) { publish({ nick: options.identity.setNick(nick) }); },
     create() { if (state.screen === 'menu') connect({ t: 'room.create' }); },
     join(code: string, role: PvpRole = 'play') { if (state.screen === 'menu') connect({ t: 'room.join', code: code.trim().toUpperCase(), role }); },
     watch(code: string) { api.join(code, 'watch'); },
     openLink(link: RoomLink | null) {
-      if (state.screen === 'idle') api.open();
+      // A play-link supplies its own handshake action; do not replace it with the reload probe.
+      if (state.screen === 'idle') publish({ screen: 'menu', error: null });
       if (state.screen !== 'menu') return;
       if (!link) { publish({ error: 'Invalid room code. Enter a 4-character code.' }); return; }
       publish({ code: link.code });
