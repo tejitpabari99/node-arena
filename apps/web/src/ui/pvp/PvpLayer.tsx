@@ -14,8 +14,12 @@ export function PvpLayer({pvp}:{pvp:PvpController}){
   if(s.screen==='lobby'){
     const level=s.lobby?pvp.level(s.lobby.levelId):undefined,palettes=(pvp.options.manifest?.()?.palettes??{}) as Record<string,string>;
     return <Lobby code={s.code} lobby={s.lobby} seat={s.seat} host={s.host} conn={s.conn} error={s.error} levelName={s.lobby?pretty(s.lobby.levelId):''}
-      seatColors={(level?.players??[]).map(p=>palettes[p.colorKey])} onReady={()=>pvp.ready()} onStart={()=>pvp.start()} onLeave={()=>{pvp.leave();pvp.close();}} onRetry={()=>pvp.retry()} onDismissError={()=>pvp.dismissError()}/>;
+      seatColors={(level?.players??[]).map(p=>palettes[p.colorKey])} onReady={()=>pvp.ready()} onStart={()=>pvp.start()} onLeave={()=>pvp.leave()} onRetry={()=>pvp.retry()} onDismissError={()=>pvp.dismissError()}/>;
   }
+  if((s.screen==='countdown'||s.screen==='playing')&&s.error===SYNC_LOST_STRING)return <section class="picker panel pvp-panel" aria-label="Connection interrupted">
+    <p class="pvp-error" role="alert" data-testid="toast-sync-lost">{s.error}</p>
+    <button class="level-card menu-button" data-testid="pvp-sync-leave" onClick={()=>pvp.leave()}>Leave</button>
+  </section>;
   if(s.screen==='countdown')return <p class="pvp-countdown" role="status" data-testid="pvp-countdown">Get ready</p>;
   if(s.screen==='playing')return <PvpPlaying pvp={pvp}/>;
   if(s.screen==='result'&&s.end)return <PvpResult outcome={s.end.outcome} seat={s.seat} onLeave={()=>pvp.leave()}/>;
@@ -23,7 +27,7 @@ export function PvpLayer({pvp}:{pvp:PvpController}){
 }
 export const TOAST_MS=5000;
 function PvpPlaying({pvp}:{pvp:PvpController}){
-  const [,bump]=useState(0),[menu,setMenu]=useState(false),[toast,setToast]=useState(false),[lost,setLost]=useState(false);
+  const [,bump]=useState(0),[menu,setMenu]=useState(false),[toast,setToast]=useState(false);
   useLayoutEffect(()=>pvp.subscribeEvents(u=>{if(u.tick%5===0)bump(n=>n+1);}),[pvp]);
   useEffect(()=>{
     const key=(e:KeyboardEvent)=>{if(e.key==='Escape')setMenu(m=>!m);};
@@ -31,13 +35,12 @@ function PvpPlaying({pvp}:{pvp:PvpController}){
   },[]);
   useEffect(()=>{
     let t:ReturnType<typeof setTimeout>|undefined;
-    const off=pvp.subscribePvpEvents(e=>{if(e.t==='sync-lost'){setLost(true);return;}if(e.t!=='desync')return;setToast(true);clearTimeout(t);t=setTimeout(()=>setToast(false),TOAST_MS);});
+    const off=pvp.subscribePvpEvents(e=>{if(e.t!=='desync')return;setToast(true);clearTimeout(t);t=setTimeout(()=>setToast(false),TOAST_MS);});
     return()=>{off();clearTimeout(t);};
   },[pvp]);
   const s=pvp.snapshot(),view=pvp.driver?.sim.view;
   return <>
-    <PvpHud segments={view?ownership(view):[]} palettes={(pvp.manifest?.palettes??{}) as Record<string,string>} ticksLeft={(s.start?.timeLimitTicks??0)-(view?.tick??0)} seat={s.seat} menuOpen={menu} onLeave={()=>{pvp.leave();pvp.close();}}/>
-    {lost&&<Toast message={SYNC_LOST_STRING} testId="toast-sync-lost"/>}
+    <PvpHud segments={view?ownership(view):[]} palettes={(pvp.manifest?.palettes??{}) as Record<string,string>} ticksLeft={(s.start?.timeLimitTicks??0)-(view?.tick??0)} seat={s.seat} menuOpen={menu} onLeave={()=>pvp.leave()}/>
     {toast&&<Toast message={DESYNC_TOAST} testId="toast-desync"/>}
   </>;
 }

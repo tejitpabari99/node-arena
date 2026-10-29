@@ -195,10 +195,13 @@ export function createPvpController(options: PvpOptions) {
         welcomed = true;
         if (pending) { const p = pending; dispatch(p); }
         break;
-      case 'room.joined':
+      case 'room.joined': {
         pending = null;
-        publish({ screen: 'lobby', code: m.code, seat: m.you.seat, host: m.you.host, role: m.you.seat === null ? 'watch' : 'play', error: null });
+        // Reauth sends room.joined before start; keep the existing match visible and enabled.
+        const active = driver && state.code === m.code && (state.screen === 'countdown' || state.screen === 'playing' || state.screen === 'result');
+        publish({ screen: active ? state.screen : 'lobby', code: m.code, seat: m.you.seat, host: m.you.host, role: m.you.seat === null ? 'watch' : 'play', error: active ? state.error : null });
         break;
+      }
       case 'lobby.state': {
         // host may change (host handover); keep own host flag in sync from seat/host fields.
         const host = state.seat !== null && m.host === state.seat;

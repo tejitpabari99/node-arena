@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { ERROR_CODES, type ClientMessage, type ServerMessage, type Versions } from '@node-arena/net';
 import { RULES_VERSION, parseContentMeta } from '@node-arena/content';
@@ -8,6 +8,15 @@ import { versionsFromMeta, webVersions } from '../../src/net/versions';
 import type { ConnState, PvpConnection } from '../../src/net/connection';
 import type { VNode } from 'preact';
 import { PvpResult } from '../../src/ui/pvp/PvpResult';
+import { PvpLayer } from '../../src/ui/pvp/PvpLayer';
+import { Lobby } from '../../src/ui/pvp/Lobby';
+import { PvpHud } from '../../src/ui/pvp/PvpHud';
+
+// Node-only component tests inspect the first render before effects subscribe.
+vi.mock('preact/hooks', () => ({
+  useState: (initial: unknown) => [initial, () => {}],
+  useEffect: () => {}, useLayoutEffect: () => {},
+}));
 import { createIdentity } from '../../src/net/identity';
 
 type N = VNode<Record<string, unknown>>;
@@ -154,7 +163,7 @@ describe('PvpController match lifecycle', () => {
     const simArgs: unknown[] = [];
     const rafs: Array<(t: number) => void> = [];
     const runRaf = () => { const q = rafs.splice(0); q.forEach((cb) => cb(0)); };
-    const view = { tick: 0, over: null as unknown };
+    const view = { tick: 0, over: null as unknown, players: [], buildings: { owner: [], level: [] } };
     const sim = { view, step: () => { view.tick++; if (view.tick === 3) view.over = { outcome: 'victory', winners: [0], winner: 0 }; return []; }, hash: () => `h${view.tick}` };
     const rt = { frame: 0, ticks: 0, disposed: 0, ctx: null as unknown, cancel: () => false, tick() { rt.ticks++; }, frame_: 0 };
     const runtime = { frame() { rt.frame++; }, tick: () => rt.ticks++, refresh() {}, cancel: () => false, dispose() { rt.disposed++; } };
@@ -225,6 +234,58 @@ describe('PvpController match lifecycle', () => {
     (leave.props.onClick as () => void)();
     expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.ctl.snapshot().end).toBeNull();
     expect(g.sent.at(-1)).toEqual({ t: 'room.leave' });
+  });
+  it.each(['countdown', 'playing', 'result'] as const)('same-room reauth preserves %s screen and the active driver', async (screen) => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    if (screen !== 'countdown') { g.c.push(g.tickMsg(0)); g.ctl.driver!.advance(); }
+    if (screen === 'result') { g.view.over = { outcome: 'victory', winners: [0], winner: 0 }; g.c.push(g.endMsg(1)); }
+    const driver = g.ctl.driver;
+    g.c.push(welcome);
+    g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
+    g.c.push(lobby(0)); g.c.push(startMsg()); await flush();
+    expect(g.ctl.snapshot().screen).toBe(screen);
+    expect(g.ctl.driver).toBe(driver);
+    if (screen === 'playing') {
+      expect((g.rt.ctx as { enabled(): boolean }).enabled()).toBe(true);
+      g.c.push(g.tickMsg(1)); g.ctl.driver!.advance(); expect(g.view.tick).toBe(2);
+    }
+    g.ctl.dispose();
+  });
+  it('lobby Leave component returns to the online menu', () => {
+    const h = setup(); h.ctl.open(); h.ctl.join('ABCD'); h.c.push(welcome);
+    h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } }); h.c.push(lobby(0));
+    const node = PvpLayer({ pvp: h.ctl });
+    expect(node!.type).toBe(Lobby);
+    const tree = Lobby(node!.props as unknown as Parameters<typeof Lobby>[0]);
+    const leave = find(tree, n => n.props['data-testid'] === 'lobby-leave')[0]!;
+    (leave.props.onClick as () => void)();
+    expect(h.ctl.snapshot().screen).toBe('menu'); expect(h.sent.at(-1)).toEqual({ t: 'room.leave' });
+  });
+  it('Esc menu Leave component returns to the online menu', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    g.c.push(g.tickMsg(0)); g.ctl.driver!.advance();
+    const node = PvpLayer({ pvp: g.ctl })!;
+    const playing = (node.type as unknown as (props: unknown) => unknown)(node.props);
+    const hud = find(playing, n => n.type === PvpHud as unknown)[0]!;
+    const tree = PvpHud({ ...hud.props as unknown as Parameters<typeof PvpHud>[0], menuOpen: true });
+    const leave = find(tree, n => n.props['data-testid'] === 'pvp-leave')[0]!;
+    (leave.props.onClick as () => void)();
+    expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.sent.at(-1)).toEqual({ t: 'room.leave' });
+  });
+  it.each([false, true])('sync loss is visible with Leave before UI effects subscribe (playing=%s)', async (playing) => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    if (playing) { g.c.push(g.tickMsg(0)); g.ctl.driver!.advance(); }
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try { g.c.push(g.tickMsg(5)); } finally { warn.mockRestore(); }
+    // Reauth must not erase the persistent error before the next frame renders.
+    g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } }); g.c.push(startMsg());
+    const node = PvpLayer({ pvp: g.ctl });
+    const alert = find(node, n => n.props['data-testid'] === 'toast-sync-lost')[0];
+    expect(alert?.props.children).toBe('Out of sync. Leave and rejoin.');
+    const leave = find(node, n => n.props['data-testid'] === 'pvp-sync-leave')[0];
+    expect(leave).toBeDefined();
+    (leave!.props.onClick as () => void)();
+    expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.ctl.driver).toBeNull();
   });
   it('3 s fallback shows result and logs mismatch', async () => {
     const g = game(); g.c.push(startMsg()); await flush();

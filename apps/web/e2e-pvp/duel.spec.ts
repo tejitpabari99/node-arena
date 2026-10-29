@@ -64,7 +64,7 @@ test('play link prompts a new visitor for a nickname with the room code filled',
   await b.getByTestId('pvp-join').click();
   await expect(b.getByTestId('lobby-code')).toHaveText(code);
   await b.getByTestId('lobby-leave').click();
-  await expect(b.getByTestId('pvp-play')).toBeVisible();
+  await expect(b.getByTestId('pvp-create')).toBeVisible();
   // The persisted nickname lets a later play link join without another prompt.
   await b.goto(`/?room=${code}`);
   await expect(b.getByTestId('lobby-code')).toHaveText(code);
@@ -77,4 +77,18 @@ test('invalid and missing play links show an online menu error', async ({ page }
   await expect(page.getByTestId('pvp-play')).toBeVisible();
   await page.goto('/?room=ZZZZ&nick=Bob');
   await expect(page.getByTestId('pvp-error')).toContainText('Room not found');
+});
+
+
+test('reload during a match exposes sync loss and Leave returns to the online menu', async ({ browser }) => {
+  const { a, b } = await openMatch(browser);
+  await expect.poll(() => b.evaluate(() => (window as any).__na.pvp.tick())).toBeGreaterThan(2);
+  // Same-tab reload retains the player token but M1 cannot recover missed ticks.
+  await b.reload();
+  await expect(b.getByTestId('toast-sync-lost')).toContainText('Out of sync. Leave and rejoin.');
+  await b.getByTestId('pvp-sync-leave').click();
+  await expect(b.getByTestId('pvp-create')).toBeVisible();
+  await a.keyboard.press('Escape');
+  await a.getByTestId('pvp-leave').click();
+  await expect(a.getByTestId('pvp-create')).toBeVisible();
 });
