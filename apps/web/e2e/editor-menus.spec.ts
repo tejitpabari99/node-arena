@@ -127,7 +127,7 @@ test('Open reads before confirmation, preserves read errors, and saves before in
   let readFails = true, saves = 0;
   await page.route('**/__editor/level/na-trial', route => readFails ? route.fulfill({ status: 500, json: { error: 'read unavailable' } }) : route.continue());
   await page.route('**/__editor/save', route => { saves++; return route.fulfill({ json: { level: route.request().postDataJSON().level, warnings: [] } }); });
-  await openCopied(page); await openFile(page, 'open'); await page.getByTestId('open-confirm').click();
+  await openCopied(page); await openFile(page, 'open'); await page.getByRole('combobox', { name: 'Open level', exact: true }).selectOption('na-trial'); await page.getByTestId('open-confirm').click();
   await expect(page.getByRole('alert')).toHaveText('read unavailable'); await expect(page.getByTestId('discard-confirm')).toHaveCount(0);
   readFails = false; await page.getByTestId('open-confirm').click(); await expect(page.getByTestId('discard-confirm')).toBeVisible();
   await page.getByTestId('confirm-save').click(); await expect(page.getByLabel('Level id', { exact: true })).toHaveText('na-trial');
