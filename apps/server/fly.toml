@@ -1,5 +1,4 @@
 # NOTE: app name per SP04 PRD decision 12; owner must `fly apps create` it (or edit here).
-# ALLOWED_ORIGINS [env] is added by SP06 Task 9.
 app = 'node-arena-server'
 primary_region = 'ewr'
 kill_timeout = 10 # server drain hard-exits at 8 s
@@ -9,6 +8,11 @@ kill_timeout = 10 # server drain hard-exits at 8 s
 
 [deploy]
   strategy = 'immediate'
+
+[env]
+  # Not secret. Firebase Hosting prod + preview channels (`<site>--<channel>-<hash>.web.app`); `*` = one DNS label.
+  # If firebase.json ever gains a CSP, connect-src must allow this server's wss host.
+  ALLOWED_ORIGINS = 'https://node-arena-99.web.app,https://node-arena-99.firebaseapp.com,https://node-arena-99--*.web.app'
 
 [http_service]
   internal_port = 8080
