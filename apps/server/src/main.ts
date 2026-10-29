@@ -67,7 +67,7 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
   const match = createMatchController({ clock, now, log, onAbort: (r) => rooms.drop(r) });
   const rooms = createRoomManager({
     content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, log,
-    onStart: match.onStart, onMatchMessage: match.onMessage,
+    onStart: match.onStart, onMatchMessage: match.onMessage, onCatchUp: match.catchUp,
   });
   const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns });
   clock.start();

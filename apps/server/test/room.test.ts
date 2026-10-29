@@ -108,7 +108,7 @@ test('room.join: second player takes seat 1, both get lobby.state', () => {
   assert.equal(b.last('lobby.state')!.seats[1]!.occupant?.ready, false);
 });
 
-test('room.join: full -> room-full; unknown -> room-not-found; watch -> bad-lobby (M2)', () => {
+test('room.join: full -> room-full; unknown -> room-not-found; watch -> spectator', () => {
   const { client } = setup();
   const a = client('Ann'), b = client('Bob'), c = client('Cy');
   a.say({ t: 'room.create' });
@@ -118,7 +118,8 @@ test('room.join: full -> room-full; unknown -> room-not-found; watch -> bad-lobb
   c.say({ t: 'room.join', code: 'ZZZZ', role: 'play' });
   assert.equal(c.last('error')!.code, 'room-not-found');
   c.say({ t: 'room.join', code: code(a), role: 'watch' });
-  assert.equal(c.last('error')!.code, 'bad-lobby');
+  assert.equal(c.last('room.joined')!.you.seat, null);
+  assert.equal(a.last('lobby.state')!.spectators, 1);
 });
 
 test('create/join while already in a room refused', () => {

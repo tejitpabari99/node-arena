@@ -44,6 +44,7 @@ function setup(opts: { maxRooms?: number } = {}) {
     randomInt: () => (n++ % 31),
     onStart: (r, m) => { starts.push(m); ctl.onStart(r, m); },
     onMatchMessage: ctl.onMessage,
+    onCatchUp: ctl.catchUp,
     ...(opts.maxRooms !== undefined ? { maxRooms: opts.maxRooms } : {}),
     timers: { setTimeout: (fn) => { timerFns.push(fn); return timerFns.length; }, clearTimeout: () => {} },
   });
@@ -294,4 +295,73 @@ test('ended room GC after 10 min clears byPlayer', () => {
   assert.equal(t.mgr.room(match.code), undefined);
   a.say({ t: 'room.create' });
   assert.equal(a.of('error').length, 0);
+});
+
+test('spectator: mid-match watch gets start(null)+catchup, reaches hash equality, read-only, cap 8', async () => {
+  const { createCatchup, createJoinLate } = await import('@node-arena/net');
+  const { room, client, tickAll, mgr, ctl } = setup();
+  const { a, b, match } = room();
+  const code = match.code;
+  tickAll();
+  a.say({ t: 'cmd', c: { type: 'DrawLine', from: 0, to: 1 } });
+  for (let i = 0; i < 30; i++) tickAll();
+  const sp = client('Spec');
+  sp.say({ t: 'room.join', code, role: 'watch' });
+  assert.equal(sp.of('room.joined')[0]!.you.seat, null);
+  const start = sp.of('start')[0]!;
+  assert.equal(start.youPlayer, null);
+  const cu = sp.of('catchup');
+  assert.ok(cu.length >= 1);
+  assert.equal(cu[cu.length - 1]!.done, true);
+  assert.equal(cu[0]!.from, 0);
+  const lockstep = ctl.inspect(mgr.room(code)!)!;
+  assert.equal(cu[cu.length - 1]!.to, lockstep.nextTick);
+  for (let i = 0; i < 25; i++) tickAll();
+  const jl = createJoinLate(createCatchup(match.level, match.seed, { teams: match.teams }));
+  for (const m of sp.sent) jl.push(m);
+  jl.run(1e9, () => 0);
+  assert.equal(jl.live, true);
+  jl.run(1e9, () => 0);
+  const ref = ctl.simOf(mgr.room(code)!)!;
+  assert.equal(jl.catchup.sim.view.tick, ref.view.tick);
+  assert.equal(jl.catchup.sim.hash(), ref.hash());
+  // identical tick bytes
+  assert.deepEqual(sp.of('tick').map((t) => t.n), a.of('tick').filter((t) => t.n >= cu[cu.length - 1]!.to).map((t) => t.n));
+  // read-only
+  sp.say({ t: 'cmd', c: { type: 'DrawLine', from: 0, to: 1 } });
+  assert.equal(sp.of('error').at(-1)!.code, 'not-your-seat');
+  sp.say({ t: 'hash', tick: 20, h: '0000000000000000' });
+  assert.equal(sp.of('error').at(-1)!.code, 'not-your-seat');
+  // cap
+  for (let i = 0; i < 7; i++) { const s = client(`S${i}`); s.say({ t: 'room.join', code, role: 'watch' }); assert.equal(s.of('error').length, 0); }
+  const ninth = client('S9');
+  ninth.say({ t: 'room.join', code, role: 'watch' });
+  assert.equal(ninth.of('error')[0]!.code, 'spectators-full');
+  // spectator leaving frees a slot; drop frees too
+  sp.drop();
+  const again = client('S10');
+  again.say({ t: 'room.join', code, role: 'watch' });
+  assert.equal(again.of('error').length, 0);
+  void b;
+});
+
+test('spectator: lobby watcher gets start(null) and live ticks from 0; mid-countdown watcher gets empty done catchup', () => {
+  const { client, tickAll } = setup();
+  const a = client('A'), w = client('W'), b = client('B');
+  a.say({ t: 'room.create' });
+  const code = a.of('room.joined')[0]!.code;
+  w.say({ t: 'room.join', code, role: 'watch' });
+  assert.equal(w.of('error').length, 0);
+  assert.equal(a.of('lobby.state').at(-1)!.spectators, 1);
+  b.say({ t: 'room.join', code, role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'lobby.start' });
+  assert.equal(w.of('start')[0]!.youPlayer, null);
+  assert.equal(w.of('catchup').length, 0);
+  const late = client('L');
+  late.say({ t: 'room.join', code, role: 'watch' });
+  assert.deepEqual(late.of('catchup'), [{ t: 'catchup', from: 0, to: 0, cmds: [], done: true }]);
+  tickAll(); tickAll();
+  assert.deepEqual(w.of('tick').map((t) => t.n), [0, 1]);
+  assert.deepEqual(late.of('tick').map((t) => t.n), [0, 1]);
 });

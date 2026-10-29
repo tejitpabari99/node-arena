@@ -23,6 +23,8 @@ export interface MatchController {
   onStart(room: Room, match: MatchStart): void;
   /** Routes `cmd` / `hash` from a seated player. Returns false if the message is not match-related. */
   onMessage(room: Room, conn: Conn, seat: number, msg: ClientMessage): boolean;
+  /** Sends the room's logged ticks [0, next) to `conn` as `catchup` chunks (<=2000 ticks each, last `done`). Sync; reusable for reconnect. */
+  catchUp(room: Room, conn: Conn): void;
   /** Test-visible: the room's lockstep server (command log survives match end). */
   inspect(room: Room): LockstepServer | undefined;
   /** Test-visible: the room's referee sim. */
@@ -139,5 +141,14 @@ export function createMatchController(deps: MatchDeps): MatchController {
     return true;
   };
 
-  return { onStart, onMessage, inspect: (room) => servers.get(room), simOf: (room) => sims.get(room) };
+  const catchUp = (room: Room, conn: Conn): void => {
+    const ls = servers.get(room);
+    if (ls === undefined) return;
+    const next = ls.nextTick;
+    const chunks = ls.log.range(0, next);
+    if (chunks.length === 0) conn.send({ t: 'catchup', from: 0, to: 0, cmds: [], done: true });
+    chunks.forEach((ch, i) => conn.send({ t: 'catchup', from: ch.from, to: ch.to, cmds: [...ch.cmds], done: i === chunks.length - 1 }));
+  };
+
+  return { onStart, onMessage, catchUp, inspect: (room) => servers.get(room), simOf: (room) => sims.get(room) };
 }

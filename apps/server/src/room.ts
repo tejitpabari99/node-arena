@@ -14,6 +14,7 @@ import type { ServerContent } from './content.js';
 export const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 export const CODE_LENGTH = 4;
 export const COUNTDOWN_MS = 3000;
+export const MAX_SPECTATORS = 8;
 export const ENDED_ROOM_TTL_MS = 10 * 60_000;
 const SWEEP_MS = 60_000;
 const MAX_CODE_TRIES = 64;
@@ -39,7 +40,7 @@ export interface MatchStart {
   /** Compiled level; the match controller builds the referee sim from `level` + `seed` + `teams`. */
   level: CompiledLevel;
   /** Builds the `start` message for a seat; `countdownMs` is the remaining countdown. */
-  startMsg(player: number, countdownMs: number): StartMsg;
+  startMsg(player: number | null, countdownMs: number): StartMsg;
 }
 
 export interface Room {
@@ -75,6 +76,8 @@ export interface RoomManagerDeps {
   /** Timer seam for the ended-room sweep. */
   timers?: { setTimeout: (fn: () => void, ms: number) => unknown; clearTimeout: (h: never) => void };
   onMatchMessage?: (room: Room, conn: Conn, seat: number, msg: ClientMessage) => boolean;
+  /** Sends `catchup` chunks (ticks [0, next)) to a conn; called right after its `start`, before it joins the live fan-out. */
+  onCatchUp?: (room: Room, conn: Conn) => void;
 }
 
 export interface RoomManager extends HubHandler {
@@ -155,11 +158,34 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     conn.send(lobbyState(room));
   };
 
+  /**
+   * Reusable mid-match attach (SP07 reconnect reuses it for seated players): `start` (youPlayer) then catch-up chunks,
+   * all synchronous so the caller can add the conn to the live fan-out in the same turn with no tick gap.
+   */
+  const attachMidMatch = (room: Room, conn: Conn, youPlayer: number | null): void => {
+    conn.send(room.match!.startMsg(youPlayer, Math.max(0, room.match!.startAt - deps.now())));
+    deps.onCatchUp?.(room, conn);
+  };
+
+  const watch = (conn: Conn, room: Room): void => {
+    if (room.state !== 'lobby' && room.state !== 'countdown' && room.state !== 'running') return conn.sendError('match-in-progress');
+    if (room.spectators.length >= MAX_SPECTATORS) return conn.sendError('spectators-full');
+    conn.send({ t: 'room.joined', code: room.code, you: { seat: null, host: false } });
+    if (room.state !== 'lobby' && room.match !== undefined) {
+      conn.send(lobbyState(room));
+      attachMidMatch(room, conn, null);
+    }
+    room.spectators.push({ playerId: conn.playerId!, nick: conn.nick, ready: false, conn });
+    byPlayer.set(conn.playerId!, room);
+    log?.info('room.watch', { room: room.code, nick: conn.nick, spectators: room.spectators.length });
+    if (room.state === 'lobby') broadcast(room);
+  };
+
   const join = (conn: Conn, code: string, role: 'play' | 'watch'): void => {
     if (byPlayer.has(conn.playerId!)) return conn.sendError('bad-lobby', 'already in a room');
     const room = rooms.get(code);
     if (room === undefined) return conn.sendError('room-not-found');
-    if (role === 'watch') return conn.sendError('bad-lobby', 'spectating not supported yet'); // M2
+    if (role === 'watch') return watch(conn, room);
     if (room.state !== 'lobby') return conn.sendError('match-in-progress');
     const i = room.seats.findIndex((s) => s.kind === 'human' && s.occupant === undefined);
     if (i < 0) return conn.sendError('room-full');
@@ -174,8 +200,14 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     if (room === undefined) return;
     // Countdown/running leave handling belongs to the disconnect FSM (M2); lobby and ended only here.
     if (room.state === 'closed') { drop(room); return; }
-    if (room.state !== 'lobby' && room.state !== 'ended') return;
     const i = seatOf(room, conn);
+    if (i < 0) { // spectators may leave any time
+      room.spectators = room.spectators.filter((o) => o.playerId !== conn.playerId);
+      byPlayer.delete(conn.playerId!);
+      if (room.state === 'lobby') broadcast(room);
+      return;
+    }
+    if (room.state !== 'lobby' && room.state !== 'ended') return;
     if (i >= 0) { delete room.seats[i]!.occupant; }
     else room.spectators = room.spectators.filter((o) => o.playerId !== conn.playerId);
     byPlayer.delete(conn.playerId!);
@@ -283,13 +315,14 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     room.state = 'countdown';
     room.startAt = startAt;
     const levelId = room.levelId;
-    const startMsg = (youPlayer: number, countdownMs: number): StartMsg => ({
+    const startMsg = (youPlayer: number | null, countdownMs: number): StartMsg => ({
       t: 'start', matchId, levelId, simHash, seed, seats, youPlayer,
       inputDelay: deps.inputDelay, countdownMs, timeLimitTicks, hashInterval: HASH_INTERVAL,
     });
     const match: MatchStart = { code: room.code, matchId, levelId, seed, teams, seats, startAt, inputDelay: deps.inputDelay, timeLimitTicks, level, startMsg };
     room.match = match;
     room.seats.forEach((s, i) => { s.occupant?.conn.send(startMsg(i, COUNTDOWN_MS)); });
+    for (const o of room.spectators) o.conn.send(startMsg(null, COUNTDOWN_MS)); // lobby watchers: live from tick 0, no catch-up
     log?.info('room.start', { room: room.code, matchId, levelId: room.levelId, startAt });
     deps.onStart?.(room, match);
   };
@@ -297,6 +330,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   const drop = (room: Room): void => {
     rooms.delete(room.code);
     for (const s of room.seats) if (s.occupant && byPlayer.get(s.occupant.playerId) === room) byPlayer.delete(s.occupant.playerId);
+    for (const o of room.spectators) if (byPlayer.get(o.playerId) === room) byPlayer.delete(o.playerId);
     log?.info('room.gc', { room: room.code, state: room.state });
   };
 
@@ -370,6 +404,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       // Ignore a stale conn that is no longer the seat's current conn.
       const o = room.seats.find((s) => s.occupant?.playerId === conn.playerId)?.occupant;
       if (o !== undefined && o.conn !== conn) return;
+      if (o === undefined) { leave(conn); return; } // spectator: just drop them
       if (room.state === 'countdown' || room.state === 'running') {
         // Disconnect FSM is M2; for now an abandoned match (everyone gone) is closed so it stops ticking.
         if (room.conns().every((c) => c.closed)) {
