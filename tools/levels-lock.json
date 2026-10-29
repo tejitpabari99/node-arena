@@ -113,5 +113,10 @@
     "outcome": "victory",
     "ticks": 3082,
     "finalHash": "2498f0f887d9bf18"
+  },
+  "na-pvp-cross": {
+    "outcome": "victory",
+    "ticks": 4266,
+    "finalHash": "4cf8dc223811f00e"
   }
 }

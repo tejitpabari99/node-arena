@@ -124,7 +124,7 @@ test('pvp Duel S compiles, is listed in pvp only, and is d2-symmetric', async ()
   assert.ok(level);
   assert.equal(level.objective, 'pvp');
   assert.equal(level.buildings.length, 7);
-  assert.deepEqual(pvpLevels(data), [{ id: 'na-pvp-duel-s', position: 1 }, { id: 'na-pvp-duel-m', position: 2 }]);
+  assert.deepEqual(pvpLevels(data), [{ id: 'na-pvp-duel-s', position: 1 }, { id: 'na-pvp-duel-m', position: 2 }, { id: 'na-pvp-cross', position: 3 }]);
   assert.equal(campaignLevels(data).length, 20);
   assert.ok(!campaignLevels(data).some(l => l.id.startsWith('na-pvp-')));
   assert.ok(!customLevels(data).some(l => l.id.startsWith('na-pvp-')));
@@ -141,6 +141,17 @@ test('pvp Duel M compiles (13 buildings, neutral tower, 2 obstacles) and is d2-s
   assert.equal(level.elements.length, 2);
   const kinds = await readSymmetry(resolve(root, 'tools/pvp-symmetry.json'));
   assert.equal(checkSymmetry(level, kinds['na-pvp-duel-m']!).ok, true);
+});
+
+test('pvp Cross compiles (4 seats, 13 buildings, teams 0,1,0,1) and is d4-symmetric', async () => {
+  const level = loadContent(data).compiled['na-pvp-cross']!;
+  assert.ok(level);
+  assert.equal(level.objective, 'pvp');
+  assert.equal(level.players.length, 4);
+  assert.deepEqual(level.players.map(p => p.team), [0, 1, 0, 1]);
+  assert.equal(level.buildings.length, 13);
+  const kinds = await readSymmetry(resolve(root, 'tools/pvp-symmetry.json'));
+  assert.equal(checkSymmetry(level, kinds['na-pvp-cross']!).ok, true);
 });
 
 const duel = () => structuredClone(compiled['na-pvp-duel-s']!);

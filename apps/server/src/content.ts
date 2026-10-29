@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { RULES_VERSION, loadContent, parseContentMeta, type CompiledLevel, type ContentFiles, type LoadedContent } from '@node-arena/content';
+import { RULES_VERSION, listPvpMaps, loadContent, parseContentMeta, type CompiledLevel, type ContentFiles, type LoadedContent } from '@node-arena/content';
 import { BOT_VERSION } from '@node-arena/bots';
 import type { Versions } from '@node-arena/net';
 
@@ -8,7 +8,7 @@ export interface ServerContent {
   loaded: LoadedContent;
   /** Compiled levels, deep-frozen; shared read-only across rooms. */
   compiled: Readonly<Record<string, CompiledLevel>>;
-  /** Every level with `objective === 'pvp'`, sorted by id. */
+  /** Every level with `objective === 'pvp'`: pvp.json order first (default = first), then others by id. */
   pvpLevelIds: readonly string[];
   /** Exactly what `checkHello` compares. */
   versions: Versions;
@@ -56,7 +56,9 @@ export function loadServerContent(contentDir: string, opts: LoadServerContentOpt
   const loaded = loadContent(files);
   const meta = parseContentMeta(readMeta(contentDir));
   const compiled = deepFreeze(loaded.compiled);
-  const pvpLevelIds = Object.values(compiled).filter((l) => l.objective === 'pvp').map((l) => l.id).sort();
+  // Shipped maps in campaigns/pvp.json order (first = default room level), then any other pvp level (test fixtures) by id.
+  const shipped = listPvpMaps(loaded).map((m) => m.id);
+  const pvpLevelIds = [...shipped, ...Object.values(compiled).filter((l) => l.objective === 'pvp' && !shipped.includes(l.id)).map((l) => l.id).sort()];
   return {
     loaded, compiled, pvpLevelIds: Object.freeze(pvpLevelIds),
     versions: { rules: RULES_VERSION, schema: meta.schemaVersion, content: meta.contentVersion, bot: BOT_VERSION },

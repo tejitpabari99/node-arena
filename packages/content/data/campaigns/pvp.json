@@ -10,6 +10,10 @@
     {
       "level": "na-pvp-duel-m",
       "position": 2
+    },
+    {
+      "level": "na-pvp-cross",
+      "position": 3
     }
   ]
 }
