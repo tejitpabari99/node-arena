@@ -82,7 +82,7 @@ function run(levelId: string, maxTicks: number) {
   const match = starts[0]!;
   assert.equal(match.levelId, levelId);
   const room = mgr.room(code)!;
-  const referee = match.sim;
+  const referee = ctl.simOf(room)!;
   const checks: { tick: number; ref: string; a: string | undefined; b: string | undefined }[] = [];
 
   // Scripted commands: each seat cycles draw/cut from buildings it owns (per client's own sim view), no `player` field.

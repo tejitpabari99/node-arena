@@ -230,8 +230,9 @@ test('start: seed from injected CSPRNG, start msg per member, countdown 3s on lo
   const m = starts[0]!;
   assert.ok(m.startAt >= 1000 + 3000 && m.startAt < 1000 + 3000 + 50);
   assert.equal(m.seed, sa.seed);
-  assert.equal(m.sim.hash(), create(level, m.seed, { teams: m.teams }).hash());
-  assert.deepEqual([...m.players.keys()], [0, 1]);
+  assert.equal(m.level, level);
+  assert.deepEqual(m.teams, level.players.map((p, i) => p.team ?? i));
+  assert.equal(m.startMsg(1, 3000).youPlayer, 1);
 });
 
 test('default randomInt (node:crypto) yields u32 seeds', () => {

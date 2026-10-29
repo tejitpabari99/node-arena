@@ -81,8 +81,8 @@ function run(bad?: (r: R, t: T) => void) {
     }
     t.tickAll();
   }
-  assert.equal(r.match.sim.view.tick, 40);
-  return { r, t, hash: r.match.sim.hash() };
+  assert.equal(t.ctl.simOf(t.mgr.room(r.match.code)!)!.view.tick, 40);
+  return { r, t, hash: t.ctl.simOf(t.mgr.room(r.match.code)!)!.hash() };
 }
 const control = run();
 

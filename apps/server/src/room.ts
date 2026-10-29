@@ -1,5 +1,6 @@
 import { randomInt as cryptoRandomInt } from 'node:crypto';
-import { create, type Sim } from '@node-arena/sim';
+import { TICK_RATE } from '@node-arena/sim';
+import type { CompiledLevel } from '@node-arena/content';
 import {
   HASH_INTERVAL, type ClientMessage, type LobbySeat, type SeatConfig, type ServerMessage, type StartMsg, type StartSeat,
 } from '@node-arena/net';
@@ -13,7 +14,8 @@ import type { ServerContent } from './content.js';
 export const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 export const CODE_LENGTH = 4;
 export const COUNTDOWN_MS = 3000;
-const TICK_RATE = 20;
+export const ENDED_ROOM_TTL_MS = 10 * 60_000;
+const SWEEP_MS = 60_000;
 const MAX_CODE_TRIES = 64;
 
 export type RoomState = 'lobby' | 'countdown' | 'running' | 'ended' | 'closed';
@@ -34,10 +36,10 @@ export interface MatchStart {
   startAt: number;
   inputDelay: number;
   timeLimitTicks: number;
-  /** Referee sim at tick 0, `create(level, seed, {teams})`. Task 6 takes ownership. */
-  sim: Sim;
-  /** Connected members: seat index -> conn. */
-  players: ReadonlyMap<number, Conn>;
+  /** Compiled level; the match controller builds the referee sim from `level` + `seed` + `teams`. */
+  level: CompiledLevel;
+  /** Builds the `start` message for a seat; `countdownMs` is the remaining countdown. */
+  startMsg(player: number, countdownMs: number): StartMsg;
 }
 
 export interface Room {
@@ -48,6 +50,10 @@ export interface Room {
   seats: Seat[];
   startAt: number | undefined;
   match: MatchStart | undefined;
+  /** Clock-domain `now` when the room ended/closed; drives GC. */
+  endedAt?: number;
+  /** Current connections of seated members (single mutable source; rebound on reconnect). */
+  conns(): Conn[];
 }
 
 export interface RoomManagerDeps {
@@ -61,6 +67,9 @@ export interface RoomManagerDeps {
   /** Seam for Task 6: called once per room when lobby -> countdown. */
   onStart?: (room: Room, match: MatchStart) => void;
   /** Task 6: routes `cmd`/`hash` from a seated player to the match; returns true if handled. */
+  maxRooms?: number;
+  /** Timer seam for the ended-room sweep. */
+  timers?: { setTimeout: (fn: () => void, ms: number) => unknown; clearTimeout: (h: never) => void };
   onMatchMessage?: (room: Room, conn: Conn, seat: number, msg: ClientMessage) => boolean;
 }
 
@@ -69,6 +78,8 @@ export interface RoomManager extends HubHandler {
   roomOf(conn: Conn): Room | undefined;
   roomCount(): number;
   runningCount(): number;
+  /** Drops ended/closed rooms older than the TTL and frees their players. */
+  gc(): void;
 }
 
 export function createRoomManager(deps: RoomManagerDeps): RoomManager {
@@ -76,6 +87,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   const rand = deps.randomInt ?? cryptoRandomInt;
   const rooms = new Map<string, Room>();
   const byPlayer = new Map<string, Room>();
+  const maxRooms = deps.maxRooms ?? Infinity;
   let matchSeq = 0;
 
   const defaultLevelId = content.pvpLevelIds[0];
@@ -111,8 +123,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     return { t: 'lobby.state', levelId: room.levelId, timeLimitSec: level.timeLimitSec ?? 0, host: room.host, seats, spectators: 0 };
   };
 
-  const members = (room: Room): Conn[] => room.seats.flatMap((s) => (s.occupant ? [s.occupant.conn] : []));
-  const broadcast = (room: Room): void => { const m = lobbyState(room); for (const c of members(room)) c.send(m); };
+  const broadcast = (room: Room): void => { const m = lobbyState(room); for (const c of room.conns()) c.send(m); };
 
   const seatOf = (room: Room, conn: Conn): number => room.seats.findIndex((s) => s.occupant?.playerId === conn.playerId);
 
@@ -124,9 +135,13 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   const create_ = (conn: Conn): void => {
     if (byPlayer.has(conn.playerId!)) return conn.sendError('bad-lobby', 'already in a room');
     if (defaultLevelId === undefined) return conn.sendError('internal', 'no pvp levels');
+    if (rooms.size >= maxRooms) return conn.sendError('room-full', 'server at room capacity');
     const code = newCode();
     if (code === undefined) return conn.sendError('internal', 'no free room code');
-    const room: Room = { code, state: 'lobby', host: 0, levelId: defaultLevelId, seats: defaultSeats(defaultLevelId), startAt: undefined, match: undefined };
+    const room: Room = {
+      code, state: 'lobby', host: 0, levelId: defaultLevelId, seats: defaultSeats(defaultLevelId), startAt: undefined, match: undefined,
+      conns: () => room.seats.flatMap((s) => (s.occupant ? [s.occupant.conn] : [])),
+    };
     rooms.set(code, room);
     seat(room, conn, 0);
     log?.info('room.create', { room: code, levelId: room.levelId });
@@ -151,16 +166,18 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   const leave = (conn: Conn): void => {
     const room = byPlayer.get(conn.playerId ?? '');
     if (room === undefined) return;
-    // Countdown/running/ended leave handling belongs to Task 6+ (disconnect FSM); lobby only here.
-    if (room.state !== 'lobby') return;
+    // Countdown/running leave handling belongs to the disconnect FSM (M2); lobby and ended only here.
+    if (room.state !== 'lobby' && room.state !== 'ended') return;
     const i = seatOf(room, conn);
     if (i >= 0) { delete room.seats[i]!.occupant; }
     byPlayer.delete(conn.playerId!);
     if (!room.seats.some((s) => s.occupant)) {
-      rooms.delete(room.code); room.state = 'closed';
+      rooms.delete(room.code);
+      if (room.state === 'lobby') room.state = 'closed';
       log?.info('room.close', { room: room.code, reason: 'empty' });
       return;
     }
+    if (room.state === 'ended') return;
     if (room.host === i) room.host = room.seats.findIndex((s) => s.occupant !== undefined); // simple transfer; R12 refines in M2
     for (const s of room.seats) if (s.occupant) s.occupant.ready = false;
     broadcast(room);
@@ -212,7 +229,6 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     const level = content.compiled[room.levelId]!;
     const seed = rand(0, 2 ** 32);
     const teams = room.seats.map((s) => s.team);
-    const sim = create(level, seed, { teams });
     const matchId = `${room.code}-${++matchSeq}`;
     const startAt = deps.clock.boundary(deps.now() + COUNTDOWN_MS);
     const seats: StartSeat[] = room.seats.map((s, player) => {
@@ -223,24 +239,61 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     const timeLimitTicks = (level.timeLimitSec ?? 0) * TICK_RATE;
     /** Wire simHash is 16 hex: prefix of the compiled level's identity hash `level.simHash`. */
     const simHash = level.simHash.slice(0, 16);
-    const players = new Map<number, Conn>();
-    room.seats.forEach((s, i) => { if (s.occupant) players.set(i, s.occupant.conn); });
     room.state = 'countdown';
     room.startAt = startAt;
-    const match: MatchStart = { code: room.code, matchId, levelId: room.levelId, seed, teams, seats, startAt, inputDelay: deps.inputDelay, timeLimitTicks, sim, players };
+    const levelId = room.levelId;
+    const startMsg = (youPlayer: number, countdownMs: number): StartMsg => ({
+      t: 'start', matchId, levelId, simHash, seed, seats, youPlayer,
+      inputDelay: deps.inputDelay, countdownMs, timeLimitTicks, hashInterval: HASH_INTERVAL,
+    });
+    const match: MatchStart = { code: room.code, matchId, levelId, seed, teams, seats, startAt, inputDelay: deps.inputDelay, timeLimitTicks, level, startMsg };
     room.match = match;
-    for (const [i, c] of players) {
-      const msg: StartMsg = {
-        t: 'start', matchId, levelId: room.levelId, simHash, seed, seats, youPlayer: i,
-        inputDelay: deps.inputDelay, countdownMs: COUNTDOWN_MS, timeLimitTicks, hashInterval: HASH_INTERVAL,
-      };
-      c.send(msg);
-    }
+    room.seats.forEach((s, i) => { s.occupant?.conn.send(startMsg(i, COUNTDOWN_MS)); });
     log?.info('room.start', { room: room.code, matchId, levelId: room.levelId, startAt });
     deps.onStart?.(room, match);
   };
 
+  const drop = (room: Room): void => {
+    rooms.delete(room.code);
+    for (const s of room.seats) if (s.occupant && byPlayer.get(s.occupant.playerId) === room) byPlayer.delete(s.occupant.playerId);
+    log?.info('room.gc', { room: room.code, state: room.state });
+  };
+
+  const gc = (): void => {
+    const t = deps.now();
+    for (const room of [...rooms.values()]) {
+      if ((room.state === 'ended' || room.state === 'closed') && room.endedAt !== undefined && t - room.endedAt >= ENDED_ROOM_TTL_MS) drop(room);
+    }
+  };
+
+  const timers = deps.timers ?? {
+    setTimeout: (fn: () => void, ms: number) => { const h = setTimeout(fn, ms); h.unref(); return h; },
+    clearTimeout: (h: never) => clearTimeout(h),
+  };
+  const sweep = (): void => { try { gc(); } finally { timers.setTimeout(sweep, SWEEP_MS); } };
+  timers.setTimeout(sweep, SWEEP_MS);
+
   return {
+    gc,
+    resume(conn) {
+      const room = byPlayer.get(conn.playerId ?? '');
+      if (room === undefined) return undefined;
+      const i = seatOf(room, conn);
+      return i < 0 ? undefined : { code: room.code, seat: i };
+    },
+    /** Rebinds a reconnecting/superseding conn to its seat and replays room state. */
+    onAuthed(conn) {
+      const room = byPlayer.get(conn.playerId ?? '');
+      if (room === undefined) return;
+      const i = seatOf(room, conn);
+      if (i < 0) return;
+      room.seats[i]!.occupant!.conn = conn;
+      conn.send({ t: 'room.joined', code: room.code, you: { seat: i, host: room.host === i } });
+      conn.send(lobbyState(room));
+      if ((room.state === 'countdown' || room.state === 'running') && room.match !== undefined) {
+        conn.send(room.match.startMsg(i, Math.max(0, room.match.startAt - deps.now())));
+      }
+    },
     room: (code) => rooms.get(code),
     roomOf: (conn) => byPlayer.get(conn.playerId ?? ''),
     roomCount: () => rooms.size,
@@ -268,8 +321,22 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       }
     },
     onDisconnect(conn, reason) {
-      // Superseded = same player on a new socket; resume/rebind is a later task, so keep the seat.
+      // Superseded = same player on a new socket; onAuthed rebinds, so keep the seat.
       if (reason === 'superseded' || conn.playerId === undefined) return;
+      const room = byPlayer.get(conn.playerId);
+      if (room === undefined) return;
+      // Ignore a stale conn that is no longer the seat's current conn.
+      const o = room.seats.find((s) => s.occupant?.playerId === conn.playerId)?.occupant;
+      if (o !== undefined && o.conn !== conn) return;
+      if (room.state === 'countdown' || room.state === 'running') {
+        // Disconnect FSM is M2; for now an abandoned match (everyone gone) is closed so it stops ticking.
+        if (room.conns().every((c) => c.closed)) {
+          room.state = 'closed'; room.endedAt = deps.now();
+          log?.info('room.close', { room: room.code, reason: 'abandoned' });
+          drop(room);
+        }
+        return;
+      }
       leave(conn);
     },
   };

@@ -52,6 +52,12 @@ export class Conn {
     this.socket.send(encode(msg));
   }
 
+  /** Pre-encoded frame (shared across recipients, e.g. tick). */
+  sendFrame(raw: string): void {
+    if (this.closed) return;
+    this.socket.send(raw);
+  }
+
   sendError(code: ErrorCode, detail?: string): void {
     this.send(detail === undefined ? { t: 'error', code } : { t: 'error', code, detail });
   }

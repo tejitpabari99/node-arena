@@ -14,20 +14,23 @@ const content = loadServerContent(DEFAULT_CONTENT_DIR, { extraLevels: { 'na-pvp-
 
 function fakeSocket() {
   let msgCb: (d: string | Uint8Array) => void = () => {};
+  let closeCb: () => void = () => {};
   const sent: ServerMessage[] = [];
   return {
     sent, bufferedAmount: 0,
     send: (d: string) => void sent.push(JSON.parse(d) as ServerMessage),
     close() {},
     onMessage: (cb: (d: string | Uint8Array) => void) => void (msgCb = cb),
-    onClose: () => {},
+    onClose: (cb: () => void) => void (closeCb = cb),
+    drop: () => closeCb(),
     say: (m: object) => msgCb(JSON.stringify(m)),
     of: <T extends ServerMessage['t']>(t: T) => sent.filter((m) => m.t === t) as Extract<ServerMessage, { t: T }>[],
   };
 }
 
-function setup() {
+function setup(opts: { maxRooms?: number } = {}) {
   let now = 1000;
+  const timerFns: Array<() => void> = [];
   const added = new Set<ClockRoom>();
   const clock = { add: (r: ClockRoom) => void added.add(r), remove: (r: ClockRoom) => void added.delete(r), boundary: (t: number) => t };
   const logs: Array<{ level: string; ev: string; f?: Record<string, unknown> }> = [];
@@ -41,13 +44,15 @@ function setup() {
     randomInt: () => (n++ % 31),
     onStart: (r, m) => { starts.push(m); ctl.onStart(r, m); },
     onMatchMessage: ctl.onMessage,
+    ...(opts.maxRooms !== undefined ? { maxRooms: opts.maxRooms } : {}),
+    timers: { setTimeout: (fn) => { timerFns.push(fn); return timerFns.length; }, clearTimeout: () => {} },
   });
   const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', timers: { setTimeout: () => 0, clearTimeout: () => {} } });
   let c = 0;
-  const client = (nick: string) => {
+  const client = (nick: string, tok?: number) => {
     const s = fakeSocket();
-    hub.accept({ ...s, onClose: () => {} } as never);
-    s.say({ t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick, token: `${String(++c).padStart(8, '0')}a1b2c3d4e5f60718293a4b5c` });
+    hub.accept(s);
+    s.say({ t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick, token: `${String(tok ?? ++c).padStart(8, '0')}a1b2c3d4e5f60718293a4b5c` });
     return s;
   };
   const room = () => {
@@ -59,11 +64,11 @@ function setup() {
     return { a, b, match: starts[starts.length - 1]! };
   };
   const tickAll = () => { for (const r of [...added]) r.tick(); };
-  return { room, tickAll, added, logs, setNow: (t: number) => { now = t; }, mgr };
+  return { room, client, tickAll, added, logs, setNow: (t: number) => { now = t; }, mgr, ctl, timerFns };
 }
 
 test('contiguous n, empty ticks sent, cmd lands at n+delay, end once and clock stops', () => {
-  const { room, tickAll, added, mgr } = setup();
+  const { room, tickAll, added, mgr, ctl } = setup();
   const { a, b, match } = room();
   const clockCount = (): number => added.size;
   assert.equal(added.size, 1);
@@ -84,23 +89,23 @@ test('contiguous n, empty ticks sent, cmd lands at n+delay, end once and clock s
   assert.equal(b.of('end').length, 1);
   assert.equal(mgr.room(match.code)!.state, 'ended');
   const end = a.of('end')[0]!;
-  assert.equal(end.finalHash, match.sim.hash());
-  assert.equal(end.finalTick, match.sim.view.tick);
+  assert.equal(end.finalHash, ctl.simOf(mgr.room(match.code)!)!.hash());
+  assert.equal(end.finalTick, ctl.simOf(mgr.room(match.code)!)!.view.tick);
   const nBefore = a.sent.length;
   tickAll();
   assert.equal(a.sent.length, nBefore);
 });
 
 test('bad hash -> desync to that socket only + log; rate-limited per seat', () => {
-  const { room, tickAll, logs, setNow } = setup();
+  const { room, tickAll, logs, setNow, mgr, ctl } = setup();
   const { a, b, match } = room();
   for (let i = 0; i < 20; i++) tickAll();
-  assert.equal(match.sim.view.tick, 20);
+  assert.equal(ctl.simOf(mgr.room(match.code)!)!.view.tick, 20);
   a.say({ t: 'hash', tick: 20, h: '0000000000000000' });
   const d = a.of('desync');
   assert.equal(d.length, 1);
   assert.equal(d[0]!.tick, 20);
-  assert.equal(d[0]!.serverHash, match.sim.hash());
+  assert.equal(d[0]!.serverHash, ctl.simOf(mgr.room(match.code)!)!.hash());
   assert.equal(b.of('desync').length, 0);
   const l = logs.find((x) => x.ev === 'desync')!;
   assert.equal(l.f!.seat, 0);
@@ -113,15 +118,15 @@ test('bad hash -> desync to that socket only + log; rate-limited per seat', () =
   setNow(1000 + DESYNC_MIN_GAP_MS);
   a.say({ t: 'hash', tick: 20, h: '2222222222222222' });
   assert.equal(a.of('desync').length, 2);
-  a.say({ t: 'hash', tick: 20, h: match.sim.hash() });
+  a.say({ t: 'hash', tick: 20, h: ctl.simOf(mgr.room(match.code)!)!.hash() });
   assert.equal(a.of('desync').length, 2);
 });
 
 test('throwing room is isolated: error internal + room.closed; other room continues', () => {
-  const { room, tickAll, added, mgr } = setup();
+  const { room, tickAll, added, mgr, ctl } = setup();
   const r1 = room(), r2 = room();
   assert.equal(added.size, 2);
-  (r1.match.sim as { step: unknown }).step = () => { throw new Error('boom'); };
+  (ctl.simOf(mgr.room(r1.match.code)!)! as { step: unknown }).step = () => { throw new Error('boom'); };
   tickAll();
   assert.equal(r1.a.of('error').at(-1)!.code, 'internal');
   assert.equal(r1.a.of('room.closed')[0]!.reason, 'internal');
@@ -139,4 +144,124 @@ test('rejected cmd replies with error code', () => {
   tickAll();
   a.say({ t: 'cmd', c: { type: 'DrawLine', from: 0, to: 9999 } });
   assert.equal(a.of('error').at(-1)!.code, 'bad-message');
+});
+
+function finish(t: ReturnType<typeof setup>): void {
+  let guard = 0;
+  while (t.added.size > 0 && guard++ < 20000) t.tickAll();
+  assert.equal(t.added.size, 0);
+}
+
+test('after end: hash checked vs stored checkpoints (ok silent, wrong -> desync); late cmd dropped silently', () => {
+  const t = setup();
+  const { a, b, match } = t.room();
+  const room = t.mgr.room(match.code)!;
+  for (let i = 0; i < 20; i++) t.tickAll();
+  const h20 = t.ctl.simOf(room)!.hash();
+  finish(t);
+  assert.equal(room.state, 'ended');
+  const finalTick = t.ctl.simOf(room)!.view.tick;
+  const nA = a.sent.length;
+  a.say({ t: 'hash', tick: 20, h: h20 });
+  a.say({ t: 'cmd', c: { type: 'DrawLine', from: 0, to: 1 } });
+  b.say({ t: 'cmd', c: { type: 'DrawLine', from: 1, to: 0 } });
+  if (finalTick % 20 === 0) a.say({ t: 'hash', tick: finalTick, h: t.ctl.simOf(room)!.hash() });
+  assert.equal(a.sent.length, nA, 'no reply to ok hash / late cmd');
+  assert.equal(b.of('error').length, 0);
+  a.say({ t: 'hash', tick: 20, h: '0000000000000000' });
+  const d = a.of('desync');
+  assert.equal(d.length, 1);
+  assert.equal(d[0]!.tick, 20);
+  assert.equal(a.of('error').length, 0);
+});
+
+test('supersede in lobby: new conn gets room.joined + lobby.state and can ready/start', () => {
+  const t = setup();
+  const a = t.client('Ann'), b = t.client('Bob');
+  a.say({ t: 'room.create' });
+  const code = a.of('room.joined')[0]!.code;
+  b.say({ t: 'room.join', code, role: 'play' });
+  const b2 = t.client('Bob', 2); // same token as b
+  assert.equal(b2.of('welcome')[0]!.resume?.code, code);
+  assert.equal(b2.of('room.joined').at(-1)!.code, code);
+  assert.deepEqual(b2.of('room.joined').at(-1)!.you, { seat: 1, host: false });
+  assert.equal(b2.of('lobby.state').at(-1)!.seats[1]!.occupant?.nick, 'Bob');
+  b.drop(); // old conn late close must not free the seat
+  assert.equal(t.mgr.room(code)!.seats[1]!.occupant?.nick, 'Bob');
+  b2.say({ t: 'lobby.ready', ready: true });
+  assert.equal(b2.of('error').length, 0);
+  a.say({ t: 'lobby.start' });
+  assert.equal(b2.of('start').at(-1)!.youPlayer, 1);
+  assert.equal(b.of('start').length, 0, 'old conn gets nothing');
+});
+
+test('supersede mid-match: new conn gets start, cmds accepted, ticks to new conn only', () => {
+  const t = setup();
+  const { a, b, match } = t.room();
+  t.tickAll();
+  const b2 = t.client('B', 2);
+  assert.equal(b2.of('start').at(-1)!.youPlayer, 1);
+  assert.equal(b2.of('start').at(-1)!.matchId, match.matchId);
+  const oldTicks = b.of('tick').length;
+  const nTicks = b2.of('tick').length;
+  b.say({ t: 'cmd', c: { type: 'DrawLine', from: 1, to: 0 } });
+  assert.equal(b.of('error').length, 0, 'closed old conn ignored');
+  b2.say({ t: 'cmd', c: { type: 'DrawLine', from: 1, to: 0 } });
+  assert.equal(b2.of('error').length, 0);
+  for (let i = 0; i < 6; i++) t.tickAll();
+  assert.equal(b.of('tick').length, oldTicks);
+  assert.equal(b2.of('tick').length, nTicks + 6);
+  assert.ok(b2.of('tick').some((x) => x.c !== undefined), 'cmd from new conn landed');
+  assert.equal(a.of('tick').length, 7);
+});
+
+test('after end both leave -> each can create again; room deleted when empty', () => {
+  const t = setup();
+  const { a, b, match } = t.room();
+  finish(t);
+  a.say({ t: 'room.leave' });
+  assert.ok(t.mgr.room(match.code), 'one member left');
+  b.say({ t: 'room.leave' });
+  assert.equal(t.mgr.room(match.code), undefined);
+  assert.equal(t.mgr.roomCount(), 0);
+  a.say({ t: 'room.create' });
+  b.say({ t: 'room.create' });
+  assert.equal(a.of('error').length, 0);
+  assert.equal(b.of('error').length, 0);
+  assert.equal(t.mgr.roomCount(), 2);
+});
+
+test('disconnect after end frees the player', () => {
+  const t = setup();
+  const { a, match } = t.room();
+  finish(t);
+  a.drop();
+  const a2 = t.client('A', 1);
+  a2.say({ t: 'room.create' });
+  assert.equal(a2.of('error').length, 0);
+  assert.notEqual(a2.of('room.joined').at(-1)!.code, match.code);
+});
+
+test('maxRooms+1 create refused', () => {
+  const t = setup({ maxRooms: 1 });
+  const a = t.client('A'), b = t.client('B');
+  a.say({ t: 'room.create' });
+  b.say({ t: 'room.create' });
+  assert.equal(a.of('error').length, 0);
+  assert.equal(b.of('error').at(-1)!.code, 'room-full');
+  assert.equal(t.mgr.roomCount(), 1);
+});
+
+test('ended room GC after 10 min clears byPlayer', () => {
+  const t = setup();
+  const { a, match } = t.room();
+  finish(t);
+  t.setNow(1000 + 9 * 60_000);
+  t.mgr.gc();
+  assert.ok(t.mgr.room(match.code));
+  t.setNow(1000 + 11 * 60_000);
+  t.timerFns.at(-1)!(); // periodic sweep timer
+  assert.equal(t.mgr.room(match.code), undefined);
+  a.say({ t: 'room.create' });
+  assert.equal(a.of('error').length, 0);
 });

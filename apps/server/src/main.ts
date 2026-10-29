@@ -66,7 +66,7 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
   });
   const match = createMatchController({ clock, now, log });
   const rooms = createRoomManager({
-    content, clock, now, inputDelay: config.inputDelay, log,
+    content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, log,
     onStart: match.onStart, onMatchMessage: match.onMessage,
   });
   const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns });
@@ -107,6 +107,8 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
     http.once('error', reject);
     http.listen(config.port, config.host, () => { http.off('error', reject); resolve(); });
   });
+  http.on('error', (e) => log.error('http.error', { error: e.message }));
+  wss.on('error', (e) => log.error('wss.error', { error: e.message }));
   const port = (http.address() as AddressInfo).port;
   log.info('server.listening', { port, host: config.host });
 
