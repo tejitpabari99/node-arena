@@ -92,7 +92,7 @@ For branch runs the baseline priority is VERSION_GUARD_BASE, CONTENT_BASE, merge
 CONTENT_BASE=<revision> pnpm run ci
 ```
 
-GitHub CI keeps Node 22/24, Chromium for web/content/sim and a separate sequential browser-suite job. Local CI needs Chromium too. `pnpm run ci` is the script invocation; pnpm reserves its bare ci command. Browser suites use development/test bundles with hooks; ordinary production excludes hooks. Neither CI nor campaign verification deploys anything.
+GitHub CI keeps Node 22/24 and Chromium for web/content/sim, with separate web and PvP browser jobs plus a server Docker build/boot job. Local CI needs Chromium too. `pnpm run ci` is the script invocation; pnpm reserves its bare ci command. Browser suites use development/test bundles with hooks; ordinary production excludes hooks. Neither CI nor campaign verification deploys anything.
 
 ## Root script inventory
 
@@ -104,9 +104,9 @@ Every root script is listed below; package-filtered commands above are additiona
 | `pnpm dev:server` | Start server alone with tsx watch |
 | `pnpm test:net` | Protocol, session and lockstep unit tests |
 | `pnpm test:server` | Server unit/integration tests |
-| `pnpm test:pvp:e2e` | Build server and test web, start both, run two-context lobby and Duel S browser checks (requires Chromium) |
+| `pnpm test:pvp:e2e` | Build server and test web, start both, run lobby/Duel S, spectator/rematch, bot/Cross, pause/forfeit/reconnect and mismatch browser checks (requires Chromium) |
 
-- Workspace checks/builds: `pnpm test`, `pnpm test:defs`, `pnpm test:content`, `pnpm test:sim`, `pnpm test:bots`, `pnpm test:bots:golden`, `pnpm test:net`, `pnpm test:server`, `pnpm test:tools`, `pnpm test:web`, `pnpm test:web:sp07`, `pnpm build`, `pnpm build:defs`, `pnpm build:content`, `pnpm build:sim`, `pnpm build:bots`, `pnpm build:net`, `pnpm build:server`, `pnpm build:web`, `pnpm build:prerequisites`, `pnpm lint`, `pnpm typecheck`, `pnpm typecheck:defs`, `pnpm typecheck:content`, `pnpm typecheck:sim`, `pnpm typecheck:bots`, `pnpm typecheck:net`, `pnpm typecheck:server`, `pnpm typecheck:tools`, `pnpm typecheck:web`, `pnpm typecheck:web:sp07`. Dev: `pnpm dev:server` (tsx watch apps/server/src/main.ts); `pnpm dev:pvp` (web on 5173 + server on 8080 in parallel, default PORT/ALLOWED_ORIGINS inline; run `pnpm build:prerequisites` first, it includes net; plain `pnpm dev` stays web-only).
+- Workspace checks/builds: `pnpm test`, `pnpm test:defs`, `pnpm test:content`, `pnpm test:sim`, `pnpm test:bots`, `pnpm test:bots:golden`, `pnpm test:net`, `pnpm test:server`, `pnpm test:tools`, `pnpm test:web`, `pnpm test:web:sp07`, `pnpm build`, `pnpm build:defs`, `pnpm build:content`, `pnpm build:sim`, `pnpm build:bots`, `pnpm build:net`, `pnpm build:server`, `pnpm build:web`, `pnpm build:prerequisites`, `pnpm lint`, `pnpm typecheck`, `pnpm typecheck:defs`, `pnpm typecheck:content`, `pnpm typecheck:sim`, `pnpm typecheck:bots`, `pnpm typecheck:net`, `pnpm typecheck:server`, `pnpm typecheck:tools`, `pnpm typecheck:web`, `pnpm typecheck:web:sp07`. Dev: `pnpm dev:server` (tsx watch apps/server/src/main.ts); `pnpm dev:pvp` (web on 5173 + server on 8080 in parallel, PORT/ALLOWED_ORIGINS defaults set by the launcher; run `pnpm build:prerequisites` first, it includes net; plain `pnpm dev` stays web-only).
 - Content and rules: `pnpm content:schemas`, `pnpm check:schemas`, `pnpm content:lock`, `pnpm check:content`, `pnpm validate:content`, `pnpm check:manifest`, `pnpm check:rules`, `pnpm import:tw`, `pnpm check:import`.
 - Simulation and reports: `pnpm sim:golden`, `pnpm bots:golden`, `pnpm replay:verify`, `pnpm validate:levels`, `pnpm levels:lock`, `pnpm bench:sim`, `pnpm bench:bots`, `pnpm balance`.
 - Web and assets: `pnpm dev`, `pnpm test:web:e2e`, `pnpm test:web:all`, `pnpm campaign:verify`, `pnpm build:test:pvp`, `pnpm test:pvp:e2e`, `pnpm assets:capture`, `pnpm assets:validate`, `pnpm assets:tw`, `pnpm assets:tw:check`, `pnpm assets:manifest`, `pnpm assets:ui`, `pnpm assets:ui:check`, `pnpm assets:capture:web`.

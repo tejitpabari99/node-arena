@@ -14,12 +14,16 @@ Node Arena: browser tower-strategy game, 20 Common campaign positions 4–23. As
 - `packages/content` schemas, loader/compiler, balance/building/unit/element/level JSON and locks
 - `packages/sim` deterministic rules engine
 - `packages/bots` AI, scripts and human proxy
+- `packages/net` transport-free protocol, handshake, session and lockstep
+- `apps/server` authoritative Node + ws PvP game server
 - `apps/web` Vite + Three.js + Preact client
 - `tools/` import/asset/content/version/manifest/docs gates, level lock and report-only balance matrix
 
 Main scripts (root `package.json`; Node >=22.13, pnpm 10.34.6):
 - `pnpm build:prerequisites` (fresh checkout), `pnpm build`
 - `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm run ci` (gate chain, needs Chromium)
+- `pnpm dev:pvp` (web + server), `pnpm dev:server`, `pnpm test:net`, `pnpm test:server`, `pnpm build:net`, `pnpm build:server`
+- `pnpm build:test:pvp`, `pnpm test:pvp:e2e` (separate Chromium PvP suite)
 - `pnpm dev`, `pnpm test:web:e2e`, `pnpm test:web:all`, `pnpm campaign:verify` (20-level browser smoke)
 - `pnpm check:rules`, `pnpm validate:content --base HEAD`, `pnpm check:content --base HEAD`, `pnpm check:manifest`
 - `pnpm content:schemas`, `pnpm check:schemas`, `pnpm content:lock`

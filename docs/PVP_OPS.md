@@ -2,6 +2,8 @@
 
 Fly.io app `node-arena-server` (region `ewr`, one shared-cpu-1x/256 MB machine). Web stays on Firebase Hosting (`node-arena-99`). Config: `apps/server/fly.toml`, image: `apps/server/Dockerfile`, CI: `.github/workflows/deploy-server.yml` + `.github/workflows/deploy.yml`.
 
+Status (2026-10-29): M1 local human play-test approved. Docker/Fly configuration, deploy workflows and production URL wiring are implemented. The owner reports account/app/setup complete; first Fly deployment, live health/version smoke, production/preview connections and the edge heartbeat check remain unverified. The checklist below is for that first deployment.
+
 The server keeps all rooms in memory: exactly one machine, and every deploy/restart drops live matches (see [Deploy](#deploy)).
 
 ## First-deploy checklist
@@ -103,7 +105,7 @@ Fly `fly.toml [env]` sets `ALLOWED_ORIGINS`; the Dockerfile sets `PORT=8080`, `C
 
 ## Version skew
 
-The handshake refuses on any protocol/rules/schema/content mismatch. Web shows "A newer version of Node Arena is available - reload"; if still mismatched after a hard reload, the PvP menu shows "PvP unavailable: this build differs from the server" (single-player is unaffected).
+The handshake requires exact protocol/schema/content versions and matching rules major/minor; rules patch differences are accepted and bot-version differences are logged without refusing the connection. Web shows "A newer version of Node Arena is available - reload"; if still mismatched after a hard reload, the PvP menu shows "PvP unavailable: this build differs from the server" (single-player is unaffected).
 - Normal deploys are server-first, so stale cached tabs see the reload prompt.
 - Preview channels talk to the prod server; a PR that bumps versions sees "PvP unavailable" in its preview until merged.
 - Persistent mismatch in prod: compare `curl .../healthz` `versions` with the deployed web build; redeploy whichever side is old (`gh workflow run deploy.yml`, which also deploys the server).
