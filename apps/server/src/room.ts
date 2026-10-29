@@ -89,6 +89,12 @@ export interface RoomManagerDeps {
   /** Current lockstep tick for `pong`; default 0. */
   tickOf?: (room: Room) => number | undefined;
   onMatchMessage?: (room: Room, conn: Conn, seat: number, msg: ClientMessage) => boolean;
+  /** SP07: detected loss of a seated human's connection while running (socket close / heartbeat timeout). */
+  onSeatDisconnect?: (room: Room, seat: number) => void;
+  /** SP07: a seated human's conn was rebound while running (after its `start`). */
+  onSeatReconnect?: (room: Room, seat: number, conn: Conn) => void;
+  /** SP07: current pause snapshot for late attachers (watchers). */
+  pauseStateOf?: (room: Room) => import('@node-arena/net').PauseStateMsg | undefined;
   /** Sends `catchup` chunks (ticks [0, next)) to a conn; called right after its `start`, before it joins the live fan-out. */
   onCatchUp?: (room: Room, conn: Conn) => void;
 }
@@ -190,6 +196,8 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   const attachMidMatch = (room: Room, conn: Conn, youPlayer: number | null): void => {
     conn.send(room.match!.startMsg(youPlayer, Math.max(0, room.match!.startAt - deps.now())));
     deps.onCatchUp?.(room, conn);
+    const p = deps.pauseStateOf?.(room);
+    if (p?.paused) conn.send(p);
   };
 
   const watch = (conn: Conn, room: Room): void => {
@@ -227,9 +235,10 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   const leave = (conn: Conn): void => {
     const room = byPlayer.get(conn.playerId ?? '');
     if (room === undefined) return;
-    // Countdown/running leave handling belongs to the disconnect FSM (M2); lobby and ended only here.
     if (room.state === 'closed') { drop(room); return; }
     const i = seatOf(room, conn);
+    // Running: a seated leave is a quit (pending Forfeit; client confirms first). Countdown cancel is Task 8.
+    if (i >= 0 && room.state === 'running') { deps.onMatchMessage?.(room, conn, i, { t: 'quit' }); return; }
     if (i < 0) { // spectators may leave any time
       room.spectators = room.spectators.filter((o) => o.playerId !== conn.playerId);
       byPlayer.delete(conn.playerId!);
@@ -443,7 +452,16 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       conn.send(lobbyState(room));
       if ((room.state === 'countdown' || room.state === 'running') && room.match !== undefined) {
         conn.send(room.match.startMsg(i, Math.max(0, room.match.startAt - deps.now())));
+        if (room.state === 'running') deps.onSeatReconnect?.(room, i, conn);
       }
+    },
+    /** Heartbeat silence: treat as a disconnect now (the socket close may lag on a dead TCP link). */
+    onHeartbeatTimeout(conn) {
+      const room = byPlayer.get(conn.playerId ?? '');
+      if (room === undefined || room.state !== 'running') return;
+      const i = seatOf(room, conn);
+      if (i < 0 || room.seats[i]!.occupant!.conn !== conn) return;
+      deps.onSeatDisconnect?.(room, i);
     },
     room: (code) => rooms.get(code),
     roomOf: (conn) => byPlayer.get(conn.playerId ?? ''),
@@ -462,10 +480,10 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
           if (msg.t === 'lobby.ready') return ready(conn, room, msg.ready);
           return start(conn, room);
         }
-        case 'cmd': case 'hash': {
+        case 'cmd': case 'hash': case 'pause': case 'resume': case 'quit': {
           const room = byPlayer.get(conn.playerId!);
           const i = room === undefined ? -1 : seatOf(room, conn);
-          if (room === undefined || i < 0) return conn.sendError('not-your-seat');
+          if (room === undefined || i < 0) return conn.sendError(room === undefined && msg.t !== 'cmd' && msg.t !== 'hash' ? 'no-match' : 'not-your-seat');
           if (deps.onMatchMessage?.(room, conn, i, msg)) return;
           return conn.sendError('internal', 'not supported yet');
         }
@@ -491,6 +509,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       const o = room.seats.find((s) => s.occupant?.playerId === conn.playerId)?.occupant;
       if (o !== undefined && o.conn !== conn) return;
       if (o === undefined) { leave(conn); return; } // spectator: just drop them
+      if (room.state === 'running') deps.onSeatDisconnect?.(room, seatOf(room, conn));
       if (room.state === 'countdown' || room.state === 'running') {
         // Running: never closed here; the match plays on and SP07 deadlines / the hard cap end it. Countdown cancel is SP07.
         if (room.state === 'countdown' && room.seats.every((s) => s.occupant === undefined || s.occupant.conn.closed)) {

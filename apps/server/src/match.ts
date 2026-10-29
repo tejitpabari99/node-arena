@@ -1,9 +1,10 @@
 import { create, type Sim } from '@node-arena/sim';
-import { encodeTick, encode, endMessage, HASH_INTERVAL, LAG_BUFFER_BYTES, LagFeed, LockstepServer, type ClientMessage, type SeatKind } from '@node-arena/net';
+import { encodeTick, encode, endMessage, HASH_INTERVAL, LAG_BUFFER_BYTES, LagFeed, LockstepServer, type ClientMessage, type PauseStateMsg, type SeatKind } from '@node-arena/net';
 import type { Clock, ClockRoom } from './clock.js';
 import type { Conn } from './conn.js';
 import { BACKPRESSURE_CLOSE_BYTES, CLOSE_BACKPRESSURE, CLOSE_RATE_LIMITED } from './limits.js';
 import type { Logger } from './log.js';
+import { createPause, type PauseModule } from './pause.js';
 import type { MatchStart, Room } from './room.js';
 
 export const DESYNC_MIN_GAP_MS = 10_000;
@@ -11,7 +12,9 @@ export const DESYNC_MIN_GAP_MS = 10_000;
 export const MAX_CMDS_PER_SEAT_PER_TICK = 8;
 
 export interface MatchDeps {
-  clock: Pick<Clock, 'add' | 'remove'>;
+  clock: Pick<Clock, 'add' | 'remove'> & Partial<Pick<Clock, 'boundary'>>;
+  /** Timer seam for pause deadlines (default: global timers, unref'd). */
+  timers?: { setTimeout: (fn: () => void, ms: number) => unknown; clearTimeout: (h: unknown) => void };
   now: () => number;
   log?: Logger;
   /** Called after an aborted room has notified its players; frees the room and its players. */
@@ -22,10 +25,18 @@ export interface MatchDeps {
 
 export interface MatchController {
   onStart(room: Room, match: MatchStart): void;
-  /** Routes `cmd` / `hash` from a seated player. Returns false if the message is not match-related. */
+  /** Routes `cmd` / `hash` / `pause` / `resume` / `quit` from a seated player. Returns false if the message is not match-related. */
   onMessage(room: Room, conn: Conn, seat: number, msg: ClientMessage): boolean;
   /** Sends the room's logged ticks [0, next) to `conn` as `catchup` chunks (<=2000 ticks each, last `done`). Sync; reusable for reconnect. */
   catchUp(room: Room, conn: Conn): void;
+  /** Detected connection loss of a seated human (socket close or heartbeat timeout): opens/marks a disconnect hold. */
+  onSeatDisconnect(room: Room, seat: number): void;
+  /** A seat's socket was (re)bound mid-match: marks holds connected and sends the pause snapshot to `conn` while paused. */
+  onSeatReconnect(room: Room, seat: number, conn: Conn): void;
+  /** Current pause snapshot (frozen tick = lockstep.nextTick), or undefined without a running match. */
+  pauseState(room: Room): PauseStateMsg | undefined;
+  /** True while any hold exists (such rooms are never GC-dropped). */
+  hasPendingDeadline(room: Room): boolean;
   /** Test-visible: the room's lockstep server (command log survives match end). */
   inspect(room: Room): LockstepServer | undefined;
   /** Test-visible: the room's referee sim. */
@@ -35,10 +46,14 @@ export interface MatchController {
 /** Authoritative loop per room: referee sim + lockstep, driven by the shared clock. Never waits on clients. */
 export function createMatchController(deps: MatchDeps): MatchController {
   const { clock, now, log } = deps;
+  const timers = deps.timers ?? {
+    setTimeout: (fn: () => void, ms: number): unknown => { const h = setTimeout(fn, ms); h.unref(); return h; },
+    clearTimeout: (h: unknown): void => clearTimeout(h as never),
+  };
   const servers = new WeakMap<Room, LockstepServer>();
   const sims = new WeakMap<Room, Sim>();
   // Kept after match end so late hashes are still compared against stored checkpoints.
-  const active = new WeakMap<Room, { lockstep: LockstepServer; lastDesync: Map<number, number>; perTick: Map<number, { tick: number; n: number }>; total: Map<number, number>; seatBudget: number }>();
+  const active = new WeakMap<Room, { lockstep: LockstepServer; lastDesync: Map<number, number>; perTick: Map<number, { tick: number; n: number }>; total: Map<number, number>; seatBudget: number; pause: PauseModule; clockRoom: ClockRoom; clockOn: boolean }>();
 
   const feeds = new WeakMap<Room, WeakMap<Conn, LagFeed>>();
 
@@ -68,9 +83,20 @@ export function createMatchController(deps: MatchDeps): MatchController {
     });
     servers.set(room, lockstep);
     const seatBudget = Math.max(1, Math.floor(lockstep.log.cmdCap / Math.max(1, kinds.length)));
-    active.set(room, { lockstep, lastDesync: new Map(), perTick: new Map(), total: new Map(), seatBudget });
+    const clockRoom: ClockRoom = { startAt: match.startAt, tick: () => tick() };
+    const pause = createPause({
+      now, setTimeout: timers.setTimeout, clearTimeout: timers.clearTimeout,
+      seats: room.seats.map((s, player) => ({ player, kind: s.kind === 'human' ? 'human' : 'bot', team: s.team })),
+      // Task 7 completes this: emit Forfeit(s) as system cmds, terminal flush, final pause.state before `end`.
+      onExpire: (e) => {
+        log?.info('pause.expire', { room: room.code, expired: e.expired, forfeits: e.forfeits, draw: e.draw, terminal: e.terminal });
+        publish(room, entry);
+      },
+    });
+    const entry = { lockstep, lastDesync: new Map<number, number>(), perTick: new Map<number, { tick: number; n: number }>(), total: new Map<number, number>(), seatBudget, pause, clockRoom, clockOn: false };
+    active.set(room, entry);
 
-    const stop = (): void => { clock.remove(clockRoom); };
+    const stop = (): void => { clock.remove(clockRoom); entry.clockOn = false; pause.dispose(); };
     const abort = (err: unknown): void => {
       stop();
       room.state = 'closed';
@@ -107,11 +133,56 @@ export function createMatchController(deps: MatchDeps): MatchController {
         abort(err);
       }
     };
-    const clockRoom: ClockRoom = { startAt: match.startAt, tick };
     clock.add(clockRoom);
+    entry.clockOn = true;
+  };
+
+  const sendAll = (room: Room, msg: PauseStateMsg): void => { for (const c of room.conns()) if (!c.closed) c.send(msg); };
+
+  /** Freeze/unfreeze the room's clock membership from the hold set, then broadcast the snapshot (sent before any later frame). */
+  const publish = (room: Room, m: { lockstep: LockstepServer; pause: PauseModule; clockRoom: ClockRoom; clockOn: boolean }): void => {
+    if (room.state !== 'running') return;
+    if (m.pause.paused() && m.clockOn) { clock.remove(m.clockRoom); m.clockOn = false; }
+    else if (!m.pause.paused() && !m.clockOn) {
+      // Resume without burst: the room re-enters the loop at the next boundary, so tick n (= frozen tick) is simply the next due tick.
+      m.clockRoom.startAt = clock.boundary?.(now()) ?? now();
+      clock.add(m.clockRoom);
+      m.clockOn = true;
+    }
+    sendAll(room, m.pause.snapshot(m.lockstep.nextTick));
+  };
+
+  const control = (room: Room, conn: Conn, seat: number, msg: Extract<ClientMessage, { t: 'pause' | 'resume' | 'quit' }>): boolean => {
+    if (room.seats[seat]?.kind !== 'human' || room.seats[seat]?.occupant?.conn !== conn) { conn.sendError('not-your-seat'); return true; }
+    const m = active.get(room);
+    if (m === undefined || room.state !== 'running') { conn.sendError('no-match'); return true; }
+    const v = m.lockstep.limiter.hit(seat, 'control');
+    if (!v.ok) {
+      conn.sendError('rate-limited');
+      if (v.advice === 'disconnect') conn.close(CLOSE_RATE_LIMITED, 'rate limited');
+      return true;
+    }
+    if (msg.t === 'resume') {
+      const r = m.pause.resume(seat, msg.epoch);
+      if (r === 'resumed') { log?.info('pause.resume', { room: room.code, seat }); publish(room, m); }
+      else if (r === 'none') conn.sendError('not-your-seat'); // no hold of its own: forged / already released
+      return true; // 'stale': ignored
+    }
+    const r = msg.t === 'pause' ? m.pause.pause(seat) : m.pause.quit(seat);
+    if (!r.ok) { conn.sendError(r.reason === 'paused' ? 'paused' : r.reason === 'ended' ? 'no-match' : 'not-your-seat'); return true; }
+    if (msg.t === 'pause') {
+      if ((r as { repeat: boolean }).repeat) conn.send(m.pause.snapshot(m.lockstep.nextTick)); // idempotent repeat by the owner
+      else { log?.info('pause.open', { room: room.code, seat, reason: 'manual' }); publish(room, m); }
+    } else {
+      // Task 7: Forfeit emission / terminal flush for the pending forfeit.
+      log?.info('pause.quit', { room: room.code, seat });
+      publish(room, m);
+    }
+    return true;
   };
 
   const onMessage = (room: Room, conn: Conn, seat: number, msg: ClientMessage): boolean => {
+    if (msg.t === 'pause' || msg.t === 'resume' || msg.t === 'quit') return control(room, conn, seat, msg);
     if (msg.t !== 'cmd' && msg.t !== 'hash') return false;
     const m = active.get(room);
     // Late messages after end/close (in-flight final hash/cmd) are dropped silently; hashes still get compared below.
@@ -128,6 +199,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
         return true;
       }
       // Per-seat caps so one spammer cannot saturate the shared CommandLog (cap breach aborts the room).
+      if (m.pause.paused()) { conn.sendError('paused'); return true; } // buffered pre-pause cmds keep their original ticks
       const tick = m.lockstep.nextTick + m.lockstep.inputDelay;
       const pt = m.perTick.get(seat);
       const n = pt !== undefined && pt.tick === tick ? pt.n : 0;
@@ -173,5 +245,30 @@ export function createMatchController(deps: MatchDeps): MatchController {
     chunks.forEach((ch, i) => conn.send({ t: 'catchup', from: ch.from, to: ch.to, cmds: [...ch.cmds], done: i === chunks.length - 1 }));
   };
 
-  return { onStart, onMessage, catchUp, inspect: (room) => servers.get(room), simOf: (room) => sims.get(room) };
+  const onSeatDisconnect = (room: Room, seat: number): void => {
+    const m = active.get(room);
+    if (m === undefined || room.state !== 'running') return;
+    const r = m.pause.disconnect(seat);
+    if (!r.ok) return;
+    log?.info('pause.disconnect', { room: room.code, seat });
+    publish(room, m);
+  };
+
+  const onSeatReconnect = (room: Room, seat: number, conn: Conn): void => {
+    const m = active.get(room);
+    if (m === undefined || room.state !== 'running') return;
+    const before = m.pause.epoch();
+    m.pause.reconnect(seat);
+    if (m.pause.epoch() !== before) publish(room, m);
+    else if (m.pause.paused()) conn.send(m.pause.snapshot(m.lockstep.nextTick));
+  };
+
+  const pauseState = (room: Room): PauseStateMsg | undefined => {
+    const m = active.get(room);
+    return m === undefined ? undefined : m.pause.snapshot(m.lockstep.nextTick);
+  };
+
+  const hasPendingDeadline = (room: Room): boolean => active.get(room)?.pause.paused() ?? false;
+
+  return { onStart, onMessage, catchUp, onSeatDisconnect, onSeatReconnect, pauseState, hasPendingDeadline, inspect: (room) => servers.get(room), simOf: (room) => sims.get(room) };
 }

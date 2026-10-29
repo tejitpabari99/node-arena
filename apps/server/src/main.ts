@@ -80,6 +80,7 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
   const rooms = createRoomManager({
     content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, ipLimits, log,
     tickOf: (r) => match.inspect(r)?.nextTick, onStart: match.onStart, onMatchMessage: match.onMessage, onCatchUp: match.catchUp,
+    onSeatDisconnect: match.onSeatDisconnect, onSeatReconnect: match.onSeatReconnect, pauseStateOf: match.pauseState, hasPendingDeadline: match.hasPendingDeadline,
   });
   const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns, ipLimits, now });
   clock.start();
