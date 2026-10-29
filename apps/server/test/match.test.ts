@@ -7,7 +7,7 @@ import { DEFAULT_CONTENT_DIR } from '../src/config.js';
 import { loadServerContent } from '../src/content.js';
 import { createHub } from '../src/hub.js';
 import { createMatchController, DESYNC_MIN_GAP_MS } from '../src/match.js';
-import { createRoomManager, type MatchStart } from '../src/room.js';
+import { createRoomManager, ENDED_ROOM_TTL_MS, LOBBY_EMPTY_TTL_MS, MATCH_CAP_EXTRA_MS, type MatchStart, type Room } from '../src/room.js';
 
 const fixture = readFileSync(new URL('./fixtures/na-pvp-fixture.json', import.meta.url), 'utf8');
 const content = loadServerContent(DEFAULT_CONTENT_DIR, { extraLevels: { 'na-pvp-fixture': fixture } });
@@ -28,7 +28,7 @@ function fakeSocket() {
   };
 }
 
-function setup(opts: { maxRooms?: number } = {}) {
+function setup(opts: { maxRooms?: number; hasPendingDeadline?: (r: Room) => boolean } = {}) {
   let now = 1000;
   const timerFns: Array<() => void> = [];
   const added = new Set<ClockRoom>();
@@ -46,6 +46,7 @@ function setup(opts: { maxRooms?: number } = {}) {
     onMatchMessage: ctl.onMessage,
     onCatchUp: ctl.catchUp,
     ...(opts.maxRooms !== undefined ? { maxRooms: opts.maxRooms } : {}),
+    ...(opts.hasPendingDeadline ? { hasPendingDeadline: opts.hasPendingDeadline } : {}),
     timers: { setTimeout: (fn) => { timerFns.push(fn); return timerFns.length; }, clearTimeout: () => {} },
   });
   const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', timers: { setTimeout: () => 0, clearTimeout: () => {} } });
@@ -364,4 +365,172 @@ test('spectator: lobby watcher gets start(null) and live ticks from 0; mid-count
   tickAll(); tickAll();
   assert.deepEqual(w.of('tick').map((t) => t.n), [0, 1]);
   assert.deepEqual(late.of('tick').map((t) => t.n), [0, 1]);
+});
+
+// ---- Task 14: host transfer, room GC, rematch ----
+
+const lobbyOf = (s: ReturnType<typeof fakeSocket>) => s.of('lobby.state').at(-1)!;
+
+test('T14 host leaves in lobby -> next connected human is host, ready cleared; no connected human -> host null, returning member regains', () => {
+  const t = setup();
+  const a = t.client('A'), b = t.client('B');
+  a.say({ t: 'room.create' });
+  b.say({ t: 'room.join', code: a.of('room.joined')[0]!.code, role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'room.leave' });
+  const ls = lobbyOf(b);
+  assert.equal(ls.host, 1);
+  assert.equal(ls.seats[1]!.occupant!.ready, true);
+  // 3rd party scenario: only a disconnected human remains -> no host
+  const a2 = t.client('A', 1);
+  a2.say({ t: 'room.join', code: b.of('room.joined')[0]!.code, role: 'play' });
+  const room = t.mgr.room(b.of('room.joined')[0]!.code)!;
+  room.seats[0]!.occupant!.conn.closed = true; // other human's socket gone (SP07 reserve keeps the seat)
+  b.say({ t: 'room.leave' });
+  assert.equal(room.host, null);
+});
+
+test('T14 host leaves after end -> host passes to connected human; spectators unaffected', () => {
+  const t = setup();
+  const { a, b, match } = t.room();
+  finish(t);
+  const room = t.mgr.room(match.code)!;
+  assert.equal(room.host, 0);
+  a.say({ t: 'room.leave' });
+  assert.equal(room.host, 1);
+  assert.equal(room.state, 'ended');
+  void b;
+});
+
+test('T14 running room with all sockets closed is NOT dropped by disconnect or gc (no 60 s timer)', () => {
+  const t = setup();
+  const { a, b, match } = t.room();
+  t.tickAll();
+  a.drop(); b.drop();
+  const room = t.mgr.room(match.code)!;
+  assert.equal(room.state, 'running');
+  t.setNow(1000 + 150_000); // < limit(60 s)+2 min cap
+  t.mgr.gc();
+  assert.ok(t.mgr.room(match.code), 'still held');
+  assert.equal(t.added.size, 1, 'still ticking');
+});
+
+test('T14 spectators do not count: running room, seats gone, spectator connected -> still not closed', () => {
+  const t = setup();
+  const { a, b, match } = t.room();
+  const sp = t.client('S');
+  sp.say({ t: 'room.join', code: match.code, role: 'watch' });
+  t.tickAll();
+  a.drop(); b.drop();
+  assert.equal(t.mgr.room(match.code)!.state, 'running');
+});
+
+test('T14 hard match cap: limit + 2 min aborts a running room, even with a pending deadline', () => {
+  const t = setup({ hasPendingDeadline: () => true });
+  const { a, match } = t.room();
+  t.tickAll();
+  const limitMs = (match.timeLimitTicks * 1000) / 20;
+  assert.ok(limitMs > 0);
+  t.setNow(match.startAt + limitMs + MATCH_CAP_EXTRA_MS - 1);
+  t.mgr.gc();
+  assert.ok(t.mgr.room(match.code));
+  t.setNow(match.startAt + limitMs + MATCH_CAP_EXTRA_MS);
+  t.mgr.gc();
+  assert.equal(t.mgr.room(match.code), undefined);
+  assert.equal(a.of('room.closed').at(-1)!.reason, 'idle');
+  t.tickAll();
+  assert.equal(t.added.size, 0, 'clock room removed after abort');
+});
+
+test('T14 ended room kept exactly ENDED_ROOM_TTL_MS; pending deadline blocks gc drop', () => {
+  let pending = true;
+  const t = setup({ hasPendingDeadline: () => pending });
+  const { match } = t.room();
+  finish(t);
+  const room = t.mgr.room(match.code)!;
+  const e = room.endedAt!;
+  assert.equal(t.mgr.hasPendingDeadline(room), true);
+  t.setNow(e + ENDED_ROOM_TTL_MS + 1);
+  t.mgr.gc();
+  assert.ok(t.mgr.room(match.code), 'pending deadline: kept');
+  pending = false;
+  t.setNow(e + ENDED_ROOM_TTL_MS - 1);
+  t.mgr.gc();
+  assert.ok(t.mgr.room(match.code));
+  t.setNow(e + ENDED_ROOM_TTL_MS);
+  t.mgr.gc();
+  assert.equal(t.mgr.room(match.code), undefined);
+});
+
+test('T14 default hasPendingDeadline is false', () => {
+  const t = setup();
+  const { match } = t.room();
+  assert.equal(t.mgr.hasPendingDeadline(t.mgr.room(match.code)!), false);
+});
+
+test('T14 socket-less lobby dropped after 2 min; spectator socket does not keep it; live seat resets timer', () => {
+  const t = setup();
+  const a = t.client('A'), sp = t.client('S');
+  a.say({ t: 'room.create' });
+  const code = a.of('room.joined')[0]!.code;
+  sp.say({ t: 'room.join', code, role: 'watch' });
+  const room = t.mgr.room(code)!;
+  room.seats[0]!.occupant!.conn.closed = true;
+  t.setNow(2000); t.mgr.gc();
+  t.setNow(2000 + LOBBY_EMPTY_TTL_MS - 1); t.mgr.gc();
+  assert.ok(t.mgr.room(code));
+  t.setNow(2000 + LOBBY_EMPTY_TTL_MS); t.mgr.gc();
+  assert.equal(t.mgr.room(code), undefined);
+  assert.equal(sp.of('room.closed').at(-1)!.reason, 'idle');
+  // freed players can create again
+  sp.of('error'); const sp2 = t.client('S', 2); sp2.say({ t: 'room.create' });
+  assert.equal(sp2.of('error').length, 0);
+  // a lobby with an open seated socket is never dropped
+  const c = t.client('C'); c.say({ t: 'room.create' });
+  t.setNow(2000 + 10 * LOBBY_EMPTY_TTL_MS); t.mgr.gc();
+  assert.ok(t.mgr.room(c.of('room.joined')[0]!.code));
+});
+
+test('T14 rematch: ended -> lobby, same setup, ready cleared except sender, new seed, spectators kept', () => {
+  const t = setup();
+  const { a, b, match } = t.room();
+  const sp = t.client('S');
+  sp.say({ t: 'room.join', code: match.code, role: 'watch' });
+  const room = t.mgr.room(match.code)!;
+  b.say({ t: 'rematch' });
+  assert.equal(b.of('error').at(-1)!.code, 'match-in-progress'); // not ended yet
+  sp.say({ t: 'rematch' });
+  assert.equal(sp.of('error').at(-1)!.code, 'not-your-seat');
+  finish(t);
+  sp.say({ t: 'rematch' });
+  assert.equal(sp.of('error').at(-1)!.code, 'not-your-seat');
+  b.say({ t: 'rematch' });
+  assert.equal(room.state, 'lobby');
+  assert.equal(room.match, undefined);
+  assert.equal(room.endedAt, undefined);
+  assert.equal(room.spectators.length, 1);
+  assert.equal(t.mgr.roomOf(sp as never) ?? room, room);
+  const ls = lobbyOf(a);
+  assert.equal(ls.seats[0]!.occupant!.ready, true); // host implicit
+  assert.equal(ls.seats[1]!.occupant!.ready, true); // sender
+  assert.equal(ls.spectators, 1);
+  assert.equal(lobbyOf(sp).host, 0);
+  const startsBefore = sp.of('start').length;
+  a.say({ t: 'lobby.start' });
+  assert.equal(room.state, 'countdown');
+  assert.notEqual(t.mgr.room(match.code)!.match!.seed, match.seed);
+  assert.equal(sp.of('start').length, startsBefore + 1); // lobby watcher goes live with the new match
+  assert.equal(sp.of('start').at(-1)!.youPlayer, null);
+});
+
+test('T14 rematch clears ready; non-sender must re-ready; host reassigned when host socket is gone', () => {
+  const t = setup();
+  const { a, b, match } = t.room();
+  finish(t);
+  const room = t.mgr.room(match.code)!;
+  room.seats[0]!.occupant!.conn.closed = true;
+  b.say({ t: 'rematch' });
+  assert.equal(room.host, 1);
+  assert.equal(room.seats[0]!.occupant!.ready, false);
+  void a;
 });

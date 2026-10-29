@@ -21,7 +21,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. 
 | 11 | [M2] Full lobby editing and start validation | 5, SP01#3 | done |
 | 12 | [M2] Bot seats in match | 6, 10, 11 | todo |
 | 13 | [M2] Spectators and mid-match catch-up | 6, 11, SP02#10 | done |
-| 14 | [M2] Host transfer, room GC, rematch | 11, 13 | todo |
+| 14 | [M2] Host transfer, room GC, rematch | 11, 13 | done |
 | 15 | [M2] Limits and abuse controls | 7, SP02#11, SP02#12 | todo |
 | 16 | [M2] Ops: env validation, health detail, SIGTERM drain | 7, 15 | todo |
 | 17 | [M2] Dockerfile, .dockerignore, fly.toml | 16 | todo |
