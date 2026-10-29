@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "build:test": "tsc --noEmit && VITE_TEST_HOOKS=1 vite build --outDir dist-test",
     "preview": "vite preview --host 127.0.0.1",
+    "build:test:pvp": "tsc --noEmit && VITE_TEST_HOOKS=1 VITE_PVP_SERVER_URL=ws://127.0.0.1:8081 vite build --outDir dist-test-pvp",
     "preview:test": "vite preview --host 127.0.0.1 --outDir dist-test",
     "test": "vitest run",
     "test:sp07": "vitest run test/sp07",
@@ -15,6 +16,7 @@
     "test:e2e": "pnpm build:test && playwright test",
     "test:e2e:dev": "WEB_TEST_SERVER=dev playwright test",
     "test:e2e:all": "pnpm build:test && playwright test --workers=1 && WEB_TEST_SERVER=dev playwright test --workers=1",
+    "test:pvp:e2e": "pnpm build:test:pvp && playwright test --config playwright.pvp.config.ts",
     "campaign:verify": "pnpm build:test && playwright test --config playwright.campaign.config.ts"
   },
   "dependencies": {
