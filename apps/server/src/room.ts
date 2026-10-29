@@ -2,10 +2,11 @@ import { randomInt as cryptoRandomInt } from 'node:crypto';
 import { TICK_RATE } from '@node-arena/sim';
 import type { CompiledLevel } from '@node-arena/content';
 import {
-  HASH_INTERVAL, MAX_INT, type ClientMessage, type LobbySeat, type SeatConfig, type ServerMessage, type StartMsg, type StartSeat,
+  HASH_INTERVAL, MAX_INT, RateLimiter, type ClientMessage, type LobbySeat, type SeatConfig, type ServerMessage, type StartMsg, type StartSeat,
 } from '@node-arena/net';
 import type { Clock } from './clock.js';
 import type { Conn } from './conn.js';
+import { CLOSE_RATE_LIMITED } from './limits.js';
 import type { HubHandler } from './hub.js';
 import type { Logger } from './log.js';
 import type { ServerContent } from './content.js';
@@ -85,6 +86,8 @@ export interface RoomManagerDeps {
   timers?: { setTimeout: (fn: () => void, ms: number) => unknown; clearTimeout: (h: never) => void };
   /** SP07 hook: true while the room has a pending pause/disconnect deadline; such rooms are never GC-dropped (only the hard cap / shutdown / abort remove them). Default false. */
   hasPendingDeadline?: (room: Room) => boolean;
+  /** Current lockstep tick for `pong`; default 0. */
+  tickOf?: (room: Room) => number | undefined;
   onMatchMessage?: (room: Room, conn: Conn, seat: number, msg: ClientMessage) => boolean;
   /** Sends `catchup` chunks (ticks [0, next)) to a conn; called right after its `start`, before it joins the live fan-out. */
   onCatchUp?: (room: Room, conn: Conn) => void;
@@ -107,6 +110,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   const { content, log } = deps;
   const rand = deps.randomInt ?? cryptoRandomInt;
   const rooms = new Map<string, Room>();
+  const pingLimiter = new RateLimiter(deps.now);
   const byPlayer = new Map<string, Room>();
   const maxRooms = deps.maxRooms ?? Infinity;
   let matchSeq = 0;
@@ -465,7 +469,17 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
           if (deps.onMatchMessage?.(room, conn, i, msg)) return;
           return conn.sendError('internal', 'not supported yet');
         }
-        default: return conn.sendError('internal', 'not supported yet'); // ping/rematch/resync: later tasks
+        case 'ping': {
+          const v = pingLimiter.hit(conn.id, 'ping');
+          if (!v.ok) {
+            conn.sendError('rate-limited');
+            if (v.advice === 'disconnect') conn.close(CLOSE_RATE_LIMITED, 'rate limited');
+            return;
+          }
+          const room = byPlayer.get(conn.playerId!);
+          return conn.send({ t: 'pong', id: msg.id, tick: (room === undefined ? undefined : deps.tickOf?.(room)) ?? 0 });
+        }
+        default: return conn.sendError('internal', 'not supported yet'); // rematch/resync: later tasks
       }
     },
     onDisconnect(conn, reason) {

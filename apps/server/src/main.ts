@@ -49,6 +49,8 @@ function wrapWs(ws: WebSocket, ip: string | undefined): Socket {
       });
     },
     onClose: (cb) => { ws.on('close', cb); },
+    ping: () => { ws.ping(); },
+    onPong: (cb) => { ws.on('pong', cb); },
     get bufferedAmount() { return ws.bufferedAmount; },
   };
 }
@@ -77,7 +79,7 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
   const match = createMatchController({ clock, now, log, onAbort: (r) => rooms.drop(r) });
   const rooms = createRoomManager({
     content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, ipLimits, log,
-    onStart: match.onStart, onMatchMessage: match.onMessage, onCatchUp: match.catchUp,
+    tickOf: (r) => match.inspect(r)?.nextTick, onStart: match.onStart, onMatchMessage: match.onMessage, onCatchUp: match.catchUp,
   });
   const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns, ipLimits, now });
   clock.start();
@@ -126,6 +128,7 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
     port, content,
     close: async () => {
       clock.stop();
+      hub.stop();
       for (const c of wss.clients) c.terminate();
       await new Promise<void>((r) => wss.close(() => r()));
       await new Promise<void>((r) => { http.close(() => r()); http.closeAllConnections(); });

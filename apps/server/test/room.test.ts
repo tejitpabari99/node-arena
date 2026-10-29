@@ -428,3 +428,15 @@ test('covers task11: non-host cannot edit seats', () => {
   assert.equal(b.last('error')!.code, 'not-host');
   assert.equal(seatsOf(a)[1]!.kind, 'human');
 });
+
+test('app ping answers pong (not internal); flood is rate-limited', () => {
+  const { client } = setup();
+  const a = client('Ann');
+  a.say({ t: 'ping', id: 9 });
+  assert.deepEqual(a.sent, [{ t: 'pong', id: 9, tick: 0 }]);
+  a.clear();
+  for (let i = 0; i < 10; i++) a.say({ t: 'ping', id: i });
+  assert.equal(a.sent.filter((m) => m.t === 'pong').length, 4); // 5 per s incl. the first
+  assert.ok(a.sent.some((m) => m.t === 'error' && m.code === 'rate-limited'));
+  assert.ok(!a.sent.some((m) => m.t === 'error' && m.code === 'internal'));
+});

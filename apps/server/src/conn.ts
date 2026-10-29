@@ -8,6 +8,10 @@ export interface Socket {
   close(code?: number, reason?: string): void;
   onMessage(cb: (data: string | Uint8Array) => void): void;
   onClose(cb: () => void): void;
+  /** Protocol-level ping frame (optional; `wrapWs` implements). */
+  ping?(): void;
+  /** Protocol-level pong callback (optional). */
+  onPong?(cb: () => void): void;
   readonly bufferedAmount: number;
   /** Peer address (Fly-Client-IP); abuse-limit key only, never logged. */
   readonly ip?: string;
@@ -17,6 +21,7 @@ export const CLOSE_SUPERSEDED = 4000;
 export const CLOSE_HELLO_TIMEOUT = 4001;
 export const CLOSE_PROTOCOL = 4002;
 export const CLOSE_VERSION = 4003;
+export const CLOSE_HEARTBEAT = 4004;
 export const CLOSE_SERVER_FULL = 1013;
 export const HELLO_DEADLINE_MS = 5000;
 
@@ -39,6 +44,10 @@ export class Conn {
   guard: ConnGuard | undefined;
   /** True while this conn holds a per-IP connection slot (hub bookkeeping). */
   ipHeld = false;
+  /** Hub clock (ms) of the last inbound frame, pong or app ping. */
+  lastSeen = 0;
+  /** Set by the hub; used to stamp `lastSeen`. */
+  clock: (() => number) | undefined;
   private timer: unknown;
 
   constructor(
@@ -51,7 +60,11 @@ export class Conn {
     this.timer = timers.setTimeout(onDeadline, HELLO_DEADLINE_MS);
     socket.onMessage((d) => this.receive(d));
     socket.onClose(() => this.handleClose());
+    socket.onPong?.(() => this.touch());
   }
+
+  /** Refresh liveness (any inbound source). */
+  touch(): void { if (this.clock !== undefined) this.lastSeen = this.clock(); }
 
   get ip(): string | undefined { return this.socket.ip; }
 
@@ -94,6 +107,7 @@ export class Conn {
 
   private receive(data: string | Uint8Array): void {
     if (this.closed) return;
+    this.touch();
     try {
       const raw = typeof data === 'string' ? data : new TextDecoder().decode(data);
       const r = parseClientMessage(raw);
