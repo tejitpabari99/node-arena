@@ -109,7 +109,7 @@ export function createPvpController(options: PvpOptions) {
   const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, serverUrl: options.serverUrl });
   let state = initial();
   let conn: PvpConnection | null = null, offs: Array<() => void> = [];
-  let lastEpoch = -1, pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
+  let lastEpoch = -1, autoResumed = -1, pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
   const publish = (patch: Partial<PvpSnapshot> = {}) => { if (disposed) return; state = { ...state, ...patch }; listeners.forEach((fn) => fn()); };
   // Match resources, generation-scoped (mirrors AppController.startLevel).
   let generation = 0, driver: NetDriver | null = null, runtime: LevelRuntime | undefined, matchManifest: ManifestV2 | undefined, fallbackTimer: unknown = null, syncLost = false, compiledCache: ReturnType<typeof loadContent> | undefined;
@@ -117,7 +117,7 @@ export function createPvpController(options: PvpOptions) {
   const setTimer = options.setTimer ?? ((fn, ms) => setTimeout(fn, ms)), clearTimer = options.clearTimer ?? ((id) => clearTimeout(id as ReturnType<typeof setTimeout>));
   const clearMatch = () => {
     ++generation;
-    lastEpoch = -1;
+    lastEpoch = -1; autoResumed = -1;
     if (fallbackTimer !== null) clearTimer(fallbackTimer);
     fallbackTimer = null;
     const d = driver, r = runtime; driver = null; runtime = undefined; matchManifest = undefined;
@@ -155,7 +155,16 @@ export function createPvpController(options: PvpOptions) {
     publish({ error: SYNC_LOST_STRING });
     pvpEvents.forEach((fn) => fn({ t: 'sync-lost' }));
   };
-  const startMatch = async (m: StartMsg) => {
+  // Own disconnect hold, caught up to the frozen tick: release it once per epoch (manual holds need a click).
+  const maybeAutoResume = () => {
+    const p = state.pause, me = state.seat;
+    if (!p?.paused || me === null || !driver || autoResumed === p.epoch || driver.tick < p.tick) return;
+    if (!p.holds.some((h) => h.player === me && h.reason === 'disconnect')) return;
+    autoResumed = p.epoch;
+    dispatch({ t: 'resume', epoch: p.epoch });
+  };
+  const startMatch = async (m: StartMsg, reconnect = false) => {
+    const prior = state.screen;
     clearMatch();
     syncLost = false;
     const gen = generation;
@@ -166,7 +175,7 @@ export function createPvpController(options: PvpOptions) {
       return;
     }
     pending = null;
-    publish({ screen: 'countdown', start: m, end: null, ranking: null, seatStatus: {}, pause: null, error: null });
+    publish({ screen: reconnect && (prior === 'playing' || prior === 'result') ? 'playing' : 'countdown', start: m, end: null, ranking: null, seatStatus: {}, pause: null, error: null });
     let owned: NetDriver | undefined, created: LevelRuntime | undefined;
     try {
       const teams = [...m.seats].sort((a, b) => a.player - b.player).map((x) => x.team);
@@ -182,6 +191,7 @@ export function createPvpController(options: PvpOptions) {
           // "playing" begins on the first server tick (server-paced; no client timer drift).
           if (state.screen === 'countdown') publish({ screen: 'playing' });
           checkResult();
+          maybeAutoResume();
         },
         onFrame: (update) => { if (gen === generation) try { runtime?.frame(update); } catch (err) { console.error('[pvp] frame failed', err); } },
         onPushError: (result) => {
@@ -236,9 +246,8 @@ export function createPvpController(options: PvpOptions) {
       }
       case 'start':
         lastEpoch = -1; // epoch is per match; every start (rematch or reconnect) restarts it
-        // Reconnect re-sends `start`; rebuilding at tick 0 would gap against live ticks. Keep the running match.
-        if (driver && state.start?.matchId === m.matchId) break;
-        void startMatch(m);
+        // Reconnect re-sends `start` + full catchup: recreate sim/lockstep/runtime and replay from tick 0 (D5).
+        void startMatch(m, !!driver && state.start?.matchId === m.matchId);
         break;
       case 'tick': case 'ticks': case 'catchup':
         driver?.push(m);
@@ -248,6 +257,7 @@ export function createPvpController(options: PvpOptions) {
         lastEpoch = m.epoch;
         driver?.setFrozen(m.paused ? m.tick : null);
         publish({ pause: toPauseView(m, now()) });
+        maybeAutoResume();
         break;
       }
       case 'start.cancel':

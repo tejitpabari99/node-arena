@@ -264,14 +264,14 @@ describe('PvpController match lifecycle', () => {
     expect(got).toEqual([{ t: 'sync-lost' }]);
     expect(g.ctl.snapshot().error).toBe('Out of sync. Leave and rejoin.');
   });
-  it('re-sent start with same matchId keeps the running match; new matchId rebuilds', async () => {
+  it('re-sent start with same matchId recreates sim+driver+runtime (no leak); new matchId rebuilds', async () => {
     const g = game(); g.c.push(startMsg()); await flush();
     const d = g.ctl.driver; g.c.push(g.tickMsg(0)); g.ctl.driver!.advance();
     g.c.push(startMsg()); await flush();
-    expect(g.ctl.driver).toBe(d); expect(g.simArgs.length).toBe(2); expect(g.view.tick).toBe(1);
-    g.c.push(g.tickMsg(1)); expect(g.ctl.snapshot().error).toBeNull();
+    expect(g.ctl.driver).not.toBe(d); expect(g.simArgs.length).toBe(4); expect(g.rt.disposed).toBe(1);
+    g.c.push(g.tickMsg(0)); expect(g.ctl.snapshot().error).toBeNull();
     g.c.push(startMsg({ matchId: 'm2' })); await flush();
-    expect(g.ctl.driver).not.toBe(d); expect(g.simArgs.length).toBe(4);
+    expect(g.simArgs.length).toBe(6); expect(g.rt.disposed).toBe(2);
   });
   it('result screen Leave returns to the PvP menu', async () => {
     const g = game(); g.c.push(startMsg()); await flush();
@@ -295,7 +295,7 @@ describe('PvpController match lifecycle', () => {
     const alert = find(PvpLayer({ pvp: g.ctl }), n => n.props['data-testid'] === 'toast-sync-lost')[0];
     expect(alert).toBeDefined(); g.ctl.dispose();
   });
-  it.each(['countdown', 'playing', 'result'] as const)('same-room reauth preserves %s screen and the active driver', async (screen) => {
+  it.each(['countdown', 'playing', 'result'] as const)('same-room reauth recreates driver and keeps %s screen', async (screen) => {
     const g = game(); g.c.push(startMsg()); await flush();
     if (screen !== 'countdown') { g.c.push(g.tickMsg(0)); g.ctl.driver!.advance(); }
     if (screen === 'result') { g.view.over = { outcome: 'victory', winners: [0], winner: 0 }; g.c.push(g.endMsg(1)); }
@@ -303,11 +303,11 @@ describe('PvpController match lifecycle', () => {
     g.c.push(welcome);
     g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
     g.c.push(lobby(0)); g.c.push(startMsg()); await flush();
-    expect(g.ctl.snapshot().screen).toBe(screen);
-    expect(g.ctl.driver).toBe(driver);
+    expect(g.ctl.driver).not.toBe(driver);
+    expect(g.ctl.snapshot().screen).toBe(screen === 'countdown' ? 'countdown' : 'playing');
     if (screen === 'playing') {
       expect((g.rt.ctx as { enabled(): boolean }).enabled()).toBe(true);
-      g.c.push(g.tickMsg(1)); g.ctl.driver!.advance(); expect(g.view.tick).toBe(2);
+      g.c.push(g.tickMsg(0)); g.ctl.driver!.advance(); expect(g.view.tick).toBe(2);
     }
     g.ctl.dispose();
   });
@@ -343,18 +343,20 @@ describe('PvpController match lifecycle', () => {
     (leave.props.onClick as () => void)();
     expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.sent.at(-1)).toEqual({ t: 'room.leave' });
   });
-  it.each([false, true])('sync loss is visible with Leave before UI effects subscribe (playing=%s)', async (playing) => {
+  it.each([false, true])('sync loss is visible with Leave until reauth start rebuilds the match (playing=%s)', async (playing) => {
     const g = game(); g.c.push(startMsg()); await flush();
     if (playing) { g.c.push(g.tickMsg(0)); g.ctl.driver!.advance(); }
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try { g.c.push(g.tickMsg(5)); } finally { warn.mockRestore(); }
-    // Reauth must not erase the persistent error before the next frame renders.
-    g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } }); g.c.push(startMsg());
+    g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
     const node = PvpLayer({ pvp: g.ctl });
-    const alert = find(node, n => n.props['data-testid'] === 'toast-sync-lost')[0];
-    expect(alert?.props.children).toBe('Out of sync. Leave and rejoin.');
+    expect(find(node, n => n.props['data-testid'] === 'toast-sync-lost')[0]?.props.children).toBe('Out of sync. Leave and rejoin.');
     const leave = find(node, n => n.props['data-testid'] === 'pvp-sync-leave')[0];
     expect(leave).toBeDefined();
+    // M2: repeated start replays from tick 0 on a fresh stream, which recovers the sync loss.
+    g.c.push(startMsg()); await flush();
+    expect(g.ctl.snapshot().error).toBeNull();
+    g.c.push(g.tickMsg(0)); expect(g.ctl.snapshot().error).toBeNull();
     (leave!.props.onClick as () => void)();
     expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.ctl.driver).toBeNull();
   });
