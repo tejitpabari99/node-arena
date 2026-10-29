@@ -1,3 +1,4 @@
+import { BOT_PRESETS, createSeatDriver, type BotDifficulty } from '@node-arena/bots';
 import { create, type Sim } from '@node-arena/sim';
 import { encodeTick, encode, endMessage, HASH_INTERVAL, LAG_BUFFER_BYTES, LagFeed, LockstepServer, SYSTEM_CMD_RESERVE, type ClientMessage, type EndMsg, type PauseStateMsg, type SeatKind } from '@node-arena/net';
 import type { Clock, ClockRoom } from './clock.js';
@@ -89,6 +90,21 @@ export function createMatchController(deps: MatchDeps): MatchController {
     });
     servers.set(room, lockstep);
     const seatBudget = Math.max(1, Math.floor((lockstep.log.cmdCap - SYSTEM_CMD_RESERVE) / Math.max(1, kinds.length)));
+    // Bot seats (R10): one driver per match; preset by lobby difficulty (unknown -> normal). Server-logged only.
+    const driver = createSeatDriver(match.level, match.seed);
+    match.seats.forEach((s, player) => { if (s.kind === 'bot') driver.setBot(player, BOT_PRESETS[(s.difficulty ?? 'normal') as BotDifficulty] ?? BOT_PRESETS.normal); });
+    const botSpent = new Map<number, number>();
+    /** Bot cmds for this tick, capped by the same per-seat budget as humans (excess dropped, deterministic, never logged). */
+    const botTick = (): import('@node-arena/defs').Command[] => {
+      const out: import('@node-arena/defs').Command[] = [];
+      for (const c of [...driver.commands(sim), ...(deps.botCommands?.(match) ?? [])]) {
+        const used = botSpent.get(c.player) ?? 0;
+        if (used >= seatBudget) continue;
+        botSpent.set(c.player, used + 1);
+        out.push(c);
+      }
+      return out;
+    };
     const clockRoom: ClockRoom = { startAt: match.startAt, tick: () => tick() };
     const pause = createPause({
       now, setTimeout: timers.setTimeout, clearTimeout: timers.clearTimeout,
@@ -128,7 +144,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
     const runTick = (forced: boolean): void => {
       try {
         if (room.state === 'countdown') room.state = 'running';
-        const botCmds = deps.botCommands?.(match) ?? [];
+        const botCmds = botTick();
         const system = pause.pendingForfeits().map((player) => ({ type: 'Forfeit' as const, player }));
         const { n, cmds, dropped, firstDrop } = lockstep.closeTick(botCmds, system);
         if (dropped > 0) throw new Error(`command log refused ${dropped} cmds: ${firstDrop}`);
