@@ -22,6 +22,8 @@ export interface NetDriverOptions {
   /** Every rAF after stepping (also with 0 steps), for rendering. */
   onFrame?: (update: FrameUpdate) => void;
   /** Called when the client rejects a pushed message (gap/duplicate/bad-range): controller should resync. */
+  /** Spectator: never sends hash or cmd (server rejects both with not-your-seat). */
+  spectator?: boolean;
   onPushError?: (result: Extract<PushResult, { ok: false }>, msg: ServerMessage) => void;
 }
 
@@ -76,7 +78,7 @@ export class NetDriver implements MatchDriver {
 
   /** Sends `cmd` without `player`/tick; server stamps both. Returns the wire message. */
   submit(cmd: Command | WireCommand, cid?: number): unknown {
-    if (this.disposed) return null;
+    if (this.disposed || this.o.spectator) return null;
     const { player: _player, ...c } = cmd as Command;
     void _player;
     const msg = this.o.client.cmd(c as WireCommand, cid);
@@ -137,7 +139,7 @@ export class NetDriver implements MatchDriver {
     this.lastStepAt = this.o.now();
     this.stepMs = this.lastStepAt - t0;
     const hash: HashMsg | null = this.o.client.after(n, () => sim.hash());
-    if (hash) this.o.send(hash);
+    if (hash && !this.o.spectator) this.o.send(hash);
     this.o.onTick?.({ tick: sim.view.tick, sim, submissions: [], events: ev });
   }
 

@@ -11,7 +11,7 @@ const pretty=(id:string)=>id.replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperC
 export function PvpLayer({pvp}:{pvp:PvpController}){
   const [s,setS]=useState(pvp.snapshot()),[code,setCode]=useState(pvp.snapshot().code??'');
   useLayoutEffect(()=>pvp.subscribe(()=>setS(pvp.snapshot())),[pvp]);
-  if(s.screen==='menu'||s.screen==='connecting')return <PvpMenu nick={s.nick} code={code} error={s.error} onNick={v=>pvp.setNick(v)} onCode={setCode} onCreate={()=>pvp.create()} onJoin={()=>pvp.join(code)} onBack={()=>pvp.close()} onDismissError={()=>pvp.dismissError()}/>;
+  if(s.screen==='menu'||s.screen==='connecting')return <PvpMenu nick={s.nick} code={code} error={s.error} onNick={v=>pvp.setNick(v)} onCode={setCode} onCreate={()=>pvp.create()} onJoin={()=>pvp.join(code)} onWatch={()=>pvp.watch(code)} onBack={()=>pvp.close()} onDismissError={()=>pvp.dismissError()}/>;
   if(s.screen==='lobby'){
     const maps=pvp.maps(),level=s.lobby?pvp.level(s.lobby.levelId):undefined,palettes=(pvp.options.manifest?.()?.palettes??{}) as Record<string,string>;
     return <Lobby code={s.code} lobby={s.lobby} seat={s.seat} host={s.host} conn={s.conn} error={s.error} levelName={s.lobby?(maps.find(m=>m.id===s.lobby!.levelId)?.name??pretty(s.lobby.levelId)):''}

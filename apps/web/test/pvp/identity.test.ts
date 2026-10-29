@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createIdentity, PVP_KEY, PVP_TOKEN_KEY, type KV } from '../../src/net/identity';
-import { parseRoomLink, shareLinks } from '../../src/net/links';
+import { parseRoomLink, shareLinks, stripRoomParams } from '../../src/net/links';
 import { resolveServerUrl } from '../../src/net/server-url';
 import { SAVE_KEY } from '../../src/save';
 
@@ -81,4 +81,12 @@ describe('resolveServerUrl', () => {
     [{ dev: true, search: '?server=http://bad' }, 'ws://127.0.0.1:8080'],
     [{ testHooks: true, search: '?server=javascript:1' }, null],
   ])('%j', (env, want) => { expect(resolveServerUrl(env)).toBe(want); });
+});
+
+describe('stripRoomParams', () => {
+  it('removes room/watch, keeps others', () => {
+    expect(stripRoomParams('?room=ABCD&watch')).toBe('');
+    expect(stripRoomParams('?server=ws%3A%2F%2Fx&room=ABCD&watch=1&nick=Z')).toBe('?server=ws%3A%2F%2Fx&nick=Z');
+    expect(stripRoomParams('')).toBe('');
+  });
 });

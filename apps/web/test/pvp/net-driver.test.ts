@@ -151,3 +151,21 @@ describe('NetDriver catch-up progress', () => {
     expect(s.d.catchupProgress).toBeNull();
   });
 });
+
+describe('NetDriver spectator', () => {
+  it('never sends hash or cmd, but its hash equals a player\'s after the same ticks', () => {
+    const mk = (spectator: boolean) => {
+      const view = { tick: 0, over: false }; const sent: ClientMessage[] = [];
+      const sim = { view, step() { view.tick++; return []; }, hash: () => `h${view.tick}` } as unknown as Sim;
+      const d = new NetDriver({ sim, client: new LockstepClient(0), send: m => sent.push(m), now: () => 0, raf: () => 0, caf: () => {}, ...(spectator ? { spectator } : {}) });
+      return { d, sent, sim };
+    };
+    const player = mk(false), spec = mk(true);
+    for (let n = 0; n < HASH_INTERVAL; n++) for (const x of [player, spec]) { x.d.push({ t: 'tick', n } as never); x.d.advance(); }
+    expect(spec.sim.hash()).toBe(player.sim.hash());
+    expect(player.sent.some(m => m.t === 'hash')).toBe(true);
+    expect(spec.sent).toEqual([]);
+    expect(spec.d.submit({ type: 'send' } as never)).toBeNull();
+    expect(spec.sent).toEqual([]);
+  });
+});

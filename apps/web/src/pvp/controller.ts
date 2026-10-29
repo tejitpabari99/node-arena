@@ -159,7 +159,7 @@ export function createPvpController(options: PvpOptions) {
       const sim = (options.createSim ?? ((l, seed, setup) => create(l, seed, setup)))(level, m.seed, { teams });
       const client = new LockstepClient(0);
       const dopts: NetDriverOptions = {
-        sim, client, send: dispatch, now: options.now ?? (() => performance.now()),
+        sim, client, send: dispatch, ...(state.seat === null ? { spectator: true } : {}), now: options.now ?? (() => performance.now()),
         ...(options.raf ? { raf: options.raf } : {}), ...(options.caf ? { caf: options.caf } : {}),
         onTick: (update) => {
           if (gen !== generation) return;

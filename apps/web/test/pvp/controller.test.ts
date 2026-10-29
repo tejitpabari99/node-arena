@@ -86,6 +86,26 @@ describe('PvpController lobby flow', () => {
     h.c.push({ t: 'error', code: 'room-not-found' });
     expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', error: ERROR_STRINGS['room-not-found'] });
   });
+  it('watch link: nick prompt without nick, then watch join; spectator lands in lobby with seat null', () => {
+    const h = setup();
+    h.ctl.openLink({ code: 'ABCD', role: 'watch' });
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', code: 'ABCD' }); expect(h.urls).toEqual([]);
+    h.ctl.setNick('Bob'); h.ctl.watch(h.ctl.snapshot().code!); h.c.push(welcome);
+    expect(h.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'watch' }]);
+    h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: null, host: false } }); h.c.push(lobby(0));
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'lobby', seat: null, role: 'watch', host: false });
+  });
+  it('watch link with saved nick joins at once; spectators-full and room-not-found return to menu with error', () => {
+    const h = setup(); h.ctl.setNick('Bob');
+    h.ctl.openLink({ code: 'ABCD', role: 'watch' }); h.c.push(welcome);
+    expect(h.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'watch' }]);
+    h.c.push({ t: 'error', code: 'spectators-full' });
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', error: ERROR_STRINGS['spectators-full'] });
+  });
+  it('invalid watch link (null) opens the menu with an error', () => {
+    const h = setup(); h.ctl.openLink(null);
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', error: expect.stringContaining('Invalid room code') });
+  });
   it('invalid play link opens the menu with an error and no connection', () => {
     const h = setup(); h.ctl.openLink(null);
     expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', error: expect.stringContaining('Invalid room code') });

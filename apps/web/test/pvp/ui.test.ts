@@ -20,7 +20,7 @@ const text = (n: unknown): string => Array.isArray(n) ? n.map(text).join('') : n
 const seat = (kind: 'human' | 'bot', team: number, occupant?: { nick: string; ready: boolean }) => ({ kind, team, ...(occupant ? { occupant: { ...occupant, status: 'connected' as const } } : {}) });
 const lobby = (seats: LobbyStateMsg['seats'], host: number | null = 0): LobbyStateMsg => ({ t: 'lobby.state', levelId: 'duel-s', timeLimitSec: 60, host, spectators: 0, seats });
 
-const menuProps = (o: Partial<Parameters<typeof PvpMenu>[0]> = {}) => ({ nick: 'Ann', code: '', error: null, onNick: () => {}, onCode: () => {}, onCreate: () => {}, onJoin: () => {}, onBack: () => {}, onDismissError: () => {}, ...o });
+const menuProps = (o: Partial<Parameters<typeof PvpMenu>[0]> = {}) => ({ nick: 'Ann', code: '', error: null, onNick: () => {}, onCode: () => {}, onCreate: () => {}, onJoin: () => {}, onWatch: () => {}, onBack: () => {}, onDismissError: () => {}, ...o });
 const lobbyProps = (o: Partial<Parameters<typeof Lobby>[0]> = {}) => ({ code: 'ABCD', lobby: lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1)]), seat: 0, host: true, conn: 'connected' as const, error: null, levelName: 'Duel S', seatColors: ['#f00', '#00f'], onReady: () => {}, onStart: () => {}, onLeave: () => {}, onRetry: () => {}, onDismissError: () => {}, ...o });
 
 describe('PvpMenu', () => {
@@ -31,6 +31,13 @@ describe('PvpMenu', () => {
     expect(byId(v, 'pvp-code-input')).toBeTruthy();
     (byId(v, 'pvp-create')!.props.onClick as () => void)(); (byId(v, 'pvp-join')!.props.onClick as () => void)();
     expect(onCreate).toHaveBeenCalledOnce(); expect(onJoin).toHaveBeenCalledOnce();
+  });
+  it('watch button wires onWatch and needs nick + code', () => {
+    const onWatch = vi.fn();
+    (byId(PvpMenu(menuProps({ code: 'ABCD', onWatch })), 'pvp-watch')!.props.onClick as () => void)();
+    expect(onWatch).toHaveBeenCalledOnce();
+    expect(byId(PvpMenu(menuProps({ code: '' })), 'pvp-watch')!.props.disabled).toBe(true);
+    expect(byId(PvpMenu(menuProps({ nick: ' ', code: 'X' })), 'pvp-watch')!.props.disabled).toBe(true);
   });
   it('disables create/join on empty nick, join on empty code', () => {
     const v = PvpMenu(menuProps({ nick: '  ', code: 'X' }));
