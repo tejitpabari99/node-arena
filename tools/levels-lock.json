@@ -108,5 +108,10 @@
     "outcome": "victory",
     "ticks": 3938,
     "finalHash": "a8d4b97bde8616ad"
+  },
+  "na-pvp-duel-m": {
+    "outcome": "victory",
+    "ticks": 3082,
+    "finalHash": "2498f0f887d9bf18"
   }
 }
