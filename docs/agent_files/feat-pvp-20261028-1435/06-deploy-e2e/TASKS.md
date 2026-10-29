@@ -13,7 +13,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M
 | 3 | [M1] Scripted-attack helper + Duel S 1v1 spec | 2, SP03#2, SP04#8 | done |
 | 4 | [M1] CI: ci.sh checklist + `pvp-e2e` job | 3, SP02#1, SP04#1 | done |
 | 5 | [M1] Doc stubs + M1 play-test runbook | 1, 4 | done |
-| 6 | [M2] `deploy-server.yml` (Fly deploy + versions smoke) | SP04#17 | todo |
+| 6 | [M2] `deploy-server.yml` (Fly deploy + versions smoke) | SP04#17 | done |
 | 7 | [M2] `deploy.yml` ordering: changes -> server -> web | 6 | todo |
 | 8 | [M2] `VITE_PVP_SERVER_URL` in deploy + preview builds | 7 | todo |
 | 9 | [M2] `ALLOWED_ORIGINS` in fly.toml | SP04#17 | done |
