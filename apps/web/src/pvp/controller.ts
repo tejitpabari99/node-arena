@@ -1,6 +1,6 @@
 import { ERROR_CODES, LockstepClient, toWireOutcome, type ClientMessage, type EndMsg, type ErrorCode, type LobbyStateMsg, type SeatConfig, type SeatStatusMsg, type ServerMessage, type StartMsg, type Versions } from '@node-arena/net';
 import { listPvpMaps, loadContent, type PvpMapInfo, type CompiledLevel, type ContentFiles, type ManifestV2 } from '@node-arena/content';
-import { create, type Sim } from '@node-arena/sim';
+import { create, type Placement, type Sim } from '@node-arena/sim';
 import type { TickUpdate } from '../driver';
 import { NetDriver, type NetDriverOptions } from '../driver/net-driver';
 import type { LevelRuntime, RuntimeContext } from '../app/state';
@@ -25,6 +25,8 @@ export interface PvpSnapshot {
   start: StartMsg | null;
   /** Server-sourced result (R6); set on `end`, screen becomes 'result' once local sim reaches finalTick or after the fallback delay. */
   end: EndMsg | null;
+  /** Final per-team placements from the local sim (identical to server by determinism); null until result. */
+  ranking: Placement[] | null;
   /** Latest status per seat from `seat.status`. */
   seatStatus: Record<number, { status: SeatStatusMsg['status']; graceMs?: number }>;
   /** Short user-facing string; null when none. */
@@ -61,7 +63,7 @@ const CLOSED_STRINGS: Record<string, string> = {
 };
 
 const CONN_STRINGS: Partial<Record<ConnState, string>> = {
-  lost: 'Connection lost.', refused: 'Game version differs from the server. Reload to update.', superseded: 'Opened in another tab.',
+  lost: 'Connection lost.', refused: 'New version: reload the page.', superseded: 'Opened in another tab.',
 };
 
 export interface PvpOptions {
@@ -101,10 +103,10 @@ type Pending = { t: 'room.create' } | { t: 'room.join'; code: string; role: PvpR
 
 export function createPvpController(options: PvpOptions) {
   const listeners = new Set<() => void>(), events = new Set<(u: TickUpdate) => void>(), pvpEvents = new Set<(e: PvpEvent) => void>();
-  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, seatStatus: {}, error: null, serverUrl: options.serverUrl });
+  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, seatStatus: {}, error: null, serverUrl: options.serverUrl });
   let state = initial();
   let conn: PvpConnection | null = null, offs: Array<() => void> = [];
-  let pending: Pending | null = null, welcomed = false, disposed = false;
+  let pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
   const publish = (patch: Partial<PvpSnapshot> = {}) => { if (disposed) return; state = { ...state, ...patch }; listeners.forEach((fn) => fn()); };
   // Match resources, generation-scoped (mirrors AppController.startLevel).
   let generation = 0, driver: NetDriver | null = null, runtime: LevelRuntime | undefined, matchManifest: ManifestV2 | undefined, fallbackTimer: unknown = null, syncLost = false, compiledCache: ReturnType<typeof loadContent> | undefined;
@@ -125,7 +127,7 @@ export function createPvpController(options: PvpOptions) {
     if (options.getLevel) return options.getLevel(id);
     return loaded()?.compiled[id];
   };
-  const drop = () => { clearMatch(); offs.forEach((f) => f()); offs = []; const c = conn; conn = null; welcomed = false; pending = null; c?.close(); };
+  const drop = () => { skipLobby = false; clearMatch(); offs.forEach((f) => f()); offs = []; const c = conn; conn = null; welcomed = false; pending = null; c?.close(); };
   const reset = (error: string | null) => { drop(); state = { ...initial(), screen: 'menu', error }; listeners.forEach((fn) => fn()); };
   const dispatch = (m: ClientMessage) => { conn?.send(m); };
 
@@ -135,7 +137,7 @@ export function createPvpController(options: PvpOptions) {
     const over = driver?.sim.view.over ?? null, local = toWireOutcome(over);
     if (!local || JSON.stringify(local) !== JSON.stringify(state.end.outcome)) console.error('[pvp] local result disagrees with server end', { local, server: state.end.outcome, localTick: driver?.tick, finalTick: state.end.finalTick });
     driver?.stop(); runtime?.cancel();
-    publish({ screen: 'result' });
+    publish({ screen: 'result', ranking: over?.ranking ? over.ranking.map((p) => ({ ...p, seats: [...p.seats] })) : null });
   };
   const checkResult = () => {
     const e = state.end;
@@ -152,7 +154,7 @@ export function createPvpController(options: PvpOptions) {
       return;
     }
     pending = null;
-    publish({ screen: 'countdown', start: m, end: null, seatStatus: {}, error: null });
+    publish({ screen: 'countdown', start: m, end: null, ranking: null, seatStatus: {}, error: null });
     let owned: NetDriver | undefined, created: LevelRuntime | undefined;
     try {
       const teams = [...m.seats].sort((a, b) => a.player - b.player).map((x) => x.team);
@@ -207,12 +209,16 @@ export function createPvpController(options: PvpOptions) {
         pending = null;
         // Reauth sends room.joined before start; keep the existing match visible and enabled.
         const active = driver && state.code === m.code && (state.screen === 'countdown' || state.screen === 'playing' || state.screen === 'result');
+        skipLobby = !!active && state.screen === 'result'; // reauth replays lobby.state; that is not a rematch
         publish({ screen: active ? state.screen : 'lobby', code: m.code, seat: m.you.seat, host: m.you.host, role: m.you.seat === null ? 'watch' : 'play', error: active ? state.error : null });
         break;
       }
       case 'lobby.state': {
         // host may change (host handover); keep own host flag in sync from seat/host fields.
         const host = state.seat !== null && m.host === state.seat;
+        // Rematch (R7): after `end`, the server resets the room and broadcasts lobby.state; leave the result screen.
+        if (skipLobby) skipLobby = false;
+        else if (state.screen === 'result') { clearMatch(); publish({ screen: 'lobby', lobby: m, host, start: null, end: null, ranking: null, seatStatus: {}, error: null }); break; }
         publish({ lobby: m, host });
         break;
       }
@@ -261,7 +267,7 @@ export function createPvpController(options: PvpOptions) {
     if (disposed || !options.serverUrl) return;
     drop();
     pending = action;
-    state = { ...state, screen: 'connecting', code: null, seat: null, host: false, lobby: null, start: null, end: null, seatStatus: {}, error: null, role: action.t === 'room.join' ? action.role : 'play' };
+    state = { ...state, screen: 'connecting', code: null, seat: null, host: false, lobby: null, start: null, end: null, ranking: null, seatStatus: {}, error: null, role: action.t === 'room.join' ? action.role : 'play' };
     const make = options.createConnection ?? createPvpConnection;
     conn = make({ url: options.serverUrl, nick: options.identity.nick, token: options.identity.token, versions: options.versions, createSocket: options.createSocket });
     offs = [conn.onMessage(onMessage), conn.onState(onState)];
@@ -306,6 +312,8 @@ export function createPvpController(options: PvpOptions) {
       const cur = state.lobby?.seats[state.seat]?.occupant?.ready ?? false;
       dispatch({ t: 'lobby.ready', ready: !cur });
     },
+    /** Seated player on the result screen asks the server to return the room to the lobby. */
+    rematch() { if (state.screen === 'result' && state.seat !== null) dispatch({ t: 'rematch' }); },
     /** Host-only: full lobby edit (level change resets seats server-side). */
     updateLobby(levelId: string, seats: SeatConfig[]) { if (state.screen === 'lobby' && state.host) dispatch({ t: 'lobby.update', levelId, seats }); },
     start() { if (state.screen === 'lobby' && state.host) dispatch({ t: 'lobby.start' }); },

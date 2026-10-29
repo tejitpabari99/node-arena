@@ -7,6 +7,7 @@ import { shareLinks } from '../../net/links';
 import { Lobby } from './Lobby';
 import { PvpMenu } from './PvpMenu';
 import { PvpResult } from './PvpResult';
+import { ConnBanner } from './ConnBanner';
 const pretty=(id:string)=>id.replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
 export function PvpLayer({pvp}:{pvp:PvpController}){
   const [s,setS]=useState(pvp.snapshot()),[code,setCode]=useState(pvp.snapshot().code??'');
@@ -23,9 +24,9 @@ export function PvpLayer({pvp}:{pvp:PvpController}){
     <p class="pvp-error" role="alert" data-testid="toast-sync-lost">{s.error}</p>
     <button class="level-card menu-button" data-testid="pvp-sync-leave" onClick={()=>pvp.leave()}>Leave</button>
   </section>;
-  if(s.screen==='countdown')return <p class="pvp-countdown" role="status" data-testid="pvp-countdown">Get ready</p>;
+  if(s.screen==='countdown')return <><ConnBanner conn={s.conn} onRetry={()=>pvp.retry()}/><p class="pvp-countdown" role="status" data-testid="pvp-countdown">Get ready</p></>;
   if(s.screen==='playing')return <PvpPlaying pvp={pvp}/>;
-  if(s.screen==='result'&&s.end)return <PvpResult outcome={s.end.outcome} seat={s.seat} onLeave={()=>pvp.leave()}/>;
+  if(s.screen==='result'&&s.end)return <><ConnBanner conn={s.conn} onRetry={()=>pvp.retry()}/><PvpResult outcome={s.end.outcome} seat={s.seat} ranking={s.ranking} seats={s.start?.seats} onLeave={()=>pvp.leave()} onRematch={()=>pvp.rematch()}/></>;
   return null;
 }
 export const TOAST_MS=5000;
@@ -43,6 +44,7 @@ function PvpPlaying({pvp}:{pvp:PvpController}){
   },[pvp]);
   const s=pvp.snapshot(),view=pvp.driver?.sim.view;
   return <>
+    <ConnBanner conn={s.conn} onRetry={()=>pvp.retry()}/>
     <PvpHud segments={view?ownership(view):[]} palettes={(pvp.manifest?.palettes??{}) as Record<string,string>} ticksLeft={(s.start?.timeLimitTicks??0)-(view?.tick??0)} seat={s.seat} menuOpen={menu} catchup={pvp.driver?.catchupProgress??null} onLeave={()=>pvp.leave()} legend={s.start&&view?{seats:s.start.seats,colorKeys:(view.players??[]).map(p=>p.colorKey),eliminatedAt:view.eliminatedAt?Array.from(view.eliminatedAt as ArrayLike<number>):undefined,seatStatus:s.seatStatus}:undefined}/>
     {toast&&<Toast message={DESYNC_TOAST} testId="toast-desync"/>}
   </>;

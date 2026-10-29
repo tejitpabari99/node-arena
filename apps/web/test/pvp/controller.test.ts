@@ -169,7 +169,7 @@ describe('PvpController lobby flow', () => {
     const g = setup(); g.ctl.open(); g.ctl.create(); g.c.setState('superseded');
     expect(g.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'Opened in another tab.' });
     const r = setup(); r.ctl.open(); r.ctl.create(); r.c.setState('refused');
-    expect(r.ctl.snapshot().screen).toBe('menu');
+    expect(r.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'New version: reload the page.' });
   });
   it('no server url: create is a no-op; setNick persists via identity; subscribe notifies', () => {
     const h = setup(null); h.ctl.open(); h.ctl.create(); expect(h.ctl.snapshot().screen).toBe('menu');
@@ -224,6 +224,22 @@ describe('PvpController match lifecycle', () => {
     g.c.push(g.tickMsg(2)); g.ctl.driver!.advance();
     expect(g.ctl.snapshot().screen).toBe('result');
     expect(g.timers.every((t) => !t.live)).toBe(true);
+  });
+  it('result carries local ranking; rematch sends msg; lobby.state returns to lobby with new seed on next start', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    const ranking = [{ team: 0, seats: [0], rank: 1, buildings: 3, troops: 9, eliminatedAt: null }, { team: 1, seats: [1], rank: 2, buildings: 0, troops: 0, eliminatedAt: 5 }];
+    g.c.push(g.tickMsg(0)); g.c.push(g.tickMsg(1)); g.ctl.driver!.advance();
+    (g.view as { over: unknown }).over = { outcome: 'victory', winners: [0], winner: 0, ranking }; g.c.push(g.endMsg(3));
+    expect(g.ctl.snapshot().screen).toBe('result');
+    expect(g.ctl.snapshot().ranking).toEqual(ranking);
+    g.ctl.rematch(); expect(g.sent.at(-1)).toEqual({ t: 'rematch' });
+    g.c.push(lobby(0)); 
+    expect(g.ctl.snapshot()).toMatchObject({ screen: 'lobby', end: null, start: null, ranking: null });
+    g.c.push(startMsg({ seed: 99, matchId: 'm2' })); await flush();
+    expect(g.simArgs.at(-2)).toBe(99);
+  });
+  it('rematch is a no-op outside result and for spectators', async () => {
+    const g = game(); g.ctl.rematch(); expect(g.sent.some((m) => m.t === 'rematch')).toBe(false);
   });
   it('renders every rAF while playing and stops after leave', async () => {
     const g = game(); g.c.push(startMsg()); await flush();

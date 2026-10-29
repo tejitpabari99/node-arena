@@ -22,7 +22,7 @@ Source of truth: [PRD.md](PRD.md). Client for online PvP: separate NetDriver and
 | 12 | [M2] Seat legend + team-grouped bar | 8, 11 | done |
 | 13 | [M2] Catch-up budget + overlay | 4, 6, SP02#10, SP04#13 | done |
 | 14 | [M2] Watch mode + deep links | 7, 13, SP04#13 | done |
-| 15 | [M2] N-seat/draw result, rematch, connection banners | 9, 11, SP01#11, SP04#14 | todo |
+| 15 | [M2] N-seat/draw result, rematch, connection banners | 9, 11, SP01#11, SP04#14 | done |
 | 16 | [M3] Reconnect resume + seat reclaim UX | 3, 13, 15, SP04#19 | todo |
 | 17 | [M3] Desync auto-resync (runtime recreation) | 6, 13, SP02#13, SP04#20 | todo |
 | 18 | [M3] M2/M3 acceptance tests sweep + doc notes | 14, 15, 16, 17 | todo |
