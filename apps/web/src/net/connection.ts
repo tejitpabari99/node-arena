@@ -16,6 +16,8 @@ export const JITTER = 0.2;
 export const GIVE_UP_MS = 60_000;
 export const CLOSE_SUPERSEDED = 4000;
 export const CLOSE_VERSION = 4003;
+/** App-level `ping` cadence while connected (server also pongs; refreshes its lastSeen when WS ping frames are not relayed). */
+export const PING_INTERVAL_MS = 3000;
 
 export interface PvpConnectionOpts {
   url: string;
@@ -57,15 +59,27 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
   let attempt = 0;
   let outageStart: number | null = null;
   let closed = false;
+  let pingTimer: unknown = null;
+  let pingId = 0;
 
   const setState = (s: ConnState) => {
     if (state === s) return;
     state = s;
     for (const cb of [...stateCbs]) cb(s);
   };
+  const stopPing = () => { if (pingTimer !== null) { clearT(pingTimer); pingTimer = null; } };
+  const schedulePing = (s: WebSocketLike) => {
+    pingTimer = setT(() => {
+      pingTimer = null;
+      if (sock !== s || state !== 'connected') return;
+      try { s.send(encode({ t: 'ping', id: ++pingId })); } catch { /* close follows */ }
+      schedulePing(s);
+    }, PING_INTERVAL_MS);
+  };
   const detach = (s: WebSocketLike) => { s.onopen = s.onmessage = s.onclose = s.onerror = null; };
   const terminal = (s: ConnState) => {
     if (timer !== null) { clearT(timer); timer = null; }
+    stopPing();
     if (sock) { const old = sock; sock = null; detach(old); try { old.close(); } catch { /* ignore */ } }
     setState(s);
   };
@@ -78,6 +92,8 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
       if (sock !== s) return;
       setState('connected');
       s.send(encode({ t: 'hello', pv: PROTOCOL_VERSION, versions: o.versions, nick: o.nick, token: o.token }));
+      stopPing();
+      schedulePing(s);
     };
     s.onmessage = (ev) => {
       if (sock !== s) return;
@@ -92,6 +108,7 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
     s.onclose = (ev) => {
       if (sock !== s) return;
       sock = null;
+      stopPing();
       if (ev.code === CLOSE_SUPERSEDED) { setState('superseded'); return; }
       if (ev.code === CLOSE_VERSION) { setState('refused'); return; }
       scheduleReconnect();

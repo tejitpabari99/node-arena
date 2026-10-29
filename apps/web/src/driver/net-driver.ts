@@ -25,6 +25,8 @@ export interface NetDriverOptions {
   /** Spectator: never sends hash or cmd (server rejects both with not-your-seat). */
   spectator?: boolean;
   onPushError?: (result: Extract<PushResult, { ok: false }>, msg: ServerMessage) => void;
+  /** A tick/ticks/catchup reaching past the frozen tick while paused (protocol error; message is dropped, not queued). */
+  onProtocolError?: (reason: 'past-frozen', msg: ServerMessage) => void;
 }
 
 /** Server-paced MatchDriver: steps only on ticks pushed from the socket; no pause, speed or hidden handling. */
@@ -37,6 +39,7 @@ export class NetDriver implements MatchDriver {
   private disposed = false;
   private awaitingDone = false;
   private latched = false;
+  private frozen: number | null = null;
   private readonly raf: (cb: (t: number) => void) => number;
   private readonly caf: (id: number) => void;
 
@@ -61,6 +64,11 @@ export class NetDriver implements MatchDriver {
     const tick = this.o.sim.view.tick, total = tick + this.o.client.queued();
     return total === 0 ? 0 : tick / total;
   }
+  /** Server-frozen tick (SP07 pause) or null; stepping holds at `sim.view.tick === frozenTick`. */
+  get frozenTick(): number | null { return this.frozen; }
+  /** Freeze at `tick` (pause.state paused) or release with null. Does not touch the queue. */
+  setFrozen(tick: number | null): void { this.frozen = tick; }
+  private canStep(): boolean { return this.frozen === null || this.o.sim.view.tick < this.frozen; }
   get alpha(): number {
     if (this.lastStepAt === null || this.o.client.queued() === 0) return 1;
     return Math.min(1, Math.max(0, (this.o.now() - this.lastStepAt) / STEP_MS));
@@ -69,6 +77,7 @@ export class NetDriver implements MatchDriver {
   /** Feed a server message from the socket handler (not rAF). tick/ticks/catchup are queued. */
   push(msg: ServerMessage): PushResult {
     if (this.disposed) return { ok: true };
+    if (this.frozen !== null && this.pastFrozen(msg)) { this.o.onProtocolError?.('past-frozen', msg); return { ok: true }; }
     const r = this.o.client.push(msg);
     if (!r.ok) this.o.onPushError?.(r, msg);
     else if (msg.t === 'catchup') this.awaitingDone = !msg.done;
@@ -76,9 +85,16 @@ export class NetDriver implements MatchDriver {
     return r;
   }
 
+  private pastFrozen(msg: ServerMessage): boolean {
+    const f = this.frozen!;
+    if (msg.t === 'tick') return msg.n >= f;
+    if (msg.t === 'ticks' || msg.t === 'catchup') return msg.to > f;
+    return false;
+  }
+
   /** Sends `cmd` without `player`/tick; server stamps both. Returns the wire message. */
   submit(cmd: Command | WireCommand, cid?: number): unknown {
-    if (this.disposed || this.o.spectator) return null;
+    if (this.disposed || this.o.spectator || this.frozen !== null) return null; // server rejects cmd while paused
     const { player: _player, ...c } = cmd as Command;
     void _player;
     const msg = this.o.client.cmd(c as WireCommand, cid);
@@ -109,15 +125,16 @@ export class NetDriver implements MatchDriver {
     let steps = 0;
     if (queued > CATCHUP_THRESHOLD) {
       const t0 = this.o.now();
-      while (client.queued() > 0 && !this.o.sim.view.over && this.o.now() - t0 < CATCHUP_BUDGET_MS) {
+      while (client.queued() > 0 && !this.o.sim.view.over && this.canStep() && this.o.now() - t0 < CATCHUP_BUDGET_MS) {
         const [tk] = client.drain(1);
         if (!tk) break;
         this.stepOne(tk.n, tk.cmds, client.queued() < CATCHUP_EVENT_TAIL);
         steps++;
       }
     } else {
-      for (const tk of client.drain(LIVE_MAX_STEPS)) {
-        if (this.o.sim.view.over) break;
+      while (steps < LIVE_MAX_STEPS && client.queued() > 0 && !this.o.sim.view.over && this.canStep()) {
+        const [tk] = client.drain(1);
+        if (!tk) break;
         this.stepOne(tk.n, tk.cmds, true);
         steps++;
       }
