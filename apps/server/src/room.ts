@@ -79,6 +79,8 @@ export interface RoomManagerDeps {
   onStart?: (room: Room, match: MatchStart) => void;
   /** Task 6: routes `cmd`/`hash` from a seated player to the match; returns true if handled. */
   maxRooms?: number;
+  /** Per-IP create / failed-join limits (keyed by `conn.ip`). */
+  ipLimits?: import('./limits.js').IpLimits;
   /** Timer seam for the ended-room sweep. */
   timers?: { setTimeout: (fn: () => void, ms: number) => unknown; clearTimeout: (h: never) => void };
   /** SP07 hook: true while the room has a pending pause/disconnect deadline; such rooms are never GC-dropped (only the hard cap / shutdown / abort remove them). Default false. */
@@ -161,6 +163,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
 
   const create_ = (conn: Conn): void => {
     if (byPlayer.has(conn.playerId!)) return conn.sendError('bad-lobby', 'already in a room');
+    if (conn.ip !== undefined && deps.ipLimits?.allowCreate(conn.ip) === false) return conn.sendError('rate-limited', 'too many rooms created');
     if (defaultLevelId === undefined) return conn.sendError('internal', 'no pvp levels');
     if (rooms.size >= maxRooms) return conn.sendError('room-full', 'server at room capacity');
     const code = newCode();
@@ -201,8 +204,12 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
 
   const join = (conn: Conn, code: string, role: 'play' | 'watch'): void => {
     if (byPlayer.has(conn.playerId!)) return conn.sendError('bad-lobby', 'already in a room');
+    if (conn.ip !== undefined && deps.ipLimits?.joinBlocked(conn.ip) === true) return conn.sendError('rate-limited', 'too many failed joins');
     const room = rooms.get(code);
-    if (room === undefined) return conn.sendError('room-not-found');
+    if (room === undefined) {
+      if (conn.ip !== undefined) deps.ipLimits?.failedJoin(conn.ip);
+      return conn.sendError('room-not-found');
+    }
     if (role === 'watch') return watch(conn, room);
     if (room.state !== 'lobby') return conn.sendError('match-in-progress');
     const i = room.seats.findIndex((s) => s.kind === 'human' && s.occupant === undefined);

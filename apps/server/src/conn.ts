@@ -1,5 +1,7 @@
 import { encode, parseClientMessage, type ClientMessage, type ErrorCode, type ServerMessage } from '@node-arena/net';
 
+import { CLOSE_RATE_LIMITED, type ConnGuard } from './limits.js';
+
 /** Transport-agnostic socket. `main.ts` wraps `ws` into this (Task 7). */
 export interface Socket {
   send(data: string): void;
@@ -7,6 +9,8 @@ export interface Socket {
   onMessage(cb: (data: string | Uint8Array) => void): void;
   onClose(cb: () => void): void;
   readonly bufferedAmount: number;
+  /** Peer address (Fly-Client-IP); abuse-limit key only, never logged. */
+  readonly ip?: string;
 }
 
 export const CLOSE_SUPERSEDED = 4000;
@@ -31,6 +35,10 @@ export class Conn {
   token: string | undefined;
   uid: string | undefined;
   closed = false;
+  /** Set by the hub: per-connection token bucket + strikes. */
+  guard: ConnGuard | undefined;
+  /** True while this conn holds a per-IP connection slot (hub bookkeeping). */
+  ipHeld = false;
   private timer: unknown;
 
   constructor(
@@ -44,6 +52,8 @@ export class Conn {
     socket.onMessage((d) => this.receive(d));
     socket.onClose(() => this.handleClose());
   }
+
+  get ip(): string | undefined { return this.socket.ip; }
 
   get authed(): boolean { return this.playerId !== undefined; }
 
@@ -96,6 +106,12 @@ export class Conn {
       if (!this.authed) {
         if (r.msg.t !== 'hello') { this.sendError('not-authed'); this.close(CLOSE_PROTOCOL, 'hello required'); return; }
         this.hooks.onHello(this, r.msg);
+        return;
+      }
+      const g = this.guard?.verdict() ?? 'ok';
+      if (g !== 'ok') {
+        this.sendError('rate-limited');
+        if (g === 'close') this.close(CLOSE_RATE_LIMITED, 'rate limited');
         return;
       }
       if (r.msg.t === 'hello') { this.sendError('bad-message', 'already authed'); return; }

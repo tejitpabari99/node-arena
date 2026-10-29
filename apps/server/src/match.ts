@@ -1,7 +1,8 @@
 import { create, type Sim } from '@node-arena/sim';
-import { encodeTick, endMessage, HASH_INTERVAL, LockstepServer, type ClientMessage, type SeatKind } from '@node-arena/net';
+import { encodeTick, encode, endMessage, HASH_INTERVAL, LAG_BUFFER_BYTES, LagFeed, LockstepServer, type ClientMessage, type SeatKind } from '@node-arena/net';
 import type { Clock, ClockRoom } from './clock.js';
 import type { Conn } from './conn.js';
+import { BACKPRESSURE_CLOSE_BYTES, CLOSE_BACKPRESSURE, CLOSE_RATE_LIMITED } from './limits.js';
 import type { Logger } from './log.js';
 import type { MatchStart, Room } from './room.js';
 
@@ -39,9 +40,22 @@ export function createMatchController(deps: MatchDeps): MatchController {
   // Kept after match end so late hashes are still compared against stored checkpoints.
   const active = new WeakMap<Room, { lockstep: LockstepServer; lastDesync: Map<number, number>; perTick: Map<number, { tick: number; n: number }>; total: Map<number, number>; seatBudget: number }>();
 
-  const frameTo = (room: Room, frame: string): void => {
+  const feeds = new WeakMap<Room, WeakMap<Conn, LagFeed>>();
+
+  /** Live fan-out with backpressure: >256 KB buffered skips writes (batched `ticks` on drain), >2 MB closes. */
+  const frameTo = (room: Room, lockstep: LockstepServer, n: number, cmds: readonly import('@node-arena/defs').Command[], frame: string): void => {
+    let byConn = feeds.get(room);
+    if (byConn === undefined) { byConn = new WeakMap(); feeds.set(room, byConn); }
     for (const c of room.conns()) {
-      try { c.sendFrame(frame); } catch { /* dead socket; disconnect FSM handles it later */ }
+      try {
+        const buffered = c.socket.bufferedAmount;
+        if (buffered > BACKPRESSURE_CLOSE_BYTES) { log?.warn('conn.backpressure_close', { conn: c.id, room: room.code }); c.close(CLOSE_BACKPRESSURE, 'backpressure'); continue; }
+        let feed = byConn.get(c);
+        if (feed === undefined) { feed = new LagFeed(lockstep.log, n); byConn.set(c, feed); }
+        const out = feed.deliver(n, cmds, buffered > LAG_BUFFER_BYTES);
+        if (out.length === 1 && out[0]!.t === 'tick') c.sendFrame(frame);
+        else for (const m of out) c.sendFrame(encode(m));
+      } catch { /* dead socket; disconnect FSM handles it later */ }
     }
   };
 
@@ -50,7 +64,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
     sims.set(room, sim);
     const kinds: SeatKind[] = room.seats.map((s) => s.kind);
     const lockstep = new LockstepServer({
-      seats: kinds, inputDelay: match.inputDelay, buildingCount: sim.view.ids.buildings.length, log: { timeLimitTicks: match.timeLimitTicks },
+      seats: kinds, inputDelay: match.inputDelay, now, buildingCount: sim.view.ids.buildings.length, log: { timeLimitTicks: match.timeLimitTicks },
     });
     servers.set(room, lockstep);
     const seatBudget = Math.max(1, Math.floor(lockstep.log.cmdCap / Math.max(1, kinds.length)));
@@ -78,7 +92,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
         if (dropped > 0) throw new Error(`command log refused ${dropped} cmds: ${firstDrop}`);
         sim.step(cmds, { events: false });
         if (sim.view.tick % HASH_INTERVAL === 0) lockstep.recordCheckpoint(sim.view.tick, sim.hash());
-        frameTo(room, encodeTick(n, cmds));
+        frameTo(room, lockstep, n, cmds, encodeTick(n, cmds));
         if (sim.view.over !== null) {
           const finalTick = sim.view.tick;
           const end = endMessage(sim.view.over, finalTick, sim.hash());
@@ -123,12 +137,21 @@ export function createMatchController(deps: MatchDeps): MatchController {
         return true;
       }
       const r = m.lockstep.submit(seat, msg.c);
-      if (!r.accepted) { conn.sendError(r.rejected); return true; }
+      if (!r.accepted) {
+        conn.sendError(r.rejected);
+        if ('advice' in r && r.advice === 'disconnect') conn.close(CLOSE_RATE_LIMITED, 'rate limited');
+        return true;
+      }
       m.perTick.set(seat, { tick, n: n + 1 });
       m.total.set(seat, total + 1);
       return true;
     }
     const r = m.lockstep.onHash(seat, msg.tick, msg.h);
+    if (r.result === 'rate-limited') {
+      conn.sendError('rate-limited');
+      if (r.advice === 'disconnect') conn.close(CLOSE_RATE_LIMITED, 'rate limited');
+      return true;
+    }
     if (r.result === 'desync') {
       const t = now();
       const last = m.lastDesync.get(seat);

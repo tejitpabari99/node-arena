@@ -1,0 +1,93 @@
+/** Abuse controls (SP04 R17). Pure; time injected (ms). IPs are keys only: never logged or sent. */
+
+export const CONN_RATE_PER_SEC = 40;
+export const CONN_BURST = 80;
+export const CONN_STRIKES = 3;
+export const STRIKE_DECAY_MS = 5000;
+export const MAX_CONNS_PER_IP = 8;
+export const CREATES_PER_MIN = 5;
+export const FAILED_JOINS_PER_MIN = 10;
+export const BACKPRESSURE_CLOSE_BYTES = 2 * 1024 * 1024;
+export const CLOSE_RATE_LIMITED = 4005;
+export const CLOSE_BACKPRESSURE = 4006;
+
+/** Token bucket: `rate` tokens/s, capacity `burst`. */
+export class TokenBucket {
+  private tokens: number;
+  private last: number;
+  constructor(private readonly now: () => number, private readonly rate = CONN_RATE_PER_SEC, private readonly burst = CONN_BURST) {
+    this.tokens = burst;
+    this.last = now();
+  }
+  take(): boolean {
+    const t = this.now();
+    if (t > this.last) { this.tokens = Math.min(this.burst, this.tokens + ((t - this.last) / 1000) * this.rate); }
+    this.last = t;
+    if (this.tokens < 1) return false;
+    this.tokens -= 1;
+    return true;
+  }
+}
+
+/** Per-connection guard: bucket + strikes (rejections close to each other); `verdict` says what to do with a message. */
+export class ConnGuard {
+  private readonly bucket: TokenBucket;
+  private strikes = 0;
+  private lastStrike = -Infinity;
+  constructor(private readonly now: () => number) { this.bucket = new TokenBucket(now); }
+  verdict(): 'ok' | 'rate-limited' | 'close' {
+    if (this.bucket.take()) return 'ok';
+    const t = this.now();
+    if (t - this.lastStrike > STRIKE_DECAY_MS) this.strikes = 0;
+    this.lastStrike = t;
+    this.strikes++;
+    return this.strikes >= CONN_STRIKES ? 'close' : 'rate-limited';
+  }
+}
+
+class Window {
+  private hits: number[] = [];
+  constructor(private readonly now: () => number, private readonly cap: number, private readonly spanMs = 60_000) {}
+  private prune(): void { const t = this.now(); this.hits = this.hits.filter((h) => t - h < this.spanMs); }
+  full(): boolean { this.prune(); return this.hits.length >= this.cap; }
+  add(): void { this.prune(); this.hits.push(this.now()); }
+  empty(): boolean { this.prune(); return this.hits.length === 0; }
+}
+
+/** Per-IP (Fly-Client-IP) limits: open conns, creates/min, failed joins/min. */
+export class IpLimits {
+  private readonly conns = new Map<string, number>();
+  private readonly creates = new Map<string, Window>();
+  private readonly fails = new Map<string, Window>();
+  constructor(private readonly now: () => number) {}
+
+  acquireConn(ip: string): boolean {
+    const n = this.conns.get(ip) ?? 0;
+    if (n >= MAX_CONNS_PER_IP) return false;
+    this.conns.set(ip, n + 1);
+    return true;
+  }
+  releaseConn(ip: string): void {
+    const n = (this.conns.get(ip) ?? 0) - 1;
+    if (n <= 0) this.conns.delete(ip); else this.conns.set(ip, n);
+  }
+  /** Counts a create attempt; false = over 5/min. */
+  allowCreate(ip: string): boolean {
+    const w = this.win(this.creates, ip, CREATES_PER_MIN);
+    if (w.full()) return false;
+    w.add();
+    return true;
+  }
+  joinBlocked(ip: string): boolean { return this.win(this.fails, ip, FAILED_JOINS_PER_MIN).full(); }
+  failedJoin(ip: string): void { this.win(this.fails, ip, FAILED_JOINS_PER_MIN).add(); }
+
+  private win(m: Map<string, Window>, ip: string, cap: number): Window {
+    let w = m.get(ip);
+    if (w === undefined) {
+      if (m.size > 10_000) for (const [k, v] of m) if (v.empty()) m.delete(k);
+      w = new Window(this.now, cap);
+      m.set(ip, w);
+    }
+    return w;
+  }
+}

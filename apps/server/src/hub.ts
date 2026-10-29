@@ -2,6 +2,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 import { checkHello, type ClientMessage, type Versions } from '@node-arena/net';
 import { noopAuth, type Auth } from './auth.js';
 import { CLOSE_HELLO_TIMEOUT, CLOSE_SERVER_FULL, CLOSE_SUPERSEDED, CLOSE_VERSION, Conn, type Socket } from './conn.js';
+import { ConnGuard, type IpLimits } from './limits.js';
 import type { Logger } from './log.js';
 
 /** Pluggable room layer (Task 5). Default stub answers every post-hello message with an error. */
@@ -29,6 +30,10 @@ export interface HubDeps {
   secret?: Buffer | string;
   timers?: HubTimers;
   maxConns?: number;
+  /** Per-IP connection cap; also see room manager for creates / failed joins. */
+  ipLimits?: IpLimits;
+  /** Real clock (ms) for per-connection buckets. Default performance.now. */
+  now?: () => number;
 }
 
 export interface Hub {
@@ -52,12 +57,14 @@ export function createHub(deps: HubDeps): Hub {
   const log = deps.log;
   const timers: HubTimers = deps.timers ?? { setTimeout: (fn, ms) => setTimeout(fn, ms), clearTimeout: (h) => clearTimeout(h as never) };
   const maxConns = deps.maxConns ?? Infinity;
+  const now = deps.now ?? ((): number => performance.now());
   const conns = new Set<Conn>();
   const byToken = new Map<string, Conn>();
   let seq = 0;
 
   const dropped = (conn: Conn): void => {
     conns.delete(conn);
+    if (conn.ipHeld && conn.ip !== undefined) { conn.ipHeld = false; deps.ipLimits?.releaseConn(conn.ip); }
     if (conn.token !== undefined && byToken.get(conn.token) === conn) {
       byToken.delete(conn.token);
       log?.info('conn.close', { conn: conn.id, playerId: conn.playerId });
@@ -131,6 +138,15 @@ export function createHub(deps: HubDeps): Hub {
         conn.close(CLOSE_SERVER_FULL, 'server full');
         return conn;
       }
+      if (deps.ipLimits !== undefined && conn.ip !== undefined) {
+        if (!deps.ipLimits.acquireConn(conn.ip)) {
+          log?.warn('conn.rejected_ip', { conn: id });
+          conn.close(CLOSE_SERVER_FULL, 'too many connections');
+          return conn;
+        }
+        conn.ipHeld = true;
+      }
+      conn.guard = new ConnGuard(now);
       conns.add(conn);
       return conn;
     },

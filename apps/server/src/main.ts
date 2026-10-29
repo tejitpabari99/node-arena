@@ -1,4 +1,4 @@
-import { createServer, type Server } from 'node:http';
+import { createServer, type IncomingMessage, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +9,7 @@ import { loadConfigOrExit, type Config } from './config.js';
 import type { Socket } from './conn.js';
 import { loadServerContentOrExit, type ServerContent } from './content.js';
 import { createHub } from './hub.js';
+import { IpLimits } from './limits.js';
 import { createLogger, type Logger } from './log.js';
 import { createMatchController } from './match.js';
 import { createRoomManager } from './room.js';
@@ -29,8 +30,16 @@ export function originAllowed(origin: string | undefined, cfg: Pick<Config, 'all
   });
 }
 
-function wrapWs(ws: WebSocket): Socket {
+/** Client IP: `Fly-Client-IP` behind Fly's proxy, else the socket peer. Key only; never logged. */
+export function clientIp(req: IncomingMessage): string | undefined {
+  const h = req.headers['fly-client-ip'];
+  const v = Array.isArray(h) ? h[0] : h;
+  return v !== undefined && v !== '' ? v : req.socket.remoteAddress;
+}
+
+function wrapWs(ws: WebSocket, ip: string | undefined): Socket {
   return {
+    ...(ip !== undefined ? { ip } : {}),
     send: (d) => { ws.send(d); },
     close: (code, reason) => { ws.close(code, reason); },
     onMessage: (cb) => {
@@ -64,12 +73,13 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
     now, setTimeout: (fn, ms) => setTimeout(fn, ms), clearTimeout: (h) => clearTimeout(h as never),
     log: (ev, f) => log.warn(ev, f),
   });
+  const ipLimits = new IpLimits(now);
   const match = createMatchController({ clock, now, log, onAbort: (r) => rooms.drop(r) });
   const rooms = createRoomManager({
-    content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, log,
+    content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, ipLimits, log,
     onStart: match.onStart, onMatchMessage: match.onMessage, onCatchUp: match.catchUp,
   });
-  const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns });
+  const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns, ipLimits, now });
   clock.start();
   const startedAt = Date.now();
 
@@ -98,9 +108,9 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
       else { log.warn('ws.origin_refused'); cb(false, 403, 'origin not allowed'); }
     },
   });
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
     ws.on('error', () => { /* close follows */ });
-    hub.accept(wrapWs(ws));
+    hub.accept(wrapWs(ws, clientIp(req)));
   });
 
   await new Promise<void>((resolve, reject) => {
