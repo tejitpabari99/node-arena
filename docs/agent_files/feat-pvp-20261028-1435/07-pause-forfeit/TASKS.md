@@ -12,7 +12,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/07-pause-forfeit/PRD.md
 | 2 | [M2] defs/sim: `Forfeit` command + forfeit golden | 1, SP01#7 | done |
 | 3 | [M2] net: protocol v2 messages, validators, `closeTick` system cmds | 2, SP02#3, SP02#6 | done |
 | 4 | [M2] Server heartbeat (ws ping + app ping) | 3 | done |
-| 5 | [M2] Server pause module (holds, budgets, deadlines, epoch) | 3 | todo |
+| 5 | [M2] Server pause module (holds, budgets, deadlines, epoch) | 3 | done |
 | 6 | [M2] Server pause/resume/quit wiring + clock rebase | 4, 5 | todo |
 | 7 | [M2] Server forfeit emission, terminal flush, cmd reserve, retention | 6, SP04#14 | todo |
 | 8 | [M2] Lobby seat reserve + countdown cancel unwind | 6, SP04#11, SP04#14 | todo |
