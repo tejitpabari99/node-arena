@@ -19,7 +19,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/02-net-protocol/PRD.md.
 | 9 | [M1] Server/client lockstep integration + replay test | 6, 7, 8 | done |
 | 10 | [M2] Catch-up runner + local-join-late helper | 5, 7 | done |
 | 11 | [M2] Rate limiter | 6 | done |
-| 12 | [M2] Lagging-client `ticks` batching | 5, 6 | todo |
+| 12 | [M2] Lagging-client `ticks` batching | 5, 6 | done |
 | 13 | [M3] Auto-resync on desync | 7, 10 | todo |
 
 ## Task 1 — [M1] Scaffold packages/net + lint/determinism/build wiring

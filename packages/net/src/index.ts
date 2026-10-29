@@ -9,3 +9,4 @@ export * from './lockstep-client.js';
 export * from './outcome.js';
 export * from './catchup.js';
 export * from './ratelimit.js';
+export * from './lag.js';
