@@ -20,7 +20,7 @@ Source of truth: [PRD.md](PRD.md). Client for online PvP: separate NetDriver and
 | 10 | [M1] Test hooks + two-tab acceptance + campaign regression | 7, 8, 9, SP04#8 | done |
 | 11 | [M2] Full lobby (maps, seats, teams, share links) | 7, SP03#8, SP04#11 | done |
 | 12 | [M2] Seat legend + team-grouped bar | 8, 11 | done |
-| 13 | [M2] Catch-up budget + overlay | 4, 6, SP02#10, SP04#13 | todo |
+| 13 | [M2] Catch-up budget + overlay | 4, 6, SP02#10, SP04#13 | done |
 | 14 | [M2] Watch mode + deep links | 7, 13, SP04#13 | todo |
 | 15 | [M2] N-seat/draw result, rematch, connection banners | 9, 11, SP01#11, SP04#14 | todo |
 | 16 | [M3] Reconnect resume + seat reclaim UX | 3, 13, 15, SP04#19 | todo |

@@ -43,7 +43,7 @@ function PvpPlaying({pvp}:{pvp:PvpController}){
   },[pvp]);
   const s=pvp.snapshot(),view=pvp.driver?.sim.view;
   return <>
-    <PvpHud segments={view?ownership(view):[]} palettes={(pvp.manifest?.palettes??{}) as Record<string,string>} ticksLeft={(s.start?.timeLimitTicks??0)-(view?.tick??0)} seat={s.seat} menuOpen={menu} onLeave={()=>pvp.leave()} legend={s.start&&view?{seats:s.start.seats,colorKeys:(view.players??[]).map(p=>p.colorKey),eliminatedAt:view.eliminatedAt?Array.from(view.eliminatedAt as ArrayLike<number>):undefined,seatStatus:s.seatStatus}:undefined}/>
+    <PvpHud segments={view?ownership(view):[]} palettes={(pvp.manifest?.palettes??{}) as Record<string,string>} ticksLeft={(s.start?.timeLimitTicks??0)-(view?.tick??0)} seat={s.seat} menuOpen={menu} catchup={pvp.driver?.catchupProgress??null} onLeave={()=>pvp.leave()} legend={s.start&&view?{seats:s.start.seats,colorKeys:(view.players??[]).map(p=>p.colorKey),eliminatedAt:view.eliminatedAt?Array.from(view.eliminatedAt as ArrayLike<number>):undefined,seatStatus:s.seatStatus}:undefined}/>
     {toast&&<Toast message={DESYNC_TOAST} testId="toast-desync"/>}
   </>;
 }

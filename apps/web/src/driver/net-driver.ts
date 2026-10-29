@@ -7,6 +7,8 @@ export const LIVE_MAX_STEPS = 2;
 export const CATCHUP_THRESHOLD = 6;
 export const CATCHUP_BUDGET_MS = 8;
 export const CATCHUP_EVENT_TAIL = 2;
+/** Overlay shows once queued exceeds this (or while `catchup` chunks are still arriving) and hides when drained to CATCHUP_THRESHOLD. */
+export const CATCHUP_SHOW_QUEUED = 40;
 
 export interface NetDriverOptions {
   sim: Sim;
@@ -31,6 +33,8 @@ export class NetDriver implements MatchDriver {
   private frameId: number | null = null;
   private running = false;
   private disposed = false;
+  private awaitingDone = false;
+  private latched = false;
   private readonly raf: (cb: (t: number) => void) => number;
   private readonly caf: (id: number) => void;
 
@@ -45,6 +49,16 @@ export class NetDriver implements MatchDriver {
   get queued(): number { return this.o.client.queued(); }
   /** Ticks stepped so far (sim tick). */
   get tick(): number { return this.o.sim.view.tick; }
+  /**
+   * Catch-up progress in 0..1 (`tick / (tick + queued)`) while the overlay should show (join, reconnect,
+   * background-return); null when live. Reusable for a repeated `start` of the same matchId: build a fresh
+   * driver and push the new `catchup` stream.
+   */
+  get catchupProgress(): number | null {
+    if (!this.latched) return null;
+    const tick = this.o.sim.view.tick, total = tick + this.o.client.queued();
+    return total === 0 ? 0 : tick / total;
+  }
   get alpha(): number {
     if (this.lastStepAt === null || this.o.client.queued() === 0) return 1;
     return Math.min(1, Math.max(0, (this.o.now() - this.lastStepAt) / STEP_MS));
@@ -55,6 +69,8 @@ export class NetDriver implements MatchDriver {
     if (this.disposed) return { ok: true };
     const r = this.o.client.push(msg);
     if (!r.ok) this.o.onPushError?.(r, msg);
+    else if (msg.t === 'catchup') this.awaitingDone = !msg.done;
+    this.updateCatchup();
     return r;
   }
 
@@ -104,7 +120,14 @@ export class NetDriver implements MatchDriver {
         steps++;
       }
     }
+    this.updateCatchup();
     return steps;
+  }
+
+  private updateCatchup(): void {
+    const q = this.o.client.queued();
+    if (this.awaitingDone || q > CATCHUP_SHOW_QUEUED) this.latched = true;
+    else if (q <= CATCHUP_THRESHOLD) this.latched = false;
   }
 
   private stepOne(n: number, cmds: Command[], events: boolean): void {

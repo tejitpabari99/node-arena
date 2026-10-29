@@ -15,6 +15,14 @@ const byId = (root: unknown, id: string) => find(root, (n) => n.props['data-test
 const text = (n: unknown): string => Array.isArray(n) ? n.map(text).join('') : n && typeof n === 'object' && 'props' in n ? text((n as N).props.children) : typeof n === 'string' || typeof n === 'number' ? String(n) : '';
 const props = (o: Partial<PvpHudProps> = {}): PvpHudProps => ({ segments: [{ player: 0, colorKey: 'a', permille: 600 }, { player: 1, colorKey: 'b', permille: 400 }], palettes: { a: '#f00', b: '#00f' }, ticksLeft: 20 * 90, seat: 0, menuOpen: false, onLeave: () => {}, ...o });
 
+describe('PvpHud catch-up overlay', () => {
+  it('renders Catching up N% only when progress given', () => {
+    expect(byId(PvpHud(props()), 'catchup-progress')).toBeUndefined();
+    expect(text(byId(PvpHud(props({ catchup: 0.426 })), 'catchup-progress'))).toBe('Catching up 42%');
+    expect(text(byId(PvpHud(props({ catchup: 0 })), 'catchup-progress'))).toBe('Catching up 0%');
+  });
+});
+
 describe('PvpHud', () => {
   it('formats match-timer from ticks left', () => {
     expect(formatTimer(20 * 90)).toBe('1:30'); expect(formatTimer(0)).toBe('0:00'); expect(formatTimer(-5)).toBe('0:00'); expect(formatTimer(1)).toBe('0:01');
