@@ -34,6 +34,8 @@ graph LR
 (01 also feeds 02 as types only; 03 feeds the 04 M1 gate and 05 map picker.)
 
 ## M1 critical path (2-tab play-test)
+SP01#11 placement ranking was promoted from M2 and completed early to satisfy active R-WIN-07 coverage (47/47 rules). Pure derived result data leaves campaign behavior and PvP hashes unchanged. [Dependency review: PASS](01-seat-rules/review-2026-10-29-0238.md).
+
 1. 01: `pvp` objective, teams/`SeatSetup`, hostility helper, elimination, victory + timeout/draw, `view.over`, hash tail, RULES_VERSION 3.1.0, goldens refreshed.
 2. 02 (parallel with 03 after 01 types): catalogue, validators, `LockstepServer/Client`, `CommandLog`, handshake, `toWireOutcome`.
 3. 03: Duel S + symmetry gate + pvp branch in `validate:levels` + `contentVersion` bump (Duel M/Cross are M2).

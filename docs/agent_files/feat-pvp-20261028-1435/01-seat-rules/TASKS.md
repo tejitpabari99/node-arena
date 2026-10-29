@@ -18,7 +18,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/01-seat-rules/PRD.md. R
 | 8 | [M1] sim: pvp outcome (victory, timeout rank, draw) | 7 | done |
 | 9 | [M1] bots harness teams + scripted match suite | 3, 5, 6, 8 | done |
 | 10 | [M1] Refresh goldens/locks + gate sweep | 9 | done |
-| 11 | [M2] sim: placement ranking | 8, 9 | todo |
+| 11 | [M2] sim: placement ranking | 8, 9 | done |
 | 12 | [M2] bots: ally filter in tw-ai | 4, 9 | todo |
 
 ## Task 1 — [M1] Rules doc + RULES_VERSION 3.1.0
@@ -72,6 +72,7 @@ What changes at a high level: Regenerate `sim:golden`, `bots:golden`, replay gol
 Done when: all gates green and golden diffs are metadata-only.
 
 ## Task 11 — [M2] sim: placement ranking
+Implemented early as an M1 gate dependency: R-WIN-07 was already active in the 3.1.0 contract, so its missing coverage blocked full CI. Original milestone: M2.
 What it is / what it means: Per-team placements for results screens (R9, R-WIN-07).
 What changes at a high level: Derive `ranking: Placement[]` at match end (team, seats, rank, buildings, troops, eliminatedAt): eliminated teams below live ones, later `eliminatedAt` better, equal values share rank. Not hashed. Extend scripted matches with ranking assertions (FFA staggered eliminations, shared ranks, timeout ordering). Tests covers R-WIN-07.
 Done when: tests green; hashes unchanged versus task 8.
