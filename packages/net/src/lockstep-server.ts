@@ -2,6 +2,7 @@ import type { Command } from '@node-arena/defs';
 import { CommandLog, type AppendResult, type CommandLogOptions } from './log.js';
 import type { DesyncMsg, ErrorCode, SeatKind } from './messages.js';
 import { MAX_INT } from './validate.js';
+import { RateLimiter, type RateAdvice, type RateLimits } from './ratelimit.js';
 
 /** Default and allowed input delay in ticks (PRD 02 R4). */
 export const DEFAULT_INPUT_DELAY = 3;
@@ -15,11 +16,14 @@ export interface LockstepServerOptions {
   /** Command `from`/`to` must be `< buildingCount`. */
   buildingCount: number;
   log: CommandLogOptions;
+  /** Injected clock (ms) for rate limiting; default is tick-derived (nextTick * 50), so it is deterministic and clock-free. */
+  now?: () => number;
+  rateLimits?: Partial<RateLimits>;
 }
 
-export type SubmitResult = { accepted: true; tick: number } | { accepted: false; rejected: ErrorCode };
+export type SubmitResult = { accepted: true; tick: number } | { accepted: false; rejected: ErrorCode; advice?: RateAdvice };
 export type DropReason = Extract<AppendResult, { ok: false }>['reason'];
-export type HashResult = { result: 'ok' } | { result: 'pending' } | { result: 'desync'; msg: DesyncMsg };
+export type HashResult = { result: 'ok' } | { result: 'pending' } | { result: 'rate-limited'; advice: RateAdvice } | { result: 'desync'; msg: DesyncMsg };
 
 /**
  * Pure, timer-free tick scheduler (PRD 02 R4/R5/R8/R10). The caller owns the clock: call `closeTick` once per
@@ -29,6 +33,8 @@ export class LockstepServer {
   readonly log: CommandLog;
   readonly inputDelay: number;
   readonly buildingCount: number;
+  /** Shared per-seat bucket set; SP07 pause/resume/quit/ping call `limiter.hit(seat, 'control'|'ping')`. */
+  readonly limiter: RateLimiter;
   private readonly seats: readonly SeatKind[];
   private readonly buffer = new Map<number, Command[]>();
   private pending = 0;
@@ -42,6 +48,7 @@ export class LockstepServer {
     this.buildingCount = opts.buildingCount;
     this.seats = opts.seats.slice();
     this.log = new CommandLog(opts.log);
+    this.limiter = new RateLimiter(opts.now ?? (() => this.next * 50), opts.rateLimits);
   }
 
   /** Next tick `closeTick` will produce (0 before the first). */
@@ -53,9 +60,12 @@ export class LockstepServer {
    */
   submit(player: number | null, cmd: unknown): SubmitResult {
     if (player === null || !Number.isInteger(player) || this.seats[player] !== 'human') return { accepted: false, rejected: 'not-your-seat' };
+    // Counted before validation: malformed / out-of-range cmds also burn budget.
+    const tick = this.next + this.inputDelay;
+    const v = this.limiter.hit(player, 'cmd', tick);
+    if (!v.ok) return { accepted: false, rejected: 'rate-limited', advice: v.advice };
     const c = this.validate(cmd);
     if (c === null) return { accepted: false, rejected: 'bad-message' };
-    const tick = this.next + this.inputDelay;
     // Bound memory: buffered + logged entries may never exceed the log's cmd cap; ticks past the log cap are refused.
     if (this.log.size + this.pending >= this.log.cmdCap || tick >= this.log.maxTick) return { accepted: false, rejected: 'rate-limited' };
     const full = { type: c.type, player, from: c.from, to: c.to } as Command;
@@ -98,7 +108,8 @@ export class LockstepServer {
    * or ignore. Mismatch -> `{t:'desync', tick, serverHash}`.
    */
   onHash(player: number, tick: number, h: string): HashResult {
-    void player;
+    const v = this.limiter.hit(player, 'hash');
+    if (!v.ok) return { result: 'rate-limited', advice: v.advice };
     const server = this.log.checkpoint(tick);
     if (server === undefined) return { result: 'pending' };
     return server === h ? { result: 'ok' } : { result: 'desync', msg: { t: 'desync', tick, serverHash: server } };

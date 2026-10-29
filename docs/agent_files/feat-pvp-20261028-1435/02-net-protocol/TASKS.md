@@ -18,7 +18,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/02-net-protocol/PRD.md.
 | 8 | [M1] Outcome adapter (toWireOutcome) | 2, SP01#8 | done |
 | 9 | [M1] Server/client lockstep integration + replay test | 6, 7, 8 | done |
 | 10 | [M2] Catch-up runner + local-join-late helper | 5, 7 | done |
-| 11 | [M2] Rate limiter | 6 | todo |
+| 11 | [M2] Rate limiter | 6 | done |
 | 12 | [M2] Lagging-client `ticks` batching | 5, 6 | todo |
 | 13 | [M3] Auto-resync on desync | 7, 10 | todo |
 

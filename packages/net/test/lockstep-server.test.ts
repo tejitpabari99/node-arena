@@ -58,7 +58,7 @@ test('non-human seats cannot submit', () => {
 });
 
 test('building index bound and malformed cmds rejected', () => {
-  const s = mk();
+  const s = new LockstepServer({ seats: ['human', 'human', 'bot', 'empty'], buildingCount: 10, log: { timeLimitTicks: 1000 }, rateLimits: { cmdsPerTick: 100, cmdsPerSec: 100 } });
   for (const c of [draw(10, 1), draw(1, 10), draw(-1, 1), draw(1.5, 2), { type: 'Nope', from: 1, to: 2 }, null, [], 'x', { type: 'DrawLine', from: 1 }, { ...draw(1, 2), extra: 1 }]) {
     assert.deepEqual(s.submit(0, c), { accepted: false, rejected: 'bad-message' });
   }
