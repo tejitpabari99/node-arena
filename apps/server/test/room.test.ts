@@ -18,9 +18,10 @@ function fakeSocket() {
   let msgCb: (d: string | Uint8Array) => void = () => {};
   let closeCb: () => void = () => {};
   const sent: ServerMessage[] = [];
+  const frames: string[] = [];
   const s = {
-    sent, bufferedAmount: 0,
-    send: (d: string) => void sent.push(JSON.parse(d) as ServerMessage),
+    sent, frames, bufferedAmount: 0,
+    send: (d: string) => { frames.push(d); sent.push(JSON.parse(d) as ServerMessage); },
     close() { closeCb(); },
     onMessage: (cb: (d: string | Uint8Array) => void) => void (msgCb = cb),
     onClose: (cb: () => void) => void (closeCb = cb),
@@ -216,7 +217,7 @@ test('start: seed from injected CSPRNG, start msg per member, countdown 3s on lo
   b.say({ t: 'lobby.ready', ready: true });
   a.clear(); b.clear();
   a.say({ t: 'lobby.start' });
-  assert.deepEqual(draws[4], [0, 2 ** 32]);
+  assert.deepEqual(draws[4], [0, 2 ** 31]);
   const sa = a.last('start')!, sb = b.last('start')!;
   assert.equal(sa.seed, 123456789);
   assert.equal(sa.youPlayer, 0); assert.equal(sb.youPlayer, 1);
@@ -235,7 +236,25 @@ test('start: seed from injected CSPRNG, start msg per member, countdown 3s on lo
   assert.equal(m.startMsg(1, 3000).youPlayer, 1);
 });
 
-test('default randomInt (node:crypto) yields u32 seeds', () => {
+test('largest seed draw produces start frames accepted by the client protocol parser', () => {
+  const { client, starts } = setup((_min, max) => max - 1);
+  const a = client('Ann'), b = client('Bob');
+  a.say({ t: 'room.create' });
+  b.say({ t: 'room.join', code: code(a), role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'lobby.start' });
+  for (const [seat, socket] of [a, b].entries()) {
+    const frame = socket.frames.find((data) => (JSON.parse(data) as ServerMessage).t === 'start');
+    assert.ok(frame, 'server sends start to each player');
+    const parsed = parseServerMessage(frame);
+    assert.equal(parsed.ok, true, 'client must accept the actual encoded start frame at the maximum seed');
+    if (!parsed.ok || parsed.msg.t !== 'start') assert.fail('expected parsed start');
+    assert.equal(parsed.msg.youPlayer, seat);
+    assert.equal(parsed.msg.seed, starts[0]!.seed);
+  }
+});
+
+test('default randomInt (node:crypto) yields wire-compatible seeds', () => {
   const { client, starts } = setup();
   const a = client('Ann'), b = client('Bob');
   a.say({ t: 'room.create' });
@@ -243,7 +262,7 @@ test('default randomInt (node:crypto) yields u32 seeds', () => {
   b.say({ t: 'lobby.ready', ready: true });
   a.say({ t: 'lobby.start' });
   const seed = starts[0]!.seed;
-  assert.ok(Number.isInteger(seed) && seed >= 0 && seed < 2 ** 32);
+  assert.ok(Number.isInteger(seed) && seed >= 0 && seed < 2 ** 31);
 });
 
 test('after start: lobby edits/join refused; second start refused', () => {

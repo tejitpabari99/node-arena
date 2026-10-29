@@ -2,7 +2,7 @@ import { randomInt as cryptoRandomInt } from 'node:crypto';
 import { TICK_RATE } from '@node-arena/sim';
 import type { CompiledLevel } from '@node-arena/content';
 import {
-  HASH_INTERVAL, type ClientMessage, type LobbySeat, type SeatConfig, type ServerMessage, type StartMsg, type StartSeat,
+  HASH_INTERVAL, MAX_INT, type ClientMessage, type LobbySeat, type SeatConfig, type ServerMessage, type StartMsg, type StartSeat,
 } from '@node-arena/net';
 import type { Clock } from './clock.js';
 import type { Conn } from './conn.js';
@@ -230,7 +230,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       if (s.kind === 'human' && !isReady(room, i)) return conn.sendError('not-ready');
     }
     const level = content.compiled[room.levelId]!;
-    const seed = rand(0, 2 ** 32);
+    const seed = rand(0, MAX_INT + 1);
     const teams = room.seats.map((s) => s.team);
     const matchId = `${room.code}-${++matchSeq}`;
     const startAt = deps.clock.boundary(deps.now() + COUNTDOWN_MS);
