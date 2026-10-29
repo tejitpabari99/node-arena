@@ -22,7 +22,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M
 | 12 | [M2] e2e specs: spectator + rematch | 3, SP04#13, SP04#14, SP05#14, SP05#15 | todo |
 | 13 | [M2] e2e specs: bot-seat lobby + 2v2 Cross | 3, SP04#12, SP03#7 | todo |
 | 14 | [M2] Full docs pass | 5, 9, 12, 13 | todo |
-| 15 | [M2] `docs/PVP_OPS.md` owner runbook | 7, 8, 9 | todo |
+| 15 | [M2] `docs/PVP_OPS.md` owner runbook | 7, 8, 9 | done |
 
 ## Task 1 — [M1] `dev:pvp` script + server URL env wiring
 What it is / what it means: R1/R2/D1. One command runs server and web together; plain `dev` stays web-only.

@@ -18,6 +18,7 @@ Browser tower-strategy game: draw persistent routes, capture buildings and compl
 - `docs/CONTENT_GUIDE.md` / `docs/LEVELS_GUIDE.md` — authoring, import policy, versions and feature coverage.
 - `docs/research/` — teardown evidence and historical research; `docs/agent_files/` — approved designs/tasks and run records.
 - `docs/FUTURES.md` — deferred features.
+- `docs/PVP_OPS.md` — owner runbook for the PvP server on Fly.io (deploy, rollback, health, heartbeat check).
 
 The shipped campaign is the Common list's positions **4–23** (tutorial positions 1–3 omitted), shown as levels 1–20 in the client. `packages/content/data/campaigns/common.json` is authoritative. Cargo and tutorial scripts are dropped; position 23 also drops one wall. These are documented fidelity limits in the levels guide. Local two-player PvP is available below; later campaign positions remain deferred.
 
