@@ -5,7 +5,8 @@ import { checkBotVersion, readBotVersion } from '../../packages/content/scripts/
 import { loadFiles } from './files.js';
 import { readBaseline, splitFiles } from './content.js';
 import { prepareEditorProxy } from './editor-solvable.js';
-import { playProxy, validateLevel } from './levels.js';
+import { playProxy, validateLevel, validatePvpLevel } from './levels.js';
+import { readSymmetry } from './pvp-symmetry.js';
 import { readUnsolved } from './unsolved.js';
 import { runEditorCommand } from './editor-finalize.js';
 
@@ -17,12 +18,20 @@ try {
   if (step === 'validate') {
     const level = JSON.parse(await readFile(resolve(contentDir, 'data/levels', `${id}.json`), 'utf8'));
     const input = await prepareEditorProxy(contentDir, id, level);
+    if (level.objective === 'pvp') {
+      // PvP: symmetry + all-seat proxy matches (same branch as validate:levels); the campaign human-proxy path does not apply.
+      const symmetry = (await readSymmetry(resolve(root, 'tools/pvp-symmetry.json')))[id];
+      const report = validatePvpLevel(input.level, undefined, 4, symmetry);
+      console.log(JSON.stringify(report, null, 2));
+      if (!report.ok) process.exitCode = 1;
+    } else {
     const unsolved = (await readUnsolved(resolve(root, 'tools/unsolved-by-proxy.json'))).find(entry => entry.id === id) ?? null;
     const report = validateLevel(input.level, undefined, 4, unsolved, undefined, (...args) => {
       const run = playProxy(...args); console.log(`${run.proxy} seed ${run.seed}: ${run.outcome}, ${run.ticks} ticks`); return run;
     });
     console.log(JSON.stringify(report, null, 2));
     if (!report.ok) process.exitCode = 1;
+    }
   } else if (step === 'sim:golden' || step === 'bots:golden') {
     // Authoring always compares with HEAD, independent of an enclosing CI baseline.
     process.env.VERSION_GUARD_BASE = 'HEAD';

@@ -17,7 +17,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/03-pvp-maps/PRD.md. Cam
 | 7 | [M2] Cross level + 2v2 smoke | 6 | done |
 | 8 | [M2] listPvpMaps helper | 2 | done |
 | 9 | [M2] Editor routing for pvp levels | 2, 8 | done |
-| 10 | [M2] Editor finalize: symmetry + pvp outcomes | 3, 9 | todo |
+| 10 | [M2] Editor finalize: symmetry + pvp outcomes | 3, 9 | done |
 
 ## Task 1 — [M1] Symmetry checker + sidecar
 What it is / what it means: Machine-checked fairness so owner editor edits cannot silently break symmetry (R5, R7, D2, D3).
