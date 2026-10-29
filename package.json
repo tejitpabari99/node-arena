@@ -28,7 +28,7 @@
     "bench:sim": "pnpm --filter @node-arena/sim bench:sim",
     "dev": "pnpm --filter @node-arena/web dev",
     "dev:server": "pnpm --filter @node-arena/server dev",
-    "dev:pvp": "PORT=${PORT:-8080} ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173} pnpm --parallel --filter @node-arena/web --filter @node-arena/server dev",
+    "dev:pvp": "node scripts/dev-pvp.mjs",
     "test:web:e2e": "pnpm --filter @node-arena/web test:e2e",
     "test:web:all": "pnpm --filter @node-arena/web test:e2e:all",
     "build:test:pvp": "pnpm --filter @node-arena/web build:test:pvp",

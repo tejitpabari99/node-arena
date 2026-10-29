@@ -63,7 +63,7 @@ M1 supports local Duel S 1v1. After the Development prerequisites above (includi
 pnpm dev:pvp
 ```
 
-Keep the process running: web uses port 5173, server uses 8080. Plain `pnpm dev` runs only the web client.
+The command works in Windows Command Prompt/PowerShell, macOS and Linux. Keep the process running: web uses port 5173, server uses 8080. Existing `PORT` and `ALLOWED_ORIGINS` environment values override the server defaults. Plain `pnpm dev` runs only the web client.
 
 1. Tab A: open <http://127.0.0.1:5173/>, select **Play online**, enter a nickname, then **Create room**. M1 selects Duel S automatically; confirm the lobby map is **Na Pvp Duel S**.
 2. Note the four-character **Room code**. Replace XXXX in `http://127.0.0.1:5173/?room=XXXX` with that code.
