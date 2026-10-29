@@ -1,13 +1,13 @@
 import { TICK_RATE } from './math.js';
 import { hashState } from './hash.js';
 import { freeSlots, liveChannels, progressOf } from './state.js';
-import type { CompiledLevel, Outcome, SimState } from './types.js';
+import type { CompiledLevel, Placement, Outcome, SimState } from './types.js';
 
 export type ReadColumn = Omit<Readonly<Int32Array>, 'set' | 'fill' | 'copyWithin' | 'reverse' | 'sort' | 'subarray'> & { subarray(begin?: number, end?: number): ReadColumn };
 
 export interface SimView {
   tick: number;
-  over: { outcome: Outcome; winner: number | null; winners?: number[] } | null;
+  over: { outcome: Outcome; winner: number | null; winners?: number[]; ranking?: Placement[] } | null;
   readonly timeLimitTicks: number;
   readonly bounds: CompiledLevel['bounds'];
   readonly ids: { readonly buildings: readonly string[]; readonly players: readonly string[]; readonly elements: readonly string[] };
@@ -96,7 +96,7 @@ export function readTroops(state: SimState, buf: TroopBuffer): number {
 /** Serializable copy of the hashed state (plain JSON). `hash` equals `sim.hash()` at capture time. */
 export interface SimSnapshot {
   tick: number; seed: number; hash: string;
-  over: { outcome: Outcome; winner: number | null; winners?: number[] } | null;
+  over: { outcome: Outcome; winner: number | null; winners?: number[]; ranking?: Placement[] } | null;
   drawSeq: number; troopSeq: number; rejected: number;
   buildings: Record<'owner' | 'level' | 'maxLevel' | 'stage' | 'lines' | 'alive' | 'ignoreForWin', number[]>;
   col: Record<string, number[]>;
@@ -110,7 +110,7 @@ export function snapshotState(state: SimState): SimSnapshot {
   for (const name of Object.keys(b.col).sort((p, q) => (p < q ? -1 : p > q ? 1 : 0))) col[name] = arr(b.col[name]!);
   return {
     tick: state.tick, seed: state.seed, hash: hashState(state),
-    over: state.over ? { ...state.over, ...(state.over.winners ? { winners: [...state.over.winners] } : {}) } : null,
+    over: state.over ? { ...state.over, ...(state.over.winners ? { winners: [...state.over.winners] } : {}), ...(state.over.ranking ? { ranking: state.over.ranking.map(p => ({ ...p, seats: [...p.seats] })) } : {}) } : null,
     drawSeq: state.drawSeq, troopSeq: state.troopSeq, rejected: state.rejected,
     buildings: { owner: arr(b.owner), level: arr(b.level), maxLevel: arr(b.maxLevel), stage: arr(b.stage), lines: arr(b.lines), alive: arr(b.alive), ignoreForWin: arr(b.ignoreForWin) },
     col,

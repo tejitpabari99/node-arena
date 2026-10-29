@@ -3,6 +3,7 @@ const { test } = require('node:test');
 require('tsx/cjs');
 const api = require('../src/internal.ts');
 const { compiledGolden, metadata } = require('./fixtures.cjs');
+const { createView, refreshView, snapshotState } = require('../src/read.ts');
 
 const level3 = (teams) => {
   const l = structuredClone(compiledGolden());
@@ -140,13 +141,14 @@ const pvpN = (owners, teams, limit = 10) => {
 };
 const win = (s) => { s.events = []; api.winPass(s); const e = s.events; s.events = null; return e; };
 const limitTick = (s) => s.level.timeLimitSec * 20;
+const outcomeOnly = ({ outcome, winner, winners }) => ({ outcome, winner, ...(winners ? { winners } : {}) });
 
 test('covers R-WIN-04: 1v1 last team standing is victory; event + view carry winners', () => {
   const s = pvpN([0, 0, 1], [0, 1]);
   assert.equal(s.over, null);
   s.buildings.owner[2] = 0;
   const ev = win(s);
-  assert.deepEqual(s.over, { outcome: 'victory', winner: 0, winners: [0] });
+  assert.deepEqual(outcomeOnly(s.over), { outcome: 'victory', winner: 0, winners: [0] });
   assert.deepEqual(ev.find((e) => e.type === 'MatchOver'), { type: 'MatchOver', outcome: 'victory', winner: 0, winners: [0] });
 });
 
@@ -155,7 +157,7 @@ test('covers R-WIN-04: 2v2 eliminated teammate still a winner; victory beats tim
   s.tick = 5; s.buildings.owner[3] = 1; s.buildings.owner[2] = 1; // team 1 gone; seat 0,1 keep one each
   const ev = win(s);
   assert.deepEqual(s.players.eliminatedAt.slice(0), Int32Array.from([-1, -1, 5, 5]));
-  assert.deepEqual(s.over, { outcome: 'victory', winner: 0, winners: [0, 1] });
+  assert.deepEqual(outcomeOnly(s.over), { outcome: 'victory', winner: 0, winners: [0, 1] });
   assert.equal(ev.find((e) => e.type === 'MatchOver').winners.length, 2);
   const t = pvpN([0, 0, 1], [0, 1]); t.tick = limitTick(t); t.buildings.owner[2] = 0;
   win(t); assert.equal(t.over.outcome, 'victory');
@@ -165,7 +167,7 @@ test('covers R-WIN-05: timeout unique leader by buildings; no outcome before the
   const s = pvpN([0, 0, 1], [0, 1]);
   s.tick = limitTick(s) - 1; win(s); assert.equal(s.over, null);
   s.tick = limitTick(s); win(s);
-  assert.deepEqual(s.over, { outcome: 'timeLimit', winner: 0, winners: [0] });
+  assert.deepEqual(outcomeOnly(s.over), { outcome: 'timeLimit', winner: 0, winners: [0] });
 });
 
 test('covers R-WIN-05: building tie broken by garrison (levels) plus troops in transit', () => {
@@ -174,16 +176,16 @@ test('covers R-WIN-05: building tie broken by garrison (levels) plus troops in t
   s.tick = limitTick(s);
   api.getChannel(s, 1, 0).troops.push(0, 0, 1, 0, 1, 1); // seat 1 troop in transit
   win(s);
-  assert.deepEqual(s.over, { outcome: 'timeLimit', winner: 1, winners: [1] });
+  assert.deepEqual(outcomeOnly(s.over), { outcome: 'timeLimit', winner: 1, winners: [1] });
   const g = pvpN([0, 1], [0, 1]); g.buildings.level[0] = 3; g.buildings.level[1] = 1; g.tick = limitTick(g);
-  win(g); assert.deepEqual(g.over, { outcome: 'timeLimit', winner: 0, winners: [0] });
+  win(g); assert.deepEqual(outcomeOnly(g.over), { outcome: 'timeLimit', winner: 0, winners: [0] });
 });
 
 test('covers R-WIN-06: exact tie at limit is draw with both teams as winners', () => {
   const s = pvpN([0, 1], [0, 1]);
   s.buildings.level[0] = 2; s.buildings.level[1] = 2; s.tick = limitTick(s);
   const ev = win(s);
-  assert.deepEqual(s.over, { outcome: 'draw', winner: null, winners: [0, 1] });
+  assert.deepEqual(outcomeOnly(s.over), { outcome: 'draw', winner: null, winners: [0, 1] });
   assert.equal(ev.find((e) => e.type === 'MatchOver').outcome, 'draw');
 });
 
@@ -191,14 +193,14 @@ test('covers R-WIN-06: 3 teams, top two tie, third excluded', () => {
   const t = pvpN([0, 1, 2], [0, 1, 2]);
   for (let i = 0; i < 3; i++) t.buildings.level[i] = 3;
   t.buildings.level[2] = 1; t.tick = limitTick(t); win(t);
-  assert.deepEqual(t.over, { outcome: 'draw', winner: null, winners: [0, 1] });
+  assert.deepEqual(outcomeOnly(t.over), { outcome: 'draw', winner: null, winners: [0, 1] });
 });
 
 test('covers R-WIN-06: zero teams alive is draw with empty winners and null winner', () => {
   const s = pvpN([0, 1], [0, 1]);
   s.tick = 3; s.buildings.owner[0] = -1; s.buildings.owner[1] = -1;
   win(s);
-  assert.deepEqual(s.over, { outcome: 'draw', winner: null, winners: [] });
+  assert.deepEqual(outcomeOnly(s.over), { outcome: 'draw', winner: null, winners: [] });
 });
 
 test('covers R-WIN-01: captureAll outcomes unchanged and carry no winners', () => {
@@ -207,4 +209,71 @@ test('covers R-WIN-01: captureAll outcomes unchanged and carry no winners', () =
   const ev = win(s);
   assert.deepEqual(s.over, { outcome: 'won', winner: 0 });
   assert.deepEqual(ev.find((e) => e.type === 'MatchOver'), { type: 'MatchOver', outcome: 'won', winner: 0 });
+});
+
+// Literal expectations catch wrong live/eliminated ordering, team aggregation, ties and hash leakage.
+test('covers R-WIN-07: live teams rank by buildings then total troops; ties share competition rank', () => {
+  const s = pvpN([0, 1, 2, 3], [0, 1, 2, 3]);
+  s.buildings.level.set([3, 4, 3, 2]);
+  api.getChannel(s, 0, 1).troops.push(0, 0, 0, 0, 1, 1);
+  s.tick = limitTick(s); win(s);
+  assert.deepEqual(s.over.ranking, [
+    { team: 0, seats: [0], rank: 1, buildings: 1, troops: 4, eliminatedAt: null },
+    { team: 1, seats: [1], rank: 1, buildings: 1, troops: 4, eliminatedAt: null },
+    { team: 2, seats: [2], rank: 3, buildings: 1, troops: 3, eliminatedAt: null },
+    { team: 3, seats: [3], rank: 4, buildings: 1, troops: 2, eliminatedAt: null },
+  ]);
+});
+
+test('covers R-WIN-07: placement uses all allied seats and the last eliminated seat tick', () => {
+  const s = pvpN([0, 1, 2, 3], [2, 0, 0, 1]);
+  s.tick = 5; s.buildings.owner[1] = 0; win(s);
+  assert.equal(s.over, null);
+  s.tick = 9; s.buildings.owner[2] = 0; win(s);
+  assert.equal(s.over, null);
+  s.tick = 12; s.buildings.owner[3] = 0; win(s);
+  assert.deepEqual(s.over.ranking, [
+    { team: 2, seats: [0], rank: 1, buildings: 4, troops: 39, eliminatedAt: null },
+    { team: 1, seats: [3], rank: 2, buildings: 0, troops: 0, eliminatedAt: 12 },
+    { team: 0, seats: [1, 2], rank: 3, buildings: 0, troops: 0, eliminatedAt: 9 },
+  ]);
+});
+
+test('covers R-WIN-07: simultaneously eliminated teams tie below live teams; zero survivors still rank', () => {
+  const s = pvpN([0, 1, 2], [0, 1, 2]);
+  s.tick = 7; s.buildings.owner.fill(0); win(s);
+  assert.deepEqual(s.over.ranking.map(({ team, rank, eliminatedAt }) => ({ team, rank, eliminatedAt })), [
+    { team: 0, rank: 1, eliminatedAt: null }, { team: 1, rank: 2, eliminatedAt: 7 }, { team: 2, rank: 2, eliminatedAt: 7 },
+  ]);
+  const empty = pvpN([0, 1], [0, 1]); empty.tick = 3; empty.buildings.owner.fill(-1); win(empty);
+  assert.deepEqual(empty.over.ranking, [
+    { team: 0, seats: [0], rank: 1, buildings: 0, troops: 0, eliminatedAt: 3 },
+    { team: 1, seats: [1], rank: 1, buildings: 0, troops: 0, eliminatedAt: 3 },
+  ]);
+});
+
+test('covers R-WIN-07: ranking is final metadata, absent during play and campaign; snapshots own nested copies; hashes exclude it', () => {
+  const s = pvpN([0, 1], [0, 1]);
+  win(s); assert.equal(s.over, null);
+  s.tick = limitTick(s); win(s);
+  const view = createView(s); refreshView(view, s);
+  assert.deepEqual(view.over.ranking, s.over.ranking);
+  const snap = snapshotState(s), hash = api.hashState(s);
+  snap.over.ranking[0].seats.push(99); snap.over.ranking[0].troops = 999;
+  assert.deepEqual(s.over.ranking[0].seats, [0]);
+  assert.notEqual(s.over.ranking[0].troops, 999);
+  s.over.ranking[0].rank = 99;
+  assert.equal(api.hashState(s), hash);
+  const c = api.createState(level3(), 1); c.buildings.owner.fill(0); win(c);
+  assert.equal('ranking' in c.over, false);
+});
+
+test('covers R-WIN-07: building count beats troop count and surviving allied team includes eliminated seats', () => {
+  const s = pvpN([0, 0, 2, 3], [0, 0, 1, 2]);
+  s.buildings.level.set([1, 1, 50, 20]); s.tick = limitTick(s); win(s);
+  assert.deepEqual(s.over.ranking, [
+    { team: 0, seats: [0, 1], rank: 1, buildings: 2, troops: 2, eliminatedAt: null },
+    { team: 1, seats: [2], rank: 2, buildings: 1, troops: 50, eliminatedAt: null },
+    { team: 2, seats: [3], rank: 3, buildings: 1, troops: 20, eliminatedAt: null },
+  ]);
 });

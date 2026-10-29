@@ -1,5 +1,5 @@
 import { TICK_RATE } from './math.js';
-import type { Outcome as OutcomeId, SimState } from './types.js';
+import type { Outcome as OutcomeId, Placement, SimState } from './types.js';
 
 type Outcome = NonNullable<SimState['over']>;
 
@@ -47,6 +47,40 @@ function eliminationPass(state: SimState): void {
   }
 }
 
+/** R-WIN-07: final per-team metadata; equal strength/elimination ticks share competition rank. */
+function placementRanking(state: SimState, seatsOf: Map<number, number[]>): Placement[] {
+  const placements = new Map<number, Placement>();
+  for (const [team, seats] of seatsOf) {
+    let eliminatedAt: number | null = 0;
+    for (const seat of seats) {
+      const tick = state.players.eliminatedAt[seat]!;
+      if (tick < 0) { eliminatedAt = null; break; }
+      eliminatedAt = Math.max(eliminatedAt, tick);
+    }
+    placements.set(team, { team, seats: [...seats], rank: 0, buildings: 0, troops: 0, eliminatedAt });
+  }
+  const b = state.buildings;
+  for (let i = 0; i < b.n; i++) {
+    const owner = b.owner[i]!;
+    if (owner < 0) continue;
+    const placement = placements.get(state.team[owner]!)!;
+    placement.buildings++; placement.troops += b.level[i]!;
+  }
+  for (const ch of state.channels.values()) for (let i = 0; i < ch.troops.len; i++) {
+    const placement = placements.get(state.team[ch.troops.owner[i]!]!);
+    if (placement) placement.troops++;
+  }
+  const compare = (a: Placement, b: Placement): number => {
+    if (a.eliminatedAt === null) return b.eliminatedAt === null ? b.buildings - a.buildings || b.troops - a.troops : -1;
+    return b.eliminatedAt === null ? 1 : b.eliminatedAt - a.eliminatedAt;
+  };
+  const ranking = [...placements.values()].sort((a, b) => compare(a, b) || a.team - b.team);
+  for (let i = 0; i < ranking.length; i++) {
+    ranking[i]!.rank = i > 0 && compare(ranking[i - 1]!, ranking[i]!) === 0 ? ranking[i - 1]!.rank : i + 1;
+  }
+  return ranking;
+}
+
 /** R-WIN-04..06 (pvp): last team standing, then time-limit ranking, draw on a top tie or no survivor. Null while running. */
 function pvpOutcome(state: SimState): Outcome | null {
   const p = state.players, b = state.buildings, team = state.team;
@@ -58,7 +92,7 @@ function pvpOutcome(state: SimState): Outcome | null {
     const winners: number[] = [];
     for (const t of teams) winners.push(...seatsOf.get(t)!);
     winners.sort((x, y) => x - y);
-    return { outcome, winner: outcome !== 'draw' && winners.length > 0 ? winners[0]! : null, winners };
+    return { outcome, winner: outcome !== 'draw' && winners.length > 0 ? winners[0]! : null, winners, ranking: placementRanking(state, seatsOf) };
   };
   if (alive.length === 1) return result('victory', alive);
   if (alive.length === 0) return result('draw', []);

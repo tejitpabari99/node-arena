@@ -650,7 +650,7 @@ At the end of a `pvp` match the result carries a `ranking` of one placement per 
 
 *Examples:* none.
 
-*Since:* 3.1.0. Text lands with 3.1.0; its test lands in a later task.
+*Since:* 3.1.0.
 
 ### Retired ids
 
