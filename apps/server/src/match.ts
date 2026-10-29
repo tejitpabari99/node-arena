@@ -1,5 +1,5 @@
 import { create, type Sim } from '@node-arena/sim';
-import { encodeTick, encode, endMessage, HASH_INTERVAL, LAG_BUFFER_BYTES, LagFeed, LockstepServer, SYSTEM_CMD_RESERVE, type ClientMessage, type PauseStateMsg, type SeatKind } from '@node-arena/net';
+import { encodeTick, encode, endMessage, HASH_INTERVAL, LAG_BUFFER_BYTES, LagFeed, LockstepServer, SYSTEM_CMD_RESERVE, type ClientMessage, type EndMsg, type PauseStateMsg, type SeatKind } from '@node-arena/net';
 import type { Clock, ClockRoom } from './clock.js';
 import type { Conn } from './conn.js';
 import { BACKPRESSURE_CLOSE_BYTES, CLOSE_BACKPRESSURE, CLOSE_RATE_LIMITED } from './limits.js';
@@ -33,6 +33,8 @@ export interface MatchController {
   onSeatDisconnect(room: Room, seat: number): void;
   /** A seat's socket was (re)bound mid-match: marks holds connected and sends the pause snapshot to `conn` while paused. */
   onSeatReconnect(room: Room, seat: number, conn: Conn): void;
+  /** Stored terminal `end` (immutable once set); undefined while the match is live. */
+  endOf(room: Room): EndMsg | undefined;
   /** Current pause snapshot (frozen tick = lockstep.nextTick), or undefined without a running match. */
   pauseState(room: Room): PauseStateMsg | undefined;
   /** True while any hold exists (such rooms are never GC-dropped). */
@@ -58,6 +60,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
   const active = new WeakMap<Room, { lockstep: LockstepServer; lastDesync: Map<number, number>; perTick: Map<number, { tick: number; n: number }>; total: Map<number, number>; seatBudget: number; pause: PauseModule; clockRoom: ClockRoom; clockOn: boolean; terminalClose: () => void }>();
 
   const feeds = new WeakMap<Room, WeakMap<Conn, LagFeed>>();
+  const ends = new WeakMap<Room, EndMsg>();
 
   /** Live fan-out with backpressure: >256 KB buffered skips writes (batched `ticks` on drain), >2 MB closes. */
   const frameTo = (room: Room, lockstep: LockstepServer, n: number, cmds: readonly import('@node-arena/defs').Command[], frame: string): void => {
@@ -139,6 +142,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
           const finalTick = sim.view.tick;
           const end = endMessage(sim.view.over, finalTick, sim.hash());
           if (end === null) throw new Error('non-pvp outcome');
+          ends.set(room, end);
           const before = pause.epoch();
           pause.flush();
           room.state = 'ended';
@@ -172,10 +176,10 @@ export function createMatchController(deps: MatchDeps): MatchController {
     entry.clockOn = true;
   };
 
-  const sendAll = (room: Room, msg: PauseStateMsg): void => { for (const c of room.conns()) if (!c.closed) c.send(msg); };
+  const sendAll = (room: Room, msg: PauseStateMsg, except?: Conn): void => { for (const c of room.conns()) if (!c.closed && c !== except) c.send(msg); };
 
   /** Freeze/unfreeze the room's clock membership from the hold set, then broadcast the snapshot (sent before any later frame). */
-  const publish = (room: Room, m: { lockstep: LockstepServer; pause: PauseModule; clockRoom: ClockRoom; clockOn: boolean }): void => {
+  const publish = (room: Room, m: { lockstep: LockstepServer; pause: PauseModule; clockRoom: ClockRoom; clockOn: boolean }, except?: Conn): void => {
     if (room.state !== 'running') return;
     if (m.pause.paused() && m.clockOn) { clock.remove(m.clockRoom); m.clockOn = false; }
     else if (!m.pause.paused() && !m.clockOn) {
@@ -184,7 +188,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
       clock.add(m.clockRoom);
       m.clockOn = true;
     }
-    sendAll(room, m.pause.snapshot(m.lockstep.nextTick));
+    sendAll(room, m.pause.snapshot(m.lockstep.nextTick), except);
   };
 
   const control = (room: Room, conn: Conn, seat: number, msg: Extract<ClientMessage, { t: 'pause' | 'resume' | 'quit' }>): boolean => {
@@ -294,8 +298,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
     if (m === undefined || room.state !== 'running') return;
     const before = m.pause.epoch();
     m.pause.reconnect(seat);
-    if (m.pause.epoch() !== before) publish(room, m);
-    else if (m.pause.paused()) conn.send(m.pause.snapshot(m.lockstep.nextTick));
+    if (m.pause.epoch() !== before) publish(room, m, conn); // the reconnecting conn gets its snapshot from room.attachMidMatch, after start + catchup
   };
 
   const pauseState = (room: Room): PauseStateMsg | undefined => {
@@ -308,8 +311,8 @@ export function createMatchController(deps: MatchDeps): MatchController {
   const cancel = (room: Room): void => {
     const m = active.get(room);
     if (m !== undefined) { clock.remove(m.clockRoom); m.clockOn = false; m.pause.dispose(); }
-    active.delete(room); servers.delete(room); sims.delete(room); feeds.delete(room);
+    active.delete(room); ends.delete(room); servers.delete(room); sims.delete(room); feeds.delete(room);
   };
 
-  return { onStart, cancel, onMessage, catchUp, onSeatDisconnect, onSeatReconnect, pauseState, hasPendingDeadline, inspect: (room) => servers.get(room), simOf: (room) => sims.get(room) };
+  return { onStart, cancel, onMessage, catchUp, onSeatDisconnect, onSeatReconnect, endOf: (room) => ends.get(room), pauseState, hasPendingDeadline, inspect: (room) => servers.get(room), simOf: (room) => sims.get(room) };
 }

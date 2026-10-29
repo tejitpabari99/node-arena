@@ -96,6 +96,7 @@ export interface RoomManagerDeps {
   /** SP07: a seated human's conn was rebound while running (after its `start`). */
   onSeatReconnect?: (room: Room, seat: number, conn: Conn) => void;
   /** SP07: current pause snapshot for late attachers (watchers). */
+  endOf?: (room: Room) => import('@node-arena/net').EndMsg | undefined;
   pauseStateOf?: (room: Room) => import('@node-arena/net').PauseStateMsg | undefined;
   /** SP07: countdown cancelled; unwind the match controller's per-room state (clock membership, sim, lockstep, pause). */
   onStartCancel?: (room: Room, match: MatchStart) => void;
@@ -208,11 +209,13 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
    * Reusable mid-match attach (SP07 reconnect reuses it for seated players): `start` (youPlayer) then catch-up chunks,
    * all synchronous so the caller can add the conn to the live fan-out in the same turn with no tick gap.
    */
-  const attachMidMatch = (room: Room, conn: Conn, youPlayer: number | null): void => {
+  const attachMidMatch = (room: Room, conn: Conn, youPlayer: number | null, alwaysPause = false): void => {
     conn.send(room.match!.startMsg(youPlayer, Math.max(0, room.match!.startAt - deps.now())));
     deps.onCatchUp?.(room, conn);
     const p = deps.pauseStateOf?.(room);
-    if (p?.paused) conn.send(p);
+    if (p !== undefined && (p.paused || alwaysPause)) conn.send(p);
+    const end = deps.endOf?.(room);
+    if (end !== undefined) conn.send(end);
   };
 
   const watch = (conn: Conn, room: Room): void => {
@@ -490,9 +493,12 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       if (room.host === null && (room.state === 'lobby' || room.state === 'ended')) room.host = i; // returning member of a hostless room
       conn.send({ t: 'room.joined', code: room.code, you: { seat: i, host: room.host === i } });
       conn.send(lobbyState(room));
-      if ((room.state === 'countdown' || room.state === 'running') && room.match !== undefined) {
-        conn.send(room.match.startMsg(i, Math.max(0, room.match.startAt - deps.now())));
+      if (room.state === 'countdown' && room.match !== undefined) conn.send(room.match.startMsg(i, Math.max(0, room.match.startAt - deps.now())));
+      else if ((room.state === 'running' || room.state === 'ended') && room.match !== undefined) {
+        // start -> catchup(0..next, last done) -> pause.state (if paused) -> stored end, all synchronous.
+        // Hold bookkeeping first (broadcast skips this conn), so the snapshot attach sends is already post-reconnect.
         if (room.state === 'running') deps.onSeatReconnect?.(room, i, conn);
+        attachMidMatch(room, conn, i, room.state === 'running');
       }
     },
     /** Heartbeat silence: treat as a disconnect now (the socket close may lag on a dead TCP link). */

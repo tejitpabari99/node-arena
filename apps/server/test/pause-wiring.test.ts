@@ -52,7 +52,7 @@ function setup() {
     randomInt: () => (n++ % 31),
     onStart: (r, m) => { starts.push(m); ctl.onStart(r, m); },
     onMatchMessage: ctl.onMessage, onCatchUp: ctl.catchUp,
-    onStartCancel: ctl.cancel, onSeatDisconnect: ctl.onSeatDisconnect, onSeatReconnect: ctl.onSeatReconnect, pauseStateOf: ctl.pauseState, hasPendingDeadline: ctl.hasPendingDeadline,
+    onStartCancel: ctl.cancel, onSeatDisconnect: ctl.onSeatDisconnect, onSeatReconnect: ctl.onSeatReconnect, pauseStateOf: ctl.pauseState, endOf: ctl.endOf, hasPendingDeadline: ctl.hasPendingDeadline,
     timers: { setTimeout: (fn, ms) => (ms === 60_000 ? 0 : fakeTimers.setTimeout(fn, ms)), clearTimeout: fakeTimers.clearTimeout }, // 60 s = gc sweep: ignored
   });
   const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', timers: { setTimeout: () => 0, clearTimeout: () => {} } });
@@ -398,4 +398,93 @@ test('AC9: heartbeat timeout during countdown cancels', () => {
   t.mgr.onHeartbeatTimeout!(room.seats[1]!.occupant!.conn);
   assert.equal(room.state, 'lobby');
   assert.equal(r.a.of('start.cancel').length, 1);
+});
+
+// ---- Task 9: minimum reconnect (token reclaim + full catch-up) ----
+const converge = async (r: ReturnType<typeof startRunning>, sock: ReturnType<typeof fakeSocket>) => {
+  const { createCatchup, createJoinLate } = await import('@node-arena/net');
+  const jl = createJoinLate(createCatchup(r.match.level, r.match.seed, { teams: r.match.teams }));
+  for (const m of sock.sent) jl.push(m);
+  jl.run(1e9, () => 0);
+  return jl;
+};
+
+test('AC3: reconnect mid-pause -> start, catchup(0..frozen), pause.state; converges to frozen hash; resume in allowance; budget not refreshed', async () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.a.say({ t: 'cmd', c: { type: 'DrawLine', from: 0, to: 1 } });
+  t.advance(500);
+  r.a.drop(); // disconnect hold on seat 0
+  const frozen = r.next();
+  const h = r.hash();
+  const b0 = r.b.of('pause.state').at(-1)!.budgets[0]!;
+  t.advance(20_000);
+  const used = r.b.of('pause.state').at(-1)!;
+  const a2 = t.client('A', 1);
+  const types = a2.sent.map((m) => m.t);
+  const iStart = types.indexOf('start');
+  assert.ok(iStart > 0 && types[iStart - 1] === 'lobby.state');
+  assert.deepEqual(types.slice(iStart).filter((x, i, arr) => x !== arr[i - 1] || x !== 'catchup'), ['start', 'catchup', 'pause.state']);
+  const cu = a2.of('catchup');
+  assert.equal(cu[0]!.from, 0);
+  assert.equal(cu.at(-1)!.to, frozen);
+  assert.equal(cu.at(-1)!.done, true);
+  const snap = a2.of('pause.state').at(-1)!;
+  assert.equal(snap.paused, true);
+  assert.equal(snap.tick, frozen);
+  assert.equal(r.hash(), h);
+  const jl = await converge(r, a2);
+  assert.equal(jl.catchup.sim.view.tick, frozen);
+  assert.equal(jl.catchup.sim.hash(), h);
+  // reconnect did not refresh the budget nor extend the deadline
+  assert.equal(snap.holds[0]!.connected, true);
+  assert.ok(snap.budgets[0]! <= b0, 'budget not refreshed');
+  assert.ok(snap.budgets[0]! <= used.budgets[0]!, 'reconnect keeps consumed budget');
+  a2.say({ t: 'resume', epoch: snap.epoch });
+  assert.equal(a2.of('pause.state').at(-1)!.paused, false);
+  t.advance(500);
+  assert.equal(r.next(), frozen + 10);
+  assert.equal(r.hash(), replayHash(t, r));
+});
+
+test('AC3: reconnect during live play converges; stale old conn cannot act', async () => {
+  const t = setup();
+  const r = startRunning(t);
+  const old = r.room.seats[0]!.occupant!.conn;
+  const a2 = t.client('A', 1); // superseding socket, no drop
+  assert.ok(a2.of('catchup').length >= 1);
+  t.advance(1000);
+  const sentOld = r.a.sent.length;
+  r.a.say({ t: 'cmd', c: { type: 'DrawLine', from: 0, to: 1 } });
+  r.a.say({ t: 'pause' });
+  assert.equal(old.closed, true);
+  assert.equal(r.room.seats[0]!.occupant!.conn === old, false);
+  assert.equal(r.a.sent.length, sentOld + 0, 'old conn got nothing back');
+  assert.equal(r.room.state, 'running');
+  assert.equal(t.ctl.pauseState(r.room)!.paused, false);
+  const jl = await converge(r, a2);
+  jl.run(1e9, () => 0);
+  assert.equal(jl.live, true);
+  const cuTo = a2.of('catchup').at(-1)!.to;
+  const live = a2.of('tick').map((x) => x.n);
+  assert.equal(live[0], cuTo, 'live ticks start exactly where catch-up ended');
+});
+
+test('AC8: reconnect after end gets start, full catchup, then the identical stored end', async () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.a.say({ t: 'quit' });
+  assert.equal(r.room.state, 'ended');
+  const end = r.b.of('end')[0]!;
+  const a2 = t.client('A', 1);
+  const types = a2.sent.map((m) => m.t);
+  const iStart = types.indexOf('start');
+  assert.equal(types.at(-1), 'end');
+  assert.ok(types.indexOf('catchup') > iStart);
+  assert.deepEqual(a2.of('end')[0], end);
+  assert.equal(a2.of('catchup').at(-1)!.to, r.next());
+  assert.equal(a2.of('pause.state').length, 0);
+  const jl = await converge(r, a2);
+  assert.equal(jl.catchup.sim.hash(), r.hash());
+  assert.equal(r.hash(), replayHash(t, r));
 });
