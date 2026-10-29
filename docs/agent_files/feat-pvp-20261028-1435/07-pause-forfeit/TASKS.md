@@ -20,7 +20,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/07-pause-forfeit/PRD.md
 | 10 | [M2] Web pause state, freeze stepping, app ping | 3, SP05#13 | done |
 | 11 | [M2] Web pause/resume/quit-confirm UI + start.cancel | 8, 10 | done |
 | 12 | [M2] Web reconnect: runtime recreation + auto-resume | 9, 10 | done |
-| 13 | [M2] Two-browser e2e + docs + deployed-heartbeat runbook | 11, 12, SP06#3, SP06#15 | todo |
+| 13 | [M2] Two-browser e2e + docs + deployed-heartbeat runbook | 11, 12, SP06#3, SP06#15 | done |
 
 ## Task 1 - [M2] Rules: R-FFT area + RULES_VERSION 3.2.0
 What it is / what it means: Mechanics-first step (AGENTS.md order; PRD Design (c) Rules/Versions, P9, D8, D12).
