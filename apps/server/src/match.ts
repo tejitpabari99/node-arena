@@ -13,6 +13,8 @@ export interface MatchDeps {
   clock: Pick<Clock, 'add' | 'remove'>;
   now: () => number;
   log?: Logger;
+  /** Called after an aborted room has notified its players; frees the room and its players. */
+  onAbort?: (room: Room) => void;
   /** Test seam: bot commands for this tick (empty in M1). */
   botCommands?: (match: MatchStart) => readonly import('@node-arena/defs').Command[];
 }
@@ -62,6 +64,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
         c.sendError('internal');
         c.send({ t: 'room.closed', reason: 'internal' });
       }
+      deps.onAbort?.(room);
     };
 
     const tick = (): void => {

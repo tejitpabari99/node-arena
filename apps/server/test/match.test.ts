@@ -36,7 +36,7 @@ function setup(opts: { maxRooms?: number } = {}) {
   const logs: Array<{ level: string; ev: string; f?: Record<string, unknown> }> = [];
   const mk = (level: string) => (ev: string, f?: Record<string, unknown>) => void logs.push({ level, ev, ...(f ? { f } : {}) });
   const log = { log: () => {}, debug: mk('debug'), info: mk('info'), warn: mk('warn'), error: mk('error') };
-  const ctl = createMatchController({ clock, now: () => now, log });
+  const ctl = createMatchController({ clock, now: () => now, log, onAbort: (r) => mgr.drop(r) });
   const starts: MatchStart[] = [];
   let n = 0;
   const mgr = createRoomManager({
@@ -126,16 +126,46 @@ test('throwing room is isolated: error internal + room.closed; other room contin
   const { room, tickAll, added, mgr, ctl } = setup();
   const r1 = room(), r2 = room();
   assert.equal(added.size, 2);
-  (ctl.simOf(mgr.room(r1.match.code)!)! as { step: unknown }).step = () => { throw new Error('boom'); };
+  const r1room = mgr.room(r1.match.code)!;
+  (ctl.simOf(r1room)! as { step: unknown }).step = () => { throw new Error('boom'); };
   tickAll();
   assert.equal(r1.a.of('error').at(-1)!.code, 'internal');
   assert.equal(r1.a.of('room.closed')[0]!.reason, 'internal');
   assert.equal(r1.b.of('room.closed').length, 1);
-  assert.equal(mgr.room(r1.match.code)!.state, 'closed');
+  assert.equal(r1room.state, 'closed');
+  assert.equal(mgr.room(r1.match.code), undefined);
+  assert.equal(mgr.roomCount(), 1);
   assert.equal(added.size, 1);
   tickAll();
   assert.equal(r2.a.of('tick').length, 2);
   assert.equal(r2.a.of('room.closed').length, 0);
+});
+
+test('aborted room is dropped: players can create again, reconnect has no replay, leave tolerated', () => {
+  const { room, tickAll, mgr, ctl } = setup();
+  const r = room();
+  (ctl.simOf(mgr.room(r.match.code)!)! as { step: unknown }).step = () => { throw new Error('boom'); };
+  tickAll();
+  assert.equal(mgr.roomCount(), 0);
+  r.a.say({ t: 'room.leave' });
+  assert.equal(r.a.of('error').filter((m) => m.code === 'bad-lobby').length, 0);
+  r.a.say({ t: 'room.create' });
+  r.b.say({ t: 'room.create' });
+  assert.equal(r.a.of('error').filter((m) => m.code === 'bad-lobby').length, 0);
+  assert.equal(r.b.of('error').filter((m) => m.code === 'bad-lobby').length, 0);
+  assert.equal(r.a.of('room.joined').length, 2);
+  assert.equal(r.b.of('room.joined').length, 2);
+  assert.equal(mgr.roomCount(), 2);
+});
+
+test('aborted room: reconnect with same token gets no replay', () => {
+  const { room, tickAll, mgr, ctl, client } = setup();
+  const r = room();
+  (ctl.simOf(mgr.room(r.match.code)!)! as { step: unknown }).step = () => { throw new Error('boom'); };
+  tickAll();
+  const again = client('A', 1);
+  assert.equal(again.of('room.joined').length, 0);
+  assert.equal(again.of('lobby.state').length, 0);
 });
 
 test('rejected cmd replies with error code', () => {

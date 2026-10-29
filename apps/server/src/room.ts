@@ -80,6 +80,8 @@ export interface RoomManager extends HubHandler {
   runningCount(): number;
   /** Drops ended/closed rooms older than the TTL and frees their players. */
   gc(): void;
+  /** Removes a room and frees its players immediately. */
+  drop(room: Room): void;
 }
 
 export function createRoomManager(deps: RoomManagerDeps): RoomManager {
@@ -167,6 +169,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     const room = byPlayer.get(conn.playerId ?? '');
     if (room === undefined) return;
     // Countdown/running leave handling belongs to the disconnect FSM (M2); lobby and ended only here.
+    if (room.state === 'closed') { drop(room); return; }
     if (room.state !== 'lobby' && room.state !== 'ended') return;
     const i = seatOf(room, conn);
     if (i >= 0) { delete room.seats[i]!.occupant; }
@@ -275,6 +278,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
 
   return {
     gc,
+    drop,
     resume(conn) {
       const room = byPlayer.get(conn.playerId ?? '');
       if (room === undefined) return undefined;

@@ -64,7 +64,7 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
     now, setTimeout: (fn, ms) => setTimeout(fn, ms), clearTimeout: (h) => clearTimeout(h as never),
     log: (ev, f) => log.warn(ev, f),
   });
-  const match = createMatchController({ clock, now, log });
+  const match = createMatchController({ clock, now, log, onAbort: (r) => rooms.drop(r) });
   const rooms = createRoomManager({
     content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, log,
     onStart: match.onStart, onMatchMessage: match.onMessage,
