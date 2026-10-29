@@ -127,6 +127,8 @@ describe('PvpController match lifecycle', () => {
     const f = fake();
     const timers: Array<{ fn: () => void; ms: number; id: number; live: boolean }> = [];
     const simArgs: unknown[] = [];
+    const rafs: Array<(t: number) => void> = [];
+    const runRaf = () => { const q = rafs.splice(0); q.forEach((cb) => cb(0)); };
     const view = { tick: 0, over: null as unknown };
     const sim = { view, step: () => { view.tick++; if (view.tick === 3) view.over = { outcome: 'victory', winners: [0], winner: 0 }; return []; }, hash: () => `h${view.tick}` };
     const rt = { frame: 0, ticks: 0, disposed: 0, ctx: null as unknown, cancel: () => false, tick() { rt.ticks++; }, frame_: 0 };
@@ -135,13 +137,13 @@ describe('PvpController match lifecycle', () => {
       identity: createIdentity({ local: null, session: null }), serverUrl: 'ws://x', versions, createSocket: () => { throw new Error('no'); },
       createConnection: () => f.c, getLevel: () => level, manifest: () => ({}) as never,
       createSim: (_l, seed, setup) => { simArgs.push(seed, setup); return sim as never; },
-      createRuntime: (ctx) => { rt.ctx = ctx; return runtime; }, raf: () => 0, caf: () => {}, now: () => 0,
+      createRuntime: (ctx) => { rt.ctx = ctx; return runtime; }, raf: (cb) => { rafs.push(cb); return rafs.length; }, caf: (id) => { rafs[id - 1] = () => {}; }, now: () => 0,
       setTimer: (fn, ms) => { const t = { fn, ms, id: timers.length, live: true }; timers.push(t); return t.id; }, clearTimer: (id) => { timers[id as number]!.live = false; },
     });
     ctl.open(); ctl.create(); f.c.push(welcome); f.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
     const tickMsg = (n: number): ServerMessage => ({ t: 'tick', n });
     const endMsg = (finalTick: number): ServerMessage => ({ t: 'end', outcome: { outcome: 'victory', winners: [0], winner: 0 }, finalTick, finalHash: 'x' });
-    return { ...f, ctl, timers, simArgs, view, rt, tickMsg, endMsg };
+    return { ...f, ctl, timers, simArgs, view, rt, runRaf, tickMsg, endMsg };
   }
   const flush = () => new Promise((r) => setTimeout(r, 0));
 
@@ -156,6 +158,38 @@ describe('PvpController match lifecycle', () => {
     g.c.push(g.tickMsg(2)); g.ctl.driver!.advance();
     expect(g.ctl.snapshot().screen).toBe('result');
     expect(g.timers.every((t) => !t.live)).toBe(true);
+  });
+  it('renders every rAF while playing and stops after leave', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    const base = g.rt.frame; // initial paint
+    g.runRaf(); g.runRaf(); g.runRaf();
+    expect(g.rt.frame).toBe(base + 3);
+    g.ctl.leave(); g.runRaf(); g.runRaf();
+    expect(g.rt.frame).toBe(base + 3);
+  });
+  it('stale driver frames after a new start do not render', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    const stale = g.ctl.driver!; g.c.push(startMsg({ matchId: 'm2' })); await flush();
+    const before = g.rt.frame;
+    (stale as unknown as { o: { onFrame: (u: unknown) => void } }).o.onFrame({});
+    expect(g.rt.frame).toBe(before);
+  });
+  it('tick gap surfaces sync-lost once (event + error)', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    const got: unknown[] = []; g.ctl.subscribePvpEvents((e) => got.push(e));
+    const warn = console.warn; console.warn = () => {};
+    try { g.c.push(g.tickMsg(0)); g.c.push(g.tickMsg(5)); g.c.push(g.tickMsg(6)); } finally { console.warn = warn; }
+    expect(got).toEqual([{ t: 'sync-lost' }]);
+    expect(g.ctl.snapshot().error).toBe('Out of sync. Leave and rejoin.');
+  });
+  it('re-sent start with same matchId keeps the running match; new matchId rebuilds', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    const d = g.ctl.driver; g.c.push(g.tickMsg(0)); g.ctl.driver!.advance();
+    g.c.push(startMsg()); await flush();
+    expect(g.ctl.driver).toBe(d); expect(g.simArgs.length).toBe(2); expect(g.view.tick).toBe(1);
+    g.c.push(g.tickMsg(1)); expect(g.ctl.snapshot().error).toBeNull();
+    g.c.push(startMsg({ matchId: 'm2' })); await flush();
+    expect(g.ctl.driver).not.toBe(d); expect(g.simArgs.length).toBe(4);
   });
   it('result screen Leave returns to the PvP menu', async () => {
     const g = game(); g.c.push(startMsg()); await flush();

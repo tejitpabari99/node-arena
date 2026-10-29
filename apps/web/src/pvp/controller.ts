@@ -90,7 +90,8 @@ export const RESULT_FALLBACK_MS = 3000;
 export const SIM_MISMATCH_STRING = 'Game content differs from the server. Reload to update.';
 
 /** Non-snapshot notifications for the UI layer. */
-export type PvpEvent = { t: 'desync'; tick: number; serverHash: string; localTick: number; localHash: string };
+export type PvpEvent = { t: 'desync'; tick: number; serverHash: string; localTick: number; localHash: string } | { t: 'sync-lost' };
+export const SYNC_LOST_STRING = 'Out of sync. Leave and rejoin.';
 
 type Pending = { t: 'room.create' } | { t: 'room.join'; code: string; role: PvpRole };
 
@@ -102,7 +103,7 @@ export function createPvpController(options: PvpOptions) {
   let pending: Pending | null = null, welcomed = false, disposed = false;
   const publish = (patch: Partial<PvpSnapshot> = {}) => { if (disposed) return; state = { ...state, ...patch }; listeners.forEach((fn) => fn()); };
   // Match resources, generation-scoped (mirrors AppController.startLevel).
-  let generation = 0, driver: NetDriver | null = null, runtime: LevelRuntime | undefined, matchManifest: ManifestV2 | undefined, fallbackTimer: unknown = null, compiledCache: ReturnType<typeof loadContent> | undefined;
+  let generation = 0, driver: NetDriver | null = null, runtime: LevelRuntime | undefined, matchManifest: ManifestV2 | undefined, fallbackTimer: unknown = null, syncLost = false, compiledCache: ReturnType<typeof loadContent> | undefined;
   const setTimer = options.setTimer ?? ((fn, ms) => setTimeout(fn, ms)), clearTimer = options.clearTimer ?? ((id) => clearTimeout(id as ReturnType<typeof setTimeout>));
   const clearMatch = () => {
     ++generation;
@@ -136,6 +137,7 @@ export function createPvpController(options: PvpOptions) {
   };
   const startMatch = async (m: StartMsg) => {
     clearMatch();
+    syncLost = false;
     const gen = generation;
     const level = getLevel(m.levelId);
     if (!level || level.simHash.slice(0, 16) !== m.simHash) {
@@ -161,7 +163,16 @@ export function createPvpController(options: PvpOptions) {
           if (state.screen === 'countdown') publish({ screen: 'playing' });
           checkResult();
         },
-        onPushError: (result) => console.warn('[pvp] tick stream error', result),
+        onFrame: (update) => { if (gen === generation) try { runtime?.frame(update); } catch (err) { console.error('[pvp] frame failed', err); } },
+        onPushError: (result) => {
+          if (gen !== generation) return;
+          console.warn('[pvp] tick stream error', result);
+          // M1 has no server catch-up: the stream is dead after a gap. Tell the user (once per match).
+          if (syncLost) return;
+          syncLost = true;
+          publish({ error: SYNC_LOST_STRING });
+          pvpEvents.forEach((fn) => fn({ t: 'sync-lost' }));
+        },
       };
       owned = (options.createDriver ?? ((o) => new NetDriver(o)))(dopts);
       driver = owned;
@@ -195,6 +206,8 @@ export function createPvpController(options: PvpOptions) {
         break;
       }
       case 'start':
+        // Reconnect re-sends `start`; rebuilding at tick 0 would gap against live ticks. Keep the running match.
+        if (driver && state.start?.matchId === m.matchId) break;
         void startMatch(m);
         break;
       case 'tick': case 'ticks': case 'catchup':

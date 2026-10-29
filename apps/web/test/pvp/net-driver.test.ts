@@ -24,6 +24,18 @@ function setup() {
   return { d, sim, view, stepped, sent, client, tickMsg, setT: (x: number) => { t = x; }, frames };
 }
 
+describe('NetDriver onFrame', () => {
+  it('fires every rAF (even with 0 steps), stops after stop()', () => {
+    const view = { tick: 0, over: false };
+    const sim = { view, step() { view.tick++; return []; }, hash: () => 'h' } as unknown as Sim;
+    const q: (() => void)[] = []; const got: { steps: number; alpha: number }[] = [];
+    const d = new NetDriver({ sim, client: new LockstepClient(0), send: () => {}, now: () => 0, raf: cb => q.push(() => cb(0)), caf: () => {}, onFrame: u => got.push({ steps: u.steps, alpha: u.alpha }) });
+    d.start(); q.shift()!(); d.push({ t: 'tick', n: 0 } as never); q.shift()!();
+    expect(got.map(g => g.steps)).toEqual([0, 1]);
+    d.stop(); q.length = 0; expect(q.length).toBe(0);
+  });
+});
+
 describe('NetDriver', () => {
   it('steps only on pushed ticks', () => {
     const s = setup();

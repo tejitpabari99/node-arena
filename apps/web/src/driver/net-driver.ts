@@ -1,7 +1,7 @@
 import type { ClientMessage, HashMsg, LockstepClient, PushResult, ServerMessage, WireCommand } from '@node-arena/net';
 import type { Command, Sim, SimEvent } from '@node-arena/sim';
 import { ownership } from '../ui/ownership';
-import { STEP_MS, type MatchDriver, type TickUpdate } from './index';
+import { STEP_MS, type FrameUpdate, type MatchDriver, type TickUpdate } from './index';
 
 export const LIVE_MAX_STEPS = 2;
 export const CATCHUP_THRESHOLD = 6;
@@ -17,6 +17,8 @@ export interface NetDriverOptions {
   raf?: (cb: (t: number) => void) => number;
   caf?: (id: number) => void;
   onTick?: (update: TickUpdate) => void;
+  /** Every rAF after stepping (also with 0 steps), for rendering. */
+  onFrame?: (update: FrameUpdate) => void;
   /** Called when the client rejects a pushed message (gap/duplicate/bad-range): controller should resync. */
   onPushError?: (result: Extract<PushResult, { ok: false }>, msg: ServerMessage) => void;
 }
@@ -120,7 +122,8 @@ export class NetDriver implements MatchDriver {
     if (!this.running || this.disposed) return;
     this.frameId = this.raf(() => {
       this.frameId = null;
-      this.advance();
+      const steps = this.advance();
+      this.o.onFrame?.({ sim: this.o.sim, alpha: this.alpha, steps, paused: false });
       this.schedule();
     });
   }
