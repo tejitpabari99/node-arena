@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { PROTOCOL_VERSION, type ServerMessage } from '@node-arena/net';
+import type { Command } from '@node-arena/defs';
+import { create } from '@node-arena/sim';
+import { PROTOCOL_VERSION, SYSTEM_CMD_RESERVE, type ServerMessage } from '@node-arena/net';
 import type { ClockRoom } from '../src/clock.js';
 import { DEFAULT_CONTENT_DIR } from '../src/config.js';
 import { loadServerContent } from '../src/content.js';
@@ -195,4 +197,102 @@ test('heartbeat timeout opens a disconnect hold', () => {
   const s = r.b.of('pause.state').at(-1)!;
   assert.deepEqual(s.holds.map((h) => [h.player, h.reason, h.connected]), [[0, 'disconnect', false]]);
   assert.equal(t.rooms.size, 0);
+});
+
+// ---- SP07 Task 7: forfeit emission, terminal flush, reserve ----
+
+const replayHash = (t: ReturnType<typeof setup>, r: ReturnType<typeof startRunning>): string => {
+  const ls = t.ctl.inspect(r.room)!;
+  const sim = create(r.match.level, r.match.seed, { teams: r.match.teams });
+  for (const ch of ls.log.range(0, ls.nextTick)) {
+    const byTick = new Map<number, Command[]>();
+    for (const e of ch.cmds) byTick.set(e.tick, [...(byTick.get(e.tick) ?? []), e.cmd]);
+    for (let n = ch.from; n < ch.to; n++) sim.step(byTick.get(n) ?? [], { events: false });
+  }
+  return sim.hash();
+};
+
+test('AC4: quit -> opponent victory exactly once, frozen-tick Forfeit, final pause.state before end, late input no-op, hash == replay', () => {
+  const t = setup();
+  const r = startRunning(t);
+  const frozen = r.next();
+  r.a.say({ t: 'quit' });
+  assert.equal(r.room.state, 'ended');
+  assert.equal(r.next(), frozen + 1, 'closed exactly the frozen tick');
+  const ticks = r.b.of('tick');
+  assert.deepEqual(ticks.at(-1)!.c, [{ type: 'Forfeit', player: 0 }]);
+  assert.equal(r.b.of('end').length, 1);
+  assert.equal(r.a.of('end').length, 1);
+  const e = r.b.of('end')[0]!;
+  assert.equal(e.outcome.outcome, 'victory');
+  const idx = r.b.sent.findIndex((m) => m.t === 'end');
+  const last = r.b.sent.slice(0, idx).filter((m) => m.t === 'pause.state').at(-1)!;
+  assert.equal((last as { paused: boolean }).paused, false);
+  assert.equal(t.rooms.size, 0);
+  const sentA = r.a.sent.length, sentB = r.b.sent.length, next = r.next();
+  r.a.say({ t: 'quit' }); r.b.say({ t: 'resume', epoch: 0 }); r.b.say({ t: 'pause' }); r.b.say({ t: 'cmd', c: { type: 'DrawLine', from: 1, to: 0 } });
+  r.a.drop();
+  t.advance(2000);
+  assert.equal(r.a.sent.length, sentA); assert.equal(r.b.sent.length, sentB);
+  assert.equal(r.next(), next);
+  assert.equal(r.b.of('end').length, 1);
+  assert.equal(r.hash(), replayHash(t, r));
+});
+
+test('AC4/AC13: quit while paused with other hold -> terminal immediately, holds cleared, log unchanged afterwards', () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.b.say({ t: 'pause' });
+  const frozen = r.next();
+  r.a.say({ t: 'quit' });
+  assert.equal(r.room.state, 'ended');
+  assert.equal(r.next(), frozen + 1);
+  assert.equal(r.b.of('pause.state').at(-1)!.paused, false);
+  assert.equal(r.b.of('end').length, 1);
+  const size = t.ctl.inspect(r.room)!.log.size;
+  t.advance(60_000);
+  r.b.say({ t: 'resume', epoch: 99 });
+  assert.equal(t.ctl.inspect(r.room)!.log.size, size);
+  assert.equal(r.hash(), replayHash(t, r));
+});
+
+test('AC5: pause budget expiry forfeits the holder at the frozen tick; opponent wins; no timers left', () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.a.say({ t: 'pause' });
+  const frozen = r.next();
+  t.advance(29_900);
+  assert.equal(r.room.state, 'running');
+  t.advance(200);
+  assert.equal(r.room.state, 'ended');
+  assert.equal(r.next(), frozen + 1);
+  assert.deepEqual(r.b.of('tick').at(-1)!.c, [{ type: 'Forfeit', player: 0 }]);
+  assert.equal(r.b.of('end').length, 1);
+  assert.equal(r.hash(), replayHash(t, r));
+});
+
+test('AC5: both humans away -> draw (Forfeit for all surviving seats ascending in one tick)', () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.a.drop();
+  t.advance(1000);
+  r.b.drop();
+  const frozen = r.next();
+  t.advance(31_000);
+  assert.equal(r.room.state, 'ended');
+  assert.equal(r.next(), frozen + 1);
+  const c = t.ctl.inspect(r.room)!.log.range(frozen, frozen + 1)[0]!.cmds.map((e) => e.cmd);
+  assert.deepEqual(c, [{ type: 'Forfeit', player: 0 }, { type: 'Forfeit', player: 1 }]);
+  assert.equal(r.hash(), replayHash(t, r));
+});
+
+test('AC14: log saturated to cap-reserve still forfeits (system reserve)', () => {
+  const t = setup();
+  const r = startRunning(t);
+  const ls = t.ctl.inspect(r.room)!;
+  const tick = ls.nextTick;
+  while (ls.log.size < ls.log.cmdCap - SYSTEM_CMD_RESERVE) ls.log.append(tick, { type: 'DrawLine', player: 1, from: 0, to: 1 } as never);
+  r.a.say({ t: 'quit' });
+  assert.equal(r.room.state, 'ended', 'forfeit appended despite saturation');
+  assert.equal(r.b.of('end').length, 1);
 });

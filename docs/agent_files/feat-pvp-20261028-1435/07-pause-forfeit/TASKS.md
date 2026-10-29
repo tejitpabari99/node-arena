@@ -14,7 +14,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/07-pause-forfeit/PRD.md
 | 4 | [M2] Server heartbeat (ws ping + app ping) | 3 | done |
 | 5 | [M2] Server pause module (holds, budgets, deadlines, epoch) | 3 | done |
 | 6 | [M2] Server pause/resume/quit wiring + clock rebase | 4, 5 | done |
-| 7 | [M2] Server forfeit emission, terminal flush, cmd reserve, retention | 6, SP04#14 | todo |
+| 7 | [M2] Server forfeit emission, terminal flush, cmd reserve, retention | 6, SP04#14 | done |
 | 8 | [M2] Lobby seat reserve + countdown cancel unwind | 6, SP04#11, SP04#14 | todo |
 | 9 | [M2] Server minimum reconnect (reclaim + full catch-up) | 7, SP04#13, SP02#10 | todo |
 | 10 | [M2] Web pause state, freeze stepping, app ping | 3, SP05#13 | todo |
