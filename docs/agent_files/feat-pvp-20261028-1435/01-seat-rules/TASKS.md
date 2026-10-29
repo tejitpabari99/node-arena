@@ -19,7 +19,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/01-seat-rules/PRD.md. R
 | 9 | [M1] bots harness teams + scripted match suite | 3, 5, 6, 8 | done |
 | 10 | [M1] Refresh goldens/locks + gate sweep | 9 | done |
 | 11 | [M2] sim: placement ranking | 8, 9 | done |
-| 12 | [M2] bots: ally filter in tw-ai | 4, 9 | todo |
+| 12 | [M2] bots: ally filter in tw-ai | 4, 9 | done |
 
 ## Task 1 — [M1] Rules doc + RULES_VERSION 3.1.0
 What it is / what it means: Rule text is the contract that precedes tests and code (D4, R11).
