@@ -5,7 +5,7 @@ date: 2026-10-28
 ---
 # Online PvP: PRD index
 
-M1 agent implementation and local validation complete; owner two-tab play-test/approval and final hosted validation pending. [Final implementation and validation summary](code-2026-10-29-0300.md).
+M1 agent implementation, local validation and hosted CI complete on `bddbf928ade3cc8d7505ac065fc230c7b927b6ea`; owner two-tab play-test/approval pending. [Final implementation and validation summary](code-2026-10-29-0300.md).
 
 Live private-room PvP (2-4 seats, teams, bots, spectators) via deterministic lockstep + server referee sim on Fly.io. Full rationale, verified facts and decision log: [brainstorm.md](brainstorm.md). Milestones: M1 = 2-tab local 1v1 owner play-test; M2 = full lobby/teams/bots/spectators/rematch/maps/Fly deploy (minimal play-link startup included in M1); M3 = reconnect hardening, desync resync, load test.
 
