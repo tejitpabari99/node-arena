@@ -14,7 +14,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M
 | 4 | [M1] CI: ci.sh checklist + `pvp-e2e` job | 3, SP02#1, SP04#1 | done |
 | 5 | [M1] Doc stubs + M1 play-test runbook | 1, 4 | done |
 | 6 | [M2] `deploy-server.yml` (Fly deploy + versions smoke) | SP04#17 | done |
-| 7 | [M2] `deploy.yml` ordering: changes -> server -> web | 6 | todo |
+| 7 | [M2] `deploy.yml` ordering: changes -> server -> web | 6 | done |
 | 8 | [M2] `VITE_PVP_SERVER_URL` in deploy + preview builds | 7 | todo |
 | 9 | [M2] `ALLOWED_ORIGINS` in fly.toml | SP04#17 | done |
 | 10 | [M2] `docker` CI job | SP04#17, 4 | done |

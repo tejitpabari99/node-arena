@@ -1,6 +1,8 @@
 name: Deploy
 # Production build to Firebase Hosting (node-arena-99) on every push to main.
-# Needs repo secret FIREBASE_SERVICE_ACCOUNT (service account JSON key).
+# Needs repo secrets FIREBASE_SERVICE_ACCOUNT (service account JSON key) and FLY_API_TOKEN.
+# Order: changes -> server (Fly, only when server-affecting paths changed) -> web,
+# so a new web build never goes live against an older server.
 on:
   push:
     branches: [main]
@@ -11,7 +13,37 @@ concurrency:
 permissions:
   contents: read
 jobs:
-  deploy:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      server: ${{ steps.diff.outputs.server }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            server=true
+          else
+            server=$(node scripts/server-changed.mjs "$BEFORE" "$AFTER")
+          fi
+          echo "server=$server" >> "$GITHUB_OUTPUT"
+          echo "server changed: $server"
+  server:
+    needs: changes
+    if: needs.changes.outputs.server == 'true'
+    uses: ./.github/workflows/deploy-server.yml
+    secrets:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  web:
+    needs: [changes, server]
+    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.server.result == 'success' || needs.server.result == 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
