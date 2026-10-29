@@ -5,7 +5,7 @@ date: 2026-10-28
 ---
 # Online PvP: PRD index
 
-Live private-room PvP (2-4 seats, teams, bots, spectators) via deterministic lockstep + server referee sim on Fly.io. Full rationale, verified facts and decision log: [brainstorm.md](brainstorm.md). Milestones: M1 = 2-tab local 1v1 owner play-test; M2 = lobby/teams/bots/spectators/rematch/maps/Fly deploy; M3 = reconnect hardening, desync resync, load test.
+Live private-room PvP (2-4 seats, teams, bots, spectators) via deterministic lockstep + server referee sim on Fly.io. Full rationale, verified facts and decision log: [brainstorm.md](brainstorm.md). Milestones: M1 = 2-tab local 1v1 owner play-test; M2 = full lobby/teams/bots/spectators/rematch/maps/Fly deploy (minimal play-link startup included in M1); M3 = reconnect hardening, desync resync, load test.
 
 ## Sub-projects
 | NN | Title | Phase | Depends on | M1 / M2 / M3 | PRD |
@@ -70,12 +70,10 @@ graph LR
 | Perf of `hostile()` in contact loops | 01 | Identity fast path; `bench:sim` gate |
 
 ## Owner-only manual steps
-1. Create Fly account + billing; `fly auth login`.
-2. Create Fly app `node-arena-server` (`fly apps create node-arena-server`; `fly scale count 1`); confirm name/region (`ewr`).
-3. Create app-scoped deploy token (`fly tokens create deploy -a node-arena-server`) and add as GitHub secret `FLY_API_TOKEN`.
-4. Add GitHub repo variable `PVP_SERVER_URL=wss://node-arena-server.fly.dev`.
-5. Run first server deploy; confirm `/healthz`.
-6. Play-tests: M1 (Duel S, two tabs), later prod with a friend; map tuning decisions; final approval.
+- Fly setup: owner-reported complete (account/billing/login, app creation and setup tasks, including deploy-token/repository configuration). Secret values were not inspected or verified. The owner reports the Fly dashboard has no deployment yet.
+- First deployment and `/healthz` confirmation remain pending M2; Dockerfile, Fly configuration, deploy workflows and production wiring are not part of M1 docs.
+- M1 human play-test: pending owner action and approval. Follow [the root README](../../../README.md#play-online-pvp) using a genuinely fresh second tab and the lobby room code. Minimal play-link startup is M1; full lobby/watch remain M2.
+- Later production play-test with a friend, map tuning and final approval remain pending. Rendering smoothing is deferred until owner play-test feedback.
 
 ## Version bumps and sequencing
 | Constant | Change | Owner | Notes |

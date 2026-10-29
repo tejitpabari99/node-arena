@@ -12,7 +12,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M
 | 2 | [M1] PvP e2e harness (config, build:test:pvp, script) | 1, SP05#10 | done |
 | 3 | [M1] Scripted-attack helper + Duel S 1v1 spec | 2, SP03#2, SP04#8 | done |
 | 4 | [M1] CI: ci.sh checklist + `pvp-e2e` job | 3, SP02#1, SP04#1 | done |
-| 5 | [M1] Doc stubs + M1 play-test runbook | 1, 4 | todo |
+| 5 | [M1] Doc stubs + M1 play-test runbook | 1, 4 | done |
 | 6 | [M2] `deploy-server.yml` (Fly deploy + versions smoke) | SP04#17 | todo |
 | 7 | [M2] `deploy.yml` ordering: changes -> server -> web | 6 | todo |
 | 8 | [M2] `VITE_PVP_SERVER_URL` in deploy + preview builds | 7 | todo |
@@ -100,9 +100,7 @@ What changes at a high level: Fly account/app creation, `fly scale count 1`, app
 Done when: steps are copy-pasteable and `check:docs` passes.
 
 ## Manual steps (owner)
-1. Fly account + billing; `fly auth login`.
-2. `fly apps create node-arena-server --org personal`; `fly scale count 1 -a node-arena-server` (if name taken, tell agents to change `fly.toml` + `PVP_SERVER_URL`).
-3. `fly tokens create deploy -a node-arena-server` -> repo secret `FLY_API_TOKEN`.
-4. Repo variable `PVP_SERVER_URL=wss://node-arena-server.fly.dev`.
-5. First deploy via Actions "Run workflow" on `deploy-server.yml`; curl `/healthz`.
-6. M1 two-tab play-test, later prod play-test with a friend.
+- Fly account/app/setup: owner-reported complete, including deploy-token/repository configuration; secret values not verified. Owner reports no Fly deployment yet.
+- Dockerfile, Fly configuration, first deployment/health check and production wiring remain M2.
+- M1 two-tab play-test and approval remain pending owner action; follow the root README with a genuinely fresh second tab. Later production play-test with a friend remains pending.
+- Rendering smoothing awaits owner play-test feedback; minimal play-link startup is M1, full lobby/watch remain M2.

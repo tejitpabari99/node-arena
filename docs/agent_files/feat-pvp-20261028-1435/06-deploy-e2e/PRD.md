@@ -81,14 +81,15 @@ M2 specs reuse the helper: spectator context joins mid-match via `?room=X&watch`
 | D10 | Fly token | App-scoped deploy token in `FLY_API_TOKEN` | Org token | Least privilege |
 
 ## Manual steps
-Owner (runbook `docs/PVP_OPS.md`):
-1. Create Fly account + billing; `fly auth login`.
-2. `fly apps create node-arena-server --org personal` (name is global; if taken, tell agents to change `fly.toml` + `PVP_SERVER_URL`), `fly scale count 1 -a node-arena-server`.
-3. `fly tokens create deploy -a node-arena-server` -> GitHub repo secret `FLY_API_TOKEN`.
-4. GitHub repo variable `PVP_SERVER_URL=wss://node-arena-server.fly.dev` (or custom domain later).
-5. First deploy: run `deploy-server.yml` via Actions "Run workflow" (or `fly deploy -c apps/server/fly.toml`), check `curl https://node-arena-server.fly.dev/healthz`.
-6. M1 play-test (R3) and later prod play-test with a friend; approval at the end.
-Agent-doable after: everything else.
+Owner status (2026-10-29): Fly account/app/setup tasks are owner-reported complete, including deploy-token/repository configuration. Secret values have not been inspected or verified. The owner reports no deployment in the Fly dashboard yet.
+
+Pending:
+1. M2 implementation: Dockerfile, Fly configuration, deploy workflow and production web/server wiring.
+2. First server deployment and `/healthz` verification after M2 wiring exists.
+3. Owner M1 two-tab Duel S play-test per the root README; still pending, not approved. Use a genuinely fresh second tab: duplicated/opener tabs may copy sessionStorage tokens. Saved nickname autojoins; new visitors enter a nickname then Join. Minimal play-link startup is M1; full lobby/watch remain M2.
+4. Later production play-test with a friend and final approval. Rendering smoothing awaits owner play-test feedback.
+
+Full operations runbook remains M2. Agent-doable implementation proceeds within the relevant milestone.
 
 ## Risks / Open Questions
 - R-token: [RESOLVED: orchestrator - SP05 stores the token in per-tab `sessionStorage` (nick in localStorage), so two tabs in one profile act as two players; no separate profile needed for the M1 play-test]
