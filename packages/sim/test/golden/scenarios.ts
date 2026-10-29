@@ -11,6 +11,8 @@ export interface Scenario {
   ticks: number;
   /** `tick` is the sim tick BEFORE the step (the recorder stamp); the command acts in effective tick `tick + 1`. */
   commands: { tick: number; cmd: Command }[];
+  /** pvp only: SeatSetup teams (recorded in the replay header). */
+  teams?: number[];
 }
 
 type Entry = Scenario['commands'][number];

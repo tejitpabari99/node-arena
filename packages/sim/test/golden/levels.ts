@@ -58,3 +58,22 @@ export function buildLevel(id: string, buildings: readonly B[], options: LevelOp
   json.requires = computeRequires(catalog(), json as never);
   return compileLevel(catalog(), loadLevel(catalog(), json).level);
 }
+
+/** pvp golden level: `seats` placeholder `human` seats (2..4), no bots, every building counts. `owner` is the seat index or null. */
+export function buildPvpLevel(id: string, seats: number, buildings: readonly { at: [number, number]; owner: number | null; level: number }[]): CompiledLevel {
+  const xs = buildings.map((b) => b.at[0]), zs = buildings.map((b) => b.at[1]);
+  const colors = ['blue', 'red', 'green', 'yellow'];
+  const json = {
+    $schema: '../../schemas/level.schema.json', schemaVersion: '2.0.0', id, name: id, theme: 'green', objective: 'pvp',
+    bounds: { minX: Math.min(...xs) - 5, maxX: Math.max(...xs) + 5, minZ: Math.min(...zs) - 5, maxZ: Math.max(...zs) + 5 },
+    timeLimitSec: null,
+    players: Array.from({ length: seats }, (_, i) => ({ id: `p${i + 1}`, kind: 'human', colorKey: colors[i]! })),
+    buildings: buildings.map((b, i) => ({
+      id: `b${i}`, archetype: 'house-wt1', pos: { x: b.at[0], z: b.at[1] }, owner: b.owner === null ? null : `p${b.owner + 1}`, level: b.level, ignoreForWin: false,
+    })),
+    elements: [],
+    requires: [] as string[],
+  };
+  json.requires = computeRequires(catalog(), json as never);
+  return compileLevel(catalog(), loadLevel(catalog(), json).level);
+}

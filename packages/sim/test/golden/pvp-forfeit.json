@@ -1,0 +1,517 @@
+{
+  "format": 1,
+  "metadata": {
+    "rulesVersion": "3.2.0",
+    "schemaVersion": "2.0.0",
+    "contentVersion": "2.4.0"
+  },
+  "scenarios": [
+    {
+      "name": "pvp-forfeit",
+      "purpose": "Forfeit: buildings neutral keeping level, lines cancelled, troops die; teammate survives; same-tick forfeit of all remaining teams is a draw.",
+      "fullGame": true,
+      "level": {
+        "id": "golden-pvp-forfeit",
+        "objective": "pvp",
+        "timeLimitSec": 480,
+        "bounds": {
+          "minX": -5000,
+          "maxX": 65000,
+          "minZ": -5000,
+          "maxZ": 35000
+        },
+        "theme": "green",
+        "rules": {
+          "timeLimitSec": 480,
+          "stageThresholds": [
+            10,
+            30
+          ],
+          "aliveCap": 30,
+          "growth": {
+            "base": 900
+          },
+          "contactDistance": 700,
+          "laneHalfWidth": 190
+        },
+        "players": [
+          {
+            "id": "p1",
+            "kind": "human",
+            "colorKey": "blue"
+          },
+          {
+            "id": "p2",
+            "kind": "human",
+            "colorKey": "red"
+          },
+          {
+            "id": "p3",
+            "kind": "human",
+            "colorKey": "green"
+          },
+          {
+            "id": "p4",
+            "kind": "human",
+            "colorKey": "yellow"
+          }
+        ],
+        "units": [
+          {
+            "id": "soldier",
+            "visual": "unit.soldier",
+            "speed": 5000,
+            "hp": 1,
+            "attack": 1,
+            "defense": 1
+          }
+        ],
+        "buildings": [
+          {
+            "id": "b0",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 0,
+            "z": 0,
+            "owner": 0,
+            "level": 30,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b1",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 0,
+            "z": 12000,
+            "owner": 1,
+            "level": 30,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b2",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 60000,
+            "z": 0,
+            "owner": 2,
+            "level": 30,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b3",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 60000,
+            "z": 12000,
+            "owner": 3,
+            "level": 30,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b4",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 30000,
+            "z": 6000,
+            "owner": -1,
+            "level": 5,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          },
+          {
+            "id": "b5",
+            "archetype": "house-wt1",
+            "kind": "house",
+            "x": 30000,
+            "z": 30000,
+            "owner": -1,
+            "level": 5,
+            "ignoreForWin": false,
+            "special": false,
+            "footprint": {
+              "shape": "box",
+              "w": 1500,
+              "d": 1500
+            },
+            "visual": "building.house-wt1",
+            "modules": {
+              "level": {
+                "maxLevel": 64
+              },
+              "drawsLines": {},
+              "spawns": {
+                "troop": "soldier",
+                "spawnSpeed": 500,
+                "lineSpawnPenalty": 300
+              },
+              "grows": {
+                "growTime": 1700
+              }
+            }
+          }
+        ],
+        "elements": [],
+        "bots": [],
+        "requires": [
+          "drawsLines",
+          "grows",
+          "level",
+          "objective:pvp",
+          "spawns"
+        ],
+        "simHash": "68fdc7cc8e4b85423c034738d47927e8a9adb0a6a1ba5f60e9dd5220d4c1cd0a",
+        "botHash": {}
+      },
+      "seed": 20261029,
+      "ticks": 200,
+      "teams": [
+        0,
+        0,
+        1,
+        2
+      ],
+      "commands": [
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 0,
+            "from": 0,
+            "to": 4
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 1,
+            "from": 1,
+            "to": 4
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 2,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "tick": 0,
+          "cmd": {
+            "type": "DrawLine",
+            "player": 3,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "tick": 59,
+          "cmd": {
+            "type": "Forfeit",
+            "player": 0
+          }
+        },
+        {
+          "tick": 99,
+          "cmd": {
+            "type": "Forfeit",
+            "player": 0
+          }
+        },
+        {
+          "tick": 99,
+          "cmd": {
+            "type": "Forfeit",
+            "player": 1
+          }
+        },
+        {
+          "tick": 139,
+          "cmd": {
+            "type": "Forfeit",
+            "player": 3
+          }
+        },
+        {
+          "tick": 139,
+          "cmd": {
+            "type": "Forfeit",
+            "player": 2
+          }
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "name": "pvp-forfeit",
+      "replay": {
+        "header": {
+          "rulesVersion": "3.2.0",
+          "schemaVersion": "2.0.0",
+          "contentVersion": "2.4.0",
+          "levelId": "golden-pvp-forfeit",
+          "simHash": "68fdc7cc8e4b85423c034738d47927e8a9adb0a6a1ba5f60e9dd5220d4c1cd0a",
+          "seed": 20261029,
+          "teams": [
+            0,
+            0,
+            1,
+            2
+          ]
+        },
+        "commands": [
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 0,
+              "from": 0,
+              "to": 4
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 1,
+              "from": 1,
+              "to": 4
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 2,
+              "from": 2,
+              "to": 4
+            }
+          },
+          {
+            "tick": 0,
+            "cmd": {
+              "type": "DrawLine",
+              "player": 3,
+              "from": 3,
+              "to": 5
+            }
+          },
+          {
+            "tick": 59,
+            "cmd": {
+              "type": "Forfeit",
+              "player": 0
+            }
+          },
+          {
+            "tick": 99,
+            "cmd": {
+              "type": "Forfeit",
+              "player": 0
+            }
+          },
+          {
+            "tick": 99,
+            "cmd": {
+              "type": "Forfeit",
+              "player": 1
+            }
+          },
+          {
+            "tick": 139,
+            "cmd": {
+              "type": "Forfeit",
+              "player": 3
+            }
+          },
+          {
+            "tick": 139,
+            "cmd": {
+              "type": "Forfeit",
+              "player": 2
+            }
+          }
+        ],
+        "checkpoints": [
+          {
+            "tick": 20,
+            "hash": "c65013f75be27453"
+          },
+          {
+            "tick": 40,
+            "hash": "3ee9ec04d24fd00f"
+          },
+          {
+            "tick": 60,
+            "hash": "460bd4307d64cf24"
+          },
+          {
+            "tick": 80,
+            "hash": "cf9630525635301f"
+          },
+          {
+            "tick": 100,
+            "hash": "b4e1188ae97cc6aa"
+          },
+          {
+            "tick": 120,
+            "hash": "c967860ff2d801da"
+          },
+          {
+            "tick": 140,
+            "hash": "9622d952b4b3cac4"
+          }
+        ],
+        "finalTick": 140,
+        "finalHash": "9622d952b4b3cac4",
+        "outcome": {
+          "outcome": "draw",
+          "winner": null,
+          "winners": [],
+          "ranking": [
+            {
+              "team": 1,
+              "seats": [
+                2
+              ],
+              "rank": 1,
+              "buildings": 0,
+              "troops": 0,
+              "eliminatedAt": 140
+            },
+            {
+              "team": 2,
+              "seats": [
+                3
+              ],
+              "rank": 1,
+              "buildings": 0,
+              "troops": 0,
+              "eliminatedAt": 140
+            },
+            {
+              "team": 0,
+              "seats": [
+                0,
+                1
+              ],
+              "rank": 3,
+              "buildings": 0,
+              "troops": 0,
+              "eliminatedAt": 100
+            }
+          ]
+        }
+      },
+      "eventLogHash": "6dc2acea913f71a7"
+    }
+  ]
+}
