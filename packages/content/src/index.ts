@@ -16,3 +16,4 @@ export { validateContent, type ValidationResult } from './validate-content.js';
 export { canonicalJson, sha256 } from './hash.js';
 export { RULES_VERSION, generateHashes, parseContentMeta, readBaselineVersion, checkContentVersion, checkRulesVersion, type ReplayHeader, type HashesLock, type ContentBaseline } from './versioning.js';
 export { isCredited } from './credits.js';
+export { listPvpMaps, type PvpMapInfo } from './pvp.js';
