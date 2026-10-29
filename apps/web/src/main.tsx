@@ -29,7 +29,7 @@ async function main(){
   const sync=()=>{const state=app.snapshot(),p=pvp.snapshot().screen,pvpShown=(p==='countdown'||p==='playing'||p==='result')&&!!pvp.driver;arena.hidden=p!=='idle'?!pvpShown:state.screen!=='playing'&&state.screen!=='result'&&!app.driver;};
   const unsubscribe=[app.subscribe(sync),pvp.subscribe(sync)];
   const unmount=mountApp(app,root,undefined,pvp),audio=connectAppAudio(app);
-  if(harness)window.__na=harness.connect(app);
+  if(harness){harness.applyPvp(pvp);window.__na=harness.connect(app,pvp);}
   await app.boot();if(new URLSearchParams(location.search).get('view')==='custom')app.setPickerView('custom');await harness?.autoLoad(app);
   if(import.meta.hot)import.meta.hot.dispose(()=>{window.__na?.dispose();delete window.__na;audio.dispose();unsubscribe.forEach(u=>u());unmount();pvp.dispose();app.dispose();arena.remove();});
 }
