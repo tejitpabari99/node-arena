@@ -8,7 +8,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/07-pause-forfeit/PRD.md
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | [M2] Rules: R-FFT area + RULES_VERSION 3.2.0 | SP01#8 | todo |
+| 1 | [M2] Rules: R-FFT area + RULES_VERSION 3.2.0 | SP01#8 | done |
 | 2 | [M2] defs/sim: `Forfeit` command + forfeit golden | 1, SP01#7 | todo |
 | 3 | [M2] net: protocol v2 messages, validators, `closeTick` system cmds | 2, SP02#3, SP02#6 | todo |
 | 4 | [M2] Server heartbeat (ws ping + app ping) | 3 | todo |

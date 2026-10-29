@@ -1,12 +1,12 @@
 # Node Arena — Game Rules
 
-RULES_VERSION: 3.1.0
+RULES_VERSION: 3.2.0
 
 This is the mechanics contract for Node Arena, motivated by Tower War (APK 1.29.3). It is a full rewrite; there are no profiles and no v1 compatibility. Rules own **structure and formulas**; every tunable number (speeds, coefficients, caps, radii, thresholds) lives in authored content under a named parameter, and rules only name the resolved parameter. The simulation must follow these rules; presentation, bots and tools consume the same mechanics. Tower War defaults appear only in the §7 glossary and in the §5 worked examples.
 
 ## 1. Conventions
 
-**Rule IDs and areas.** Rule IDs have the form `R-<AREA>-<NN>` and are permanent. Areas: `TCK` ticks and determinism, `ENT` entities, `SPN` spawn, `GRW` growth, `LIN` lines, `CAP` level and overflow, `CMB` combat, `CPT` capture, `TWR` towers, `OBS` obstacles, `WIN` outcomes, `SEA` seats, `TEM` teams, `ELM` elimination. Retired areas `GEN` (generation) and `SND` (sending) exist only as tombstones.
+**Rule IDs and areas.** Rule IDs have the form `R-<AREA>-<NN>` and are permanent. Areas: `TCK` ticks and determinism, `ENT` entities, `SPN` spawn, `GRW` growth, `LIN` lines, `CAP` level and overflow, `CMB` combat, `CPT` capture, `TWR` towers, `OBS` obstacles, `WIN` outcomes, `SEA` seats, `TEM` teams, `ELM` elimination, `FFT` forfeit. Retired areas `GEN` (generation) and `SND` (sending) exist only as tombstones.
 
 **Id policy.** A rewritten topic keeps its id and records `Since: 2.0.0` plus `Supersedes:` when v1 text meant something different. A dead topic is tombstoned and its id is never reused or reassigned. Tombstones stay listed under "Retired ids" in §3: GEN-01, GEN-02, SND-01, SND-02, CAP-02. Every active rule needs a test whose title contains `covers R-…` (ownership table in §8). A heading is an active rule unless it is marked tombstone; §6 contains no rule headings until an element ships.
 
@@ -546,7 +546,7 @@ A troop that arrives at a building whose owner is on the troop owner's team rein
 
 ### R-ELM-01
 
-In a `pvp` match a seat is eliminated when it owns no building and owns no troops in transit. Elimination is final (a seat never returns) and records `eliminatedAt` as the tick; the event `SeatEliminated` is emitted. Seats are evaluated at phase 9 by ascending index. A seat with no building has no troops in transit in practice (R-CPT-01 kills troops sourced at a captured building), so the troop condition is defensive.
+In a `pvp` match a seat is eliminated when it owns no building and owns no troops in transit. Elimination is final (a seat never returns) and records `eliminatedAt` as the tick; the event `SeatEliminated` is emitted. Seats are evaluated at phase 9 by ascending index. A second cause is a `Forfeit` (R-FFT-01), which eliminates the seat at phase 1 of its tick; a seat already eliminated is not eliminated again and keeps its first `eliminatedAt`. A seat with no building has no troops in transit in practice (R-CPT-01 kills troops sourced at a captured building), so the troop condition is defensive.
 
 *Source:* Node Arena (PvP design, SP01).
 
@@ -555,6 +555,8 @@ In a `pvp` match a seat is eliminated when it owns no building and owns no troop
 *Examples:* none.
 
 *Since:* 3.1.0.
+
+*Amended:* 3.2.0 (second elimination cause: `Forfeit`, R-FFT-01).
 
 ### R-WIN-01
 
@@ -606,7 +608,7 @@ In objective `captureAll`, a level may set `timeLimitSec`; when absent there is 
 
 ### R-WIN-04
 
-In objective `pvp`, at phase 9 after elimination (R-ELM-01), when exactly one team has a non-eliminated seat the outcome is `victory` and the winners are all seats of that team, eliminated teammates included. `winner` is the lowest winning seat index. This check precedes the time limit (R-WIN-05): a last-team-standing result on the final tick is a `victory`. Once recorded, an outcome is final.
+In objective `pvp`, at phase 9 after elimination (R-ELM-01), when exactly one team has a non-eliminated seat the outcome is `victory` and the winners are all seats of that team, eliminated teammates included. `winner` is the lowest winning seat index. This check precedes the time limit (R-WIN-05): a last-team-standing result on the final tick is a `victory`. A seat eliminated by `Forfeit` (R-FFT-01) counts as eliminated here, so a forfeit can complete a last-team-standing victory (R-FFT-03). Once recorded, an outcome is final.
 
 *Source:* Node Arena (PvP design, SP01).
 
@@ -615,6 +617,8 @@ In objective `pvp`, at phase 9 after elimination (R-ELM-01), when exactly one te
 *Examples:* none.
 
 *Since:* 3.1.0.
+
+*Amended:* 3.2.0 (cross-reference to `Forfeit`, R-FFT-03).
 
 ### R-WIN-05
 
@@ -630,7 +634,7 @@ In objective `pvp`, when `tick >= timeLimitSec × tickRate` and no `victory` has
 
 ### R-WIN-06
 
-In objective `pvp` the outcome `draw` occurs when (a) at the time limit two or more teams tie for best under R-WIN-05, including when 3 or more teams exist and only the top teams tie, with winners = the seats of all tied top teams (a shared first place); or (b) no team has a non-eliminated seat, with winners `[]`. `winner` is always null on a draw; `winners` lists the tied seats (empty in case b).
+In objective `pvp` the outcome `draw` occurs when (a) at the time limit two or more teams tie for best under R-WIN-05, including when 3 or more teams exist and only the top teams tie, with winners = the seats of all tied top teams (a shared first place); or (b) no team has a non-eliminated seat (including when the last remaining teams are all eliminated by `Forfeit` in the same tick, R-FFT-03), with winners `[]`. `winner` is always null on a draw; `winners` lists the tied seats (empty in case b).
 
 *Source:* Node Arena (PvP design, SP01).
 
@@ -639,6 +643,8 @@ In objective `pvp` the outcome `draw` occurs when (a) at the time limit two or m
 *Examples:* none.
 
 *Since:* 3.1.0.
+
+*Amended:* 3.2.0 (case b cross-reference to `Forfeit`, R-FFT-03).
 
 ### R-WIN-07
 
@@ -651,6 +657,42 @@ At the end of a `pvp` match the result carries a `ranking` of one placement per 
 *Examples:* none.
 
 *Since:* 3.1.0.
+
+### R-FFT-01
+
+In a `pvp` match a `Forfeit{player}` applied for a non-eliminated seat `s` at phase 1 does, in this order: every building owned by `s` becomes neutral and keeps its building level; every line whose source building was owned by `s` is cancelled; every troop whose source is a building owned by `s` dies (as in R-CPT-01), including troops on cut lines and in flight; the growth timer of each such building resets and its `ignoreForWin` is cleared (as in R-CPT-01); tower cooldowns are unchanged; and `s` is eliminated (R-ELM-01) with `eliminatedAt` set to the current tick and `SeatEliminated` emitted. Lines that other seats drew toward the now-neutral buildings stay valid (neutral targets are legal, R-LIN-01). Neutral towers fire as for any neutral tower (`neutralFires`, R-TWR-04). The effect depends on no wall-clock input: who forfeits and when is decided outside the simulation and recorded in the command log.
+
+*Source:* Node Arena (PvP design, SP07).
+
+*Params:* None.
+
+*Examples:* none.
+
+*Since:* 3.2.0.
+
+### R-FFT-02
+
+`Forfeit{player}` is a system command: it is issued only by the server (or a replay/test harness playing a recorded log), never by a seat, bot or client, and is rejected as a player-submitted command. It is valid only in objective `pvp` and only for a seat that is not already eliminated; any other `Forfeit` is a rejected command that changes nothing (R-LIN-01 rejection semantics). Within phase 1 of a tick all `Forfeit` commands apply first, by ascending `player`, before any `DrawLine` / `CutLine`; so a seat forfeiting on a tick has no command of its own applied on that tick. Two forfeits of the same tick are applied in ascending seat order and the outcome is evaluated once at phase 9.
+
+*Source:* Node Arena (PvP design, SP07).
+
+*Params:* None.
+
+*Examples:* none.
+
+*Since:* 3.2.0.
+
+### R-FFT-03
+
+A seat eliminated by `Forfeit` is eliminated for every outcome rule: R-WIN-04 awards `victory` when exactly one team keeps a non-eliminated seat after the forfeit (teammates of a forfeited seat still win with their team); if the forfeits of one tick leave no team with a non-eliminated seat, the outcome is a `draw` with no winner (R-WIN-06 case b); R-WIN-07 ranks by `eliminatedAt`, where a forfeited seat's tick is the tick of the `Forfeit`. Outcome evaluation is at phase 9 of the same tick (R-TCK-05) and is not changed by the forfeit path; a forfeit applied after the outcome is recorded changes nothing (the outcome is final).
+
+*Source:* Node Arena (PvP design, SP07).
+
+*Params:* None.
+
+*Examples:* none.
+
+*Since:* 3.2.0.
 
 ### Retired ids
 
@@ -682,7 +724,7 @@ R-TCK-05 fixes this order. Iteration and ties follow R-TCK-03 throughout. A read
 
 | Phase | Name | Rules | Iteration and tie order | Required effect |
 |---|---|---|---|---|
-| 1 | Commands | R-LIN-01..05, R-ENT-04 | Player index, then submission order. | Canonicalize, validate and atomically apply `DrawLine` / `CutLine`. A rejected command changes nothing. |
+| 1 | Commands | R-FFT-01, R-FFT-02, R-LIN-01..05, R-ENT-04 | `Forfeit` pass first by ascending player; then player index, then submission order. | Apply `Forfeit` system commands (R-FFT-01), then canonicalize, validate and atomically apply `DrawLine` / `CutLine`. A rejected command changes nothing. |
 | 2 | Reserved (unused) | — | — | Slot kept so phase numbers stay stable (formerly booster strikes, deferred, §6). Nothing runs. |
 | 3 | Growth | R-GRW-01, R-GRW-02, R-TCK-06 | Buildings by ascending index. | Advance growth timers of owned houses (those with `grows`; towers never grow) with zero lines; fire raises level by one up to `maxLevel`. |
 | 4 | Spawn / departures | R-SPN-01..03, R-TCK-06 | Buildings by index; within a building lines by target index. | Advance each line's spawn timer; fire departs one troop at progress 0 with the next `seq`, or skips under the alive cap. |
@@ -690,7 +732,7 @@ R-TCK-05 fixes this order. Iteration and ties follow R-TCK-03 throughout. A read
 | 6 | Contacts | R-CMB-01, R-CMB-04, R-CMB-05, R-TEM-02 | Head-on pass first, pairs by ascending ordered channel key; then crossing pass by ascending `(channelKeyA, channelKeyB)`, then `(seqA, seqB)`. | Resolve exchanges (R-CMB-05); dead troops are removed immediately; survivors may fight again in the same pass. |
 | 7 | Tower shots | R-TWR-01..04, R-TEM-02 | Towers by ascending building index, sequentially (a troop killed by an earlier tower cannot be shot again). | Decrement cooldowns, then each ready tower fires once (target tie: distance, owner index, troop `seq`). |
 | 8 | Arrivals + capture | R-CMB-02, R-CMB-03, R-CAP-01, R-CAP-03, R-CPT-01, R-CPT-02, R-TEM-03 | Arrivals ordered by overshoot descending, then channel order (source index, target index), then FIFO `seq`. Ownership is re-evaluated per arrival. | Apply reinforcement or damage; capture inline; forward overflow on the `fwd` stream; troops removed by a capture do not arrive. |
-| 9 | Win / loss / time | R-WIN-01..03, R-ELM-01, R-WIN-04..07 | Players by ascending index. | Evaluate outcome and the optional time limit; expose final state. Outcome is final. |
+| 9 | Win / loss / time | R-WIN-01..03, R-ELM-01, R-WIN-04..07, R-FFT-03 | Players by ascending index. | Evaluate outcome and the optional time limit; expose final state. Outcome is final. |
 
 Captured buildings neither grow nor spawn for the new owner before the next tick, because capture happens after phases 3–4. Level drops never cut lines (R-LIN-02).
 
@@ -700,8 +742,9 @@ The command set is closed and is extended only by union with a minor version bum
 
 - `DrawLine{from, to}` — validated and applied by R-LIN-01, R-LIN-03.
 - `CutLine{from, to}` — R-LIN-05.
+- `Forfeit{player}` — system-issued only, objective `pvp` only; R-FFT-01, R-FFT-02. Applied in phase 1 before player commands.
 
-Human players, scripted AI and bots submit the same commands, pass the same validation and get no privileges (R-ENT-04). Tower War AI never cuts; that is bot policy, not a rule. There is no booster command (§6).
+Human players, scripted AI and bots submit the same player commands (`DrawLine`, `CutLine`), pass the same validation and get no privileges (R-ENT-04); `Forfeit` is not a player command (R-FFT-02). Tower War AI never cuts; that is bot policy, not a rule. There is no booster command (§6).
 
 ### 4.2 Hash surface
 
@@ -804,6 +847,7 @@ One row per content key: the key rules name, its Tower War source, the rule ids 
 
 | RULES_VERSION | Date | Change |
 |---|---|---|
+| 3.2.0 | 2026-10-29 | Additive; no existing replay outcome changes (campaign and pvp replays without `Forfeit` are identical; only `rulesVersion` metadata moves). New area FFT: `Forfeit` system command (R-FFT-01 effect, R-FFT-02 validity/phase-1 order/system-only provenance, R-FFT-03 outcome interaction). Amended in place: R-ELM-01 (second elimination cause), R-WIN-04 and R-WIN-06(b) (cross-references), §4 phase 1 and 9 rows, §4.1 (command set union). `SCHEMA_VERSION` unchanged. |
 | 3.1.0 | 2026-10-28 | Additive; campaign replays unchanged. New objective `pvp`: seats and teams (R-SEA-01, R-TEM-01), ally non-aggression and reinforcement (R-TEM-02, R-TEM-03), seat elimination (R-ELM-01), last-team victory, timeout ranking, draw and placement (R-WIN-04..07). Amended in place: R-ENT-04 (team = player id unless a `SeatSetup` assigns teams), R-WIN-01..03 scoped to `captureAll`. Hash gains a pvp-only tail (§4.2). `SCHEMA_VERSION` unchanged. |
 | 3.0.0 | 2026-10-23 | **Replay outcomes may change.** R-TWR-02: a ready tower with no troop target shoots in-reach opponent (non-neutral hostile) houses before neutral houses; neutral houses only when no opponent house is in reach. Deviation from decomp ordering, justified by playtest. Troop targeting unchanged. |
 | 2.0.0 | 2026-10-22 | Full rewrite as the Tower War (APK 1.29.3) rules contract, replacing v1. **Replay outcomes change**: v1 replays and goldens are invalid and must be regenerated. Per-line spawn timers, zero-line growth, stage-based slots with no auto-cut, tank/soldier hp and attack, capture by damage greater than level with overshoot discarded and the source building's troops killed, overflow forwarded, crossing combat, shooting towers, lane blocking by obstacles, optional time limit; draw outcome and 300 s default limit removed; integer milli-tick timers. **Retired ids:** GEN-01, GEN-02, SND-01, SND-02, CAP-02 (tombstones). Rewritten ids keep their numbers (`Since: 2.0.0`); new areas SPN, GRW, TWR, OBS. Boosters deferred (§6). |
@@ -832,6 +876,7 @@ Booster aim count (1 versus 3, 03#8.10 against 05#4.6) is not settled here becau
 |---|---|
 | TCK, ENT, SPN, GRW, LIN, CAP, CMB-01/02/03/05, CPT, WIN-01..03 | SP03 (`packages/sim/test`) |
 | SEA, TEM, ELM, WIN-04..07 | PvP SP01 seat-rules (`packages/sim/test`; WIN-07 placement test lands after the text) |
+| FFT-01..03 | PvP SP07 pause-forfeit Task 2 (`packages/sim/test`; `check:rules` is red for FFT until it lands, as for 2.0.0) |
 | CMB-04, TWR, OBS | SP04 |
 | Content validation of rule params | SP02 (`packages/content/test`) |
 | Stale v1 `covers` tags (sim step/rules/economy tests, content components, tools/test, apps/web) | Deleted by the SP that deletes that file; SP09 verifies none remain |
