@@ -1,28 +1,11 @@
-import { expect, test, type NewPlayerPage } from './fixtures';
+import { expect, test } from './fixtures';
+import { openMatch } from './open-match';
 import type { Page } from '@playwright/test';
 import { runScriptedAttack } from './scripted-attack';
 
 // Duel S 1v1 through the real input path (SP06 R5/D8): seat 0 runs a scripted attack, seat 1 idles; no time-limit override.
 // MEASURED (local swiftshader chromium): play-to-result ~39 s (finalTick ~716 at ~20 ticks/s), whole test ~41 s, limit 150 s.
 // FIXTURE DECISION: none needed (< ~90 s); no tiny e2e map, no lobby time-limit override.
-
-async function openMatch(newPlayerPage: NewPlayerPage): Promise<{ a: Page; b: Page }> {
-  const a = await newPlayerPage();
-  const b = await newPlayerPage();
-  await a.goto('/?nick=Alice');
-  await a.getByTestId('pvp-play').click();
-  await a.getByTestId('pvp-create').click();
-  const code = ((await a.getByTestId('lobby-code').textContent()) ?? '').trim();
-  expect(code).not.toBe('');
-  await expect(a.getByTestId('lobby-map')).toContainText('Duel S');
-  await b.goto(`/?room=${code}&nick=Bob`);
-  await expect(b.getByTestId('lobby-code')).toHaveText(code);
-  await b.getByTestId('lobby-ready').click();
-  await expect(a.getByTestId('lobby-start')).toBeEnabled();
-  await a.getByTestId('lobby-start').click();
-  await expect.poll(() => a.evaluate(() => (window as any).__na.screen), { timeout: 8_000 }).not.toBe('lobby');
-  return { a, b };
-}
 
 test('Duel S 1v1: scripted attack by seat 0 wins; both pages agree on result and final hash', async ({ newPlayerPage }) => {
   test.setTimeout(150_000);
