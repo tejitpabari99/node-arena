@@ -1,0 +1,23 @@
+{
+  "name": "@node-arena/net",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "test": "tsx --test test/*.test.ts",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.check.json",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@node-arena/defs": "workspace:*",
+    "@node-arena/sim": "workspace:*",
+    "@node-arena/content": "workspace:*"
+  }
+}

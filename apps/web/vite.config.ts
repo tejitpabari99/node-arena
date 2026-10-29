@@ -19,6 +19,7 @@ export default defineConfig(({ command }) => ({
       { find: /^@node-arena\/defs$/, replacement: fileURLToPath(new URL('../../packages/defs/src/index.ts', import.meta.url)) },
       { find: /^@node-arena\/bots$/, replacement: fileURLToPath(new URL('../../packages/bots/src/index.ts', import.meta.url)) },
       { find: /^@node-arena\/content$/, replacement: fileURLToPath(new URL('../../packages/content/src/index.ts', import.meta.url)) },
+      { find: /^@node-arena\/net$/, replacement: fileURLToPath(new URL('../../packages/net/src/index.ts', import.meta.url)) },
       { find: /^@node-arena\/sim$/, replacement: fileURLToPath(new URL('../../packages/sim/src/index.ts', import.meta.url)) },
     ],
   },

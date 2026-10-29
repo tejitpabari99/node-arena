@@ -3,7 +3,7 @@ import { ownership, type OwnershipView } from '../../src/ui/ownership.js';
 
 function view(owners: number[], levels: number[], colors = ['blue', 'red']): OwnershipView {
   return {
-    players: Object.freeze(colors.map(colorKey => Object.freeze({ kind: 'ai' as const, colorKey }))),
+    players: Object.freeze(colors.map((colorKey, team) => Object.freeze({ kind: 'ai' as const, colorKey, team }))),
     buildings: Object.freeze({ owner: Int32Array.from(owners), level: Int32Array.from(levels) }),
   };
 }

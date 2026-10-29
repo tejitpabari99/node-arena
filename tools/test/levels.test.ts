@@ -6,9 +6,10 @@ import { loadContent } from '@node-arena/content';
 import { runMatch } from '@node-arena/bots';
 import { loadFiles } from '../src/files.js';
 import { splitFiles } from '../src/content.js';
-import { buildLock, campaignLevels, checkLevelsLock, humanSeat, selectLevels, validateLevel, validateLevels, type playProxy } from '../src/levels.js';
+import { buildLock, campaignLevels, validatePvpLevel, parseLevelsLock, PVP_CAP_MARGIN, type PlayPvp, customLevels, pvpLevels, checkLevelsLock, humanSeat, selectLevels, validateLevel, validateLevels, type playProxy } from '../src/levels.js';
 import { levelsMarkdown } from '../src/levels-output.js';
 import { parseUnsolved, readUnsolved, type UnsolvedEntry } from '../src/unsolved.js';
+import { checkSymmetry, readSymmetry } from '../src/pvp-symmetry.js';
 
 const root = resolve(import.meta.dirname, '../..');
 const { data } = splitFiles(await loadFiles(resolve(root, 'packages/content')));
@@ -115,4 +116,71 @@ test('validate:levels CLI: one level, JSON report with levels payload; bad optio
   const report = JSON.parse(ok.stdout); assert.equal(report.levels.length, 1); assert.equal(report.levels[0].id, 'levelview-1');
   assert.equal(run('--seeds', '0').status, 1);
   assert.equal(run('--levels', 'unknown', '--seeds', '1').status, 1);
+});
+
+test('pvp Duel S compiles, is listed in pvp only, and is d2-symmetric', async () => {
+  const loaded = loadContent(data);
+  const level = loaded.compiled['na-pvp-duel-s']!;
+  assert.ok(level);
+  assert.equal(level.objective, 'pvp');
+  assert.equal(level.buildings.length, 7);
+  assert.deepEqual(pvpLevels(data), [{ id: 'na-pvp-duel-s', position: 1 }]);
+  assert.equal(campaignLevels(data).length, 20);
+  assert.ok(!campaignLevels(data).some(l => l.id.startsWith('na-pvp-')));
+  assert.ok(!customLevels(data).some(l => l.id.startsWith('na-pvp-')));
+  const kinds = await readSymmetry(resolve(root, 'tools/pvp-symmetry.json'));
+  assert.equal(checkSymmetry(level, kinds['na-pvp-duel-s']!).ok, true);
+});
+
+const duel = () => structuredClone(compiled['na-pvp-duel-s']!);
+const kinds = await readSymmetry(resolve(root, 'tools/pvp-symmetry.json'));
+test('pvp branch passes Duel S: symmetry, idle draw, 4 seeds x 2 delays, deterministic, no humanSeat', () => {
+  const report = validatePvpLevel(duel(), 1, 4, kinds['na-pvp-duel-s']);
+  assert.equal(report.ok, true, JSON.stringify(report.errors));
+  assert.equal(report.runs, 8); assert.equal(report.deterministic, true); assert.equal(report.humanSeat, undefined);
+  assert.deepEqual(Object.keys(report.pvp!.outcomes).sort(), ['1/1000', '1/2000', '2/1000', '2/2000', '3/1000', '3/2000', '4/1000', '4/2000']);
+  assert.ok(['victory', 'timeLimit', 'draw'].includes(report.lock.outcome));
+  assert.match(levelsMarkdown([report]), /pvp d2: 1\/1000=/);
+});
+test('validateLevels routes pvp through the pvp branch and keeps it out of selectLevels', () => {
+  const reports = validateLevels(data, [], 'na-pvp-duel-s', 1, undefined, kinds);
+  assert.equal(reports.length, 1); assert.equal(reports[0]!.ok, true, JSON.stringify(reports[0]!.errors)); assert.ok(reports[0]!.pvp);
+  assert.throws(() => selectLevels(data, 'na-pvp-duel-s'), /Unknown or empty/);
+  const missing = validateLevels(data, [], 'na-pvp-duel-s', 1);
+  assert.equal(missing[0]!.ok, false); assert.match(missing[0]!.errors.join(' '), /no entry in tools\/pvp-symmetry\.json/);
+});
+test('pvp branch fails: missing sidecar entry, asymmetric level', () => {
+  const none = validatePvpLevel(duel(), 1, 1, undefined);
+  assert.equal(none.ok, false); assert.match(none.errors.join(' '), /pvp-symmetry\.json/);
+  const bad = duel(); bad.buildings[0]!.x += 0.001;
+  const r = validatePvpLevel(bad, 1, 1, 'd2');
+  assert.equal(r.ok, false); assert.match(r.errors.join(' '), /Symmetry d2 fails/);
+});
+test('pvp branch fails: idle seats not a draw (seat 0 holds an extra building)', () => {
+  const lvl = duel();
+  lvl.buildings.find(b => b.owner === 1)!.owner = 0; // seat 0 holds one more building: timeLimit, not draw
+  const r = validatePvpLevel(lvl, 1, 1, 'd2');
+  assert.equal(r.ok, false); assert.match(r.errors.join(' '), /Idle seats seed 1 ended (timeLimit|victory); expected draw/);
+});
+test('pvp branch fails: rejected command, non-termination, rerun hash mismatch', () => {
+  const ok: PlayPvp = () => ({ outcome: 'draw', ticks: 10, finalHash: 'a' });
+  const reject: PlayPvp = (l, seed, ad) => { if (ad === 1000) throw new Error('Match rejected 1 command(s) at tick 3'); return ok(l, seed, ad, 0); };
+  const r1 = validatePvpLevel(duel(), 1, 2, 'd2', reject);
+  assert.equal(r1.ok, false); assert.match(r1.errors.join(' '), /proxy-1000 seed 2: Match rejected 1 command/);
+  let seen = 0;
+  const stuck: PlayPvp = (_l, _s, ad, cap) => { seen = cap; return { outcome: ad === 'idle' ? 'draw' : 'truncated', ticks: cap, finalHash: 'a' }; };
+  const r2 = validatePvpLevel(duel(), 1, 1, 'd2', stuck);
+  assert.equal(r2.ok, false); assert.match(r2.errors.join(' '), /did not terminate within 9700 ticks/); assert.equal(seen, 480 * 20 + PVP_CAP_MARGIN);
+  let calls = 0;
+  const flaky: PlayPvp = (_l, _s, ad) => ({ outcome: 'draw', ticks: 10, finalHash: ad === 2000 && ++calls > 1 ? 'b' : 'a' });
+  const r3 = validatePvpLevel(duel(), 1, 1, 'd2', flaky);
+  assert.equal(r3.ok, false); assert.match(r3.errors.join(' '), /rerun final hash differs/);
+});
+test('levels lock accepts victory|timeLimit outcomes and the committed Duel S entry', async () => {
+  const entry = { ticks: 5, finalHash: '0123456789abcdef' };
+  for (const outcome of ['victory', 'timeLimit', 'draw']) assert.ok(parseLevelsLock({ x: { outcome, ...entry } }));
+  assert.throws(() => parseLevelsLock({ x: { outcome: 'bogus', ...entry } }), /Invalid levels lock entry/);
+  const lock = parseLevelsLock(JSON.parse(await (await import('node:fs/promises')).readFile(resolve(root, 'tools/levels-lock.json'), 'utf8')));
+  const report = validatePvpLevel(duel(), 1, 1, 'd2');
+  assert.deepEqual(checkLevelsLock([report], lock), []);
 });

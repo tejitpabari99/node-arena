@@ -9,8 +9,8 @@ const level=Object.values(loadContent(files).compiled)[0]!;
 it('gates level, seed, speed and fixtures; only explicit test disables animation',()=>{
  expect(testHookRequest('?level=20&seed=7&speed=2',true)).toMatchObject({level:'20',seed:7,speed:2,testing:false});
  expect(testHookRequest('?test=1&fixture=win',true)).toMatchObject({testing:true,fixture:'win'});
- expect(testHookRequest('?test=1&level=20&seed=7&speed=2',false)).toEqual({testing:false,fixture:null,level:null,seed:1,speed:1});
- expect(testHookRequest('?seed=NaN&speed=5',true)).toMatchObject({seed:1,speed:1});
+ expect(testHookRequest('?test=1&level=20&seed=7&speed=2',false)).toEqual({testing:false,fixture:null,level:null,seed:1,speed:1,nick:null});
+ expect(testHookRequest('?seed=NaN&speed=5',true)).toMatchObject({seed:1,speed:1,nick:null});
 });
 it('driver ownership is pure passthrough and accelerated frames preserve hashes at equal ticks',()=>{
  const a=new GameDriver({level,matchSeed:1,autoStart:false,createBotDriver:()=>({commands:()=>[]})});

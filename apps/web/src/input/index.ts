@@ -12,6 +12,8 @@ export interface InputControllerOptions {
   worldRoot: Object3D; scene?: Scene;
   driver: { submit(command: Command): unknown };
   isEnabled?(): boolean; now?(): number;
+  /** Controlled seat. Omitted = first human player (campaign); null = read-only (spectator). */
+  seat?: number | null | undefined;
 }
 /** Public sim read API only; the driver's submit owns command tick stamps. */
 export function createInputController(options: InputControllerOptions) {
@@ -29,7 +31,7 @@ export function createInputController(options: InputControllerOptions) {
   let trailCount=0,disposed=false,width=1,height=1,left=0,top=0,groundHit=false;
   const oldTouch=canvas.style.touchAction,oldCursor=canvas.style.cursor;
   canvas.style.touchAction='none';
-  const human=sim.view.players.findIndex(player=>player.kind==='human');
+  const human=options.seat===undefined ? sim.view.players.findIndex(player=>player.kind==='human') : (options.seat ?? -1);
   const enabled=()=>!disposed && human>=0 && !sim.view.over && (options.isEnabled?.() ?? true);
   function measure() {const box=canvas.getBoundingClientRect();width=box.width || 1;height=box.height || 1;left=box.left;top=box.top;}
   function projectAnchors() {

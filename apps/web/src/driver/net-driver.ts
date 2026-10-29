@@ -1,0 +1,130 @@
+import type { ClientMessage, HashMsg, LockstepClient, PushResult, ServerMessage, WireCommand } from '@node-arena/net';
+import type { Command, Sim, SimEvent } from '@node-arena/sim';
+import { ownership } from '../ui/ownership';
+import { STEP_MS, type FrameUpdate, type MatchDriver, type TickUpdate } from './index';
+
+export const LIVE_MAX_STEPS = 2;
+export const CATCHUP_THRESHOLD = 6;
+export const CATCHUP_BUDGET_MS = 8;
+export const CATCHUP_EVENT_TAIL = 2;
+
+export interface NetDriverOptions {
+  sim: Sim;
+  client: LockstepClient;
+  send: (msg: ClientMessage) => void;
+  /** Monotonic ms clock (performance.now); only used for alpha and budgets, never fed to the sim. */
+  now: () => number;
+  raf?: (cb: (t: number) => void) => number;
+  caf?: (id: number) => void;
+  onTick?: (update: TickUpdate) => void;
+  /** Every rAF after stepping (also with 0 steps), for rendering. */
+  onFrame?: (update: FrameUpdate) => void;
+  /** Called when the client rejects a pushed message (gap/duplicate/bad-range): controller should resync. */
+  onPushError?: (result: Extract<PushResult, { ok: false }>, msg: ServerMessage) => void;
+}
+
+/** Server-paced MatchDriver: steps only on ticks pushed from the socket; no pause, speed or hidden handling. */
+export class NetDriver implements MatchDriver {
+  readonly paused = false;
+  private stepMs = 0;
+  private lastStepAt: number | null = null;
+  private frameId: number | null = null;
+  private running = false;
+  private disposed = false;
+  private readonly raf: (cb: (t: number) => void) => number;
+  private readonly caf: (id: number) => void;
+
+  constructor(private readonly o: NetDriverOptions) {
+    this.raf = o.raf ?? (cb => globalThis.requestAnimationFrame(cb));
+    this.caf = o.caf ?? (id => globalThis.cancelAnimationFrame(id));
+  }
+
+  get sim(): Sim { return this.o.sim; }
+  get lastStepMs(): number { return this.stepMs; }
+  get ownership() { return ownership(this.o.sim.view); }
+  get queued(): number { return this.o.client.queued(); }
+  /** Ticks stepped so far (sim tick). */
+  get tick(): number { return this.o.sim.view.tick; }
+  get alpha(): number {
+    if (this.lastStepAt === null || this.o.client.queued() === 0) return 1;
+    return Math.min(1, Math.max(0, (this.o.now() - this.lastStepAt) / STEP_MS));
+  }
+
+  /** Feed a server message from the socket handler (not rAF). tick/ticks/catchup are queued. */
+  push(msg: ServerMessage): PushResult {
+    if (this.disposed) return { ok: true };
+    const r = this.o.client.push(msg);
+    if (!r.ok) this.o.onPushError?.(r, msg);
+    return r;
+  }
+
+  /** Sends `cmd` without `player`/tick; server stamps both. Returns the wire message. */
+  submit(cmd: Command | WireCommand, cid?: number): unknown {
+    if (this.disposed) return null;
+    const { player: _player, ...c } = cmd as Command;
+    void _player;
+    const msg = this.o.client.cmd(c as WireCommand, cid);
+    this.o.send(msg);
+    return msg;
+  }
+
+  start(): void {
+    if (this.disposed || this.running) return;
+    this.running = true;
+    this.schedule();
+  }
+
+  stop(): void {
+    this.running = false;
+    if (this.frameId !== null) this.caf(this.frameId);
+    this.frameId = null;
+  }
+
+  dispose(): void { this.stop(); this.disposed = true; }
+
+  /** One frame's worth of stepping; exposed so tests and the rAF loop share it. Returns steps taken. */
+  advance(): number {
+    if (this.disposed || this.o.sim.view.over) return 0;
+    const { client } = this.o;
+    const queued = client.queued();
+    if (queued === 0) return 0;
+    let steps = 0;
+    if (queued > CATCHUP_THRESHOLD) {
+      const t0 = this.o.now();
+      while (client.queued() > 0 && !this.o.sim.view.over && this.o.now() - t0 < CATCHUP_BUDGET_MS) {
+        const [tk] = client.drain(1);
+        if (!tk) break;
+        this.stepOne(tk.n, tk.cmds, client.queued() < CATCHUP_EVENT_TAIL);
+        steps++;
+      }
+    } else {
+      for (const tk of client.drain(LIVE_MAX_STEPS)) {
+        if (this.o.sim.view.over) break;
+        this.stepOne(tk.n, tk.cmds, true);
+        steps++;
+      }
+    }
+    return steps;
+  }
+
+  private stepOne(n: number, cmds: Command[], events: boolean): void {
+    const { sim } = this.o;
+    const t0 = this.o.now();
+    const ev: SimEvent[] = sim.step(cmds, { events });
+    this.lastStepAt = this.o.now();
+    this.stepMs = this.lastStepAt - t0;
+    const hash: HashMsg | null = this.o.client.after(n, () => sim.hash());
+    if (hash) this.o.send(hash);
+    this.o.onTick?.({ tick: sim.view.tick, sim, submissions: [], events: ev });
+  }
+
+  private schedule(): void {
+    if (!this.running || this.disposed) return;
+    this.frameId = this.raf(() => {
+      this.frameId = null;
+      const steps = this.advance();
+      this.o.onFrame?.({ sim: this.o.sim, alpha: this.alpha, steps, paused: false });
+      this.schedule();
+    });
+  }
+}

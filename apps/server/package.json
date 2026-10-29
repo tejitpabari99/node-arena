@@ -1,0 +1,23 @@
+{
+  "name": "@node-arena/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "test": "tsx --test test/*.test.ts",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.check.json",
+    "lint": "eslint src test"
+  },
+  "dependencies": {
+    "@node-arena/bots": "workspace:*",
+    "@node-arena/content": "workspace:*",
+    "@node-arena/defs": "workspace:*",
+    "@node-arena/net": "workspace:*",
+    "@node-arena/sim": "workspace:*",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/ws": "8.18.2"
+  }
+}

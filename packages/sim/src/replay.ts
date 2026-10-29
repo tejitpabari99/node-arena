@@ -2,7 +2,7 @@ import type { CompiledLevel, ReplayHeader } from '@node-arena/content';
 import type { Command } from '@node-arena/defs';
 import { create, type Sim } from './sim.js';
 import { TICK_RATE } from './math.js';
-import type { SimState } from './types.js';
+import type { SeatSetup, SimState } from './types.js';
 
 type GameOver = NonNullable<SimState['over']>;
 /** Authoritative versions from `content.json` (extra fields are ignored). */
@@ -41,7 +41,8 @@ function metadataValid(value: unknown): value is ReplayMetadata {
 function headerValid(value: unknown): value is ReplayHeader {
   return object(value) && typeof value.levelId === 'string' && /^[a-z0-9][a-z0-9-]*$/.test(value.levelId) &&
     typeof value.simHash === 'string' && /^[0-9a-f]{64}$/.test(value.simHash) &&
-    typeof value.seed === 'number' && Number.isInteger(value.seed) && value.seed >= 0 && value.seed <= 4294967295 && metadataValid(value);
+    typeof value.seed === 'number' && Number.isInteger(value.seed) && value.seed >= 0 && value.seed <= 4294967295 && metadataValid(value) &&
+    (value.teams === undefined || (Array.isArray(value.teams) && value.teams.every(t => typeof t === 'number' && Number.isInteger(t) && t >= 0)));
 }
 /** Refuse lossy JSON conversions (undefined, non-finite, prototypes, cycles). */
 function json(value: unknown, ancestors = new Set<unknown>()): value is ReplayJson {
@@ -56,7 +57,8 @@ function json(value: unknown, ancestors = new Set<unknown>()): value is ReplayJs
 }
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
 function overValid(value: unknown): value is GameOver | null {
-  return value === null || (object(value) && ['won', 'lost', 'timeout'].includes(value.outcome as string) && (value.winner === null || (typeof value.winner === 'number' && Number.isInteger(value.winner) && value.winner >= 0)));
+  return value === null || (object(value) && ['won', 'lost', 'timeout', 'victory', 'timeLimit', 'draw'].includes(value.outcome as string) && (value.winner === null || (typeof value.winner === 'number' && Number.isInteger(value.winner) && value.winner >= 0)) &&
+    (value.winners === undefined || (Array.isArray(value.winners) && value.winners.every(w => typeof w === 'number' && Number.isInteger(w) && w >= 0))));
 }
 function validate(rec: unknown): asserts rec is ReplayRecord {
   if (!object(rec) || !headerValid(rec.header) || !tick(rec.finalTick) || !validHash(rec.finalHash) || !overValid(rec.outcome) || !Array.isArray(rec.commands) || !Array.isArray(rec.checkpoints)) invalid();
@@ -77,10 +79,11 @@ function validate(rec: unknown): asserts rec is ReplayRecord {
  * stamped with the current tick BEFORE step increments it and canonicalizes.
  * Postgame steps are inert, including recorder bookkeeping.
  */
-export function createReplayRecorder(level: CompiledLevel, seed: number, metadata: ReplayMetadata): ReplayRecorder {
-  const header: ReplayHeader = { rulesVersion: metadata?.rulesVersion, schemaVersion: metadata?.schemaVersion, contentVersion: metadata?.contentVersion, levelId: level.id, simHash: level.simHash, seed };
+export function createReplayRecorder(level: CompiledLevel, seed: number, metadata: ReplayMetadata, setup?: SeatSetup): ReplayRecorder {
+  const header: ReplayHeader = { rulesVersion: metadata?.rulesVersion, schemaVersion: metadata?.schemaVersion, contentVersion: metadata?.contentVersion, levelId: level.id, simHash: level.simHash, seed, ...(setup !== undefined ? { teams: [...setup.teams] } : {}) };
   if (!headerValid(header)) invalid();
-  const sim = create(level, seed);
+  if (setup !== undefined && level.objective !== 'pvp') invalid();
+  const sim = create(level, seed, setup);
   const commands: ReplayRecord['commands'] = [], checkpoints: ReplayRecord['checkpoints'] = [];
   return {
     get view() { return sim.view; },
@@ -115,7 +118,9 @@ export function playReplay(content: ReplaySource, rec: ReplayRecord): ReplayResu
   for (const key of ['schemaVersion', 'contentVersion'] as const) if (rec.header[key] !== content.metadata[key]) invalid();
   const level = content.level ?? content.resolveLevel(rec.header.levelId);
   if (level.id !== rec.header.levelId || level.simHash !== rec.header.simHash) invalid();
-  const sim = create(level, rec.header.seed);
+  if (level.objective !== 'pvp' && (rec.outcome !== null && !['won', 'lost', 'timeout'].includes(rec.outcome.outcome) || rec.outcome?.winners !== undefined)) invalid();
+  if (rec.header.teams !== undefined && level.objective !== 'pvp') invalid();
+  const sim = create(level, rec.header.seed, rec.header.teams !== undefined ? { teams: rec.header.teams } : undefined);
   if (sim.view.timeLimitTicks > 0 && rec.finalTick > sim.view.timeLimitTicks) invalid();
   let commandIndex = 0, checkpointIndex = 0;
   while (sim.view.tick < rec.finalTick) {

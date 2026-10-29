@@ -27,6 +27,9 @@
       ],
       "@node-arena/bots": [
         "../../packages/bots/src/index.ts"
+      ],
+      "@node-arena/net": [
+        "../../packages/net/src/index.ts"
       ]
     }
   },

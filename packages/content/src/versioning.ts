@@ -4,7 +4,7 @@ import { canonicalJson } from './hash.js';
 import { parseAndConvert, type ContentSource } from './issues.js';
 import type { ContentMeta } from './schemas.js';
 
-export const RULES_VERSION = '3.0.0';
+export const RULES_VERSION = '3.1.0';
 export interface ReplayHeader {
   rulesVersion: string;
   schemaVersion: string;
@@ -12,6 +12,8 @@ export interface ReplayHeader {
   levelId: string;
   simHash: string;
   seed: number;
+  /** pvp only: per-seat team ids (SeatSetup). Absent for campaign and identity teams. */
+  teams?: number[];
 }
 /** `levels`: level id -> simHash; `bots`: `<levelId>#<playerId>` -> botHash. */
 export interface HashesLock { levels: Record<string, string>; bots: Record<string, string> }

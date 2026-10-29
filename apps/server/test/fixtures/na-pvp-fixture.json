@@ -1,0 +1,114 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "na-pvp-fixture",
+  "name": "Fixture Duel",
+  "theme": "green",
+  "bounds": {
+    "minX": -9,
+    "maxX": 9,
+    "minZ": -5.5,
+    "maxZ": 5.5
+  },
+  "objective": "pvp",
+  "timeLimitSec": 60,
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "blue"
+    },
+    {
+      "id": "p2",
+      "kind": "human",
+      "colorKey": "red"
+    }
+  ],
+  "buildings": [
+    {
+      "id": "home-l",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -6,
+        "z": 0
+      },
+      "owner": "p1",
+      "level": 12,
+      "ignoreForWin": false
+    },
+    {
+      "id": "home-r",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 6,
+        "z": 0
+      },
+      "owner": "p2",
+      "level": 12,
+      "ignoreForWin": false
+    },
+    {
+      "id": "side-ln",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -3.5,
+        "z": -2.5
+      },
+      "owner": null,
+      "level": 3,
+      "ignoreForWin": false
+    },
+    {
+      "id": "side-ls",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -3.5,
+        "z": 2.5
+      },
+      "owner": null,
+      "level": 3,
+      "ignoreForWin": false
+    },
+    {
+      "id": "side-rn",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 3.5,
+        "z": -2.5
+      },
+      "owner": null,
+      "level": 3,
+      "ignoreForWin": false
+    },
+    {
+      "id": "side-rs",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 3.5,
+        "z": 2.5
+      },
+      "owner": null,
+      "level": 3,
+      "ignoreForWin": false
+    },
+    {
+      "id": "centre",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 0,
+        "z": 0
+      },
+      "owner": null,
+      "level": 6,
+      "ignoreForWin": false
+    }
+  ],
+  "elements": [],
+  "requires": [
+    "drawsLines",
+    "grows",
+    "level",
+    "objective:pvp",
+    "spawns"
+  ]
+}

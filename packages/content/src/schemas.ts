@@ -123,6 +123,8 @@ export const LevelSchema = Type.Object({
   players: Type.Array(Type.Object({
     id: id(), kind: Type.Union([Type.Literal('human'), Type.Literal('ai')]), colorKey: visual(),
     bot: Type.Optional(BotBlock),
+    /** pvp only: team id (dense 0..k-1). Absent = identity (every seat its own team). */
+    team: Type.Optional(count({ minimum: 0 })),
   }, { additionalProperties: false }), { minItems: 2 }),
   buildings: Type.Array(Type.Object({
     id: id(), archetype: id(), pos: pos(), owner: Type.Union([id(), Type.Null()]),

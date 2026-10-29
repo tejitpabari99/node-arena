@@ -1,17 +1,19 @@
 import { TICK_RATE } from './math.js';
 import { hashState } from './hash.js';
 import { freeSlots, liveChannels, progressOf } from './state.js';
-import type { CompiledLevel, SimState } from './types.js';
+import type { CompiledLevel, Placement, Outcome, SimState } from './types.js';
 
 export type ReadColumn = Omit<Readonly<Int32Array>, 'set' | 'fill' | 'copyWithin' | 'reverse' | 'sort' | 'subarray'> & { subarray(begin?: number, end?: number): ReadColumn };
 
 export interface SimView {
   tick: number;
-  over: { outcome: 'won' | 'lost' | 'timeout'; winner: number | null } | null;
+  over: { outcome: Outcome; winner: number | null; winners?: number[]; ranking?: Placement[] } | null;
   readonly timeLimitTicks: number;
   readonly bounds: CompiledLevel['bounds'];
   readonly ids: { readonly buildings: readonly string[]; readonly players: readonly string[]; readonly elements: readonly string[] };
-  readonly players: readonly { readonly kind: 'human' | 'ai'; readonly colorKey: string }[];
+  readonly players: readonly { readonly kind: 'human' | 'ai'; readonly colorKey: string; readonly team: number }[];
+  /** Per seat elimination tick; -1 = alive. Filled by seat elimination (later task). */
+  readonly eliminatedAt: ReadColumn;
   readonly buildings: {
     readonly owner: ReadColumn; readonly level: ReadColumn; readonly maxLevel: ReadColumn; readonly stage: ReadColumn;
     readonly lines: ReadColumn; readonly alive: ReadColumn; readonly ignoreForWin: ReadColumn; readonly col: Readonly<Record<string, ReadColumn>>;
@@ -35,7 +37,8 @@ export function createView(state: SimState): SimView {
     timeLimitTicks: level.timeLimitSec === null ? 0 : level.timeLimitSec * TICK_RATE,
     bounds: level.bounds,
     ids: { buildings: level.buildings.map((x) => x.id), players: level.players.map((x) => x.id), elements: level.elements.map((x) => x.id) },
-    players: level.players.map((p) => ({ kind: p.kind, colorKey: p.colorKey })),
+    players: level.players.map((p, i) => ({ kind: p.kind, colorKey: p.colorKey, team: state.team[i]! })),
+    eliminatedAt: state.players.eliminatedAt,
     buildings: b,
     buildingStatic: level.buildings.map((x) => ({
       x: x.x, z: x.z, kind: x.kind, archetype: x.archetype, visual: x.visual, footprint: x.footprint,
@@ -93,7 +96,7 @@ export function readTroops(state: SimState, buf: TroopBuffer): number {
 /** Serializable copy of the hashed state (plain JSON). `hash` equals `sim.hash()` at capture time. */
 export interface SimSnapshot {
   tick: number; seed: number; hash: string;
-  over: { outcome: 'won' | 'lost' | 'timeout'; winner: number | null } | null;
+  over: { outcome: Outcome; winner: number | null; winners?: number[]; ranking?: Placement[] } | null;
   drawSeq: number; troopSeq: number; rejected: number;
   buildings: Record<'owner' | 'level' | 'maxLevel' | 'stage' | 'lines' | 'alive' | 'ignoreForWin', number[]>;
   col: Record<string, number[]>;
@@ -107,7 +110,7 @@ export function snapshotState(state: SimState): SimSnapshot {
   for (const name of Object.keys(b.col).sort((p, q) => (p < q ? -1 : p > q ? 1 : 0))) col[name] = arr(b.col[name]!);
   return {
     tick: state.tick, seed: state.seed, hash: hashState(state),
-    over: state.over ? { ...state.over } : null,
+    over: state.over ? { ...state.over, ...(state.over.winners ? { winners: [...state.over.winners] } : {}), ...(state.over.ranking ? { ranking: state.over.ranking.map(p => ({ ...p, seats: [...p.seats] })) } : {}) } : null,
     drawSeq: state.drawSeq, troopSeq: state.troopSeq, rejected: state.rejected,
     buildings: { owner: arr(b.owner), level: arr(b.level), maxLevel: arr(b.maxLevel), stage: arr(b.stage), lines: arr(b.lines), alive: arr(b.alive), ignoreForWin: arr(b.ignoreForWin) },
     col,

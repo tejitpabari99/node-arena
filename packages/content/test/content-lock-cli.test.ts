@@ -11,7 +11,7 @@ const cli = (dir: string, ...args: string[]) => spawnSync(process.execPath, ['--
 function workspace() {
   const dir = mkdtempSync(join(tmpdir(), 'content-lock-'));
   mkdirSync(join(dir, 'docs'), { recursive: true });
-  writeFileSync(join(dir, 'docs/GAME_RULES.md'), 'RULES_VERSION: 3.0.0\n');
+  writeFileSync(join(dir, 'docs/GAME_RULES.md'), 'RULES_VERSION: 3.1.0\n');
   mkdirSync(join(dir, 'packages/content'), { recursive: true });
   execFileSync('git', ['init', '-q', dir]);
   return dir;

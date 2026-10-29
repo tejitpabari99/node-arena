@@ -4,6 +4,9 @@ import { sha256, canonicalJson } from './hash.js';
 import { computeRequires, mergeModules, type ModuleBags, type SeatBot } from './level.js';
 import type { NextLevel } from './schemas.js';
 
+/** pvp default match length (R1): 480 s = 9600 ticks. */
+export const PVP_DEFAULT_TIME_LIMIT_SEC = 480;
+
 export interface CompiledFootprint { shape: 'circle' | 'box'; radius?: number; w?: number; d?: number }
 export interface CompiledRules {
   timeLimitSec: number | null;
@@ -13,7 +16,7 @@ export interface CompiledRules {
   contactDistance: number;
   laneHalfWidth: number;
 }
-export interface CompiledPlayer { id: string; kind: 'human' | 'ai'; colorKey: string }
+export interface CompiledPlayer { id: string; kind: 'human' | 'ai'; colorKey: string; /** Only when authored (pvp). */ team?: number }
 export interface CompiledUnit { id: string; visual: string; speed: number; hp: number; attack: number; defense: number }
 export interface CompiledBuilding {
   id: string; archetype: string; /** From the archetype `kind`. */ kind: 'house' | 'tower'; x: number; z: number;
@@ -113,8 +116,8 @@ export function compileLevel(catalog: Catalog, level: NextLevel): CompiledLevel 
     return { id, visual: u.visual, speed: u.speed, hp: u.hp, attack: u.attack, defense: u.defense };
   });
   const bal = catalog.balance;
-  const timeLimitSec = level.timeLimitSec ?? null;
-  const players: CompiledPlayer[] = level.players.map((p) => ({ id: p.id, kind: p.kind, colorKey: p.colorKey }));
+  const timeLimitSec = level.timeLimitSec ?? (level.objective === 'pvp' ? PVP_DEFAULT_TIME_LIMIT_SEC : null);
+  const players: CompiledPlayer[] = level.players.map((p) => ({ id: p.id, kind: p.kind, colorKey: p.colorKey, ...(p.team !== undefined ? { team: p.team } : {}) }));
   const bots: CompiledBot[] = [];
   level.players.forEach((p, i) => { if (p.bot) bots.push({ player: i, bot: p.bot as SeatBot }); });
   const base = {

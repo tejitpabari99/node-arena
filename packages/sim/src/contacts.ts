@@ -3,7 +3,7 @@ import { activeCrossings, createCrossingScratch, fillCrossingScratch, prepareCro
 import { cutLine } from './commands.js';
 import { fireCapture } from './hooks.js';
 import { TICK_RATE, idiv } from './math.js';
-import { killTroop, liveChannels, progressOf, setLevel, spawnTroop, troopPosition } from './state.js';
+import { hostile, killTroop, liveChannels, progressOf, setLevel, spawnTroop, troopPosition } from './state.js';
 import type { Channel, SimState } from './types.js';
 
 // Derived scratch never enters snapshots/hashes. Its rows are private to this
@@ -27,19 +27,19 @@ export function crossingPass(state: SimState): void {
     const A = state.channels.get(pair.a)!, B = state.channels.get(pair.b)!;
     if (!A.troops.len || !B.troops.len) continue;
     const boundA = scratch.get(A.key)!, boundB = scratch.get(B.key)!;
-    if (boundA.owner !== undefined && boundA.owner === boundB.owner) continue;
+    if (boundA.owner !== undefined && boundB.owner !== undefined && !hostile(state, boundA.owner, boundB.owner)) continue;
     if (boundA.end < pair.windowA[0] || boundA.start > pair.windowA[1] || boundB.end < pair.windowB[0] || boundB.start > pair.windowB[1]) continue;
     for (const rowA of boundA.rows) {
       if (rowA.end < pair.windowA[0] || rowA.start > pair.windowA[1]) continue;
       for (const rowB of boundB.rows) {
         if (rowB.end < pair.windowB[0] || rowB.start > pair.windowB[1]) continue;
-        if (rowA.owner === rowB.owner) continue;
+        if (!hostile(state, rowA.owner, rowB.owner)) continue;
         const sweepA = prepareCrossingRow(rowA,pair.laneA), sweepB = prepareCrossingRow(rowB,pair.laneB);
         if (!sweepsMayTouch(sweepA,sweepB,state.level.rules.contactDistance)) continue;
         const seqA = rowA.seq, seqB = rowB.seq;
         const ia = A.troops.indexOfSeq(seqA), ib = B.troops.indexOfSeq(seqB);
         if (ia < 0) break;
-        if (ib < 0 || A.troops.owner[ia] === B.troops.owner[ib]) continue;
+        if (ib < 0 || !hostile(state, A.troops.owner[ia]!, B.troops.owner[ib]!)) continue;
         if (sweepPrepared(state, pair, sweepA, sweepB)) exchange(state, A.key, seqA, B.key, seqB, 'crossing');
       }
     }
@@ -59,7 +59,7 @@ export function exchange(state: SimState, chA: number, seqA: number, chB: number
   const ia = A ? A.troops.indexOfSeq(seqA) : -1, ib = B ? B.troops.indexOfSeq(seqB) : -1;
   if (!A || !B || ia < 0 || ib < 0) return { aAlive: ia >= 0, bAlive: ib >= 0 };
   const ownerA = A.troops.owner[ia]!, ownerB = B.troops.owner[ib]!;
-  if (ownerA === ownerB) return { aAlive: true, bAlive: true };
+  if (!hostile(state, ownerA, ownerB)) return { aAlive: true, bAlive: true };
   if (state.events) {
     const pa = troopPosition(state, A, ia), pb = troopPosition(state, B, ib);
     const ev: SimEvent = {
@@ -91,7 +91,7 @@ export function headOnPass(state: SimState): void {
     const B = state.channels.get(A.to * state.buildings.n + A.from);
     if (!B) continue;
     while (A.troops.len > 0 && B.troops.len > 0) {
-      if (A.troops.owner[0] === B.troops.owner[0]) break;
+      if (!hostile(state, A.troops.owner[0]!, B.troops.owner[0]!)) break;
       if (progressOf(state, A, 0) + progressOf(state, B, 0) < A.length - contact) break;
       const r = exchange(state, A.key, A.troops.seq[0]!, B.key, B.troops.seq[0]!, 'headon');
       if (r.aAlive && r.bAlive) break; // max 2 rounds per pair per tick (R-CMB-05); survivors re-test next tick
@@ -160,7 +160,7 @@ export function arrivalPass(state: SimState): void {
     b.alive[ch.from]!--;
     state.counters.arrived++;
     const base = { channel: ch.key, seq, owner, kind: unit.id };
-    if (b.owner[to] === owner) {
+    if (!hostile(state, b.owner[to]!, owner)) {
       const sum = b.level[to]! + unit.defense, surplus = sum - b.maxLevel[to]!;
       setLevel(state, to, Math.min(sum, b.maxLevel[to]!));
       emit(state, { type: 'TroopArrived', ...base, effect: surplus > 0 ? 'overflow' : 'reinforce' });

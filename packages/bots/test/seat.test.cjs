@@ -186,3 +186,16 @@ test('startDelayMs: idles until delay elapsed, then normal cadence; absent = unc
   // 1000 ms = 20 ticks idle, then first action 34 ticks later, then every 35
   assert.deepEqual(collect({ ...P, startDelayMs: 1000 }), [54, 89]);
 });
+
+test('covers R3: pvp tie-break (key, dist2 to nearest own, index) mirrors targets across seats; default order unchanged', () => {
+  // 0 = seat0 home (left), 1 = seat1 home (right), 2/3 = equal neutral houses near-left/near-right (2 listed first).
+  const view = fakeView({ owner: [0, 1, -1, -1], level: [5, 5, 3, 3], xz: [[0, 0], [1000, 0], [250, 0], [750, 0]] });
+  const first = (me, byDistance) => bots.sortedTargets(view, me, byDistance)[0];
+  assert.equal(first(0, true), 2);
+  assert.equal(first(1, true), 3);
+  assert.equal(first(1, false), 2); // default: index tie only
+  const pvp = { ...P, pvpTieBreak: true };
+  const cmd = me => bots.decideDefault(view, allow, seq([0]), me, { timer: 1700 }, pvp)[0];
+  assert.equal(cmd(0).to, 2);
+  assert.equal(cmd(1).to, 3);
+});

@@ -9,7 +9,9 @@ assertType<Equal<EventOf<'LineDrawn'>, { type: 'LineDrawn'; from: number; to: nu
 assertType<Equal<EventOf<'LineCut'>['reason'], 'player' | 'replaced' | 'captured'>>();
 assertType<Equal<EventOf<'TroopSpawned'>['cause'], 'timer' | 'forward'>>();
 assertType<Equal<EventOf<'TroopArrived'>['effect'], 'reinforce' | 'overflow' | 'hit'>>();
-assertType<Equal<EventOf<'MatchOver'>['outcome'], 'won' | 'lost' | 'timeout'>>();
+assertType<Equal<EventOf<'MatchOver'>['outcome'], 'won' | 'lost' | 'timeout' | 'victory' | 'timeLimit' | 'draw'>>
+assertType<Equal<EventOf<'MatchOver'>['winners'], number[] | undefined>>();
+assertType<Equal<EventOf<'SeatEliminated'>['player'], number>>();
 assertType<Equal<EventOf<'MatchOver'>['winner'], number | null>>();
 assertType<Equal<EventOf<'Clash'>['kind'], 'headon' | 'crossing'>>();
 assertType<Equal<EventOf<'Clash'>['a'], { channel: number; seq: number; owner: number }>>();
@@ -18,7 +20,7 @@ assertType<Equal<EventOf<'TowerShot'>['target']['kind'], 'troop' | 'house'>>();
 assertType<Equal<EventOf<'CommandRejected'>['command'], CommandId>>();
 assertType<Equal<EventOf<'CommandRejected'>['reason'], RejectReason>>();
 assertType<Equal<SimEvent['type'], EventId>>();
-assertType<Equal<EventId, 'LineDrawn' | 'LineCut' | 'TroopSpawned' | 'TroopArrived' | 'BuildingCaptured' | 'MatchOver' | 'CommandRejected' | 'Clash' | 'TroopDied' | 'TowerShot'>>();
+assertType<Equal<EventId, 'LineDrawn' | 'LineCut' | 'TroopSpawned' | 'TroopArrived' | 'BuildingCaptured' | 'MatchOver' | 'SeatEliminated' | 'CommandRejected' | 'Clash' | 'TroopDied' | 'TowerShot'>>();
 
 // Emitting or reading an undeclared field must fail to compile.
 // @ts-expect-error unknown field on emit

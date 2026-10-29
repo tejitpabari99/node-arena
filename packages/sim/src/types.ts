@@ -5,7 +5,13 @@ import type { ModuleId, Phase, RejectReason, SimEvent } from '@node-arena/defs';
 
 export type CompiledLevel = ContentCompiledLevel;
 export type LineCutReason = 'player' | 'replaced' | 'captured';
-export type Outcome = 'won' | 'lost' | 'timeout';
+/** Per-match seat setup: `teams[i]` = team id of seat i (R-TEM-01). */
+export interface SeatSetup { readonly teams: readonly number[] }
+/** Derived final placement per team (R-WIN-07); never hashed. */
+export interface Placement {
+  team: number; seats: number[]; rank: number; buildings: number; troops: number; eliminatedAt: number | null;
+}
+export type Outcome = 'won' | 'lost' | 'timeout' | 'victory' | 'timeLimit' | 'draw';
 
 /** Building columns (int32, one slot per building). `col` holds `<module>.<field>` columns. */
 export interface Buildings {
@@ -21,7 +27,11 @@ export interface Buildings {
 }
 
 /** Seat columns (int32). `kind`: 0 human, 1 ai. colorKey is view-only and lives in the level. */
-export interface Players { readonly n: number; readonly kind: Int32Array }
+export interface Players {
+  readonly n: number; readonly kind: Int32Array;
+  /** Tick a seat was eliminated (R-ELM-01), -1 while alive. Written only for objective `pvp`. */
+  readonly eliminatedAt: Int32Array;
+}
 
 /** Ordered pair `from -> to`, key `from*n+to`, created lazily. Owner is derived (`owner[from]`). */
 export interface Channel {
@@ -49,12 +59,14 @@ export interface SimState {
   /** Per module id: indexes of buildings carrying it (static; computed once at create). */
   readonly carriers: Readonly<Record<ModuleId, Int32Array>>;
   tick: number;
-  over: { outcome: Outcome; winner: number | null } | null;
+  over: { outcome: Outcome; winner: number | null; winners?: number[]; ranking?: Placement[] } | null;
   drawSeq: number;
   troopSeq: number;
   rejected: number;
   readonly buildings: Buildings;
   readonly players: Players;
+  /** Static team id per seat (R-TEM-01); not hashed or mutated. */
+  readonly team: Int32Array;
   /** Lazy channels by key; hashed in ascending key order, only while live (drawn or holding troops). */
   readonly channels: Map<number, Channel>;
   /** Eager per-building surplus-forward streams (`fwd`, idx = building). */

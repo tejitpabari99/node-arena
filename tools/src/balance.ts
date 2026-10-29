@@ -2,7 +2,8 @@ import { generateHashes, loadContent, parseContentMeta, type ContentFiles } from
 import { BOT_VERSION } from '@node-arena/bots';
 import { runBalancePool } from './balance-pool.js';
 import type { BalanceObservation, BalanceProfile, BalanceTask } from './balance-match.js';
-import { campaignLevels, humanSeat, selectLevels } from './levels.js';
+import { campaignLevels, humanSeat, pvpLevels, selectLevels } from './levels.js';
+import { pvpFairness, PVP_BALANCE_DELAYS, type PvpFairnessRow } from './balance-pvp.js';
 import { LocatedError } from './files.js';
 export interface BalanceRow {
   level: string; position: number; profile: string; matches: number; observations: number;
@@ -10,9 +11,9 @@ export interface BalanceRow {
 }
 export interface BalanceReport {
   header: {rulesVersion:string;contentVersion:string;botHash:Record<string,string>;BOT_VERSION:string};
-  mode: 'campaign'|'arena'; seeds: number; profiles: string[]; rows: BalanceRow[];
+  mode: 'campaign'|'arena'|'pvp'; seeds: number; profiles: string[]; rows: BalanceRow[]; pvp?: PvpFairnessRow[];
 }
-export interface BalanceOptions {levels?:string;proxy?:string;seeds?:number;jobs?:number;mode?:'campaign'|'arena'}
+export interface BalanceOptions {levels?:string;proxy?:string;seeds?:number;jobs?:number;mode?:'campaign'|'arena'|'pvp'}
 function median(values: number[]): number | null {
   if (!values.length) return null;
   values.sort((a,b)=>a-b); const middle = Math.floor(values.length/2);
@@ -33,7 +34,16 @@ export async function balance(data: ContentFiles, meta: string | object, options
   const seeds = options.seeds ?? 20, jobs = options.jobs ?? 2, mode = options.mode ?? 'campaign';
   if (!Number.isSafeInteger(seeds) || seeds < 1 || seeds > 4294967295) throw new LocatedError('arguments','--seeds must be an integer in 1..4294967295');
   if (!Number.isSafeInteger(jobs) || jobs < 1) throw new LocatedError('arguments','--jobs must be a positive safe integer');
-  if (mode !== 'campaign' && mode !== 'arena') throw new LocatedError('arguments','--mode must be campaign or arena');
+  if (mode !== 'campaign' && mode !== 'arena' && mode !== 'pvp') throw new LocatedError('arguments','--mode must be campaign, arena or pvp');
+  if (mode === 'pvp') {
+    // Report-only self-play fairness: every seat of a pvp map runs the same proxy; no worker pool (in-process, deterministic).
+    const delays = options.proxy ? parseProfiles(options.proxy).filter(p=>p.ad !== null).map(p=>p.ad!) : [...PVP_BALANCE_DELAYS];
+    if (!delays.length) throw new LocatedError('arguments','--mode pvp needs at least one proxy action delay (idle is not a self-play config)');
+    const { compiled } = loadContent(data);
+    const maps = pvpLevels(data).filter(l=>!options.levels || options.levels === 'all' || options.levels.split(',').includes(l.id));
+    const metadata = parseContentMeta(meta);
+    return {header:{rulesVersion:metadata.rulesVersion,contentVersion:metadata.contentVersion,botHash:generateHashes(loadContent(data)).bots,BOT_VERSION},mode,seeds,profiles:delays.map(d=>`proxy-${d}`),rows:[],pvp:maps.map(l=>pvpFairness(compiled[l.id]!,l.position,seeds,delays))};
+  }
   const profiles = parseProfiles(options.proxy ?? DEFAULT_PROXY);
   const { levels, compiled } = !options.levels || options.levels === 'all'
     ? { levels: campaignLevels(data), compiled: loadContent(data).compiled }

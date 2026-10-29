@@ -10,6 +10,8 @@ Browser tower-strategy game: draw persistent routes, capture buildings and compl
 - `packages/content/` — browser-safe schemas, validation, compilation, content data and hash locks.
 - `packages/sim/` — deterministic integer simulation, replay playback, goldens and benchmarks.
 - `packages/bots/` — default/scripted AI and human proxy.
+- `packages/net/` — transport-free multiplayer protocol, session and lockstep core.
+- `apps/server/` — PvP game server (`@node-arena/server`, Node + ws).
 - `apps/web/` — Vite + Preact + Three.js client, local progress/audio settings and browser tests.
 - `tools/` — importers, asset pipeline, gates, level determinism and balance reports; [commands and gate semantics](tools/README.md).
 - `docs/GAME_RULES.md` — mechanics contract, stable rule IDs and version history.
@@ -17,7 +19,7 @@ Browser tower-strategy game: draw persistent routes, capture buildings and compl
 - `docs/research/` — teardown evidence and historical research; `docs/agent_files/` — approved designs/tasks and run records.
 - `docs/FUTURES.md` — deferred features.
 
-The shipped campaign is the Common list's positions **4–23** (tutorial positions 1–3 omitted), shown as levels 1–20 in the client. `packages/content/data/campaigns/common.json` is authoritative. Cargo and tutorial scripts are dropped; position 23 also drops one wall. These are documented fidelity limits in the levels guide. Multiplayer and later campaign positions remain deferred.
+The shipped campaign is the Common list's positions **4–23** (tutorial positions 1–3 omitted), shown as levels 1–20 in the client. `packages/content/data/campaigns/common.json` is authoritative. Cargo and tutorial scripts are dropped; position 23 also drops one wall. These are documented fidelity limits in the levels guide. Local two-player PvP is available below; later campaign positions remain deferred.
 
 ## Screenshots
 
@@ -53,6 +55,25 @@ Chromium is also needed by content/sim browser parity checks; install it with th
 
 Committed levels and assets work without the original extract. Set `TW_EXTRACT` to the Tower War extract directory for `pnpm import:tw`, `pnpm check:import`, `pnpm assets:tw` and `pnpm assets:tw:check`. Without it, import writes fail with an explanation; import verification and art regeneration/checks skip. CI never downloads the extract; `pnpm check:manifest` still checks committed asset hashes, budgets and credits. See the [levels guide](docs/LEVELS_GUIDE.md) and [tools guide](tools/README.md) before regenerating data.
 
+## Play online (PvP)
+
+M1 supports local Duel S 1v1. After the Development prerequisites above (including `pnpm build:prerequisites`, which builds net), run:
+
+```sh
+pnpm dev:pvp
+```
+
+The command works in Windows Command Prompt/PowerShell, macOS and Linux. Keep the process running: web uses port 5173, server uses 8080. Existing `PORT` and `ALLOWED_ORIGINS` environment values override the server defaults. Plain `pnpm dev` runs only the web client.
+
+1. Tab A: open <http://127.0.0.1:5173/>, select **Play online**, enter a nickname, then **Create room**. M1 selects Duel S automatically; confirm the lobby map is **Na Pvp Duel S**.
+2. Note the four-character **Room code**. Replace XXXX in `http://127.0.0.1:5173/?room=XXXX` with that code.
+3. Open a genuinely fresh tab with your browser's New Tab command, then paste that URL into its address bar. Use the same browser profile if desired. Avoid Duplicate Tab or opening from a tab that copies its session storage: each player needs a distinct per-tab token.
+4. Tab B: a saved nickname joins automatically. A new visitor sees the nickname field and prefilled room code: enter a nickname, then **Join**. You may use a separate browser profile for a different saved nickname.
+5. Tab B: press **Ready**. Tab A: press **Start** (the host is already ready). After the countdown, draw routes from your buildings to capture the opponent's buildings. Keep both tabs visible in separate windows for the play-test; background tabs may throttle rendering.
+6. Finish the match and confirm both tabs show the corresponding Victory!/Defeat result (or Draw on both tabs). **Leave** returns to **Play online**; the lobby's **Leave** and in-match **Esc** → **Leave** do the same. The Esc menu does not pause play.
+
+Tokens live in per-tab `sessionStorage`; nicknames are shared through `localStorage`. Minimal play-link startup is included in M1. Full lobby controls, watch links, rematch, production server wiring and reconnect/catch-up remain later milestones. Owner human play-test and approval are still pending; rendering smoothing awaits play-test feedback.
+
 ## Deploy / hosting
 
 Static client on Firebase Hosting (project `node-arena-99`): <https://node-arena-99.web.app>. `firebase.json` serves `apps/web/dist` with an SPA rewrite.
@@ -61,3 +82,5 @@ Static client on Firebase Hosting (project `node-arena-99`): <https://node-arena
 - Same-repo PRs get a preview channel `pr-<N>` (7-day expiry) via `.github/workflows/preview.yml`; the URL is commented on the PR and the channel is deleted when the PR closes.
 - Both need the repo secret `FIREBASE_SERVICE_ACCOUNT` (JSON key of `github-deployer@node-arena-99.iam.gserviceaccount.com`, roles Firebase Hosting Admin + Service Usage Consumer).
 - Manual deploy (needs `firebase login`): `pnpm build:prerequisites && pnpm build:web && npx firebase-tools@15.34.1 deploy --only hosting --project node-arena-99`.
+
+PvP production hosting is M2. The owner reports Fly account/app/setup complete, but the Fly dashboard has no deployment yet; secret values have not been verified. Dockerfile, Fly configuration, first server deployment and production web/server wiring remain M2 work.
