@@ -7,6 +7,9 @@ date: 2026-10-28
 Repo/branch: node-arena / `feat/pvp` · Depends on: none · Consumed by: SP02 (types), SP03 (level schema), SP04 (referee, bots), SP05 (view/result)
 Owns: `docs/GAME_RULES.md`, `packages/defs/src/{objectives,events}.ts`, `packages/sim/src/{types,state,sim,win,hash,replay,read,contacts,crossings,modules/shoots}.ts`, `packages/content/src/{schemas,level,compile,versioning}.ts` (+ generated `schemas/*.json`, `content.json` rulesVersion), `packages/bots/src/{harness,tw-ai,version}.ts` (ally filter + harness `teams`), tests under `packages/*/test`, golden envelopes.
 
+## M2 amendment (2026-10-29)
+The original surrender non-goal below is historical M1 scope. SP07 adds a future M2 1v1 forfeit outcome and requires deterministic terminal logging/replay, rules and version design before coding; non-1v1 semantics remain open. Authoritative scope: [SP07 Pause, Quit and window-close forfeit](../07-pause-forfeit/PRD.md). Existing task lists await reconciliation after its open questions are settled.
+
 ## TL;DR
 - New objective `pvp`; `captureAll` code path and semantics untouched. Win/elimination logic is branched on `level.objective`.
 - Teams are a per-match `SeatSetup {teams[]}` given to `create()`; allies never fight, troops arriving at an ally building reinforce it (owner unchanged).
@@ -20,7 +23,7 @@ Owns: `docs/GAME_RULES.md`, `packages/defs/src/{objectives,events}.ts`, `package
 
 ## Goals / Non-Goals
 Goals: 2-4 seats, any seat human or bot (decided outside the sim); teams (1v1, FFA, 2v2, 3v1); ally non-aggression + reinforcement; elimination; deterministic outcome with placements; testable headless with `runMatch`.
-Non-goals: lobby/net/UI (SP02/04/05); the three maps (SP03); bot difficulty presets (SP04, bots package); alliance changes mid-match; shared ownership or control of ally buildings; surrender command.
+Non-goals: lobby/net/UI (SP02/04/05); the three maps (SP03); bot difficulty presets (SP04, bots package); alliance changes mid-match; shared ownership or control of ally buildings; surrender command in original M1 (future M2 forfeit: SP07).
 
 ## Requirements
 | # | Requirement | M |

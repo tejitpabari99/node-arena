@@ -6,6 +6,9 @@ date: 2026-10-28
 # PRD: Net Protocol (packages/net)
 Repo/branch: node-arena / feat/pvp · Depends on: 01-seat-rules (outcome/seat types, interface assumption below) · Owns: `packages/net/**`, root `package.json` script/filter entries for net, `docs/agent_files/.../02-net-protocol/`
 
+## M2 amendment (2026-10-29)
+SP07 requires M2 pause-control/state validation, paused-input handling and terminal-forfeit log/replay support. Tick-only heartbeat assumptions below must be replaced by independent bounded liveness detection during pause. Minimum reconnect/catch-up is M2 before disconnect pause is enabled; general auto-resync remains M3. Authoritative scope: [SP07 Pause, Quit and window-close forfeit](../07-pause-forfeit/PRD.md). Existing task lists await reconciliation after its open questions are settled.
+
 ## TL;DR
 `@node-arena/net`: pure TS, no sockets/DOM/Node APIs. Holds (1) message catalogue + versioning + strict runtime validation, (2) `LockstepServer` / `LockstepClient` schedulers, (3) bounded `CommandLog` + catch-up runner built on `sim.create` / `Sim.step`. Server (04) and web (05) only add transport and UI. Fully unit-testable with in-memory fakes.
 

@@ -6,6 +6,9 @@ date: 2026-10-28
 # PRD: Deploy, CI and E2E for PvP
 Repo/branch: node-arena / feat/pvp · Depends on: 04-game-server (image, fly.toml, env, `/healthz`), 05-web-netplay (screens, test ids, server URL var), 02 (version handshake) · Owns: `.github/workflows/{deploy-server.yml,deploy.yml,preview.yml,ci.yml}` edits, `scripts/ci.sh` PvP steps, root `package.json` (`dev:pvp`, `test:pvp:e2e`), `apps/web/{playwright.pvp.config.ts,e2e-pvp/**}`, `apps/server/README.md`, `docs/PVP_OPS.md` (owner runbook), README / `tools/README.md` / `docs/FUTURES.md` / `AGENTS.md` doc edits, one `[env] ALLOWED_ORIGINS` line in `apps/server/fly.toml`
 
+## M2 amendment (2026-10-29)
+SP07 adds future M2 two-browser coverage for cumulative pause time, freeze/Resume, Quit confirmation, window-close/return/expiry and immutable results. Enable disconnect pause only after minimum M2 reconnect/catch-up is available. No implementation or task regeneration is authorized while SP07 policies remain open. Authoritative scope: [SP07 Pause, Quit and window-close forfeit](../07-pause-forfeit/PRD.md). Existing task lists await reconciliation after its open questions are settled.
+
 ## TL;DR
 `pnpm dev:pvp` starts server + web; M1 play-test = two tabs on `?room=`. CI gains net/server steps, a Docker build+boot check and a 2-browser Playwright job. `deploy.yml` becomes `changes -> server (reusable deploy-server.yml) -> web`, so a new web never talks to an older server. Previews use the prod server; PvP self-disables in the preview when the handshake says versions differ. Docs updated, owner runbook for Fly.
 

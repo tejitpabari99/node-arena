@@ -7,8 +7,11 @@ date: 2026-10-28
 Repo/branch: node-arena / `feat/pvp` · Depends on: 01-seat-rules (outcome/`team` view), 02-net-protocol (messages, `LockstepClient`, catch-up), 04-game-server (behavior), 03-pvp-maps (`listPvpMaps`) · Consumed by: 06-deploy-e2e (hooks, server URL)
 Owns: `apps/web/src/{net/**,pvp/**,ui/pvp/**}`, small edits to `apps/web/src/{main.tsx,app/state.ts (types only),driver/index.ts (interface export),input/index.ts,ui/{App,Picker,ownership}.tsx,test-harness/index.ts,style.css}`, `apps/web/{package.json,vite.config.ts}` (net dep + alias, env typing), tests under `apps/web/test/pvp/`.
 
+## M2 amendment (2026-10-29)
+M1 remains a non-pausing Esc/Leave menu. SP07 supersedes blanket no-pause and 1v1 bot-takeover UX for M2 with synchronized pause/countdown, owner Resume and confirmed Quit forfeit. Minimum reconnect/catch-up/runtime recreation moves into M2 before window-close pause; hidden tabs alone still never auto-pause. Non-1v1 policy remains open. Authoritative scope: [SP07 Pause, Quit and window-close forfeit](../07-pause-forfeit/PRD.md). Existing task lists await reconciliation after its open questions are settled.
+
 ## TL;DR
-- Separate `NetDriver` (not a GameDriver mode): ticks advance only from server `tick`s via `LockstepClient`; no pause/speed/auto-pause. Both drivers satisfy a small `MatchDriver` interface that runtime + input consume, so campaign code paths stay byte-for-byte.
+- Separate `NetDriver` (not a GameDriver mode): ticks advance only from server `tick`s via `LockstepClient`; M1 has no pause/speed/auto-pause; M2 server-controlled pause follows SP07. Both drivers satisfy a small `MatchDriver` interface that runtime + input consume, so campaign code paths stay byte-for-byte.
 - A separate `PvpController` (own state, subscribe/events API like `AppController`) owns connection, lobby, match, result. `App.tsx` renders its screens when active; `AppController` is not extended.
 - Identity: nickname in localStorage key `nodearena:pvp`; player token in `sessionStorage` (per tab, survives reload in the same tab -> reconnect; two tabs in one profile = two players). `nodearena:save` is untouched, so no schema bump/migration.
 - Deep links `?room=ABCD` / `&watch`, server URL via `VITE_PVP_SERVER_URL`, `window.__na.pvp` + `data-testid`s for SP06.
@@ -26,7 +29,7 @@ Non-goals: prediction, chat, accounts/Firebase (hello `auth` slot only), mobile 
 |---|---|---|
 | R1 | Main menu gains "Play online" (hidden when no server URL configured in a prod build). Opens PvP menu: nickname field (1-20, persisted), Create room, Join by 4-char code, Watch by code. | M1 (create/join), M2 (watch) |
 | R2 | Lobby shows code, share link (copy button; play link and `&watch` link), map cards from `listPvpMaps`, seat rows, spectator count, connection state. Host: choose map, seat kind human/bot(easy/normal/hard)/empty, team per seat, Start. Non-host: Ready toggle only. Start disabled with reason text until server rules pass (unready/empty seat). | M1 (2 seats, Duel S, start+ready), M2 (all) |
-| R3 | Match start: show "Get ready" countdown (`countdownMs`), create sim from `start` (`levelId`, `seed`, `teams`), step only on ticks. HUD: ownership bar (N colors), seat legend (color dot, nick, team badge, "you", eliminated/bot/disconnected status), time remaining from `timeLimitTicks`. No pause button; Esc opens a non-pausing menu with Leave only. | M1 (bar+timer), M2 (legend) |
+| R3 | Match start: show "Get ready" countdown (`countdownMs`), create sim from `start` (`levelId`, `seed`, `teams`), step only on ticks. HUD: ownership bar (N colors), seat legend (color dot, nick, team badge, "you", eliminated/bot/disconnected status), time remaining from `timeLimitTicks`. M1: no pause button; Esc opens a non-pausing menu with Leave only. M2 pause/Resume/Quit follows SP07. | M1 (bar+timer), M2 (legend) |
 | R4 | Input: drawing starts only from own buildings; targets may be any building incl. allies (sim canDraw is authority; reason text shown as today). Spectators: input disabled, "Spectating" badge. | M1 |
 | R5 | Catch-up: join/reconnect/spectate/background-return show "Catching up N%" overlay; the frame budget never blocks input or paint for more than ~8 ms of stepping. Live play resumes with no gap. | M2 |
 | R6 | Result popup from the server `end` outcome (not locally derived): Victory / Defeat / Draw (you among winners) / team-win / spectator "X won"; placement table for N seats/teams with nick, team, buildings, troops; buttons Rematch (players) and Leave. Shown after local sim reaches `finalTick` (or 3 s after `end`), then presentation delay as today. | M1 (win/lose), M2 (N-seat, draw, rematch) |
@@ -81,7 +84,7 @@ Resync/reconnect: dispose client+sim, create fresh `create(level, seed, {teams})
 | 3 | Persistence | Nick in localStorage `nodearena:pvp`; token in `sessionStorage` | Add nick to `nodearena:save` (v3 + migration); token in localStorage | Save validator is exact-field and discards unknown shapes; per-tab token lets two tabs in one profile be two players [RESOLVED: orchestrator] |
 | 4 | Prediction | None | Local ghost line until echoed | Server-side delay 150 ms is consistent and simple; revisit after M1 play-test [RESOLVED] |
 | 5 | Jitter buffer | Step on arrival, hold alpha | Fixed 100 ms playout buffer | Server delay already hides jitter; buffer would add latency [RESOLVED] |
-| 6 | Hidden tab | Never pause; catch up on return | Auto-pause | Locked: no pause in PvP; server never waits |
+| 6 | Hidden tab | Never pause; catch up on return | Auto-pause | Visibility alone never auto-pauses; M2 explicit/detected-disconnect pause follows SP07 |
 | 7 | Seat identity in input | `seat` option, `null` = spectator | Infer from `kind` | All PvP seats are `human` placeholders |
 | 8 | Server URL | `VITE_PVP_SERVER_URL`; dev default `ws://127.0.0.1:8080`; hide entry if unset in prod | Hard-coded; runtime config fetch | Static hosting; SP06 sets it per channel |
 | 9 | Result source | Server `end` | Local `sim.view.over` | Locked: server decides outcome |
@@ -90,7 +93,7 @@ Resync/reconnect: dispose client+sim, create fresh `create(level, seed, {teams})
 
 ## Risks / Open Questions
 - [RESOLVED: SP05 renders `lobby.state` as sent; map list = client `listPvpMaps(catalog)`, selection validated by server — agent recommendation]
-- [RESOLVED: reconnect-after-takeover in M2 lands as spectator (server contract); UI says "A bot took your seat" with Watch — agent recommendation]
+- [RESOLVED: historical takeover proposal superseded for 1v1 by SP07; M2 reconnect must recover the same pause budget before its deadline. Non-1v1 takeover/forfeit policy remains open in SP07.]
 - Risk: `createBrowserRuntime` binds `driver.sim.view` once; sim rebuild (resync/reconnect) needs runtime recreation. Mitigation: controller recreates runtime on rebuild (M3). [verify at impl]
 - Risk: catch-up of an 8 min match at 6-8 ms/frame budget: 9600 ticks x ~0.25 ms = ~2.4 s CPU -> 5-6 s overlay on mid-range hardware. Acceptable; SP02 `createCatchup` same budget.
 - Risk: background-throttled tab sends hash late -> false desync? Server compares per checkpoint when received; late hash for old tick is still valid. [RESOLVED: SP04 compares by tick]
