@@ -1,4 +1,7 @@
-import { useLayoutEffect, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
+import { ownership } from '../ownership';
+import { PvpHud } from './PvpHud';
+import { DESYNC_TOAST, Toast } from './Toast';
 import type { PvpController } from '../../pvp/controller';
 import { Lobby } from './Lobby';
 import { PvpMenu } from './PvpMenu';
@@ -13,5 +16,25 @@ export function PvpLayer({pvp}:{pvp:PvpController}){
       seatColors={(level?.players??[]).map(p=>palettes[p.colorKey])} onReady={()=>pvp.ready()} onStart={()=>pvp.start()} onLeave={()=>{pvp.leave();pvp.close();}} onRetry={()=>pvp.retry()} onDismissError={()=>pvp.dismissError()}/>;
   }
   if(s.screen==='countdown')return <p class="pvp-countdown" role="status" data-testid="pvp-countdown">Get ready</p>;
+  if(s.screen==='playing')return <PvpPlaying pvp={pvp}/>;
   return null;
+}
+export const TOAST_MS=5000;
+function PvpPlaying({pvp}:{pvp:PvpController}){
+  const [,bump]=useState(0),[menu,setMenu]=useState(false),[toast,setToast]=useState(false);
+  useLayoutEffect(()=>pvp.subscribeEvents(u=>{if(u.tick%5===0)bump(n=>n+1);}),[pvp]);
+  useEffect(()=>{
+    const key=(e:KeyboardEvent)=>{if(e.key==='Escape')setMenu(m=>!m);};
+    window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);
+  },[]);
+  useEffect(()=>{
+    let t:ReturnType<typeof setTimeout>|undefined;
+    const off=pvp.subscribePvpEvents(e=>{if(e.t!=='desync')return;setToast(true);clearTimeout(t);t=setTimeout(()=>setToast(false),TOAST_MS);});
+    return()=>{off();clearTimeout(t);};
+  },[pvp]);
+  const s=pvp.snapshot(),view=pvp.driver?.sim.view;
+  return <>
+    <PvpHud segments={view?ownership(view):[]} palettes={(pvp.manifest?.palettes??{}) as Record<string,string>} ticksLeft={(s.start?.timeLimitTicks??0)-(view?.tick??0)} seat={s.seat} menuOpen={menu} onLeave={()=>{pvp.leave();pvp.close();}}/>
+    {toast&&<Toast message={DESYNC_TOAST} testId="toast-desync"/>}
+  </>;
 }
