@@ -193,6 +193,8 @@ export function createPvpController(options: PvpOptions) {
     switch (m.t) {
       case 'welcome':
         welcomed = true;
+        // A play-link reload may already own this seat; onAuthed replays room state.
+        if (pending?.t === 'room.join' && pending.role === 'play' && m.resume?.code === pending.code) pending = null;
         if (pending) { const p = pending; dispatch(p); }
         break;
       case 'room.joined': {
@@ -238,7 +240,7 @@ export function createPvpController(options: PvpOptions) {
         break;
       case 'error':
         if (state.screen === 'connecting') reset(errorString(m.code));
-        else publish({ error: errorString(m.code) });
+        else if (!syncLost || !driver) publish({ error: errorString(m.code) });
         break;
       default: break;
     }

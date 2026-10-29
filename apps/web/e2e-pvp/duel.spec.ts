@@ -84,8 +84,12 @@ test('reload during a match exposes sync loss and Leave returns to the online me
   const { a, b } = await openMatch(browser);
   await expect.poll(() => b.evaluate(() => (window as any).__na.pvp.tick())).toBeGreaterThan(2);
   // Same-tab reload retains the player token but M1 cannot recover missed ticks.
+  const sentTypes: string[] = [];
+  b.on('websocket', socket => socket.on('framesent', ({ payload }) => sentTypes.push(JSON.parse(String(payload)).t)));
   await b.reload();
   await expect(b.getByTestId('toast-sync-lost')).toContainText('Out of sync. Leave and rejoin.');
+  // welcome.resume already owns the room: a second join would race a bad-lobby error against the gap notice.
+  expect(sentTypes).not.toContain('room.join');
   await b.getByTestId('pvp-sync-leave').click();
   await expect(b.getByTestId('pvp-create')).toBeVisible();
   await a.keyboard.press('Escape');

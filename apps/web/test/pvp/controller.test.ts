@@ -96,6 +96,18 @@ describe('PvpController lobby flow', () => {
     expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', code: 'ABCD', error: 'Online play is unavailable.' });
     expect(h.urls).toEqual([]);
   });
+  it('welcome resume suppresses a pending join for the room already being replayed', () => {
+    const h = setup(); h.ctl.setNick('Bob'); h.ctl.openLink({ code: 'ABCD', role: 'play' });
+    h.c.push({ ...welcome, resume: { code: 'ABCD', seat: 1 } } as ServerMessage);
+    expect(h.sent).toEqual([]);
+    h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'lobby', code: 'ABCD', seat: 1 });
+  });
+  it('welcome resume for a different room does not silently discard the requested join', () => {
+    const h = setup(); h.ctl.setNick('Bob'); h.ctl.openLink({ code: 'ABCD', role: 'play' });
+    h.c.push({ ...welcome, resume: { code: 'WXYZ', seat: 1 } } as ServerMessage);
+    expect(h.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'play' }]);
+  });
   it('ready toggles for non-host only; start host-only', () => {
     const h = setup(); h.ctl.open(); h.ctl.join('ABCD'); h.c.push(welcome);
     h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } }); h.c.push(lobby(0, false));
@@ -234,6 +246,18 @@ describe('PvpController match lifecycle', () => {
     (leave.props.onClick as () => void)();
     expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.ctl.snapshot().end).toBeNull();
     expect(g.sent.at(-1)).toEqual({ t: 'room.leave' });
+  });
+  it('sync-loss notice survives late lobby errors and further rejected ticks', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      g.c.push(g.tickMsg(5));
+      g.c.push({ t: 'error', code: 'bad-lobby', detail: 'already in a room' } as ServerMessage);
+      g.c.push(g.tickMsg(6));
+    } finally { warn.mockRestore(); }
+    expect(g.ctl.snapshot()).toMatchObject({ screen: 'countdown', error: 'Out of sync. Leave and rejoin.' });
+    const alert = find(PvpLayer({ pvp: g.ctl }), n => n.props['data-testid'] === 'toast-sync-lost')[0];
+    expect(alert).toBeDefined(); g.ctl.dispose();
   });
   it.each(['countdown', 'playing', 'result'] as const)('same-room reauth preserves %s screen and the active driver', async (screen) => {
     const g = game(); g.c.push(startMsg()); await flush();
