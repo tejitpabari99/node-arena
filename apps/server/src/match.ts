@@ -37,6 +37,8 @@ export interface MatchController {
   pauseState(room: Room): PauseStateMsg | undefined;
   /** True while any hold exists (such rooms are never GC-dropped). */
   hasPendingDeadline(room: Room): boolean;
+  /** Countdown cancelled: drops clock membership, pause timers and all per-room state so nothing leaks into the next Start. */
+  cancel(room: Room): void;
   /** Test-visible: the room's lockstep server (command log survives match end). */
   inspect(room: Room): LockstepServer | undefined;
   /** Test-visible: the room's referee sim. */
@@ -155,7 +157,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
     };
 
     const tick = (): void => {
-      if (room.state === 'ended' || room.state === 'closed') { stop(); return; }
+      if (room.state === 'ended' || room.state === 'closed' || room.state === 'lobby') { stop(); return; }
       runTick(false);
     };
 
@@ -303,5 +305,11 @@ export function createMatchController(deps: MatchDeps): MatchController {
 
   const hasPendingDeadline = (room: Room): boolean => active.get(room)?.pause.paused() ?? false;
 
-  return { onStart, onMessage, catchUp, onSeatDisconnect, onSeatReconnect, pauseState, hasPendingDeadline, inspect: (room) => servers.get(room), simOf: (room) => sims.get(room) };
+  const cancel = (room: Room): void => {
+    const m = active.get(room);
+    if (m !== undefined) { clock.remove(m.clockRoom); m.clockOn = false; m.pause.dispose(); }
+    active.delete(room); servers.delete(room); sims.delete(room); feeds.delete(room);
+  };
+
+  return { onStart, cancel, onMessage, catchUp, onSeatDisconnect, onSeatReconnect, pauseState, hasPendingDeadline, inspect: (room) => servers.get(room), simOf: (room) => sims.get(room) };
 }

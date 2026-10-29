@@ -21,6 +21,8 @@ export const ENDED_ROOM_TTL_MS = 10 * 60_000;
 export const LOBBY_EMPTY_TTL_MS = 2 * 60_000;
 /** Hard match cap = time limit + this; unlimited (limit 0) matches have no cap here. */
 export const MATCH_CAP_EXTRA_MS = 2 * 60_000;
+/** A dropped lobby human's seat stays reserved this long for a token reconnect, then is freed (SP07 P13). */
+export const SEAT_RESERVE_MS = 30_000;
 const SWEEP_MS = 60_000;
 const MAX_CODE_TRIES = 64;
 
@@ -95,6 +97,8 @@ export interface RoomManagerDeps {
   onSeatReconnect?: (room: Room, seat: number, conn: Conn) => void;
   /** SP07: current pause snapshot for late attachers (watchers). */
   pauseStateOf?: (room: Room) => import('@node-arena/net').PauseStateMsg | undefined;
+  /** SP07: countdown cancelled; unwind the match controller's per-room state (clock membership, sim, lockstep, pause). */
+  onStartCancel?: (room: Room, match: MatchStart) => void;
   /** Sends `catchup` chunks (ticks [0, next)) to a conn; called right after its `start`, before it joins the live fan-out. */
   onCatchUp?: (room: Room, conn: Conn) => void;
 }
@@ -120,6 +124,17 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   const byPlayer = new Map<string, Room>();
   const maxRooms = deps.maxRooms ?? Infinity;
   let matchSeq = 0;
+
+  const timers = deps.timers ?? {
+    setTimeout: (fn: () => void, ms: number) => { const h = setTimeout(fn, ms); h.unref(); return h; },
+    clearTimeout: (h: never) => clearTimeout(h),
+  };
+  /** Pending seat-reserve timers (lobby drop), keyed by the occupant. */
+  const reserves = new WeakMap<Occupant, unknown>();
+  const clearReserve = (o: Occupant): void => {
+    const h = reserves.get(o);
+    if (h !== undefined) { timers.clearTimeout(h as never); reserves.delete(o); }
+  };
 
   const defaultLevelId = content.pvpLevelIds[0];
 
@@ -232,12 +247,40 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     broadcast(room);
   };
 
+  /** Countdown -> lobby with full unwind: match/startAt cleared, controller state dropped, ready cleared, `start.cancel` then `lobby.state`. */
+  const cancelCountdown = (room: Room, rebroadcast = true): void => {
+    const match = room.match;
+    if (room.state !== 'countdown' || match === undefined) return;
+    deps.onStartCancel?.(room, match);
+    room.state = 'lobby';
+    room.match = undefined;
+    room.startAt = undefined;
+    for (const s of room.seats) if (s.occupant) s.occupant.ready = false;
+    const m: ServerMessage = { t: 'start.cancel', matchId: match.matchId };
+    for (const c of room.conns()) c.send(m);
+    log?.info('room.start.cancel', { room: room.code, matchId: match.matchId });
+    if (rebroadcast) broadcast(room);
+  };
+
+  /** Lobby human lost their socket: keep the seat SEAT_RESERVE_MS for a token reconnect, pass host on, then free it. */
+  const reserveSeat = (room: Room, i: number): void => {
+    const o = room.seats[i]!.occupant!;
+    clearReserve(o);
+    if (room.host === i) room.host = pickHost(room);
+    reserves.set(o, timers.setTimeout(() => {
+      reserves.delete(o);
+      if (room.state === 'lobby' && room.seats[i]?.occupant === o && o.conn.closed) leave(o.conn);
+    }, SEAT_RESERVE_MS));
+  };
+
   const leave = (conn: Conn): void => {
     const room = byPlayer.get(conn.playerId ?? '');
     if (room === undefined) return;
     if (room.state === 'closed') { drop(room); return; }
     const i = seatOf(room, conn);
-    // Running: a seated leave is a quit (pending Forfeit; client confirms first). Countdown cancel is Task 8.
+    // Countdown: a seated leave cancels the start (full unwind), then the seat is freed like a lobby leave.
+    if (i >= 0 && room.state === 'countdown') cancelCountdown(room, false);
+    // Running: a seated leave is a quit (pending Forfeit; client confirms first).
     if (i >= 0 && room.state === 'running') { deps.onMatchMessage?.(room, conn, i, { t: 'quit' }); return; }
     if (i < 0) { // spectators may leave any time
       room.spectators = room.spectators.filter((o) => o.playerId !== conn.playerId);
@@ -246,7 +289,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       return;
     }
     if (room.state !== 'lobby' && room.state !== 'ended') return;
-    if (i >= 0) { delete room.seats[i]!.occupant; }
+    if (i >= 0) { clearReserve(room.seats[i]!.occupant!); delete room.seats[i]!.occupant; }
     else room.spectators = room.spectators.filter((o) => o.playerId !== conn.playerId);
     byPlayer.delete(conn.playerId!);
     if (i < 0) { if (room.state === 'lobby') broadcast(room); return; }
@@ -423,10 +466,6 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     }
   };
 
-  const timers = deps.timers ?? {
-    setTimeout: (fn: () => void, ms: number) => { const h = setTimeout(fn, ms); h.unref(); return h; },
-    clearTimeout: (h: never) => clearTimeout(h),
-  };
   const sweep = (): void => { try { gc(); } finally { timers.setTimeout(sweep, SWEEP_MS); } };
   timers.setTimeout(sweep, SWEEP_MS);
 
@@ -446,6 +485,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       if (room === undefined) return;
       const i = seatOf(room, conn);
       if (i < 0) return;
+      clearReserve(room.seats[i]!.occupant!);
       room.seats[i]!.occupant!.conn = conn;
       if (room.host === null && (room.state === 'lobby' || room.state === 'ended')) room.host = i; // returning member of a hostless room
       conn.send({ t: 'room.joined', code: room.code, you: { seat: i, host: room.host === i } });
@@ -458,9 +498,10 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     /** Heartbeat silence: treat as a disconnect now (the socket close may lag on a dead TCP link). */
     onHeartbeatTimeout(conn) {
       const room = byPlayer.get(conn.playerId ?? '');
-      if (room === undefined || room.state !== 'running') return;
+      if (room === undefined || (room.state !== 'running' && room.state !== 'countdown')) return;
       const i = seatOf(room, conn);
       if (i < 0 || room.seats[i]!.occupant!.conn !== conn) return;
+      if (room.state === 'countdown') { cancelCountdown(room); return; } // away before tick 0: cancel (the close that follows reserves the seat)
       deps.onSeatDisconnect?.(room, i);
     },
     room: (code) => rooms.get(code),
@@ -484,6 +525,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
           const room = byPlayer.get(conn.playerId!);
           const i = room === undefined ? -1 : seatOf(room, conn);
           if (room === undefined || i < 0) return conn.sendError(room === undefined && msg.t !== 'cmd' && msg.t !== 'hash' ? 'no-match' : 'not-your-seat');
+          if (msg.t === 'quit' && room.state === 'countdown') return cancelCountdown(room); // quit before tick 0 cancels to lobby
           if (deps.onMatchMessage?.(room, conn, i, msg)) return;
           return conn.sendError('internal', 'not supported yet');
         }
@@ -509,16 +551,9 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       const o = room.seats.find((s) => s.occupant?.playerId === conn.playerId)?.occupant;
       if (o !== undefined && o.conn !== conn) return;
       if (o === undefined) { leave(conn); return; } // spectator: just drop them
-      if (room.state === 'running') deps.onSeatDisconnect?.(room, seatOf(room, conn));
-      if (room.state === 'countdown' || room.state === 'running') {
-        // Running: never closed here; the match plays on and SP07 deadlines / the hard cap end it. Countdown cancel is SP07.
-        if (room.state === 'countdown' && room.seats.every((s) => s.occupant === undefined || s.occupant.conn.closed)) {
-          room.state = 'closed'; room.endedAt = deps.now();
-          log?.info('room.close', { room: room.code, reason: 'abandoned' });
-          drop(room);
-        }
-        return;
-      }
+      if (room.state === 'running') { deps.onSeatDisconnect?.(room, seatOf(room, conn)); return; } // never closed here; SP07 deadlines / hard cap end it
+      if (room.state === 'countdown') { reserveSeat(room, seatOf(room, conn)); cancelCountdown(room); return; }
+      if (room.state === 'lobby') { reserveSeat(room, seatOf(room, conn)); broadcast(room); return; }
       leave(conn);
     },
   };

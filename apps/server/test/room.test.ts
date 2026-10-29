@@ -37,9 +37,11 @@ function setup(randomInt?: (a: number, b: number) => number) {
   let now = 1000;
   const clock = createClock({ now: () => now, setTimeout: () => 0 });
   const starts: MatchStart[] = [];
+  const pending: Array<{ fn: () => void; ms: number }> = [];
   const mgr = createRoomManager({
     content, clock, now: () => now, inputDelay: 3, ...(randomInt ? { randomInt } : {}),
     onStart: (_r, m) => void starts.push(m),
+    timers: { setTimeout: (fn, ms) => { pending.push({ fn, ms }); return pending.length; }, clearTimeout: () => {} },
   });
   const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', timers: { setTimeout: () => 0, clearTimeout: () => {} } });
   let n = 0;
@@ -51,7 +53,7 @@ function setup(randomInt?: (a: number, b: number) => number) {
     s.clear();
     return s;
   };
-  return { mgr, hub, client, starts, setNow: (t: number) => { now = t; } };
+  return { mgr, hub, client, starts, pending, setNow: (t: number) => { now = t; } };
 }
 
 const code = (s: ReturnType<typeof fakeSocket>): string => s.last('room.joined')!.code;
@@ -283,17 +285,21 @@ test('after start: lobby edits/join refused; second start refused', () => {
 });
 
 test('lobby leave/disconnect frees seat; empty room is removed; host transfers', () => {
-  const { client, mgr } = setup();
+  const { client, mgr, pending } = setup();
   const a = client('Ann'), b = client('Bob');
   a.say({ t: 'room.create' });
   const cd = code(a);
   b.say({ t: 'room.join', code: cd, role: 'play' });
   b.say({ t: 'lobby.ready', ready: true });
   a.drop();
-  const ls = b.last('lobby.state')!;
+  let ls = b.last('lobby.state')!;
   assert.equal(ls.host, 1);
-  assert.equal(ls.seats[0]!.occupant, undefined);
+  assert.equal(ls.seats[0]!.occupant?.status, 'grace'); // SP07: seat reserved 30 s
   assert.equal(ls.seats[1]!.occupant?.ready, true); // new host implicit
+  const reserve = pending.find((p) => p.ms === 30_000)!;
+  reserve.fn(); // reserve expires -> seat freed
+  ls = b.last('lobby.state')!;
+  assert.equal(ls.seats[0]!.occupant, undefined);
   b.say({ t: 'room.leave' });
   assert.equal(mgr.roomCount(), 0);
   assert.equal(mgr.room(cd), undefined);

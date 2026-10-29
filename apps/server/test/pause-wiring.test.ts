@@ -52,8 +52,8 @@ function setup() {
     randomInt: () => (n++ % 31),
     onStart: (r, m) => { starts.push(m); ctl.onStart(r, m); },
     onMatchMessage: ctl.onMessage, onCatchUp: ctl.catchUp,
-    onSeatDisconnect: ctl.onSeatDisconnect, onSeatReconnect: ctl.onSeatReconnect, pauseStateOf: ctl.pauseState, hasPendingDeadline: ctl.hasPendingDeadline,
-    timers: { setTimeout: () => 0, clearTimeout: () => {} },
+    onStartCancel: ctl.cancel, onSeatDisconnect: ctl.onSeatDisconnect, onSeatReconnect: ctl.onSeatReconnect, pauseStateOf: ctl.pauseState, hasPendingDeadline: ctl.hasPendingDeadline,
+    timers: { setTimeout: (fn, ms) => (ms === 60_000 ? 0 : fakeTimers.setTimeout(fn, ms)), clearTimeout: fakeTimers.clearTimeout }, // 60 s = gc sweep: ignored
   });
   const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', timers: { setTimeout: () => 0, clearTimeout: () => {} } });
   let c = 0;
@@ -79,8 +79,10 @@ function setup() {
       for (const r of [...rooms]) if (r.startAt <= now) r.tick();
     }
   };
-  return { room, client, advance, rooms, mgr, ctl, now: () => now };
+  return { room, client, advance, rooms, mgr, ctl, starts, now: () => now };
 }
+
+const lastStart = (t: ReturnType<typeof setup>) => t.starts[t.starts.length - 1]!;
 
 const startRunning = (t: ReturnType<typeof setup>) => {
   const r = t.room();
@@ -295,4 +297,105 @@ test('AC14: log saturated to cap-reserve still forfeits (system reserve)', () =>
   r.a.say({ t: 'quit' });
   assert.equal(r.room.state, 'ended', 'forfeit appended despite saturation');
   assert.equal(r.b.of('end').length, 1);
+});
+
+// ---- SP07 Task 8: lobby seat reserve + countdown cancel ----
+
+const lobbyOf = (s: ReturnType<typeof fakeSocket>) => s.of('lobby.state').at(-1)!;
+const lobby = (t: ReturnType<typeof setup>) => {
+  const a = t.client('A'), b = t.client('B');
+  a.say({ t: 'room.create' });
+  const code = a.of('room.joined')[0]!.code;
+  b.say({ t: 'room.join', code, role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  return { a, b, code };
+};
+
+test('AC9: lobby drop reserves seat 30 s (grace), host passes, Start refused, then freed; token reclaim within window', () => {
+  const t = setup();
+  const { a, b, code } = lobby(t);
+  a.drop();
+  let ls = lobbyOf(b);
+  assert.equal(ls.host, 1);
+  assert.equal(ls.seats[0]!.occupant?.status, 'grace');
+  b.say({ t: 'lobby.start' });
+  assert.equal(b.of('error').at(-1)!.code, 'not-ready'); // reserved occupant is not ready/connected
+  assert.equal(t.starts.length, 0);
+  t.advance(29_000);
+  assert.equal(lobbyOf(b).seats[0]!.occupant?.status, 'grace');
+  t.advance(1_500);
+  ls = lobbyOf(b);
+  assert.equal(ls.seats[0]!.occupant, undefined);
+  assert.equal(t.mgr.room(code)!.seats[0]!.occupant, undefined);
+  // reclaim path: B drops, returns with same token inside the window
+  b.drop();
+  const b2 = t.client('B', 2);
+  assert.equal(b2.of('room.joined').at(-1)!.code, code);
+  t.advance(40_000);
+  assert.ok(t.mgr.room(code)!.seats[1]!.occupant, 'timer cleared by reclaim');
+  assert.equal(lobbyOf(b2).seats[1]!.occupant?.status, 'connected');
+});
+
+test('AC9: countdown drop cancels with full unwind; start.cancel then lobby.state; later Start works with new matchId/seed', () => {
+  const t = setup();
+  const r = t.room();
+  const room = t.mgr.room(r.match.code)!;
+  assert.equal(room.state, 'countdown');
+  const before = r.b.sent.length;
+  r.a.drop();
+  assert.equal(room.state, 'lobby');
+  assert.equal(room.match, undefined);
+  assert.equal(room.startAt, undefined);
+  assert.equal(t.rooms.size, 0, 'ClockRoom removed');
+  assert.equal(t.ctl.inspect(room), undefined);
+  assert.equal(t.ctl.simOf(room), undefined);
+  const tail = r.b.sent.slice(before).map((m) => m.t);
+  assert.deepEqual(tail.slice(0, 2), ['start.cancel', 'lobby.state']);
+  assert.equal(r.b.of('start.cancel')[0]!.matchId, r.match.matchId);
+  assert.equal(lobbyOf(r.b).host, 1);
+  assert.equal(lobbyOf(r.b).seats[1]!.occupant?.ready, true);
+  t.advance(3500);
+  assert.equal(room.state, 'lobby', 'no stale tick 0');
+  assert.equal(r.b.of('tick').length, 0);
+  // A returns, readies, new Start
+  const a2 = t.client('A', 1);
+  a2.say({ t: 'lobby.ready', ready: true });
+  r.b.say({ t: 'lobby.start' });
+  const m2 = lastStart(t);
+  assert.notEqual(m2.matchId, r.match.matchId);
+  assert.notEqual(m2.seed, r.match.seed);
+  t.advance(3100);
+  assert.equal(room.state, 'running');
+});
+
+test('AC9: quit / leave in countdown cancel to lobby; pause stays no-match', () => {
+  const t = setup();
+  const r = t.room();
+  const room = t.mgr.room(r.match.code)!;
+  r.b.say({ t: 'pause' });
+  assert.equal(r.b.of('error').at(-1)!.code, 'no-match');
+  assert.equal(room.state, 'countdown');
+  r.b.say({ t: 'quit' });
+  assert.equal(room.state, 'lobby');
+  assert.equal(r.a.of('start.cancel').length, 1);
+  assert.equal(room.seats[1]!.occupant !== undefined, true, 'quit keeps the seat');
+  assert.equal(t.rooms.size, 0);
+  r.b.say({ t: 'lobby.ready', ready: true });
+  r.a.say({ t: 'lobby.start' });
+  assert.equal(room.state, 'countdown');
+  r.b.say({ t: 'room.leave' });
+  assert.equal(room.state, 'lobby');
+  assert.equal(room.seats[1]!.occupant, undefined);
+  assert.equal(r.a.of('start.cancel').length, 2);
+  assert.equal(t.rooms.size, 0);
+  assert.equal(lobbyOf(r.a).seats[1]!.occupant, undefined);
+});
+
+test('AC9: heartbeat timeout during countdown cancels', () => {
+  const t = setup();
+  const r = t.room();
+  const room = t.mgr.room(r.match.code)!;
+  t.mgr.onHeartbeatTimeout!(room.seats[1]!.occupant!.conn);
+  assert.equal(room.state, 'lobby');
+  assert.equal(r.a.of('start.cancel').length, 1);
 });
