@@ -62,6 +62,31 @@ describe('PvpController lobby flow', () => {
     h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: null, host: false } });
     expect(h.ctl.snapshot().role).toBe('watch');
   });
+  it('play link without a nickname prompts with the room code before joining', () => {
+    const h = setup();
+    h.ctl.openLink({ code: 'ABCD', role: 'play' });
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', code: 'ABCD', nick: '' });
+    expect(h.urls).toEqual([]);
+    h.ctl.setNick('  Bob  '); h.ctl.join(h.ctl.snapshot().code!); h.c.push(welcome);
+    expect(h.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'play' }]);
+  });
+  it('play link with a saved nickname joins immediately and reports a missing room', () => {
+    const h = setup(); h.ctl.setNick('Bob');
+    h.ctl.openLink({ code: 'ABCD', role: 'play' }); h.c.push(welcome);
+    expect(h.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'play' }]);
+    h.c.push({ t: 'error', code: 'room-not-found' });
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', error: ERROR_STRINGS['room-not-found'] });
+  });
+  it('invalid play link opens the menu with an error and no connection', () => {
+    const h = setup(); h.ctl.openLink(null);
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', error: expect.stringContaining('Invalid room code') });
+    expect(h.urls).toEqual([]);
+  });
+  it('play link reports unavailable online play without opening a connection', () => {
+    const h = setup(null); h.ctl.setNick('Bob'); h.ctl.openLink({ code: 'ABCD', role: 'play' });
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', code: 'ABCD', error: 'Online play is unavailable.' });
+    expect(h.urls).toEqual([]);
+  });
   it('ready toggles for non-host only; start host-only', () => {
     const h = setup(); h.ctl.open(); h.ctl.join('ABCD'); h.c.push(welcome);
     h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } }); h.c.push(lobby(0, false));

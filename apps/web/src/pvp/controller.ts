@@ -277,7 +277,16 @@ export function createPvpController(options: PvpOptions) {
     create() { if (state.screen === 'menu') connect({ t: 'room.create' }); },
     join(code: string, role: PvpRole = 'play') { if (state.screen === 'menu') connect({ t: 'room.join', code: code.trim().toUpperCase(), role }); },
     watch(code: string) { api.join(code, 'watch'); },
-    openLink(link: RoomLink) { if (state.screen === 'idle') api.open(); api.join(link.code, link.role); },
+    openLink(link: RoomLink | null) {
+      if (state.screen === 'idle') api.open();
+      if (state.screen !== 'menu') return;
+      if (!link) { publish({ error: 'Invalid room code. Enter a 4-character code.' }); return; }
+      publish({ code: link.code });
+      if (!options.serverUrl) { publish({ error: 'Online play is unavailable.' }); return; }
+
+      // A first-time visitor supplies a nickname in the existing menu, then presses Join.
+      if (state.nick) api.join(link.code, link.role);
+    },
     /** Non-host toggles own ready flag; host is implicitly ready. */
     ready() {
       if (state.screen !== 'lobby' || state.host || state.seat === null) return;
