@@ -7,7 +7,7 @@ date: 2026-10-28
 Repo/branch: node-arena / feat/pvp · Depends on: 01-seat-rules (outcome/seat types, interface assumption below) · Owns: `packages/net/**`, root `package.json` script/filter entries for net, `docs/agent_files/.../02-net-protocol/`
 
 ## M2 amendment (2026-10-29)
-SP07 requires M2 pause-control/state validation, paused-input handling and terminal-forfeit log/replay support. Tick-only heartbeat assumptions below must be replaced by independent bounded liveness detection during pause. Minimum reconnect/catch-up is M2 before disconnect pause is enabled; general auto-resync remains M3. Authoritative scope: [SP07 Pause, Quit and window-close forfeit](../07-pause-forfeit/PRD.md). Existing task lists await reconciliation after its open questions are settled.
+SP07 (settled) adds, in M2: `PROTOCOL_VERSION` 1 -> 2; client `pause`, `resume{epoch}`, `quit`; server `pause.state` snapshot; `seat.status` statuses `away`/`forfeit`(+`cause`); error codes `paused`, `no-match`; server-message validators accept `Forfeit` in `tick.c`/`catchup.cmds` (client `cmd` stays DrawLine/CutLine only); `LockstepServer.closeTick(botCmds, systemCmds)`. **Superseded:** the tick-as-heartbeat statement below; liveness is a server ws protocol ping every 3 s with a 7 s inbound timeout (SP07 (a)); app `ping`/`pong` is RTT-only. Catch-up (R7) is now required in M2 for reconnect; auto-resync stays M3. Authoritative scope: [SP07 Pause, Quit and window-close forfeit](../07-pause-forfeit/PRD.md).
 
 ## TL;DR
 `@node-arena/net`: pure TS, no sockets/DOM/Node APIs. Holds (1) message catalogue + versioning + strict runtime validation, (2) `LockstepServer` / `LockstepClient` schedulers, (3) bounded `CommandLog` + catch-up runner built on `sim.create` / `Sim.step`. Server (04) and web (05) only add transport and UI. Fully unit-testable with in-memory fakes.
@@ -59,9 +59,9 @@ Non-goals: sockets (04), UI/rendering/jitter smoothing (05), lobby state machine
 | S>C | `pong` | `id`, `tick` |
 | S>C | `error` | `code`, `detail?` |
 
-Error codes: `bad-json, too-large, bad-message, unknown-type, version-mismatch, not-authed, not-in-room, not-host, not-your-seat, rate-limited, room-full, room-not-found, spectators-full, bad-lobby, not-ready, match-in-progress, desync, internal`.
+Error codes (SP07 adds `paused`, `no-match`): `bad-json, too-large, bad-message, unknown-type, version-mismatch, not-authed, not-in-room, not-host, not-your-seat, rate-limited, room-full, room-not-found, spectators-full, bad-lobby, not-ready, match-in-progress, desync, internal`.
 
-**Tick cadence.** Server emits exactly one `tick` per 20 Hz tick, empty ticks included (`{"t":"tick","n":123}` ~20 B). It doubles as heartbeat and clock; no separate keepalive logic. 12 clients x 20 msg/s x <=60 B is trivial. Batching 2 ticks would save nothing and add 50 ms latency. Exception: a lagging socket gets `ticks` batches instead (R11).
+**Tick cadence.** [Heartbeat claim SUPERSEDED by SP07: ticks stop during pause; see SP07 (a).] Server emits exactly one `tick` per 20 Hz tick, empty ticks included (`{"t":"tick","n":123}` ~20 B). It doubles as heartbeat and clock; no separate keepalive logic. 12 clients x 20 msg/s x <=60 B is trivial. Batching 2 ticks would save nothing and add 50 ms latency. Exception: a lagging socket gets `ticks` batches instead (R11).
 
 **LockstepServer** (pure, no timers; 04 owns `setInterval`/drift-correct clock):
 - `submit(player, cmd) -> {accepted, tick} | {rejected: code}`: validates, stamps `player`, target `= nextTick + inputDelay`, appends to `buffer[target]`. Because the server stamps on receipt there are no late commands; latency just shifts which tick a click lands on.

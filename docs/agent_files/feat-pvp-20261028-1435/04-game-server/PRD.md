@@ -7,7 +7,7 @@ date: 2026-10-28
 Repo/branch: node-arena / feat/pvp · Depends on: 01-seat-rules (sim/outcome), 02-net-protocol (messages, Lockstep*, CommandLog), 03-pvp-maps (levels; M1 gate needs Duel S) · Owns: `apps/server/**`, `packages/bots/src/{pvp.ts,difficulty.ts,index.ts,version.ts}` (presets + dynamic seat driver + BOT_VERSION), root `package.json` server entries, `.dockerignore`, `docs/agent_files/.../04-game-server/`
 
 ## M2 amendment (2026-10-29)
-SP07 supersedes the old grace→bot/reclaim plan below for 1v1: M2 uses one cumulative per-player 30-second manual-pause/disconnect budget and deadline forfeit. Minimum reconnect/catch-up/Resume moves from M3 into M2. Team/FFA, concurrent-disconnect and lobby policy remain open; legacy grace text is not a settled policy for those modes. Authoritative scope: [SP07 Pause, Quit and window-close forfeit](../07-pause-forfeit/PRD.md). Existing task lists await reconciliation after its open questions are settled.
+SP07 (settled) supersedes the old grace->bot/reclaim plan (R14/R15, disconnect FSM, Decision 9) for human players: one cumulative 30 s per-human budget, holds, seat-only forfeit (team/FFA included), unlimited pause when no other human. M2 adds: heartbeat (3 s ping / 7 s timeout, close 4004), pause module + clock remove/re-add with `boundary(now())`, `Forfeit` via `closeTick` system cmds, minimum reconnect (token reclaim, full `catchup` from `CommandLog.range`, `pause.state`, stored `end`), removal of the running-room 'all conns closed => drop' path, deadline-safe GC (`gc()` never drops a room with a pending deadline; ended rooms kept 10 min; sole-human unlimited abandonment closes `idle` after 10 min). Lobby (R12 refined): dropped seat reserved 30 s for token reconnect then freed; host passes to next human seat; a drop during the 3-2-1 countdown cancels to lobby. Remaining M3: auto-resync (R16), load smoke (R19), SIGTERM drain. Authoritative scope: [SP07 Pause, Quit and window-close forfeit](../07-pause-forfeit/PRD.md).
 
 ## TL;DR
 One Node process (ws + `http` health) holding all rooms in memory. Per room: lobby state machine -> referee `Sim` + `LockstepServer` + bot seats -> one `tick` broadcast per 20 Hz tick from a single drift-corrected global loop. Server owns seed, bot commands, hashes, outcome. Reconnect/spectate = replay log from tick 0. Thin ws adapter over a transport-agnostic `Hub`, so integration tests use fake sockets and a manual clock.
@@ -35,8 +35,8 @@ Non-goals: auth (slot only), matchmaking, chat, persistence, server replays, mul
 | R11 | Spectators (cap 8): join in lobby or mid-match via `start` + `catchup`; read-only; survive rematch | M2 |
 | R12 | Host leaves/lost -> host moves to earliest-joined connected human; no humans left -> room GC | M2 |
 | R13 | Rematch: back to lobby, same setup, ready cleared, new seed on next start | M2 |
-| R14 | Historical M3 proposal (M2 1v1 superseded by SP07): disconnect mid-match: `seat.status grace` 30 s, then bot takes seat; reconnect in grace resumes via token + catch-up | M3 |
-| R15 | Historical non-1v1 proposal pending SP07 policy; no 1v1 takeover: after takeover, original token may reclaim seat; bot yields | M3 |
+| R14 | [SUPERSEDED by SP07 2026-10-29] Historical M3 proposal (M2 1v1 superseded by SP07): disconnect mid-match: `seat.status grace` 30 s, then bot takes seat; reconnect in grace resumes via token + catch-up | M3 |
+| R15 | [SUPERSEDED by SP07] Historical non-1v1 proposal pending SP07 policy; no 1v1 takeover: after takeover, original token may reclaim seat; bot yields | M3 |
 | R16 | Auto-resync on `desync`: resend full log; per-seat limit 1 per 10 s | M3 |
 | R17 | Limits/abuse: origin allowlist, maxPayload 4 KB, per-connection token bucket, per-IP conn/create caps, max rooms, failed-join throttle | M2 |
 | R18 | `/healthz`, JSON-line logs, SIGTERM drain, Dockerfile, fly.toml | M2 |
@@ -63,7 +63,7 @@ Server never waits for any client. Client `hash` -> `lockstep.onHash`.
 
 **Identity / reconnect.** `hello{token, nick, auth?}`. `playerId = HMAC(serverSecret, token)` hex (public id; token never echoed or logged). Hub index `token -> {room, seat|spectator}`. New hello with a token that already has a connection supersedes the old (close 4000). If the token owns a seat/spectator slot: `welcome{resume}` -> `room.joined` -> `lobby.state` -> (running) `start` + `catchup` chunks (<=2000 ticks, from `CommandLog.range`) then live subscribe in the same synchronous turn. Spectator mid-match join = same path with `youPlayer:null`. Auth slot: `auth.verify(hello.auth) -> {uid?} | null`, default no-op; room logic keys on `playerId` only.
 
-**Historical disconnect FSM (superseded for M2 1v1 by SP07; non-1v1 policy open).** `connected -> grace(30s) -> bot` ; `grace -> connected` on resume; `bot -> connected` on reclaim (M3, token must match, bot dropped from driver next tick). Every transition broadcasts `seat.status`. Commands from a seat not `connected` are dropped.
+**Historical disconnect FSM [SUPERSEDED by SP07 for all human players].** `connected -> grace(30s) -> bot` ; `grace -> connected` on resume; `bot -> connected` on reclaim (M3, token must match, bot dropped from driver next tick). Every transition broadcasts `seat.status`. Commands from a seat not `connected` are dropped.
 
 **Desync.** Server hash is truth. M1/M2: send `desync{tick, serverHash}` to that socket only, log, rate-limited. M3: follow with full `catchup` from 0; client rebuilds sim (05).
 
@@ -124,5 +124,5 @@ Server never waits for any client. Client `hash` -> `lockstep.onHash`.
 - M1: cmd from spectator/non-member/bot seat rejected; injected `player` rejected; bad JSON/oversize -> error, no crash. `healthz` OK. Real-ws loopback smoke passes.
 - M2: scenarios pass with hash equality: 2 humans+1 bot (3-seat/FFA fixture or Cross), FFA 4, 2v2 (`teams [0,0,1,1]`) with bots; spectator joins mid-match and reaches equal hash; host transfer; rematch yields new seed; lobby rules (non-host cannot update, start blocked on unready/empty).
 - M2: limits: 9th spectator, 41st room, rate bursts, disallowed Origin, missing hello deadline each refused; Docker image builds, boots, `/healthz` 200, content loaded; `fly.toml` valid (`fly config validate`).
-- Historical M3 disconnect acceptance (superseded for 1v1 by SP07; non-1v1 unresolved): disconnect -> `grace` -> after 30 s (fake clock) bot commands appear, match completes, clients still hash-equal; reconnect inside grace resumes and converges; reclaim after takeover works; forced hash mismatch -> `desync` -> resync converges; 20-room bot load smoke: loop lateness p99 < 25 ms, RSS < 200 MB, report CPU/room.
+- Historical M3 disconnect acceptance (SUPERSEDED by SP07 for humans): disconnect -> `grace` -> after 30 s (fake clock) bot commands appear, match completes, clients still hash-equal; reconnect inside grace resumes and converges; reclaim after takeover works; forced hash mismatch -> `desync` -> resync converges; 20-room bot load smoke: loop lateness p99 < 25 ms, RSS < 200 MB, report CPU/room.
 - Lint, typecheck, `pnpm test` include server; `pnpm bots:golden` + `check:content` unchanged except documented version fields.
