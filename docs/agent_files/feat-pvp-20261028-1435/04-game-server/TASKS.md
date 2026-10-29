@@ -17,7 +17,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. 
 | 7 | [M1] ws adapter, /healthz, real-socket smoke | 6 | done |
 | 8 | [M1] Two-client acceptance on fixture + Duel S | 7, SP02#9, SP03#2 | done |
 | 9 | [M1] Command and input rejection hardening | 6 | done |
-| 10 | [M2] Bots: presets, seat driver, BOT_VERSION 2.5.0 | SP01#9, SP01#12 | todo |
+| 10 | [M2] Bots: presets, seat driver, BOT_VERSION 2.5.0 | SP01#9, SP01#12 | done |
 | 11 | [M2] Full lobby editing and start validation | 5, SP01#3 | done |
 | 12 | [M2] Bot seats in match | 6, 10, 11 | todo |
 | 13 | [M2] Spectators and mid-match catch-up | 6, 11, SP02#10 | done |
