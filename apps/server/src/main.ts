@@ -64,6 +64,8 @@ export interface RunningServer {
   port: number;
   content: ServerContent;
   close(): Promise<void>;
+  /** Graceful drain: stop accepting, `room.closed{shutdown}` to all rooms, close sockets 1001. Resolves when sockets are gone (<= `graceMs`). */
+  shutdown(graceMs?: number): Promise<void>;
 }
 
 /** Wires config -> content -> clock -> match -> rooms -> hub -> http+ws. */
@@ -125,8 +127,30 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
   const port = (http.address() as AddressInfo).port;
   log.info('server.listening', { port, host: config.host });
 
+  let draining: Promise<void> | undefined;
+  const shutdown = (graceMs = 6000): Promise<void> => draining ??= (async () => {
+    log.info('server.shutdown', { rooms: rooms.roomCount(), conns: hub.connCount() });
+    const stopped = new Promise<void>((r) => { http.close(() => r()); });
+    clock.stop();
+    hub.stop();
+    rooms.closeAll('shutdown');
+    const gone: Array<Promise<void>> = [];
+    for (const c of wss.clients) {
+      gone.push(new Promise<void>((r) => { c.once('close', () => r()); }));
+      try { c.close(1001, 'shutdown'); } catch { c.terminate(); }
+    }
+    let timer: NodeJS.Timeout | undefined;
+    const deadline = new Promise<void>((r) => { timer = setTimeout(r, graceMs); });
+    await Promise.race([Promise.all(gone), deadline]);
+    clearTimeout(timer);
+    for (const c of wss.clients) c.terminate();
+    await new Promise<void>((r) => wss.close(() => r()));
+    http.closeAllConnections();
+    await stopped;
+  })();
+
   return {
-    port, content,
+    port, content, shutdown,
     close: async () => {
       clock.stop();
       hub.stop();
@@ -146,7 +170,18 @@ function main(): void {
   process.on('uncaughtException', crash('uncaught'));
   process.on('unhandledRejection', crash('unhandled_rejection'));
   const config = loadConfigOrExit();
-  startServer(config, { log: createLogger({ level: config.logLevel }) }).catch(crash('boot_failed'));
+  startServer(config, { log: createLogger({ level: config.logLevel }) }).then((srv) => {
+    let once = false;
+    const drain = (sig: string): void => {
+      if (once) return;
+      once = true;
+      log.info('server.signal', { signal: sig });
+      setTimeout(() => process.exit(1), 8000).unref();
+      srv.shutdown().then(() => process.exit(0), crash('shutdown_failed'));
+    };
+    process.once('SIGTERM', () => drain('SIGTERM'));
+    process.once('SIGINT', () => drain('SIGINT'));
+  }).catch(crash('boot_failed'));
 }
 
 if (process.argv[1] !== undefined && process.argv[1] === fileURLToPath(import.meta.url)) main();

@@ -23,7 +23,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. 
 | 13 | [M2] Spectators and mid-match catch-up | 6, 11, SP02#10 | done |
 | 14 | [M2] Host transfer, room GC, rematch | 11, 13 | done |
 | 15 | [M2] Limits and abuse controls | 7, SP02#11, SP02#12 | done |
-| 16 | [M2] Ops: env validation, health detail, SIGTERM drain | 7, 15 | todo |
+| 16 | [M2] Ops: env validation, health detail, SIGTERM drain | 7, 15 | done |
 | 17 | [M2] Dockerfile, .dockerignore, fly.toml | 16 | todo |
 | 18 | [M2] Lobby-shape scenario suite | 12, 13, 14, SP03#6, SP03#7 | todo |
 | 19 | [M3] Disconnect grace, bot takeover, resume, reclaim (superseded by SP07) | 12, 13, 14 | todo |

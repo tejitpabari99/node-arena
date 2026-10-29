@@ -115,6 +115,8 @@ export interface RoomManager extends HubHandler {
   hasPendingDeadline(room: Room): boolean;
   /** Removes a room and frees its players immediately. */
   drop(room: Room): void;
+  /** Shutdown: sends `room.closed{reason}` to every conn in every room, marks rooms closed, and drops them. */
+  closeAll(reason: string): void;
 }
 
 export function createRoomManager(deps: RoomManagerDeps): RoomManager {
@@ -513,6 +515,9 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     room: (code) => rooms.get(code),
     roomOf: (conn) => byPlayer.get(conn.playerId ?? ''),
     roomCount: () => rooms.size,
+    closeAll(reason) {
+      for (const room of [...rooms.values()]) { notifyClosed(room, reason); room.state = 'closed'; drop(room); }
+    },
     runningCount: () => { let n = 0; for (const r of rooms.values()) if (r.state === 'running') n++; return n; },
     onClientMessage(conn, msg) {
       switch (msg.t) {
