@@ -12,12 +12,12 @@ Source of truth: [PRD.md](PRD.md). Client for online PvP: separate NetDriver and
 | 2 | [M1] Identity, room links, server URL | none | done |
 | 3 | [M1] PvpConnection | SP02#2, SP02#3, SP02#4 | done |
 | 4 | [M1] NetDriver (live stepping) | 1, SP02#7, SP01#4 | done |
-| 5 | [M1] PvpController: connection, lobby, start | 2, 3, SP04#5 | in-progress |
-| 6 | [M1] PvpController: match lifecycle + end | 1, 4, 5, SP04#6, SP03#2 | todo |
-| 7 | [M1] PvP menu, 2-seat lobby, App/main wiring | 5, 6 | todo |
-| 8 | [M1] PvpHud (ownership bar, timer, Esc leave) + toast | 6, 7 | todo |
-| 9 | [M1] PvpResult (win/lose) | 6, 8, SP01#8, SP02#8 | todo |
-| 10 | [M1] Test hooks + two-tab acceptance + campaign regression | 7, 8, 9, SP04#8 | todo |
+| 5 | [M1] PvpController: connection, lobby, start | 2, 3, SP04#5 | done |
+| 6 | [M1] PvpController: match lifecycle + end | 1, 4, 5, SP04#6, SP03#2 | done |
+| 7 | [M1] PvP menu, 2-seat lobby, App/main wiring | 5, 6 | done |
+| 8 | [M1] PvpHud (ownership bar, timer, Esc leave) + toast | 6, 7 | done |
+| 9 | [M1] PvpResult (win/lose) | 6, 8, SP01#8, SP02#8 | done |
+| 10 | [M1] Test hooks + two-tab acceptance + campaign regression | 7, 8, 9, SP04#8 | done |
 | 11 | [M2] Full lobby (maps, seats, teams, share links) | 7, SP03#8, SP04#11 | todo |
 | 12 | [M2] Seat legend + team-grouped bar | 8, 11 | todo |
 | 13 | [M2] Catch-up budget + overlay | 4, 6, SP02#10, SP04#13 | todo |
