@@ -1,8 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
-test('two contexts reach lobby and see the same lobby-code', async ({ browser }) => {
-  const a = await (await browser.newContext()).newPage();
-  const b = await (await browser.newContext()).newPage();
+test('two contexts reach lobby and see the same lobby-code', async ({ newPlayerPage }) => {
+  const a = await newPlayerPage();
+  const b = await newPlayerPage();
   await a.goto('/?nick=Alice');
   await a.getByTestId('pvp-play').click();
   await a.getByTestId('pvp-create').click();

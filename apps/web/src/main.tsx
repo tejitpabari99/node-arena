@@ -10,7 +10,6 @@ import { createIdentity } from './net/identity';
 import { currentServerUrl } from './net/server-url';
 import { parseRoomLink } from './net/links';
 import { webVersions } from './net/versions';
-import { loadManifest } from './manifest/load';
 import './style.css';
 async function main(){
   const root=document.getElementById('app');if(!root)throw Error('Missing app root');
@@ -24,9 +23,7 @@ async function main(){
   }
   const createRuntime:NonNullable<Parameters<typeof createAppController>[0]['createRuntime']>=context=>createBrowserRuntime(context,arena,(ctx,stage)=>createInputController({canvas:stage.canvas,sim:ctx.driver.sim,camera:stage.camera,world:stage.world,worldRoot:stage.worldRoot,scene:stage.scene,driver:ctx.driver,seat:ctx.seat,isEnabled:()=>ctx.enabled()&&!ctx.driver.paused}));
   const app=createAppController({files,...harness?.options,createRuntime});
-  let pvpManifest:Awaited<ReturnType<typeof loadManifest>>|undefined;
-  void loadManifest().then(m=>{pvpManifest=m;}).catch(()=>undefined);
-  const pvp=createPvpController({identity:createIdentity(),serverUrl:currentServerUrl(),versions:webVersions(),createSocket:url=>new WebSocket(url) as unknown as WebSocketLike,files,manifest:()=>pvpManifest,createRuntime});
+  const pvp=createPvpController({identity:createIdentity(),serverUrl:currentServerUrl(),versions:webVersions(),createSocket:url=>new WebSocket(url) as unknown as WebSocketLike,files,manifest:()=>app.manifest,createRuntime});
   const sync=()=>{const state=app.snapshot(),p=pvp.snapshot().screen,pvpShown=(p==='countdown'||p==='playing'||p==='result')&&!!pvp.driver;arena.hidden=p!=='idle'?!pvpShown:state.screen!=='playing'&&state.screen!=='result'&&!app.driver;};
   const unsubscribe=[app.subscribe(sync),pvp.subscribe(sync)];
   const unmount=mountApp(app,root,undefined,pvp),audio=connectAppAudio(app);

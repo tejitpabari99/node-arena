@@ -1,15 +1,14 @@
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import { expect, test, type NewPlayerPage } from './fixtures';
+import type { Page } from '@playwright/test';
 import { runScriptedAttack } from './scripted-attack';
 
 // Duel S 1v1 through the real input path (SP06 R5/D8): seat 0 runs a scripted attack, seat 1 idles; no time-limit override.
 // MEASURED (local swiftshader chromium): play-to-result ~39 s (finalTick ~716 at ~20 ticks/s), whole test ~41 s, limit 150 s.
 // FIXTURE DECISION: none needed (< ~90 s); no tiny e2e map, no lobby time-limit override.
 
-const mkPage = async (browser: Browser): Promise<Page> => (await browser.newContext()).newPage();
-
-async function openMatch(browser: Browser): Promise<{ a: Page; b: Page }> {
-  const a = await mkPage(browser);
-  const b = await mkPage(browser);
+async function openMatch(newPlayerPage: NewPlayerPage): Promise<{ a: Page; b: Page }> {
+  const a = await newPlayerPage();
+  const b = await newPlayerPage();
   await a.goto('/?nick=Alice');
   await a.getByTestId('pvp-play').click();
   await a.getByTestId('pvp-create').click();
@@ -25,9 +24,9 @@ async function openMatch(browser: Browser): Promise<{ a: Page; b: Page }> {
   return { a, b };
 }
 
-test('Duel S 1v1: scripted attack by seat 0 wins; both pages agree on result and final hash', async ({ browser }) => {
+test('Duel S 1v1: scripted attack by seat 0 wins; both pages agree on result and final hash', async ({ newPlayerPage }) => {
   test.setTimeout(150_000);
-  const { a, b } = await openMatch(browser);
+  const { a, b } = await openMatch(newPlayerPage);
   const t0 = Date.now();
   await expect.poll(() => a.evaluate(() => (window as any).__na.pvp.tick()), { timeout: 30_000 }).toBeGreaterThan(0);
   const stop = await runScriptedAttack(a, 0);
@@ -51,8 +50,8 @@ test('Duel S 1v1: scripted attack by seat 0 wins; both pages agree on result and
 });
 
 
-test('play link prompts a new visitor for a nickname with the room code filled', async ({ browser }) => {
-  const a = await mkPage(browser), b = await mkPage(browser);
+test('play link prompts a new visitor for a nickname with the room code filled', async ({ newPlayerPage }) => {
+  const a = await newPlayerPage(), b = await newPlayerPage();
   await a.goto('/?nick=Alice');
   await a.getByTestId('pvp-play').click(); await a.getByTestId('pvp-create').click();
   const code = ((await a.getByTestId('lobby-code').textContent()) ?? '').trim();
@@ -80,14 +79,35 @@ test('invalid and missing play links show an online menu error', async ({ page }
 });
 
 
-test('reload during a match exposes sync loss and Leave returns to the online menu', async ({ browser }) => {
-  const { a, b } = await openMatch(browser);
+test('reload during a match exposes sync loss and Leave returns to the online menu', async ({ newPlayerPage }) => {
+  const { a, b } = await openMatch(newPlayerPage);
   await expect.poll(() => b.evaluate(() => (window as any).__na.pvp.tick())).toBeGreaterThan(2);
   // Same-tab reload retains the player token but M1 cannot recover missed ticks.
-  const sentTypes: string[] = [];
-  b.on('websocket', socket => socket.on('framesent', ({ payload }) => sentTypes.push(JSON.parse(String(payload)).t)));
+  const sentTypes: string[] = [], received: unknown[] = [], pageErrors: string[] = [];
+  b.on('pageerror', error => pageErrors.push(error.message.slice(0, 500)));
+  b.on('websocket', socket => {
+    socket.on('framesent', ({ payload }) => sentTypes.push(JSON.parse(String(payload)).t));
+    socket.on('framereceived', ({ payload }) => { const m = JSON.parse(String(payload)); if (m.t !== 'tick') received.push(m); });
+  });
+  // Force the startup fetch race: a separate PvP manifest request used to lag behind app.boot.
+  // The boot manifest must be ready before resuming the match, even on a slow response.
+  let manifestRequests = 0;
+  await b.route('**/manifest.json', async route => {
+    if (++manifestRequests === 1) await new Promise(resolve => setTimeout(resolve, 1500));
+    await route.continue();
+  });
+  const matchId = await b.evaluate(() => (window as any).__na.pvp.state().start.matchId);
   await b.reload();
-  await expect(b.getByTestId('toast-sync-lost')).toContainText('Out of sync. Leave and rejoin.');
+  try {
+    // Boot and handshake have their own deadline; the notice assertion measures UI delivery after start.
+    await expect.poll(() => b.evaluate(() => (window as any).__na?.pvp.state().start?.matchId), { timeout: 30_000 }).toBe(matchId);
+    await expect(b.getByTestId('toast-sync-lost')).toContainText('Out of sync. Leave and rejoin.');
+  } catch (error) {
+    const diagnostic = JSON.stringify({ sentTypes, received, pageErrors, state: await b.evaluate(() => (window as any).__na?.pvp.state()), body: await b.locator('body').innerText() });
+    console.log('[pvp reload failure]', diagnostic);
+    await test.info().attach('reload-state', { body: diagnostic, contentType: 'application/json' });
+    throw error;
+  }
   // welcome.resume already owns the room: a second join would race a bad-lobby error against the gap notice.
   expect(sentTypes).not.toContain('room.join');
   await b.getByTestId('pvp-sync-leave').click();
