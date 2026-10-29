@@ -6,8 +6,16 @@ import { BOT_VERSION } from '@node-arena/bots';
 import { createPvpController, errorString, ERROR_STRINGS } from '../../src/pvp/controller';
 import { versionsFromMeta, webVersions } from '../../src/net/versions';
 import type { ConnState, PvpConnection } from '../../src/net/connection';
+import type { VNode } from 'preact';
+import { PvpResult } from '../../src/ui/pvp/PvpResult';
 import { createIdentity } from '../../src/net/identity';
 
+type N = VNode<Record<string, unknown>>;
+function find(node: unknown, test: (n: N) => boolean, out: N[] = []): N[] {
+  if (Array.isArray(node)) node.forEach((n) => find(n, test, out));
+  else if (node && typeof node === 'object' && 'props' in node) { const n = node as N; if (test(n)) out.push(n); find(n.props.children, test, out); }
+  return out;
+}
 const versions: Versions = { rules: 'r', schema: 's', content: 'c', bot: 'b' };
 function fake() {
   const sent: ClientMessage[] = [];
@@ -148,6 +156,16 @@ describe('PvpController match lifecycle', () => {
     g.c.push(g.tickMsg(2)); g.ctl.driver!.advance();
     expect(g.ctl.snapshot().screen).toBe('result');
     expect(g.timers.every((t) => !t.live)).toBe(true);
+  });
+  it('result screen Leave returns to the PvP menu', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    g.c.push(g.endMsg(50)); g.timers.at(-1)!.fn();
+    const s = g.ctl.snapshot();
+    expect(s.screen).toBe('result'); expect(s.end?.outcome.winners).toEqual([0]);
+    const leave = find(PvpResult({ outcome: s.end!.outcome, seat: s.seat, onLeave: () => g.ctl.leave() }), (n) => n.props['data-testid'] === 'pvp-result-leave')[0]!;
+    (leave.props.onClick as () => void)();
+    expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.ctl.snapshot().end).toBeNull();
+    expect(g.sent.at(-1)).toEqual({ t: 'room.leave' });
   });
   it('3 s fallback shows result and logs mismatch', async () => {
     const g = game(); g.c.push(startMsg()); await flush();

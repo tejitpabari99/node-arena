@@ -5,6 +5,7 @@ import { DESYNC_TOAST, Toast } from './Toast';
 import type { PvpController } from '../../pvp/controller';
 import { Lobby } from './Lobby';
 import { PvpMenu } from './PvpMenu';
+import { PvpResult } from './PvpResult';
 const pretty=(id:string)=>id.replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
 export function PvpLayer({pvp}:{pvp:PvpController}){
   const [s,setS]=useState(pvp.snapshot()),[code,setCode]=useState('');
@@ -17,6 +18,7 @@ export function PvpLayer({pvp}:{pvp:PvpController}){
   }
   if(s.screen==='countdown')return <p class="pvp-countdown" role="status" data-testid="pvp-countdown">Get ready</p>;
   if(s.screen==='playing')return <PvpPlaying pvp={pvp}/>;
+  if(s.screen==='result'&&s.end)return <PvpResult outcome={s.end.outcome} seat={s.seat} onLeave={()=>pvp.leave()}/>;
   return null;
 }
 export const TOAST_MS=5000;
