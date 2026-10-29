@@ -3,7 +3,7 @@
   "metadata": {
     "rulesVersion": "3.2.0",
     "schemaVersion": "2.0.0",
-    "contentVersion": "2.4.0"
+    "contentVersion": "2.6.0"
   },
   "scenarios": [
     {
@@ -356,7 +356,7 @@
         "header": {
           "rulesVersion": "3.2.0",
           "schemaVersion": "2.0.0",
-          "contentVersion": "2.4.0",
+          "contentVersion": "2.6.0",
           "levelId": "golden-pvp-forfeit",
           "simHash": "68fdc7cc8e4b85423c034738d47927e8a9adb0a6a1ba5f60e9dd5220d4c1cd0a",
           "seed": 20261029,
