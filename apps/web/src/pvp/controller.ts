@@ -1,5 +1,5 @@
-import { ERROR_CODES, LockstepClient, toWireOutcome, type ClientMessage, type EndMsg, type ErrorCode, type LobbyStateMsg, type SeatStatusMsg, type ServerMessage, type StartMsg, type Versions } from '@node-arena/net';
-import { loadContent, type CompiledLevel, type ContentFiles, type ManifestV2 } from '@node-arena/content';
+import { ERROR_CODES, LockstepClient, toWireOutcome, type ClientMessage, type EndMsg, type ErrorCode, type LobbyStateMsg, type SeatConfig, type SeatStatusMsg, type ServerMessage, type StartMsg, type Versions } from '@node-arena/net';
+import { listPvpMaps, loadContent, type PvpMapInfo, type CompiledLevel, type ContentFiles, type ManifestV2 } from '@node-arena/content';
 import { create, type Sim } from '@node-arena/sim';
 import type { TickUpdate } from '../driver';
 import { NetDriver, type NetDriverOptions } from '../driver/net-driver';
@@ -77,6 +77,8 @@ export interface PvpOptions {
   createRuntime?: (context: RuntimeContext) => LevelRuntime | Promise<LevelRuntime>;
   /** Compiled level by id; default compiles `files` via loadContent (cached). */
   getLevel?: (levelId: string) => CompiledLevel | undefined;
+  /** PvP map list for the lobby picker; default `listPvpMaps` over `files`. */
+  maps?: () => PvpMapInfo[];
   createSim?: (level: CompiledLevel, seed: number, setup: { teams: number[] }) => Sim;
   createDriver?: (o: NetDriverOptions) => NetDriver;
   now?: () => number;
@@ -114,12 +116,14 @@ export function createPvpController(options: PvpOptions) {
     const d = driver, r = runtime; driver = null; runtime = undefined; matchManifest = undefined;
     d?.dispose(); r?.dispose();
   };
-  const getLevel = (id: string): CompiledLevel | undefined => {
-    if (options.getLevel) return options.getLevel(id);
+  const loaded = () => {
     if (!options.files) return undefined;
     const m = options.manifest?.();
-    compiledCache ??= loadContent(options.files, { themes: Object.keys(m?.themes ?? {}), colorKeys: Object.keys(m?.palettes ?? {}) });
-    return compiledCache.compiled[id];
+    return (compiledCache ??= loadContent(options.files, { themes: Object.keys(m?.themes ?? {}), colorKeys: Object.keys(m?.palettes ?? {}) }));
+  };
+  const getLevel = (id: string): CompiledLevel | undefined => {
+    if (options.getLevel) return options.getLevel(id);
+    return loaded()?.compiled[id];
   };
   const drop = () => { clearMatch(); offs.forEach((f) => f()); offs = []; const c = conn; conn = null; welcomed = false; pending = null; c?.close(); };
   const reset = (error: string | null) => { drop(); state = { ...initial(), screen: 'menu', error }; listeners.forEach((fn) => fn()); };
@@ -277,6 +281,8 @@ export function createPvpController(options: PvpOptions) {
     get options() { return options; },
     /** Compiled level by id (for lobby seat colours). */
     level(id: string) { return getLevel(id); },
+    /** Lobby map picker list (empty when content unavailable). */
+    maps(): PvpMapInfo[] { if (options.maps) return options.maps(); const c = loaded(); return c ? listPvpMaps(c) : []; },
     get connection() { return conn; },
     get welcomed() { return welcomed; },
     open() { if (disposed || state.screen !== 'idle') return; publish({ screen: 'menu', error: null }); },
@@ -300,6 +306,8 @@ export function createPvpController(options: PvpOptions) {
       const cur = state.lobby?.seats[state.seat]?.occupant?.ready ?? false;
       dispatch({ t: 'lobby.ready', ready: !cur });
     },
+    /** Host-only: full lobby edit (level change resets seats server-side). */
+    updateLobby(levelId: string, seats: SeatConfig[]) { if (state.screen === 'lobby' && state.host) dispatch({ t: 'lobby.update', levelId, seats }); },
     start() { if (state.screen === 'lobby' && state.host) dispatch({ t: 'lobby.start' }); },
     leave() {
       if (state.screen === 'idle' || state.screen === 'menu') return;

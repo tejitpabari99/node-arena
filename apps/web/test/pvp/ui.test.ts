@@ -71,6 +71,51 @@ describe('Lobby', () => {
   });
 });
 
+describe('Lobby M2 full', () => {
+  const maps = [{ id: 'duel-s', name: 'Duel S', seats: 2, teams: [0, 1], timeLimitSec: 60, theme: 't' }, { id: 'cross', name: 'Cross', seats: 4, teams: [0, 1, 0, 1], timeLimitSec: 60, theme: 't' }];
+  const two = lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1, { nick: 'b', ready: true })]);
+  const rowProps = (n: N) => n.props as unknown as Parameters<typeof SeatRow>[0];
+  it('host sees map cards and seat controls; picking wires callbacks', () => {
+    const onMap = vi.fn(), onSeat = vi.fn();
+    const v = Lobby(lobbyProps({ lobby: two, maps, onMap, onSeat }));
+    expect(byId(v, 'lobby-map-duel-s')!.props.disabled).toBe(false); expect(byId(v, 'lobby-map-cross')).toBeTruthy();
+    (byId(v, 'lobby-map-cross')!.props.onClick as () => void)(); expect(onMap).toHaveBeenCalledWith('cross');
+    const r1 = find(v, (n) => (n.type as unknown) === SeatRow)[1]!;
+    const row = SeatRow(rowProps(r1));
+    const kind = byId(row, 'seat-kind-1')!, team = byId(row, 'seat-team-1')!;
+    expect(byId(row, 'seat-kind-0')).toBeUndefined();
+    (r1.props.onChange as (i: number, p: object) => void)(1, { kind: 'bot' });
+    expect(onSeat).toHaveBeenCalledWith([{ kind: 'human', team: 0 }, { kind: 'bot', team: 1, difficulty: 'normal' }]);
+    (r1.props.onChange as (i: number, p: object) => void)(1, { team: 0 });
+    expect(onSeat).toHaveBeenLastCalledWith([{ kind: 'human', team: 0 }, { kind: 'human', team: 0 }]);
+    expect(kind.props.value).toBe('human'); expect(team.props.value).toBe('1');
+    expect(byId(SeatRow({ ...rowProps(r1), seat: { kind: 'bot', team: 1, difficulty: 'hard' } }), 'seat-difficulty-1')!.props.value).toBe('hard');
+    expect(byId(SeatRow({ ...rowProps(r1), seat: { kind: 'human', team: 1 } }), 'seat-difficulty-1')).toBeUndefined();
+  });
+  it('non-host: read-only seats and map cards, Ready shown', () => {
+    const v = Lobby(lobbyProps({ lobby: two, maps, host: false, seat: 1 }));
+    expect(byId(v, 'lobby-map-cross')!.props.disabled).toBe(true);
+    const r = SeatRow({ ...rowProps(find(v, (n) => (n.type as unknown) === SeatRow)[1]!) });
+    expect(byId(r, 'seat-kind-1')).toBeUndefined(); expect(byId(r, 'seat-team-1')).toBeUndefined(); expect(byId(r, 'seat-team-label-1')).toBeTruthy();
+    expect(byId(v, 'lobby-ready')).toBeTruthy(); expect(byId(v, 'lobby-start')).toBeUndefined();
+  });
+  it('start blockers: disconnected/reserved seat, empty seats ignored', () => {
+    const grace = lobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'human', team: 1, occupant: { nick: 'b', ready: true, status: 'grace' } }]);
+    expect(startBlocker(grace)).toBe('Waiting for player to reconnect');
+    const v = Lobby(lobbyProps({ lobby: grace })); expect(byId(v, 'lobby-start')!.props.disabled).toBe(true);
+    expect(text(byId(SeatRow({ index: 1, seat: grace.seats[1]!, you: false, host: false }), 'lobby-seat-1'))).toContain('Not connected');
+    const withBot = lobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'bot', team: 1, difficulty: 'easy' }, { kind: 'empty', team: 0 }]);
+    expect(startBlocker(withBot)).toBeNull();
+  });
+  it('share links with copy buttons and spectator count', () => {
+    const onCopy = vi.fn(), links = { play: 'http://x/?room=ABCD', watch: 'http://x/?room=ABCD&watch' };
+    const v = Lobby(lobbyProps({ lobby: { ...two, spectators: 3 }, links, onCopy }));
+    (byId(v, 'copy-play-link')!.props.onClick as () => void)(); (byId(v, 'copy-watch-link')!.props.onClick as () => void)();
+    expect(onCopy).toHaveBeenNthCalledWith(1, links.play); expect(onCopy).toHaveBeenNthCalledWith(2, links.watch);
+    expect(text(byId(v, 'lobby-spectators'))).toContain('3');
+  });
+});
+
 describe('Picker Play online', () => {
   const state = { save: defaultSave(), levels: [], customLevels: [], pickerView: 'main' } as unknown as AppSnapshot;
   it('shows pvp-play only when onPlayOnline given', () => {

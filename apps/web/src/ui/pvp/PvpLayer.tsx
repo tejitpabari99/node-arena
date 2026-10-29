@@ -3,6 +3,7 @@ import { ownership } from '../ownership';
 import { PvpHud } from './PvpHud';
 import { DESYNC_TOAST, Toast } from './Toast';
 import { SYNC_LOST_STRING, type PvpController } from '../../pvp/controller';
+import { shareLinks } from '../../net/links';
 import { Lobby } from './Lobby';
 import { PvpMenu } from './PvpMenu';
 import { PvpResult } from './PvpResult';
@@ -12,8 +13,10 @@ export function PvpLayer({pvp}:{pvp:PvpController}){
   useLayoutEffect(()=>pvp.subscribe(()=>setS(pvp.snapshot())),[pvp]);
   if(s.screen==='menu'||s.screen==='connecting')return <PvpMenu nick={s.nick} code={code} error={s.error} onNick={v=>pvp.setNick(v)} onCode={setCode} onCreate={()=>pvp.create()} onJoin={()=>pvp.join(code)} onBack={()=>pvp.close()} onDismissError={()=>pvp.dismissError()}/>;
   if(s.screen==='lobby'){
-    const level=s.lobby?pvp.level(s.lobby.levelId):undefined,palettes=(pvp.options.manifest?.()?.palettes??{}) as Record<string,string>;
-    return <Lobby code={s.code} lobby={s.lobby} seat={s.seat} host={s.host} conn={s.conn} error={s.error} levelName={s.lobby?pretty(s.lobby.levelId):''}
+    const maps=pvp.maps(),level=s.lobby?pvp.level(s.lobby.levelId):undefined,palettes=(pvp.options.manifest?.()?.palettes??{}) as Record<string,string>;
+    return <Lobby code={s.code} lobby={s.lobby} seat={s.seat} host={s.host} conn={s.conn} error={s.error} levelName={s.lobby?(maps.find(m=>m.id===s.lobby!.levelId)?.name??pretty(s.lobby.levelId)):''}
+      maps={maps} links={s.code&&typeof location!=='undefined'?shareLinks(location.origin,location.pathname,s.code):null}
+      onMap={id=>pvp.updateLobby(id,[])} onSeat={seats=>s.lobby&&pvp.updateLobby(s.lobby.levelId,seats)} onCopy={t=>{try{void navigator.clipboard?.writeText(t);}catch{/* clipboard unavailable */}}}
       seatColors={(level?.players??[]).map(p=>palettes[p.colorKey])} onReady={()=>pvp.ready()} onStart={()=>pvp.start()} onLeave={()=>pvp.leave()} onRetry={()=>pvp.retry()} onDismissError={()=>pvp.dismissError()}/>;
   }
   if((s.screen==='countdown'||s.screen==='playing')&&s.error===SYNC_LOST_STRING)return <section class="picker panel pvp-panel" aria-label="Connection interrupted">
