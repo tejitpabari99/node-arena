@@ -11,7 +11,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M
 | 1 | [M1] `dev:pvp` script + server URL env wiring | SP04#1, SP04#7 | done |
 | 2 | [M1] PvP e2e harness (config, build:test:pvp, script) | 1, SP05#10 | done |
 | 3 | [M1] Scripted-attack helper + Duel S 1v1 spec | 2, SP03#2, SP04#8 | done |
-| 4 | [M1] CI: ci.sh checklist + `pvp-e2e` job | 3, SP02#1, SP04#1 | todo |
+| 4 | [M1] CI: ci.sh checklist + `pvp-e2e` job | 3, SP02#1, SP04#1 | done |
 | 5 | [M1] Doc stubs + M1 play-test runbook | 1, 4 | todo |
 | 6 | [M2] `deploy-server.yml` (Fly deploy + versions smoke) | SP04#17 | todo |
 | 7 | [M2] `deploy.yml` ordering: changes -> server -> web | 6 | todo |
