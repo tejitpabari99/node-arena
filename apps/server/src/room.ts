@@ -48,6 +48,8 @@ export interface Room {
   host: number | null;
   levelId: string;
   seats: Seat[];
+  /** Occupants kicked from a seat (Task 11); Task 13 adds watch-join. Read-only observers. */
+  spectators: Occupant[];
   startAt: number | undefined;
   match: MatchStart | undefined;
   /** Clock-domain `now` when the room ended/closed; drives GC. */
@@ -55,6 +57,8 @@ export interface Room {
   /** Current connections of seated members (single mutable source; rebound on reconnect). */
   conns(): Conn[];
 }
+
+export const BOT_DIFFICULTIES = ['easy', 'normal', 'hard'] as const;
 
 export interface RoomManagerDeps {
   content: ServerContent;
@@ -119,10 +123,10 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     const seats: LobbySeat[] = room.seats.map((s, i) => {
       const out: LobbySeat = { kind: s.kind, team: s.team };
       if (s.difficulty !== undefined) out.difficulty = s.difficulty;
-      if (s.occupant !== undefined) out.occupant = { nick: s.occupant.nick, ready: isReady(room, i), status: 'connected' };
+      if (s.occupant !== undefined) out.occupant = { nick: s.occupant.nick, ready: isReady(room, i), status: s.occupant.conn.closed ? 'grace' : 'connected' };
       return out;
     });
-    return { t: 'lobby.state', levelId: room.levelId, timeLimitSec: level.timeLimitSec ?? 0, host: room.host, seats, spectators: 0 };
+    return { t: 'lobby.state', levelId: room.levelId, timeLimitSec: level.timeLimitSec ?? 0, host: room.host, seats, spectators: room.spectators.length };
   };
 
   const broadcast = (room: Room): void => { const m = lobbyState(room); for (const c of room.conns()) c.send(m); };
@@ -141,8 +145,8 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     const code = newCode();
     if (code === undefined) return conn.sendError('internal', 'no free room code');
     const room: Room = {
-      code, state: 'lobby', host: 0, levelId: defaultLevelId, seats: defaultSeats(defaultLevelId), startAt: undefined, match: undefined,
-      conns: () => room.seats.flatMap((s) => (s.occupant ? [s.occupant.conn] : [])),
+      code, state: 'lobby', host: 0, levelId: defaultLevelId, seats: defaultSeats(defaultLevelId), spectators: [], startAt: undefined, match: undefined,
+      conns: () => [...room.seats.flatMap((s) => (s.occupant ? [s.occupant.conn] : [])), ...room.spectators.map((o) => o.conn)],
     };
     rooms.set(code, room);
     seat(room, conn, 0);
@@ -173,8 +177,12 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     if (room.state !== 'lobby' && room.state !== 'ended') return;
     const i = seatOf(room, conn);
     if (i >= 0) { delete room.seats[i]!.occupant; }
+    else room.spectators = room.spectators.filter((o) => o.playerId !== conn.playerId);
     byPlayer.delete(conn.playerId!);
+    if (i < 0) { if (room.state === 'lobby') broadcast(room); return; }
     if (!room.seats.some((s) => s.occupant)) {
+      for (const o of room.spectators) byPlayer.delete(o.playerId);
+      room.spectators = [];
       rooms.delete(room.code);
       if (room.state === 'lobby') room.state = 'closed';
       log?.info('room.close', { room: room.code, reason: 'empty' });
@@ -186,21 +194,25 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     broadcast(room);
   };
 
-  const sameConfig = (a: SeatConfig, b: SeatConfig): boolean => a.kind === b.kind && a.team === b.team;
+  /** Normalises one wire seat: difficulty only on bots (default normal); returns undefined if invalid. */
+  const normSeat = (s: SeatConfig, n: number): SeatConfig | undefined => {
+    if (!Number.isInteger(s.team) || s.team < 0 || s.team >= n) return undefined;
+    if (s.kind !== 'bot') return s.difficulty === undefined ? { kind: s.kind, team: s.team } : undefined;
+    const difficulty = s.difficulty ?? 'normal';
+    if (!(BOT_DIFFICULTIES as readonly string[]).includes(difficulty)) return undefined;
+    return { kind: 'bot', team: s.team, difficulty };
+  };
 
   const update = (conn: Conn, room: Room, msg: Extract<ClientMessage, { t: 'lobby.update' }>): void => {
-    if (room.host !== seatOf(room, conn)) return conn.sendError('not-host');
+    const hostSeat = seatOf(room, conn);
+    if (room.host !== hostSeat) return conn.sendError('not-host');
     if (room.state !== 'lobby') return conn.sendError('match-in-progress');
     if (!content.pvpLevelIds.includes(msg.levelId)) return conn.sendError('bad-lobby', 'unknown level');
-    // M1: seat edits are not supported; seats must equal the level defaults. M2 (Task 11) lifts this.
-    const want = defaultSeats(msg.levelId);
-    if (msg.seats.length !== want.length || !msg.seats.every((s, i) => sameConfig(s, want[i]!))) {
-      return conn.sendError('bad-lobby', 'seat edits not supported yet');
-    }
     if (msg.levelId !== room.levelId) {
+      // Level change resets seats to defaults (msg.seats ignored); occupants refill in seat order, ready cleared, host -> seat 0.
+      const want = defaultSeats(msg.levelId);
       const occ = room.seats.flatMap((s) => (s.occupant ? [s.occupant] : []));
       if (occ.length > want.length) return conn.sendError('bad-lobby', 'too many players for level');
-      // Level change resets seats to defaults; occupants refill in seat order with ready cleared (host stays seat 0).
       const hostOcc = room.seats[room.host!]!.occupant!;
       const rest = occ.filter((o) => o !== hostOcc);
       room.levelId = msg.levelId;
@@ -208,7 +220,31 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       [hostOcc, ...rest].forEach((o, i) => { o.ready = false; room.seats[i]!.occupant = o; });
       room.host = 0;
       log?.info('lobby.level', { room: room.code, levelId: room.levelId });
+      return broadcast(room);
     }
+    const n = room.seats.length;
+    if (msg.seats.length !== n) return conn.sendError('bad-lobby', 'seat count must match level');
+    const next: SeatConfig[] = [];
+    for (const raw of msg.seats) {
+      const s = normSeat(raw, n);
+      if (s === undefined) return conn.sendError('bad-lobby', 'invalid seat');
+      next.push(s);
+    }
+    if (next[hostSeat]!.kind !== 'human') return conn.sendError('bad-lobby', 'host seat must be human');
+    let changed = false;
+    next.forEach((c, i) => {
+      const cur = room.seats[i]!;
+      if (cur.kind === c.kind && cur.team === c.team && cur.difficulty === c.difficulty) return;
+      changed = true;
+      if (cur.occupant !== undefined && c.kind !== 'human') { // occupied human seat flipped away: occupant -> spectator
+        room.spectators.push(cur.occupant);
+        delete cur.occupant;
+      }
+      const out: Seat = { kind: c.kind, team: c.team, ...(cur.occupant ? { occupant: cur.occupant } : {}) };
+      if (c.difficulty !== undefined) out.difficulty = c.difficulty;
+      room.seats[i] = out;
+    });
+    if (changed) for (const s of room.seats) if (s.occupant) s.occupant.ready = false;
     broadcast(room);
   };
 
@@ -228,7 +264,9 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       const s = room.seats[i]!;
       if (s.kind === 'empty' || (s.kind === 'human' && s.occupant === undefined)) return conn.sendError('bad-lobby', 'seats not filled');
       if (s.kind === 'human' && !isReady(room, i)) return conn.sendError('not-ready');
+      if (s.kind === 'human' && s.occupant!.conn.closed) return conn.sendError('bad-lobby', 'a seated player is disconnected');
     }
+    if (new Set(room.seats.map((s) => s.team)).size < 2) return conn.sendError('bad-lobby', 'needs at least 2 distinct teams');
     const level = content.compiled[room.levelId]!;
     const seed = rand(0, MAX_INT + 1);
     const teams = room.seats.map((s) => s.team);
