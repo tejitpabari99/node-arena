@@ -81,6 +81,7 @@ export function createMatchController(deps: MatchDeps): MatchController {
   };
 
   const onStart = (room: Room, match: MatchStart): void => {
+    feeds.delete(room); ends.delete(room); // rematch reuses the Room: drop the previous match's per-conn LagFeeds and stored result
     let terminalClose: () => void = () => {};
     const sim = create(match.level, match.seed, { teams: match.teams });
     sims.set(room, sim);
