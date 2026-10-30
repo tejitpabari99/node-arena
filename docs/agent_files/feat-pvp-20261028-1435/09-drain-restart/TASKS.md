@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 8 M3 tasks - PROTOCOL v3 wire, drain state machine + refusals, notice fan-out, room-close teardown, exit timing + fly.toml, web notice/terminal UI, deploy warning + ops docs, two-process e2e.
 date: 2026-10-30
 ---
@@ -8,14 +8,14 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/09-drain-restart/PRD.md
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | [M3] Protocol v3: `server.draining`, `draining` error | SP08#1 | todo |
-| 2 | [M3] Server drain state machine, refusals, healthz | 1 | todo |
-| 3 | [M3] Draining notice fan-out + late joiners | 2 | todo |
-| 4 | [M3] `onRoomClosed` teardown on all close paths | 2 | todo |
-| 5 | [M3] Close sequence, hard-exit timing, fly.toml | 2, 4 | todo |
-| 6 | [M3] Web notice banner, disabled actions, terminal state | 1, 3 | todo |
-| 7 | [M3] Deploy-time warning + PVP_OPS docs | 5 | todo |
-| 8 | [M3] Two-process SIGTERM e2e + web component tests | 5, 6, 7 | todo |
+| 1 | [M3] Protocol v3: `server.draining`, `draining` error | SP08#1 | done |
+| 2 | [M3] Server drain state machine, refusals, healthz | 1 | done |
+| 3 | [M3] Draining notice fan-out + late joiners | 2 | done |
+| 4 | [M3] `onRoomClosed` teardown on all close paths | 2 | done |
+| 5 | [M3] Close sequence, hard-exit timing, fly.toml | 2, 4 | done |
+| 6 | [M3] Web notice banner, disabled actions, terminal state | 1, 3 | done |
+| 7 | [M3] Deploy-time warning + PVP_OPS docs | 5 | done |
+| 8 | [M3] Two-process SIGTERM e2e + web component tests | 5, 6, 7 | done |
 
 ## Task 1 — [M3] Protocol v3: `server.draining`, `draining` error
 What it is / what it means: Additive wire and the shared version bump (D3, Versions, AC7).

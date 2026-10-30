@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 7 M3 tasks - SeatStatus/seat.status protocol cleanup, unlimited-flag broadcast fix, connection info getter, banner states, away chips in legend, gap-closing tests, M3 acceptance sweep.
 date: 2026-10-30
 ---
@@ -8,13 +8,13 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/11-reconnect-polish/PRD
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | [M3] Protocol cleanup: `SeatStatus` away-only, drop `seat.status` | SP09#1 | todo |
-| 2 | [M3] Broadcast `pause.state` after `syncEliminated` epoch change | SP08#1, SP09#5 | todo |
-| 3 | [M3] Connection `info` getter | SP08#2, SP09#6 | todo |
-| 4 | [M3] Banner states and catch-up overlay handoff | 3 | todo |
-| 5 | [M3] SeatLegend away/eliminated/bot chips from `pause.state` | 1, 2, SP08#2 | todo |
-| 6 | [M3] Gap-closing tests (unlimited, host-pass, 4005, spectator resync, resync+pause, drain) | 2, 4, 5, SP08#4, SP09#8 | todo |
-| 7 | [M3] M3 acceptance sweep, doc notes, old-row pointers | 6, SP08#5, SP09#8, SP10#6 | todo |
+| 1 | [M3] Protocol cleanup: `SeatStatus` away-only, drop `seat.status` | SP09#1 | done |
+| 2 | [M3] Broadcast `pause.state` after `syncEliminated` epoch change | SP08#1, SP09#5 | done |
+| 3 | [M3] Connection `info` getter | SP08#2, SP09#6 | done |
+| 4 | [M3] Banner states and catch-up overlay handoff | 3 | done |
+| 5 | [M3] SeatLegend away/eliminated/bot chips from `pause.state` | 1, 2, SP08#2 | done |
+| 6 | [M3] Gap-closing tests (unlimited, host-pass, 4005, spectator resync, resync+pause, drain) | 2, 4, 5, SP08#4, SP09#8 | done |
+| 7 | [M3] M3 acceptance sweep, doc notes, old-row pointers | 6, SP08#5, SP09#8, SP10#6 | done |
 
 ## Task 1 — [M3] Protocol cleanup: `SeatStatus` away-only, drop `seat.status`
 What it is / what it means: One coherent seat-status vocabulary (C1, C2, D1-D3, D6, AC1).

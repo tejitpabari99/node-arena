@@ -1,5 +1,5 @@
 ---
-status: approved
+status: done
 summary: M3 SP11 — reconnect UX polish, protocol cleanup (SeatStatus drop 'bot', rename 'grace'->'away', drop dead seat.status driving), unlimited-flag broadcast fix, ready-flag fix on host pass, and the M3 acceptance sweep that closes old rows in SP02/04/05 TASKS.
 date: 2026-10-30
 ---

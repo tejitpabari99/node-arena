@@ -1,11 +1,11 @@
 ---
 status: in-progress
-summary: Eleven PvP sub-projects — M2 merged (#40, 993b796); M3 PRDs SP08-SP11 approved (resync, drain, load smoke, reconnect polish), 26 M3 tasks drafted; first Fly deployment pending.
+summary: Eleven PvP sub-projects — M2 merged (#40, 993b796); M3 (SP08-SP11) implemented on feat/pvp-m3, 26/26 tasks done, CI green; first Fly deployment pending.
 date: 2026-10-30
 ---
 # Online PvP: PRD index
 
-M1 merged in #39; owner local play-test passed (2026-10-29). M2 merged to main (#40, 993b796); M3 (SP08-SP11) implemented on `feat/pvp-m3` (acceptance map: [11-reconnect-polish/m3-acceptance-map.md](11-reconnect-polish/m3-acceptance-map.md); review: [review-2026-10-30-m3.md](review-2026-10-30-m3.md)); first Fly deployment and production acceptance remain pending. [M1 implementation and validation summary](code-2026-10-29-0300.md).
+M1 merged in #39; owner local play-test passed (2026-10-29). M2 merged to main (#40, 993b796); M3 (SP08-SP11) implemented on `feat/pvp-m3` (26/26 tasks done; [run summary](code-2026-10-30-m3.md); acceptance map: [11-reconnect-polish/m3-acceptance-map.md](11-reconnect-polish/m3-acceptance-map.md); review: [review-2026-10-30-m3.md](review-2026-10-30-m3.md)); first Fly deployment and production acceptance remain pending. [M1 implementation and validation summary](code-2026-10-29-0300.md).
 
 Live private-room PvP (2-4 seats, teams, bots, spectators) via deterministic lockstep + server referee sim on Fly.io. Full rationale, verified facts and decision log: [brainstorm.md](brainstorm.md). Milestones: M1 = 2-tab local 1v1 owner play-test; M2 = full lobby/teams/bots/spectators/rematch/maps/Fly deploy (minimal play-link startup included in M1); M3 = broader reconnect hardening, desync resync, load test. **M2 also includes [SP07 pause/Quit/window-close forfeit](07-pause-forfeit/PRD.md) (settled, approved) and its minimum reconnect/catch-up.**
 
@@ -112,7 +112,7 @@ Historical integration sequence was 01 → (02 || 03) → 04 → 05 → 06, with
 
 ## Tasks
 
-Current tracking-table totals: **95 done / 101 tasks** for SP01-07, plus **26 new M3 tasks** (SP08 5, SP09 8, SP10 6, SP11 7; all `todo`) = **95 done / 127 listed**. The six old M3 rows below are superseded and still listed but must not be counted as remaining work: real remaining = 26 (SP08-11). All **48 M1-labelled** and **47 M2-labelled** tasks are done; **six old M3** rows (SP02#13, SP04#19/#20, SP05#16/#17/#18) remain `todo` and are superseded by SP08-SP11. Counts preserve task milestone labels: SP01#11 remains labelled M2 even though placement ranking was promoted and completed for M1 coverage. 
+Current tracking-table totals: **95 done / 101 tasks** for SP01-07, plus **26 new M3 tasks** (SP08 5, SP09 8, SP10 6, SP11 7; all `done`) = **121 done / 127 listed**. The six old M3 rows below are superseded and still listed but must not be counted as remaining work: real remaining = 0 (SP08-11 done). All **48 M1-labelled** and **47 M2-labelled** tasks are done; **six old M3** rows (SP02#13, SP04#19/#20, SP05#16/#17/#18) remain `todo` and are superseded by SP08-SP11. Counts preserve task milestone labels: SP01#11 remains labelled M2 even though placement ranking was promoted and completed for M1 coverage. 
 
 | SP | TASKS | M1 | M2 | M3 | Total | Done |
 |---|---|---|---|---|---|---|
@@ -123,13 +123,13 @@ Current tracking-table totals: **95 done / 101 tasks** for SP01-07, plus **26 ne
 | 05 | [05-web-netplay](05-web-netplay/TASKS.md) | 10 | 5 | 3 | 18 | 15 |
 | 06 | [06-deploy-e2e](06-deploy-e2e/TASKS.md) | 5 | 10 | 0 | 15 | 15 |
 | 07 | [07-pause-forfeit](07-pause-forfeit/TASKS.md) | 0 | 13 | 0 | 13 | 13 |
-| 08 | [08-desync-resync](08-desync-resync/TASKS.md) | 0 | 0 | 5 | 5 | 0 |
-| 09 | [09-drain-restart](09-drain-restart/TASKS.md) | 0 | 0 | 8 | 8 | 0 |
-| 10 | [10-load-smoke](10-load-smoke/TASKS.md) | 0 | 0 | 6 | 6 | 0 |
-| 11 | [11-reconnect-polish](11-reconnect-polish/TASKS.md) | 0 | 0 | 7 | 7 | 0 |
+| 08 | [08-desync-resync](08-desync-resync/TASKS.md) | 0 | 0 | 5 | 5 | 5 |
+| 09 | [09-drain-restart](09-drain-restart/TASKS.md) | 0 | 0 | 8 | 8 | 8 |
+| 10 | [10-load-smoke](10-load-smoke/TASKS.md) | 0 | 0 | 6 | 6 | 6 |
+| 11 | [11-reconnect-polish](11-reconnect-polish/TASKS.md) | 0 | 0 | 7 | 7 | 7 |
 | | **Total (SP01-07)** | 48 | 47 | 6 (superseded, see M3 plan) | 101 | **95** |
-| | **New M3 (SP08-11)** | 0 | 0 | 26 | 26 | **0** |
-| | **Total (SP01-11)** | 48 | 47 | 32 listed (6 superseded + 26 live) | 127 | **95 done / 127 tasks; live remaining 26** |
+| | **New M3 (SP08-11)** | 0 | 0 | 26 | 26 | **26** |
+| | **Total (SP01-11)** | 48 | 47 | 32 listed (6 superseded + 26 live) | 127 | **121 done / 127 tasks; live remaining 0 (6 superseded)** |
 
 ### M1 execution order (historical; complete)
 Topological waves; `||` = independent, run at most 2 at a time (parallelism cap).

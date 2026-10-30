@@ -1,5 +1,5 @@
 ---
-status: approved
+status: done
 summary: M3 SP10 — report-only load smoke. A script runs N (default 20) concurrent bot-filled rooms against the real server loop (in-process, or a URL for owner runs) and reports tick lateness p50/p99, RSS and CPU per room against targets p99 < 25 ms, RSS < 200 MB. /healthz gains rss/cpu/p50. Not a CI gate.
 date: 2026-10-30
 ---

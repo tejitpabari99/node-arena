@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 5 M3 tasks - server resync handler + limiter, web auto-resync controller, catch-up hash regression check, forced-desync tests, two-browser e2e.
 date: 2026-10-30
 ---
@@ -8,11 +8,11 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/08-desync-resync/PRD.md
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | [M3] Server `resync` handler + limiter + logging | SP07 reconnect attach | todo |
-| 2 | [M3] Web auto-resync controller (triggers, in-flight, cap, fallback) | 1 | todo |
-| 3 | [M3] Catch-up hash suppression regression check (S10) | 1, 2 | todo |
-| 4 | [M3] Forced desync / gap / pause / rate-limit tests | 2, 3 | todo |
-| 5 | [M3] Two-browser injected-desync e2e | 4, SP06#3 | todo |
+| 1 | [M3] Server `resync` handler + limiter + logging | SP07 reconnect attach | done |
+| 2 | [M3] Web auto-resync controller (triggers, in-flight, cap, fallback) | 1 | done |
+| 3 | [M3] Catch-up hash suppression regression check (S10) | 1, 2 | done |
+| 4 | [M3] Forced desync / gap / pause / rate-limit tests | 2, 3 | done |
+| 5 | [M3] Two-browser injected-desync e2e | 4, SP06#3 | done |
 
 ## Task 1 — [M3] Server `resync` handler + limiter + logging
 What it is / what it means: Replaces the `internal: not supported yet` answer for `resync` with the reconnect attach (S3, S4, S5, S9, D1, D3, D4).

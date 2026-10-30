@@ -1,5 +1,5 @@
 ---
-status: approved
+status: done
 summary: M3 SP09 — SIGTERM drain with a notice window. Server stops creating/starting, broadcasts server.draining{deadlineMs}, lets running matches finish or aborts them at the deadline (no result, no rules change); room-close hook tears down match timers; fly.toml/hard-exit aligned; web shows the notice and a "server restarted" terminal state.
 date: 2026-10-30
 ---

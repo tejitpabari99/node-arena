@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 6 M3 tasks - healthz rss/p50/cpu, in-process load harness + report, URL mode, spectator/churn scenarios, tiny CI test, first measured run + PVP_OPS capacity.
 date: 2026-10-30
 ---
@@ -8,12 +8,12 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/10-load-smoke/PRD.md. R
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | [M3] `/healthz` adds `rss`, `lateP50Ms`, `cpuMs` | none | todo |
-| 2 | [M3] `load:smoke` in-process harness, sampler, report, verdicts | 1 | todo |
-| 3 | [M3] URL mode and per-IP limit handling | 2 | todo |
-| 4 | [M3] `--spectators` and `--churn` scenarios, forced-GC delta | 2 | todo |
-| 5 | [M3] `load-smoke.test.ts` anti-rot test | 2 | todo |
-| 6 | [M3] First measured run, report attachment, PVP_OPS Capacity | 3, 4, 5 | todo |
+| 1 | [M3] `/healthz` adds `rss`, `lateP50Ms`, `cpuMs` | none | done |
+| 2 | [M3] `load:smoke` in-process harness, sampler, report, verdicts | 1 | done |
+| 3 | [M3] URL mode and per-IP limit handling | 2 | done |
+| 4 | [M3] `--spectators` and `--churn` scenarios, forced-GC delta | 2 | done |
+| 5 | [M3] `load-smoke.test.ts` anti-rot test | 2 | done |
+| 6 | [M3] First measured run, report attachment, PVP_OPS Capacity | 3, 4, 5 | done |
 
 ## Task 1 — [M3] `/healthz` adds `rss`, `lateP50Ms`, `cpuMs`
 What it is / what it means: One metric path for local and Fly runs, and live observability (L8, D4, AC3).

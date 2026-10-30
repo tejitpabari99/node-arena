@@ -1,5 +1,5 @@
 ---
-status: approved
+status: done
 summary: M3 SP08 — automatic recovery from a hash desync or lockstep stream error. Client sends the existing `resync`; server answers through the reconnect attach path (start + full catch-up + pause.state); web recreates sim/runtime. Limit 1 per 10 s per seat/spectator. No RULES_VERSION change; no wire change of its own.
 date: 2026-10-30
 ---
