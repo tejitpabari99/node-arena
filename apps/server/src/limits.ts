@@ -12,6 +12,8 @@ export const NEW_CONNS_PER_IP_PER_MIN = 30;
 /** Min gap between full-log catch-up attaches (watch / seated reconnect) per player. */
 export const CATCHUP_MIN_GAP_MS = 5000;
 export const CATCHUPS_PER_IP_PER_MIN = 20;
+/** Min gap between client `resync` requests per player id (seat or spectator). */
+export const RESYNC_MIN_GAP_MS = 10_000;
 export const CLOSE_RATE_LIMITED = 4005;
 export const CLOSE_BACKPRESSURE = 4006;
 
@@ -66,6 +68,7 @@ export class IpLimits {
   private readonly newConns = new Map<string, Window>();
   private readonly catchUpsByIp = new Map<string, Window>();
   private readonly catchUpAt = new Map<string, number>();
+  private readonly resyncAt = new Map<string, number>();
   constructor(private readonly now: () => number) {}
 
   acquireConn(ip: string): boolean {
@@ -98,6 +101,15 @@ export class IpLimits {
     w?.add();
     if (this.catchUpAt.size > 10_000) for (const [k, v] of this.catchUpAt) if (t - v >= CATCHUP_MIN_GAP_MS) this.catchUpAt.delete(k);
     this.catchUpAt.set(playerId, t);
+    return true;
+  }
+  /** Counts a `resync` request; false = this player resynced <10 s ago. Checked before `allowCatchUp`. */
+  allowResync(playerId: string): boolean {
+    const t = this.now();
+    const last = this.resyncAt.get(playerId);
+    if (last !== undefined && t - last < RESYNC_MIN_GAP_MS) return false;
+    if (this.resyncAt.size > 10_000) for (const [k, v] of this.resyncAt) if (t - v >= RESYNC_MIN_GAP_MS) this.resyncAt.delete(k);
+    this.resyncAt.set(playerId, t);
     return true;
   }
   joinBlocked(ip: string): boolean { return this.win(this.fails, ip, FAILED_JOINS_PER_MIN).full(); }

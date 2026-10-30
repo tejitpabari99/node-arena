@@ -291,3 +291,90 @@ test('catch-up to a conn already over cap closes 4006 before sending', () => {
   assert.equal(s.closed, 4006);
   assert.equal(s.of('catchup').length, 0);
 });
+
+// ---- SP08 Task 1: resync ----
+function runningRoom(t: ReturnType<typeof setup>) {
+  const a = t.client('5.5.5.5'), b = t.client('6.6.6.6');
+  a.say({ t: 'room.create' });
+  const code = a.of('room.joined')[0]!.code;
+  b.say({ t: 'room.join', code, role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'lobby.start' });
+  return { a, b, code };
+}
+
+test('resync: lobby/countdown/no room -> no-match, conn open, no limiter spent', () => {
+  const t = setup();
+  const lone = t.client('4.4.4.4');
+  lone.say({ t: 'resync' });
+  assert.equal(lone.of('error').at(-1)?.code, 'no-match');
+  const { a, b } = runningRoom(t); // countdown (no ticks yet)
+  a.say({ t: 'resync' });
+  assert.equal(a.of('error').at(-1)?.code, 'no-match');
+  const n = a.of('start').length;
+  for (let i = 0; i < 5; i++) t.tickAll();
+  t.advance(6000);
+  a.say({ t: 'resync' }); // first real resync still allowed (earlier no-match did not spend tokens)
+  assert.equal(a.of('start').length, n + 1);
+  assert.equal(b.closed, undefined);
+});
+
+test('covers SP08 S3: resync in running room -> start, chunked catchup (done last) in one turn; spectator youPlayer null', () => {
+  const t = setup();
+  const { a, code } = runningRoom(t);
+  for (let i = 0; i < 5; i++) t.tickAll();
+  t.advance(6000);
+  const before = a.sent.length;
+  a.say({ t: 'resync' });
+  const got = a.sent.slice(before);
+  const types = got.map((m) => m.t);
+  assert.equal(types[0], 'start');
+  assert.ok(types.slice(1).every((x) => x === 'catchup'), JSON.stringify(types));
+  const cu = got.filter((m) => m.t === 'catchup') as Extract<ServerMessage, { t: 'catchup' }>[];
+  assert.equal(cu[0]!.from, 0);
+  assert.equal(cu.at(-1)!.done, true);
+  assert.equal((got[0] as Extract<ServerMessage, { t: 'start' }>).youPlayer, 0);
+  const w = t.client('8.8.8.8');
+  w.say({ t: 'room.join', code, role: 'watch' });
+  t.advance(6000);
+  const wb = w.sent.length;
+  w.say({ t: 'resync' });
+  const ws = w.sent.slice(wb);
+  assert.equal(ws[0]!.t, 'start');
+  assert.equal((ws[0] as Extract<ServerMessage, { t: 'start' }>).youPlayer, null);
+  assert.equal(w.closed, undefined);
+});
+
+test('resync: second within 10 s -> rate-limited, conn open, no second attach; allowed after 10 s', () => {
+  const t = setup();
+  const { a } = runningRoom(t);
+  for (let i = 0; i < 5; i++) t.tickAll();
+  t.advance(6000);
+  a.say({ t: 'resync' });
+  const n = a.of('start').length;
+  t.advance(6000); // past the 5 s catch-up token, inside 10 s
+  a.say({ t: 'resync' });
+  assert.equal(a.of('error').at(-1)?.code, 'rate-limited');
+  assert.equal(a.of('start').length, n);
+  assert.equal(a.closed, undefined);
+  t.advance(4001);
+  a.say({ t: 'resync' });
+  assert.equal(a.of('start').length, n + 1);
+});
+
+test('resync right after a reconnect catch-up is refused by the catch-up token; conn stays open', () => {
+  const t = setup();
+  const { b } = runningRoom(t);
+  for (let i = 0; i < 5; i++) t.tickAll();
+  t.advance(6000);
+  const b2 = fakeSocket('6.6.6.6');
+  t.hub.accept(b2 as never);
+  b2.say({ t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick: 'P1', token: TOKEN(2) });
+  assert.ok(b2.of('start').length >= 1);
+  const n = b2.of('start').length;
+  b2.say({ t: 'resync' });
+  assert.equal(b2.of('error').at(-1)?.code, 'rate-limited');
+  assert.equal(b2.of('start').length, n);
+  assert.equal(b2.closed, undefined);
+  void b;
+});

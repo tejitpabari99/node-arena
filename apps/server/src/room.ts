@@ -230,6 +230,25 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
 
   const catchUpAllowed = (conn: Conn): boolean => deps.ipLimits?.allowCatchUp(conn.playerId!, conn.ip) ?? true;
 
+  /** SP08: client-requested self-heal. Replays the reconnect attach (start, full catch-up, pause.state, stored end); no hold bookkeeping, no sim/log mutation. */
+  const resync = (conn: Conn): void => {
+    const room = byPlayer.get(conn.playerId!);
+    const i = room === undefined ? -1 : seatOf(room, conn);
+    const who = i >= 0 ? 'seat' : 'spectator';
+    if (room === undefined || room.match === undefined || (room.state !== 'running' && room.state !== 'ended')) {
+      log?.info('resync', { room: room?.code, who, outcome: 'no-match' });
+      return conn.sendError('no-match');
+    }
+    const tick = deps.tickOf?.(room);
+    const fields = { room: room.code, matchId: room.match.matchId, who, seat: i >= 0 ? i : undefined, tick };
+    if (deps.ipLimits?.allowResync(conn.playerId!) === false || !catchUpAllowed(conn)) {
+      log?.warn('resync', { ...fields, outcome: 'limited' });
+      return conn.sendError('rate-limited', 'resync too frequent');
+    }
+    log?.info('resync', { ...fields, outcome: 'allowed' });
+    attachMidMatch(room, conn, i >= 0 ? i : null, room.state === 'running');
+  };
+
   const watch = (conn: Conn, room: Room): void => {
     if (room.state !== 'lobby' && room.state !== 'countdown' && room.state !== 'running') return conn.sendError('match-in-progress');
     if (room.spectators.length >= MAX_SPECTATORS) return conn.sendError('spectators-full');
@@ -579,7 +598,8 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
           const room = byPlayer.get(conn.playerId!);
           return conn.send({ t: 'pong', id: msg.id, tick: (room === undefined ? undefined : deps.tickOf?.(room)) ?? 0 });
         }
-        default: return conn.sendError('internal', 'not supported yet'); // rematch/resync: later tasks
+        case 'resync': return resync(conn);
+        default: return conn.sendError('internal', 'not supported yet');
       }
     },
     onDisconnect(conn, reason) {
