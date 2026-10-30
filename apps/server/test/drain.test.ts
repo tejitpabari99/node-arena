@@ -125,3 +125,29 @@ test('drain({windowMs:0}) is the legacy immediate shutdown', async () => {
   await srv.drain({ windowMs: 0 });
   assert.deepEqual(a.msgs.find((m) => m.t === 'room.closed'), { t: 'room.closed', reason: 'shutdown' });
 });
+
+test('server.draining: every existing and late authed conn gets exactly one notice with sensible deadlineMs', async () => {
+  const srv = await boot();
+  const a = await connect(srv.port, 'Ann', 'a'), b = await connect(srv.port, 'Bob', 'b');
+  const raw = new WebSocket(`ws://127.0.0.1:${srv.port}`); // connected, never sent hello: not authed, gets nothing
+  const rawMsgs: string[] = [];
+  raw.on('message', (d) => rawMsgs.push(String(d)));
+  await new Promise<void>((r) => raw.once('open', () => r()));
+  const notices = (c: Client) => c.msgs.filter((m): m is Extract<ServerMessage, { t: 'server.draining' }> => m.t === 'server.draining');
+  try {
+    assert.equal(notices(a).length, 0);
+    const done = srv.drain({ windowMs: 12_000, minMs: 12_000 });
+    await a.until('server.draining'); await b.until('server.draining');
+    await sleep(300);
+    const late = await connect(srv.port, 'Cy', 'c');
+    await late.until('server.draining');
+    await sleep(1200); // spans two 500 ms drain polls: the notice is never repeated
+    for (const c of [a, b, late]) assert.equal(notices(c).length, 1);
+    for (const c of [a, b]) assert.ok(notices(c)[0]!.deadlineMs > 11_000 && notices(c)[0]!.deadlineMs <= 12_000, String(notices(c)[0]!.deadlineMs));
+    const l = notices(late)[0]!.deadlineMs;
+    assert.ok(l > 9_000 && l < notices(a)[0]!.deadlineMs, String(l));
+    assert.deepEqual(late.msgs.slice(0, 2).map((m) => m.t), ['welcome', 'server.draining']);
+    assert.equal(rawMsgs.length, 0);
+    void done;
+  } finally { raw.terminate(); await srv.close(); }
+});

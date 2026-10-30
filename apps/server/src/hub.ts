@@ -1,5 +1,5 @@
 import { createHmac, randomBytes } from 'node:crypto';
-import { checkHello, type ClientMessage, type Versions } from '@node-arena/net';
+import { checkHello, type ClientMessage, type ServerMessage, type Versions } from '@node-arena/net';
 import { noopAuth, type Auth } from './auth.js';
 import { CLOSE_HEARTBEAT, CLOSE_HELLO_TIMEOUT, CLOSE_SERVER_FULL, CLOSE_SUPERSEDED, CLOSE_VERSION, Conn, type Socket } from './conn.js';
 import { ConnGuard, type IpLimits } from './limits.js';
@@ -43,12 +43,16 @@ export interface HubDeps {
   ipLimits?: IpLimits;
   /** Real clock (ms) for per-connection buckets. Default performance.now. */
   now?: () => number;
+  /** SP09: remaining drain ms while draining, else undefined; sent once (`server.draining`) to each conn authed during the drain, right after `welcome`. */
+  drainRemainingMs?: () => number | undefined;
 }
 
 export interface Hub {
   accept(socket: Socket): Conn;
   connCount(): number;
   connByPlayer(playerId: string): Conn | undefined;
+  /** Sends `msg` to every authed, open conn; returns the count. */
+  broadcast(msg: ServerMessage): number;
   /** Stops heartbeat timers. */
   stop(): void;
 }
@@ -137,6 +141,8 @@ export function createHub(deps: HubDeps): Hub {
     const res = resume === undefined ? probe : checkHello(msg, deps.versions, { playerId, resume });
     if (!res.ok) return;
     conn.send(res.welcome);
+    const draining = deps.drainRemainingMs?.();
+    if (draining !== undefined) conn.send({ t: 'server.draining', deadlineMs: draining });
     log?.info('hello.ok', { conn: conn.id, playerId });
     handler.onAuthed?.(conn);
   };
@@ -183,6 +189,11 @@ export function createHub(deps: HubDeps): Hub {
       return conn;
     },
     connCount: () => conns.size,
+    broadcast(msg) {
+      let n = 0;
+      for (const c of conns) if (c.authed && !c.closed) { c.send(msg); n++; }
+      return n;
+    },
     stop() { for (const h of beat) timers.clearInterval?.(h as never); beat.length = 0; },
     connByPlayer(playerId) {
       for (const c of byToken.values()) if (c.playerId === playerId) return c;

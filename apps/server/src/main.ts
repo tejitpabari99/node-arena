@@ -101,7 +101,9 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
     onSeatDisconnect: match.onSeatDisconnect, onSeatReconnect: match.onSeatReconnect, pauseStateOf: match.pauseState, endOf: match.endOf, hasPendingDeadline: match.hasPendingDeadline,
     pausedMsOf: match.pausedMs, seatOut: match.seatOut, onRoomClosed: (r) => match.cancel(r), isDraining: () => phase !== 'serving',
   });
-  const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns, ipLimits, now });
+  let drainDeadline: number | undefined;
+  const drainRemaining = (): number | undefined => drainDeadline === undefined ? undefined : Math.max(0, Math.round(drainDeadline - now()));
+  const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns, ipLimits, now, drainRemainingMs: drainRemaining });
   clock.start();
   const startedAt = Date.now();
 
@@ -182,6 +184,8 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
     const minMs = Math.min(dopts.minMs ?? DRAIN_MIN_MS, windowMs);
     const t0 = now();
     phase = 'draining';
+    drainDeadline = t0 + windowMs;
+    hub.broadcast({ t: 'server.draining', deadlineMs: windowMs });
     log.info('server.draining', { windowMs, active: rooms.activeMatchCount(), rooms: rooms.roomCount(), conns: hub.connCount() });
     await new Promise<void>((resolve) => {
       endWindow = resolve;
