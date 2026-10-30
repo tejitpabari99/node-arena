@@ -47,7 +47,23 @@ Secrets are never in `fly.toml`; its `[env]` holds only `ALLOWED_ORIGINS`.
 
 Manual server-only deploy: `gh workflow run deploy-server.yml`, or locally from the repo root: `fly deploy --remote-only -c apps/server/fly.toml`.
 
-`strategy = 'immediate'` on a single machine: a few seconds of downtime, and live matches end. On `SIGTERM` the server drains: stops accepting, sends `room.closed{shutdown}` to all rooms, closes sockets with 1001 within a 6 s grace, then hard-exits at 8 s (`kill_timeout = 10` in `fly.toml` must stay above 8). Deploy when nobody is mid-match; there is no resume across restarts.
+`strategy = 'immediate'` on a single machine: total outage is the drain window plus boot (about 5-10 s), and live matches end. `deploy-server.yml` first fetches `/healthz` and emits a `::warning::` when `running > 0` (non-blocking; a fetch failure just skips it). Deploy when nobody is mid-match; there is no resume across restarts.
+
+### Drain on SIGTERM
+
+Fly sends `kill_signal = 'SIGTERM'` (explicit in `fly.toml`); SIGINT behaves the same. The server then drains for `DRAIN_MS` (default 30000, range 0-120000; 0 = legacy immediate close, `room.closed{shutdown}`):
+- It keeps listening: `/healthz` stays HTTP 200 with `draining: true`, token reconnects into running matches still work, running matches keep ticking.
+- It refuses `room.create`, `room.join` (new members), `lobby.start` and `rematch` with `error{draining}`.
+- Every connection gets one `server.draining{deadlineMs}` (remaining ms) at drain start, or right after `welcome` when it connects later.
+- Early exit: once no match is in `countdown`/`running` (minimum 3 s so the notice is delivered) the drain ends. Otherwise it ends at the window.
+- At the end every room is closed with `room.closed{server-restart}` (running matches abort: no `end`, no result, no forfeit), sockets close with 1001 (2 s grace), then the process exits 0.
+- Hard exit (`hardExitMs`): `DRAIN_MS` + 2 s grace + 1 s = 33 s by default (8 s when `DRAIN_MS=0`). `kill_timeout` in `fly.toml` is 40 (hard exit + 5 s margin); a server test fails if it is not above the hard exit. If you raise `DRAIN_MS`, raise `kill_timeout` to `DRAIN_MS/1000 + 8`.
+
+Check before deploying: `curl -fsS https://node-arena-server.fly.dev/healthz | jq '{running, rooms, draining}'`. `running` is matches in progress; deploy when it is 0 to finish in about 3 s.
+
+Players see: a banner "Server restarting - this match will end in 0:24" (lobby: "Server restarting - you can't start a new match."), Create/Join/Start/Rematch disabled, then "Server restarted. Your match ended with no result." with a Back to menu button.
+
+Owner-only, first deploy: confirm Fly honours `kill_timeout = 40` and stops routing new connections to a stopping machine (`fly config show -a node-arena-server`); if not, set `DRAIN_MS=20000` and `kill_timeout = 30`. Record the result here.
 
 ### Rollback
 
@@ -62,7 +78,7 @@ Or revert the commit on `main` (re-triggers the pipeline). Rolling the server ba
 ```sh
 curl -fsS https://node-arena-server.fly.dev/healthz
 ```
-JSON fields: `ok`, `rooms`, `conns`, `running` (matches in progress), `lateP99Ms` (tick-loop lateness p99; sustained high values mean CPU starvation), `uptimeS`, `versions` (`protocol` plus content/rules/schema/bot versions the handshake compares). Fly also polls `GET /healthz` every 15 s (3 s timeout, 10 s grace).
+JSON fields: `ok`, `rooms`, `conns`, `running` (matches in progress), `draining` (true during SIGTERM drain; still HTTP 200), `lateP99Ms` (tick-loop lateness p99; sustained high values mean CPU starvation), `uptimeS`, `versions` (`protocol` plus content/rules/schema/bot versions the handshake compares). Fly also polls `GET /healthz` every 15 s (3 s timeout, 10 s grace).
 
 ```sh
 fly status -a node-arena-server
@@ -73,7 +89,7 @@ fly checks list -a node-arena-server
 
 ```sh
 fly logs -a node-arena-server
-fly logs -a node-arena-server | grep server.shutdown
+fly logs -a node-arena-server | grep -E 'server\.(signal|draining|drain_end|shutdown)'
 ```
 Structured lines; verbosity via `LOG_LEVEL` (`debug|info|warn|error`, default `info`).
 
@@ -91,6 +107,7 @@ Fly `fly.toml [env]` sets `ALLOWED_ORIGINS`; the Dockerfile sets `PORT=8080`, `C
 | `MAX_ROOMS` | 40 | |
 | `MAX_CONNS` | 200 | Past the cap new sockets close with 1013 |
 | `CONTENT_DIR` | repo `packages/content/data` | Image sets `/app/content-data/data` |
+| `DRAIN_MS` | 30000 | SIGTERM drain window, 0-120000; 0 = immediate close. Keep `kill_timeout` in `fly.toml` above `DRAIN_MS/1000 + 3` (see [Drain on SIGTERM](#drain-on-sigterm)) |
 | `LOG_LEVEL` | info | |
 
 ## Close codes
@@ -101,7 +118,7 @@ Fly `fly.toml [env]` sets `ALLOWED_ORIGINS`; the Dockerfile sets `PORT=8080`, `C
 | 4005 | Per-connection rate limit exceeded |
 | 4006 | Backpressure (client not reading fast enough) |
 | 1013 | Server full (`MAX_CONNS` or per-IP cap) |
-| 1001 | Server shutting down (drain) |
+| 1001 | Server shutting down (drain; preceded by `room.closed{server-restart}`) |
 
 ## Version skew
 
@@ -162,4 +179,4 @@ One `shared-cpu-1x` / 256 MB machine, always on (`auto_stop_machines = 'off'`, `
 | Players dropped with 4005/4006 | Rate limit / slow client; look at `fly logs` |
 | New connections closed 1013 | `MAX_CONNS` / per-IP cap hit; check `conns` in `/healthz` |
 | Matches lag | `lateP99Ms` in `/healthz`; upsize VM in `fly.toml` `[[vm]]` |
-| Matches vanish after a deploy | Expected: restart drains rooms (`room.closed` shutdown) |
+| Matches vanish after a deploy | Expected: a deploy drains up to 30 s, then aborts live matches (`room.closed` server-restart) |
