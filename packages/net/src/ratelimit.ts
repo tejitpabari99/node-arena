@@ -73,6 +73,9 @@ export class RateLimiter {
 
   reset(key: number | string): void { this.entries.delete(key); }
 
+  /** Tracked keys (leak checks). */
+  get size(): number { return this.entries.size; }
+
   private cap(kind: LimitKind): number {
     switch (kind) {
       case 'cmd': return this.limits.cmdsPerSec;

@@ -117,6 +117,8 @@ export interface RoomManager extends HubHandler {
   drop(room: Room): void;
   /** Shutdown: sends `room.closed{reason}` to every conn in every room, marks rooms closed, and drops them. */
   closeAll(reason: string): void;
+  /** Test hook: live ping-limiter entries. */
+  pingLimiterSize(): number;
 }
 
 export function createRoomManager(deps: RoomManagerDeps): RoomManager {
@@ -220,9 +222,12 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     if (end !== undefined) conn.send(end);
   };
 
+  const catchUpAllowed = (conn: Conn): boolean => deps.ipLimits?.allowCatchUp(conn.playerId!, conn.ip) ?? true;
+
   const watch = (conn: Conn, room: Room): void => {
     if (room.state !== 'lobby' && room.state !== 'countdown' && room.state !== 'running') return conn.sendError('match-in-progress');
     if (room.spectators.length >= MAX_SPECTATORS) return conn.sendError('spectators-full');
+    if (room.state !== 'lobby' && room.match !== undefined && !catchUpAllowed(conn)) return conn.sendError('rate-limited', 'catch-up too frequent');
     conn.send({ t: 'room.joined', code: room.code, you: { seat: null, host: false } });
     if (room.state !== 'lobby' && room.match !== undefined) {
       conn.send(lobbyState(room));
@@ -499,6 +504,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       else if ((room.state === 'running' || room.state === 'ended') && room.match !== undefined) {
         // start -> catchup(0..next, last done) -> pause.state (if paused) -> stored end, all synchronous.
         // Hold bookkeeping first (broadcast skips this conn), so the snapshot attach sends is already post-reconnect.
+        if (!catchUpAllowed(conn)) { conn.sendError('rate-limited', 'catch-up too frequent'); conn.close(CLOSE_RATE_LIMITED, 'rate limited'); return; }
         if (room.state === 'running') deps.onSeatReconnect?.(room, i, conn);
         attachMidMatch(room, conn, i, room.state === 'running');
       }
@@ -518,6 +524,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     closeAll(reason) {
       for (const room of [...rooms.values()]) { notifyClosed(room, reason); room.state = 'closed'; drop(room); }
     },
+    pingLimiterSize: () => pingLimiter.size,
     runningCount: () => { let n = 0; for (const r of rooms.values()) if (r.state === 'running') n++; return n; },
     onClientMessage(conn, msg) {
       switch (msg.t) {
@@ -554,6 +561,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       }
     },
     onDisconnect(conn, reason) {
+      pingLimiter.reset(conn.id);
       // Superseded = same player on a new socket; onAuthed rebinds, so keep the seat.
       if (reason === 'superseded' || conn.playerId === undefined) return;
       const room = byPlayer.get(conn.playerId);
