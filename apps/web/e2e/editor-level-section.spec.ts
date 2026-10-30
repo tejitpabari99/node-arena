@@ -99,7 +99,7 @@ test('Level id is selectable immutable text before the name and stays outside th
     return (await import(/* @vite-ignore */ path) as typeof import('./fixtures/level-section.js')).ops;
   });
   expect(ops).toEqual([{ type: 'level-properties', value: {
-    name: 'Renamed level', theme: 'green', timeLimitSec: null,
+    name: 'Renamed level', theme: 'green', timeLimitSec: null, objective: 'captureAll',
     players: [
       { id: 'p1', kind: 'human', colorKey: 'blue' },
       { id: 'p2', kind: 'ai', colorKey: 'red', bot: { kind: 'tw', actionDelayMs: 4000, behavior: 'full', script: [] } },
