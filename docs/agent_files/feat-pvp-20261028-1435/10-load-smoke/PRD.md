@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 summary: M3 SP10 — report-only load smoke. A script runs N (default 20) concurrent bot-filled rooms against the real server loop (in-process, or a URL for owner runs) and reports tick lateness p50/p99, RSS and CPU per room against targets p99 < 25 ms, RSS < 200 MB. /healthz gains rss/cpu/p50. Not a CI gate.
 date: 2026-10-30
 ---
@@ -28,7 +28,7 @@ Non-goals: CI gate (noisy shared runners); browser clients or real sim on the cl
 | L1 | `pnpm load:smoke [-- --rooms 20 --seconds 60 --level <id> --json <path> --url <wss> --strict]`; runs under `tsx` from `apps/server/scripts/`. Defaults: 20 rooms, 60 s steady state after all rooms are running. |
 | L2 | Default mode is **in-process**: `startServer` on port 0 with the real content and an `info`-level-suppressed logger, so the production clock, room manager, match controller, bots, lockstep, rate limits and ws framing are exercised. Thin ws clients (not browsers, no client sim) on loopback. |
 | L3 | One client per room as host: `hello` (distinct token), `room.create`, `lobby.update` with all other seats `bot` (difficulty mix), `lobby.ready`, `lobby.start`; then it consumes `tick`/`ticks` frames, sends `ping` every 3 s (heartbeat 7 s) and no `cmd`/`hash`. Levels cycle over the shipped PvP levels so Duel S, Duel M and Cross (4 seats) all appear. |
-| L4 | Per-IP limits (8 conns, 5 creates/min per `Fly-Client-IP`, `limits.ts`) would block 20 rooms from loopback; in-process mode sets a distinct `Fly-Client-IP` header per client (`main.ts clientIp` honors it). In URL mode the proxy overwrites it, so rooms are capped at the limit (ramp 1 room/13 s, max 5) unless the owner runs from several IPs. |
+| L4 | Per-IP limits (8 conns, 5 creates/min per `Fly-Client-IP`, `limits.ts`) would block 20 rooms from loopback; in-process mode sets a distinct `Fly-Client-IP` header per client (`main.ts clientIp` honors it). In URL mode the proxy overwrites it, so rooms are capped at the limit (ramp 1 room/13 s, max 5) unless the owner runs from several IPs. M2 hardening limits (a0a63c4) also apply: 30 new connections per IP per min (ramp and churn must stay under it, or use distinct `Fly-Client-IP` per client in-process) and catch-up attaches limited to 1 per player per 5 s and 20 per IP per min (any reconnect/resync/spectator-join churn scenario must space attaches accordingly, else it measures the limiter). |
 | L5 | Metrics, sampled every 2 s: clock `lateness()` p50/p99 (max over samples and final), `process.memoryUsage().rss` and `heapUsed`, event-loop delay p99 (`monitorEventLoopDelay`), `process.cpuUsage()` delta over wall time = CPU % of one vCPU, divided by running rooms = CPU per room; frames sent/s; `running` room count; any `error`/`room.closed` received by clients. |
 | L6 | Verdict lines (PASS/FAIL, never exit non-zero without `--strict`): p99 < 25 ms; peak RSS < 200 MB; all N rooms stayed `running` for the whole window; zero unexpected `room.closed`/`error`. Exit codes: 0 report, 1 only with `--strict` and a FAIL, 2 harness error. |
 | L7 | Optional scenarios (flags): `--spectators K` attaches K spectators per room at the midpoint (mid-match catch-up cost; this is the data SP08's non-goal "resume-from-checkpoint" waits on); `--churn` ends and restarts rooms to expose leaks. After the run, rooms are closed and the script reports `rss` after a forced GC (`--expose-gc`) as an informational leak delta. |
@@ -73,7 +73,7 @@ Calibration: the 8 min map time limit and `MATCH_CAP_EXTRA_MS` mean a 60 s windo
 3. Decide `MAX_ROOMS` (currently default 40) and VM size from the numbers.
 
 ## Risks / Open Questions
-- Local pass does not imply Fly pass (shared-cpu burst credits/throttling). [OPEN-OWNER: only a Fly run answers it]
+- Local pass does not imply Fly pass (shared-cpu burst credits/throttling). [DEFERRED: owner verifies at first deploy via Manual steps 1-3; fallback: lower `MAX_ROOMS` / bigger VM]
 - `LATENESS_SAMPLES` window is the last 400 clock wakes (~20 s), so a spike can age out between 2 s samples; harness keeps the max across samples and its own event-loop delay histogram. [RESOLVED]
 - 40 rooms (`MAX_ROOMS`) may exceed what 1 shared vCPU can step; if 20 already fails, the follow-up is a lower cap, not a gate. [RESOLVED: report-only]
 - Rooms are held by `WeakMap`s in `match.ts` (`servers`, `sims`, `ends`, `feeds`), so dropped rooms are collectable, but pause/clock timers are not torn down on every close path (see SP09 D7); `--churn` leak delta may implicate that. [RESOLVED: SP09 fixes the hook; SP10 measures]

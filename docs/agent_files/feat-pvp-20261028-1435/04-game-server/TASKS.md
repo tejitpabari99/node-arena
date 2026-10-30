@@ -129,6 +129,7 @@ Done when (historical, not to be built): fake-clock tests: bot commands appear a
 What it is / what it means: R16, R19. Remaining M3 per SP07 amendment (2026-10-29), alongside SIGTERM drain / restart recovery (task 16 still lists drain; PRD amendment text calls it M3, R18 table says M2 - verify at implementation).
 What changes at a high level: after `desync`, resend full log as `catchup` from 0, limit 1 per 10 s per seat. Load script runs N concurrent bot-filled rooms and reports tick lateness p50/p99, RSS and CPU per room.
 Done when: forced mismatch resyncs and converges; 20-room smoke shows loop lateness p99 < 25 ms and RSS < 200 MB, with CPU/room reported.
+Superseded 2026-10-30 by [SP08](../08-desync-resync/PRD.md) (resync) and [SP10](../10-load-smoke/PRD.md) (load smoke); drain by [SP09](../09-drain-restart/PRD.md).
 
 ## Manual steps (owner)
 `fly apps create`, confirm app name/region, set `FLY_API_TOKEN` GitHub secret (SP06 consumes), set `ALLOWED_ORIGINS`.

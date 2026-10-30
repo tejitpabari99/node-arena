@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 summary: M3 SP09 — SIGTERM drain with a notice window. Server stops creating/starting, broadcasts server.draining{deadlineMs}, lets running matches finish or aborts them at the deadline (no result, no rules change); room-close hook tears down match timers; fly.toml/hard-exit aligned; web shows the notice and a "server restarted" terminal state.
 date: 2026-10-30
 ---
@@ -31,7 +31,7 @@ Non-goals: surviving restarts (room snapshot/restore, multi-machine, blue-green:
 | D4 | Countdown rooms are treated as running (3-2-1 completes). Lobbies stay joinable-by-members until close but cannot start. |
 | D5 | Drain ends at the earliest of: window elapsed; no room in `countdown`/`running` (after a minimum 3 s so the notice is delivered). Then every remaining room is closed with `room.closed{server-restart}` (lobby, ended, running alike); running/countdown matches end as ABORT: no `end` message, no `Forfeit`, no draw. |
 | D6 | Rooms that finish naturally during the window behave normally (`end`, result). Their rooms close at D5. |
-| D7 | `rooms.drop` calls a new `onRoomClosed(room)` dep, wired to a match-controller teardown (idempotent: clock remove, `pause.dispose`, state maps) so every close path (drain, `closeAll`, gc match-cap, idle, abort) stops timers. `pause.dispose()` is already idempotent (`ended = true`). |
+| D7 | [onRoomClosed hook EXISTS since 1a93075 (drop() and empty-room -> match.cancel); SP09 only extends it to drain/closeAll paths and adds tests] `rooms.drop` calls `onRoomClosed(room)` dep, wired to a match-controller teardown (idempotent: clock remove, `pause.dispose`, state maps) so every close path (drain, `closeAll`, gc match-cap, idle, abort) stops timers. `pause.dispose()` is already idempotent (`ended = true`). |
 | D8 | After D5: close all sockets 1001 (`server-restart` reason string), `http.close`, exit 0. Hard exit timer = `windowMs + closeGraceMs(2000) + 1000`, replacing the fixed 8 s; `kill_timeout` in `fly.toml` = that + 5 s margin (default window: hard exit 33 s, `kill_timeout = 40`). A test asserts `fly.toml kill_timeout` > computed hard exit for the default `DRAIN_MS`. Set `kill_signal = 'SIGTERM'` explicitly. |
 | D9 | `/healthz` adds `draining: boolean` and stays HTTP 200 while draining (a failing check could make Fly restart early); `ok` unchanged. |
 | D10 | Web: on `server.draining` show a banner with a local countdown ("Server restarting - this match will end in 0:24"; in lobby "Server restarting - you can't start a new match"); disable Create/Join/Start/Rematch; `error{draining}` shows the same text. Notice never covers the pause overlay or result screen. |
@@ -74,14 +74,15 @@ Web: `controller.ts` gets `case 'server.draining'` -> store `{ deadlineAt: now +
 ## Manual steps (owner-only)
 1. Confirm Fly's stop signal and timeout semantics on the real app: `fly.toml` explicit `kill_signal`/`kill_timeout` honored (`fly config show`), and that the proxy stops routing NEW connections to a stopping machine while existing ones continue.
 2. Production rehearsal: start a live match, `fly deploy`, observe notice, abort and "server restarted" screen; check `fly logs` for `server.signal`, drain timing and exit code 0.
-3. Decide whether to schedule deploys around play sessions (D12 only warns).
+3. Verify Fly allows `kill_timeout` >= 40 s (else set drain window 20 s, kill_timeout 30) and no new-connection routing during stop (same as step 1; result recorded in `PVP_OPS.md`).
+4. Decide whether to schedule deploys around play sessions (D12 only warns).
 
 ## Risks / Open Questions
 - Fly `strategy = 'immediate'` replaces the machine in place: total outage = drain window + boot (~5-10 s). Accepted at friends-only scale. [RESOLVED: orchestrator default]
 - Auto-deploy on every push to main (`deploy-server.yml`) can now take up to ~35 s per deploy and abort a match. D12 warns only; blocking is [DEFERRED].
-- `deploy-server.yml`, `main.ts`, `limits.ts`, `room.ts` currently carry uncommitted security edits from a parallel agent (backpressure close, attach limiter, per-IP conn rate, ping limiter cleanup); SP09 tasks must rebase on them. Ping-limiter cleanup in `drop` must stay compatible with the new `onRoomClosed` call. [RESOLVED: sequencing note]
+- `deploy-server.yml`, `main.ts`, `limits.ts`, `room.ts` security edits (backpressure close, attach limiter, per-IP conn rate, ping limiter cleanup) are committed (a0a63c4, dde99c1, 1a93075); SP09 builds on them. Ping-limiter cleanup in `drop` must stay compatible with the new `onRoomClosed` call. [RESOLVED: sequencing note]
 - `onRoomClosed` from `drop` also fires on ended-room TTL expiry and rematch-free closes; teardown must be a no-op for already-torn-down rooms. [RESOLVED: D7 idempotent; test it]
-- Whether Fly's kill_timeout allows >= 40 s on this plan. [OPEN-OWNER: verify in step 1; fallback window 20 s, kill_timeout 30]
+- Whether Fly's kill_timeout allows >= 40 s on this plan, and that the proxy stops routing new connections to a stopping machine. [DEFERRED: owner verifies at first deploy; fallback drain window 20 s, kill_timeout 30]
 
 ## Acceptance Criteria
 1. Server: after drain start, `room.create`/`join`/`lobby.start`/`rematch` return `error draining`; a token reconnect into a running match succeeds and gets `start`+`catchup`; every authed conn (existing and new) receives exactly one `server.draining` with sensible `deadlineMs`.

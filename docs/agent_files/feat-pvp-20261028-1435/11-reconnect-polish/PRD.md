@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 summary: M3 SP11 — reconnect UX polish, protocol cleanup (SeatStatus drop 'bot', rename 'grace'->'away', drop dead seat.status driving), unlimited-flag broadcast fix, ready-flag fix on host pass, and the M3 acceptance sweep that closes old rows in SP02/04/05 TASKS.
 date: 2026-10-30
 ---
@@ -15,7 +15,7 @@ M2 shipped a minimal reconnect and left stale protocol vocabulary behind (`grace
 - `SeatStatus = 'connected'|'grace'|'bot'` (`messages.ts:21`), validated in `validate.ts:81`; `lobby.state` reports `'grace'` for a closed conn (`room.ts:171`).
 - `seat.status` exists in the catalogue (`messages.ts:67`) but `grep` finds no server emitter in `apps/server/src`; the web only stores it and `SeatLegend` reads `st==='grace'`/`'bot'` (`SeatLegend.tsx:17`) with text "bot took over", which SP07 voided. In-match away state is only visible in `pause.state.holds` (`connected:false`).
 - `pause.ts` `syncEliminated` (~252-261) recomputes unlimited mode and bumps `epoch` but does not itself broadcast; a client can hold a stale `unlimited`/`budgets` until the next hold change.
-- `reserveSeat` (`room.ts:276-279`) passes host on without clearing ready flags (other host-pass paths at 268/315/369/436 do).
+- [FIXED in dde99c1: host-pass / hostless lobby clears ready flags; no work left, keep lobby test as regression only] `reserveSeat` previously passed host on without clearing ready flags.
 - `ConnBanner` shows only `Reconnecting...`, `Connection lost.`, refused, superseded; `connecting` and backoff progress are invisible.
 - An M2 hardening fix rate-limits catch-up attaches (5 s per player); a reconnect that lands inside that window is closed `CLOSE_RATE_LIMITED`.
 
@@ -32,9 +32,9 @@ Non-goals: resume-from-checkpoint; bot takeover or seat-reclaim-after-bot (void)
 | C3 | `SeatLegend`: statuses `eliminated` (label "Eliminated"; no wire distinction for forfeit), `away` ("Away 0:21" from the seat's `pause.state` budget), bots show "Bot". Remove "bot took over" wording. Away chip counts down locally from the snapshot (display only, as `toPauseView` already does). |
 | C4 | Chips update for all viewers (players and spectators) from `pause.state`; a seat with a `disconnect` hold and `connected:false` is away; a manual hold shows "Paused". |
 | C5 | `pause.syncEliminated` must broadcast: whenever it bumps `epoch` (or changes `unlimited`), `match.ts` publishes `pause.state` to all conns. Add the publish at the call site after `pause.syncEliminated(elim)` (`match.ts:155`) when `epoch()` changed. |
-| C6 | Host pass in `reserveSeat` clears all ready flags, consistent with the other host-pass paths; covered by a lobby test. |
+| C6 | [DONE in dde99c1; regression check only] Host pass in `reserveSeat` clears all ready flags, consistent with the other host-pass paths; covered by a lobby test. |
 | C7 | Banner states: `connecting` ("Connecting..."), `reconnecting` (attempt count / next retry seconds when available), `lost` (Retry), `refused` (Reload), `superseded` (terminal). Active-match banner does not hide the pause overlay or countdown. |
-| C8 | A reconnect closed with `CLOSE_RATE_LIMITED` (4005) is retried with growing backoff and shown as `reconnecting`, not `lost`. Close-code mapping verified (only 4000/4003 are terminal); the missing piece is not resetting `attempt` on `welcome` when that close follows (see Risks). Connection exposes a client-local `info` getter for C7 (attempt, next retry time, last close code). |
+| C8 | A reconnect closed with `CLOSE_RATE_LIMITED` (4005) is retried with growing backoff and shown as `reconnecting`, not `lost`. Close-code mapping verified (only 4000/4003 are terminal); the `attempt` reset gap is FIXED in 8528f00 (reset only after STABLE_MS = 10 s stable; 4005 min delay 5.5 s); remaining work = the `info` getter and banner. Connection exposes a client-local `info` getter for C7 (attempt, next retry time, last close code). |
 | C9 | During the post-reconnect catch-up overlay, the banner clears on `welcome` and the overlay owns the progress UI (existing SP05#13). |
 | C10 | Acceptance sweep (below). |
 
@@ -75,13 +75,13 @@ Dependency: sweep tasks run last, after SP08 and SP09 land.
 - Removing `seat.status` is a catalogue change: confirm no e2e or test helper depends on it. [RESOLVED: orchestrator default — owner may override; keep if a consumer is found]
 - "Forfeited" vs "Eliminated" labelling: no wire distinction exists; label stays "Eliminated". [DEFERRED]
 - Merge conflicts in `room.ts`/`messages.ts` with SP08/SP09 are likely; sequence: SP08 -> SP09 -> SP11, or rebase. [RESOLVED: SP11 lands last]
-- Banner retry detail (verified 2026-10-30, `apps/web/src/net/connection.ts`): `PvpConnection` exposes only `state: ConnState` (`connecting|connected|reconnecting|lost|refused|superseded`), `onState(cb(state))`, `onMessage`, `send`, `retry`, `close`. `attempt`, `outageStart` and the pending backoff delay (`backoffDelay`, `BACKOFF_MS` 0.5-8 s, +-20% jitter, `GIVE_UP_MS` 60 s) are closure-private; the close code is not surfaced. SP11 must add a client-local `info` getter `{ attempt, nextRetryAt: number | null, outageStartedAt: number | null, lastCloseCode: number | null }` (set in `scheduleReconnect`/`onclose`) and let `onState` callbacks read it; no wire change. C8 finding: `onclose` maps only 4000 -> `superseded` and 4003 -> `refused`; every other code, including `CLOSE_RATE_LIMITED` 4005, already goes to `scheduleReconnect` (so it shows `reconnecting`, not `lost`, until the 60 s give-up). Gap: `attempt` resets to 0 on every `welcome` (line ~91), and a rate-limited attach closes AFTER `welcome`, so the backoff never grows and the loop retries at ~0.5 s against a 5 s catch-up window. SP11 must reset `attempt` only once the attach is not followed by a rate-limited close (e.g. on first `start`/`room.joined` held for ~2 s, or treat 4005 as keep-attempt). [RESOLVED: exposed = state only; additions specified in C7/C8 — verified]
+- Banner retry detail (verified 2026-10-30, `apps/web/src/net/connection.ts`): `PvpConnection` exposes only `state: ConnState` (`connecting|connected|reconnecting|lost|refused|superseded`), `onState(cb(state))`, `onMessage`, `send`, `retry`, `close`. `attempt`, `outageStart` and the pending backoff delay (`backoffDelay`, `BACKOFF_MS` 0.5-8 s, +-20% jitter, `GIVE_UP_MS` 60 s) are closure-private; the close code is not surfaced. SP11 must add a client-local `info` getter `{ attempt, nextRetryAt: number | null, outageStartedAt: number | null, lastCloseCode: number | null }` (set in `scheduleReconnect`/`onclose`) and let `onState` callbacks read it; no wire change. C8 finding: `onclose` maps only 4000 -> `superseded` and 4003 -> `refused`; every other code, including `CLOSE_RATE_LIMITED` 4005, already goes to `scheduleReconnect` (so it shows `reconnecting`, not `lost`, until the 60 s give-up). Former gap (attempt reset on every `welcome`, retry loop at ~0.5 s against the 5 s window) FIXED in 8528f00; SP11 only needs the `info` getter to expose the existing attempt/backoff state. [RESOLVED: exposed = state only; additions specified in C7/C8 — verified]
 
 ## Acceptance Criteria
 1. Wire: `grace`/`bot` rejected by validators, `away` accepted; `PROTOCOL_VERSION === 3`; handshake mismatch test updated; no `seat.status` in catalogue.
 2. Legend: another seat that disconnects shows "Away" with a decreasing budget in both players' and spectators' views; returns to normal on `resume`; text no longer says "bot took over".
 3. Quit/elimination during a pause that flips unlimited mode produces a broadcast `pause.state` with `unlimited:true`, `null` budget.
-4. Host drop in lobby clears all ready flags.
+4. Host drop in lobby clears all ready flags (already delivered in dde99c1; regression test only).
 5. Banner shows each of connecting/reconnecting/lost/refused/superseded with correct controls; rate-limited reconnect ends in `connected`, not `lost`.
 6. Every acceptance bullet of SP07 (M3-relevant), SP08, SP09 and this PRD maps to a passing test; the old-row pointers in 02/04/05 TASKS.md are updated.
 7. CI chain green on `feat/pvp-m3`.

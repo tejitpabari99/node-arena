@@ -89,3 +89,4 @@ Done when: tests show a lagging client receives a gap-free batch then live ticks
 What it is: R8 auto-resync (M3). Amended 2026-10-29: stays M3; only reconnect catch-up moved to M2 (SP07).
 What changes at a high level: on `desync`/protocol error, LockstepClient emits `resync` and exposes a reset path; server answers with full catch-up from the log; reuse catch-up runner. Caller (SP05) rebuilds the Sim.
 Done when: a forced hash mismatch yields `desync` then the client converges to the server hash after full resync in test.
+Superseded 2026-10-30 by [SP08](../08-desync-resync/PRD.md).
