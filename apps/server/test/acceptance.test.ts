@@ -70,7 +70,7 @@ function run(levelId: string, maxTicks: number) {
     onStart: (r, m) => { starts.push(m); ctl.onStart(r, m); },
     onMatchMessage: ctl.onMessage,
   });
-  const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', timers: { setTimeout: () => 0, clearTimeout: () => {} } });
+  const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', now: () => now, timers: { setTimeout: () => 0, clearTimeout: () => {} } });
   const a = simClient('A', 1, hub), b = simClient('B', 2, hub);
   a.s.say({ t: 'room.create' });
   const code = ((a.s.sent.find((m) => m.t === 'room.joined') as { code: string }).code);
@@ -103,6 +103,7 @@ function run(levelId: string, maxTicks: number) {
   while (added.size > 0 && guard++ < maxTicks) {
     const t = a.sim.view.tick;
     script(a, t); script(b, t);
+    now += 50; // simulated 20 Hz wall clock for the rate limiters
     for (const r of [...added]) r.tick();
     a.pump(); b.pump();
     if (referee.view.tick % 20 === 0) checks.push({ tick: referee.view.tick, ref: referee.hash(), a: a.hashes.get(referee.view.tick), b: b.hashes.get(referee.view.tick) });

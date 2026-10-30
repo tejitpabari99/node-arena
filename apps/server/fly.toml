@@ -1,0 +1,33 @@
+# NOTE: app name per SP04 PRD decision 12; owner must `fly apps create` it (or edit here).
+app = 'node-arena-server'
+primary_region = 'ewr'
+kill_timeout = 10 # server drain hard-exits at 8 s
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[deploy]
+  strategy = 'immediate'
+
+[env]
+  # Not secret. Firebase Hosting prod + preview channels (`<site>--<channel>-<hash>.web.app`); `*` = one DNS label.
+  # If firebase.json ever gains a CSP, connect-src must allow this server's wss host.
+  ALLOWED_ORIGINS = 'https://node-arena-99.web.app,https://node-arena-99.firebaseapp.com,https://node-arena-99--*.web.app'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'off'
+  auto_start_machines = false
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    method = 'GET'
+    path = '/healthz'
+    interval = '15s'
+    timeout = '3s'
+    grace_period = '10s'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '256mb'

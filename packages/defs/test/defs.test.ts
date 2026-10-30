@@ -61,7 +61,10 @@ test('module params validate TW defaults and reject unknown keys', () => {
 });
 
 test('commands and events', () => {
-  assert.deepEqual(Object.keys(COMMANDS), ['DrawLine', 'CutLine']);
+  assert.deepEqual(Object.keys(COMMANDS), ['DrawLine', 'CutLine', 'Forfeit']);
+  assert.ok(Value.Check(COMMANDS.Forfeit.payload, { player: 1 }));
+  assert.ok(!Value.Check(COMMANDS.Forfeit.payload, { player: 1, from: 0 }));
+  assert.deepEqual(COMMANDS.Forfeit.rejectReasons, ['gameover', 'malformed', 'unknown-id', 'not-pvp', 'eliminated']);
   assert.ok(Value.Check(COMMANDS.DrawLine.payload, { player: 0, from: 1, to: 2 }));
   assert.ok(!Value.Check(COMMANDS.DrawLine.payload, { player: 0, from: 1 }));
   assert.ok(!('UseBooster' in COMMANDS));

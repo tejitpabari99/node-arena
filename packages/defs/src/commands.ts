@@ -16,6 +16,13 @@ export const COMMANDS = {
     rejectReasons: ['gameover', 'malformed', 'unknown-id', 'no-line', 'not-owner'],
     ruleIds: ['R-LIN-05', 'R-ENT-04'],
   },
+  /** System command (server/replay only, never a seat or bot): pvp seat elimination (R-FFT-01..03). */
+  Forfeit: {
+    id: 'Forfeit',
+    payload: Type.Object({ player: index() }, { additionalProperties: false }),
+    rejectReasons: ['gameover', 'malformed', 'unknown-id', 'not-pvp', 'eliminated'],
+    ruleIds: ['R-FFT-01', 'R-FFT-02', 'R-FFT-03'],
+  },
 } as const;
 
 export type CommandId = keyof typeof COMMANDS;

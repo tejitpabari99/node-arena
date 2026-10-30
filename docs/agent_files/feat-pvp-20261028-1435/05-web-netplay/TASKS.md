@@ -4,7 +4,7 @@ summary: 18 tasks (10 M1, 5 M2, 3 M3) for apps/web netplay - MatchDriver seam, i
 date: 2026-10-28
 ---
 # Tasks: Web Netplay (apps/web)
-Source of truth: [PRD.md](PRD.md). Client for online PvP: separate NetDriver and PvpController beside the untouched campaign driver/AppController/save. Cross-SP refs `SPxx#N` point at sibling TASKS.md numbers.
+Source of truth: [PRD.md](PRD.md). Client for online PvP: separate NetDriver and PvpController beside the untouched campaign driver/AppController/save. Cross-SP refs `SPxx#N` point at sibling TASKS.md numbers. SP07 (2026-10-29) ownership: all pause/quit/forfeit/heartbeat/reconnect-hold work is tracked in ../07-pause-forfeit/TASKS.md, not here; entries below carry only amended decisions. SP07-owned web work: Pause/Resume/Quit buttons + Yes/No confirm, pause overlay from `pause.state`, `lastEpoch` reset on `start`, app `ping` every 3 s, countdown -> lobby on `start.cancel`, `room.leave` only after confirm, new error strings, auto-`resume` after reconnect catch-up, and the minimum mid-match reconnect (moved from task 16 to M2). Bot-takeover UX is superseded.
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
@@ -18,11 +18,11 @@ Source of truth: [PRD.md](PRD.md). Client for online PvP: separate NetDriver and
 | 8 | [M1] PvpHud (ownership bar, timer, Esc leave) + toast | 6, 7 | done |
 | 9 | [M1] PvpResult (win/lose) | 6, 8, SP01#8, SP02#8 | done |
 | 10 | [M1] Test hooks + two-tab acceptance + campaign regression | 7, 8, 9, SP04#8 | done |
-| 11 | [M2] Full lobby (maps, seats, teams, share links) | 7, SP03#8, SP04#11 | todo |
-| 12 | [M2] Seat legend + team-grouped bar | 8, 11 | todo |
-| 13 | [M2] Catch-up budget + overlay | 4, 6, SP02#10, SP04#13 | todo |
-| 14 | [M2] Watch mode + deep links | 7, 13, SP04#13 | todo |
-| 15 | [M2] N-seat/draw result, rematch, connection banners | 9, 11, SP01#11, SP04#14 | todo |
+| 11 | [M2] Full lobby (maps, seats, teams, share links) | 7, SP03#8, SP04#11 | done |
+| 12 | [M2] Seat legend + team-grouped bar | 8, 11 | done |
+| 13 | [M2] Catch-up budget + overlay | 4, 6, SP02#10, SP04#13 | done |
+| 14 | [M2] Watch mode + deep links | 7, 13, SP04#13 | done |
+| 15 | [M2] N-seat/draw result, rematch, connection banners | 9, 11, SP01#11, SP04#14 | done |
 | 16 | [M3] Reconnect resume + seat reclaim UX | 3, 13, 15, SP04#19 | todo |
 | 17 | [M3] Desync auto-resync (runtime recreation) | 6, 13, SP02#13, SP04#20 | todo |
 | 18 | [M3] M2/M3 acceptance tests sweep + doc notes | 14, 15, 16, 17 | todo |
@@ -79,17 +79,17 @@ Done when: `pnpm test`, `test:web:e2e`, `campaign:verify`, `typecheck`, `lint` g
 
 ## Task 11 — [M2] Full lobby (maps, seats, teams, share links)
 What it is: R2 complete.
-What changes: map cards from `listPvpMaps` (`lobby-map-<levelId>`), host controls for seat kind human/bot/empty, bot difficulty, team (`seat-kind/-difficulty/-team-<i>`), non-host read-only + Ready, share play/watch links with copy buttons, spectator count; render `lobby.state` as sent.
+What changes: map cards from `listPvpMaps` (`lobby-map-<levelId>`), host controls for seat kind human/bot/empty, bot difficulty, team (`seat-kind/-difficulty/-team-<i>`), non-host read-only + Ready, share play/watch links with copy buttons, spectator count; render `lobby.state` as sent. Amended 2026-10-29: Start-disabled reasons include a human seat not connected / reserved; reserved seats show not-connected from `lobby.state`.
 Done when: component tests for host vs non-host controls, Start disabled reasons, link copy pass.
 
 ## Task 12 — [M2] Seat legend + team-grouped bar
 What it is: R3 legend, multi-seat visuals, Decision 11 (legend only).
-What changes: `seat-legend-<i>` with color dot, nick, team badge (not color-only), "you", eliminated/bot/disconnected status from `seat.status`; ownership bar groups same-team adjacent segments with thin gap.
+What changes: `seat-legend-<i>` with color dot, nick, team badge (not color-only), "you", eliminated/bot/disconnected status (source: `pause.state` holds + lobby occupant state + sim elimination; `seat.status away/forfeit` chips only if SP07 adds them); ownership bar groups same-team adjacent segments with thin gap.
 Done when: 4-seat team legend test passes.
 
 ## Task 13 — [M2] Catch-up budget + overlay
 What it is: R5.
-What changes: NetDriver catch-up mode when queued > 6: time-boxed ~8 ms stepping with `events:false` (events for last 2 steps), progress `tick/(tick+queued)`; "Catching up N%" overlay (`catchup-progress`) for join, reconnect, background-return; handles `catchup` messages via net helper or same loop. Tests with fake clock: budget respected, resumes live without gap.
+What changes: NetDriver catch-up mode when queued > 6: time-boxed ~8 ms stepping with `events:false` (events for last 2 steps), progress `tick/(tick+queued)`; "Catching up N%" overlay (`catchup-progress`) for join, reconnect, background-return; handles `catchup` messages via net helper or same loop. Amended 2026-10-29: the overlay is also the reconnect catch-up UI (SP07 recreates sim + `LockstepClient(0)` + runtime on repeated `start` for the same `matchId`). Tests with fake clock: budget respected, resumes live without gap.
 Done when: budget and progress tests pass.
 
 ## Task 14 — [M2] Watch mode + deep links
@@ -99,13 +99,14 @@ Done when: tests for deep-link flow incl. invalid code pass; spectator hash equa
 
 ## Task 15 — [M2] N-seat/draw result, rematch, connection banners
 What it is: R6 full, R7, R8 basic.
-What changes: placement table (`result-placement-<i>`, nick, team, buildings, troops), Draw and team-win and spectator "X won" variants, Rematch (`pvp-rematch`) returning to lobby on `lobby.state`; `ConnBanner` for reconnecting/lost (Retry)/refused, terminal messages for close 4000 ("Opened in another tab") and `version-mismatch` ("New version: reload"), "A bot took your seat" with Watch.
+What changes: placement table (`result-placement-<i>`, nick, team, buildings, troops), Draw and team-win and spectator "X won" variants, Rematch (`pvp-rematch`) returning to lobby on `lobby.state`; `ConnBanner` for reconnecting/lost (Retry)/refused, terminal messages for close 4000 ("Opened in another tab") and `version-mismatch` ("New version: reload"). Amended 2026-10-29: "A bot took your seat" banner dropped (bot takeover superseded by SP07); rematch resets pause budgets (server, SP07).
 Done when: component tests for N-seat, draw, rematch new seed, banners pass.
 
 ## Task 16 — [M3] Reconnect resume + seat reclaim UX
-What it is: R8 M3.
-What changes: mid-match socket drop keeps screen, shows Reconnecting, re-handshakes with same token, rebuilds sim via catch-up, recreating the runtime as `createBrowserRuntime` binds `sim.view` once; seat-in-grace chip for others; reclaim flow.
-Done when: killing socket mid-match resumes with equal hash.
+Superseded in part by SP07 (2026-10-29): minimum mid-match reconnect (same token, catch-up rebuild, runtime recreation, auto-resume of disconnect holds, stored result after `end`) moved to M2 under SP07; seat-in-grace chip, bot reclaim flow and seat-reclaim-after-bot are void. Remaining M3: polished reconnect UX/status chips beyond the basic banner. SP04#19 dependency is superseded (no server work to wait on).
+What it is: R8 M3 (polish only).
+What changes (remaining): reconnect status polish on top of the SP07 basic flow (shown state, richer chips for other seats' away state); original text (re-handshake, rebuild via catch-up, runtime recreation) is delivered by SP07 in M2.
+Done when: polish items per PRD M3 pass; basic kill-socket resume with equal hash is covered by SP07.
 
 ## Task 17 — [M3] Desync auto-resync (runtime recreation)
 What it is: R9 M3.
@@ -113,6 +114,6 @@ What changes: on `desync`, toast then dispose client+sim, fresh `create(level, s
 Done when: forced desync converges to server hash in a test.
 
 ## Task 18 — [M3] Acceptance sweep + doc notes
-What it is: closes M2/M3 acceptance criteria.
+What it is: closes M2/M3 acceptance criteria (pause/quit/reconnect acceptance is SP07's).
 What changes: fill gaps in tests against PRD acceptance list; short web netplay notes in existing docs where the doc gate requires. No new features.
 Done when: all gates green.

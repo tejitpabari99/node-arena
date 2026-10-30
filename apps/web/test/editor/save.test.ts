@@ -249,3 +249,25 @@ it('a changed:false response clears dirty when an undo snapshot carries an older
   expect(isDirty(undoSnapshot, result.level)).toBe(false);
   expect(isDirty({ ...undoSnapshot, name: 'Edit during request' }, result.level)).toBe(true);
 });
+
+it('saves pvp levels to pvp.json, never custom.json; objective and team retained', async () => {
+  const before = await campaign().catch(() => null);
+  const pvp = JSON.parse(await readFile(join(dir, 'data/levels/na-pvp-cross.json'), 'utf8')) as NextLevel;
+  const edited = structuredClone(pvp);
+  edited.buildings[0]!.level = edited.buildings[0]!.level + 1;
+  const res = await save('na-pvp-cross', edited);
+  expect(res.status).toBe(200);
+  const written = JSON.parse(await disk('na-pvp-cross')) as NextLevel;
+  expect(written.buildings[0]!.level).toBe(edited.buildings[0]!.level);
+  expect(written.objective).toBe('pvp');
+  expect(written.players.map(p => p.team)).toEqual([0, 1, 0, 1]);
+  expect(await campaign().catch(() => null)).toBe(before);
+  const list = JSON.parse(await readFile(join(dir, 'data/campaigns/pvp.json'), 'utf8')) as { entries: { level: string }[] };
+  expect(list.entries.filter(e => e.level === 'na-pvp-cross')).toHaveLength(1);
+  // a new pvp-objective id is appended to pvp.json too
+  const copy = structuredClone(pvp);
+  expect((await save('na-pvp-test-copy', copy)).status).toBe(200);
+  const after = JSON.parse(await readFile(join(dir, 'data/campaigns/pvp.json'), 'utf8')) as { entries: { level: string }[] };
+  expect(after.entries.map(e => e.level)).toContain('na-pvp-test-copy');
+  expect(await campaign().catch(() => null)).toBe(before);
+});

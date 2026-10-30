@@ -1,0 +1,490 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { test } from 'node:test';
+import type { Command } from '@node-arena/defs';
+import { create } from '@node-arena/sim';
+import { PROTOCOL_VERSION, SYSTEM_CMD_RESERVE, type ServerMessage } from '@node-arena/net';
+import type { ClockRoom } from '../src/clock.js';
+import { DEFAULT_CONTENT_DIR } from '../src/config.js';
+import { loadServerContent } from '../src/content.js';
+import { createHub } from '../src/hub.js';
+import { createMatchController } from '../src/match.js';
+import { createRoomManager, type MatchStart } from '../src/room.js';
+
+const fixture = readFileSync(new URL('./fixtures/na-pvp-fixture.json', import.meta.url), 'utf8');
+const content = loadServerContent(DEFAULT_CONTENT_DIR, { extraLevels: { 'na-pvp-fixture': fixture } });
+
+function fakeSocket() {
+  let msgCb: (d: string | Uint8Array) => void = () => {};
+  let closeCb: () => void = () => {};
+  const sent: ServerMessage[] = [];
+  return {
+    sent, bufferedAmount: 0,
+    send: (d: string) => void sent.push(JSON.parse(d) as ServerMessage),
+    close() {},
+    onMessage: (cb: (d: string | Uint8Array) => void) => void (msgCb = cb),
+    onClose: (cb: () => void) => void (closeCb = cb),
+    drop: () => closeCb(),
+    say: (m: object) => msgCb(JSON.stringify(m)),
+    of: <T extends ServerMessage['t']>(t: T) => sent.filter((m) => m.t === t) as Extract<ServerMessage, { t: T }>[],
+  };
+}
+
+/** Fake time: 50 ms loop steps tick every ClockRoom whose startAt has passed; fake timers fire in order. */
+function setup() {
+  let now = 1000;
+  const rooms = new Set<ClockRoom>();
+  const timers: Array<{ at: number; fn: () => void; id: number }> = [];
+  let tid = 0;
+  const clock = {
+    add: (r: ClockRoom) => void rooms.add(r), remove: (r: ClockRoom) => void rooms.delete(r),
+    boundary: (t: number) => Math.ceil(t / 50) * 50,
+  };
+  const fakeTimers = {
+    setTimeout: (fn: () => void, ms: number) => { timers.push({ at: now + ms, fn, id: ++tid }); return tid; },
+    clearTimeout: (h: unknown) => { const i = timers.findIndex((t) => t.id === h); if (i >= 0) timers.splice(i, 1); },
+  };
+  const ctl = createMatchController({ clock, now: () => now, timers: fakeTimers, onAbort: (r) => mgr.drop(r) });
+  const starts: MatchStart[] = [];
+  let n = 0;
+  const mgr = createRoomManager({
+    content, clock, now: () => now, inputDelay: 3,
+    randomInt: () => (n++ % 31),
+    onStart: (r, m) => { starts.push(m); ctl.onStart(r, m); },
+    onMatchMessage: ctl.onMessage, onCatchUp: ctl.catchUp,
+    onStartCancel: ctl.cancel, onSeatDisconnect: ctl.onSeatDisconnect, onSeatReconnect: ctl.onSeatReconnect, pauseStateOf: ctl.pauseState, endOf: ctl.endOf, hasPendingDeadline: ctl.hasPendingDeadline,
+    timers: { setTimeout: (fn, ms) => (ms === 60_000 ? 0 : fakeTimers.setTimeout(fn, ms)), clearTimeout: fakeTimers.clearTimeout }, // 60 s = gc sweep: ignored
+  });
+  const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', timers: { setTimeout: () => 0, clearTimeout: () => {} } });
+  let c = 0;
+  const client = (nick: string, tok?: number) => {
+    const s = fakeSocket();
+    hub.accept(s);
+    s.say({ t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick, token: `${String(tok ?? ++c).padStart(8, '0')}a1b2c3d4e5f60718293a4b5c` });
+    return s;
+  };
+  const room = () => {
+    const a = client(`A${c}`), b = client(`B${c}`);
+    a.say({ t: 'room.create' });
+    b.say({ t: 'room.join', code: a.of('room.joined')[0]!.code, role: 'play' });
+    b.say({ t: 'lobby.ready', ready: true });
+    a.say({ t: 'lobby.start' });
+    return { a, b, match: starts[starts.length - 1]! };
+  };
+  /** Advance fake time by `ms` in 50 ms loop steps. */
+  const advance = (ms: number) => {
+    for (let t = 0; t < ms; t += 50) {
+      now += 50;
+      for (const x of timers.filter((q) => q.at <= now).sort((p, q) => p.at - q.at || p.id - q.id)) { const i = timers.indexOf(x); if (i >= 0) { timers.splice(i, 1); x.fn(); } }
+      for (const r of [...rooms]) if (r.startAt <= now) r.tick();
+    }
+  };
+  return { room, client, advance, rooms, mgr, ctl, starts, now: () => now };
+}
+
+const lastStart = (t: ReturnType<typeof setup>) => t.starts[t.starts.length - 1]!;
+
+const startRunning = (t: ReturnType<typeof setup>) => {
+  const r = t.room();
+  t.advance(3100); // countdown + a few ticks
+  const room = t.mgr.room(r.match.code)!;
+  assert.equal(room.state, 'running');
+  return { ...r, room, hash: () => t.ctl.simOf(room)!.hash(), next: () => t.ctl.inspect(room)!.nextTick };
+};
+
+test('AC1: pause freezes 10 s (no ticks, hash frozen), resume continues at frozen tick with no burst; other rooms tick', () => {
+  const t = setup();
+  const r1 = startRunning(t);
+  const r2 = startRunning(t);
+  const frozen = r1.next();
+  const h = r1.hash();
+  const nTicks = r1.a.of('tick').length;
+  r1.a.say({ t: 'pause' });
+  const s = r1.a.of('pause.state').at(-1)!;
+  assert.equal(s.paused, true);
+  assert.equal(s.tick, frozen);
+  assert.deepEqual(r1.b.of('pause.state').at(-1), s);
+  assert.equal(s.holds[0]!.player, 0);
+  assert.equal(s.holds[0]!.reason, 'manual');
+  const other = r2.a.of('tick').length;
+  t.advance(10_000);
+  assert.equal(r1.a.of('tick').length, nTicks, 'no frames while paused');
+  assert.equal(r1.b.of('tick').length, nTicks);
+  assert.equal(r1.hash(), h);
+  assert.equal(r1.next(), frozen);
+  assert.equal(r2.a.of('tick').length - other, 200, 'other room unaffected');
+  r1.a.say({ t: 'resume', epoch: r1.a.of('pause.state').at(-1)!.epoch });
+  assert.equal(r1.a.of('pause.state').at(-1)!.paused, false);
+  assert.equal(t.rooms.size, 2);
+  t.advance(50);
+  const ticks = r1.a.of('tick');
+  assert.equal(ticks.length, nTicks + 1, 'exactly one tick per loop step after resume (no burst)');
+  assert.equal(ticks.at(-1)!.n, frozen, 'next tick n = frozen tick');
+  t.advance(500);
+  assert.equal(r1.a.of('tick').length, nTicks + 11);
+});
+
+test('AC6: second Pause is `paused`, owner repeat idempotent, concurrent holds, resume only after all, forged/spectator rejected', () => {
+  const t = setup();
+  const r = startRunning(t);
+  const spec = t.client('S');
+  spec.say({ t: 'room.join', code: r.match.code, role: 'watch' });
+  spec.say({ t: 'pause' });
+  assert.equal(spec.of('error').at(-1)!.code, 'not-your-seat');
+  spec.say({ t: 'resume', epoch: 99 });
+  assert.equal(spec.of('error').at(-1)!.code, 'not-your-seat');
+  spec.say({ t: 'quit' });
+  assert.equal(spec.of('error').at(-1)!.code, 'not-your-seat');
+  r.a.say({ t: 'pause' });
+  const e1 = r.a.of('pause.state').at(-1)!.epoch;
+  assert.equal(spec.of('pause.state').at(-1)!.paused, true, 'spectator sees the pause');
+  r.b.say({ t: 'pause' });
+  assert.equal(r.b.of('error').at(-1)!.code, 'paused');
+  const nA = r.a.of('pause.state').length;
+  r.a.say({ t: 'pause' });
+  assert.equal(r.a.of('pause.state').length, nA + 1, 'repeat replies with snapshot to owner only');
+  assert.equal(r.a.of('pause.state').at(-1)!.holds.length, 1);
+  r.b.say({ t: 'resume', epoch: e1 }); // b has no hold: forged
+  assert.equal(r.b.of('error').at(-1)!.code, 'not-your-seat');
+  r.b.drop(); // disconnect while a is paused -> second hold
+  const snap = r.a.of('pause.state').at(-1)!;
+  assert.deepEqual(snap.holds.map((h) => [h.player, h.reason]), [[0, 'manual'], [1, 'disconnect']]);
+  r.a.say({ t: 'resume', epoch: 0 }); // stale
+  assert.equal(r.a.of('pause.state').at(-1)!.holds.length, 2, 'stale resume ignored');
+  r.a.say({ t: 'resume', epoch: snap.epoch });
+  assert.equal(r.a.of('pause.state').at(-1)!.paused, true, 'still paused: b hold remains');
+  assert.equal(t.rooms.size, 0);
+  const b2 = t.client('B', 2); // token of the second client
+  const rejoin = b2.of('pause.state').at(-1)!;
+  assert.equal(rejoin.paused, true, 'reauthed seat gets the snapshot');
+  assert.equal(rejoin.holds[0]!.connected, true);
+  b2.say({ t: 'resume', epoch: rejoin.epoch });
+  assert.equal(b2.of('pause.state').at(-1)!.paused, false);
+  assert.equal(t.rooms.size, 1);
+});
+
+test('AC6: buffered pre-pause cmds land at original ticks; cmd while paused rejected', () => {
+  const t = setup();
+  const r = startRunning(t);
+  const n = r.next();
+  r.a.say({ t: 'cmd', c: { type: 'DrawLine', from: 0, to: 1 } }); // lands at n + 3
+  r.a.say({ t: 'pause' });
+  r.b.say({ t: 'cmd', c: { type: 'DrawLine', from: 1, to: 0 } });
+  assert.equal(r.b.of('error').at(-1)!.code, 'paused');
+  t.advance(5000);
+  r.a.say({ t: 'resume', epoch: r.a.of('pause.state').at(-1)!.epoch });
+  t.advance(50 * 6);
+  const withCmd = r.a.of('tick').filter((x) => x.c !== undefined);
+  assert.equal(withCmd.length, 1);
+  assert.equal(withCmd[0]!.n, n + 3);
+});
+
+test('pause in countdown -> no-match; control msgs share the rate-limit bucket', () => {
+  const t = setup();
+  const r = t.room();
+  r.a.say({ t: 'pause' });
+  assert.equal(r.a.of('error').at(-1)!.code, 'no-match');
+  t.advance(3100);
+  const room = t.mgr.room(r.match.code)!;
+  assert.equal(room.state, 'running');
+  for (let i = 0; i < 12; i++) r.b.say({ t: 'pause' });
+  assert.ok(r.b.of('error').some((e) => e.code === 'rate-limited'));
+});
+
+test('heartbeat timeout opens a disconnect hold', () => {
+  const t = setup();
+  const r = startRunning(t);
+  const conn = r.room.seats[0]!.occupant!.conn;
+  t.mgr.onHeartbeatTimeout!(conn);
+  const s = r.b.of('pause.state').at(-1)!;
+  assert.deepEqual(s.holds.map((h) => [h.player, h.reason, h.connected]), [[0, 'disconnect', false]]);
+  assert.equal(t.rooms.size, 0);
+});
+
+// ---- SP07 Task 7: forfeit emission, terminal flush, reserve ----
+
+const replayHash = (t: ReturnType<typeof setup>, r: ReturnType<typeof startRunning>): string => {
+  const ls = t.ctl.inspect(r.room)!;
+  const sim = create(r.match.level, r.match.seed, { teams: r.match.teams });
+  for (const ch of ls.log.range(0, ls.nextTick)) {
+    const byTick = new Map<number, Command[]>();
+    for (const e of ch.cmds) byTick.set(e.tick, [...(byTick.get(e.tick) ?? []), e.cmd]);
+    for (let n = ch.from; n < ch.to; n++) sim.step(byTick.get(n) ?? [], { events: false });
+  }
+  return sim.hash();
+};
+
+test('AC4: quit -> opponent victory exactly once, frozen-tick Forfeit, final pause.state before end, late input no-op, hash == replay', () => {
+  const t = setup();
+  const r = startRunning(t);
+  const frozen = r.next();
+  r.a.say({ t: 'quit' });
+  assert.equal(r.room.state, 'ended');
+  assert.equal(r.next(), frozen + 1, 'closed exactly the frozen tick');
+  const ticks = r.b.of('tick');
+  assert.deepEqual(ticks.at(-1)!.c, [{ type: 'Forfeit', player: 0 }]);
+  assert.equal(r.b.of('end').length, 1);
+  assert.equal(r.a.of('end').length, 1);
+  const e = r.b.of('end')[0]!;
+  assert.equal(e.outcome.outcome, 'victory');
+  const idx = r.b.sent.findIndex((m) => m.t === 'end');
+  const last = r.b.sent.slice(0, idx).filter((m) => m.t === 'pause.state').at(-1)!;
+  assert.equal((last as { paused: boolean }).paused, false);
+  assert.equal(t.rooms.size, 0);
+  const sentA = r.a.sent.length, sentB = r.b.sent.length, next = r.next();
+  r.a.say({ t: 'quit' }); r.b.say({ t: 'resume', epoch: 0 }); r.b.say({ t: 'pause' }); r.b.say({ t: 'cmd', c: { type: 'DrawLine', from: 1, to: 0 } });
+  r.a.drop();
+  t.advance(2000);
+  assert.equal(r.a.sent.length, sentA); assert.equal(r.b.sent.length, sentB);
+  assert.equal(r.next(), next);
+  assert.equal(r.b.of('end').length, 1);
+  assert.equal(r.hash(), replayHash(t, r));
+});
+
+test('AC4/AC13: quit while paused with other hold -> terminal immediately, holds cleared, log unchanged afterwards', () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.b.say({ t: 'pause' });
+  const frozen = r.next();
+  r.a.say({ t: 'quit' });
+  assert.equal(r.room.state, 'ended');
+  assert.equal(r.next(), frozen + 1);
+  assert.equal(r.b.of('pause.state').at(-1)!.paused, false);
+  assert.equal(r.b.of('end').length, 1);
+  const size = t.ctl.inspect(r.room)!.log.size;
+  t.advance(60_000);
+  r.b.say({ t: 'resume', epoch: 99 });
+  assert.equal(t.ctl.inspect(r.room)!.log.size, size);
+  assert.equal(r.hash(), replayHash(t, r));
+});
+
+test('AC5: pause budget expiry forfeits the holder at the frozen tick; opponent wins; no timers left', () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.a.say({ t: 'pause' });
+  const frozen = r.next();
+  t.advance(29_900);
+  assert.equal(r.room.state, 'running');
+  t.advance(200);
+  assert.equal(r.room.state, 'ended');
+  assert.equal(r.next(), frozen + 1);
+  assert.deepEqual(r.b.of('tick').at(-1)!.c, [{ type: 'Forfeit', player: 0 }]);
+  assert.equal(r.b.of('end').length, 1);
+  assert.equal(r.hash(), replayHash(t, r));
+});
+
+test('AC5: both humans away -> draw (Forfeit for all surviving seats ascending in one tick)', () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.a.drop();
+  t.advance(1000);
+  r.b.drop();
+  const frozen = r.next();
+  t.advance(31_000);
+  assert.equal(r.room.state, 'ended');
+  assert.equal(r.next(), frozen + 1);
+  const c = t.ctl.inspect(r.room)!.log.range(frozen, frozen + 1)[0]!.cmds.map((e) => e.cmd);
+  assert.deepEqual(c, [{ type: 'Forfeit', player: 0 }, { type: 'Forfeit', player: 1 }]);
+  assert.equal(r.hash(), replayHash(t, r));
+});
+
+test('AC14: log saturated to cap-reserve still forfeits (system reserve)', () => {
+  const t = setup();
+  const r = startRunning(t);
+  const ls = t.ctl.inspect(r.room)!;
+  const tick = ls.nextTick;
+  while (ls.log.size < ls.log.cmdCap - SYSTEM_CMD_RESERVE) ls.log.append(tick, { type: 'DrawLine', player: 1, from: 0, to: 1 } as never);
+  r.a.say({ t: 'quit' });
+  assert.equal(r.room.state, 'ended', 'forfeit appended despite saturation');
+  assert.equal(r.b.of('end').length, 1);
+});
+
+// ---- SP07 Task 8: lobby seat reserve + countdown cancel ----
+
+const lobbyOf = (s: ReturnType<typeof fakeSocket>) => s.of('lobby.state').at(-1)!;
+const lobby = (t: ReturnType<typeof setup>) => {
+  const a = t.client('A'), b = t.client('B');
+  a.say({ t: 'room.create' });
+  const code = a.of('room.joined')[0]!.code;
+  b.say({ t: 'room.join', code, role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  return { a, b, code };
+};
+
+test('AC9: lobby drop reserves seat 30 s (grace), host passes, Start refused, then freed; token reclaim within window', () => {
+  const t = setup();
+  const { a, b, code } = lobby(t);
+  a.drop();
+  let ls = lobbyOf(b);
+  assert.equal(ls.host, 1);
+  assert.equal(ls.seats[0]!.occupant?.status, 'grace');
+  b.say({ t: 'lobby.start' });
+  assert.equal(b.of('error').at(-1)!.code, 'not-ready'); // reserved occupant is not ready/connected
+  assert.equal(t.starts.length, 0);
+  t.advance(29_000);
+  assert.equal(lobbyOf(b).seats[0]!.occupant?.status, 'grace');
+  t.advance(1_500);
+  ls = lobbyOf(b);
+  assert.equal(ls.seats[0]!.occupant, undefined);
+  assert.equal(t.mgr.room(code)!.seats[0]!.occupant, undefined);
+  // reclaim path: B drops, returns with same token inside the window
+  b.drop();
+  const b2 = t.client('B', 2);
+  assert.equal(b2.of('room.joined').at(-1)!.code, code);
+  t.advance(40_000);
+  assert.ok(t.mgr.room(code)!.seats[1]!.occupant, 'timer cleared by reclaim');
+  assert.equal(lobbyOf(b2).seats[1]!.occupant?.status, 'connected');
+});
+
+test('AC9: countdown drop cancels with full unwind; start.cancel then lobby.state; later Start works with new matchId/seed', () => {
+  const t = setup();
+  const r = t.room();
+  const room = t.mgr.room(r.match.code)!;
+  assert.equal(room.state, 'countdown');
+  const before = r.b.sent.length;
+  r.a.drop();
+  assert.equal(room.state, 'lobby');
+  assert.equal(room.match, undefined);
+  assert.equal(room.startAt, undefined);
+  assert.equal(t.rooms.size, 0, 'ClockRoom removed');
+  assert.equal(t.ctl.inspect(room), undefined);
+  assert.equal(t.ctl.simOf(room), undefined);
+  const tail = r.b.sent.slice(before).map((m) => m.t);
+  assert.deepEqual(tail.slice(0, 2), ['start.cancel', 'lobby.state']);
+  assert.equal(r.b.of('start.cancel')[0]!.matchId, r.match.matchId);
+  assert.equal(lobbyOf(r.b).host, 1);
+  assert.equal(lobbyOf(r.b).seats[1]!.occupant?.ready, true);
+  t.advance(3500);
+  assert.equal(room.state, 'lobby', 'no stale tick 0');
+  assert.equal(r.b.of('tick').length, 0);
+  // A returns, readies, new Start
+  const a2 = t.client('A', 1);
+  a2.say({ t: 'lobby.ready', ready: true });
+  r.b.say({ t: 'lobby.start' });
+  const m2 = lastStart(t);
+  assert.notEqual(m2.matchId, r.match.matchId);
+  assert.notEqual(m2.seed, r.match.seed);
+  t.advance(3100);
+  assert.equal(room.state, 'running');
+});
+
+test('AC9: quit / leave in countdown cancel to lobby; pause stays no-match', () => {
+  const t = setup();
+  const r = t.room();
+  const room = t.mgr.room(r.match.code)!;
+  r.b.say({ t: 'pause' });
+  assert.equal(r.b.of('error').at(-1)!.code, 'no-match');
+  assert.equal(room.state, 'countdown');
+  r.b.say({ t: 'quit' });
+  assert.equal(room.state, 'lobby');
+  assert.equal(r.a.of('start.cancel').length, 1);
+  assert.equal(room.seats[1]!.occupant !== undefined, true, 'quit keeps the seat');
+  assert.equal(t.rooms.size, 0);
+  r.b.say({ t: 'lobby.ready', ready: true });
+  r.a.say({ t: 'lobby.start' });
+  assert.equal(room.state, 'countdown');
+  r.b.say({ t: 'room.leave' });
+  assert.equal(room.state, 'lobby');
+  assert.equal(room.seats[1]!.occupant, undefined);
+  assert.equal(r.a.of('start.cancel').length, 2);
+  assert.equal(t.rooms.size, 0);
+  assert.equal(lobbyOf(r.a).seats[1]!.occupant, undefined);
+});
+
+test('AC9: heartbeat timeout during countdown cancels', () => {
+  const t = setup();
+  const r = t.room();
+  const room = t.mgr.room(r.match.code)!;
+  t.mgr.onHeartbeatTimeout!(room.seats[1]!.occupant!.conn);
+  assert.equal(room.state, 'lobby');
+  assert.equal(r.a.of('start.cancel').length, 1);
+});
+
+// ---- Task 9: minimum reconnect (token reclaim + full catch-up) ----
+const converge = async (r: ReturnType<typeof startRunning>, sock: ReturnType<typeof fakeSocket>) => {
+  const { createCatchup, createJoinLate } = await import('@node-arena/net');
+  const jl = createJoinLate(createCatchup(r.match.level, r.match.seed, { teams: r.match.teams }));
+  for (const m of sock.sent) jl.push(m);
+  jl.run(1e9, () => 0);
+  return jl;
+};
+
+test('AC3: reconnect mid-pause -> start, catchup(0..frozen), pause.state; converges to frozen hash; resume in allowance; budget not refreshed', async () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.a.say({ t: 'cmd', c: { type: 'DrawLine', from: 0, to: 1 } });
+  t.advance(500);
+  r.a.drop(); // disconnect hold on seat 0
+  const frozen = r.next();
+  const h = r.hash();
+  const b0 = r.b.of('pause.state').at(-1)!.budgets[0]!;
+  t.advance(20_000);
+  const used = r.b.of('pause.state').at(-1)!;
+  const a2 = t.client('A', 1);
+  const types = a2.sent.map((m) => m.t);
+  const iStart = types.indexOf('start');
+  assert.ok(iStart > 0 && types[iStart - 1] === 'lobby.state');
+  assert.deepEqual(types.slice(iStart).filter((x, i, arr) => x !== arr[i - 1] || x !== 'catchup'), ['start', 'catchup', 'pause.state']);
+  const cu = a2.of('catchup');
+  assert.equal(cu[0]!.from, 0);
+  assert.equal(cu.at(-1)!.to, frozen);
+  assert.equal(cu.at(-1)!.done, true);
+  const snap = a2.of('pause.state').at(-1)!;
+  assert.equal(snap.paused, true);
+  assert.equal(snap.tick, frozen);
+  assert.equal(r.hash(), h);
+  const jl = await converge(r, a2);
+  assert.equal(jl.catchup.sim.view.tick, frozen);
+  assert.equal(jl.catchup.sim.hash(), h);
+  // reconnect did not refresh the budget nor extend the deadline
+  assert.equal(snap.holds[0]!.connected, true);
+  assert.ok(snap.budgets[0]! <= b0, 'budget not refreshed');
+  assert.ok(snap.budgets[0]! <= used.budgets[0]!, 'reconnect keeps consumed budget');
+  a2.say({ t: 'resume', epoch: snap.epoch });
+  assert.equal(a2.of('pause.state').at(-1)!.paused, false);
+  t.advance(500);
+  assert.equal(r.next(), frozen + 10);
+  assert.equal(r.hash(), replayHash(t, r));
+});
+
+test('AC3: reconnect during live play converges; stale old conn cannot act', async () => {
+  const t = setup();
+  const r = startRunning(t);
+  const old = r.room.seats[0]!.occupant!.conn;
+  const a2 = t.client('A', 1); // superseding socket, no drop
+  assert.ok(a2.of('catchup').length >= 1);
+  t.advance(1000);
+  const sentOld = r.a.sent.length;
+  r.a.say({ t: 'cmd', c: { type: 'DrawLine', from: 0, to: 1 } });
+  r.a.say({ t: 'pause' });
+  assert.equal(old.closed, true);
+  assert.equal(r.room.seats[0]!.occupant!.conn === old, false);
+  assert.equal(r.a.sent.length, sentOld + 0, 'old conn got nothing back');
+  assert.equal(r.room.state, 'running');
+  assert.equal(t.ctl.pauseState(r.room)!.paused, false);
+  const jl = await converge(r, a2);
+  jl.run(1e9, () => 0);
+  assert.equal(jl.live, true);
+  const cuTo = a2.of('catchup').at(-1)!.to;
+  const live = a2.of('tick').map((x) => x.n);
+  assert.equal(live[0], cuTo, 'live ticks start exactly where catch-up ended');
+});
+
+test('AC8: reconnect after end gets start, full catchup, then the identical stored end', async () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.a.say({ t: 'quit' });
+  assert.equal(r.room.state, 'ended');
+  const end = r.b.of('end')[0]!;
+  const a2 = t.client('A', 1);
+  const types = a2.sent.map((m) => m.t);
+  const iStart = types.indexOf('start');
+  assert.equal(types.at(-1), 'end');
+  assert.ok(types.indexOf('catchup') > iStart);
+  assert.deepEqual(a2.of('end')[0], end);
+  assert.equal(a2.of('catchup').at(-1)!.to, r.next());
+  assert.equal(a2.of('pause.state').length, 0);
+  const jl = await converge(r, a2);
+  assert.equal(jl.catchup.sim.hash(), r.hash());
+  assert.equal(r.hash(), replayHash(t, r));
+});

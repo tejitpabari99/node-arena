@@ -1,7 +1,7 @@
 import { COMMANDS } from '@node-arena/defs';
 import type { Command, CommandId, RejectReason, SimEvent } from '@node-arena/defs';
-import { fireLineCut, fireLineDrawn, firstDrawRejection } from './hooks.js';
-import { freeSlots, getChannel } from './state.js';
+import { fireCapture, fireLineCut, fireLineDrawn, firstDrawRejection } from './hooks.js';
+import { freeSlots, getChannel, killTroop, liveChannels } from './state.js';
 import type { LineCutReason, SimState } from './types.js';
 
 const MAX_INDEX = 2147483647;
@@ -16,6 +16,7 @@ function parse(raw: unknown, expected: CommandId | null): Parsed | null {
     const r = raw as Record<string, unknown>;
     const type = r['type'];
     if (typeof type !== 'string' || !Object.prototype.hasOwnProperty.call(COMMANDS, type)) return null;
+    if (type !== 'DrawLine' && type !== 'CutLine') return null; // Forfeit has its own parser
     if (expected !== null && type !== expected) return null;
     const keys = Object.keys(r);
     if (keys.length !== 4) return null;
@@ -102,15 +103,66 @@ function reject(state: SimState, raw: unknown, c: Parsed | null, reason: RejectR
   } catch { /* unreadable input: counted only */ }
 }
 
-/** Phase 1: apply commands in (player idx, submission index) order, each validated then applied atomically. */
+/** Strict `Forfeit` parse: exact keys `type, player`, index player. */
+function parseForfeit(raw: unknown): number | null {
+  try {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
+    const r = raw as Record<string, unknown>;
+    const keys = Object.keys(r);
+    if (keys.length !== 2 || !keys.every((k) => k === 'type' || k === 'player')) return null;
+    return isIndex(r['player']) ? r['player'] : null;
+  } catch {
+    return null;
+  }
+}
+
+function isForfeit(raw: unknown): boolean {
+  try { return typeof raw === 'object' && raw !== null && (raw as { type?: unknown }).type === 'Forfeit'; } catch { return false; }
+}
+
+/** R-FFT-01: seat `s` buildings go neutral keeping level, outgoing lines cancel, sourced troops die, growth resets, seat is eliminated. */
+function forfeitSeat(state: SimState, s: number): void {
+  const b = state.buildings;
+  const owned: number[] = [];
+  for (let x = 0; x < b.n; x++) if (b.owner[x] === s) { b.owner[x] = -1; b.ignoreForWin[x] = 0; owned.push(x); }
+  for (const x of owned) {
+    for (let to = 0; to < b.n; to++) cutLine(state, x, to, 'captured');
+    for (const ch of liveChannels(state)) {
+      if (ch.from !== x) continue;
+      for (const seq of Array.from(ch.troops.seq.subarray(0, ch.troops.len))) killTroop(state, ch.key, seq, 'capture');
+    }
+    fireCapture(state, x, s, -1);
+  }
+  state.players.eliminatedAt[s] = state.tick;
+  emit(state, { type: 'SeatEliminated', player: s });
+}
+
+function forfeitReason(state: SimState, player: number | null): RejectReason | null {
+  if (state.over) return 'gameover';
+  if (player === null) return 'malformed';
+  if (player >= state.players.n) return 'unknown-id';
+  if (state.level.objective !== 'pvp') return 'not-pvp';
+  if (state.players.eliminatedAt[player]! >= 0) return 'eliminated';
+  return null;
+}
+
+/** Phase 1: `Forfeit` pass first (ascending player), then DrawLine/CutLine in (player idx, submission index) order, each validated then applied atomically. */
 export function runCommands(state: SimState, commands: readonly unknown[]): void {
   const order: { raw: unknown; player: number; i: number }[] = [];
+  const forfeits: { raw: unknown; player: number; i: number }[] = [];
   let list: readonly unknown[] = [];
   try { list = Array.isArray(commands) ? commands : []; } catch { list = []; }
   for (let i = 0; i < list.length; i++) {
     let raw: unknown; let player = Infinity;
     try { raw = list[i]; const p = (raw as { player?: unknown } | null)?.player; if (isIndex(p)) player = p; } catch { raw = null; }
-    order.push({ raw, player, i });
+    (isForfeit(raw) ? forfeits : order).push({ raw, player, i });
+  }
+  forfeits.sort((a, b) => (a.player - b.player) || (a.i - b.i) || 0);
+  for (const { raw } of forfeits) {
+    const player = parseForfeit(raw);
+    const reason = forfeitReason(state, player);
+    if (reason) { reject(state, raw, null, reason); continue; }
+    forfeitSeat(state, player!);
   }
   order.sort((a, b) => (a.player - b.player) || (a.i - b.i) || 0);
   for (const { raw } of order) {

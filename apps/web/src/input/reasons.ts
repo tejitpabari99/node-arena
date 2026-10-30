@@ -12,4 +12,6 @@ export const DRAW_REASON_TEXT: Record<RejectReason,string> = {
   'blocked-obstacle': 'An obstacle blocks this route.',
   'blocked-building': 'Another building blocks this route.',
   'no-line': 'This route no longer exists.',
+  'not-pvp': 'This battle has no seat forfeits.',
+  eliminated: 'This player is already out.',
 };

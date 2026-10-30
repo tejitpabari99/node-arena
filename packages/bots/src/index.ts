@@ -38,3 +38,5 @@ export {
   type MatchPlayerStats, type MatchBuildingStats, type MatchController, type ScriptedController,
 } from './harness.js';
 export { BOT_VERSION } from './version.js';
+export { BOT_PRESETS, type BotDifficulty } from './difficulty.js';
+export { createSeatDriver, type SeatDriver } from './pvp.js';

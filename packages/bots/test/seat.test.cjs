@@ -12,6 +12,7 @@ function fakeView(spec) {
   const lineCount = spec.owner.map((_, i) => lines.filter(l => l.from === i).length);
   return {
     over: null,
+    ...(spec.teams ? { players: spec.teams.map(team => ({ team })) } : {}),
     ids: { buildings: spec.owner.map((_, i) => `b${i}`), players: ['p0', 'p1'], elements: [] },
     buildings: { owner: spec.owner, level: spec.level, lines: lineCount },
     buildingStatic: spec.owner.map((_, i) => ({
@@ -198,4 +199,18 @@ test('covers R3: pvp tie-break (key, dist2 to nearest own, index) mirrors target
   const cmd = me => bots.decideDefault(view, allow, seq([0]), me, { timer: 1700 }, pvp)[0];
   assert.equal(cmd(0).to, 2);
   assert.equal(cmd(1).to, 3);
+});
+
+test('covers R10: bot in a 2v2 never targets or draws to ally buildings; neutrals and enemies stay targets', () => {
+  // seats 0,1 = team 0; seats 2,3 = team 1. building owners: 0,1 allies; 2 enemy; 3 enemy; 4 neutral.
+  const view = fakeView({ owner: [0, 1, 2, 3, -1], level: [5, 1, 4, 3, 2], teams: [0, 0, 1, 1] });
+  assert.deepEqual(bots.sortedTargets(view, 0), [4, 3, 2]);
+  assert.deepEqual(bots.sortedTargets(view, 0, true), [4, 3, 2]);
+  const seen = [];
+  const canDraw = (_p, _f, to) => { seen.push(to); return 'no'; };
+  bots.decideDefault(view, canDraw, seq([0]), 0, { timer: 1700 }, P);
+  assert.ok(seen.length > 0 && !seen.includes(1));
+  // identity teams: ally filter inert
+  const ffa = fakeView({ owner: [0, 1, 2, 3, -1], level: [5, 1, 4, 3, 2], teams: [0, 1, 2, 3] });
+  assert.deepEqual(bots.sortedTargets(ffa, 0), [1, 4, 3, 2]);
 });

@@ -155,3 +155,91 @@ test('maxConns rejects extra', () => {
   assert.equal(hub.connCount(), 1);
   hub.accept(fakeSocket());
 });
+
+// ---- Task 4: heartbeat ----
+function hbSetup(handler?: HubHandler) {
+  let t = 0;
+  const ints: Array<{ fn: () => void; ms: number; next: number; live: boolean }> = [];
+  const hub = createHub({
+    versions, secret: 'sekrit', now: () => t, ...(handler ? { handler } : {}),
+    timers: {
+      setTimeout: () => ({}), clearTimeout: () => {},
+      setInterval: (fn, ms) => { const i = { fn, ms, next: ms, live: true }; ints.push(i); return i; },
+      clearInterval: (h) => { (h as { live: boolean }).live = false; },
+    },
+  });
+  const advance = (ms: number): void => {
+    const end = t + ms;
+    for (;;) {
+      const due = ints.filter((i) => i.live && i.next <= end).sort((a, b) => a.next - b.next)[0];
+      if (due === undefined) break;
+      t = due.next; due.next += due.ms; due.fn();
+    }
+    t = end;
+  };
+  return { hub, advance };
+}
+function hbSocket() {
+  const s = fakeSocket();
+  let pongCb: () => void = () => {};
+  let pings = 0;
+  return Object.assign(s, { ping: () => { pings++; }, onPong: (cb: () => void) => { pongCb = cb; }, pong: () => pongCb(), pingCount: () => pings });
+}
+
+test('heartbeat: pings every 3 s, silent conn closed 4004 within 8 s', () => {
+  const seen: number[] = [];
+  const { hub, advance } = hbSetup({ onClientMessage() {}, onHeartbeatTimeout: (c) => void seen.push(c.id) });
+  const s = hbSocket();
+  hub.accept(s);
+  s.recv(hello());
+  advance(3000);
+  assert.equal(s.pingCount(), 1);
+  advance(3999);
+  assert.equal(s.closed, undefined);
+  advance(1001); // 8000 total
+  assert.equal((s.closed as { code?: number } | undefined)?.code, 4004);
+  assert.equal(seen.length, 1);
+  assert.equal(hub.connCount(), 0);
+});
+
+test('heartbeat: protocol pong alone keeps conn alive', () => {
+  const { hub, advance } = hbSetup();
+  const s = hbSocket();
+  hub.accept(s);
+  s.recv(hello());
+  for (let i = 0; i < 10; i++) { advance(3000); s.pong(); }
+  assert.equal(s.closed, undefined);
+});
+
+test('heartbeat: app ping alone keeps conn alive', () => {
+  const { hub, advance } = hbSetup({ onClientMessage() {} });
+  const s = hbSocket();
+  hub.accept(s);
+  s.recv(hello());
+  for (let i = 0; i < 10; i++) { advance(3000); s.recv(JSON.stringify({ t: 'ping', id: i })); }
+  assert.equal(s.closed, undefined);
+});
+
+test('heartbeat: abrupt close detected immediately; independent of any room/pause state', () => {
+  const gone: string[] = [];
+  const { hub, advance } = hbSetup({ onClientMessage() {}, onDisconnect: (_c, r) => void gone.push(r) });
+  const s = hbSocket();
+  hub.accept(s);
+  s.recv(hello());
+  s.drop();
+  assert.deepEqual(gone, ['closed']);
+  // a conn that goes silent long after (e.g. while a room is paused) is still swept
+  const s2 = hbSocket();
+  hub.accept(s2);
+  s2.recv(JSON.stringify({ t: 'hello', pv: PROTOCOL_VERSION, versions, nick: 'B', token: 'ffffffffffffffffffffffffffffffff' }));
+  advance(30_000);
+  assert.equal((s2.closed as { code?: number } | undefined)?.code, 4004);
+});
+
+test('heartbeat: pre-hello conn not swept by heartbeat', () => {
+  const { hub, advance } = hbSetup();
+  const s = hbSocket();
+  hub.accept(s);
+  advance(20_000);
+  assert.equal(s.closed, undefined);
+});

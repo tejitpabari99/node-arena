@@ -59,3 +59,23 @@ test('Finalize versions use actual AI identity map, preserve pre-bumps, and are 
     await run('BOT_VERSION'); assert.equal(await readFile(version, 'utf8'), envelopeVersion);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test('Finalize validate step runs the pvp branch: clean passes, nudged Duel S reports the symmetry failure', async () => {
+  const dir = await mkdtemp(resolve(tmpdir(), 'na-finalize-pvp-'));
+  const content = resolve(dir, 'packages/content');
+  const run = (id: string) => exec(process.execPath, ['--import', require.resolve('tsx'), resolve(root, 'tools/src/editor-finalize-worker.ts'), 'validate', id], { cwd: dir, maxBuffer: 16 * 1024 * 1024 });
+  try {
+    await cp(resolve(root, 'packages/content/data'), resolve(content, 'data'), { recursive: true });
+    await cp(resolve(root, 'packages/content/content.json'), resolve(content, 'content.json'));
+    await mkdir(resolve(dir, 'tools'), { recursive: true });
+    await cp(resolve(root, 'tools/pvp-symmetry.json'), resolve(dir, 'tools/pvp-symmetry.json'));
+    const clean = await run('na-pvp-duel-s');
+    assert.match(clean.stdout, /"symmetry": "d2"/);
+    assert.match(clean.stdout, /"ok": true/);
+    const path = resolve(content, 'data/levels/na-pvp-duel-s.json');
+    const level = JSON.parse(await readFile(path, 'utf8')) as NextLevel;
+    level.buildings.find(b => b.owner === level.players[0]!.id)!.pos.x += 0.5;
+    await writeFile(path, JSON.stringify(level));
+    await assert.rejects(run('na-pvp-duel-s'), (error: { stdout: string }) => /Symmetry d2 fails/.test(error.stdout));
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});

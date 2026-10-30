@@ -1,4 +1,4 @@
-import { createServer, type Server } from 'node:http';
+import { createServer, type IncomingMessage, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +9,7 @@ import { loadConfigOrExit, type Config } from './config.js';
 import type { Socket } from './conn.js';
 import { loadServerContentOrExit, type ServerContent } from './content.js';
 import { createHub } from './hub.js';
+import { IpLimits } from './limits.js';
 import { createLogger, type Logger } from './log.js';
 import { createMatchController } from './match.js';
 import { createRoomManager } from './room.js';
@@ -29,8 +30,16 @@ export function originAllowed(origin: string | undefined, cfg: Pick<Config, 'all
   });
 }
 
-function wrapWs(ws: WebSocket): Socket {
+/** Client IP: `Fly-Client-IP` behind Fly's proxy, else the socket peer. Key only; never logged. */
+export function clientIp(req: IncomingMessage): string | undefined {
+  const h = req.headers['fly-client-ip'];
+  const v = Array.isArray(h) ? h[0] : h;
+  return v !== undefined && v !== '' ? v : req.socket.remoteAddress;
+}
+
+function wrapWs(ws: WebSocket, ip: string | undefined): Socket {
   return {
+    ...(ip !== undefined ? { ip } : {}),
     send: (d) => { ws.send(d); },
     close: (code, reason) => { ws.close(code, reason); },
     onMessage: (cb) => {
@@ -40,6 +49,8 @@ function wrapWs(ws: WebSocket): Socket {
       });
     },
     onClose: (cb) => { ws.on('close', cb); },
+    ping: () => { ws.ping(); },
+    onPong: (cb) => { ws.on('pong', cb); },
     get bufferedAmount() { return ws.bufferedAmount; },
   };
 }
@@ -53,6 +64,8 @@ export interface RunningServer {
   port: number;
   content: ServerContent;
   close(): Promise<void>;
+  /** Graceful drain: stop accepting, `room.closed{shutdown}` to all rooms, close sockets 1001. Resolves when sockets are gone (<= `graceMs`). */
+  shutdown(graceMs?: number): Promise<void>;
 }
 
 /** Wires config -> content -> clock -> match -> rooms -> hub -> http+ws. */
@@ -64,12 +77,14 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
     now, setTimeout: (fn, ms) => setTimeout(fn, ms), clearTimeout: (h) => clearTimeout(h as never),
     log: (ev, f) => log.warn(ev, f),
   });
+  const ipLimits = new IpLimits(now);
   const match = createMatchController({ clock, now, log, onAbort: (r) => rooms.drop(r) });
   const rooms = createRoomManager({
-    content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, log,
-    onStart: match.onStart, onMatchMessage: match.onMessage,
+    content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, ipLimits, log,
+    tickOf: (r) => match.inspect(r)?.nextTick, onStart: match.onStart, onStartCancel: (r) => match.cancel(r), onMatchMessage: match.onMessage, onCatchUp: match.catchUp,
+    onSeatDisconnect: match.onSeatDisconnect, onSeatReconnect: match.onSeatReconnect, pauseStateOf: match.pauseState, endOf: match.endOf, hasPendingDeadline: match.hasPendingDeadline,
   });
-  const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns });
+  const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns, ipLimits, now });
   clock.start();
   const startedAt = Date.now();
 
@@ -98,9 +113,9 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
       else { log.warn('ws.origin_refused'); cb(false, 403, 'origin not allowed'); }
     },
   });
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
     ws.on('error', () => { /* close follows */ });
-    hub.accept(wrapWs(ws));
+    hub.accept(wrapWs(ws, clientIp(req)));
   });
 
   await new Promise<void>((resolve, reject) => {
@@ -112,10 +127,33 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
   const port = (http.address() as AddressInfo).port;
   log.info('server.listening', { port, host: config.host });
 
+  let draining: Promise<void> | undefined;
+  const shutdown = (graceMs = 6000): Promise<void> => draining ??= (async () => {
+    log.info('server.shutdown', { rooms: rooms.roomCount(), conns: hub.connCount() });
+    const stopped = new Promise<void>((r) => { http.close(() => r()); });
+    clock.stop();
+    hub.stop();
+    rooms.closeAll('shutdown');
+    const gone: Array<Promise<void>> = [];
+    for (const c of wss.clients) {
+      gone.push(new Promise<void>((r) => { c.once('close', () => r()); }));
+      try { c.close(1001, 'shutdown'); } catch { c.terminate(); }
+    }
+    let timer: NodeJS.Timeout | undefined;
+    const deadline = new Promise<void>((r) => { timer = setTimeout(r, graceMs); });
+    await Promise.race([Promise.all(gone), deadline]);
+    clearTimeout(timer);
+    for (const c of wss.clients) c.terminate();
+    await new Promise<void>((r) => wss.close(() => r()));
+    http.closeAllConnections();
+    await stopped;
+  })();
+
   return {
-    port, content,
+    port, content, shutdown,
     close: async () => {
       clock.stop();
+      hub.stop();
       for (const c of wss.clients) c.terminate();
       await new Promise<void>((r) => wss.close(() => r()));
       await new Promise<void>((r) => { http.close(() => r()); http.closeAllConnections(); });
@@ -132,7 +170,18 @@ function main(): void {
   process.on('uncaughtException', crash('uncaught'));
   process.on('unhandledRejection', crash('unhandled_rejection'));
   const config = loadConfigOrExit();
-  startServer(config, { log: createLogger({ level: config.logLevel }) }).catch(crash('boot_failed'));
+  startServer(config, { log: createLogger({ level: config.logLevel }) }).then((srv) => {
+    let once = false;
+    const drain = (sig: string): void => {
+      if (once) return;
+      once = true;
+      log.info('server.signal', { signal: sig });
+      setTimeout(() => process.exit(1), 8000).unref();
+      srv.shutdown().then(() => process.exit(0), crash('shutdown_failed'));
+    };
+    process.once('SIGTERM', () => drain('SIGTERM'));
+    process.once('SIGINT', () => drain('SIGINT'));
+  }).catch(crash('boot_failed'));
 }
 
 if (process.argv[1] !== undefined && process.argv[1] === fileURLToPath(import.meta.url)) main();

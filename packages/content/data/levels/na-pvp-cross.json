@@ -1,0 +1,194 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "na-pvp-cross",
+  "name": "Cross",
+  "theme": "green",
+  "bounds": {
+    "minX": -10,
+    "maxX": 10,
+    "minZ": -10,
+    "maxZ": 10
+  },
+  "objective": "pvp",
+  "timeLimitSec": 480,
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "blue",
+      "team": 0
+    },
+    {
+      "id": "p2",
+      "kind": "human",
+      "colorKey": "red",
+      "team": 1
+    },
+    {
+      "id": "p3",
+      "kind": "human",
+      "colorKey": "green",
+      "team": 0
+    },
+    {
+      "id": "p4",
+      "kind": "human",
+      "colorKey": "yellow",
+      "team": 1
+    }
+  ],
+  "buildings": [
+    {
+      "id": "home-1",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -7,
+        "z": 0
+      },
+      "owner": "p1",
+      "level": 12,
+      "ignoreForWin": false
+    },
+    {
+      "id": "home-2",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 0,
+        "z": -7
+      },
+      "owner": "p2",
+      "level": 12,
+      "ignoreForWin": false
+    },
+    {
+      "id": "home-3",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 7,
+        "z": 0
+      },
+      "owner": "p3",
+      "level": 12,
+      "ignoreForWin": false
+    },
+    {
+      "id": "home-4",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 0,
+        "z": 7
+      },
+      "owner": "p4",
+      "level": 12,
+      "ignoreForWin": false
+    },
+    {
+      "id": "front-1",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -3.5,
+        "z": 0
+      },
+      "owner": null,
+      "level": 3,
+      "ignoreForWin": false
+    },
+    {
+      "id": "front-2",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 0,
+        "z": -3.5
+      },
+      "owner": null,
+      "level": 3,
+      "ignoreForWin": false
+    },
+    {
+      "id": "front-3",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 3.5,
+        "z": 0
+      },
+      "owner": null,
+      "level": 3,
+      "ignoreForWin": false
+    },
+    {
+      "id": "front-4",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 0,
+        "z": 3.5
+      },
+      "owner": null,
+      "level": 3,
+      "ignoreForWin": false
+    },
+    {
+      "id": "corner-1",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -5.5,
+        "z": -5.5
+      },
+      "owner": null,
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "corner-2",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 5.5,
+        "z": -5.5
+      },
+      "owner": null,
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "corner-3",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 5.5,
+        "z": 5.5
+      },
+      "owner": null,
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "corner-4",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -5.5,
+        "z": 5.5
+      },
+      "owner": null,
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "centre",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 0,
+        "z": 0
+      },
+      "owner": null,
+      "level": 8,
+      "ignoreForWin": false
+    }
+  ],
+  "elements": [],
+  "requires": [
+    "drawsLines",
+    "grows",
+    "level",
+    "objective:pvp",
+    "spawns"
+  ]
+}

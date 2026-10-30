@@ -19,6 +19,15 @@ export function noLineBetween(view: SimView, a: number, b: number): boolean {
   return true;
 }
 
+/** R10: true when building `i` belongs to a seat on `me`'s team (other than `me`). Neutral/unknown owners are never allies; views without `players` (identity teams) have none. */
+export function isAlly(view: SimView, me: number, i: number): boolean {
+  const o = view.buildings.owner[i]!;
+  const players = view.players;
+  if (o < 0 || o === me || !players) return false;
+  const mine = players[me]?.team, theirs = players[o]?.team;
+  return mine !== undefined && mine === theirs;
+}
+
 /** Weakest-first key: garrison level, or floor((2L+1)/3) (= round(L/1.5)) for `special` targets. */
 export function targetKey(view: SimView, i: number): number {
   const level = view.buildings.level[i]!;
@@ -37,12 +46,12 @@ function nearestOwnDist2(view: SimView, me: number, i: number): number {
 }
 
 /**
- * All non-own buildings (neutral, hostile, towers included) ascending by (key, index).
+ * All non-own, non-ally buildings (neutral, hostile, towers included) ascending by (key, index).
  * `byDistance` (pvp only) inserts a tie-break: (key, dist2 to nearest own building, index), so mirrored seats pick mirrored targets.
  */
 export function sortedTargets(view: SimView, me: number, byDistance = false): number[] {
   const keyed: { i: number; key: number; d: number }[] = [];
-  for (let i = 0; i < view.ids.buildings.length; i++) if (!owned(view, me, i)) keyed.push({ i, key: targetKey(view, i), d: byDistance ? nearestOwnDist2(view, me, i) : 0 });
+  for (let i = 0; i < view.ids.buildings.length; i++) if (!owned(view, me, i) && !isAlly(view, me, i)) keyed.push({ i, key: targetKey(view, i), d: byDistance ? nearestOwnDist2(view, me, i) : 0 });
   return keyed.sort((a, b) => a.key - b.key || a.d - b.d || a.i - b.i).map(e => e.i);
 }
 

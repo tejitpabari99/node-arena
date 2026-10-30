@@ -8,7 +8,7 @@ import { createPvpController } from './pvp/controller';
 import type { WebSocketLike } from './net/connection';
 import { createIdentity } from './net/identity';
 import { currentServerUrl } from './net/server-url';
-import { parseRoomLink } from './net/links';
+import { parseRoomLink, stripRoomParams } from './net/links';
 import { webVersions } from './net/versions';
 import './style.css';
 async function main(){
@@ -31,8 +31,16 @@ async function main(){
   await app.boot();
   const query=new URLSearchParams(location.search);
   if(query.get('view')==='custom')app.setPickerView('custom');
-  // Play links are part of the M1 room flow; spectator links arrive in M2.
-  if(query.has('room')&&!query.has('watch'))pvp.openLink(parseRoomLink(location.search));
+  if(query.has('room')){
+    // Deep link (`?room=CODE[&watch]`): params are cleaned once the player leaves the room flow.
+    let inRoom=false;
+    unsubscribe.push(pvp.subscribe(()=>{
+      const screen=pvp.snapshot().screen;
+      if(screen==='lobby'||screen==='countdown'||screen==='playing'||screen==='result'){inRoom=true;return;}
+      if(inRoom&&(screen==='menu'||screen==='idle')){inRoom=false;history.replaceState(null,'',`${location.pathname}${stripRoomParams(location.search)}${location.hash}`);}
+    }));
+    pvp.openLink(parseRoomLink(location.search));
+  }
   else await harness?.autoLoad(app);
   if(import.meta.hot)import.meta.hot.dispose(()=>{window.__na?.dispose();delete window.__na;audio.dispose();unsubscribe.forEach(u=>u());unmount();pvp.dispose();app.dispose();arena.remove();});
 }

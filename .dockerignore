@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+.git
+.worktrees
+.github
+docs
+apps/web
+assets
+**/test-results
+**/playwright-report
+**/*.log
+.env

@@ -1,13 +1,13 @@
 ---
-status: draft
-summary: Index of the seven online-PvP sub-project PRDs (seat rules, net protocol, maps, game server, web netplay, deploy/e2e, pause/forfeit) with dependencies, M1 critical path, locked decisions, risks, owner steps and version-bump sequencing.
-date: 2026-10-28
+status: in-progress
+summary: Seven PvP sub-projects — all 95 M1/M2-labelled tasks done; six M3 backlog tasks; first Fly deployment and production acceptance pending.
+date: 2026-10-29
 ---
 # Online PvP: PRD index
 
-M1 agent implementation, local validation and hosted CI complete on `bddbf928ade3cc8d7505ac065fc230c7b927b6ea`; owner two-tab play-test/approval pending. [Final implementation and validation summary](code-2026-10-29-0300.md).
+M1 merged in #39; owner local play-test passed (2026-10-29). M2 code is implemented on branch `feat/pvp-m2`; first Fly deployment and production acceptance remain pending. [M1 implementation and validation summary](code-2026-10-29-0300.md).
 
-Live private-room PvP (2-4 seats, teams, bots, spectators) via deterministic lockstep + server referee sim on Fly.io. Full rationale, verified facts and decision log: [brainstorm.md](brainstorm.md). Milestones: M1 = 2-tab local 1v1 owner play-test; M2 = full lobby/teams/bots/spectators/rematch/maps/Fly deploy (minimal play-link startup included in M1); M3 = broader reconnect hardening, desync resync, load test. **M2 now also includes [SP07 pause/Quit/window-close forfeit](07-pause-forfeit/PRD.md) and its minimum reconnect/catch-up dependency. Planning only; broader M2 implementation remains paused.** Owner reports joining works; this does not approve the full M1 gameplay milestone.
+Live private-room PvP (2-4 seats, teams, bots, spectators) via deterministic lockstep + server referee sim on Fly.io. Full rationale, verified facts and decision log: [brainstorm.md](brainstorm.md). Milestones: M1 = 2-tab local 1v1 owner play-test; M2 = full lobby/teams/bots/spectators/rematch/maps/Fly deploy (minimal play-link startup included in M1); M3 = broader reconnect hardening, desync resync, load test. **M2 also includes [SP07 pause/Quit/window-close forfeit](07-pause-forfeit/PRD.md) (settled, approved) and its minimum reconnect/catch-up.**
 
 ## Sub-projects
 | NN | Title | Phase | Depends on | M1 / M2 / M3 | PRD |
@@ -18,7 +18,7 @@ Live private-room PvP (2-4 seats, teams, bots, spectators) via deterministic loc
 | 04 | Game server (`apps/server`) | backend | 01, 02, 03 | M1 hub, room, clock, referee, hash check, end; M2 full lobby, bots, spectators, rematch, limits, Docker/fly.toml; M2 minimum SP07 reconnect; M3 broader reconnect/resync, load smoke | [04-game-server](04-game-server/PRD.md) |
 | 05 | Web netplay (`apps/web`) | client | 01, 02, 03, 04 | M1 NetDriver, create/join, 2-seat lobby, result win/lose, desync toast; M2 full lobby, legend, catch-up, watch, rematch, deep links; M3 reconnect polish, resync | [05-web-netplay](05-web-netplay/PRD.md) |
 | 06 | Deploy, CI, e2e | ops | 04, 05 (02 handshake) | M1 `dev:pvp`, 2-browser e2e, CI steps, doc stubs; M2 Fly deploy workflow, ordering, Docker job, more specs, runbook; M3 - | [06-deploy-e2e](06-deploy-e2e/PRD.md) |
-| 07 | Pause, Quit and window-close forfeit | cross-cutting enhancement | 01, 02, 04, 05, 06 | M2 cumulative budget, confirmed Quit, deadline forfeit + minimum reconnect; policies open, no TASKS | [07-pause-forfeit](07-pause-forfeit/PRD.md) |
+| 07 | Pause, Quit and window-close forfeit | cross-cutting enhancement | 01, 02, 04, 05, 06 | M2 cumulative budget, confirmed Quit, deadline `Forfeit` command (RULES 3.2.0, PROTOCOL 2), heartbeat, minimum reconnect; all 13 tasks implemented | [07-pause-forfeit](07-pause-forfeit/PRD.md) |
 
 ## Dependency graph
 ```mermaid
@@ -41,7 +41,7 @@ graph LR
 ```
 (01 also feeds 02 as types only; 03 feeds the 04 M1 gate and 05 map picker.)
 
-## M1 critical path (2-tab play-test)
+## M1 critical path (historical; local owner play-test approved)
 SP01#11 placement ranking was promoted from M2 and completed early to satisfy active R-WIN-07 coverage (47/47 rules). Pure derived result data leaves campaign behavior and PvP hashes unchanged. [Dependency review: PASS](01-seat-rules/review-2026-10-29-0238.md).
 
 1. 01: `pvp` objective, teams/`SeatSetup`, hostility helper, elimination, victory + timeout/draw, `view.over`, hash tail, RULES_VERSION 3.1.0, goldens refreshed.
@@ -49,14 +49,14 @@ SP01#11 placement ranking was promoted from M2 and completed early to satisfy ac
 3. 03: Duel S + symmetry gate + pvp branch in `validate:levels` + `contentVersion` bump (Duel M/Cross are M2).
 4. 04: hub/room/lobby for 2 seats, 20 Hz clock, referee, hash check, `end`, `/healthz`, loopback smoke.
 5. 05: connection, per-tab identity, `NetDriver`, PvP menu/2-seat lobby/result, test hooks.
-6. 06: `dev:pvp`, e2e harness, CI steps. Owner then plays Duel S in two tabs (one profile is enough).
+6. 06: `dev:pvp`, e2e harness, CI steps. Owner subsequently approved Duel S in two tabs (one profile is enough).
 
 ## Locked decisions (from brainstorm)
 - Live real-time, private rooms by code/link, 2-4 seats (1v1, FFA, teams, bot fill), spectators (cap 8, read-only, no delay).
 - Lockstep + server referee sim (hash is truth); input delay 3 ticks server-stamped; server-paced 20 Hz clock; clients never choose ticks.
 - Plain `ws` + own protocol in `apps/server`; Fly.io single always-on machine, rooms in memory; web stays on Firebase Hosting.
 - Identity: nickname + random token (no accounts; Firebase Auth later via `hello.auth`).
-- M1 has no pause/speed. M2 1v1 supersedes the old grace→bot plan: each player has 30 seconds total cumulative for manual pause/disconnect/window close; board + match clock freeze; owner Resume keeps unused time; budget expiry or confirmed Quit gives opponent victory. See [SP07](07-pause-forfeit/PRD.md); team/FFA/concurrent/lobby policies remain open. No auto-pause merely for a hidden tab.
+- M1 had no pause/speed. M2 (SP07, settled 2026-10-29): 30 s cumulative pause/disconnect budget per human, board + match clock freeze; Resume keeps unused time. Quit (confirmed) or budget expiry eliminates only that seat (buildings neutral, troops vanish, match continues; team wins if a teammate survives; 1v1 = opponent wins). Concurrent: manual Pause rejected while paused, a disconnect opens its own hold, resume when all holds end, first deadline forfeits, same-instant = draw if all remaining teams eliminated. Lobby: 30 s seat reserve then freed, host passes on, countdown drop cancels to lobby; budget only in match. No other human seated = unlimited pause (Quit still loses); bots never pause; spectators read-only. Old grace->bot plan dropped for humans. No auto-pause for a hidden tab.
 - Elimination = no buildings and no troops in transit; last team standing wins; timeout ranks buildings then total troops owned; exact tie = draw (also when only the top teams of 3+ tie).
 - Teams: allies never hurt each other and reinforce; ownership unchanged. Campaign outcomes unchanged; minor RULES_VERSION bump; goldens verify.
 - Maps: Duel S, Duel M (2p), Cross (4p, default teams `[0,1,0,1]`); time limit per map only (default 480 s), no lobby override, no `SeatSetup.timeLimitTicks`.
@@ -81,37 +81,44 @@ SP01#11 placement ranking was promoted from M2 and completed early to satisfy ac
 
 ## Owner-only manual steps
 - Fly setup: owner-reported complete (account/billing/login, app creation and setup tasks, including deploy-token/repository configuration). Secret values were not inspected or verified. The owner reports the Fly dashboard has no deployment yet.
-- First deployment and `/healthz` confirmation remain pending M2; Dockerfile, Fly configuration, deploy workflows and production wiring are not part of M1 docs.
-- M1 human play-test: pending owner action and approval. Follow [the root README](../../../README.md#play-online-pvp) using a genuinely fresh second tab and the lobby room code. Minimal play-link startup is M1; full lobby/watch remain M2.
-- Later production play-test with a friend, map tuning and final approval remain pending. Rendering smoothing is deferred until owner play-test feedback.
+- First Fly deployment and live health/version verification remain pending. Dockerfile, Fly configuration, ordered deploy workflows and URL/origin wiring are implemented; Docker build/boot was not tested locally. Run the [operations checklist](../../../docs/PVP_OPS.md#first-deploy-checklist).
+- Verify production and Firebase preview origins connect through wss and a disallowed origin is refused; run the Fly-edge heartbeat/disconnect timing check after first deploy. These live checks are unverified.
+- M1 local human play-test: approved (2026-10-29). Full lobby, bots, teams, watch/rematch, pause/forfeit and minimum reconnect are implemented for M2.
+- Production play-test with a friend, map tuning and final M2 approval remain pending. Rendering smoothing awaits play-test feedback.
 
 ## Version bumps and sequencing
-| Constant | Change | Owner | Notes |
-|---|---|---|---|
-| `RULES_VERSION` | 3.0.0 -> 3.1.0 (minor) | 01 | Only SP01 touches it. Goldens/replays/`levels-lock`/`content.json` change `rulesVersion` metadata only. |
-| `contentVersion` | 2.3.4 -> 2.4.0 (minor) | 03 | SP01 also edits content schemas/compile and `content.json` rulesVersion; if `check:content` demands a content bump for SP01, do it in SP01 and have SP03 bump relative to the result (conflict: same constant, two SPs). Sequence 01 then 03; regenerate `content:lock` and `levels:lock` after 03 on top of 01. |
-| `BOT_VERSION` | 2.4.5 -> 2.5.0 (minor) | 04 | SP01 already landed 2.4.5 (ally filter). Possible conflict:  SP03 may need a bump if `check:content` demands. Sequence 01 -> 03 -> 04 so SP04 lands 2.5.0 last; any earlier patch is subsumed. Regenerate bot goldens only if identity map changes. |
-| `PROTOCOL_VERSION` | new, int | 02 | Bumped on any wire break after first ship. |
-| `SCHEMA_VERSION` | stays 2.0.0 | 01 | Additive optional fields; bumping breaks replay headers. |
-Recommended merge order: 01 -> (02 || 03) -> 04 -> 05 -> 06; each locks/regenerates after rebasing on the previous.
 
-## M2 amendment gate
-[SP07](07-pause-forfeit/PRD.md) is draft with `[OPEN]` team/FFA, concurrent-disconnect, lobby/countdown and bot-scope policies. Task generation/reconciliation is pending those decisions; no SP07 TASKS.md is generated. Existing M2/M3 task counts/order below are historical and do not yet include SP07 or the minimum reconnect/catch-up promotion. Before implementation, settle SP07, reconcile affected tasks, and order terminal rules/replay design → protocol/heartbeat → server pause + minimum reconnect → web controls → browser coverage. Active GAME_RULES/versions remain unchanged in this planning update.
+Implemented identities (verified from source and content metadata):
+
+| Constant | Current | Sequence / owner |
+|---|---|---|
+| `RULES_VERSION` | **3.2.0** | M1 3.1.0; SP07 added logged `Forfeit` with a minor bump |
+| `contentVersion` | **2.6.0** | SP03 Duel M/Cross and content/lock updates landed after M1 |
+| `BOT_VERSION` | **2.5.0** | SP01 ally filter, then SP04 bot presets/seats |
+| `PROTOCOL_VERSION` | **2** | SP07 pause/resume/quit, pause state, forfeit and countdown-cancel messages |
+| `SCHEMA_VERSION` | **2.0.0** | Unchanged; additive optional fields |
+
+Historical integration sequence was 01 → (02 || 03) → 04 → 05 → 06, with SP07 threaded through rules → protocol → server → web → e2e. Each task's table remains the status authority.
+
+## M2 amendment (settled 2026-10-29)
+[SP07](07-pause-forfeit/PRD.md) is approved with all four owner policies resolved. Technical design: ws protocol heartbeat (3 s ping / 7 s timeout, silent-drop detection <= 8 s); `PROTOCOL_VERSION` 1 -> 2 (`pause`, `resume`, `quit`, `pause.state`, `seat.status` away/forfeit, errors `paused`/`no-match`); logged `Forfeit{player}` system command (`R-FFT-01..03`, `RULES_VERSION` 3.1.0 -> 3.2.0 minor); minimum reconnect (token reclaim, full catch-up, runtime recreation) promoted to M2; room removed from/re-added to the shared clock at `boundary(now())` on resume. SP01/02/04/05/06 carry dated amendment notes. **All 13 SP07 tasks are now done**, including two-browser verification and the deployed-heartbeat runbook; the live heartbeat check remains owner-pending. Order: rules text/version + replay design (SP01) -> protocol + heartbeat (SP02) -> server pause + reconnect + lobby (SP04) -> web controls + reconnect (SP05) -> e2e (SP06).
 
 ## Tasks
-Per-SP task breakdowns (all Status `todo`). Cross-SP deps use `SPxx#N`; no cycles, no M1 task depends on M2/M3 (verified by script).
 
-| SP | TASKS | M1 | M2 | M3 | Total |
-|---|---|---|---|---|---|
-| 01 | [01-seat-rules](01-seat-rules/TASKS.md) | 10 | 2 | 0 | 12 |
-| 02 | [02-net-protocol](02-net-protocol/TASKS.md) | 9 | 3 | 1 | 13 |
-| 03 | [03-pvp-maps](03-pvp-maps/TASKS.md) | 5 | 5 | 0 | 10 |
-| 04 | [04-game-server](04-game-server/TASKS.md) | 9 | 9 | 2 | 20 |
-| 05 | [05-web-netplay](05-web-netplay/TASKS.md) | 10 | 5 | 3 | 18 |
-| 06 | [06-deploy-e2e](06-deploy-e2e/TASKS.md) | 5 | 10 | 0 | 15 |
-| | **Total** | **48** | **34** | **6** | **88** |
+Current tracking-table totals: **95 done / 101 tasks**. All **48 M1-labelled** and **47 M2-labelled** tasks are done; **six M3** tasks remain `todo`. Counts preserve task milestone labels: SP01#11 remains labelled M2 even though placement ranking was promoted and completed for M1 coverage. No M3 task scope has changed.
 
-### M1 execution order
+| SP | TASKS | M1 | M2 | M3 | Total | Done |
+|---|---|---|---|---|---|---|
+| 01 | [01-seat-rules](01-seat-rules/TASKS.md) | 10 | 2 | 0 | 12 | 12 |
+| 02 | [02-net-protocol](02-net-protocol/TASKS.md) | 9 | 3 | 1 | 13 | 12 |
+| 03 | [03-pvp-maps](03-pvp-maps/TASKS.md) | 5 | 5 | 0 | 10 | 10 |
+| 04 | [04-game-server](04-game-server/TASKS.md) | 9 | 9 | 2 | 20 | 18 |
+| 05 | [05-web-netplay](05-web-netplay/TASKS.md) | 10 | 5 | 3 | 18 | 15 |
+| 06 | [06-deploy-e2e](06-deploy-e2e/TASKS.md) | 5 | 10 | 0 | 15 | 15 |
+| 07 | [07-pause-forfeit](07-pause-forfeit/TASKS.md) | 0 | 13 | 0 | 13 | 13 |
+| | **Total** | 48 | 47 | 6 | 101 | **95** |
+
+### M1 execution order (historical; complete)
 Topological waves; `||` = independent, run at most 2 at a time (parallelism cap).
 1. `SP01#1 || SP02#1` (SP05#2 also ready, no deps; slot it in when a lane frees)
 2. `SP01#2 || SP02#2` ; then `SP02#5`, `SP04#1`, `SP05#1`
@@ -126,8 +133,22 @@ Topological waves; `||` = independent, run at most 2 at a time (parallelism cap)
 
 Pair within a wave only when files do not conflict (e.g. SP01 sim tasks vs SP02/SP04 packages are safe; SP01#5/#6/#7 all touch sim, run serially or in 2 lanes with care; root `package.json` edits in SP02#1/SP04#1/SP06#1 conflict, keep them serial).
 
-### M2 headline order (historical; SP07 reconciliation pending)
-SP02#10 → SP01#11, SP01#12, SP03#8 → SP04#11 → SP04#10, SP04#13, SP03#9, SP03#10 → SP04#12, SP04#14, SP04#15, SP02#11, SP02#12, SP05#13 → SP03#6, SP03#7, SP04#16, SP05#11, SP05#14 → SP04#17, SP04#18, SP05#12 → SP05#15, SP06#6, SP06#9 → SP06#7 → SP06#8 → SP06#10..#13, SP06#15 → SP06#14.
+### M2 completed scope and actual integration order
 
-### M3 headline order (historical; minimum SP07 reconnect moves to M2)
-SP02#13 → SP04#19 → SP04#20 → SP05#17 → SP05#16 → SP05#18.
+| SP | Completed M2-labelled tasks | Result |
+|---|---|---|
+| 01 | #11–12 | Placement ranking (promoted/completed in M1), bot ally filter |
+| 02 | #10–12 | Catch-up, rate limiter, lagging-client batching |
+| 03 | #6–10 | Duel M, Cross, map listing and PvP editor/finalize |
+| 04 | #10–18 | Bots/full lobby, spectators, host transfer/rematch, abuse limits, health/drain, Docker/Fly config, lobby scenarios |
+| 05 | #11–15 | Full lobby, team legend/bar, catch-up overlay, watch/deep links, N-seat results/rematch |
+| 06 | #6–15 | Deploy/order/URL/origins, Docker job, mismatch, spectator/rematch, bot/Cross e2e, docs/runbook |
+| 07 | #1–13 | Rules/Forfeit → protocol → heartbeat/pause/deadlines → lobby/reclaim → web controls/recreation → two-browser e2e/runbook |
+
+Implemented in interleaved dependency lanes: pure bot/map/catch-up foundations; rules/protocol; server lobby/spectator/rematch and pause/forfeit; maps/web controls and minimum reconnect; bot seats/ops/editor/deploy; browser verification and docs. SP07's task order is #1 → #2 → #3 → #4/#5 → #6 → #7/#8 → #9 → #10/#11/#12 → #13 (actual server/web integration was interleaved with the other SPs).
+
+The branch already held **49 commits ahead of main through `d364c83`**, including SP07#13 and SP06 spectator/rematch. Resumed tail, now done: **SP06#11** (`62da259`, mismatch) → **SP06#13** (`274d3ce`, bot/Cross) → **SP06#14** (`3e47dd9`, docs). Final gate repairs: metadata-only golden refresh `0f00b6a` (simulation values/hashes unchanged), replay count `373a998`, FFT coverage count `d67e0ba`, and editor objective expectation `2b2f671`; production behavior unchanged by these repairs. [Resumed-delta review: PASS](06-deploy-e2e/review-2026-10-29-1754.md). [Final run summary](code-2026-10-29-1754.md): local CI **44 stages / 1570 passed**, full PvP **13 passed**; original full-web run had one stale assertion, then the affected spec passed **2/2** after repair (136 other executed web cases passed; no monolithic full-web exit-0 claim).
+
+### M3 backlog (not implemented)
+
+Historical dependency outline: SP02#13 → SP04#19 → SP04#20 → SP05#17 → SP05#16 → SP05#18. Minimum reconnect/catch-up and runtime recreation were promoted to M2 by SP07. SP04#19's old grace/bot-takeover policy is superseded: **human disconnects use the cumulative budget and forfeit; no bot takeover**. The six M3 table entries remain unchanged backlog placeholders for broader hardening, auto-resync and load testing; reconcile the superseded policy before implementing them.

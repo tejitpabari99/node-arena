@@ -4,7 +4,7 @@ summary: 12 tasks (10 M1, 2 M2) adding pvp objective, teams, ally rules, elimina
 date: 2026-10-28
 ---
 # Tasks: Seat rules (teams, elimination, PvP outcome)
-Source of truth: docs/agent_files/feat-pvp-20261028-1435/01-seat-rules/PRD.md. Rules text and version bump come first, then tests, then code (AGENTS.md). Campaign (`captureAll`) behaviour, `simHash`, state hashes and replay outcomes must stay identical; only `rulesVersion` metadata changes. No [OPEN] items in the PRD.
+Source of truth: docs/agent_files/feat-pvp-20261028-1435/01-seat-rules/PRD.md. Rules text and version bump come first, then tests, then code (AGENTS.md). Campaign (`captureAll`) behaviour, `simHash`, state hashes and replay outcomes must stay identical; only `rulesVersion` metadata changes. No [OPEN] items in the PRD. M2 amendment (2026-10-29): the seat-only `Forfeit` system command (rule area FFT R-FFT-01..03, R-ELM-01/R-WIN-04/06(b) amendments, RULES_VERSION 3.2.0, pvp forfeit golden) is owned by SP07 TASKS.md; no SP01 task added for it. Task 1 (3.1.0 rules doc) stays as shipped; 3.2.0 bump is SP07's.
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
@@ -19,7 +19,7 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/01-seat-rules/PRD.md. R
 | 9 | [M1] bots harness teams + scripted match suite | 3, 5, 6, 8 | done |
 | 10 | [M1] Refresh goldens/locks + gate sweep | 9 | done |
 | 11 | [M2] sim: placement ranking | 8, 9 | done |
-| 12 | [M2] bots: ally filter in tw-ai | 4, 9 | todo |
+| 12 | [M2] bots: ally filter in tw-ai | 4, 9 | done |
 
 ## Task 1 — [M1] Rules doc + RULES_VERSION 3.1.0
 What it is / what it means: Rule text is the contract that precedes tests and code (D4, R11).

@@ -87,3 +87,41 @@ test('covers R-WIN-07: scripted FFA placements preserve staggered elimination or
   ]);
   assert.equal(r.stats.finalHash, '51485a36ced93989'); // Pre-ranking hash.
 });
+
+test('covers R10: seat driver presets, determinism, set/clear, player check', () => {
+  const bots = require('../src/index.ts');
+  const sim = require('../../sim/src/index.ts');
+  const { pvpLevel } = require('./pvp-fixture.cjs');
+  assert.deepEqual(['easy', 'normal', 'hard'].map(k => bots.BOT_PRESETS[k].actionDelayMs), [3000, 1500, 700]);
+  for (const k of ['easy', 'normal', 'hard']) {
+    assert.equal(bots.BOT_PRESETS[k].behavior, 'full');
+    assert.equal(bots.BOT_PRESETS[k].script.length, 0);
+  }
+  const level = pvpLevel([0, 1, -1, -1], [0, 1]);
+  const run = () => {
+    const s = sim.create(level, 11);
+    const d = bots.createSeatDriver(level, 11);
+    assert.equal(d.has(1), false);
+    d.setBot(1, bots.BOT_PRESETS.hard);
+    assert.equal(d.has(1), true);
+    assert.equal(d.has(0), false);
+    const log = [];
+    for (let t = 0; t < 400; t++) {
+      const c = d.commands(s);
+      assert.deepEqual(d.commands(s), []);
+      for (const x of c) assert.equal(x.player, 1);
+      log.push(c);
+      s.step(c);
+    }
+    d.setBot(1, null);
+    assert.equal(d.has(1), false);
+    assert.deepEqual(d.commands(s), []);
+    s.step([]);
+    assert.deepEqual(d.commands(s), []);
+    assert.throws(() => d.setBot(9, bots.BOT_PRESETS.easy), RangeError);
+    return JSON.stringify(log);
+  };
+  const a = run();
+  assert.equal(a, run());
+  assert.ok(a.includes('"player":1'));
+});

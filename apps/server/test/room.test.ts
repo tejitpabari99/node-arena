@@ -37,9 +37,11 @@ function setup(randomInt?: (a: number, b: number) => number) {
   let now = 1000;
   const clock = createClock({ now: () => now, setTimeout: () => 0 });
   const starts: MatchStart[] = [];
+  const pending: Array<{ fn: () => void; ms: number }> = [];
   const mgr = createRoomManager({
     content, clock, now: () => now, inputDelay: 3, ...(randomInt ? { randomInt } : {}),
     onStart: (_r, m) => void starts.push(m),
+    timers: { setTimeout: (fn, ms) => { pending.push({ fn, ms }); return pending.length; }, clearTimeout: () => {} },
   });
   const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', timers: { setTimeout: () => 0, clearTimeout: () => {} } });
   let n = 0;
@@ -51,7 +53,7 @@ function setup(randomInt?: (a: number, b: number) => number) {
     s.clear();
     return s;
   };
-  return { mgr, hub, client, starts, setNow: (t: number) => { now = t; } };
+  return { mgr, hub, client, starts, pending, setNow: (t: number) => { now = t; } };
 }
 
 const code = (s: ReturnType<typeof fakeSocket>): string => s.last('room.joined')!.code;
@@ -108,7 +110,7 @@ test('room.join: second player takes seat 1, both get lobby.state', () => {
   assert.equal(b.last('lobby.state')!.seats[1]!.occupant?.ready, false);
 });
 
-test('room.join: full -> room-full; unknown -> room-not-found; watch -> bad-lobby (M2)', () => {
+test('room.join: full -> room-full; unknown -> room-not-found; watch -> spectator', () => {
   const { client } = setup();
   const a = client('Ann'), b = client('Bob'), c = client('Cy');
   a.say({ t: 'room.create' });
@@ -118,7 +120,8 @@ test('room.join: full -> room-full; unknown -> room-not-found; watch -> bad-lobb
   c.say({ t: 'room.join', code: 'ZZZZ', role: 'play' });
   assert.equal(c.last('error')!.code, 'room-not-found');
   c.say({ t: 'room.join', code: code(a), role: 'watch' });
-  assert.equal(c.last('error')!.code, 'bad-lobby');
+  assert.equal(c.last('room.joined')!.you.seat, null);
+  assert.equal(a.last('lobby.state')!.spectators, 1);
 });
 
 test('create/join while already in a room refused', () => {
@@ -172,6 +175,7 @@ test('level change resets seats + ready; occupants keep seats; unknown level / s
   assert.equal(ls.seats[1]!.occupant?.ready, false);
   a.say({ t: 'lobby.update', levelId: 'nope', seats });
   assert.equal(a.last('error')!.code, 'bad-lobby');
+  // host seat cannot become a bot
   a.say({ t: 'lobby.update', levelId: other, seats: seats.map((s) => ({ ...s, kind: 'bot' })) });
   assert.equal(a.last('error')!.code, 'bad-lobby');
 });
@@ -281,18 +285,164 @@ test('after start: lobby edits/join refused; second start refused', () => {
 });
 
 test('lobby leave/disconnect frees seat; empty room is removed; host transfers', () => {
-  const { client, mgr } = setup();
+  const { client, mgr, pending } = setup();
   const a = client('Ann'), b = client('Bob');
   a.say({ t: 'room.create' });
   const cd = code(a);
   b.say({ t: 'room.join', code: cd, role: 'play' });
   b.say({ t: 'lobby.ready', ready: true });
   a.drop();
-  const ls = b.last('lobby.state')!;
+  let ls = b.last('lobby.state')!;
   assert.equal(ls.host, 1);
-  assert.equal(ls.seats[0]!.occupant, undefined);
+  assert.equal(ls.seats[0]!.occupant?.status, 'grace'); // SP07: seat reserved 30 s
   assert.equal(ls.seats[1]!.occupant?.ready, true); // new host implicit
+  const reserve = pending.find((p) => p.ms === 30_000)!;
+  reserve.fn(); // reserve expires -> seat freed
+  ls = b.last('lobby.state')!;
+  assert.equal(ls.seats[0]!.occupant, undefined);
   b.say({ t: 'room.leave' });
   assert.equal(mgr.roomCount(), 0);
   assert.equal(mgr.room(cd), undefined);
+});
+
+// ---- Task 11: full lobby editing ----
+type Sock = ReturnType<typeof fakeSocket>;
+const seatsOf = (s: Sock) => s.last('lobby.state')!.seats.map((x) => ({ kind: x.kind, team: x.team, ...(x.difficulty ? { difficulty: x.difficulty } : {}) }));
+const lobby2 = () => {
+  const env = setup();
+  const a = env.client('Ann'), b = env.client('Bob');
+  a.say({ t: 'room.create' });
+  b.say({ t: 'room.join', code: code(a), role: 'play' });
+  const levelId = a.last('lobby.state')!.levelId;
+  return { ...env, a, b, levelId, edit: (seats: object[], s: Sock = a) => s.say({ t: 'lobby.update', levelId, seats }) };
+};
+
+test('covers task11: host sets seat kind/difficulty/team; broadcast to all', () => {
+  const { a, b, edit } = lobby2();
+  const seats = seatsOf(a);
+  edit([seats[0]!, { kind: 'bot', team: 1, difficulty: 'hard' }]);
+  for (const s of [a, b]) {
+    const x = s.last('lobby.state')!.seats[1]!;
+    assert.equal(x.kind, 'bot'); assert.equal(x.difficulty, 'hard'); assert.equal(x.team, 1);
+  }
+});
+
+test('covers task11: bot difficulty defaults to normal; invalid difficulty / team / count / difficulty on human refused', () => {
+  const { a, edit } = lobby2();
+  const h = seatsOf(a)[0]!;
+  edit([h, { kind: 'bot', team: 1 }]);
+  assert.equal(a.last('lobby.state')!.seats[1]!.difficulty, 'normal');
+  for (const bad of [
+    [h, { kind: 'bot', team: 1, difficulty: 'nightmare' }],
+    [h, { kind: 'human', team: 1, difficulty: 'easy' }],
+    [h, { kind: 'bot', team: 99 }],
+    [h],
+  ]) {
+    a.clear();
+    edit(bad);
+    assert.equal(a.last('error')!.code, 'bad-lobby');
+  }
+});
+
+test('covers task11: host seat cannot become bot/empty', () => {
+  const { a, edit } = lobby2();
+  edit([{ kind: 'empty', team: 0 }, { kind: 'human', team: 1 }]);
+  assert.equal(a.last('error')!.code, 'bad-lobby');
+});
+
+test('covers task11: occupied human seat -> bot kicks occupant to spectator; spectator count in lobby.state', () => {
+  const { a, b, edit } = lobby2();
+  edit([seatsOf(a)[0]!, { kind: 'bot', team: 1, difficulty: 'easy' }]);
+  const ls = a.last('lobby.state')!;
+  assert.equal(ls.seats[1]!.occupant, undefined);
+  assert.equal(ls.spectators, 1);
+  assert.equal(b.last('lobby.state')!.spectators, 1);
+  // spectator is read-only
+  b.say({ t: 'lobby.ready', ready: true });
+  assert.equal(b.last('error')!.code, 'not-in-room');
+  b.say({ t: 'lobby.update', levelId: ls.levelId, seats: seatsOf(a) });
+  assert.equal(b.last('error')!.code, 'not-host');
+  // spectator leaving updates count
+  b.say({ t: 'room.leave' });
+  assert.equal(a.last('lobby.state')!.spectators, 0);
+});
+
+test('covers task11: seat edits clear non-host ready', () => {
+  const { a, b, edit } = lobby2();
+  b.say({ t: 'lobby.ready', ready: true });
+  edit(seatsOf(a).map((s, i) => (i === 1 ? { ...s, team: 1 } : s))); // no change
+  assert.equal(a.last('lobby.state')!.seats[1]!.occupant?.ready, true);
+  edit([{ kind: 'human', team: 1 }, { kind: 'human', team: 1 }]);
+  assert.equal(a.last('lobby.state')!.seats[1]!.occupant?.ready, false);
+});
+
+test('covers task11: level change resets edited seats to defaults', () => {
+  const { a, levelId, mgr } = lobby2();
+  const other = content.pvpLevelIds.find((id) => id !== levelId && content.compiled[id]!.players.length === 2)!;
+  a.say({ t: 'lobby.update', levelId, seats: [seatsOf(a)[0]!, { kind: 'bot', team: 1, difficulty: 'hard' }] });
+  a.say({ t: 'lobby.update', levelId: other, seats: [] });
+  const ls = a.last('lobby.state')!;
+  assert.equal(ls.levelId, other);
+  assert.deepEqual(ls.seats.map((x) => x.kind), ['human', 'human']);
+  assert.equal(ls.timeLimitSec, content.compiled[other]!.timeLimitSec ?? 0);
+  assert.ok(mgr.roomCount() === 1);
+});
+
+test('covers task11: timeLimitSec is read-only (extra field rejected by protocol, value from map)', () => {
+  const { a, levelId } = lobby2();
+  a.say({ t: 'lobby.update', levelId, seats: seatsOf(a), timeLimitSec: 5 });
+  assert.equal(a.last('error')!.code, 'bad-message');
+  assert.equal(a.last('lobby.state')!.timeLimitSec, content.compiled[levelId]!.timeLimitSec ?? 0);
+});
+
+test('covers task11: start refuses empty seat, <2 teams, disconnected human; allows bot seat', () => {
+  const { a, b, edit, starts } = lobby2();
+  const h = seatsOf(a);
+  b.say({ t: 'lobby.ready', ready: true });
+  edit([h[0]!, { kind: 'empty', team: 1 }]);
+  a.say({ t: 'lobby.start' });
+  assert.equal(a.last('error')!.code, 'bad-lobby');
+  edit([h[0]!, { kind: 'bot', team: 0 }]); // same team: invalid
+  a.say({ t: 'lobby.start' });
+  assert.equal(a.last('error')!.code, 'bad-lobby');
+  assert.equal(starts.length, 0);
+  edit([h[0]!, { kind: 'bot', team: 1, difficulty: 'easy' }]);
+  a.say({ t: 'lobby.start' });
+  assert.equal(starts.length, 1);
+  assert.deepEqual(starts[0]!.seats.map((s) => s.kind), ['human', 'bot']);
+  assert.equal(starts[0]!.seats[1]!.difficulty, 'easy');
+});
+
+test('covers task11: start blocked when ready human is not connected; lobby.state status reflects it', () => {
+  const { a, b, mgr, starts } = lobby2();
+  b.say({ t: 'lobby.ready', ready: true });
+  const r = mgr.room(code(a))!;
+  r.seats[1]!.occupant!.conn.closed = true; // simulates a reserved/away seat (SP07 holds the seat)
+  a.say({ t: 'lobby.start' });
+  assert.equal(a.last('error')!.code, 'bad-lobby');
+  assert.equal(starts.length, 0);
+  a.say({ t: 'lobby.update', levelId: a.last('lobby.state')!.levelId, seats: seatsOf(a) }); // no-op edit rebroadcasts
+  assert.equal(a.last('lobby.state')!.seats[1]!.occupant?.status, 'grace');
+  r.seats[1]!.occupant!.conn.closed = false;
+  a.say({ t: 'lobby.start' });
+  assert.equal(starts.length, 1);
+});
+
+test('covers task11: non-host cannot edit seats', () => {
+  const { a, b, edit } = lobby2();
+  edit([{ kind: 'human', team: 0 }, { kind: 'bot', team: 1 }], b);
+  assert.equal(b.last('error')!.code, 'not-host');
+  assert.equal(seatsOf(a)[1]!.kind, 'human');
+});
+
+test('app ping answers pong (not internal); flood is rate-limited', () => {
+  const { client } = setup();
+  const a = client('Ann');
+  a.say({ t: 'ping', id: 9 });
+  assert.deepEqual(a.sent, [{ t: 'pong', id: 9, tick: 0 }]);
+  a.clear();
+  for (let i = 0; i < 10; i++) a.say({ t: 'ping', id: i });
+  assert.equal(a.sent.filter((m) => m.t === 'pong').length, 4); // 5 per s incl. the first
+  assert.ok(a.sent.some((m) => m.t === 'error' && m.code === 'rate-limited'));
+  assert.ok(!a.sent.some((m) => m.t === 'error' && m.code === 'internal'));
 });

@@ -4,7 +4,7 @@ summary: Tasks for PvP dev script, 2-browser e2e harness and CI job (M1), then F
 date: 2026-10-28
 ---
 # Tasks: Deploy, CI and E2E for PvP
-Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M1 = local one-command dev + 2-browser e2e + CI steps + doc stubs; M2 = Fly deploy chain, Docker job, origins, more specs, full docs, runbook. SP05 deps use real task numbers (SP05#10 test hooks/testids, SP05#3+#15 mismatch UX, SP05#14 watch, SP05#15 rematch).
+Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M1 = local one-command dev + 2-browser e2e + CI steps + doc stubs; M2 = Fly deploy chain, Docker job, origins, more specs, full docs, runbook. SP05 deps use real task numbers (SP05#10 test hooks/testids, SP05#3+#15 mismatch UX, SP05#14 watch, SP05#15 rematch). SP07 (2026-10-29) ownership: all pause/quit/forfeit/heartbeat/reconnect-hold work is tracked in ../07-pause-forfeit/TASKS.md, not here; entries below carry only amended decisions. SP07-owned: pause/quit/window-close/countdown-drop/reconnect-after-end e2e specs and the test-hooks server env for short test deadlines (not shipped).
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
@@ -13,16 +13,16 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M
 | 3 | [M1] Scripted-attack helper + Duel S 1v1 spec | 2, SP03#2, SP04#8 | done |
 | 4 | [M1] CI: ci.sh checklist + `pvp-e2e` job | 3, SP02#1, SP04#1 | done |
 | 5 | [M1] Doc stubs + M1 play-test runbook | 1, 4 | done |
-| 6 | [M2] `deploy-server.yml` (Fly deploy + versions smoke) | SP04#17 | todo |
-| 7 | [M2] `deploy.yml` ordering: changes -> server -> web | 6 | todo |
-| 8 | [M2] `VITE_PVP_SERVER_URL` in deploy + preview builds | 7 | todo |
-| 9 | [M2] `ALLOWED_ORIGINS` in fly.toml | SP04#17 | todo |
-| 10 | [M2] `docker` CI job | SP04#17, 4 | todo |
-| 11 | [M2] Version-mismatch UX verification | 8, SP05#3, SP05#15 | todo |
-| 12 | [M2] e2e specs: spectator + rematch | 3, SP04#13, SP04#14, SP05#14, SP05#15 | todo |
-| 13 | [M2] e2e specs: bot-seat lobby + 2v2 Cross | 3, SP04#12, SP03#7 | todo |
-| 14 | [M2] Full docs pass | 5, 9, 12, 13 | todo |
-| 15 | [M2] `docs/PVP_OPS.md` owner runbook | 7, 8, 9 | todo |
+| 6 | [M2] `deploy-server.yml` (Fly deploy + versions smoke) | SP04#17 | done |
+| 7 | [M2] `deploy.yml` ordering: changes -> server -> web | 6 | done |
+| 8 | [M2] `VITE_PVP_SERVER_URL` in deploy + preview builds | 7 | done |
+| 9 | [M2] `ALLOWED_ORIGINS` in fly.toml | SP04#17 | done |
+| 10 | [M2] `docker` CI job | SP04#17, 4 | done |
+| 11 | [M2] Version-mismatch UX verification | 8, SP05#3, SP05#15 | done |
+| 12 | [M2] e2e specs: spectator + rematch | 3, SP04#13, SP04#14, SP05#14, SP05#15 | done |
+| 13 | [M2] e2e specs: bot-seat lobby + 2v2 Cross | 3, SP04#12, SP03#7 | done |
+| 14 | [M2] Full docs pass | 5, 9, 12, 13 | done |
+| 15 | [M2] `docs/PVP_OPS.md` owner runbook | 7, 8, 9 | done |
 
 ## Task 1 — [M1] `dev:pvp` script + server URL env wiring
 What it is / what it means: R1/R2/D1. One command runs server and web together; plain `dev` stays web-only.
@@ -51,7 +51,7 @@ Done when: `pnpm check:docs` passes; owner can follow README steps verbatim.
 
 ## Task 6 — [M2] `deploy-server.yml`
 What it is / what it means: R6/D2/D10. Reusable Fly deploy with version smoke.
-What changes at a high level: `workflow_call` + `workflow_dispatch`; `permissions: contents: read`; concurrency group `deploy-server`, no cancel; setup-flyctl pinned by commit SHA (release >= 2 weeks old, resolved at implementation); `flyctl deploy --remote-only -c apps/server/fly.toml`; `FLY_API_TOKEN` from secrets. Smoke: curl `/healthz` and compare `versions` with values computed by a Node one-liner from `@node-arena/net` version constants + content version (not hard-coded).
+What changes at a high level: `workflow_call` + `workflow_dispatch`; `permissions: contents: read`; concurrency group `deploy-server`, no cancel; setup-flyctl pinned by commit SHA (release >= 2 weeks old, resolved at implementation); `flyctl deploy --remote-only -c apps/server/fly.toml`; `FLY_API_TOKEN` from secrets. Amended 2026-10-29: RULES 3.2.0 / PROTOCOL 2 bumps deploy server first (this workflow + task 7 ordering already guarantee it; versions come from constants, so the smoke picks them up automatically). Smoke: curl `/healthz` and compare `versions` with values computed by a Node one-liner from `@node-arena/net` version constants + content version (not hard-coded).
 Done when: workflow lints (actionlint if available); dispatch run deploys and smoke passes once owner secret exists; wrong token fails the job.
 
 ## Task 7 — [M2] `deploy.yml` ordering
@@ -95,7 +95,7 @@ What changes at a high level: README Contents (+`apps/server/`, `packages/net/`)
 Done when: `pnpm check:docs` green; no stale hosting/multiplayer-deferred text.
 
 ## Task 15 — [M2] `docs/PVP_OPS.md` owner runbook
-What it is / what it means: R14. Owner-facing; covers the Manual steps.
+What it is / what it means: R14. Owner-facing; covers the Manual steps. Amended 2026-10-29: add a post-first-deploy manual heartbeat check (SP07 acceptance 16, owner, not CI): with only the app `ping` active a live tab is not dropped, and killing the client network is detected within ~8 s through the Fly edge; if the edge forwards neither ping source, document and adjust intervals.
 What changes at a high level: Fly account/app creation, `fly scale count 1`, app-scoped deploy token -> `FLY_API_TOKEN`, `PVP_SERVER_URL` variable, first deploy via dispatch, healthz check, rollback, logs, cost, name-taken fallback. Link from README.
 Done when: steps are copy-pasteable and `check:docs` passes.
 

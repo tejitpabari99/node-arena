@@ -19,7 +19,7 @@ const client: ClientMessage[] = [
   { t: 'cmd', c: cmd, cid: 1 }, { t: 'hash', tick: 19, h: '0'.repeat(16) }, { t: 'resync' }, { t: 'ping', id: 3 },
 ];
 const server: ServerMessage[] = [
-  { t: 'welcome', pv: 1, playerId: 'p', serverVersions: versions },
+  { t: 'welcome', pv: 2, playerId: 'p', serverVersions: versions },
   { t: 'room.joined', code: 'ABCD', you: { seat: null, host: false } },
   { t: 'lobby.state', levelId: 'l', timeLimitSec: 300, host: 0, spectators: 0,
     seats: [{ kind: 'human', team: 0, occupant: { nick: 'a', ready: false, status: 'grace' } }] },
@@ -57,7 +57,7 @@ test('byteSize counts utf-8 bytes', () => {
 });
 
 test('error codes complete', () => {
-  assert.equal(ERROR_CODES.length, 18);
+  assert.equal(ERROR_CODES.length, 20);
   assert.ok(ERROR_CODES.includes('version-mismatch'));
-  assert.equal(PROTOCOL_VERSION, 1);
+  assert.equal(PROTOCOL_VERSION, 2);
 });

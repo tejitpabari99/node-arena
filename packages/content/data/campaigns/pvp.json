@@ -6,6 +6,14 @@
     {
       "level": "na-pvp-duel-s",
       "position": 1
+    },
+    {
+      "level": "na-pvp-duel-m",
+      "position": 2
+    },
+    {
+      "level": "na-pvp-cross",
+      "position": 3
     }
   ]
 }

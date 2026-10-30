@@ -15,7 +15,7 @@ import { PvpHud } from '../../src/ui/pvp/PvpHud';
 // Node-only component tests inspect the first render before effects subscribe.
 vi.mock('preact/hooks', () => ({
   useState: (initial: unknown) => [initial, () => {}],
-  useEffect: () => {}, useLayoutEffect: () => {},
+  useEffect: () => {}, useLayoutEffect: () => {}, useRef: (v: unknown) => ({ current: v }),
 }));
 import { createIdentity } from '../../src/net/identity';
 
@@ -41,11 +41,11 @@ function fake() {
   };
   return { c, sent, isClosed: () => closed, retried: () => retried };
 }
-function setup(serverUrl: string | null = 'ws://x') {
+function setup(serverUrl: string | null = 'ws://x', clientVersions = versions) {
   const f = fake();
   const urls: string[] = [];
   const identity = createIdentity({ local: null, session: null });
-  const ctl = createPvpController({ identity, serverUrl, versions, createSocket: () => { throw new Error('no'); }, createConnection: (o) => { urls.push(o.url); return f.c; } });
+  const ctl = createPvpController({ identity, serverUrl, versions: clientVersions, createSocket: () => { throw new Error('no'); }, createConnection: (o) => { urls.push(o.url); return f.c; } });
   return { ctl, ...f, urls };
 }
 const welcome: ServerMessage = { t: 'welcome', pv: 1, playerId: 'p', serverVersions: versions };
@@ -85,6 +85,26 @@ describe('PvpController lobby flow', () => {
     expect(h.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'play' }]);
     h.c.push({ t: 'error', code: 'room-not-found' });
     expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', error: ERROR_STRINGS['room-not-found'] });
+  });
+  it('watch link: nick prompt without nick, then watch join; spectator lands in lobby with seat null', () => {
+    const h = setup();
+    h.ctl.openLink({ code: 'ABCD', role: 'watch' });
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', code: 'ABCD' }); expect(h.urls).toEqual([]);
+    h.ctl.setNick('Bob'); h.ctl.watch(h.ctl.snapshot().code!); h.c.push(welcome);
+    expect(h.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'watch' }]);
+    h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: null, host: false } }); h.c.push(lobby(0));
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'lobby', seat: null, role: 'watch', host: false });
+  });
+  it('watch link with saved nick joins at once; spectators-full and room-not-found return to menu with error', () => {
+    const h = setup(); h.ctl.setNick('Bob');
+    h.ctl.openLink({ code: 'ABCD', role: 'watch' }); h.c.push(welcome);
+    expect(h.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'watch' }]);
+    h.c.push({ t: 'error', code: 'spectators-full' });
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', error: ERROR_STRINGS['spectators-full'] });
+  });
+  it('invalid watch link (null) opens the menu with an error', () => {
+    const h = setup(); h.ctl.openLink(null);
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', error: expect.stringContaining('Invalid room code') });
   });
   it('invalid play link opens the menu with an error and no connection', () => {
     const h = setup(); h.ctl.openLink(null);
@@ -149,7 +169,7 @@ describe('PvpController lobby flow', () => {
     const g = setup(); g.ctl.open(); g.ctl.create(); g.c.setState('superseded');
     expect(g.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'Opened in another tab.' });
     const r = setup(); r.ctl.open(); r.ctl.create(); r.c.setState('refused');
-    expect(r.ctl.snapshot().screen).toBe('menu');
+    expect(r.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'A newer version of Node Arena is available - reload' });
   });
   it('no server url: create is a no-op; setNick persists via identity; subscribe notifies', () => {
     const h = setup(null); h.ctl.open(); h.ctl.create(); expect(h.ctl.snapshot().screen).toBe('menu');
@@ -205,6 +225,22 @@ describe('PvpController match lifecycle', () => {
     expect(g.ctl.snapshot().screen).toBe('result');
     expect(g.timers.every((t) => !t.live)).toBe(true);
   });
+  it('result carries local ranking; rematch sends msg; lobby.state returns to lobby with new seed on next start', async () => {
+    const g = game(); g.c.push(startMsg()); await flush();
+    const ranking = [{ team: 0, seats: [0], rank: 1, buildings: 3, troops: 9, eliminatedAt: null }, { team: 1, seats: [1], rank: 2, buildings: 0, troops: 0, eliminatedAt: 5 }];
+    g.c.push(g.tickMsg(0)); g.c.push(g.tickMsg(1)); g.ctl.driver!.advance();
+    (g.view as { over: unknown }).over = { outcome: 'victory', winners: [0], winner: 0, ranking }; g.c.push(g.endMsg(3));
+    expect(g.ctl.snapshot().screen).toBe('result');
+    expect(g.ctl.snapshot().ranking).toEqual(ranking);
+    g.ctl.rematch(); expect(g.sent.at(-1)).toEqual({ t: 'rematch' });
+    g.c.push(lobby(0)); 
+    expect(g.ctl.snapshot()).toMatchObject({ screen: 'lobby', end: null, start: null, ranking: null });
+    g.c.push(startMsg({ seed: 99, matchId: 'm2' })); await flush();
+    expect(g.simArgs.at(-2)).toBe(99);
+  });
+  it('rematch is a no-op outside result and for spectators', async () => {
+    const g = game(); g.ctl.rematch(); expect(g.sent.some((m) => m.t === 'rematch')).toBe(false);
+  });
   it('renders every rAF while playing and stops after leave', async () => {
     const g = game(); g.c.push(startMsg()); await flush();
     const base = g.rt.frame; // initial paint
@@ -228,14 +264,14 @@ describe('PvpController match lifecycle', () => {
     expect(got).toEqual([{ t: 'sync-lost' }]);
     expect(g.ctl.snapshot().error).toBe('Out of sync. Leave and rejoin.');
   });
-  it('re-sent start with same matchId keeps the running match; new matchId rebuilds', async () => {
+  it('re-sent start with same matchId recreates sim+driver+runtime (no leak); new matchId rebuilds', async () => {
     const g = game(); g.c.push(startMsg()); await flush();
     const d = g.ctl.driver; g.c.push(g.tickMsg(0)); g.ctl.driver!.advance();
     g.c.push(startMsg()); await flush();
-    expect(g.ctl.driver).toBe(d); expect(g.simArgs.length).toBe(2); expect(g.view.tick).toBe(1);
-    g.c.push(g.tickMsg(1)); expect(g.ctl.snapshot().error).toBeNull();
+    expect(g.ctl.driver).not.toBe(d); expect(g.simArgs.length).toBe(4); expect(g.rt.disposed).toBe(1);
+    g.c.push(g.tickMsg(0)); expect(g.ctl.snapshot().error).toBeNull();
     g.c.push(startMsg({ matchId: 'm2' })); await flush();
-    expect(g.ctl.driver).not.toBe(d); expect(g.simArgs.length).toBe(4);
+    expect(g.simArgs.length).toBe(6); expect(g.rt.disposed).toBe(2);
   });
   it('result screen Leave returns to the PvP menu', async () => {
     const g = game(); g.c.push(startMsg()); await flush();
@@ -259,7 +295,7 @@ describe('PvpController match lifecycle', () => {
     const alert = find(PvpLayer({ pvp: g.ctl }), n => n.props['data-testid'] === 'toast-sync-lost')[0];
     expect(alert).toBeDefined(); g.ctl.dispose();
   });
-  it.each(['countdown', 'playing', 'result'] as const)('same-room reauth preserves %s screen and the active driver', async (screen) => {
+  it.each(['countdown', 'playing', 'result'] as const)('same-room reauth recreates driver and keeps %s screen', async (screen) => {
     const g = game(); g.c.push(startMsg()); await flush();
     if (screen !== 'countdown') { g.c.push(g.tickMsg(0)); g.ctl.driver!.advance(); }
     if (screen === 'result') { g.view.over = { outcome: 'victory', winners: [0], winner: 0 }; g.c.push(g.endMsg(1)); }
@@ -267,11 +303,11 @@ describe('PvpController match lifecycle', () => {
     g.c.push(welcome);
     g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
     g.c.push(lobby(0)); g.c.push(startMsg()); await flush();
-    expect(g.ctl.snapshot().screen).toBe(screen);
-    expect(g.ctl.driver).toBe(driver);
+    expect(g.ctl.driver).not.toBe(driver);
+    expect(g.ctl.snapshot().screen).toBe(screen === 'countdown' ? 'countdown' : 'playing');
     if (screen === 'playing') {
       expect((g.rt.ctx as { enabled(): boolean }).enabled()).toBe(true);
-      g.c.push(g.tickMsg(1)); g.ctl.driver!.advance(); expect(g.view.tick).toBe(2);
+      g.c.push(g.tickMsg(0)); g.ctl.driver!.advance(); expect(g.view.tick).toBe(2);
     }
     g.ctl.dispose();
   });
@@ -285,8 +321,19 @@ describe('PvpController match lifecycle', () => {
     (leave.props.onClick as () => void)();
     expect(h.ctl.snapshot().screen).toBe('menu'); expect(h.sent.at(-1)).toEqual({ t: 'room.leave' });
   });
-  it('Esc menu Leave component returns to the online menu', async () => {
+  it('seated Leave asks confirmation (no immediate leave); Yes sends quit', async () => {
     const g = game(); g.c.push(startMsg()); await flush();
+    g.c.push(g.tickMsg(0)); g.ctl.driver!.advance();
+    const node = PvpLayer({ pvp: g.ctl })!;
+    const hud = find((node.type as unknown as (props: unknown) => unknown)(node.props), n => n.type === PvpHud as unknown)[0]!;
+    const p = hud.props as unknown as Parameters<typeof PvpHud>[0];
+    p.onLeave();
+    expect(g.ctl.snapshot().screen).toBe('playing'); expect(g.sent.some(m => m.t === 'room.leave')).toBe(false);
+    p.onQuitNo!(); expect(g.sent.some(m => m.t === 'quit')).toBe(false);
+    p.onQuitYes!(); expect(g.sent.at(-1)).toEqual({ t: 'quit' }); expect(g.ctl.snapshot().screen).toBe('playing');
+  });
+  it('Esc menu Leave component returns to the online menu (spectator)', async () => {
+    const g = game(); g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: null, host: false } }); g.c.push(startMsg()); await flush();
     g.c.push(g.tickMsg(0)); g.ctl.driver!.advance();
     const node = PvpLayer({ pvp: g.ctl })!;
     const playing = (node.type as unknown as (props: unknown) => unknown)(node.props);
@@ -296,18 +343,20 @@ describe('PvpController match lifecycle', () => {
     (leave.props.onClick as () => void)();
     expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.sent.at(-1)).toEqual({ t: 'room.leave' });
   });
-  it.each([false, true])('sync loss is visible with Leave before UI effects subscribe (playing=%s)', async (playing) => {
+  it.each([false, true])('sync loss is visible with Leave until reauth start rebuilds the match (playing=%s)', async (playing) => {
     const g = game(); g.c.push(startMsg()); await flush();
     if (playing) { g.c.push(g.tickMsg(0)); g.ctl.driver!.advance(); }
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try { g.c.push(g.tickMsg(5)); } finally { warn.mockRestore(); }
-    // Reauth must not erase the persistent error before the next frame renders.
-    g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } }); g.c.push(startMsg());
+    g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
     const node = PvpLayer({ pvp: g.ctl });
-    const alert = find(node, n => n.props['data-testid'] === 'toast-sync-lost')[0];
-    expect(alert?.props.children).toBe('Out of sync. Leave and rejoin.');
+    expect(find(node, n => n.props['data-testid'] === 'toast-sync-lost')[0]?.props.children).toBe('Out of sync. Leave and rejoin.');
     const leave = find(node, n => n.props['data-testid'] === 'pvp-sync-leave')[0];
     expect(leave).toBeDefined();
+    // M2: repeated start replays from tick 0 on a fresh stream, which recovers the sync loss.
+    g.c.push(startMsg()); await flush();
+    expect(g.ctl.snapshot().error).toBeNull();
+    g.c.push(g.tickMsg(0)); expect(g.ctl.snapshot().error).toBeNull();
     (leave!.props.onClick as () => void)();
     expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.ctl.driver).toBeNull();
   });
@@ -338,4 +387,40 @@ describe('PvpController match lifecycle', () => {
     expect(m.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'Game content differs from the server. Reload to update.' });
     expect(m.sent.at(-1)).toEqual({ t: 'room.leave' }); expect(m.simArgs).toEqual([]);
   });
+});
+
+
+it('version refusal keeps a reload action reachable in the menu', () => {
+  const h = setup(); h.ctl.open(); h.ctl.create(); h.c.setState('refused');
+  expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', conn: 'refused', error: 'A newer version of Node Arena is available - reload' });
+});
+
+
+it('reload rechecks a mismatch, blocks room actions on repeat refusal, and recovers when compatible', () => {
+  const entries = new Map<string, string>();
+  vi.stubGlobal('sessionStorage', { getItem: (k: string) => entries.get(k) ?? null, setItem: (k: string, v: string) => entries.set(k, v), removeItem: (k: string) => entries.delete(k) });
+  try {
+    const first = setup(); first.ctl.open(); first.ctl.create(); first.c.setState('refused'); first.ctl.dispose();
+    const otherServer = setup('ws://different'); otherServer.ctl.open(); expect(otherServer.urls).toEqual([]);
+    const otherBuild = setup('ws://x', { ...versions, rules: 'new' }); otherBuild.ctl.open(); expect(otherBuild.urls).toEqual([]);
+    const linked = setup(); linked.ctl.setNick('Saved'); linked.ctl.openLink({ code: 'ABCD', role: 'play' }); linked.c.push(welcome);
+    expect(linked.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'play' }]);
+    linked.ctl.dispose();
+    // Recreate the failed-build marker after the successful link handshake.
+    const rejected = setup(); rejected.ctl.open(); rejected.ctl.create(); rejected.c.setState('refused'); rejected.ctl.dispose();
+    const reloaded = setup(); reloaded.ctl.open();
+    expect(reloaded.ctl.snapshot().screen).toBe('connecting');
+    reloaded.c.setState('refused');
+    expect(reloaded.ctl.snapshot()).toMatchObject({ screen: 'menu', pvpUnavailable: true, error: 'PvP unavailable: this build differs from the server' });
+    reloaded.ctl.create(); reloaded.ctl.join('ABCD');
+    expect(reloaded.urls).toHaveLength(1);
+    reloaded.ctl.dispose();
+    const compatible = setup(); compatible.ctl.open(); compatible.c.push(welcome);
+    expect(compatible.ctl.snapshot()).toMatchObject({ screen: 'menu', pvpUnavailable: false, error: null });
+    expect(compatible.sent).toEqual([]); // compatibility probe never creates a room
+    compatible.ctl.create(); compatible.c.push(welcome);
+    expect(compatible.sent).toEqual([{ t: 'room.create' }]);
+    compatible.ctl.dispose();
+    const next = setup(); next.ctl.open(); expect(next.urls).toEqual([]);
+  } finally { vi.unstubAllGlobals(); }
 });

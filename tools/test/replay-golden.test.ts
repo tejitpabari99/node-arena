@@ -24,9 +24,9 @@ async function directory(t: { after(fn: () => Promise<void>): void }) {
   return dir;
 }
 
-test('replay:verify golden scans all 22 v2 recordings (sim + bots goldens)', () => {
+test('replay:verify golden scans all 23 v2 recordings (sim + bots + PvP forfeit goldens)', () => {
   const result = run('replay:verify', 'golden', '--format', 'json');
-  assert.equal(result.status, 0, result.stdout); assert.match(result.report.summary, /22 replays verified of 22/);
+  assert.equal(result.status, 0, result.stdout); assert.match(result.report.summary, /23 replays verified of 23/);
 });
 test('corrupted golden fixtures fail with a clear message (tampered finalHash, tampered command)', async t => {
   const original = JSON.parse(await readFile(join(root, 'packages/sim/test/golden/baseline.json'), 'utf8'));

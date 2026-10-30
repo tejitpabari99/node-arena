@@ -49,7 +49,7 @@ test('arrival order within a tick', () => {
   const s = mk(1);
   s.submit(1, draw(1, 2)); s.submit(0, draw(3, 4)); s.submit(1, draw(5, 6));
   s.closeTick();
-  assert.deepEqual(s.closeTick().cmds.map((c) => [c.player, c.from]), [[1, 1], [0, 3], [1, 5]]);
+  assert.deepEqual(s.closeTick().cmds.map((c) => [c.player, (c as { from: number }).from]), [[1, 1], [0, 3], [1, 5]]);
 });
 
 test('non-human seats cannot submit', () => {
@@ -58,7 +58,7 @@ test('non-human seats cannot submit', () => {
 });
 
 test('building index bound and malformed cmds rejected', () => {
-  const s = mk();
+  const s = new LockstepServer({ seats: ['human', 'human', 'bot', 'empty'], buildingCount: 10, log: { timeLimitTicks: 1000 }, rateLimits: { cmdsPerTick: 100, cmdsPerSec: 100 } });
   for (const c of [draw(10, 1), draw(1, 10), draw(-1, 1), draw(1.5, 2), { type: 'Nope', from: 1, to: 2 }, null, [], 'x', { type: 'DrawLine', from: 1 }, { ...draw(1, 2), extra: 1 }]) {
     assert.deepEqual(s.submit(0, c), { accepted: false, rejected: 'bad-message' });
   }

@@ -4,7 +4,7 @@ import type { Sim } from '@node-arena/sim';
 import { NetDriver } from '../../src/driver/net-driver';
 import { STEP_MS } from '../../src/driver';
 
-function setup() {
+function setup(clockStep = 0) {
   const view = { tick: 0, over: false };
   const stepped: { cmds: unknown[]; events: unknown }[] = [];
   const sim = {
@@ -17,7 +17,7 @@ function setup() {
   const frames: (() => void)[] = [];
   const client = new LockstepClient(0);
   const d = new NetDriver({
-    sim, client, send: m => sent.push(m), now: () => t,
+    sim, client, send: m => sent.push(m), now: () => (t += clockStep),
     raf: cb => frames.push(() => cb(t)), caf: () => {},
   });
   const tickMsg = (n: number) => d.push({ t: 'tick', n } as never);
@@ -110,5 +110,62 @@ describe('NetDriver', () => {
     expect(s.view.tick).toBe(1);
     expect(s.frames.length).toBe(1);
     s.d.dispose();
+  });
+});
+
+describe('NetDriver catch-up progress', () => {
+  const chunk = (from: number, to: number, done: boolean) => ({ t: 'catchup', from, to, cmds: [], done }) as never;
+  it('null when live; progress = tick/(tick+queued) during catchup; resumes live with no gap', () => {
+    const s = setup(1); // fake clock: 1 ms per read, 8 ms budget
+    const d = s.d;
+    expect(d.catchupProgress).toBeNull();
+    d.push(chunk(0, 100, false));
+    expect(d.catchupProgress).toBe(0);
+    const n = d.advance();
+    expect(n).toBeGreaterThan(0); expect(n).toBeLessThan(10);
+    expect(d.catchupProgress).toBeCloseTo(n / 100, 5);
+    d.push(chunk(100, 200, true));
+    expect(d.catchupProgress).toBeCloseTo(n / 200, 5);
+    let guard = 0;
+    while (d.catchupProgress !== null && guard++ < 1000) d.advance();
+    expect(d.catchupProgress).toBeNull();
+    expect(s.client.queued()).toBeLessThanOrEqual(6);
+    expect(d.push({ t: 'tick', n: 200 } as never)).toEqual({ ok: true }); // live tick follows done chunk with no gap
+    while (s.client.queued() > 0) d.advance();
+    expect(s.view.tick).toBe(201);
+    expect(s.stepped.slice(0, n).every(x => x.events === false)).toBe(true);
+  });
+  it('shows when queued > 40 without catchup messages, hides at <= 6', () => {
+    const s = setup(3);
+    for (let i = 0; i < 41; i++) s.tickMsg(i);
+    expect(s.d.catchupProgress).toBe(0);
+    s.d.advance();
+    expect(s.d.catchupProgress).not.toBeNull();
+    while (s.client.queued() > 0) s.d.advance();
+    expect(s.d.catchupProgress).toBeNull();
+    expect(s.view.tick).toBe(41);
+  });
+  it('small burst never shows overlay', () => {
+    const s = setup();
+    for (let i = 0; i < 10; i++) s.tickMsg(i);
+    expect(s.d.catchupProgress).toBeNull();
+  });
+});
+
+describe('NetDriver spectator', () => {
+  it('never sends hash or cmd, but its hash equals a player\'s after the same ticks', () => {
+    const mk = (spectator: boolean) => {
+      const view = { tick: 0, over: false }; const sent: ClientMessage[] = [];
+      const sim = { view, step() { view.tick++; return []; }, hash: () => `h${view.tick}` } as unknown as Sim;
+      const d = new NetDriver({ sim, client: new LockstepClient(0), send: m => sent.push(m), now: () => 0, raf: () => 0, caf: () => {}, ...(spectator ? { spectator } : {}) });
+      return { d, sent, sim };
+    };
+    const player = mk(false), spec = mk(true);
+    for (let n = 0; n < HASH_INTERVAL; n++) for (const x of [player, spec]) { x.d.push({ t: 'tick', n } as never); x.d.advance(); }
+    expect(spec.sim.hash()).toBe(player.sim.hash());
+    expect(player.sent.some(m => m.t === 'hash')).toBe(true);
+    expect(spec.sent).toEqual([]);
+    expect(spec.d.submit({ type: 'send' } as never)).toBeNull();
+    expect(spec.sent).toEqual([]);
   });
 });

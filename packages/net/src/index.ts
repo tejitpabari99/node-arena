@@ -7,3 +7,6 @@ export * from './log.js';
 export * from './lockstep-server.js';
 export * from './lockstep-client.js';
 export * from './outcome.js';
+export * from './catchup.js';
+export * from './ratelimit.js';
+export * from './lag.js';

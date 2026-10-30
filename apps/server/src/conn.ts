@@ -1,18 +1,27 @@
 import { encode, parseClientMessage, type ClientMessage, type ErrorCode, type ServerMessage } from '@node-arena/net';
 
+import { CLOSE_RATE_LIMITED, type ConnGuard } from './limits.js';
+
 /** Transport-agnostic socket. `main.ts` wraps `ws` into this (Task 7). */
 export interface Socket {
   send(data: string): void;
   close(code?: number, reason?: string): void;
   onMessage(cb: (data: string | Uint8Array) => void): void;
   onClose(cb: () => void): void;
+  /** Protocol-level ping frame (optional; `wrapWs` implements). */
+  ping?(): void;
+  /** Protocol-level pong callback (optional). */
+  onPong?(cb: () => void): void;
   readonly bufferedAmount: number;
+  /** Peer address (Fly-Client-IP); abuse-limit key only, never logged. */
+  readonly ip?: string;
 }
 
 export const CLOSE_SUPERSEDED = 4000;
 export const CLOSE_HELLO_TIMEOUT = 4001;
 export const CLOSE_PROTOCOL = 4002;
 export const CLOSE_VERSION = 4003;
+export const CLOSE_HEARTBEAT = 4004;
 export const CLOSE_SERVER_FULL = 1013;
 export const HELLO_DEADLINE_MS = 5000;
 
@@ -31,6 +40,14 @@ export class Conn {
   token: string | undefined;
   uid: string | undefined;
   closed = false;
+  /** Set by the hub: per-connection token bucket + strikes. */
+  guard: ConnGuard | undefined;
+  /** True while this conn holds a per-IP connection slot (hub bookkeeping). */
+  ipHeld = false;
+  /** Hub clock (ms) of the last inbound frame, pong or app ping. */
+  lastSeen = 0;
+  /** Set by the hub; used to stamp `lastSeen`. */
+  clock: (() => number) | undefined;
   private timer: unknown;
 
   constructor(
@@ -43,7 +60,13 @@ export class Conn {
     this.timer = timers.setTimeout(onDeadline, HELLO_DEADLINE_MS);
     socket.onMessage((d) => this.receive(d));
     socket.onClose(() => this.handleClose());
+    socket.onPong?.(() => this.touch());
   }
+
+  /** Refresh liveness (any inbound source). */
+  touch(): void { if (this.clock !== undefined) this.lastSeen = this.clock(); }
+
+  get ip(): string | undefined { return this.socket.ip; }
 
   get authed(): boolean { return this.playerId !== undefined; }
 
@@ -84,6 +107,7 @@ export class Conn {
 
   private receive(data: string | Uint8Array): void {
     if (this.closed) return;
+    this.touch();
     try {
       const raw = typeof data === 'string' ? data : new TextDecoder().decode(data);
       const r = parseClientMessage(raw);
@@ -96,6 +120,12 @@ export class Conn {
       if (!this.authed) {
         if (r.msg.t !== 'hello') { this.sendError('not-authed'); this.close(CLOSE_PROTOCOL, 'hello required'); return; }
         this.hooks.onHello(this, r.msg);
+        return;
+      }
+      const g = this.guard?.verdict() ?? 'ok';
+      if (g !== 'ok') {
+        this.sendError('rate-limited');
+        if (g === 'close') this.close(CLOSE_RATE_LIMITED, 'rate limited');
         return;
       }
       if (r.msg.t === 'hello') { this.sendError('bad-message', 'already authed'); return; }

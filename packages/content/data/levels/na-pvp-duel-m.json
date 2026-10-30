@@ -1,0 +1,213 @@
+{
+  "$schema": "../../schemas/level.schema.json",
+  "schemaVersion": "2.0.0",
+  "id": "na-pvp-duel-m",
+  "name": "Duel M",
+  "theme": "snow",
+  "bounds": {
+    "minX": -12,
+    "maxX": 12,
+    "minZ": -8,
+    "maxZ": 8
+  },
+  "objective": "pvp",
+  "timeLimitSec": 480,
+  "players": [
+    {
+      "id": "p1",
+      "kind": "human",
+      "colorKey": "blue"
+    },
+    {
+      "id": "p2",
+      "kind": "human",
+      "colorKey": "red"
+    }
+  ],
+  "buildings": [
+    {
+      "id": "home-l",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -9,
+        "z": 0
+      },
+      "owner": "p1",
+      "level": 15,
+      "ignoreForWin": false
+    },
+    {
+      "id": "home-r",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 9,
+        "z": 0
+      },
+      "owner": "p2",
+      "level": 15,
+      "ignoreForWin": false
+    },
+    {
+      "id": "sat-ln",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -7,
+        "z": -5
+      },
+      "owner": "p1",
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "sat-ls",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -7,
+        "z": 5
+      },
+      "owner": "p1",
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "sat-rn",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 7,
+        "z": -5
+      },
+      "owner": "p2",
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "sat-rs",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 7,
+        "z": 5
+      },
+      "owner": "p2",
+      "level": 5,
+      "ignoreForWin": false
+    },
+    {
+      "id": "side-ln",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -4,
+        "z": -2.5
+      },
+      "owner": null,
+      "level": 4,
+      "ignoreForWin": false
+    },
+    {
+      "id": "side-ls",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": -4,
+        "z": 2.5
+      },
+      "owner": null,
+      "level": 4,
+      "ignoreForWin": false
+    },
+    {
+      "id": "side-rn",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 4,
+        "z": -2.5
+      },
+      "owner": null,
+      "level": 4,
+      "ignoreForWin": false
+    },
+    {
+      "id": "side-rs",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 4,
+        "z": 2.5
+      },
+      "owner": null,
+      "level": 4,
+      "ignoreForWin": false
+    },
+    {
+      "id": "mid-n",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 0,
+        "z": -5
+      },
+      "owner": null,
+      "level": 6,
+      "ignoreForWin": false
+    },
+    {
+      "id": "mid-s",
+      "archetype": "house-wt1",
+      "pos": {
+        "x": 0,
+        "z": 5
+      },
+      "owner": null,
+      "level": 6,
+      "ignoreForWin": false
+    },
+    {
+      "id": "centre",
+      "archetype": "tower",
+      "pos": {
+        "x": 0,
+        "z": 0
+      },
+      "owner": null,
+      "level": 5,
+      "ignoreForWin": false
+    }
+  ],
+  "elements": [
+    {
+      "id": "obs-n",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 0,
+        "z": -2
+      },
+      "yawDeg": 0,
+      "footprint": {
+        "shape": "box",
+        "w": 0.427,
+        "d": 0.427
+      },
+      "variant": "small"
+    },
+    {
+      "id": "obs-s",
+      "archetype": "obstacle",
+      "pos": {
+        "x": 0,
+        "z": 2
+      },
+      "yawDeg": 0,
+      "footprint": {
+        "shape": "box",
+        "w": 0.427,
+        "d": 0.427
+      },
+      "variant": "small"
+    }
+  ],
+  "requires": [
+    "blocksLines",
+    "drawsLines",
+    "grows",
+    "level",
+    "objective:pvp",
+    "shoots",
+    "spawns"
+  ]
+}

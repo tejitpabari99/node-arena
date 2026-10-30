@@ -27,7 +27,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:prerequisites
-      - run: pnpm build:web
+      - name: Build web
+        env:
+          # Repo variable PVP_SERVER_URL (not secret); empty/unset falls back to the prod server.
+          VITE_PVP_SERVER_URL: ${{ vars.PVP_SERVER_URL || 'wss://node-arena-server.fly.dev' }}
+        run: pnpm build:web
       - name: Deploy preview channel
         id: deploy
         env:

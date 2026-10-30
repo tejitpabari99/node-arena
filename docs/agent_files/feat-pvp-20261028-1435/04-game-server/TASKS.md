@@ -4,7 +4,7 @@ summary: 20 tasks (9 M1, 8 M2, 3 M3) for apps/server - hub, rooms, 20 Hz global 
 date: 2026-10-28
 ---
 # Tasks: Game Server (apps/server)
-Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. Transport-agnostic `Hub` over a `Socket` interface with injected clock; one thin `ws` adapter. SP01/SP02 deps use real task numbers; SP03 deps use real task numbers (SP03#2 Duel S, SP03#6 Duel M, SP03#7 Cross). No [OPEN] items in the PRD.
+Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. Transport-agnostic `Hub` over a `Socket` interface with injected clock; one thin `ws` adapter. SP01/SP02 deps use real task numbers; SP03 deps use real task numbers (SP03#2 Duel S, SP03#6 Duel M, SP03#7 Cross). No [OPEN] items in the PRD. SP07 (2026-10-29) ownership: all pause/quit/forfeit/heartbeat/reconnect-hold work is tracked in ../07-pause-forfeit/TASKS.md, not here; entries below carry only amended decisions. Superseded: grace -> bot takeover/reclaim (task 19). SP07-owned: heartbeat (close 4004, accepts app `ping`), pause module/holds/budgets, clock remove/re-add, `Forfeit` via `closeTick`, command-log reserve `(cmdCap-8)/seats`, minimum reconnect, pending-forfeit/terminal-flush logic, lobby 30 s seat reserve and countdown cancel (`start.cancel`).
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
@@ -17,16 +17,16 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/04-game-server/PRD.md. 
 | 7 | [M1] ws adapter, /healthz, real-socket smoke | 6 | done |
 | 8 | [M1] Two-client acceptance on fixture + Duel S | 7, SP02#9, SP03#2 | done |
 | 9 | [M1] Command and input rejection hardening | 6 | done |
-| 10 | [M2] Bots: presets, seat driver, BOT_VERSION 2.5.0 | SP01#9, SP01#12 | todo |
-| 11 | [M2] Full lobby editing and start validation | 5, SP01#3 | todo |
-| 12 | [M2] Bot seats in match | 6, 10, 11 | todo |
-| 13 | [M2] Spectators and mid-match catch-up | 6, 11, SP02#10 | todo |
-| 14 | [M2] Host transfer, room GC, rematch | 11, 13 | todo |
-| 15 | [M2] Limits and abuse controls | 7, SP02#11, SP02#12 | todo |
-| 16 | [M2] Ops: env validation, health detail, SIGTERM drain | 7, 15 | todo |
-| 17 | [M2] Dockerfile, .dockerignore, fly.toml | 16 | todo |
-| 18 | [M2] Lobby-shape scenario suite | 12, 13, 14, SP03#6, SP03#7 | todo |
-| 19 | [M3] Disconnect grace, bot takeover, resume, reclaim | 12, 13, 14 | todo |
+| 10 | [M2] Bots: presets, seat driver, BOT_VERSION 2.5.0 | SP01#9, SP01#12 | done |
+| 11 | [M2] Full lobby editing and start validation | 5, SP01#3 | done |
+| 12 | [M2] Bot seats in match | 6, 10, 11 | done |
+| 13 | [M2] Spectators and mid-match catch-up | 6, 11, SP02#10 | done |
+| 14 | [M2] Host transfer, room GC, rematch | 11, 13 | done |
+| 15 | [M2] Limits and abuse controls | 7, SP02#11, SP02#12 | done |
+| 16 | [M2] Ops: env validation, health detail, SIGTERM drain | 7, 15 | done |
+| 17 | [M2] Dockerfile, .dockerignore, fly.toml | 16 | done |
+| 18 | [M2] Lobby-shape scenario suite | 12, 13, 14, SP03#6, SP03#7 | done |
+| 19 | [M3] Disconnect grace, bot takeover, resume, reclaim (superseded by SP07) | 12, 13, 14 | todo |
 | 20 | [M3] Auto-resync and load smoke | 19, SP02#13 | todo |
 
 ## Task 1 — [M1] Scaffold apps/server + root scripts
@@ -81,7 +81,7 @@ Done when: bots tests pass; `pnpm bots:golden` and `check:content` unchanged exc
 
 ## Task 11 — [M2] Full lobby editing and start validation
 What it is / what it means: Complete lobby (R4 M2, lobby model).
-What changes at a high level: host edits per-seat kind (human/bot/empty), difficulty, team; level change resets seats to defaults; flipping an occupied human seat to bot kicks occupant to spectator; `timeLimitSec` read-only from map; non-host only `lobby.ready`; start refuses `empty` seats, unready humans, invalid teams (SP01 rules).
+What changes at a high level: host edits per-seat kind (human/bot/empty), difficulty, team; level change resets seats to defaults; flipping an occupied human seat to bot kicks occupant to spectator; `timeLimitSec` read-only from map; non-host only `lobby.ready`; start refuses `empty` seats, unready humans, invalid teams (SP01 rules). Amended 2026-10-29: start also requires every human seat occupied, ready AND currently connected, so a reserved/away seat blocks Start (`bad-lobby`) (reserve timer and countdown cancel are SP07).
 Done when: tests per rule; `lobby.state` carries occupant `{nick,ready,status}` and spectator count.
 
 ## Task 12 — [M2] Bot seats in match
@@ -91,17 +91,17 @@ Done when: 1 human + 1 bot match finishes with client/referee hash equality and 
 
 ## Task 13 — [M2] Spectators and mid-match catch-up
 What it is / what it means: Watch mode and late join (R11, Identity).
-What changes at a high level: `room.join` watch -> spectator, cap 8 (`spectators-full`); mid-match join gets `start` (`youPlayer:null`) + `catchup` chunks (<=2000 ticks from `CommandLog.range`) then live subscribe in the same synchronous turn. Spectators read-only, receive identical tick bytes, survive rematch.
+What changes at a high level: `room.join` watch -> spectator, cap 8 (`spectators-full`); mid-match join gets `start` (`youPlayer:null`) + `catchup` chunks (<=2000 ticks from `CommandLog.range`) then live subscribe in the same synchronous turn (SP07 reconnect reuses this start+catchup path for seated players). Spectators read-only, receive identical tick bytes, survive rematch.
 Done when: spectator joining mid-match reaches hash equality; 9th spectator refused; spectator cmd rejected.
 
 ## Task 14 — [M2] Host transfer, room GC, rematch
 What it is / what it means: Room lifecycle (R12, R13, Decision 8).
-What changes at a high level: host leave/lost -> earliest-joined connected human; none -> GC. GC timers: empty lobby 2 min, ended 10 min, running with no sockets/humans 60 s, hard match cap = limit + 2 min. `rematch` from a seated human returns room to lobby with same setup, ready cleared (sender ready), new seed next start, spectators kept.
-Done when: tests on fake timers for each timer and transfer; rematch yields a different seed.
+What changes at a high level: host leave/lost -> passes immediately to the earliest connected human seat, ready flags cleared (returning ex-host is a normal member); none -> GC. GC timers: empty lobby 2 min (>= the 30 s seat reserve), ended rooms kept 10 min (`endedAt`, immutable `end` retained so absent players can fetch it), hard match cap = limit + 2 min. Amended 2026-10-29: the 'running with no sockets/humans 60 s' timer and the 'all conns closed => close + drop' path are removed for running rooms; `gc()` never drops a room with a pending pause/disconnect deadline (only shutdown/abort); sole-human unlimited abandonment idle close (10 min) is SP07. `rematch` from a seated human returns room to lobby with same setup, ready cleared (sender ready), new seed next start, spectators kept.
+Done when: tests on fake timers for each timer and transfer, incl. a running room with a pending deadline surviving GC and ended room retained 10 min; rematch yields a different seed.
 
 ## Task 15 — [M2] Limits and abuse controls
 What it is / what it means: R17, Abuse/security.
-What changes at a high level: `verifyClient` Origin allowlist (exact + single-label wildcard; missing refused unless `ALLOW_NO_ORIGIN`); per-connection token bucket 40/s burst 80 with 3 strikes then close; per-IP (`Fly-Client-IP`) 8 conns, 5 creates/min, 10 failed joins/min; `MAX_ROOMS` 40, `MAX_CONNS` 200; backpressure skip-writes >256 KB with `ticks` batch on drain, close >2 MB; use net rate limiter and batching.
+What changes at a high level: `verifyClient` Origin allowlist (exact + single-label wildcard; missing refused unless `ALLOW_NO_ORIGIN`); per-connection token bucket 40/s burst 80 with 3 strikes then close; per-IP (`Fly-Client-IP`) 8 conns, 5 creates/min, 10 failed joins/min; `MAX_ROOMS` 40, `MAX_CONNS` 200; backpressure skip-writes >256 KB with `ticks` batch on drain, close >2 MB; use net rate limiter and batching. Amended 2026-10-29: pause/resume/quit/app `ping` count in the same bucket; the 8-slot system command reserve in seat budgets is SP07's.
 Done when: each limit refused in tests (41st room, 9th conn per IP, burst, bad Origin, lagging socket); IPs never logged.
 
 ## Task 16 — [M2] Ops: env validation, health detail, SIGTERM drain
@@ -119,13 +119,14 @@ What it is / what it means: M2 acceptance across shapes.
 What changes at a high level: fake-socket scenarios with client hash equality: 2 humans + 1 bot (3-seat/Cross), FFA 4, 2v2 `teams [0,0,1,1]` with bots, mid-match spectator, host transfer, rematch new seed, lobby rule rejections.
 Done when: all scenarios green in `pnpm test`.
 
-## Task 19 — [M3] Disconnect grace, bot takeover, resume, reclaim
+## Task 19 — [M3] Disconnect grace, bot takeover, resume, reclaim (superseded by SP07)
+Superseded in part by SP07 (2026-10-29): fully superseded; no work remains here. Human grace -> bot takeover, bot -> connected reclaim and `seat.status grace/bot` driving are dropped (R14/R15 SUPERSEDED, Decision 9 void); the minimum token reconnect, 30 s cumulative disconnect budget, lobby 30 s seat reserve and forfeit now live in SP07 (M2). Remaining M3 server work is task 20 (auto-resync, load smoke). Historical description follows.
 What it is / what it means: R14, R15, Decision 9, Disconnect FSM.
 What changes at a high level: per-seat FSM `connected -> grace(30 s) -> bot`, `grace -> connected` on resume (token + catch-up), `bot -> connected` on reclaim (bot dropped next tick); `seat.status` broadcast every transition, also in lobby (30 s seat free); commands from non-connected seats dropped. Takeover uses a fresh normal seat bot at tick T. M2 behaviour (returns as spectator) replaced.
-Done when: fake-clock tests: bot commands appear after 30 s and clients stay hash-equal; resume in grace converges; reclaim after takeover works.
+Done when (historical, not to be built): fake-clock tests: bot commands appear after 30 s and clients stay hash-equal; resume in grace converges; reclaim after takeover works.
 
 ## Task 20 — [M3] Auto-resync and load smoke
-What it is / what it means: R16, R19.
+What it is / what it means: R16, R19. Remaining M3 per SP07 amendment (2026-10-29), alongside SIGTERM drain / restart recovery (task 16 still lists drain; PRD amendment text calls it M3, R18 table says M2 - verify at implementation).
 What changes at a high level: after `desync`, resend full log as `catchup` from 0, limit 1 per 10 s per seat. Load script runs N concurrent bot-filled rooms and reports tick lateness p50/p99, RSS and CPU per room.
 Done when: forced mismatch resyncs and converges; 20-room smoke shows loop lateness p99 < 25 ms and RSS < 200 MB, with CPU/room reported.
 

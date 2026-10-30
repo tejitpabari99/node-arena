@@ -12,3 +12,11 @@ export function shareLinks(origin: string, path: string, code: string): { play: 
   const base = `${origin}${path}?room=${encodeURIComponent(code.toUpperCase())}`;
   return { play: base, watch: `${base}&watch` };
 }
+
+/** Query string without the deep-link params (`room`, `watch`), keeping everything else. */
+export function stripRoomParams(search: string): string {
+  const q = new URLSearchParams(search);
+  q.delete('room'); q.delete('watch');
+  const rest = q.toString();
+  return rest ? `?${rest}` : '';
+}

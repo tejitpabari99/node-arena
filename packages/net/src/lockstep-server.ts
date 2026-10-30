@@ -2,11 +2,15 @@ import type { Command } from '@node-arena/defs';
 import { CommandLog, type AppendResult, type CommandLogOptions } from './log.js';
 import type { DesyncMsg, ErrorCode, SeatKind } from './messages.js';
 import { MAX_INT } from './validate.js';
+import { RateLimiter, type RateAdvice, type RateLimits } from './ratelimit.js';
 
 /** Default and allowed input delay in ticks (PRD 02 R4). */
 export const DEFAULT_INPUT_DELAY = 3;
 export const MIN_INPUT_DELAY = 1;
 export const MAX_INPUT_DELAY = 10;
+/** Log slots kept free for system `Forfeit` appends (>= 4 seats); callers size seat/bot budgets as `cmdCap - reserve`. */
+export const SYSTEM_CMD_RESERVE = 8;
+export type ForfeitCommand = Extract<Command, { type: 'Forfeit' }>;
 
 export interface LockstepServerOptions {
   /** Seat kind per player index. Only 'human' seats may submit; bot cmds arrive via `closeTick`. */
@@ -15,11 +19,14 @@ export interface LockstepServerOptions {
   /** Command `from`/`to` must be `< buildingCount`. */
   buildingCount: number;
   log: CommandLogOptions;
+  /** Injected clock (ms) for rate limiting; default is tick-derived (nextTick * 50), so it is deterministic and clock-free. */
+  now?: () => number;
+  rateLimits?: Partial<RateLimits>;
 }
 
-export type SubmitResult = { accepted: true; tick: number } | { accepted: false; rejected: ErrorCode };
+export type SubmitResult = { accepted: true; tick: number } | { accepted: false; rejected: ErrorCode; advice?: RateAdvice };
 export type DropReason = Extract<AppendResult, { ok: false }>['reason'];
-export type HashResult = { result: 'ok' } | { result: 'pending' } | { result: 'desync'; msg: DesyncMsg };
+export type HashResult = { result: 'ok' } | { result: 'pending' } | { result: 'rate-limited'; advice: RateAdvice } | { result: 'desync'; msg: DesyncMsg };
 
 /**
  * Pure, timer-free tick scheduler (PRD 02 R4/R5/R8/R10). The caller owns the clock: call `closeTick` once per
@@ -29,6 +36,8 @@ export class LockstepServer {
   readonly log: CommandLog;
   readonly inputDelay: number;
   readonly buildingCount: number;
+  /** Shared per-seat bucket set; SP07 pause/resume/quit/ping call `limiter.hit(seat, 'control'|'ping')`. */
+  readonly limiter: RateLimiter;
   private readonly seats: readonly SeatKind[];
   private readonly buffer = new Map<number, Command[]>();
   private pending = 0;
@@ -42,6 +51,7 @@ export class LockstepServer {
     this.buildingCount = opts.buildingCount;
     this.seats = opts.seats.slice();
     this.log = new CommandLog(opts.log);
+    this.limiter = new RateLimiter(opts.now ?? (() => this.next * 50), opts.rateLimits);
   }
 
   /** Next tick `closeTick` will produce (0 before the first). */
@@ -53,9 +63,12 @@ export class LockstepServer {
    */
   submit(player: number | null, cmd: unknown): SubmitResult {
     if (player === null || !Number.isInteger(player) || this.seats[player] !== 'human') return { accepted: false, rejected: 'not-your-seat' };
+    // Counted before validation: malformed / out-of-range cmds also burn budget.
+    const tick = this.next + this.inputDelay;
+    const v = this.limiter.hit(player, 'cmd', tick);
+    if (!v.ok) return { accepted: false, rejected: 'rate-limited', advice: v.advice };
     const c = this.validate(cmd);
     if (c === null) return { accepted: false, rejected: 'bad-message' };
-    const tick = this.next + this.inputDelay;
     // Bound memory: buffered + logged entries may never exceed the log's cmd cap; ticks past the log cap are refused.
     if (this.log.size + this.pending >= this.log.cmdCap || tick >= this.log.maxTick) return { accepted: false, rejected: 'rate-limited' };
     const full = { type: c.type, player, from: c.from, to: c.to } as Command;
@@ -67,12 +80,13 @@ export class LockstepServer {
   }
 
   /**
-   * Close tick `nextTick`: buffered human cmds (arrival order) then `botCmds` (already player-stamped, they land on
+   * Close tick `nextTick`: `systemCmds` (server-issued `Forfeit`s, sorted ascending by seat, applied first), buffered
+   * human cmds (arrival order) then `botCmds` (already player-stamped, they land on
    * this tick with no delay). Only cmds that were logged are returned, so the log, the referee and every client
    * always see the identical array. Advances `nextTick`. `dropped` counts cmds the log refused (`firstDrop` = first
    * reason); non-zero means the log is saturated and the caller (SP04) should abort the room.
    */
-  closeTick(botCmds: readonly Command[] = []): { n: number; cmds: Command[]; dropped: number; firstDrop?: DropReason } {
+  closeTick(botCmds: readonly Command[] = [], systemCmds: readonly ForfeitCommand[] = []): { n: number; cmds: Command[]; dropped: number; firstDrop?: DropReason } {
     const n = this.next;
     const humans = this.buffer.get(n) ?? [];
     this.buffer.delete(n);
@@ -80,7 +94,8 @@ export class LockstepServer {
     const cmds: Command[] = [];
     let dropped = 0;
     let firstDrop: DropReason | undefined;
-    for (const cmd of [...humans, ...botCmds]) {
+    const system = [...systemCmds].sort((a, b) => a.player - b.player);
+    for (const cmd of [...system, ...humans, ...botCmds]) {
       const r = this.log.append(n, cmd);
       if (r.ok) cmds.push(cmd);
       else { dropped++; if (firstDrop === undefined) firstDrop = r.reason; }
@@ -98,7 +113,8 @@ export class LockstepServer {
    * or ignore. Mismatch -> `{t:'desync', tick, serverHash}`.
    */
   onHash(player: number, tick: number, h: string): HashResult {
-    void player;
+    const v = this.limiter.hit(player, 'hash');
+    if (!v.ok) return { result: 'rate-limited', advice: v.advice };
     const server = this.log.checkpoint(tick);
     if (server === undefined) return { result: 'pending' };
     return server === h ? { result: 'ok' } : { result: 'desync', msg: { t: 'desync', tick, serverHash: server } };
