@@ -132,3 +132,12 @@ describe('Picker Play online', () => {
     (byId(v, 'pvp-play')!.props.onClick as () => void)(); expect(fn).toHaveBeenCalledOnce();
   });
 });
+
+describe('PvpLayer leave', () => {
+  it('eliminated seat and spectators leave directly; live seats confirm quit', async () => {
+    const { leaveNeedsConfirm } = await import('../../src/ui/pvp/PvpLayer');
+    expect(leaveNeedsConfirm(1, false)).toBe(true);
+    expect(leaveNeedsConfirm(1, true)).toBe(false);
+    expect(leaveNeedsConfirm(null, false)).toBe(false);
+  });
+});

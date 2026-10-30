@@ -169,3 +169,18 @@ describe('NetDriver spectator', () => {
     expect(spec.sent).toEqual([]);
   });
 });
+
+describe('NetDriver catch-up hashing', () => {
+  it('does not hash replayed ticks (< catch-up target); live ticks hash normally', () => {
+    const s = setup();
+    const target = HASH_INTERVAL * 5;
+    s.d.push({ t: 'catchup', from: 0, to: target, cmds: [], done: true } as never);
+    for (let i = target; i < target + HASH_INTERVAL; i++) s.tickMsg(i);
+    let guard = 0;
+    while (s.d.queued > 0 && guard++ < 10_000) s.d.advance();
+    expect(s.view.tick).toBe(target + HASH_INTERVAL);
+    const hashes = s.sent.filter((m) => m.t === 'hash') as { t: 'hash'; tick: number }[];
+    expect(hashes.length).toBeGreaterThan(0);
+    expect(hashes.every((h) => h.tick >= target)).toBe(true);
+  });
+});

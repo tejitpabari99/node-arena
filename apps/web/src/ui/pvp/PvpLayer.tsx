@@ -30,6 +30,8 @@ export function PvpLayer({pvp}:{pvp:PvpController}){
   return null;
 }
 export const TOAST_MS=5000;
+/** Leave asks for quit confirmation only for a seat still in the match; spectators and eliminated seats leave directly. */
+export const leaveNeedsConfirm=(seat:number|null,eliminated:boolean):boolean=>seat!==null&&!eliminated;
 function PvpPlaying({pvp}:{pvp:PvpController}){
   const [,bump]=useState(0),[menu,setMenu]=useState(false),[toast,setToast]=useState(false),[confirm,setConfirm]=useState(false);
   useLayoutEffect(()=>pvp.subscribeEvents(u=>{if(u.tick%5===0)bump(n=>n+1);}),[pvp]);
@@ -49,9 +51,10 @@ function PvpPlaying({pvp}:{pvp:PvpController}){
     return()=>{off();clearTimeout(t);};
   },[pvp]);
   const s=pvp.snapshot(),view=pvp.driver?.sim.view;
+  const eliminated=((view?.eliminatedAt as ArrayLike<number>|undefined)?.[s.seat??-1]??-1)>=0;
   return <>
     <ConnBanner conn={s.conn} onRetry={()=>pvp.retry()}/>
-    <PvpHud segments={view?ownership(view):[]} palettes={(pvp.manifest?.palettes??{}) as Record<string,string>} ticksLeft={(s.start?.timeLimitTicks??0)-(view?.tick??0)} seat={s.seat} menuOpen={menu&&!confirm} pause={buildPauseUi(s.pause,pvp.pauseRemaining(),s.seat,Object.fromEntries((s.start?.seats??[]).map(x=>[x.player,x.nick])),((view?.eliminatedAt as ArrayLike<number>|undefined)?.[s.seat??-1]??-1)>=0)} onPause={()=>pvp.pause()} onResume={()=>pvp.resume()} confirmQuit={confirm} onQuitYes={()=>{setConfirm(false);pvp.quit();}} onQuitNo={()=>setConfirm(false)} catchup={pvp.driver?.catchupProgress??null} onLeave={()=>{if(s.seat===null)pvp.leave();else{setMenu(false);setConfirm(true);}}} legend={s.start&&view?{seats:s.start.seats,colorKeys:(view.players??[]).map(p=>p.colorKey),eliminatedAt:view.eliminatedAt?Array.from(view.eliminatedAt as ArrayLike<number>):undefined,seatStatus:s.seatStatus}:undefined}/>
+    <PvpHud segments={view?ownership(view):[]} palettes={(pvp.manifest?.palettes??{}) as Record<string,string>} ticksLeft={(s.start?.timeLimitTicks??0)-(view?.tick??0)} seat={s.seat} menuOpen={menu&&!confirm} pause={buildPauseUi(s.pause,pvp.pauseRemaining(),s.seat,Object.fromEntries((s.start?.seats??[]).map(x=>[x.player,x.nick])),eliminated)} onPause={()=>pvp.pause()} onResume={()=>pvp.resume()} confirmQuit={confirm} onQuitYes={()=>{setConfirm(false);pvp.quit();}} onQuitNo={()=>setConfirm(false)} catchup={pvp.driver?.catchupProgress??null} onLeave={()=>{if(!leaveNeedsConfirm(s.seat,eliminated))pvp.leave();else{setMenu(false);setConfirm(true);}}} legend={s.start&&view?{seats:s.start.seats,colorKeys:(view.players??[]).map(p=>p.colorKey),eliminatedAt:view.eliminatedAt?Array.from(view.eliminatedAt as ArrayLike<number>):undefined,seatStatus:s.seatStatus}:undefined}/>
     {toast&&<Toast message={DESYNC_TOAST} testId="toast-desync"/>}
   </>;
 }

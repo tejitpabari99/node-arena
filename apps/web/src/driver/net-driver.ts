@@ -38,6 +38,8 @@ export class NetDriver implements MatchDriver {
   private awaitingDone = false;
   private latched = false;
   private frozen: number | null = null;
+  /** Exclusive end of the server's catch-up replay; ticks below it are never hashed (a burst would trip the server's hash limit). */
+  private catchupTarget = 0;
   private readonly raf: (cb: (t: number) => void) => number;
   private readonly caf: (id: number) => void;
 
@@ -77,7 +79,7 @@ export class NetDriver implements MatchDriver {
     if (this.disposed) return { ok: true };
     const r = this.o.client.push(msg);
     if (!r.ok) this.o.onPushError?.(r, msg);
-    else if (msg.t === 'catchup') this.awaitingDone = !msg.done;
+    else if (msg.t === 'catchup') { this.awaitingDone = !msg.done; this.catchupTarget = Math.max(this.catchupTarget, msg.to); }
     this.updateCatchup();
     return r;
   }
@@ -146,7 +148,7 @@ export class NetDriver implements MatchDriver {
     this.lastStepAt = this.o.now();
     this.stepMs = this.lastStepAt - t0;
     const hash: HashMsg | null = this.o.client.after(n, () => sim.hash());
-    if (hash && !this.o.spectator) this.o.send(hash);
+    if (hash && !this.o.spectator && n >= this.catchupTarget) this.o.send(hash);
     this.o.onTick?.({ tick: sim.view.tick, sim, submissions: [], events: ev });
   }
 
