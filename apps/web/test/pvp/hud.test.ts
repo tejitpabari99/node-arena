@@ -52,7 +52,7 @@ describe('PvpHud', () => {
 describe('Toast', () => {
   it('renders desync toast', () => {
     const v = Toast({ message: DESYNC_TOAST, testId: 'toast-desync' });
-    expect(v.props['data-testid']).toBe('toast-desync'); expect(text(v)).toBe('Out of sync with server');
+    expect(v.props['data-testid']).toBe('toast-desync'); expect(text(v)).toBe('Resyncing...');
   });
 });
 

@@ -100,7 +100,12 @@ export const RESULT_FALLBACK_MS = 3000;
 export const SIM_MISMATCH_STRING = 'Game content differs from the server. Reload to update.';
 
 /** Non-snapshot notifications for the UI layer. */
-export type PvpEvent = { t: 'desync'; tick: number; serverHash: string; localTick: number; localHash: string } | { t: 'sync-lost' };
+export type PvpEvent = { t: 'desync'; tick: number; serverHash: string; localTick: number; localHash: string } | { t: 'resync'; reason: ResyncReason } | { t: 'sync-lost' };
+export type ResyncReason = 'desync' | 'push-error';
+/** Auto-resyncs allowed per match before the terminal SYNC_LOST_STRING. */
+export const MAX_RESYNCS = 3;
+/** Delay before the single retry of a `rate-limited` resync (matches the server's 5 s catch-up token + margin). */
+export const RESYNC_RETRY_MS = 5500;
 export const SYNC_LOST_STRING = 'Out of sync. Leave and rejoin.';
 
 type Pending = { t: 'room.create' } | { t: 'room.join'; code: string; role: PvpRole };
@@ -120,7 +125,7 @@ export function createPvpController(options: PvpOptions) {
   let lastEpoch = -1, autoResumed = -1, pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
   const publish = (patch: Partial<PvpSnapshot> = {}) => { if (disposed) return; state = { ...state, ...patch }; listeners.forEach((fn) => fn()); };
   // Match resources, generation-scoped (mirrors AppController.startLevel).
-  let generation = 0, driver: NetDriver | null = null, runtime: LevelRuntime | undefined, matchManifest: ManifestV2 | undefined, fallbackTimer: unknown = null, syncLost = false, compiledCache: ReturnType<typeof loadContent> | undefined;
+  let generation = 0, driver: NetDriver | null = null, runtime: LevelRuntime | undefined, matchManifest: ManifestV2 | undefined, fallbackTimer: unknown = null, syncLost = false, resyncInFlight = false, resyncRetried = false, resyncCount = 0, resyncTimer: unknown = null, compiledCache: ReturnType<typeof loadContent> | undefined;
   const now = () => (options.now ?? (() => performance.now()))();
   const setTimer = options.setTimer ?? ((fn, ms) => setTimeout(fn, ms)), clearTimer = options.clearTimer ?? ((id) => clearTimeout(id as ReturnType<typeof setTimeout>));
   const clearMatch = () => {
@@ -128,6 +133,9 @@ export function createPvpController(options: PvpOptions) {
     lastEpoch = -1; autoResumed = -1;
     if (fallbackTimer !== null) clearTimer(fallbackTimer);
     fallbackTimer = null;
+    resyncInFlight = false; resyncRetried = false;
+    if (resyncTimer !== null) clearTimer(resyncTimer);
+    resyncTimer = null;
     const d = driver, r = runtime; driver = null; runtime = undefined; matchManifest = undefined;
     d?.dispose(); r?.dispose();
   };
@@ -162,6 +170,30 @@ export function createPvpController(options: PvpOptions) {
     syncLost = true;
     publish({ error: SYNC_LOST_STRING });
     pvpEvents.forEach((fn) => fn({ t: 'sync-lost' }));
+  };
+  /**
+   * Self-heal (SP08): ask the server to replay the match. One request in flight (cleared by the next `start`, which rebuilds
+   * sim/lockstep/driver/runtime); capped per match; anything else falls to the terminal "Leave and rejoin".
+   */
+  const requestResync = (reason: ResyncReason) => {
+    if (syncLost || resyncInFlight || !driver || (state.screen !== 'countdown' && state.screen !== 'playing')) return;
+    if (resyncCount >= MAX_RESYNCS) return markSyncLost(generation, `resync cap (${reason})`);
+    resyncCount++;
+    resyncInFlight = true; resyncRetried = false;
+    console.warn('[pvp] resync', reason, { n: resyncCount });
+    pvpEvents.forEach((fn) => fn({ t: 'resync', reason }));
+    dispatch({ t: 'resync' });
+  };
+  // Server refused the resync: retry `rate-limited` once after a delay, otherwise terminal.
+  const resyncRefused = (code: string) => {
+    const gen = generation;
+    if (code === 'rate-limited' && !resyncRetried) {
+      resyncRetried = true;
+      resyncTimer = setTimer(() => { resyncTimer = null; if (gen === generation && resyncInFlight && !syncLost) dispatch({ t: 'resync' }); }, RESYNC_RETRY_MS);
+      return;
+    }
+    resyncInFlight = false;
+    markSyncLost(gen, `resync refused (${code})`);
   };
   // Own disconnect hold, caught up to the frozen tick: release it once per epoch (manual holds need a click).
   const maybeAutoResume = () => {
@@ -205,11 +237,7 @@ export function createPvpController(options: PvpOptions) {
         onPushError: (result) => {
           if (gen !== generation) return;
           console.warn('[pvp] tick stream error', result);
-          // M1 has no server catch-up: the stream is dead after a gap. Tell the user (once per match).
-          if (syncLost) return;
-          syncLost = true;
-          publish({ error: SYNC_LOST_STRING });
-          pvpEvents.forEach((fn) => fn({ t: 'sync-lost' }));
+          requestResync('push-error');
         },
       };
       owned = (options.createDriver ?? ((o) => new NetDriver(o)))(dopts);
@@ -257,6 +285,7 @@ export function createPvpController(options: PvpOptions) {
       }
       case 'start':
         lastEpoch = -1; // epoch is per match; every start (rematch or reconnect) restarts it
+        if (state.start?.matchId !== m.matchId) resyncCount = 0; // cap is per match
         // Reconnect re-sends `start` + full catchup: recreate sim/lockstep/runtime and replay from tick 0 (D5).
         void startMatch(m, !!driver && state.start?.matchId === m.matchId);
         break;
@@ -264,6 +293,7 @@ export function createPvpController(options: PvpOptions) {
         driver?.push(m);
         break;
       case 'pause.state': {
+        if (!driver) break;
         if (m.epoch <= lastEpoch) break;
         lastEpoch = m.epoch;
         driver?.setFrozen(m.paused ? m.tick : null);
@@ -294,12 +324,14 @@ export function createPvpController(options: PvpOptions) {
         const localHash = driver?.sim.hash() ?? '', localTick = driver?.tick ?? -1;
         console.warn('[pvp] desync', { tick: m.tick, serverHash: m.serverHash, localTick, localHash });
         pvpEvents.forEach((fn) => fn({ t: 'desync', tick: m.tick, serverHash: m.serverHash, localTick, localHash }));
+        requestResync('desync');
         break;
       }
       case 'room.closed':
         reset(CLOSED_STRINGS[m.reason] ?? 'Room closed.');
         break;
       case 'error':
+        if (resyncInFlight && (m.code === 'rate-limited' || m.code === 'no-match') && driver) { resyncRefused(m.code); break; }
         if (state.screen === 'connecting') reset(errorString(m.code));
         else if (!syncLost || !driver) publish({ error: errorString(m.code) });
         break;

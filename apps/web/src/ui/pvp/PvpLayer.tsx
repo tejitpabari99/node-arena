@@ -47,7 +47,7 @@ function PvpPlaying({pvp}:{pvp:PvpController}){
   },[live?.paused,live?.epoch,live?.unlimited]);
   useEffect(()=>{
     let t:ReturnType<typeof setTimeout>|undefined;
-    const off=pvp.subscribePvpEvents(e=>{if(e.t!=='desync')return;setToast(true);clearTimeout(t);t=setTimeout(()=>setToast(false),TOAST_MS);});
+    const off=pvp.subscribePvpEvents(e=>{if(e.t!=='resync')return;setToast(true);clearTimeout(t);t=setTimeout(()=>setToast(false),TOAST_MS);});
     return()=>{off();clearTimeout(t);};
   },[pvp]);
   const s=pvp.snapshot(),view=pvp.driver?.sim.view;

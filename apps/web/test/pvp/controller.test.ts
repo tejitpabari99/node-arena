@@ -256,12 +256,12 @@ describe('PvpController match lifecycle', () => {
     (stale as unknown as { o: { onFrame: (u: unknown) => void } }).o.onFrame({});
     expect(g.rt.frame).toBe(before);
   });
-  it('tick gap surfaces sync-lost once (event + error)', async () => {
+  it('tick gap surfaces sync-lost once when the server refuses the resync (event + error)', async () => {
     const g = game(); g.c.push(startMsg()); await flush();
     const got: unknown[] = []; g.ctl.subscribePvpEvents((e) => got.push(e));
     const warn = console.warn; console.warn = () => {};
-    try { g.c.push(g.tickMsg(0)); g.c.push(g.tickMsg(5)); g.c.push(g.tickMsg(6)); } finally { console.warn = warn; }
-    expect(got).toEqual([{ t: 'sync-lost' }]);
+    try { g.c.push(g.tickMsg(0)); g.c.push(g.tickMsg(5)); g.c.push(g.tickMsg(6)); g.c.push({ t: 'error', code: 'no-match' }); g.c.push(g.tickMsg(7)); } finally { console.warn = warn; }
+    expect(got).toEqual([{ t: 'resync', reason: 'push-error' }, { t: 'sync-lost' }]);
     expect(g.ctl.snapshot().error).toBe('Out of sync. Leave and rejoin.');
   });
   it('re-sent start with same matchId recreates sim+driver+runtime (no leak); new matchId rebuilds', async () => {
@@ -288,6 +288,7 @@ describe('PvpController match lifecycle', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
       g.c.push(g.tickMsg(5));
+      g.c.push({ t: 'error', code: 'no-match' } as ServerMessage);
       g.c.push({ t: 'error', code: 'bad-lobby', detail: 'already in a room' } as ServerMessage);
       g.c.push(g.tickMsg(6));
     } finally { warn.mockRestore(); }
@@ -347,7 +348,7 @@ describe('PvpController match lifecycle', () => {
     const g = game(); g.c.push(startMsg()); await flush();
     if (playing) { g.c.push(g.tickMsg(0)); g.ctl.driver!.advance(); }
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try { g.c.push(g.tickMsg(5)); } finally { warn.mockRestore(); }
+    try { g.c.push(g.tickMsg(5)); g.c.push({ t: 'error', code: 'no-match' }); } finally { warn.mockRestore(); }
     g.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
     const node = PvpLayer({ pvp: g.ctl });
     expect(find(node, n => n.props['data-testid'] === 'toast-sync-lost')[0]?.props.children).toBe('Out of sync. Leave and rejoin.');
@@ -373,7 +374,7 @@ describe('PvpController match lifecycle', () => {
     const got: unknown[] = []; g.ctl.subscribePvpEvents((e) => got.push(e));
     const orig = console.warn; let warned = 0; console.warn = () => { warned++; };
     try { g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }); } finally { console.warn = orig; }
-    expect(got).toEqual([{ t: 'desync', tick: 10, serverHash: 'abc', localTick: 0, localHash: 'h0' }]); expect(warned).toBe(1);
+    expect(got).toEqual([{ t: 'desync', tick: 10, serverHash: 'abc', localTick: 0, localHash: 'h0' }, { t: 'resync', reason: 'desync' }]); expect(warned).toBe(2);
   });
   it('seat.status stored; simHash mismatch leaves; room.closed/leave dispose', async () => {
     const g = game(); g.c.push(startMsg()); await flush();
@@ -386,6 +387,69 @@ describe('PvpController match lifecycle', () => {
     const m = game(); m.c.push(startMsg({ simHash: 'ffffffffffffffff' })); await flush();
     expect(m.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'Game content differs from the server. Reload to update.' });
     expect(m.sent.at(-1)).toEqual({ t: 'room.leave' }); expect(m.simArgs).toEqual([]);
+  });
+  describe('SP08 auto-resync', () => {
+    const quiet = <T,>(fn: () => T): T => { const w = vi.spyOn(console, 'warn').mockImplementation(() => {}); try { return fn(); } finally { w.mockRestore(); } };
+    const resyncs = (g: { sent: ClientMessage[] }) => g.sent.filter((m) => m.t === 'resync').length;
+    const playing = async () => { const g = game(); g.c.push(startMsg()); await flush(); g.c.push(g.tickMsg(0)); g.ctl.driver!.advance(); return g; };
+    it('one resync per burst of triggers (desync + gap + duplicate); rebuild on start clears in-flight', async () => {
+      const g = await playing(); const d = g.ctl.driver;
+      quiet(() => { g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }); g.c.push(g.tickMsg(9)); g.c.push(g.tickMsg(9)); g.c.push({ t: 'desync', tick: 20, serverHash: 'abd' }); });
+      expect(resyncs(g)).toBe(1);
+      expect(g.ctl.snapshot().error).toBeNull();
+      g.c.push(startMsg()); await flush();
+      expect(g.ctl.driver).not.toBe(d); // sim/lockstep/driver/runtime rebuilt
+      expect(g.rt.disposed).toBe(1);
+      quiet(() => g.c.push({ t: 'desync', tick: 30, serverHash: 'abe' }));
+      expect(resyncs(g)).toBe(2); // in-flight was cleared by start
+    });
+    it('push error alone triggers a resync and emits the Resyncing event', async () => {
+      const g = await playing(); const got: unknown[] = []; g.ctl.subscribePvpEvents((e) => got.push(e));
+      quiet(() => g.c.push(g.tickMsg(7)));
+      expect(resyncs(g)).toBe(1); expect(got).toEqual([{ t: 'resync', reason: 'push-error' }]);
+    });
+    it('rate-limited answer retries once after 5.5 s then goes terminal', async () => {
+      const g = await playing();
+      quiet(() => g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }));
+      g.c.push({ t: 'error', code: 'rate-limited' });
+      expect(g.ctl.snapshot().error).toBeNull();
+      const t = g.timers.at(-1)!; expect(t).toMatchObject({ ms: 5500, live: true });
+      t.fn(); expect(resyncs(g)).toBe(2);
+      g.c.push({ t: 'error', code: 'rate-limited' }); // retry refused too
+      expect(g.ctl.snapshot().error).toBe('Out of sync. Leave and rejoin.');
+      expect(resyncs(g)).toBe(2);
+    });
+    it('retried resync that succeeds (start) leaves no terminal state', async () => {
+      const g = await playing();
+      quiet(() => g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }));
+      g.c.push({ t: 'error', code: 'rate-limited' });
+      g.timers.at(-1)!.fn();
+      g.c.push(startMsg()); await flush();
+      expect(g.ctl.snapshot().error).toBeNull();
+    });
+    it('no-match answer is terminal immediately', async () => {
+      const g = await playing();
+      quiet(() => g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }));
+      g.c.push({ t: 'error', code: 'no-match' });
+      expect(g.ctl.snapshot().error).toBe('Out of sync. Leave and rejoin.');
+    });
+    it('fourth trigger in a match is terminal; a new matchId resets the cap', async () => {
+      const g = await playing();
+      for (let i = 0; i < 3; i++) { quiet(() => g.c.push({ t: 'desync', tick: 10 + i, serverHash: 'abc' })); g.c.push(startMsg()); await flush(); }
+      expect(resyncs(g)).toBe(3); expect(g.ctl.snapshot().error).toBeNull();
+      quiet(() => g.c.push({ t: 'desync', tick: 99, serverHash: 'abc' }));
+      expect(resyncs(g)).toBe(3);
+      expect(g.ctl.snapshot().error).toBe('Out of sync. Leave and rejoin.');
+      g.c.push(startMsg({ matchId: 'm2' })); await flush();
+      expect(g.ctl.snapshot().error).toBeNull();
+      quiet(() => g.c.push({ t: 'desync', tick: 5, serverHash: 'abc' }));
+      expect(resyncs(g)).toBe(4);
+    });
+    it('pause.state is ignored without a driver', async () => {
+      const h = setup(); h.ctl.open(); h.ctl.create(); h.c.push(welcome);
+      h.c.push({ t: 'pause.state', epoch: 1, paused: true, tick: 5, holds: [], budgets: [], graceMs: [] } as never);
+      expect(h.ctl.snapshot().pause).toBeNull();
+    });
   });
 });
 
