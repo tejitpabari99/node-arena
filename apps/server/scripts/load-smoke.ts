@@ -1,6 +1,6 @@
 /**
  * Load smoke (SP10): N bot-filled rooms against the real server loop. Report-only unless --strict.
- * Usage: pnpm load:smoke [-- --rooms 20 --seconds 60 --level <id> --json <path> --url <wss://host> --origin <o> --strict]
+ * Usage: pnpm load:smoke [-- --rooms 20 --seconds 60 --level <id> --json <path> --url <wss://host> --origin <o> --spectators K --churn [--churn-every s] --strict]
 
  * Fidelity: thin ws clients (no sim, no hash/cmd); bots run server-side as in production.
  */
@@ -17,6 +17,9 @@ import { startServer, type RunningServer } from '../src/main.js';
 /** Per-IP limits (limits.ts): 5 creates/min => ramp 1 room per 13 s, max 5 from one IP. */
 export const URL_RAMP_MS = 13_000;
 export const URL_MAX_ROOMS = 5;
+/** URL mode: attaches spaced > 60 s / 20 catch-ups per IP and well under 30 new conns/min. */
+export const URL_SPEC_GAP_MS = 3200;
+export const URL_MAX_SPECTATORS = 20;
 export const TARGET_P99_MS = 25;
 export const TARGET_RSS_MB = 200;
 export const LEVELS = ['na-pvp-duel-s', 'na-pvp-duel-m', 'na-pvp-cross'] as const;
@@ -34,6 +37,11 @@ export interface Opts {
   url?: string | undefined;
   /** Origin header for URL mode (when the server enforces ALLOWED_ORIGINS). */
   origin?: string | undefined;
+  /** K spectators per room attached at the window midpoint (catch-up cost). */
+  spectators?: number | undefined;
+  /** End and restart one room every `churnEverySec` (round-robin) to expose leaks. */
+  churn?: boolean | undefined;
+  churnEverySec?: number | undefined;
   /** Override the p99 lateness target (ms); default 25. */
   p99Ms?: number | undefined;
   /** Quiet progress output (tests). */
@@ -50,7 +58,7 @@ export interface Verdict { name: string; pass: boolean; detail: string }
 export interface Report {
   config: Record<string, unknown>;
   samples: Sample[];
-  summary: Record<string, number | string | null>;
+  summary: Record<string, unknown>;
   verdicts: Verdict[];
   events: string[];
 }
@@ -71,11 +79,18 @@ interface Env {
   runId: string;
 }
 
-class Stats { frames = 0; closed: string[] = []; errors: string[] = []; rematches = 0; started = 0 }
+class Stats {
+  frames = 0; closed: string[] = []; errors: string[] = []; rematches = 0; started = 0; churned = 0;
+  specLatencyMs: number[] = []; specBytes: number[] = []; specErrors: string[] = [];
+}
 
 /** Thin ws client: host of one bot-filled room. */
 class BotRoomClient {
-  phase: 'connecting' | 'setup' | 'starting' | 'running' | 'ended' | 'dead' = 'connecting';
+  phase: 'connecting' | 'setup' | 'starting' | 'running' | 'ended' | 'closing' | 'dead' = 'connecting';
+  /** Set when the harness forced this room's match to end (churn): restart on `end` instead of rematch. */
+  churning = false;
+  /** Teardown started: errors from racing leaves are expected and ignored. */
+  private tearing = false;
   code = '';
   private ws: WebSocket | undefined;
   private ping: NodeJS.Timeout | undefined;
@@ -84,6 +99,7 @@ class BotRoomClient {
   constructor(readonly idx: number, private readonly env: Env, private readonly stats: Stats, level: string) { this.level = level; }
 
   get isRunning(): boolean { return this.phase === 'running'; }
+  get canChurn(): boolean { return this.phase === 'running' && !this.churning && this.level !== 'na-pvp-cross'; }
 
   connect(): void {
     const headers: Record<string, string> = {};
@@ -127,14 +143,61 @@ class BotRoomClient {
         break;
       }
       case 'tick': case 'ticks': if (this.phase === 'starting') { this.phase = 'running'; this.stats.started++; } break;
-      case 'end': this.phase = 'ended'; this.stats.rematches++; this.send({ t: 'rematch' }); break;
+      case 'end':
+        if (this.phase === 'closing') { this.send({ t: 'room.leave' }); setTimeout(() => this.close(), 100); break; }
+        this.phase = 'setup';
+        if (this.churning) { this.churning = false; this.stats.churned++; this.send({ t: 'room.leave' }); this.send({ t: 'room.create' }); }
+        else { this.stats.rematches++; this.phase = 'ended'; this.send({ t: 'rematch' }); }
+        break;
       case 'room.closed': this.stats.closed.push(`room#${this.idx}: ${m.reason}`); this.phase = 'dead'; break;
-      case 'error': this.stats.errors.push(`room#${this.idx}: ${m.code}${m.detail ? ` (${m.detail})` : ''}`); break;
+      case 'error': if (!this.tearing) this.stats.errors.push(`room#${this.idx}[${this.phase}]: ${m.code}${m.detail ? ` (${m.detail})` : ''}`); break;
       default: break;
     }
   }
 
+  /** Churn: force the match to end (host quits); restarts on `end`. Skips 4-seat Cross: a host quit there leaves bots playing on (no `end`), so the room cannot be recycled. */
+  churn(): void { if (this.phase === 'running' && !this.churning && this.level !== 'na-pvp-cross') { this.churning = true; this.send({ t: 'quit' }); } }
+  /** Graceful teardown: quit -> end -> leave (room closes) -> disconnect. */
+  closeRoom(): void {
+    this.tearing = true;
+    if (this.phase === 'running') { this.phase = 'closing'; if (!this.churning) this.send({ t: 'quit' }); this.churning = false; }
+    else if (this.phase !== 'dead') { this.send({ t: 'room.leave' }); setTimeout(() => this.close(), 150); }
+  }
   close(): void { clearInterval(this.ping); this.phase = 'dead'; this.ws?.close(); }
+}
+
+/** Spectator: joins a live room, measures time to the end of the catch-up replay. */
+class SpectatorClient {
+  private ws: WebSocket | undefined;
+  private t0 = 0;
+  private bytes = 0;
+  private done = false;
+  constructor(private readonly idx: number, private readonly code: string, private readonly env: Env, private readonly stats: Stats) {}
+  connect(): void {
+    const headers: Record<string, string> = {};
+    if (this.env.spoofIp) headers['Fly-Client-IP'] = nextIp();
+    if (this.env.origin !== undefined) headers.Origin = this.env.origin;
+    const ws = new WebSocket(this.env.wsUrl, { headers });
+    this.ws = ws;
+    ws.on('open', () => {
+      this.t0 = performance.now();
+      ws.send(JSON.stringify({
+        t: 'hello', pv: PROTOCOL_VERSION, versions: this.env.versions, nick: `Spec${this.idx}`,
+        token: this.env.runId + (0x1000000 + this.idx).toString(16).padStart(16, '0'),
+      } satisfies ClientMessage));
+    });
+    ws.on('message', (d) => {
+      const raw = String(d);
+      const m = JSON.parse(raw) as ServerMessage;
+      this.stats.frames++;
+      if (m.t === 'welcome') ws.send(JSON.stringify({ t: 'room.join', code: this.code, role: 'watch' } satisfies ClientMessage));
+      else if (m.t === 'catchup') { this.bytes += raw.length; if (m.done && !this.done) this.finish(); }
+      else if (m.t === 'error') this.stats.specErrors.push(`spec#${this.idx}: ${m.code}`);
+    });
+    ws.on('error', (e) => { this.stats.specErrors.push(`spec#${this.idx}: ${e.message}`); });
+  }
+  private finish(): void { this.done = true; this.stats.specLatencyMs.push(performance.now() - this.t0); this.stats.specBytes.push(this.bytes); }
+  close(): void { this.ws?.close(); }
 }
 
 interface Health {
@@ -200,8 +263,37 @@ export async function runLoad(opts: Opts): Promise<Report> {
     let prevFrames = stats.frames;
     const t0 = performance.now();
     let peakEld = 0;
+    const K = opts.spectators ?? 0;
+    const specCount = urlMode ? Math.min(K * n, URL_MAX_SPECTATORS) : K * n;
+    if (K > 0) events.push(`spectators: ${K}/room requested${specCount < K * n ? `, capped to ${specCount} total by per-IP limits (30 conns/min, 20 catch-ups/min)` : ''}, attached at midpoint`);
+    const churnMs = Math.max(1, opts.churnEverySec ?? 10) * 1000;
+    const churnGap = urlMode ? Math.max(churnMs, URL_RAMP_MS) : churnMs;
+    if (opts.churn === true) events.push(`churn: one room ended and restarted every ${churnGap / 1000} s (round-robin)`);
+    let specStarted = false;
+    let nextChurn = t0 + churnGap;
+    let churnIdx = 0;
+    const specs: SpectatorClient[] = [];
     while (performance.now() - t0 < opts.seconds * 1000) {
       await sleep(Math.min(SAMPLE_MS, Math.max(50, opts.seconds * 1000 - (performance.now() - t0))));
+      if (K > 0 && !specStarted && performance.now() - t0 >= (opts.seconds * 1000) / 2) {
+        specStarted = true;
+        void (async () => {
+          let made = 0;
+          for (let k = 0; k < K && made < specCount; k++) {
+            for (const c of clients) {
+              if (made >= specCount || c.code === '') continue;
+              const sp = new SpectatorClient(made++, c.code, env, stats);
+              specs.push(sp);
+              sp.connect();
+              await sleep(urlMode ? URL_SPEC_GAP_MS : 50);
+            }
+          }
+        })();
+      }
+      if (opts.churn === true && performance.now() >= nextChurn) {
+        nextChurn += churnGap;
+        for (let tries = 0; tries < n; tries++) { const c = clients[churnIdx++ % n]!; if (c.canChurn) { c.churn(); break; } }
+      }
       const h = await health(httpUrl);
       const t = performance.now();
       const dt = (t - prevT) / 1000;
@@ -219,6 +311,25 @@ export async function runLoad(opts: Opts): Promise<Report> {
     const peak = (f: (s: Sample) => number): number => samples.reduce((m, s) => Math.max(m, f(s)), 0);
     const mean = (f: (s: Sample) => number): number => (samples.length === 0 ? 0 : samples.reduce((a, s) => a + f(s), 0) / samples.length);
     const minRunning = samples.reduce((m, s) => Math.min(m, s.running), Number.POSITIVE_INFINITY);
+    // Teardown: spectators leave, hosts quit -> end -> leave so rooms close; then (in-process) forced-GC RSS vs baseline.
+    for (const sp of specs) sp.close();
+    for (const c of clients) c.closeRoom();
+    for (let i = 0; i < 100 && clients.some((c) => c.phase !== 'dead'); i++) await sleep(100);
+    await sleep(500);
+    const gcFn = (globalThis as { gc?: () => void }).gc;
+    if (!urlMode && gcFn !== undefined) { gcFn(); await sleep(200); gcFn(); }
+    const hEnd = await health(httpUrl);
+    const leak = {
+      rssMbBaseline: mb(h0.rss), rssMbAfter: mb(hEnd.rss), rssMbDelta: r2(mb(hEnd.rss) - mb(h0.rss)),
+      forcedGc: !urlMode && gcFn !== undefined, roomsAfter: hEnd.rooms,
+    };
+    events.push(leak.forcedGc ? 'leak: rooms closed, forced GC (--expose-gc), RSS after vs baseline (informational)' : 'leak: rooms closed, no forced GC (' + (urlMode ? 'url mode' : 'run with --expose-gc') + '); RSS delta is informational');
+    const lat = [...stats.specLatencyMs];
+    const spectators = K > 0 ? {
+      perRoom: K, attached: specs.length, catchupDone: lat.length, errors: stats.specErrors.length,
+      catchupMsP50: r2(pct(lat, 0.5)), catchupMsP99: r2(pct(lat, 0.99)), catchupMsMax: r2(Math.max(0, ...lat)),
+      catchupKbMean: r2(stats.specBytes.length === 0 ? 0 : stats.specBytes.reduce((a, b) => a + b, 0) / stats.specBytes.length / 1024),
+    } : null;
     const summary = {
       lateP50MsMax: r2(peak((s) => s.lateP50Ms)), lateP99MsMax: r2(peak((s) => s.lateP99Ms)),
       lateP99MsFinal: r2(samples.at(-1)?.lateP99Ms ?? 0), eldP99MsMax: r2(peakEld),
@@ -226,16 +337,17 @@ export async function runLoad(opts: Opts): Promise<Report> {
       cpuPctMean: r2(mean((s) => s.cpuPct)), cpuPctPeak: r2(peak((s) => s.cpuPct)), cpuPerRoomPctMean: r2(mean((s) => s.cpuPerRoomPct)),
       framesPerSecMean: r2(mean((s) => s.framesPerSec)), minRunning: Number.isFinite(minRunning) ? minRunning : 0,
       rematches: stats.rematches, roomClosed: stats.closed.length, errors: stats.errors.length,
+      churned: stats.churned, spectators, leak,
     };
     const verdicts: Verdict[] = [
       { name: `p99 lateness < ${p99Target} ms`, pass: summary.lateP99MsFinal < p99Target, detail: `final window ${summary.lateP99MsFinal} ms, max over samples ${summary.lateP99MsMax} ms (window = last 400 wakes, may include ramp)` },
       { name: `peak RSS < ${TARGET_RSS_MB} MB`, pass: summary.rssMbPeak < TARGET_RSS_MB, detail: urlMode ? `server peak ${summary.rssMbPeak} MB (start ${summary.rssMbStart}, +${summary.rssMbDeltaPeak})` : `peak ${summary.rssMbPeak} MB (harness+server, upper bound)` },
-      { name: `all ${n} rooms stayed running`, pass: runningAtStart === n && summary.minRunning >= n, detail: `started ${runningAtStart}, min running ${summary.minRunning}` },
-      { name: 'no unexpected room.closed/error', pass: stats.closed.length === 0 && stats.errors.length === 0, detail: [...stats.closed, ...stats.errors].slice(0, 5).join('; ') || 'none' },
+      { name: `all ${n} rooms stayed running`, pass: runningAtStart === n && summary.minRunning >= (opts.churn === true ? n - 2 : n), detail: `started ${runningAtStart}, min running ${summary.minRunning}${opts.churn === true ? ' (churn: up to 2 restarting rooms tolerated)' : ''}` },
+      { name: 'no unexpected room.closed/error', pass: stats.closed.length === 0 && stats.errors.length === 0 && stats.specErrors.length === 0, detail: [...stats.closed, ...stats.errors, ...stats.specErrors].slice(0, 5).join('; ') || 'none' },
     ];
     const report: Report = {
       config: {
-        rooms: n, roomsRequested: opts.rooms, seconds: opts.seconds, mode: urlMode ? 'url' : 'in-process', url: opts.url ?? null, level: opts.level ?? 'cycle:' + LEVELS.join(','),
+        spectatorsPerRoom: K, churn: opts.churn === true, rooms: n, roomsRequested: opts.rooms, seconds: opts.seconds, mode: urlMode ? 'url' : 'in-process', url: opts.url ?? null, level: opts.level ?? 'cycle:' + LEVELS.join(','),
         botDifficultyMix: 'seat j of room i = [easy,normal,hard][(i+j)%3]', targets: { p99Ms: p99Target, rssMb: TARGET_RSS_MB },
         fidelity: 'thin ws clients, no sim, no hash/cmd; bots server-side; harness shares the process',
         node: process.version, time: new Date().toISOString(),
@@ -257,7 +369,7 @@ export function printReport(r: Report): void {
   for (const s of r.samples) {
     out.push([s.tSec, s.running, s.lateP50Ms, s.lateP99Ms, s.rssMb, s.cpuPct, s.cpuPerRoomPct, s.framesPerSec, s.eldP99Ms].map((v) => String(v).padEnd(10)).join(''));
   }
-  out.push('', `summary: ${JSON.stringify(r.summary)}`, '');
+  out.push('', ...r.events.map((e) => `note: ${e}`), '', `summary: ${JSON.stringify(r.summary)}`, '');
   for (const v of r.verdicts) out.push(`${v.pass ? 'PASS' : 'FAIL'}  ${v.name}  (${v.detail})`);
   process.stdout.write(`${out.join('\n')}\n`);
 }
@@ -274,6 +386,9 @@ function parseArgs(argv: string[]): Opts {
     else if (a === '--json') o.json = val();
     else if (a === '--url') o.url = val();
     else if (a === '--origin') o.origin = val();
+    else if (a === '--spectators') o.spectators = Number(val());
+    else if (a === '--churn') o.churn = true;
+    else if (a === '--churn-every') o.churnEverySec = Number(val());
     else if (a === '--strict') o.strict = true;
     else if (a === '--p99-ms') o.p99Ms = Number(val());
     else throw new Error(`unknown flag ${a}`);
