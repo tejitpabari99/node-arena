@@ -1,6 +1,7 @@
 /**
  * Load smoke (SP10): N bot-filled rooms against the real server loop. Report-only unless --strict.
- * Usage: pnpm load:smoke [-- --rooms 20 --seconds 60 --level <id> --json <path> --strict]
+ * Usage: pnpm load:smoke [-- --rooms 20 --seconds 60 --level <id> --json <path> --url <wss://host> --origin <o> --strict]
+
  * Fidelity: thin ws clients (no sim, no hash/cmd); bots run server-side as in production.
  */
 import { monitorEventLoopDelay } from 'node:perf_hooks';
@@ -13,6 +14,9 @@ import { parseConfig } from '../src/config.js';
 import { createLogger } from '../src/log.js';
 import { startServer, type RunningServer } from '../src/main.js';
 
+/** Per-IP limits (limits.ts): 5 creates/min => ramp 1 room per 13 s, max 5 from one IP. */
+export const URL_RAMP_MS = 13_000;
+export const URL_MAX_ROOMS = 5;
 export const TARGET_P99_MS = 25;
 export const TARGET_RSS_MB = 200;
 export const LEVELS = ['na-pvp-duel-s', 'na-pvp-duel-m', 'na-pvp-cross'] as const;
@@ -26,6 +30,10 @@ export interface Opts {
   level?: string | undefined;
   json?: string | undefined;
   strict: boolean;
+  /** wss://host or ws://host: drive an already-running server (skips in-process boot). */
+  url?: string | undefined;
+  /** Origin header for URL mode (when the server enforces ALLOWED_ORIGINS). */
+  origin?: string | undefined;
   /** Override the p99 lateness target (ms); default 25. */
   p99Ms?: number | undefined;
   /** Quiet progress output (tests). */
@@ -148,13 +156,15 @@ const pct = (xs: number[], p: number): number => {
 export async function runLoad(opts: Opts): Promise<Report> {
   const log = (s: string): void => { if (opts.quiet !== true) process.stdout.write(`${s}\n`); };
   const events: string[] = [];
-  const n = opts.rooms;
+  const urlMode = opts.url !== undefined;
+  const n = urlMode ? Math.min(opts.rooms, URL_MAX_ROOMS) : opts.rooms;
   const p99Target = opts.p99Ms ?? TARGET_P99_MS;
-  const srv: RunningServer = await startServer(
+  const srv: RunningServer | undefined = urlMode ? undefined : await startServer(
     parseConfig({ PORT: '0', HOST: '127.0.0.1', ALLOW_NO_ORIGIN: '1', MAX_ROOMS: String(n + 5), MAX_CONNS: String(n + 20) }),
     { log: createLogger({ level: 'error' }) },
   );
-  const httpUrl = `http://127.0.0.1:${srv.port}`;
+  const wsUrl = opts.url !== undefined ? opts.url.replace(/\/+$/, '') : `ws://127.0.0.1:${srv!.port}`;
+  const httpUrl = wsUrl.replace(/^ws/, 'http');
   const stats = new Stats();
   const eld = monitorEventLoopDelay({ resolution: 10 });
   const clients: BotRoomClient[] = [];
@@ -162,18 +172,22 @@ export async function runLoad(opts: Opts): Promise<Report> {
   try {
     const h0 = await health(httpUrl);
     const { protocol: _p, ...versions } = h0.versions;
-    const env: Env = { wsUrl: `ws://127.0.0.1:${srv.port}`, versions, spoofIp: true, runId: randomBytes(8).toString('hex') };
+    const env: Env = { wsUrl, versions, spoofIp: !urlMode, origin: opts.origin, runId: randomBytes(8).toString('hex') };
     const levelFor = (i: number): string => opts.level ?? LEVELS[i % LEVELS.length]!;
     eld.enable();
-    log(`load-smoke: ${n} rooms, ${opts.seconds}s steady, mode=in-process (harness+server share one process: numbers are an upper bound for the server)`);
+    const modeNote = urlMode
+      ? `mode=url ${wsUrl}${opts.rooms > n ? ` (rooms capped ${opts.rooms} -> ${n} by per-IP limits: 5 creates/min, ramp 1 room/${URL_RAMP_MS / 1000} s)` : ''}; server RSS/CPU/lateness from /healthz deltas`
+      : 'mode=in-process (harness+server share one process: RSS/CPU are an upper bound for the server)';
+    events.push(modeNote);
+    log(`load-smoke: ${n} rooms, ${opts.seconds}s steady, ${modeNote}`);
     for (let i = 0; i < n; i++) {
       const c = new BotRoomClient(i, env, stats, levelFor(i));
       clients.push(c);
       c.connect();
-      await sleep(40);
+      await sleep(urlMode ? URL_RAMP_MS : 40);
     }
     const rampStart = Date.now();
-    const rampTimeout = opts.rampTimeoutMs ?? 30_000;
+    const rampTimeout = opts.rampTimeoutMs ?? (urlMode ? 60_000 : 30_000);
     while (clients.some((c) => !c.isRunning) && Date.now() - rampStart < rampTimeout) await sleep(100);
     const runningAtStart = clients.filter((c) => c.isRunning).length;
     events.push(`ramp: ${runningAtStart}/${n} running after ${Date.now() - rampStart} ms`);
@@ -208,23 +222,23 @@ export async function runLoad(opts: Opts): Promise<Report> {
     const summary = {
       lateP50MsMax: r2(peak((s) => s.lateP50Ms)), lateP99MsMax: r2(peak((s) => s.lateP99Ms)),
       lateP99MsFinal: r2(samples.at(-1)?.lateP99Ms ?? 0), eldP99MsMax: r2(peakEld),
-      rssMbPeak: peak((s) => s.rssMb), rssMbFinal: samples.at(-1)?.rssMb ?? 0, harnessHeapMbPeak: peak((s) => s.harnessHeapMb),
+      rssMbStart: mb(h0.rss), rssMbPeak: peak((s) => s.rssMb), rssMbDeltaPeak: r2(peak((s) => s.rssMb) - mb(h0.rss)), rssMbFinal: samples.at(-1)?.rssMb ?? 0, harnessHeapMbPeak: peak((s) => s.harnessHeapMb),
       cpuPctMean: r2(mean((s) => s.cpuPct)), cpuPctPeak: r2(peak((s) => s.cpuPct)), cpuPerRoomPctMean: r2(mean((s) => s.cpuPerRoomPct)),
       framesPerSecMean: r2(mean((s) => s.framesPerSec)), minRunning: Number.isFinite(minRunning) ? minRunning : 0,
       rematches: stats.rematches, roomClosed: stats.closed.length, errors: stats.errors.length,
     };
     const verdicts: Verdict[] = [
       { name: `p99 lateness < ${p99Target} ms`, pass: summary.lateP99MsFinal < p99Target, detail: `final window ${summary.lateP99MsFinal} ms, max over samples ${summary.lateP99MsMax} ms (window = last 400 wakes, may include ramp)` },
-      { name: `peak RSS < ${TARGET_RSS_MB} MB`, pass: summary.rssMbPeak < TARGET_RSS_MB, detail: `peak ${summary.rssMbPeak} MB (harness+server)` },
+      { name: `peak RSS < ${TARGET_RSS_MB} MB`, pass: summary.rssMbPeak < TARGET_RSS_MB, detail: urlMode ? `server peak ${summary.rssMbPeak} MB (start ${summary.rssMbStart}, +${summary.rssMbDeltaPeak})` : `peak ${summary.rssMbPeak} MB (harness+server, upper bound)` },
       { name: `all ${n} rooms stayed running`, pass: runningAtStart === n && summary.minRunning >= n, detail: `started ${runningAtStart}, min running ${summary.minRunning}` },
       { name: 'no unexpected room.closed/error', pass: stats.closed.length === 0 && stats.errors.length === 0, detail: [...stats.closed, ...stats.errors].slice(0, 5).join('; ') || 'none' },
     ];
     const report: Report = {
       config: {
-        rooms: n, seconds: opts.seconds, mode: 'in-process', level: opts.level ?? 'cycle:' + LEVELS.join(','),
+        rooms: n, roomsRequested: opts.rooms, seconds: opts.seconds, mode: urlMode ? 'url' : 'in-process', url: opts.url ?? null, level: opts.level ?? 'cycle:' + LEVELS.join(','),
         botDifficultyMix: 'seat j of room i = [easy,normal,hard][(i+j)%3]', targets: { p99Ms: p99Target, rssMb: TARGET_RSS_MB },
         fidelity: 'thin ws clients, no sim, no hash/cmd; bots server-side; harness shares the process',
-        node: process.version, cpus: 1, time: new Date().toISOString(),
+        node: process.version, time: new Date().toISOString(),
       },
       samples, summary, verdicts, events,
     };
@@ -232,7 +246,7 @@ export async function runLoad(opts: Opts): Promise<Report> {
   } finally {
     eld.disable();
     for (const c of clients) c.close();
-    await srv.close();
+    await srv?.close();
   }
 }
 
@@ -258,6 +272,8 @@ function parseArgs(argv: string[]): Opts {
     else if (a === '--seconds') o.seconds = Number(val());
     else if (a === '--level') o.level = val();
     else if (a === '--json') o.json = val();
+    else if (a === '--url') o.url = val();
+    else if (a === '--origin') o.origin = val();
     else if (a === '--strict') o.strict = true;
     else if (a === '--p99-ms') o.p99Ms = Number(val());
     else throw new Error(`unknown flag ${a}`);
