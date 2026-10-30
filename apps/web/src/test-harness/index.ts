@@ -29,6 +29,7 @@ export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
       const active=()=>pvp&&pvp.snapshot().screen!=='idle'&&pvp.driver?pvp.driver:app.driver;
       const hashes:Record<number,string>={};let hashed:object|null=null;
       const offHash=pvp?.subscribeEvents(u=>{const d=pvp.driver;if(d!==hashed){hashed=d;for(const k of Object.keys(hashes))delete hashes[Number(k)];}if(u.tick%50===0)hashes[u.tick]=u.sim.hash();});
+      const pvpLog:{t:string}[]=[];const offPvpLog=pvp?.subscribePvpEvents(e=>{pvpLog.push({t:e.t});});
       const pvpApi=pvp&&{
         state:()=>pvp.snapshot(),
         actions:{open:()=>pvp.open(),setNick:(n:string)=>pvp.setNick(n),create:()=>pvp.create(),join:(c:string)=>pvp.join(c),watch:(c:string)=>pvp.watch(c),start:()=>pvp.start(),ready:()=>pvp.ready(),leave:()=>pvp.leave(),close:()=>pvp.close()},
@@ -38,6 +39,10 @@ export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
         queued:()=>pvp.driver?.queued??0,submit:(cmd:Command)=>pvp.driver?.submit(cmd)??null,
         connection:()=>pvp.snapshot().conn,
         setServer:(url:string|null)=>{pvp.options.serverUrl=url;},
+        /** SP08 e2e: step the local sim one extra, server-unknown tick so the next hash checkpoint mismatches (test builds only). */
+        corruptSim:()=>{pvp.driver?.sim.step([]);},
+        /** PvP events seen so far (desync / resync / sync-lost), for recovery assertions. */
+        pvpEvents:()=>pvpLog.map(e=>e.t),
       };
       const api={
         step:(n=1)=>app.step(n),hash:()=>active()?.sim.hash(),get view(){return active()?.sim.snapshot();},pvp:pvpApi,
@@ -52,7 +57,7 @@ export function createTestHarness(files:ContentFiles,request:TestHookRequest) {
         legality(from:number,to:number,player=app.driver?.sim.view.players.findIndex(p=>p.kind==='human')??-1){const sim=app.driver?.sim;return {reason:sim?.canDraw(player,from,to)??null,explanation:sim?.explainDraw(player,from,to)??null};},
         visualProbe(){return buildVisualProbe(app,inspect());},
         renderInfo(){const info=inspect()?.renderer.info.render;return info?{calls:info.calls,triangles:info.triangles}:null;},
-        dispose(){offHash?.();unsubscribe();unsubscribeEvents();},
+        dispose(){offHash?.();offPvpLog?.();unsubscribe();unsubscribeEvents();},
       };
       return api;
     },

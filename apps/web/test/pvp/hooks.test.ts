@@ -23,7 +23,7 @@ it('covers R12: netplay re-points view/submit/hash/screen at the NetDriver and e
   const driver={sim,tick:200,queued:3,submit:vi.fn(()=>'wire')};
   let screen='idle';const options={serverUrl:'ws://a'};
   const subs=new Set<(u:{tick:number;sim:typeof sim})=>void>();
-  const pvp={snapshot:()=>({screen,conn:'connected'}),driver,options,setNick:vi.fn(),open:vi.fn(),create:vi.fn(),join:vi.fn(),watch:vi.fn(),start:vi.fn(),ready:vi.fn(),leave:vi.fn(),close:vi.fn(),subscribeEvents:(f:(u:{tick:number;sim:typeof sim})=>void)=>{subs.add(f);return()=>subs.delete(f);}} as unknown as PvpController;
+  const pvp={snapshot:()=>({screen,conn:'connected'}),driver,options,setNick:vi.fn(),open:vi.fn(),create:vi.fn(),join:vi.fn(),watch:vi.fn(),start:vi.fn(),ready:vi.fn(),leave:vi.fn(),close:vi.fn(),subscribePvpEvents:()=>()=>{},subscribeEvents:(f:(u:{tick:number;sim:typeof sim})=>void)=>{subs.add(f);return()=>subs.delete(f);}} as unknown as PvpController;
   const harness=createTestHarness(files,testHookRequest('?test=1&nick=Zed',true));
   const app=createAppController({files,...harness.options,loadManifest:async()=>manifest});
   harness.applyPvp(pvp);expect(pvp.setNick).toHaveBeenCalledWith('Zed');
