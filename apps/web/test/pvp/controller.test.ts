@@ -445,6 +445,30 @@ describe('PvpController match lifecycle', () => {
       quiet(() => g.c.push({ t: 'desync', tick: 5, serverHash: 'abc' }));
       expect(resyncs(g)).toBe(4);
     });
+    it('AC5 client: resync while paused keeps the frozen view and accepts the fresh epoch after start', async () => {
+      const g = await playing();
+      const ps = (epoch: number): ServerMessage => ({ t: 'pause.state', epoch, paused: true, tick: 5, unlimited: false, holds: [{ player: 0, reason: 'manual', connected: true, since: 0 }], budgets: [30000, 30000] } as ServerMessage);
+      g.c.push(ps(3));
+      expect(g.ctl.driver!.frozenTick).toBe(5);
+      quiet(() => g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }));
+      g.c.push(startMsg()); await flush();
+      expect(g.ctl.snapshot().pause).toBeNull(); // rebuilt: waits for the fresh snapshot
+      g.c.push(ps(3)); // same epoch as before the rebuild is accepted (lastEpoch reset on start)
+      expect(g.ctl.snapshot().pause).toMatchObject({ epoch: 3, paused: true, tick: 5 });
+      expect(g.ctl.driver!.frozenTick).toBe(5);
+    });
+    it('AC6 client: rate-limited resync shows the fallback banner; connection and match stay', async () => {
+      const g = await playing();
+      quiet(() => g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }));
+      g.c.push({ t: 'error', code: 'rate-limited' });
+      g.timers.at(-1)!.fn();
+      g.c.push({ t: 'error', code: 'rate-limited' });
+      const node = PvpLayer({ pvp: g.ctl });
+      expect(find(node, n => n.props['data-testid'] === 'toast-sync-lost')[0]?.props.children).toBe('Out of sync. Leave and rejoin.');
+      expect(g.ctl.driver).not.toBeNull();
+      expect(g.isClosed()).toBe(false);
+      expect(g.sent.some((m) => m.t === 'room.leave')).toBe(false);
+    });
     it('pause.state is ignored without a driver', async () => {
       const h = setup(); h.ctl.open(); h.ctl.create(); h.c.push(welcome);
       h.c.push({ t: 'pause.state', epoch: 1, paused: true, tick: 5, holds: [], budgets: [], graceMs: [] } as never);
