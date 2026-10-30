@@ -268,7 +268,7 @@ test('host transfer: host drop / leave in lobby passes host to earliest connecte
   h.s.drop();
   assert.equal(lobbyOf(p1.s).host, 1);
   // NOTE: reserveSeat (drop path) does not clear ready flags (PRD says it does); the leave path below does. Reported, not asserted.
-  assert.equal(lobbyOf(p1.s).seats[0]!.occupant?.status, 'grace', 'ex-host seat reserved');
+  assert.equal(lobbyOf(p1.s).seats[0]!.occupant?.status, 'away', 'ex-host seat reserved');
   p1.s.say({ t: 'lobby.start' });
   assert.equal(p1.s.of('error').at(-1)!.code, 'not-ready', 'refused: seat 0 reserved, p2 not ready, seat 3 empty');
   p1.s.say({ t: 'room.leave' });

@@ -377,10 +377,8 @@ describe('PvpController match lifecycle', () => {
     try { g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }); } finally { console.warn = orig; }
     expect(got).toEqual([{ t: 'desync', tick: 10, serverHash: 'abc', localTick: 0, localHash: 'h0' }, { t: 'resync', reason: 'desync' }]); expect(warned).toBe(2);
   });
-  it('seat.status stored; simHash mismatch leaves; room.closed/leave dispose', async () => {
+  it('simHash mismatch leaves; room.closed/leave dispose', async () => {
     const g = game(); g.c.push(startMsg()); await flush();
-    g.c.push({ t: 'seat.status', player: 0, status: 'grace', graceMs: 5000 });
-    expect(g.ctl.snapshot().seatStatus[0]).toEqual({ status: 'grace', graceMs: 5000 });
     g.c.push({ t: 'room.closed', reason: 'idle' });
     expect(g.ctl.snapshot().screen).toBe('menu'); expect(g.rt.disposed).toBe(1); expect(g.ctl.driver).toBeNull();
     const h = game(); h.c.push(startMsg()); await flush(); h.ctl.leave();

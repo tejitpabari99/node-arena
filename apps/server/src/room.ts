@@ -178,7 +178,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     const seats: LobbySeat[] = room.seats.map((s, i) => {
       const out: LobbySeat = { kind: s.kind, team: s.team };
       if (s.difficulty !== undefined) out.difficulty = s.difficulty;
-      if (s.occupant !== undefined) out.occupant = { nick: s.occupant.nick, ready: isReady(room, i), status: s.occupant.conn.closed ? 'grace' : 'connected' };
+      if (s.occupant !== undefined) out.occupant = { nick: s.occupant.nick, ready: isReady(room, i), status: s.occupant.conn.closed ? 'away' : 'connected' };
       return out;
     });
     return { t: 'lobby.state', levelId: room.levelId, timeLimitSec: level.timeLimitSec ?? 0, host: room.host, seats, spectators: room.spectators.length };

@@ -1,4 +1,4 @@
-import type { SeatKind, SeatStatus } from '@node-arena/net';
+import type { SeatKind } from '@node-arena/net';
 export type LegendStatus='eliminated'|'bot'|'disconnected'|'';
 export interface LegendSeat { player:number; kind:SeatKind; team:number; nick:string }
 export interface LegendEntry { player:number; nick:string; team:number; color:string|undefined; you:boolean; ally:boolean; status:LegendStatus }
@@ -6,15 +6,12 @@ export interface SeatLegendProps {
   seats:readonly LegendSeat[]; colorKeys:readonly string[]; palettes:Readonly<Record<string,string>>; seat:number|null;
   /** Per-seat elimination tick; -1 = alive (sim `eliminatedAt`). */
   eliminatedAt?:readonly number[]|undefined;
-  /** Latest `seat.status` per seat; `grace` = disconnected, `bot` = bot took over. */
-  seatStatus?:Readonly<Record<number,{status:SeatStatus}>>|undefined;
 }
 const LABEL:Record<LegendStatus,string>={eliminated:'Eliminated',bot:'Bot',disconnected:'Disconnected',''  :''};
-export function legendEntries({seats,colorKeys,palettes,seat,eliminatedAt,seatStatus}:SeatLegendProps):LegendEntry[]{
+export function legendEntries({seats,colorKeys,palettes,seat,eliminatedAt}:SeatLegendProps):LegendEntry[]{
   const myTeam=seat===null?undefined:seats.find(s=>s.player===seat)?.team;
   return [...seats].sort((a,b)=>a.player-b.player).map(s=>{
-    const st=seatStatus?.[s.player]?.status;
-    const status:LegendStatus=(eliminatedAt?.[s.player]??-1)>=0?'eliminated':s.kind==='bot'||st==='bot'?'bot':st==='grace'?'disconnected':'';
+    const status:LegendStatus=(eliminatedAt?.[s.player]??-1)>=0?'eliminated':s.kind==='bot'?'bot':'';
     const key=colorKeys[s.player];
     return {player:s.player,nick:s.nick,team:s.team,color:key===undefined?undefined:palettes[key],you:s.player===seat,ally:s.player!==seat&&myTeam!==undefined&&s.team===myTeam,status};
   });

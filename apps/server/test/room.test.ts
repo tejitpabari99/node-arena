@@ -294,7 +294,7 @@ test('lobby leave/disconnect frees seat; empty room is removed; host transfers',
   a.drop();
   let ls = b.last('lobby.state')!;
   assert.equal(ls.host, 1);
-  assert.equal(ls.seats[0]!.occupant?.status, 'grace'); // SP07: seat reserved 30 s
+  assert.equal(ls.seats[0]!.occupant?.status, 'away'); // SP07: seat reserved 30 s
   assert.equal(ls.seats[1]!.occupant?.ready, true); // new host implicit
   const reserve = pending.find((p) => p.ms === 30_000)!;
   reserve.fn(); // reserve expires -> seat freed
@@ -422,7 +422,7 @@ test('covers task11: start blocked when ready human is not connected; lobby.stat
   assert.equal(a.last('error')!.code, 'bad-lobby');
   assert.equal(starts.length, 0);
   a.say({ t: 'lobby.update', levelId: a.last('lobby.state')!.levelId, seats: seatsOf(a) }); // no-op edit rebroadcasts
-  assert.equal(a.last('lobby.state')!.seats[1]!.occupant?.status, 'grace');
+  assert.equal(a.last('lobby.state')!.seats[1]!.occupant?.status, 'away');
   r.seats[1]!.occupant!.conn.closed = false;
   a.say({ t: 'lobby.start' });
   assert.equal(starts.length, 1);

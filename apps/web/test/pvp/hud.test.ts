@@ -63,13 +63,13 @@ const legend = (o: Partial<SeatLegendProps> = {}): SeatLegendProps => ({
 });
 describe('SeatLegend (SP05 T12)', () => {
   it('4-seat team legend: you, ally, team badges, bot, eliminated, disconnected', () => {
-    const v = SeatLegend(legend({ eliminatedAt: [-1, -1, 120, -1], seatStatus: { 1: { status: 'grace' } } }));
+    const v = SeatLegend(legend({ eliminatedAt: [-1, -1, 120, -1] }));
     for (let i = 0; i < 4; i++) expect(byId(v, `seat-legend-${i}`)).toBeDefined();
     expect(text(byId(v, 'seat-legend-0'))).toContain('(you)');
     expect(byId(v, 'seat-legend-1')!.props['data-ally']).toBe('true');
     expect(byId(v, 'seat-legend-2')!.props['data-ally']).toBe('false');
     expect([0, 1, 2, 3].map((i) => text(byId(v, `seat-legend-team-${i}`)))).toEqual(['T1', 'T1', 'T2', 'T2']);
-    expect(text(byId(v, 'seat-legend-status-1'))).toBe('Disconnected');
+    expect(byId(v, 'seat-legend-status-1')).toBeUndefined();
     expect(text(byId(v, 'seat-legend-status-2'))).toBe('Eliminated');
     expect(text(byId(v, 'seat-legend-status-3'))).toBe('Bot');
     expect(byId(v, 'seat-legend-status-0')).toBeUndefined();

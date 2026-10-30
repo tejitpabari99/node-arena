@@ -1,4 +1,4 @@
-import { PROTOCOL_VERSION, ERROR_CODES, LockstepClient, toWireOutcome, type ClientMessage, type EndMsg, type ErrorCode, type LobbyStateMsg, type SeatConfig, type SeatStatusMsg, type ServerMessage, type StartMsg, type Versions } from '@node-arena/net';
+import { PROTOCOL_VERSION, ERROR_CODES, LockstepClient, toWireOutcome, type ClientMessage, type EndMsg, type ErrorCode, type LobbyStateMsg, type SeatConfig, type ServerMessage, type StartMsg, type Versions } from '@node-arena/net';
 import { listPvpMaps, loadContent, type PvpMapInfo, type CompiledLevel, type ContentFiles, type ManifestV2 } from '@node-arena/content';
 import { create, type Placement, type Sim } from '@node-arena/sim';
 import type { TickUpdate } from '../driver';
@@ -28,8 +28,6 @@ export interface PvpSnapshot {
   end: EndMsg | null;
   /** Final per-team placements from the local sim (identical to server by determinism); null until result. */
   ranking: Placement[] | null;
-  /** Latest status per seat from `seat.status`. */
-  seatStatus: Record<number, { status: SeatStatusMsg['status']; graceMs?: number }>;
   /** Latest authoritative pause snapshot (null before the first / after a new match). */
   pause: PauseView | null;
   /** Short user-facing string; null when none. */
@@ -125,7 +123,7 @@ export function createPvpController(options: PvpOptions) {
   let mismatchedBeforeReload = false;
   try { mismatchedBeforeReload = sessionStorage.getItem(mismatchKey) === buildKey; } catch { /* storage unavailable */ }
   const listeners = new Set<() => void>(), events = new Set<(u: TickUpdate) => void>(), pvpEvents = new Set<(e: PvpEvent) => void>();
-  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false, draining: null });
+  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false, draining: null });
   let state = initial();
   let conn: PvpConnection | null = null, offs: Array<() => void> = [];
   let lastEpoch = -1, autoResumed = -1, pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
@@ -221,7 +219,7 @@ export function createPvpController(options: PvpOptions) {
       return;
     }
     pending = null;
-    publish({ screen: reconnect && (prior === 'playing' || prior === 'result') ? 'playing' : 'countdown', start: m, end: null, ranking: null, seatStatus: {}, pause: null, error: null });
+    publish({ screen: reconnect && (prior === 'playing' || prior === 'result') ? 'playing' : 'countdown', start: m, end: null, ranking: null, pause: null, error: null });
     let owned: NetDriver | undefined, created: LevelRuntime | undefined;
     try {
       const teams = [...m.seats].sort((a, b) => a.player - b.player).map((x) => x.team);
@@ -285,7 +283,7 @@ export function createPvpController(options: PvpOptions) {
         const host = state.seat !== null && m.host === state.seat;
         // Rematch (R7): after `end`, the server resets the room and broadcasts lobby.state; leave the result screen.
         if (skipLobby) skipLobby = false;
-        else if (state.screen === 'result') { clearMatch(); publish({ screen: 'lobby', lobby: m, host, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null }); break; }
+        else if (state.screen === 'result') { clearMatch(); publish({ screen: 'lobby', lobby: m, host, start: null, end: null, ranking: null, pause: null, error: null }); break; }
         publish({ lobby: m, host });
         break;
       }
@@ -312,10 +310,7 @@ export function createPvpController(options: PvpOptions) {
         if (state.start?.matchId !== m.matchId || state.end) break;
         clearMatch();
         syncLost = false;
-        publish({ screen: 'lobby', start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null });
-        break;
-      case 'seat.status':
-        publish({ seatStatus: { ...state.seatStatus, [m.player]: m.graceMs === undefined ? { status: m.status } : { status: m.status, graceMs: m.graceMs } } });
+        publish({ screen: 'lobby', start: null, end: null, ranking: null, pause: null, error: null });
         break;
       case 'end': {
         if (!driver || state.end) break;
@@ -372,7 +367,7 @@ export function createPvpController(options: PvpOptions) {
     if (disposed || !options.serverUrl || state.pvpUnavailable) return;
     drop();
     pending = action;
-    state = { ...state, screen: 'connecting', code: null, seat: null, host: false, lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, role: action?.t === 'room.join' ? action.role : 'play' };
+    state = { ...state, screen: 'connecting', code: null, seat: null, host: false, lobby: null, start: null, end: null, ranking: null, pause: null, error: null, role: action?.t === 'room.join' ? action.role : 'play' };
     const make = options.createConnection ?? createPvpConnection;
     conn = make({ url: options.serverUrl, nick: options.identity.nick, token: options.identity.token, versions: options.versions, createSocket: options.createSocket });
     offs = [conn.onMessage(onMessage), conn.onState(onState)];

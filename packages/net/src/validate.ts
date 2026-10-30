@@ -78,7 +78,7 @@ function nick(v: unknown): string {
 }
 
 const SEAT_KINDS = ['human', 'bot', 'empty'] as const satisfies readonly SeatKind[];
-const SEAT_STATUS = ['connected', 'grace', 'bot'] as const satisfies readonly SeatStatus[];
+const SEAT_STATUS = ['connected', 'away'] as const satisfies readonly SeatStatus[];
 
 function versions(v: unknown, strict: boolean): Versions {
   const o = rec(v);
@@ -175,7 +175,7 @@ function clientMsg(o: Rec): ClientMessage {
 
 const SERVER_TYPES = [
   'welcome', 'room.joined', 'lobby.state', 'room.closed', 'start', 'tick', 'catchup', 'ticks', 'desync',
-  'seat.status', 'end', 'pong', 'pause.state', 'start.cancel', 'server.draining', 'error',
+  'end', 'pong', 'pause.state', 'start.cancel', 'server.draining', 'error',
 ] as const;
 
 function serverMsg(o: Rec): ServerMessage {
@@ -218,11 +218,6 @@ function serverMsg(o: Rec): ServerMessage {
       return { t: 'catchup', from: int(o.from), to: int(o.to), cmds: arr(o.cmds, MAX_CMDS, tickCmds), done: bool(o.done) };
     case 'ticks': return { t: 'ticks', from: int(o.from), to: int(o.to), cmds: arr(o.cmds, MAX_CMDS, tickCmds) };
     case 'desync': return { t: 'desync', tick: int(o.tick), serverHash: hash16(o.serverHash) };
-    case 'seat.status':
-      return withOpt(
-        { t: 'seat.status', player: int(o.player), status: oneOf(o.status, SEAT_STATUS) },
-        { graceMs: opt(o, 'graceMs', int) },
-      ) as ServerMessage;
     case 'end': {
       const oc = rec(o.outcome);
       return {

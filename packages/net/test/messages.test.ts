@@ -22,14 +22,13 @@ const server: ServerMessage[] = [
   { t: 'welcome', pv: 3, playerId: 'p', serverVersions: versions },
   { t: 'room.joined', code: 'ABCD', you: { seat: null, host: false } },
   { t: 'lobby.state', levelId: 'l', timeLimitSec: 300, host: 0, spectators: 0,
-    seats: [{ kind: 'human', team: 0, occupant: { nick: 'a', ready: false, status: 'grace' } }] },
+    seats: [{ kind: 'human', team: 0, occupant: { nick: 'a', ready: false, status: 'away' } }] },
   { t: 'room.closed', reason: 'idle' },
   { t: 'start', matchId: 'm', levelId: 'l', simHash: '0'.repeat(16), seed: 1, youPlayer: null, inputDelay: 3,
     countdownMs: 3000, timeLimitTicks: 6000, hashInterval: 20, seats: [{ player: 0, kind: 'human', team: 0, nick: 'a' }] },
   { t: 'tick', n: 5, c: [{ type: 'CutLine', player: 0, from: 1, to: 2 }] },
   { t: 'catchup', from: 0, to: 9, cmds: [], done: true }, { t: 'ticks', from: 10, to: 12, cmds: [] },
   { t: 'desync', tick: 19, serverHash: '0'.repeat(16) },
-  { t: 'seat.status', player: 1, status: 'grace', graceMs: 5000 },
   { t: 'end', outcome: { outcome: 'draw', winners: [], winner: null }, finalTick: 100, finalHash: '0'.repeat(16) },
   { t: 'pong', id: 3, tick: 7 }, { t: 'error', code: 'bad-json', detail: 'x' },
   { t: 'server.draining', deadlineMs: 30000 }, { t: 'error', code: 'draining' },
@@ -39,7 +38,7 @@ test('every message type round-trips through JSON', () => {
   for (const m of client) assert.deepEqual(JSON.parse(encodeClient(m)), m);
   for (const m of server) assert.deepEqual(JSON.parse(encodeServer(m)), m);
   assert.equal(new Set(client.map((m) => m.t)).size, 12);
-  assert.equal(new Set(server.map((m) => m.t)).size, 14);
+  assert.equal(new Set(server.map((m) => m.t)).size, 13);
 });
 
 test('empty tick is compact; non-empty carries c', () => {
