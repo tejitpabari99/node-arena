@@ -213,3 +213,18 @@ test('covers SP08 AC6 order: catch-up refusal does not spend the resync window; 
   a2.say({ t: 'resync' }); // now genuinely inside the 10 s window
   assert.equal(a2.of('error').at(-1)?.code, 'rate-limited');
 });
+
+test('covers SP08 AC4: spectator resync replays start + full catch-up, no seat bookkeeping', () => {
+  const r = running();
+  r.run(500);
+  const s = r.t.client('S');
+  s.say({ t: 'room.join', code: r.a.of('room.joined')[0]!.code, role: 'watch' });
+  assert.equal(s.of('room.joined').at(-1)?.you.seat, null);
+  r.t.advance(5500); // past the 5 s catch-up gap spent by watch
+  const starts0 = s.of('start').length, catchups0 = s.of('catchup').length;
+  s.say({ t: 'resync' });
+  assert.equal(s.of('start').length, starts0 + 1);
+  assert.ok(s.of('catchup').length > catchups0, 'full catch-up replayed');
+  assert.equal(s.closed, undefined);
+  assert.equal(s.of('error').length, 0);
+});
