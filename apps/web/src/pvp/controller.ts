@@ -4,7 +4,7 @@ import { create, type Placement, type Sim } from '@node-arena/sim';
 import type { TickUpdate } from '../driver';
 import { NetDriver, type NetDriverOptions } from '../driver/net-driver';
 import type { LevelRuntime, RuntimeContext } from '../app/state';
-import { createPvpConnection, type ConnState, type PvpConnection, type PvpConnectionOpts } from '../net/connection';
+import { createPvpConnection, type ConnInfo, type ConnState, type PvpConnection, type PvpConnectionOpts } from '../net/connection';
 import { pauseRemaining, toPauseView, type PauseView } from './pause';
 import type { Identity } from '../net/identity';
 import type { RoomLink } from '../net/links';
@@ -16,6 +16,8 @@ export interface PvpSnapshot {
   screen: PvpScreen;
   nick: string;
   conn: ConnState | null;
+  /** Client-local backoff info for the connection banner. */
+  connInfo: ConnInfo | null;
   code: string | null;
   /** Own seat (null = spectator) once in a room. */
   seat: number | null;
@@ -123,7 +125,7 @@ export function createPvpController(options: PvpOptions) {
   let mismatchedBeforeReload = false;
   try { mismatchedBeforeReload = sessionStorage.getItem(mismatchKey) === buildKey; } catch { /* storage unavailable */ }
   const listeners = new Set<() => void>(), events = new Set<(u: TickUpdate) => void>(), pvpEvents = new Set<(e: PvpEvent) => void>();
-  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false, draining: null });
+  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, connInfo: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false, draining: null });
   let state = initial();
   let conn: PvpConnection | null = null, offs: Array<() => void> = [];
   let lastEpoch = -1, autoResumed = -1, pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
@@ -360,7 +362,7 @@ export function createPvpController(options: PvpOptions) {
       return;
     }
     if (s === 'superseded') { reset(msg ?? null); return; }
-    publish({ conn: s, ...(msg ? { error: msg } : s === 'connected' || s === 'connecting' ? { error: state.error === CONN_STRINGS.lost ? null : state.error } : {}) });
+    publish({ conn: s, connInfo: conn?.info ?? null, ...(msg ? { error: msg } : s === 'connected' || s === 'connecting' ? { error: state.error === CONN_STRINGS.lost ? null : state.error } : {}) });
   };
 
   const connect = (action: Pending | null) => {
@@ -371,7 +373,7 @@ export function createPvpController(options: PvpOptions) {
     const make = options.createConnection ?? createPvpConnection;
     conn = make({ url: options.serverUrl, nick: options.identity.nick, token: options.identity.token, versions: options.versions, createSocket: options.createSocket });
     offs = [conn.onMessage(onMessage), conn.onState(onState)];
-    state = { ...state, conn: conn.state };
+    state = { ...state, conn: conn.state, connInfo: conn.info };
     listeners.forEach((fn) => fn());
   };
 

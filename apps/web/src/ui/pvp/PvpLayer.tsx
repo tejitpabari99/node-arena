@@ -29,9 +29,9 @@ export function PvpLayer({pvp}:{pvp:PvpController}){
     <p class="pvp-error" role="alert" data-testid="toast-sync-lost">{s.error}</p>
     <button class="level-card menu-button" data-testid="pvp-sync-leave" onClick={()=>pvp.leave()}>Leave</button>
   </section>;
-  if(s.screen==='countdown')return <><ConnBanner conn={s.conn} onRetry={()=>pvp.retry()}/>{s.draining&&<DrainBanner deadlineAt={s.draining.deadlineAt} mode="match" now={()=>pvp.options.now?.()??performance.now()}/>}<p class="pvp-countdown" role="status" data-testid="pvp-countdown">Get ready</p></>;
+  if(s.screen==='countdown')return <><ConnBanner conn={s.conn} info={s.connInfo} onRetry={()=>pvp.retry()}/>{s.draining&&<DrainBanner deadlineAt={s.draining.deadlineAt} mode="match" now={()=>pvp.options.now?.()??performance.now()}/>}<p class="pvp-countdown" role="status" data-testid="pvp-countdown">Get ready</p></>;
   if(s.screen==='playing')return <PvpPlaying pvp={pvp}/>;
-  if(s.screen==='result'&&s.end)return <><ConnBanner conn={s.conn} onRetry={()=>pvp.retry()}/><PvpResult outcome={s.end.outcome} seat={s.seat} ranking={s.ranking} seats={s.start?.seats} draining={!!s.draining} onLeave={()=>pvp.leave()} onRematch={()=>pvp.rematch()}/></>;
+  if(s.screen==='result'&&s.end)return <><ConnBanner conn={s.conn} info={s.connInfo} onRetry={()=>pvp.retry()}/><PvpResult outcome={s.end.outcome} seat={s.seat} ranking={s.ranking} seats={s.start?.seats} draining={!!s.draining} onLeave={()=>pvp.leave()} onRematch={()=>pvp.rematch()}/></>;
   return null;
 }
 export const TOAST_MS=5000;
@@ -58,7 +58,7 @@ function PvpPlaying({pvp}:{pvp:PvpController}){
   const s=pvp.snapshot(),view=pvp.driver?.sim.view;
   const eliminated=((view?.eliminatedAt as ArrayLike<number>|undefined)?.[s.seat??-1]??-1)>=0;
   return <>
-    <ConnBanner conn={s.conn} onRetry={()=>pvp.retry()}/>
+    <ConnBanner conn={s.conn} info={s.connInfo} onRetry={()=>pvp.retry()}/>
     {s.draining&&<DrainBanner deadlineAt={s.draining.deadlineAt} mode="match" now={()=>pvp.options.now?.()??performance.now()}/>}
     <PvpHud segments={view?ownership(view):[]} palettes={(pvp.manifest?.palettes??{}) as Record<string,string>} ticksLeft={(s.start?.timeLimitTicks??0)-(view?.tick??0)} seat={s.seat} menuOpen={menu&&!confirm} pause={buildPauseUi(s.pause,pvp.pauseRemaining(),s.seat,Object.fromEntries((s.start?.seats??[]).map(x=>[x.player,x.nick])),eliminated)} onPause={()=>pvp.pause()} onResume={()=>pvp.resume()} confirmQuit={confirm} onQuitYes={()=>{setConfirm(false);pvp.quit();}} onQuitNo={()=>setConfirm(false)} catchup={pvp.driver?.catchupProgress??null} onLeave={()=>{if(!leaveNeedsConfirm(s.seat,eliminated))pvp.leave();else{setMenu(false);setConfirm(true);}}} legend={s.start&&view?{seats:s.start.seats,colorKeys:(view.players??[]).map(p=>p.colorKey),eliminatedAt:view.eliminatedAt?Array.from(view.eliminatedAt as ArrayLike<number>):undefined}:undefined}/>
     {toast&&<Toast message={DESYNC_TOAST} testId="toast-desync"/>}

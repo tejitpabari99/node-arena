@@ -165,6 +165,7 @@ describe('PvpController lobby flow', () => {
     const h = setup(); h.ctl.open(); h.ctl.create(); h.c.push(welcome);
     h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
     h.c.setState('lost'); expect(h.ctl.snapshot()).toMatchObject({ screen: 'lobby', error: 'Connection lost.' });
+    expect(h.ctl.snapshot().connInfo).toEqual({ attempt: 0, nextRetryAt: null, outageStartedAt: null, lastCloseCode: null });
     h.ctl.retry(); expect(h.retried()).toBe(1);
     h.c.push({ t: 'room.closed', reason: 'idle' }); expect(h.ctl.snapshot().screen).toBe('menu');
     const g = setup(); g.ctl.open(); g.ctl.create(); g.c.setState('superseded');

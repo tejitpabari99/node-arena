@@ -3,7 +3,7 @@ import type { VNode } from 'preact';
 import type { EndOutcome } from '@node-arena/net';
 import { PvpResult, resultTitle } from '../../src/ui/pvp/PvpResult';
 import { BattlePopup } from '../../src/ui/PausePopup';
-import { ConnBanner } from '../../src/ui/pvp/ConnBanner';
+import { ConnBanner, connBannerText } from '../../src/ui/pvp/ConnBanner';
 
 type N = VNode<Record<string, unknown>>;
 function find(node: unknown, test: (n: N) => boolean, out: N[] = []): N[] {
@@ -62,15 +62,44 @@ describe('PvpResult N-seat / draw / rematch', () => {
   });
 });
 
+describe('ConnBanner SP11 states', () => {
+  const btn = (n: unknown, id: string) => find(n as never, (x) => x.props['data-testid'] === id);
+  const info = { attempt: 3, nextRetryAt: 10_000, outageStartedAt: 0, lastCloseCode: 4005 };
+  it('all five states render with correct controls; connected renders nothing (welcome handoff to catch-up overlay)', () => {
+    const retry = vi.fn();
+    const st = (conn: Parameters<typeof ConnBanner>[0]['conn']) => ConnBanner({ conn, onRetry: retry })!;
+    expect(ConnBanner({ conn: 'connected', onRetry: retry })).toBeNull();
+    expect(ConnBanner({ conn: null, onRetry: retry })).toBeNull();
+    for (const s of ['connecting', 'reconnecting', 'lost', 'refused', 'superseded'] as const) {
+      const b = st(s); expect(b.props['data-state']).toBe(s); expect(b.props['data-testid']).toBe('conn-banner');
+      expect(btn(b, 'banner-retry')).toHaveLength(s === 'lost' ? 1 : 0);
+      expect(btn(b, 'banner-reload')).toHaveLength(s === 'refused' ? 1 : 0);
+    }
+  });
+  it('wording: connecting; reconnecting shows attempt and seconds to next retry; refused/superseded terminal text', () => {
+    expect(connBannerText('connecting')).toBe('Connecting...');
+    expect(connBannerText('reconnecting')).toBe('Reconnecting...');
+    expect(connBannerText('reconnecting', info, 4_500)).toBe('Reconnecting... (attempt 3, retry in 6s)');
+    expect(connBannerText('reconnecting', info, 10_000)).toBe('Reconnecting... (attempt 3, retrying now)');
+    expect(connBannerText('reconnecting', { ...info, nextRetryAt: null }, 0)).toBe('Reconnecting... (attempt 3)');
+    expect(connBannerText('lost', info, 0)).toBe('Connection lost.');
+    expect(connBannerText('connected')).toBeUndefined();
+  });
+  it('active-match layer renders banner without removing the pause overlay/countdown siblings (banner is position:fixed, pointer-events none)', async () => {
+    const css = (await import('node:fs')).readFileSync(new URL('../../src/style.css', import.meta.url), 'utf8');
+    expect(css).toMatch(/\.conn-banner[^{]*\{position:fixed/);
+  });
+});
+
 describe('ConnBanner', () => {
   it('reconnecting, lost+Retry, refused, superseded; none when connected', () => {
     const retry = vi.fn();
     expect(ConnBanner({ conn: 'connected', onRetry: retry })).toBeNull();
-    const rc = ConnBanner({ conn: 'reconnecting', onRetry: retry })!; expect(JSON.stringify(rc.props.children)).toContain('Reconnecting');
+    expect(connBannerText('reconnecting')).toContain('Reconnecting');
     const lost = ConnBanner({ conn: 'lost', onRetry: retry })!;
     (find(lost, (n) => n.props['data-testid'] === 'banner-retry')[0]!.props.onClick as () => void)(); expect(retry).toHaveBeenCalledOnce();
-    const ref = ConnBanner({ conn: 'refused', onRetry: retry })!; expect(JSON.stringify(ref.props.children)).toContain('A newer version of Node Arena is available - reload');
+    const ref = ConnBanner({ conn: 'refused', onRetry: retry })!; expect(connBannerText('refused')).toContain('A newer version of Node Arena is available - reload');
     expect(find(ref, (n) => n.props['data-testid'] === 'banner-retry')).toHaveLength(0);
-    expect(JSON.stringify(ConnBanner({ conn: 'superseded', onRetry: retry })!.props.children)).toContain('Opened in another tab');
+    expect(connBannerText('superseded')).toContain('Opened in another tab');
   });
 });
