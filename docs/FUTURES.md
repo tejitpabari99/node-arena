@@ -45,3 +45,8 @@ Source facts below describe Tower War; they are deferred in Node Arena. Research
 - **Level deletion UI (v1.1 or later).** No editor delete flow; future work must remove the `na-*` file and custom entry, removing `custom.json` when empty, then refresh versions/locks.
 - **Campaign/custom level reorder UI.** Positions remain authored data; no ordering tool in v1.
 - **Hot reload of external level edits.** No live reconciliation into an open draft; reload/reopen deliberately. [Current editor workflow](LEVELS_GUIDE.md#4-author-an-original-level).
+
+## From PvP M2 play-test (2026-10-29)
+
+- **Cross balance.** FFA and adjacent-team imbalance observed in bot play; cause unproven. Investigate before tuning; no balance/content changes in this M2 run.
+- **Host-drop readiness.** Host disconnect leaves ready flags uncleared. Revisit lobby readiness policy and behavior; deferred from this M2 run.

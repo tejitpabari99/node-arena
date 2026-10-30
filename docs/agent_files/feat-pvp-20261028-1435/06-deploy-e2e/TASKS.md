@@ -18,10 +18,10 @@ Source of truth: docs/agent_files/feat-pvp-20261028-1435/06-deploy-e2e/PRD.md. M
 | 8 | [M2] `VITE_PVP_SERVER_URL` in deploy + preview builds | 7 | done |
 | 9 | [M2] `ALLOWED_ORIGINS` in fly.toml | SP04#17 | done |
 | 10 | [M2] `docker` CI job | SP04#17, 4 | done |
-| 11 | [M2] Version-mismatch UX verification | 8, SP05#3, SP05#15 | todo |
+| 11 | [M2] Version-mismatch UX verification | 8, SP05#3, SP05#15 | done |
 | 12 | [M2] e2e specs: spectator + rematch | 3, SP04#13, SP04#14, SP05#14, SP05#15 | done |
-| 13 | [M2] e2e specs: bot-seat lobby + 2v2 Cross | 3, SP04#12, SP03#7 | todo |
-| 14 | [M2] Full docs pass | 5, 9, 12, 13 | todo |
+| 13 | [M2] e2e specs: bot-seat lobby + 2v2 Cross | 3, SP04#12, SP03#7 | done |
+| 14 | [M2] Full docs pass | 5, 9, 12, 13 | done |
 | 15 | [M2] `docs/PVP_OPS.md` owner runbook | 7, 8, 9 | done |
 
 ## Task 1 — [M1] `dev:pvp` script + server URL env wiring
