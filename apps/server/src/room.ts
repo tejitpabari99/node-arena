@@ -92,6 +92,8 @@ export interface RoomManagerDeps {
   pausedMsOf?: (room: Room) => number;
   /** True if the seat is eliminated / pending forfeit in a running match (may leave without a quit). Default false. */
   seatOut?: (room: Room, seat: number) => boolean;
+  /** SP09: true while the server drains; new work (create / join / start / rematch) is refused with `error draining`. Token reattach is unaffected. */
+  isDraining?: () => boolean;
   /** Called whenever a room is removed (gc, abort, closeAll, empty): tear down per-room match state. */
   onRoomClosed?: (room: Room) => void;
   /** Current lockstep tick for `pong`; default 0. */
@@ -115,6 +117,8 @@ export interface RoomManager extends HubHandler {
   roomOf(conn: Conn): Room | undefined;
   roomCount(): number;
   runningCount(): number;
+  /** SP09: rooms in `countdown` or `running` (drain waits for these). */
+  activeMatchCount(): number;
   /** Drops ended/closed rooms older than the TTL and frees their players. */
   gc(): void;
   /** True while the room has a pending pause/disconnect deadline (SP07). */
@@ -197,7 +201,14 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     byPlayer.set(conn.playerId!, room);
   };
 
+  const refuseDraining = (conn: Conn): boolean => {
+    if (deps.isDraining?.() !== true) return false;
+    conn.sendError('draining', 'server restarting');
+    return true;
+  };
+
   const create_ = (conn: Conn): void => {
+    if (refuseDraining(conn)) return;
     if (byPlayer.has(conn.playerId!)) return conn.sendError('bad-lobby', 'already in a room');
     if (conn.ip !== undefined && deps.ipLimits?.allowCreate(conn.ip) === false) return conn.sendError('rate-limited', 'too many rooms created');
     if (defaultLevelId === undefined) return conn.sendError('internal', 'no pvp levels');
@@ -265,6 +276,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   };
 
   const join = (conn: Conn, code: string, role: 'play' | 'watch'): void => {
+    if (refuseDraining(conn)) return;
     if (byPlayer.has(conn.playerId!)) return conn.sendError('bad-lobby', 'already in a room');
     if (conn.ip !== undefined && deps.ipLimits?.joinBlocked(conn.ip) === true) return conn.sendError('rate-limited', 'too many failed joins');
     const room = rooms.get(code);
@@ -420,6 +432,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   };
 
   const start = (conn: Conn, room: Room): void => {
+    if (refuseDraining(conn)) return;
     if (room.host !== seatOf(room, conn)) return conn.sendError('not-host');
     if (room.state !== 'lobby') return conn.sendError('match-in-progress');
     for (let i = 0; i < room.seats.length; i++) {
@@ -459,6 +472,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
 
   /** Seated human back to lobby after `end`: same setup, ready cleared (sender ready), new seed on next start, spectators kept. */
   const rematch = (conn: Conn): void => {
+    if (refuseDraining(conn)) return;
     const room = byPlayer.get(conn.playerId ?? '');
     if (room === undefined) return conn.sendError('not-in-room');
     const i = seatOf(room, conn);
@@ -567,6 +581,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     },
     pingLimiterSize: () => pingLimiter.size,
     runningCount: () => { let n = 0; for (const r of rooms.values()) if (r.state === 'running') n++; return n; },
+    activeMatchCount: () => { let n = 0; for (const r of rooms.values()) if (r.state === 'running' || r.state === 'countdown') n++; return n; },
     onClientMessage(conn, msg) {
       switch (msg.t) {
         case 'room.create': return create_(conn);

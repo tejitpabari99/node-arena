@@ -52,7 +52,7 @@ Defaults below are for direct server startup. Invalid values fail boot with exit
 curl -fsS http://127.0.0.1:8080/healthz
 ```
 
-`GET /healthz` returns 200 JSON with `ok`, room/connection/running-match counts, `lateP99Ms`, `uptimeS` and `versions` (protocol, rules, schema, content, bot). Responses use `Cache-Control: no-store`. Other HTTP paths return 404; the same listener accepts WebSocket connections.
+`GET /healthz` returns 200 JSON with `ok`, room/connection/running-match counts, `draining` (true after SIGTERM; stays 200), `lateP99Ms`, `uptimeS` and `versions` (protocol, rules, schema, content, bot). Responses use `Cache-Control: no-store`. Other HTTP paths return 404; the same listener accepts WebSocket connections.
 
 Protocol authority: [message types](../../packages/net/src/messages.ts), [validation](../../packages/net/src/validate.ts), [handshake](../../packages/net/src/handshake.ts) and [protocol version](../../packages/net/src/version.ts). The hello handshake requires exact protocol/schema/content versions and matching rules major/minor before room actions. Rules patch differences are accepted; bot-version differences are logged without refusing the connection. See [game rules](../../docs/GAME_RULES.md) for mechanics and version policy.
 

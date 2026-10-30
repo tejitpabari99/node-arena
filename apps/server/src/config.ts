@@ -14,6 +14,8 @@ export interface Config {
   maxConns: number;
   contentDir: string;
   logLevel: LogLevel;
+  /** SIGTERM drain window in ms (SP09). 0 = legacy immediate shutdown. */
+  drainMs: number;
 }
 
 export class ConfigError extends Error {
@@ -43,6 +45,7 @@ export function parseConfig(env: Env): Config {
   const inputDelay = intIn(env, 'INPUT_DELAY', 3, 1, 10, errors);
   const maxRooms = intIn(env, 'MAX_ROOMS', 40, 1, 100000, errors);
   const maxConns = intIn(env, 'MAX_CONNS', 200, 1, 100000, errors);
+  const drainMs = intIn(env, 'DRAIN_MS', 30000, 0, 120000, errors);
   const host = env.HOST === undefined || env.HOST === '' ? '0.0.0.0' : env.HOST;
   const allowedOrigins = (env.ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim()).filter((s) => s !== '');
   for (const o of allowedOrigins) {
@@ -63,7 +66,7 @@ export function parseConfig(env: Env): Config {
   }
   const contentDir = env.CONTENT_DIR === undefined || env.CONTENT_DIR === '' ? DEFAULT_CONTENT_DIR : env.CONTENT_DIR;
   if (errors.length > 0) throw new ConfigError(errors);
-  return { port, host, allowedOrigins, allowNoOrigin, inputDelay, maxRooms, maxConns, contentDir, logLevel };
+  return { port, host, allowedOrigins, allowNoOrigin, inputDelay, maxRooms, maxConns, contentDir, logLevel, drainMs };
 }
 
 /** Boot helper: bad env -> message on stderr, exit 1. `exit` injectable for tests. */
