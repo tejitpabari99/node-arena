@@ -45,13 +45,14 @@ function setup() {
   };
   const ctl = createMatchController({ clock, now: () => now, timers: fakeTimers, onAbort: (r) => mgr.drop(r) });
   const starts: MatchStart[] = [];
+  const closed: unknown[] = [];
   let n = 0;
   const mgr = createRoomManager({
     content, clock, now: () => now, inputDelay: 3, randomInt: () => (n++ % 31) + starts.length * 7,
     onStart: (r, m) => { starts.push(m); ctl.onStart(r, m); },
     onMatchMessage: ctl.onMessage, onCatchUp: ctl.catchUp,
     onStartCancel: ctl.cancel, onSeatDisconnect: ctl.onSeatDisconnect, onSeatReconnect: ctl.onSeatReconnect, pauseStateOf: ctl.pauseState, endOf: ctl.endOf, hasPendingDeadline: ctl.hasPendingDeadline,
-    pausedMsOf: ctl.pausedMs, seatOut: ctl.seatOut, onRoomClosed: ctl.cancel,
+    pausedMsOf: ctl.pausedMs, seatOut: ctl.seatOut, onRoomClosed: (r) => { closed.push(r); ctl.cancel(r); },
     timers: { setTimeout: (fn, ms) => (ms === 60_000 ? 0 : fakeTimers.setTimeout(fn, ms)), clearTimeout: fakeTimers.clearTimeout },
   });
   const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', now: () => now, timers: { setTimeout: () => 0, clearTimeout: () => {} } });
@@ -95,7 +96,7 @@ function setup() {
     assert.equal(room.state, 'running');
     return { socks, room, code };
   };
-  return { client, advance, mgr, ctl, starts, rooms, timers, now: () => now, setNow: (v: number) => { now = v; }, soloVsBot, ffa };
+  return { client, advance, mgr, ctl, starts, rooms, timers, closed, now: () => now, setNow: (v: number) => { now = v; }, soloVsBot, ffa };
 }
 
 test('hard cap: paused room is never capped; cap extends by total paused time', () => {
@@ -234,4 +235,54 @@ test('onRoomClosed tears down match timers for a closed/abandoned paused room', 
   assert.equal(t.timers.length, 0, 'pause/idle timers torn down');
   assert.equal(t.ctl.hasPendingDeadline(room), false);
   assert.equal(t.ctl.inspect(room), undefined);
+});
+
+test('onRoomClosed fires on drain/closeAll (server-restart), tears down timers and the clock membership (SP09 AC4)', () => {
+  const t = setup();
+  const { a, room } = t.soloVsBot();
+  a.say({ t: 'pause' });
+  a.drop();
+  assert.ok(t.timers.length > 0, 'idle timer armed (paused room is off the clock)');
+  t.mgr.closeAll('server-restart');
+  assert.deepEqual(t.closed, [room]);
+  assert.equal(t.timers.length, 0, 'no armed pause/idle timers after closeAll');
+  assert.equal(t.ctl.inspect(room), undefined);
+  assert.equal(t.mgr.room(room.code), undefined);
+});
+
+test('onRoomClosed fires on match-cap gc', () => {
+  const t = setup();
+  const { room, match } = t.soloVsBot();
+  t.setNow(match.startAt + (match.timeLimitTicks * 1000) / 20 + MATCH_CAP_EXTRA_MS + 1);
+  t.mgr.gc();
+  assert.deepEqual(t.closed, [room]);
+  assert.equal(t.rooms.size, 0);
+  assert.equal(t.timers.length, 0);
+});
+
+test('onRoomClosed fires on idle close (abort path) and on a direct drop', () => {
+  const t = setup();
+  const { a, room } = t.soloVsBot();
+  a.say({ t: 'pause' });
+  a.drop();
+  t.advance(10 * 60_000 + 1000);
+  assert.equal(room.state, 'closed');
+  assert.deepEqual(t.closed, [room], 'idle close -> onAbort -> drop -> hook');
+  assert.equal(t.timers.length, 0);
+  const b = t.soloVsBot();
+  t.mgr.drop(b.room);
+  assert.deepEqual(t.closed, [room, b.room]);
+  assert.equal(t.rooms.size, 0);
+});
+
+test('onRoomClosed teardown is idempotent: a second call is harmless', () => {
+  const t = setup();
+  const { a, room } = t.soloVsBot();
+  a.say({ t: 'pause' });
+  t.mgr.closeAll('server-restart');
+  assert.doesNotThrow(() => { t.ctl.cancel(room); t.ctl.cancel(room); t.mgr.drop(room); });
+  assert.equal(t.timers.length, 0);
+  assert.equal(t.rooms.size, 0);
+  assert.equal(t.ctl.inspect(room), undefined);
+  t.advance(1000); // nothing left to fire
 });
