@@ -4,6 +4,7 @@ import { PvpHud, buildPauseUi, formatTimer, type PvpHudProps } from '../../src/u
 import { Toast, DESYNC_TOAST } from '../../src/ui/pvp/Toast';
 import { BattlePopup } from '../../src/ui/PausePopup';
 import { OwnershipBar } from '../../src/ui/OwnershipBar';
+import { pauseRemaining, toPauseView } from '../../src/pvp/pause';
 
 type N = VNode<Record<string, unknown>>;
 function find(node: unknown, test: (n: N) => boolean, out: N[] = []): N[] {
@@ -73,6 +74,25 @@ describe('SeatLegend (SP05 T12)', () => {
     expect(text(byId(v, 'seat-legend-status-2'))).toBe('Eliminated');
     expect(text(byId(v, 'seat-legend-status-3'))).toBe('Bot');
     expect(byId(v, 'seat-legend-status-0')).toBeUndefined();
+  });
+  it('SP11: away chip with decreasing budget for player and spectator views; Paused for manual; clears on resume; never "bot took over"', () => {
+    const msg = { t: 'pause.state', epoch: 3, paused: true, tick: 40, unlimited: false, budgets: [30_000, 21_000, 30_000, null],
+      holds: [{ player: 1, reason: 'disconnect', connected: false, since: 3 }, { player: 2, reason: 'manual', connected: true, since: 2 }] } as const;
+    const pv = toPauseView(msg as never, 1000);
+    for (const seat of [0, null]) {
+      const chip = (at: number) => text(byId(SeatLegend(legend({ seat, pause: pv, remaining: pauseRemaining(pv, at) })), 'seat-legend-status-1'));
+      expect(chip(1000)).toBe('Away 0:21');
+      expect(chip(11_000)).toBe('Away 0:11'); // decreases
+      const v = SeatLegend(legend({ seat, pause: pv, remaining: pauseRemaining(pv, 1000) }));
+      expect(text(byId(v, 'seat-legend-status-2'))).toBe('Paused');
+      expect(byId(v, 'seat-legend-1')!.props['data-status']).toBe('away');
+      expect(JSON.stringify(v)).not.toMatch(/took over/i);
+    }
+    const back = SeatLegend(legend({ pause: toPauseView({ ...msg, paused: false, holds: [], epoch: 4 } as never, 2000), remaining: [30_000, 21_000, 30_000, null] }));
+    expect(byId(back, 'seat-legend-status-1')).toBeUndefined();
+    expect(byId(SeatLegend(legend({ pause: null })), 'seat-legend-status-1')).toBeUndefined();
+    const elim = SeatLegend(legend({ eliminatedAt: [-1, 50, -1, -1], pause: pv, remaining: pauseRemaining(pv, 1000) }));
+    expect(text(byId(elim, 'seat-legend-status-1'))).toBe('Eliminated');
   });
   it('colors from palettes by colorKey; spectator has no you/ally; eliminated wins', () => {
     const e = legendEntries(legend({ seat: null, eliminatedAt: [-1, -1, -1, 5] }));
