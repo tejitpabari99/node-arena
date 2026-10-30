@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HASH_INTERVAL, LockstepClient, type ClientMessage } from '@node-arena/net';
+import { HASH_INTERVAL, LockstepClient, RateLimiter, type ClientMessage } from '@node-arena/net';
 import type { Sim } from '@node-arena/sim';
 import { NetDriver } from '../../src/driver/net-driver';
 import { STEP_MS } from '../../src/driver';
@@ -192,5 +192,35 @@ describe('NetDriver catch-up hashing', () => {
     const hashes = s.sent.filter((m) => m.t === 'hash') as { t: 'hash'; tick: number }[];
     expect(s.view.tick).toBe(n);
     expect(hashes).toEqual([{ t: 'hash', tick: n, h: `h${n}` }]);
+  });
+});
+
+// SP08 Task 3 / AC7: long catch-up (resync and reconnect build the same fresh driver + full catchup stream).
+describe('NetDriver >=2,000-tick catch-up (AC7)', () => {
+  it.each([
+    ['resync: whole log in one burst', false],
+    ['reconnect: chunks arrive across frames', true],
+  ])('%s: no hash up to the catch-up target, zero rate-limited verdicts, first live checkpoint hashes', (_name, trickle) => {
+    const TARGET = 2400, CHUNK = 600;
+    const s = setup();
+    let frame = 0;
+    const limiter = new RateLimiter(() => frame * 16); // server hash limit (4/s) judged on 16 ms frames
+    let violations = 0, hashesSeen: number[] = [];
+    const judge = () => {
+      for (const m of s.sent.splice(0)) if (m.t === 'hash') { hashesSeen.push(m.tick); if (!limiter.hit('c', 'hash').ok) violations++; }
+    };
+    const chunks = Array.from({ length: TARGET / CHUNK }, (_, i) => ({ t: 'catchup', from: i * CHUNK, to: (i + 1) * CHUNK, cmds: [], done: i === TARGET / CHUNK - 1 }) as never);
+    const frameOnce = () => { s.d.advance(); frame++; judge(); };
+    if (trickle) for (const c of chunks) { s.d.push(c); frameOnce(); } else for (const c of chunks) s.d.push(c);
+    let guard = 0;
+    while (s.d.queued > 0 && guard++ < 100_000) frameOnce();
+    expect(s.view.tick).toBe(TARGET);
+    expect(hashesSeen).toEqual([]); // zero hashes at or below the catch-up target
+    expect(violations).toBe(0);
+    for (let i = TARGET; i < TARGET + HASH_INTERVAL; i++) s.tickMsg(i);
+    while (s.d.queued > 0) frameOnce();
+    expect(hashesSeen).toEqual([TARGET + HASH_INTERVAL]); // first live checkpoint hashes, matching the sim
+    expect(violations).toBe(0);
+    hashesSeen = [];
   });
 });
