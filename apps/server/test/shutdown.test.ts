@@ -15,7 +15,7 @@ test('healthz shape', async () => {
   try {
     const j = await (await fetch(`http://127.0.0.1:${srv.port}/healthz`)).json() as Record<string, unknown>;
     assert.equal(j.ok, true);
-    for (const k of ['rooms', 'conns', 'running', 'lateP99Ms', 'uptimeS']) assert.equal(typeof j[k], 'number', k);
+    for (const k of ['rooms', 'conns', 'running', 'lateP99Ms', 'lateP50Ms', 'rss', 'cpuMs', 'uptimeS']) assert.equal(typeof j[k], 'number', k);
     const v = j.versions as Record<string, unknown>;
     assert.equal(v.protocol, PROTOCOL_VERSION);
     for (const k of Object.keys(content.versions)) assert.equal(v[k], (content.versions as Record<string, unknown>)[k], k);

@@ -110,9 +110,12 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
   const http: Server = createServer((req, res) => {
     const path = (req.url ?? '').split('?')[0];
     if (req.method === 'GET' && path === '/healthz') {
+      const late = clock.lateness();
+      const cpu = process.cpuUsage();
       const body = JSON.stringify({
         ok: true, rooms: rooms.roomCount(), conns: hub.connCount(),
-        running: rooms.runningCount(), draining: phase !== 'serving', lateP99Ms: clock.lateness().p99,
+        running: rooms.runningCount(), draining: phase !== 'serving', lateP99Ms: late.p99, lateP50Ms: late.p50,
+        rss: process.memoryUsage().rss, cpuMs: Math.round((cpu.user + cpu.system) / 1000),
         uptimeS: Math.floor((Date.now() - startedAt) / 1000),
         versions: { ...content.versions, protocol: PROTOCOL_VERSION },
       });

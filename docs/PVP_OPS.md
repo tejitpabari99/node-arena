@@ -120,6 +120,31 @@ Server pings (ws protocol) every 3 s and closes a conn silent for 7 s (4004); de
 3. Kill the client network (DevTools -> Network -> Offline, or disable Wi-Fi) during a match. Expect the other side to see the disconnect hold start within about 8 s (`fly logs` shows the 4004 close).
 4. If step 1 drops the tab, or step 3 takes much longer than 8 s, the edge forwards neither ping source as assumed: record the observed timings and adjust `HEARTBEAT_INTERVAL_MS` / `HEARTBEAT_TIMEOUT_MS` (SP07 PRD, section Heartbeat) before play-testing with friends.
 
+## Capacity
+
+Load smoke: N bot-filled rooms against the real server loop. Report-only (exit 0 unless `--strict`).
+
+```sh
+pnpm load:smoke                                  # 20 rooms, 45 s, in-process, forced-GC leak check
+pnpm load:smoke -- --spectators 3                # K spectators/room at the midpoint (catch-up cost)
+pnpm load:smoke -- --churn                       # end/restart a room every 10 s (leak check)
+pnpm load:smoke -- --url wss://<app>.fly.dev --rooms 5 --json out.json   # URL mode (real Fly; per-IP limits apply)
+```
+
+Reading it: per-2 s table of running rooms, tick lateness p50/p99 (`late`), RSS, CPU % of one vCPU (and per room), frames/s, event-loop p99. Verdicts: p99 lateness < 25 ms, peak RSS < 200 MB, all rooms stayed `running`, no unexpected `room.closed`/`error`. The lateness window is the last 400 clock wakes (~20 s), so the first samples include ramp; judge the final window. Leak signal = `heapUsed` after forced GC vs baseline (RSS rarely shrinks after GC; ignore it for leaks).
+
+Measured 2026-10-30 (4 vCPU box, in-process: harness shares the server process, so RSS/CPU are upper bounds; full table in `docs/agent_files/feat-pvp-20261028-1435/10-load-smoke/load-report-2026-10-30.md`):
+
+| Run (20 rooms, 45 s) | p99 late (final / max) | RSS peak | CPU mean (per room) | Notes |
+|---|---|---|---|---|
+| default | 3.4 / 123 ms | 205.8 MB | 10.3% (0.53%) | RSS FAIL borderline; running dipped to 13 (harness rematch) |
+| `--spectators 3` | 2.1 / 117 ms | 192.1 MB | 13.7% (0.71%) | catch-up p99 2.8 ms, 0.85 KB |
+| `--churn` | 2.3 / 112 ms | 200.2 MB | 12.7% (0.66%) | heapUsed after GC ~45 MB, same as other runs: no leak |
+
+Max lateness is ramp (first ~8 s). The "rooms running" FAIL is a harness artifact (Duel S bot matches end ~34 s and rematch), not server rooms closing.
+
+If a run FAILs: lower `MAX_ROOMS` (fly secret/env) and/or move to a bigger VM (`fly scale vm` / `fly scale memory`). Owner: rerun in URL mode against Fly (needs several client IPs or a temporary limit bump for 20 rooms), compare with `/healthz` `lateP99Ms`/`rss`, then decide `MAX_ROOMS` (default 40) and VM size.
+
 ## Cost
 
 One `shared-cpu-1x` / 256 MB machine, always on (`auto_stop_machines = 'off'`, `min_machines_running = 1`): a few dollars per month. Check `fly dashboard -a node-arena-server` -> Billing. To pause spend: `fly scale count 0 -a node-arena-server` (PvP offline until `fly scale count 1`).

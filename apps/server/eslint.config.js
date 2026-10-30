@@ -2,7 +2,7 @@ import tseslint from 'typescript-eslint';
 
 /** Game server: Node + ws allowed; must never import the web client. */
 export function createServerPreset(root = '.') {
-  const files = [`${root}/src/**/*.ts`, `${root}/test/**/*.ts`];
+  const files = [`${root}/src/**/*.ts`, `${root}/test/**/*.ts`, `${root}/scripts/**/*.ts`];
   return [
     { files, languageOptions: { parser: tseslint.parser } },
     { files, rules: {
