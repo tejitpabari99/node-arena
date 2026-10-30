@@ -44,7 +44,7 @@ function setup(opts: { maxRooms?: number; hasPendingDeadline?: (r: Room) => bool
     randomInt: () => (n++ % 31),
     onStart: (r, m) => { starts.push(m); ctl.onStart(r, m); },
     onMatchMessage: ctl.onMessage,
-    onCatchUp: ctl.catchUp,
+    onCatchUp: ctl.catchUp, endOf: ctl.endOf,
     ...(opts.maxRooms !== undefined ? { maxRooms: opts.maxRooms } : {}),
     ...(opts.hasPendingDeadline ? { hasPendingDeadline: opts.hasPendingDeadline } : {}),
     timers: { setTimeout: (fn) => { timerFns.push(fn); return timerFns.length; }, clearTimeout: () => {} },
@@ -263,15 +263,16 @@ test('after end both leave -> each can create again; room deleted when empty', (
   assert.equal(t.mgr.roomCount(), 2);
 });
 
-test('disconnect after end frees the player', () => {
+test('disconnect after end keeps binding; token reconnect gets the stored end', () => {
   const t = setup();
   const { a, match } = t.room();
   finish(t);
   a.drop();
-  const a2 = t.client('A', 1);
-  a2.say({ t: 'room.create' });
-  assert.equal(a2.of('error').length, 0);
-  assert.notEqual(a2.of('room.joined').at(-1)!.code, match.code);
+  const a1 = t.client('A', 1);
+  a1.say({ t: 'room.create' });
+  assert.equal(a1.of('error').at(-1)?.code, 'bad-lobby', 'still bound to the ended room');
+  assert.equal(a1.of('room.joined').at(-1)!.code, match.code);
+  assert.equal(a1.of('end').length, 1, 'reconnect after end gets the immutable result');
 });
 
 test('maxRooms+1 create refused', () => {
@@ -425,14 +426,20 @@ test('T14 spectators do not count: running room, seats gone, spectator connected
   assert.equal(t.mgr.room(match.code)!.state, 'running');
 });
 
-test('T14 hard match cap: limit + 2 min aborts a running room, even with a pending deadline', () => {
-  const t = setup({ hasPendingDeadline: () => true });
+test('T14 hard match cap: limit + 2 min aborts a running room; a paused room is exempt', () => {
+  let pending = true;
+  const t = setup({ hasPendingDeadline: () => pending });
   const { a, match } = t.room();
   t.tickAll();
   const limitMs = (match.timeLimitTicks * 1000) / 20;
   assert.ok(limitMs > 0);
+  t.setNow(match.startAt + limitMs + MATCH_CAP_EXTRA_MS + 60_000);
+  t.mgr.gc();
+  assert.ok(t.mgr.room(match.code), 'paused (pending deadline): never capped');
+  pending = false;
   t.setNow(match.startAt + limitMs + MATCH_CAP_EXTRA_MS - 1);
   t.mgr.gc();
+  // (the earlier now was beyond the cap; rewind is fine for the fake clock)
   assert.ok(t.mgr.room(match.code));
   t.setNow(match.startAt + limitMs + MATCH_CAP_EXTRA_MS);
   t.mgr.gc();
