@@ -14,6 +14,7 @@
     "test:bots": "pnpm --filter @node-arena/bots test",
     "test:bots:golden": "pnpm --filter @node-arena/bots test:golden",
     "test:net": "pnpm --filter @node-arena/net test",
+    "load:smoke": "pnpm --filter @node-arena/server exec tsx --expose-gc scripts/load-smoke.ts",
     "test:server": "pnpm --filter @node-arena/server test",
     "test:tools": "pnpm --filter @node-arena/tools test",
     "test:web": "pnpm --filter @node-arena/web test",
