@@ -32,7 +32,7 @@ function fake() {
   const msgCbs = new Set<(m: ServerMessage) => void>(), stCbs = new Set<(s: ConnState) => void>();
   let closed = false, retried = 0;
   const c: PvpConnection & { push(m: ServerMessage): void; setState(s: ConnState): void } = {
-    state: 'connected',
+    state: 'connected', info: { attempt: 0, nextRetryAt: null, outageStartedAt: null, lastCloseCode: null },
     send(m) { sent.push(m); return true; },
     onMessage(cb) { msgCbs.add(cb); return () => msgCbs.delete(cb); },
     onState(cb) { stCbs.add(cb); return () => stCbs.delete(cb); },

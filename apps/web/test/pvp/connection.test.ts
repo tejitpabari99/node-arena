@@ -98,6 +98,30 @@ describe('PvpConnection', () => {
     expect(h.socks.length).toBe(7);
   });
 
+  it('info: attempt / nextRetryAt / outageStartedAt / lastCloseCode across a retry loop; readable in onState', () => {
+    const h = setup(() => 0.5);
+    expect(h.conn.info).toEqual({ attempt: 0, nextRetryAt: null, outageStartedAt: null, lastCloseCode: null });
+    const seen: unknown[] = [];
+    h.conn.onState((s) => seen.push({ s, ...h.conn.info }));
+    h.last().open(); h.last().drop(1006);
+    expect(h.conn.info).toEqual({ attempt: 1, nextRetryAt: 500, outageStartedAt: 0, lastCloseCode: 1006 });
+    expect(seen.at(-1)).toMatchObject({ s: 'reconnecting', attempt: 1, nextRetryAt: 500 });
+    h.fire();
+    expect(h.conn.info.nextRetryAt).toBeNull();
+    h.last().drop(1006);
+    expect(h.conn.info).toMatchObject({ attempt: 2, nextRetryAt: 500 + 1000, outageStartedAt: 0 });
+  });
+
+  it('info + 4005: stays reconnecting with nextRetryAt >= 5.5 s and lastCloseCode 4005, never lost', () => {
+    const h = setup(() => 0.5);
+    h.last().open(); welcome(h); h.last().drop(CLOSE_RATE_LIMITED);
+    expect(h.conn.state).toBe('reconnecting');
+    expect(h.conn.info.lastCloseCode).toBe(CLOSE_RATE_LIMITED);
+    expect(h.conn.info.nextRetryAt! - 0).toBeGreaterThanOrEqual(CATCHUP_MIN_GAP_MS);
+    h.fire(); h.last().open(); welcome(h);
+    expect(h.conn.state).toBe('connected');
+  });
+
   it('no reconnect on close 4000 or 4003', () => {
     for (const code of [4000, 4003]) {
       const h = setup(); h.last().open(); h.last().drop(code);

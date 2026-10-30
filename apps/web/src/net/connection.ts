@@ -38,8 +38,21 @@ export interface PvpConnectionOpts {
   now?: () => number;
 }
 
+/** Client-local backoff state for the banner (not wire). */
+export interface ConnInfo {
+  /** Reconnect attempts scheduled in the current outage (0 once stable). */
+  attempt: number;
+  /** Absolute `now()` ms of the pending reconnect, null when none is scheduled. */
+  nextRetryAt: number | null;
+  outageStartedAt: number | null;
+  /** Close code of the most recent socket close, null before any. */
+  lastCloseCode: number | null;
+}
+
 export interface PvpConnection {
   readonly state: ConnState;
+  /** Current backoff info; already updated when `onState` callbacks run. */
+  readonly info: ConnInfo;
   send(msg: ClientMessage): boolean;
   onMessage(cb: (msg: ServerMessage) => void): () => void;
   onState(cb: (state: ConnState) => void): () => void;
@@ -70,6 +83,8 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
   let pingId = 0;
   let stableTimer: unknown = null;
   let rateLimited = false;
+  let nextRetryAt: number | null = null;
+  let lastCloseCode: number | null = null;
 
   const setState = (s: ConnState) => {
     if (state === s) return;
@@ -97,6 +112,7 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
 
   const open = () => {
     timer = null;
+    nextRetryAt = null;
     const s = o.createSocket(o.url);
     sock = s;
     s.onopen = () => {
@@ -124,6 +140,7 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
       sock = null;
       stopPing();
       stopStable();
+      lastCloseCode = ev.code;
       rateLimited = ev.code === CLOSE_RATE_LIMITED;
       if (ev.code === CLOSE_SUPERSEDED) { setState('superseded'); return; }
       if (ev.code === CLOSE_VERSION) { setState('refused'); return; }
@@ -138,8 +155,9 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
     let delay = backoffDelay(attempt, rand());
     if (rateLimited) delay = Math.max(delay, RATE_LIMITED_MIN_DELAY_MS);
     rateLimited = false;
-    if (t - outageStart + delay > GIVE_UP_MS) { setState('lost'); return; }
+    if (t - outageStart + delay > GIVE_UP_MS) { nextRetryAt = null; setState('lost'); return; }
     attempt++;
+    nextRetryAt = t + delay;
     setState('reconnecting');
     timer = setT(open, delay);
   };
@@ -148,6 +166,7 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
 
   return {
     get state() { return state; },
+    get info() { return { attempt, nextRetryAt, outageStartedAt: outageStart, lastCloseCode }; },
     send(msg) {
       if (state !== 'connected' || !sock) return false;
       try { sock.send(encode(msg)); return true; } catch { return false; }
@@ -162,7 +181,8 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
     },
     close() {
       closed = true;
-      terminal(state);
+      nextRetryAt = null;
+    terminal(state);
     },
   };
 }
