@@ -5,7 +5,7 @@ date: 2026-10-30
 ---
 # Online PvP: PRD index
 
-M1 merged in #39; owner local play-test passed (2026-10-29). M2 merged to main (#40, 993b796); M3 (SP08-SP11) PRDs approved on `feat/pvp-m3`; first Fly deployment and production acceptance remain pending. [M1 implementation and validation summary](code-2026-10-29-0300.md).
+M1 merged in #39; owner local play-test passed (2026-10-29). M2 merged to main (#40, 993b796); M3 (SP08-SP11) implemented on `feat/pvp-m3` (acceptance map: [11-reconnect-polish/m3-acceptance-map.md](11-reconnect-polish/m3-acceptance-map.md); review: [review-2026-10-30-m3.md](review-2026-10-30-m3.md)); first Fly deployment and production acceptance remain pending. [M1 implementation and validation summary](code-2026-10-29-0300.md).
 
 Live private-room PvP (2-4 seats, teams, bots, spectators) via deterministic lockstep + server referee sim on Fly.io. Full rationale, verified facts and decision log: [brainstorm.md](brainstorm.md). Milestones: M1 = 2-tab local 1v1 owner play-test; M2 = full lobby/teams/bots/spectators/rematch/maps/Fly deploy (minimal play-link startup included in M1); M3 = broader reconnect hardening, desync resync, load test. **M2 also includes [SP07 pause/Quit/window-close forfeit](07-pause-forfeit/PRD.md) (settled, approved) and its minimum reconnect/catch-up.**
 

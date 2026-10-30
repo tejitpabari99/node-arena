@@ -23,7 +23,7 @@ function ConnText({ conn, info, now }: { conn: ConnState; info?: ConnInfo | null
 }
 /**
  * Connection status banner; null when connected (the catch-up overlay then owns progress). connecting/reconnecting are informational,
- * lost has Retry, refused has Reload, superseded is terminal. Fixed at the top so it never covers the pause overlay or countdown.
+ * lost has Retry, refused has Reload, superseded is terminal. Fixed at the bottom (stacked above the drain banner) so it never covers the ownership bar, pause overlay, countdown or HUD controls.
  */
 export function ConnBanner({ conn, info, onRetry, now = Date.now }: { conn: ConnState | null; info?: ConnInfo | null | undefined; onRetry(): void; now?: () => number }) {
   if (!conn || !CONN_BANNER_TEXT[conn]) return null;

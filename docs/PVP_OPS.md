@@ -110,6 +110,10 @@ Fly `fly.toml [env]` sets `ALLOWED_ORIGINS`; the Dockerfile sets `PORT=8080`, `C
 | `DRAIN_MS` | 30000 | SIGTERM drain window, 0-120000; 0 = immediate close. Keep `kill_timeout` in `fly.toml` above `DRAIN_MS/1000 + 3` (see [Drain on SIGTERM](#drain-on-sigterm)) |
 | `LOG_LEVEL` | info | |
 
+## Desync resync
+
+A client that detects a hash mismatch (`desync`), a tick gap or a rejected push sends one `resync`; the server replies like a reconnect attach (`start`, full chunked `catchup`, `pause.state`, stored `end`) without touching the sim or log. Limits: 1 per 10 s per player, plus the 5 s per-player catch-up gap; a refused resync gets `error{rate-limited, 'resync too frequent'}` and the client retries once after 5.5 s, then shows "Leave and rejoin". Max 3 resyncs per match client-side. Spectators resync the same way. Grep logs for `resync` (`outcome` allowed, limited, no-match).
+
 ## Close codes
 
 | Code | Meaning |
