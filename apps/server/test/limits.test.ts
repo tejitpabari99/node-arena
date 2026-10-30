@@ -4,6 +4,7 @@ import { PROTOCOL_VERSION, type ServerMessage } from '@node-arena/net';
 import type { ClockRoom } from '../src/clock.js';
 import { DEFAULT_CONTENT_DIR } from '../src/config.js';
 import { loadServerContent } from '../src/content.js';
+import { Conn } from '../src/conn.js';
 import { createHub } from '../src/hub.js';
 import { IpLimits, TokenBucket } from '../src/limits.js';
 import { createMatchController } from '../src/match.js';
@@ -39,9 +40,10 @@ function setup(opts: { maxRooms?: number; maxConns?: number } = {}) {
   const ipLimits = new IpLimits(() => now);
   const ctl = createMatchController({ clock, now: () => now, log });
   const starts: MatchStart[] = [];
+  const rooms: Parameters<typeof ctl.catchUp>[0][] = [];
   const mgr = createRoomManager({
     content, clock, now: () => now, inputDelay: 3, log, ipLimits, maxRooms: opts.maxRooms ?? 40,
-    onStart: (r, m) => { starts.push(m); ctl.onStart(r, m); },
+    onStart: (r, m) => { starts.push(m); rooms.push(r); ctl.onStart(r, m); },
     onMatchMessage: ctl.onMessage, onCatchUp: ctl.catchUp,
   });
   const hub = createHub({
@@ -56,7 +58,7 @@ function setup(opts: { maxRooms?: number; maxConns?: number } = {}) {
     return s;
   };
   const tickAll = () => { for (const r of [...added]) r.tick(); };
-  return { client, hub, mgr, logs, tickAll, starts, advance: (ms: number) => { now += ms; } };
+  return { ctl, rooms, client, hub, mgr, logs, tickAll, starts, advance: (ms: number) => { now += ms; } };
 }
 
 test('41st room refused with room-full; 40 fit (distinct IPs)', () => {
@@ -246,4 +248,46 @@ test('IpLimits: 31st new connection/min refused (released slots still count); wi
   assert.ok(l.acquireConn('1.1.1.2'));
   now += 61_000;
   assert.ok(l.acquireConn('1.1.1.1'));
+});
+
+function catchUpConn(buffered: number) {
+  const s = fakeSocket('9.9.9.9');
+  s.bufferedAmount = buffered;
+  const hooks = { onHello() {}, onMessage() {}, onClose() {} };
+  const c = new Conn(1, s as never, hooks, { setTimeout: () => 0, clearTimeout: () => {} }, () => {});
+  return { s, c };
+}
+
+function startedMatch() {
+  const t = setup();
+  const a = t.client('5.5.5.5'), b = t.client('6.6.6.6');
+  a.say({ t: 'room.create' });
+  const code = a.of('room.joined')[0]!.code;
+  b.say({ t: 'room.join', code, role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'lobby.start' });
+  const room = t.rooms[0]!;
+  const ls = t.ctl.inspect(room)!;
+  // 3 chunks of ~1 MB => > 2 MB catch-up in one synchronous turn.
+  const pad = 'x'.repeat(1_000_000);
+  (ls.log as { range: unknown }).range = () => [0, 1, 2].map((i) => ({ from: i, to: i + 1, cmds: [{ pad }] }));
+  return { t, room };
+}
+
+test('catch-up > 2 MB to a low-buffer conn completes (no per-chunk 4006)', () => {
+  const { t, room } = startedMatch();
+  const { s, c } = catchUpConn(0);
+  t.ctl.catchUp(room, c);
+  assert.equal(s.closed, undefined);
+  const chunks = s.of('catchup');
+  assert.equal(chunks.length, 3);
+  assert.equal(chunks.at(-1)?.done, true);
+});
+
+test('catch-up to a conn already over cap closes 4006 before sending', () => {
+  const { t, room } = startedMatch();
+  const { s, c } = catchUpConn(3 * 1024 * 1024);
+  t.ctl.catchUp(room, c);
+  assert.equal(s.closed, 4006);
+  assert.equal(s.of('catchup').length, 0);
 });

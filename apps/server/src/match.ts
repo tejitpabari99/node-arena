@@ -308,10 +308,12 @@ export function createMatchController(deps: MatchDeps): MatchController {
   const catchUp = (room: Room, conn: Conn): void => {
     const ls = servers.get(room);
     if (ls === undefined) return;
+    if (conn.overBuffer()) return; // already over the cap: closed (4006) before queueing the log
     const next = ls.nextTick;
     const chunks = ls.log.range(0, next);
-    if (chunks.length === 0) conn.send({ t: 'catchup', from: 0, to: 0, cmds: [], done: true });
-    chunks.forEach((ch, i) => conn.send({ t: 'catchup', from: ch.from, to: ch.to, cmds: [...ch.cmds], done: i === chunks.length - 1 }));
+    // Chunks bypass the per-send cap: a full log (~2 MB) must not self-close a legitimate reconnect.
+    if (chunks.length === 0) conn.sendUnchecked({ t: 'catchup', from: 0, to: 0, cmds: [], done: true });
+    chunks.forEach((ch, i) => conn.sendUnchecked({ t: 'catchup', from: ch.from, to: ch.to, cmds: [...ch.cmds], done: i === chunks.length - 1 }));
   };
 
   const onSeatDisconnect = (room: Room, seat: number): void => {

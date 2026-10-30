@@ -81,8 +81,14 @@ export class Conn {
     this.socket.send(raw);
   }
 
+  /** Catch-up chunk: skips the per-send backpressure check (caller checks `overBuffer` once up front). */
+  sendUnchecked(msg: ServerMessage): void {
+    if (this.closed) return;
+    this.socket.send(encode(msg));
+  }
+
   /** Slow/abusive reader: close instead of queueing more (bounds ws memory). */
-  private overBuffer(): boolean {
+  overBuffer(): boolean {
     if (this.socket.bufferedAmount <= BACKPRESSURE_CLOSE_BYTES) return false;
     this.close(CLOSE_BACKPRESSURE, 'backpressure');
     return true;

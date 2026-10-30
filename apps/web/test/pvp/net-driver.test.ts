@@ -183,4 +183,14 @@ describe('NetDriver catch-up hashing', () => {
     expect(hashes.length).toBeGreaterThan(0);
     expect(hashes.every((h) => h.tick >= target)).toBe(true);
   });
+
+  it('backlog drain: at most one (latest) hash per frame', () => {
+    const s = setup();
+    const n = HASH_INTERVAL * 4; // 4 checkpoints, one frame (no clock => unbounded budget)
+    for (let i = 0; i < n; i++) s.tickMsg(i);
+    s.d.advance();
+    const hashes = s.sent.filter((m) => m.t === 'hash') as { t: 'hash'; tick: number }[];
+    expect(s.view.tick).toBe(n);
+    expect(hashes).toEqual([{ t: 'hash', tick: n, h: `h${n}` }]);
+  });
 });
