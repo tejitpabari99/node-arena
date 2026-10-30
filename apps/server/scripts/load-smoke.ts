@@ -1,6 +1,6 @@
 /**
  * Load smoke (SP10): N bot-filled rooms against the real server loop. Report-only unless --strict.
- * Usage: pnpm load:smoke [-- --rooms 20 --seconds 60 --level <id> --json <path> --url <wss://host> --origin <o> --spectators K --churn [--churn-every s] --strict]
+ * Usage: pnpm load:smoke [-- --rooms 20 --seconds 45 --level <id> --json <path> --url <wss://host> --origin <o> --spectators K --churn [--churn-every s] --strict]
 
  * Fidelity: thin ws clients (no sim, no hash/cmd); bots run server-side as in production.
  */
@@ -234,6 +234,7 @@ export async function runLoad(opts: Opts): Promise<Report> {
   const samples: Sample[] = [];
   try {
     const h0 = await health(httpUrl);
+    const heap0 = process.memoryUsage().heapUsed;
     const { protocol: _p, ...versions } = h0.versions;
     const env: Env = { wsUrl, versions, spoofIp: !urlMode, origin: opts.origin, runId: randomBytes(8).toString('hex') };
     const levelFor = (i: number): string => opts.level ?? LEVELS[i % LEVELS.length]!;
@@ -317,13 +318,15 @@ export async function runLoad(opts: Opts): Promise<Report> {
     for (let i = 0; i < 100 && clients.some((c) => c.phase !== 'dead'); i++) await sleep(100);
     await sleep(500);
     const gcFn = (globalThis as { gc?: () => void }).gc;
+    const heapBeforeGcMb = mb(process.memoryUsage().heapUsed);
     if (!urlMode && gcFn !== undefined) { gcFn(); await sleep(200); gcFn(); }
     const hEnd = await health(httpUrl);
     const leak = {
       rssMbBaseline: mb(h0.rss), rssMbAfter: mb(hEnd.rss), rssMbDelta: r2(mb(hEnd.rss) - mb(h0.rss)),
+      heapMbBaseline: mb(heap0), heapMbBeforeGc: heapBeforeGcMb, heapMbAfterGc: mb(process.memoryUsage().heapUsed), heapMbDelta: r2(mb(process.memoryUsage().heapUsed) - mb(heap0)),
       forcedGc: !urlMode && gcFn !== undefined, roomsAfter: hEnd.rooms,
     };
-    events.push(leak.forcedGc ? 'leak: rooms closed, forced GC (--expose-gc), RSS after vs baseline (informational)' : 'leak: rooms closed, no forced GC (' + (urlMode ? 'url mode' : 'run with --expose-gc') + '); RSS delta is informational');
+    events.push(leak.forcedGc ? 'leak: rooms closed, forced GC (--expose-gc), heapUsed (leak signal) and RSS after vs baseline (informational; RSS rarely shrinks)' : 'leak: rooms closed, no forced GC (' + (urlMode ? 'url mode' : 'run with --expose-gc') + '); RSS delta is informational');
     const lat = [...stats.specLatencyMs];
     const spectators = K > 0 ? {
       perRoom: K, attached: specs.length, catchupDone: lat.length, errors: stats.specErrors.length,
@@ -375,7 +378,7 @@ export function printReport(r: Report): void {
 }
 
 function parseArgs(argv: string[]): Opts {
-  const o: Opts = { rooms: 20, seconds: 60, strict: false };
+  const o: Opts = { rooms: 20, seconds: 45, strict: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
     const val = (): string => { const v = argv[++i]; if (v === undefined) throw new Error(`${a} needs a value`); return v; };
