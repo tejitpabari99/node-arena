@@ -107,6 +107,10 @@ test('server: tolerant of unknown fields, ignorable unknown t, still validates',
   assert.equal(code(parseServerMessage('{"t":"pong","id":-1,"tick":2}')), 'bad-message');
   assert.equal(code(parseServerMessage('{"t":"desync","tick":20,"serverHash":"nothex"}')), 'bad-message');
   assert.equal(code(parseServerMessage('{"t":"error","code":"made-up"}')), 'bad-message');
+  assert.deepEqual(parseServerMessage('{"t":"server.draining","deadlineMs":30000}'), { ok: true, msg: { t: 'server.draining', deadlineMs: 30000 } });
+  assert.deepEqual(parseServerMessage('{"t":"error","code":"draining"}'), { ok: true, msg: { t: 'error', code: 'draining' } });
+  for (const bad of ['{"t":"server.draining"}', '{"t":"server.draining","deadlineMs":-1}', '{"t":"server.draining","deadlineMs":1.5}', '{"t":"server.draining","deadlineMs":"30"}'])
+    assert.equal(code(parseServerMessage(bad)), 'bad-message', bad);
   assert.equal(code(parseServerMessage('nope')), 'bad-json');
   assert.equal(code(parseServerMessage('[1]')), 'bad-message');
   assert.equal(code(parseServerMessage(' '.repeat(2 ** 20 + 1))), 'too-large');

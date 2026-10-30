@@ -88,7 +88,7 @@ describe('controller pause.state', () => {
       raf: () => 0, caf: () => {}, now: () => t,
     });
     ctl.open(); ctl.create();
-    push({ t: 'welcome', pv: 2, playerId: 'p', serverVersions: versions });
+    push({ t: 'welcome', pv: 3, playerId: 'p', serverVersions: versions });
     push({ t: 'room.joined', code: 'ABCD', you: { seat: 0, host: true } });
     const start = (matchId = 'm'): ServerMessage => ({ t: 'start', matchId, levelId: 'l', simHash: '0123456789abcdef', seed: 1, seats: [{ player: 0, kind: 'human', team: 0, nick: 'a' }, { player: 1, kind: 'human', team: 1, nick: 'b' }], youPlayer: 0, inputDelay: 2, countdownMs: 3000, timeLimitTicks: 100, hashInterval: 10 });
     return { ctl, push, start, setT: (x: number) => { t = x; }, view, sent };

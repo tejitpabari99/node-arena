@@ -59,6 +59,7 @@ export const ERROR_STRINGS: Record<ErrorCode, string> = {
   'internal': 'Server error. Try again.',
   'paused': 'The match is paused.',
   'no-match': 'No match is running.',
+  'draining': "Server restarting - you can't start a new match.",
 };
 export const errorString = (code: string): string => (ERROR_CODES as readonly string[]).includes(code) ? ERROR_STRINGS[code as ErrorCode] : 'Something went wrong.';
 

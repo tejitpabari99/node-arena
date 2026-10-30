@@ -6,7 +6,7 @@ import type { EndOutcome } from './outcome.js';
 export const ERROR_CODES = [
   'bad-json', 'too-large', 'bad-message', 'unknown-type', 'version-mismatch', 'not-authed', 'not-in-room',
   'not-host', 'not-your-seat', 'rate-limited', 'room-full', 'room-not-found', 'spectators-full', 'bad-lobby',
-  'not-ready', 'match-in-progress', 'desync', 'internal', 'paused', 'no-match',
+  'not-ready', 'match-in-progress', 'desync', 'internal', 'paused', 'no-match', 'draining',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
@@ -73,11 +73,13 @@ export type PauseStateMsg = {
   holds: PauseHold[]; budgets: (number | null)[];
 };
 export type StartCancelMsg = { t: 'start.cancel'; matchId: string };
+/** Server is draining for a restart (SP09): `deadlineMs` = remaining ms (relative, skew-safe like `start`). */
+export type ServerDrainingMsg = { t: 'server.draining'; deadlineMs: number };
 export type ErrorMsg = { t: 'error'; code: ErrorCode; detail?: string };
 
 export type ServerMessage =
   | WelcomeMsg | RoomJoinedMsg | LobbyStateMsg | RoomClosedMsg | StartMsg | TickMsg | CatchupMsg
-  | TicksMsg | DesyncMsg | SeatStatusMsg | EndMsg | PongMsg | PauseStateMsg | StartCancelMsg | ErrorMsg;
+  | TicksMsg | DesyncMsg | SeatStatusMsg | EndMsg | PongMsg | PauseStateMsg | StartCancelMsg | ServerDrainingMsg | ErrorMsg;
 
 export type ClientMessageType = ClientMessage['t'];
 export type ServerMessageType = ServerMessage['t'];

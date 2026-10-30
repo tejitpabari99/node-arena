@@ -175,7 +175,7 @@ function clientMsg(o: Rec): ClientMessage {
 
 const SERVER_TYPES = [
   'welcome', 'room.joined', 'lobby.state', 'room.closed', 'start', 'tick', 'catchup', 'ticks', 'desync',
-  'seat.status', 'end', 'pong', 'pause.state', 'start.cancel', 'error',
+  'seat.status', 'end', 'pong', 'pause.state', 'start.cancel', 'server.draining', 'error',
 ] as const;
 
 function serverMsg(o: Rec): ServerMessage {
@@ -240,6 +240,7 @@ function serverMsg(o: Rec): ServerMessage {
         budgets: arr(o.budgets, 4, (x) => (x === null ? null : typeof x === 'number' && Number.isInteger(x) && x >= 0 && x <= 30000 ? x : bad())),
       };
     case 'start.cancel': return { t: 'start.cancel', matchId: str(o.matchId) };
+    case 'server.draining': return { t: 'server.draining', deadlineMs: int(o.deadlineMs) };
     case 'pong': return { t: 'pong', id: int(o.id), tick: int(o.tick) };
     case 'error':
       return withOpt(
