@@ -10,9 +10,10 @@ export function resultTitle(outcome: EndOutcome, seat: number | null, nicks: Rec
 }
 export interface PvpResultProps {
   outcome: EndOutcome; seat: number | null; ranking?: Placement[] | null; seats?: ReadonlyArray<StartSeat> | undefined;
+  /** SP09: server restart notice received; Rematch is disabled. */ draining?: boolean;
   onLeave(): void; onRematch?(): void;
 }
-export function PvpResult({ outcome, seat, ranking = null, seats, onLeave, onRematch }: PvpResultProps) {
+export function PvpResult({ outcome, seat, ranking = null, seats, draining = false, onLeave, onRematch }: PvpResultProps) {
   const nicks = seatNicks(seats), teamWin = outcome.winners.length > 1;
   return <div data-testid="pvp-result"><BattlePopup title={resultTitle(outcome, seat, nicks)}>
     {teamWin && seat !== null && <p data-testid="result-team">{outcome.winners.includes(seat) ? 'Your team won' : `${names(outcome.winners, nicks)} won`}</p>}
@@ -21,7 +22,7 @@ export function PvpResult({ outcome, seat, ranking = null, seats, onLeave, onRem
         <span class="rank">{p.rank}</span> <span class="nick">{names(p.seats, nicks)}</span> <span class="team">{`Team ${p.team + 1}`}</span>
         {' '}<span class="buildings">{`${p.buildings} buildings`}</span> <span class="troops">{`${p.troops} troops`}</span>{p.eliminatedAt !== null && <span class="out"> out</span>}
       </li>)}</ol>}
-    {seat !== null && onRematch && <button class="battle-action primary" data-testid="pvp-rematch" onClick={onRematch}>Rematch</button>}
+    {seat !== null && onRematch && <button class="battle-action primary" data-testid="pvp-rematch" disabled={draining} onClick={onRematch}>Rematch</button>}
     <button class="battle-action primary" data-testid="pvp-result-leave" onClick={onLeave}>Leave</button>
   </BattlePopup></div>;
 }

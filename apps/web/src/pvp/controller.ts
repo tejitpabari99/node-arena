@@ -9,7 +9,7 @@ import { pauseRemaining, toPauseView, type PauseView } from './pause';
 import type { Identity } from '../net/identity';
 import type { RoomLink } from '../net/links';
 
-export type PvpScreen = 'idle' | 'menu' | 'connecting' | 'lobby' | 'countdown' | 'playing' | 'result';
+export type PvpScreen = 'idle' | 'menu' | 'connecting' | 'lobby' | 'countdown' | 'playing' | 'result' | 'restarted';
 export type PvpRole = 'play' | 'watch';
 
 export interface PvpSnapshot {
@@ -36,6 +36,8 @@ export interface PvpSnapshot {
   error: string | null;
   serverUrl: string | null;
   pvpUnavailable: boolean;
+  /** SP09: server restart notice; `deadlineAt` is on the controller clock (`options.now`). Null when no notice received. */
+  draining: { deadlineAt: number } | null;
 }
 
 export const ERROR_STRINGS: Record<ErrorCode, string> = {
@@ -63,8 +65,11 @@ export const ERROR_STRINGS: Record<ErrorCode, string> = {
 };
 export const errorString = (code: string): string => (ERROR_CODES as readonly string[]).includes(code) ? ERROR_STRINGS[code as ErrorCode] : 'Something went wrong.';
 
+/** SP09 D11: terminal strings after the server restarted under a room. */
+export const RESTARTED_MATCH_STRING = 'Server restarted. Your match ended with no result.';
+export const RESTARTED_ROOM_STRING = 'Server restarted. Room closed.';
 const CLOSED_STRINGS: Record<string, string> = {
-  shutdown: 'Server is shutting down.', 'server-restart': 'Server restarted. Room closed.', internal: 'Room closed by a server error.', idle: 'Room closed (idle).',
+  shutdown: RESTARTED_ROOM_STRING, 'server-restart': RESTARTED_ROOM_STRING, internal: 'Room closed by a server error.', idle: 'Room closed (idle).',
 };
 
 const CONN_STRINGS: Partial<Record<ConnState, string>> = {
@@ -120,7 +125,7 @@ export function createPvpController(options: PvpOptions) {
   let mismatchedBeforeReload = false;
   try { mismatchedBeforeReload = sessionStorage.getItem(mismatchKey) === buildKey; } catch { /* storage unavailable */ }
   const listeners = new Set<() => void>(), events = new Set<(u: TickUpdate) => void>(), pvpEvents = new Set<(e: PvpEvent) => void>();
-  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false });
+  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false, draining: null });
   let state = initial();
   let conn: PvpConnection | null = null, offs: Array<() => void> = [];
   let lastEpoch = -1, autoResumed = -1, pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
@@ -328,8 +333,20 @@ export function createPvpController(options: PvpOptions) {
         requestResync('desync');
         break;
       }
-      case 'room.closed':
+      case 'room.closed': {
+        if (m.reason === 'shutdown' || (m.reason === 'server-restart' && state.draining)) {
+          // Terminal "server restarted" screen with a single Back to menu action; connection and match are torn down.
+          const inMatch = (state.screen === 'countdown' || state.screen === 'playing') && !state.end;
+          drop();
+          state = { ...initial(), screen: 'restarted', error: inMatch ? RESTARTED_MATCH_STRING : RESTARTED_ROOM_STRING };
+          listeners.forEach((fn) => fn());
+          break;
+        }
         reset(CLOSED_STRINGS[m.reason] ?? 'Room closed.');
+        break;
+      }
+      case 'server.draining':
+        publish({ draining: { deadlineAt: now() + m.deadlineMs } });
         break;
       case 'error':
         if (resyncInFlight && (m.code === 'rate-limited' || m.code === 'no-match') && driver) { resyncRefused(m.code); break; }
@@ -415,10 +432,22 @@ export function createPvpController(options: PvpOptions) {
       dispatch({ t: 'lobby.ready', ready: !cur });
     },
     /** Seated player on the result screen asks the server to return the room to the lobby. */
-    rematch() { if (state.screen === 'result' && state.seat !== null) dispatch({ t: 'rematch' }); },
+    rematch() {
+      if (state.screen !== 'result' || state.seat === null) return;
+      if (state.draining) { publish({ error: ERROR_STRINGS.draining }); return; }
+      dispatch({ t: 'rematch' });
+    },
+    /** Terminal "server restarted" screen -> online menu (a fresh connection is made by the next menu action). */
+    backToMenu() { if (state.screen === 'restarted') reset(null); },
+    /** Remaining ms of the restart window (0 once past); null without a notice. */
+    drainRemaining(at: number = now()): number | null { return state.draining ? Math.max(0, state.draining.deadlineAt - at) : null; },
     /** Host-only: full lobby edit (level change resets seats server-side). */
     updateLobby(levelId: string, seats: SeatConfig[]) { if (state.screen === 'lobby' && state.host) dispatch({ t: 'lobby.update', levelId, seats }); },
-    start() { if (state.screen === 'lobby' && state.host) dispatch({ t: 'lobby.start' }); },
+    start() {
+      if (state.screen !== 'lobby' || !state.host) return;
+      if (state.draining) { publish({ error: ERROR_STRINGS.draining }); return; }
+      dispatch({ t: 'lobby.start' });
+    },
     leave() {
       if (state.screen === 'idle' || state.screen === 'menu') return;
       dispatch({ t: 'room.leave' });

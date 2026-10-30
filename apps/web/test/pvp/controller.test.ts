@@ -8,6 +8,7 @@ import { versionsFromMeta, webVersions } from '../../src/net/versions';
 import type { ConnState, PvpConnection } from '../../src/net/connection';
 import type { VNode } from 'preact';
 import { PvpResult } from '../../src/ui/pvp/PvpResult';
+import { DrainBanner, drainText } from '../../src/ui/pvp/DrainBanner';
 import { PvpLayer } from '../../src/ui/pvp/PvpLayer';
 import { Lobby } from '../../src/ui/pvp/Lobby';
 import { PvpHud } from '../../src/ui/pvp/PvpHud';
@@ -387,6 +388,83 @@ describe('PvpController match lifecycle', () => {
     const m = game(); m.c.push(startMsg({ simHash: 'ffffffffffffffff' })); await flush();
     expect(m.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'Game content differs from the server. Reload to update.' });
     expect(m.sent.at(-1)).toEqual({ t: 'room.leave' }); expect(m.simArgs).toEqual([]);
+  });
+  describe('SP09 drain', () => {
+    const tid = (tree: unknown, id: string) => find(tree, (n) => n.props['data-testid'] === id)[0];
+    const draining = (ms: number): ServerMessage => ({ t: 'server.draining', deadlineMs: ms });
+    it('server.draining stores a relative deadline; countdown text counts down and clamps at 0:00', async () => {
+      const g = game(); g.c.push(startMsg()); await flush();
+      expect(g.ctl.snapshot().draining).toBeNull(); expect(g.ctl.drainRemaining()).toBeNull();
+      g.c.push(draining(24_000));
+      expect(g.ctl.snapshot().draining).toEqual({ deadlineAt: 24_000 });
+      expect(g.ctl.drainRemaining(0)).toBe(24_000); expect(g.ctl.drainRemaining(23_001)).toBe(999); expect(g.ctl.drainRemaining(99_000)).toBe(0);
+      expect(drainText(24_000, 'match')).toBe('Server restarting - this match will end in 0:24');
+      expect(drainText(23_001, 'match')).toBe('Server restarting - this match will end in 0:24');
+      expect(drainText(1, 'match')).toBe('Server restarting - this match will end in 0:01');
+      expect(drainText(75_000, 'match')).toBe('Server restarting - this match will end in 1:15');
+      expect(drainText(-5, 'match')).toBe('Server restarting - this match will end in 0:00');
+      expect(drainText(24_000, 'lobby')).toBe("Server restarting - you can't start a new match.");
+    });
+    it('banner shows in countdown and playing but not on the result screen', async () => {
+      const g = game(); g.c.push(startMsg()); await flush();
+      g.c.push(draining(20_000));
+      const cd = PvpLayer({ pvp: g.ctl }) as unknown as N;
+      expect(find(cd, (n) => (n.type as unknown) === DrainBanner)).toHaveLength(1);
+      expect(JSON.stringify(DrainBanner({ deadlineAt: 20_000, mode: 'match', now: () => 4000 }).props.children)).toContain('0:16');
+      g.c.push(g.tickMsg(0)); g.c.push(g.tickMsg(1)); g.ctl.driver!.advance();
+      expect(g.ctl.snapshot().screen).toBe('playing');
+      g.c.push(g.endMsg(3)); g.c.push(g.tickMsg(2)); g.ctl.driver!.advance();
+      expect(g.ctl.snapshot().screen).toBe('result');
+      expect(find(PvpLayer({ pvp: g.ctl }) as unknown as N, (n) => (n.type as unknown) === DrainBanner)).toHaveLength(0);
+    });
+    it('result Rematch is disabled while draining; controller refuses with the draining string', async () => {
+      const g = game(); g.c.push(startMsg()); await flush();
+      g.c.push(g.endMsg(50)); g.timers.at(-1)!.fn(); g.c.push(draining(10_000));
+      const s = g.ctl.snapshot();
+      expect(tid(PvpResult({ outcome: s.end!.outcome, seat: s.seat, draining: true, onLeave: () => {}, onRematch: () => {} }), 'pvp-rematch')!.props.disabled).toBe(true);
+      expect(tid(PvpResult({ outcome: s.end!.outcome, seat: s.seat, onLeave: () => {}, onRematch: () => {} }), 'pvp-rematch')!.props.disabled).toBe(false);
+      const before = g.sent.length;
+      g.ctl.rematch();
+      expect(g.sent.length).toBe(before); expect(g.ctl.snapshot().error).toBe(ERROR_STRINGS.draining);
+    });
+    it('lobby: banner shown, Start disabled and refused, error{draining} shows the same text', () => {
+      const h = setup(); h.ctl.open(); h.ctl.create(); h.c.push(welcome);
+      h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 0, host: true } }); h.c.push(lobby(0, true));
+      h.c.push(draining(15_000));
+      const node = PvpLayer({ pvp: h.ctl });
+      expect(node!.type).toBe(Lobby);
+      const tree = Lobby(node!.props as unknown as Parameters<typeof Lobby>[0]);
+      expect(tid(tree, 'drain-banner') ?? find(tree, (n) => (n.type as unknown) === DrainBanner)[0]).toBeTruthy();
+      expect(tid(tree, 'lobby-start')!.props.disabled).toBe(true);
+      const sent = h.sent.length;
+      h.ctl.start();
+      expect(h.sent.length).toBe(sent); expect(h.ctl.snapshot().error).toBe("Server restarting - you can't start a new match.");
+      h.c.push({ t: 'error', code: 'draining' });
+      expect(h.ctl.snapshot().error).toBe(drainText(0, 'lobby'));
+    });
+    it('room.closed{server-restart} after a notice mid-match -> terminal screen; Back to menu works and a fresh connect succeeds', async () => {
+      const g = game(); g.c.push(startMsg()); await flush();
+      g.c.push(draining(5000)); g.c.push({ t: 'room.closed', reason: 'server-restart' });
+      expect(g.ctl.snapshot()).toMatchObject({ screen: 'restarted', error: 'Server restarted. Your match ended with no result.', draining: null, code: null });
+      expect(g.rt.disposed).toBe(1); expect(g.ctl.driver).toBeNull(); expect(g.isClosed()).toBe(true);
+      const tree = PvpLayer({ pvp: g.ctl });
+      expect(JSON.stringify(tid(tree, 'pvp-restarted')!.props.children)).toContain('Server restarted. Your match ended with no result.');
+      const btns = find(tree, (n) => n.type === 'button');
+      expect(btns).toHaveLength(1);
+      (btns[0]!.props.onClick as () => void)();
+      expect(g.ctl.snapshot()).toMatchObject({ screen: 'menu', error: null });
+      g.ctl.create(); expect(g.ctl.snapshot().screen).toBe('connecting');
+    });
+    it('shutdown closes unify with the same terminal screen even without a notice; lobby close says room closed', () => {
+      const h = setup(); h.ctl.open(); h.ctl.create(); h.c.push(welcome);
+      h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
+      h.c.push({ t: 'room.closed', reason: 'shutdown' });
+      expect(h.ctl.snapshot()).toMatchObject({ screen: 'restarted', error: 'Server restarted. Room closed.' });
+      const k = setup(); k.ctl.open(); k.ctl.create(); k.c.push(welcome);
+      k.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
+      k.c.push({ t: 'room.closed', reason: 'server-restart' }); // no notice seen: legacy menu path, unified string
+      expect(k.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'Server restarted. Room closed.' });
+    });
   });
   describe('SP08 auto-resync', () => {
     const quiet = <T,>(fn: () => T): T => { const w = vi.spyOn(console, 'warn').mockImplementation(() => {}); try { return fn(); } finally { w.mockRestore(); } };
