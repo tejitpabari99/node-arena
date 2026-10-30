@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { WebSocket } from 'ws';
 import { PROTOCOL_VERSION, type ServerMessage } from '@node-arena/net';
@@ -150,4 +151,30 @@ test('server.draining: every existing and late authed conn gets exactly one noti
     assert.equal(rawMsgs.length, 0);
     void done;
   } finally { raw.terminate(); await srv.close(); }
+});
+
+test('running match is aborted at the deadline: room.closed{server-restart}, no end, 1001, exit within window + 3 s', async () => {
+  const srv = await boot();
+  const a = await connect(srv.port, 'Ann', 'a');
+  await soloMatch(a);
+  const windowMs = 4000;
+  const t0 = Date.now();
+  await srv.drain({ windowMs });
+  const dt = Date.now() - t0;
+  assert.ok(dt >= windowMs - 200, `aborted too early: ${dt}`);
+  assert.ok(dt <= windowMs + 3000, `exit too late: ${dt}`);
+  assert.equal(await a.closed, 1001);
+  assert.deepEqual(a.msgs.find((m) => m.t === 'room.closed'), { t: 'room.closed', reason: 'server-restart' });
+  assert.equal(a.msgs.some((m) => m.t === 'end'), false);
+  assert.equal(srv.phase(), 'exited');
+});
+
+test('fly.toml: kill_signal SIGTERM and kill_timeout exceeds the default-DRAIN_MS hard exit', () => {
+  const toml = readFileSync(new URL('../fly.toml', import.meta.url), 'utf8');
+  const kt = /^kill_timeout\s*=\s*(\d+)/m.exec(toml);
+  assert.ok(kt, 'kill_timeout present');
+  assert.match(toml, /^kill_signal\s*=\s*'SIGTERM'/m);
+  const hardS = hardExitMs(parseConfig({}).drainMs) / 1000;
+  assert.ok(Number(kt[1]) > hardS, `kill_timeout ${kt[1]} must exceed hard exit ${hardS}`);
+  assert.ok(Number(kt[1]) >= hardS + 5, 'keeps a 5 s margin');
 });
