@@ -167,7 +167,9 @@ export function createMatchController(deps: MatchDeps): MatchController {
         sim.step(cmds, { events: false });
         const elim: number[] = [];
         for (let p = 0; p < kinds.length; p++) if (sim.view.eliminatedAt[p]! >= 0) elim.push(p);
+        const epochBefore = pause.epoch();
         pause.syncEliminated(elim);
+        if (pause.epoch() !== epochBefore) publish(room, entry); // C5: clients must see the new epoch/unlimited/budgets
         if (sim.view.tick % HASH_INTERVAL === 0) lockstep.recordCheckpoint(sim.view.tick, sim.hash());
         frameTo(room, lockstep, n, cmds, encodeTick(n, cmds));
         if (sim.view.over !== null) {
