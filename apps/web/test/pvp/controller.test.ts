@@ -5,7 +5,7 @@ import { RULES_VERSION, parseContentMeta } from '@node-arena/content';
 import { BOT_VERSION } from '@node-arena/bots';
 import { createPvpController, errorString, ERROR_STRINGS } from '../../src/pvp/controller';
 import { versionsFromMeta, webVersions } from '../../src/net/versions';
-import type { ConnState, PvpConnection } from '../../src/net/connection';
+import type { ConnInfo, ConnState, PvpConnection } from '../../src/net/connection';
 import type { VNode } from 'preact';
 import { PvpResult } from '../../src/ui/pvp/PvpResult';
 import { DrainBanner, drainText } from '../../src/ui/pvp/DrainBanner';
@@ -31,7 +31,7 @@ function fake() {
   const sent: ClientMessage[] = [];
   const msgCbs = new Set<(m: ServerMessage) => void>(), stCbs = new Set<(s: ConnState) => void>();
   let closed = false, retried = 0;
-  const c: PvpConnection & { push(m: ServerMessage): void; setState(s: ConnState): void } = {
+  const c: PvpConnection & { push(m: ServerMessage): void; setState(s: ConnState): void; setInfo(i: ConnInfo): void } = {
     state: 'connected', info: { attempt: 0, nextRetryAt: null, outageStartedAt: null, lastCloseCode: null },
     send(m) { sent.push(m); return true; },
     onMessage(cb) { msgCbs.add(cb); return () => msgCbs.delete(cb); },
@@ -39,6 +39,7 @@ function fake() {
     retry() { retried++; }, close() { closed = true; },
     push(m) { msgCbs.forEach((f) => f(m)); },
     setState(s) { (c as { state: ConnState }).state = s; stCbs.forEach((f) => f(s)); },
+    setInfo(i) { (c as { info: ConnInfo }).info = i; },
   };
   return { c, sent, isClosed: () => closed, retried: () => retried };
 }
@@ -160,6 +161,13 @@ describe('PvpController lobby flow', () => {
     expect(h.sent.at(-1)).toEqual({ t: 'room.leave' });
     expect(h.isClosed()).toBe(true);
     expect(h.ctl.snapshot()).toMatchObject({ screen: 'menu', code: null, lobby: null, seat: null, host: false });
+  });
+  it('repeated reconnecting notifications republish connInfo (attempt 2 reaches the snapshot)', () => {
+    const h = setup(); h.ctl.open(); h.ctl.create(); h.c.push(welcome);
+    h.c.setInfo({ attempt: 1, nextRetryAt: 500, outageStartedAt: 0, lastCloseCode: 1006 }); h.c.setState('reconnecting');
+    expect(h.ctl.snapshot().connInfo?.attempt).toBe(1);
+    h.c.setInfo({ attempt: 2, nextRetryAt: 1500, outageStartedAt: 0, lastCloseCode: 1006 }); h.c.setState('reconnecting');
+    expect(h.ctl.snapshot().connInfo).toMatchObject({ attempt: 2, nextRetryAt: 1500 });
   });
   it('room.closed, superseded, refused -> menu with message; lost keeps screen and retry works', () => {
     const h = setup(); h.ctl.open(); h.ctl.create(); h.c.push(welcome);
@@ -488,21 +496,31 @@ describe('PvpController match lifecycle', () => {
     it('rate-limited answer retries once after 5.5 s then goes terminal', async () => {
       const g = await playing();
       quiet(() => g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }));
-      g.c.push({ t: 'error', code: 'rate-limited' });
+      g.c.push({ t: 'error', code: 'rate-limited', detail: 'resync too frequent' });
       expect(g.ctl.snapshot().error).toBeNull();
       const t = g.timers.at(-1)!; expect(t).toMatchObject({ ms: 5500, live: true });
       t.fn(); expect(resyncs(g)).toBe(2);
-      g.c.push({ t: 'error', code: 'rate-limited' }); // retry refused too
+      g.c.push({ t: 'error', code: 'rate-limited', detail: 'resync too frequent' }); // retry refused too
       expect(g.ctl.snapshot().error).toBe('Out of sync. Leave and rejoin.');
       expect(resyncs(g)).toBe(2);
     });
     it('retried resync that succeeds (start) leaves no terminal state', async () => {
       const g = await playing();
       quiet(() => g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }));
-      g.c.push({ t: 'error', code: 'rate-limited' });
+      g.c.push({ t: 'error', code: 'rate-limited', detail: 'resync too frequent' });
       g.timers.at(-1)!.fn();
       g.c.push(startMsg()); await flush();
       expect(g.ctl.snapshot().error).toBeNull();
+    });
+    it('unrelated rate-limited error (no resync detail) is not the resync answer', async () => {
+      const g = await playing();
+      quiet(() => g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }));
+      const timers0 = g.timers.length;
+      g.c.push({ t: 'error', code: 'rate-limited' });
+      expect(g.timers.length).toBe(timers0); // no retry scheduled
+      expect(g.ctl.snapshot().error).not.toBe('Out of sync. Leave and rejoin.');
+      g.c.push({ t: 'error', code: 'rate-limited', detail: 'resync too frequent' });
+      expect(g.timers.at(-1)).toMatchObject({ ms: 5500, live: true });
     });
     it('no-match answer is terminal immediately', async () => {
       const g = await playing();
@@ -537,9 +555,9 @@ describe('PvpController match lifecycle', () => {
     it('AC6 client: rate-limited resync shows the fallback banner; connection and match stay', async () => {
       const g = await playing();
       quiet(() => g.c.push({ t: 'desync', tick: 10, serverHash: 'abc' }));
-      g.c.push({ t: 'error', code: 'rate-limited' });
+      g.c.push({ t: 'error', code: 'rate-limited', detail: 'resync too frequent' });
       g.timers.at(-1)!.fn();
-      g.c.push({ t: 'error', code: 'rate-limited' });
+      g.c.push({ t: 'error', code: 'rate-limited', detail: 'resync too frequent' });
       const node = PvpLayer({ pvp: g.ctl });
       expect(find(node, n => n.props['data-testid'] === 'toast-sync-lost')[0]?.props.children).toBe('Out of sync. Leave and rejoin.');
       expect(g.ctl.driver).not.toBeNull();

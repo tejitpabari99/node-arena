@@ -110,6 +110,8 @@ export type PvpEvent = { t: 'desync'; tick: number; serverHash: string; localTic
 export type ResyncReason = 'desync' | 'push-error';
 /** Auto-resyncs allowed per match before the terminal SYNC_LOST_STRING. */
 export const MAX_RESYNCS = 3;
+/** Server detail marking a refused resync (vs ping/conn/command rate limits). */
+const RESYNC_LIMITED_DETAIL = 'resync too frequent';
 /** Delay before the single retry of a `rate-limited` resync (matches the server's 5 s catch-up token + margin). */
 export const RESYNC_RETRY_MS = 5500;
 export const SYNC_LOST_STRING = 'Out of sync. Leave and rejoin.';
@@ -346,7 +348,7 @@ export function createPvpController(options: PvpOptions) {
         publish({ draining: { deadlineAt: now() + m.deadlineMs } });
         break;
       case 'error':
-        if (resyncInFlight && (m.code === 'rate-limited' || m.code === 'no-match') && driver) { resyncRefused(m.code); break; }
+        if (resyncInFlight && ((m.code === 'rate-limited' && m.detail === RESYNC_LIMITED_DETAIL) || m.code === 'no-match') && driver) { resyncRefused(m.code); break; }
         if (state.screen === 'connecting') reset(errorString(m.code));
         else if (!syncLost || !driver) publish({ error: errorString(m.code) });
         break;

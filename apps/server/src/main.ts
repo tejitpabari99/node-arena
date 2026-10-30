@@ -234,8 +234,8 @@ function main(): void {
       setTimeout(() => process.exit(1), hardExitMs(config.drainMs)).unref();
       srv.drain().then(() => process.exit(0), crash('shutdown_failed'));
     };
-    process.once('SIGTERM', () => drain('SIGTERM'));
-    process.once('SIGINT', () => drain('SIGINT'));
+    process.on('SIGTERM', () => drain('SIGTERM'));
+    process.on('SIGINT', () => drain('SIGINT'));
   }).catch(crash('boot_failed'));
 }
 

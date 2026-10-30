@@ -110,6 +110,7 @@ describe('PvpConnection', () => {
     expect(h.conn.info.nextRetryAt).toBeNull();
     h.last().drop(1006);
     expect(h.conn.info).toMatchObject({ attempt: 2, nextRetryAt: 500 + 1000, outageStartedAt: 0 });
+    expect(seen.at(-1)).toMatchObject({ s: 'reconnecting', attempt: 2 }); // re-notified although state was unchanged
   });
 
   it('info + 4005: stays reconnecting with nextRetryAt >= 5.5 s and lastCloseCode 4005, never lost', () => {

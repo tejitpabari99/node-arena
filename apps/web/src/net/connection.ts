@@ -86,8 +86,9 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
   let nextRetryAt: number | null = null;
   let lastCloseCode: number | null = null;
 
-  const setState = (s: ConnState) => {
-    if (state === s) return;
+  /** `force` re-notifies on an unchanged state so subscribers re-read `info` (e.g. reconnect attempt counter). */
+  const setState = (s: ConnState, force = false) => {
+    if (state === s && !force) return;
     state = s;
     for (const cb of [...stateCbs]) cb(s);
   };
@@ -158,7 +159,7 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
     if (t - outageStart + delay > GIVE_UP_MS) { nextRetryAt = null; setState('lost'); return; }
     attempt++;
     nextRetryAt = t + delay;
-    setState('reconnecting');
+    setState('reconnecting', true);
     timer = setT(open, delay);
   };
 

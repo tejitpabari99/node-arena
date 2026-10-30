@@ -105,12 +105,20 @@ export class IpLimits {
   }
   /** Counts a `resync` request; false = this player resynced <10 s ago. Checked before `allowCatchUp`. */
   allowResync(playerId: string): boolean {
-    const t = this.now();
+    if (this.resyncBlocked(playerId)) return false;
+    this.noteResync(playerId);
+    return true;
+  }
+  /** Peek only: true = this player resynced <10 s ago. Spends nothing. */
+  resyncBlocked(playerId: string): boolean {
     const last = this.resyncAt.get(playerId);
-    if (last !== undefined && t - last < RESYNC_MIN_GAP_MS) return false;
+    return last !== undefined && this.now() - last < RESYNC_MIN_GAP_MS;
+  }
+  /** Records an accepted resync (call only after every check passed). */
+  noteResync(playerId: string): void {
+    const t = this.now();
     if (this.resyncAt.size > 10_000) for (const [k, v] of this.resyncAt) if (t - v >= RESYNC_MIN_GAP_MS) this.resyncAt.delete(k);
     this.resyncAt.set(playerId, t);
-    return true;
   }
   joinBlocked(ip: string): boolean { return this.win(this.fails, ip, FAILED_JOINS_PER_MIN).full(); }
   failedJoin(ip: string): void { this.win(this.fails, ip, FAILED_JOINS_PER_MIN).add(); }

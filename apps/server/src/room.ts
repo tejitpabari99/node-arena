@@ -252,10 +252,12 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     }
     const tick = deps.tickOf?.(room);
     const fields = { room: room.code, matchId: room.match.matchId, who, seat: i >= 0 ? i : undefined, tick };
-    if (deps.ipLimits?.allowResync(conn.playerId!) === false || !catchUpAllowed(conn)) {
+    // Order matters: the resync window is spent only when catch-up also passes, so the client's single retry is not starved.
+    if (deps.ipLimits?.resyncBlocked(conn.playerId!) === true || !catchUpAllowed(conn)) {
       log?.warn('resync', { ...fields, outcome: 'limited' });
       return conn.sendError('rate-limited', 'resync too frequent');
     }
+    deps.ipLimits?.noteResync(conn.playerId!);
     log?.info('resync', { ...fields, outcome: 'allowed' });
     attachMidMatch(room, conn, i >= 0 ? i : null, room.state === 'running');
   };

@@ -59,6 +59,7 @@ test('SIGTERM on the real process: notice -> abort at the deadline -> exit 0 wit
     const t0 = Date.now();
     assert.ok(child.kill('SIGTERM'));
     const notice = await until('server.draining');
+    assert.ok(child.kill('SIGTERM'), 'second SIGTERM must not kill mid-drain'); // handler is process.on, not once
     const nm = notice.m as Extract<ServerMessage, { t: 'server.draining' }>;
     assert.ok(notice.at - t0 < 1000, `notice took ${notice.at - t0} ms`);
     assert.ok(nm.deadlineMs > windowMs - 1000 && nm.deadlineMs <= windowMs, String(nm.deadlineMs));

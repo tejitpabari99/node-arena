@@ -46,10 +46,10 @@ function setup() {
   });
   const hub = createHub({ versions: content.versions, handler: mgr, secret: 's', timers });
   let c = 0;
-  const client = (nick: string) => {
+  const client = (nick: string, tok?: number) => {
     const s = fakeSocket();
     hub.accept(s);
-    s.say({ t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick, token: `${String(++c).padStart(8, '0')}a1b2c3d4e5f60718293a4b5c` });
+    s.say({ t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick, token: `${String(tok ?? ++c).padStart(8, '0')}a1b2c3d4e5f60718293a4b5c` });
     return s;
   };
   const advance = (ms: number) => { for (let t = 0; t < ms; t += 50) { now += 50; for (const r of [...rooms]) if (r.startAt <= now) r.tick(); } };
@@ -193,4 +193,23 @@ test('covers SP08 AC6: rate-limited resync leaves connection and match intact', 
   assert.equal(r.pa.lc.needsResync, false);
   r.pa.step();
   assert.equal(r.pa.sim.hash(), r.server().hash());
+});
+
+test('covers SP08 AC6 order: catch-up refusal does not spend the resync window; retry 5.5 s later gets start', () => {
+  const r = running();
+  r.run(500);
+  r.a.closed = undefined;
+  const a2 = r.t.client('A', 1); // same token as A: reclaim -> full catch-up spends the 5 s catch-up gap
+  assert.ok(a2.of('start').length > 0, 'reclaimed with start');
+  const starts0 = a2.of('start').length;
+  a2.say({ t: 'resync' });
+  const err = a2.of('error').at(-1);
+  assert.equal(err?.code, 'rate-limited');
+  assert.equal(err?.detail, 'resync too frequent');
+  assert.equal(a2.of('start').length, starts0);
+  r.t.advance(5500);
+  a2.say({ t: 'resync' });
+  assert.equal(a2.of('start').length, starts0 + 1, 'retry accepted');
+  a2.say({ t: 'resync' }); // now genuinely inside the 10 s window
+  assert.equal(a2.of('error').at(-1)?.code, 'rate-limited');
 });

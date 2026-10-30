@@ -378,3 +378,14 @@ test('resync right after a reconnect catch-up is refused by the catch-up token; 
   assert.equal(b2.closed, undefined);
   void b;
 });
+
+test('resyncBlocked peeks without spending; noteResync spends the 10 s window', () => {
+  let now = 0;
+  const l = new IpLimits(() => now);
+  assert.equal(l.resyncBlocked('p'), false);
+  assert.equal(l.resyncBlocked('p'), false);
+  l.noteResync('p');
+  assert.equal(l.resyncBlocked('p'), true);
+  now = 10_000;
+  assert.equal(l.resyncBlocked('p'), false);
+});
