@@ -2,7 +2,7 @@
 
 Fly.io app `node-arena-server` (region `ewr`, one shared-cpu-1x/256 MB machine). Web stays on Firebase Hosting (`node-arena-99`). Config: `apps/server/fly.toml`, image: `apps/server/Dockerfile`, CI: `.github/workflows/deploy-server.yml` + `.github/workflows/deploy.yml`.
 
-Status (2026-10-29): M1 local human play-test approved. Docker/Fly configuration, deploy workflows and production URL wiring are implemented. The owner reports account/app/setup complete; first Fly deployment, live health/version smoke, production/preview connections and the edge heartbeat check remain unverified. The checklist below is for that first deployment.
+Status (2026-10-31): M1 local human play-test approved. First Fly deploy done. Verified: health/version smoke, prod + preview-origin connections, load smoke in URL mode (5 rooms: p99 late 1.11 ms, peak RSS 84.8 MB, CPU ~1.4%, 0 errors). Pending: edge heartbeat check, friend play-test.
 
 The server keeps all rooms in memory: exactly one machine, and every deploy/restart drops live matches (see [Deploy](#deploy)).
 
@@ -32,7 +32,8 @@ The server keeps all rooms in memory: exactly one machine, and every deploy/rest
    gh workflow run deploy-server.yml
    gh run watch
    ```
-   The workflow runs `flyctl deploy --remote-only -c apps/server/fly.toml`, then `node scripts/pvp-versions.mjs https://node-arena-server.fly.dev/healthz`, which fails if `/healthz` `versions` differ from this commit's built versions.
+   The first deploy had created 2 machines (Fly default HA); fixed 2026-10-31 with `fly scale count 1 -a node-arena-server --region ewr`. `--ha=false` prevents a repeat.
+   The workflow runs `flyctl deploy --remote-only --ha=false -c apps/server/fly.toml`, fails if the app does not have exactly 1 machine, then `node scripts/pvp-versions.mjs https://node-arena-server.fly.dev/healthz`, which fails if `/healthz` `versions` differ from this commit's built versions.
 6. Verify health ([Health](#health)), then run the [heartbeat check](#heartbeat-check-through-the-fly-edge-manual-once-after-first-deploy).
 7. Push to `main` (or run "Deploy") so the web build picks up the server URL; open the site and confirm the PvP menu entry appears.
 
@@ -63,7 +64,7 @@ Check before deploying: `curl -fsS https://node-arena-server.fly.dev/healthz | j
 
 Players see: a banner "Server restarting - this match will end in 0:24" (lobby: "Server restarting - you can't start a new match."), Create/Join/Start/Rematch disabled, then "Server restarted. Your match ended with no result." with a Back to menu button.
 
-Owner-only, first deploy: confirm Fly honours `kill_timeout = 40` and stops routing new connections to a stopping machine (`fly config show -a node-arena-server`); if not, set `DRAIN_MS=20000` and `kill_timeout = 30`. Record the result here.
+Verified 2026-10-31: `fly config show` reports kill_signal SIGTERM, kill_timeout 40s. `fly machine restart` with 1 live room / 2 conns: `server.draining windowMs 30000` at 19:08:57, `server.drain_end elapsedMs 30013`, `server.shutdown reason server-restart`, exit 0 at ~32 s (< 40 s), listening again 3 s later; client saw the match end at ~30 s. `fly machine restart` (and the 07:52 deploy) sent SIGINT, not SIGTERM; the server handles both identically, so no change; the `DRAIN_MS=20000` / `kill_timeout = 30` fallback is not needed. Single machine: new `room.create`/`room.join` during drain should get `error{draining}` - live check pending.
 
 ### Rollback
 
@@ -149,7 +150,7 @@ Load smoke: N bot-filled rooms against the real server loop. Report-only (exit 0
 pnpm load:smoke                                  # 20 rooms, 45 s, in-process, forced-GC leak check
 pnpm load:smoke -- --spectators 3                # K spectators/room at the midpoint (catch-up cost)
 pnpm load:smoke -- --churn                       # end/restart a room every 10 s (leak check)
-pnpm load:smoke -- --url wss://<app>.fly.dev --rooms 5 --json out.json   # URL mode (real Fly; per-IP limits apply)
+pnpm load:smoke -- --url wss://node-arena-server.fly.dev --origin https://node-arena-99.web.app --rooms 5 --json out.json   # URL mode (real Fly; per-IP limits apply; --origin required, prod enforces ALLOWED_ORIGINS)
 ```
 
 Reading it: per-2 s table of running rooms, tick lateness p50/p99 (`late`), RSS, CPU % of one vCPU (and per room), frames/s, event-loop p99. Verdicts: p99 lateness < 25 ms, peak RSS < 200 MB, all rooms stayed `running`, no unexpected `room.closed`/`error`. The lateness window is the last 400 clock wakes (~20 s), so the first samples include ramp; judge the final window. Leak signal = `heapUsed` after forced GC vs baseline (RSS rarely shrinks after GC; ignore it for leaks).
