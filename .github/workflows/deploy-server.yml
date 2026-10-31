@@ -19,12 +19,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       HEALTHZ_URL: https://node-arena-server.fly.dev/healthz
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: superfly/flyctl-actions/setup-flyctl@fc53c09e1bc3be6f54706524e3b82c4f462f77be # 1.5
+      - name: Warn if matches are live (non-blocking)
+        # SP09 D12: a deploy drains for up to DRAIN_MS and aborts running matches. Never fails the job; no secrets needed.
+        continue-on-error: true
+        run: |
+          body="$(curl -fsS --max-time 10 "$HEALTHZ_URL" 2>/dev/null)" || { echo "healthz unreachable; skipping live-match check"; exit 0; }
+          running="$(printf '%s' "$body" | jq -r '.running // empty' 2>/dev/null)" || running=""
+          rooms="$(printf '%s' "$body" | jq -r '.rooms // empty' 2>/dev/null)" || rooms=""
+          echo "healthz: running=${running:-?} rooms=${rooms:-?}"
+          case "$running" in
+            ''|*[!0-9]*) echo "running not a number; skipping" ;;
+            *) if [ "$running" -gt 0 ]; then echo "::warning::Deploying with $running live match(es) (rooms=${rooms:-?}); they get a restart notice and are aborted after up to 30 s with no result."; fi ;;
+          esac
+          exit 0
       - name: Deploy to Fly
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl deploy --remote-only -c apps/server/fly.toml
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0

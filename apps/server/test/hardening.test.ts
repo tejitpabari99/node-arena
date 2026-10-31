@@ -6,10 +6,11 @@ import type { ClockRoom } from '../src/clock.js';
 import { DEFAULT_CONTENT_DIR } from '../src/config.js';
 import { loadServerContent } from '../src/content.js';
 import { createHub } from '../src/hub.js';
-import { createMatchController, MAX_CMDS_PER_SEAT_PER_TICK } from '../src/match.js';
+import { createMatchController } from '../src/match.js';
 import { createRoomManager, type MatchStart } from '../src/room.js';
 
 const fixture = readFileSync(new URL('./fixtures/na-pvp-fixture.json', import.meta.url), 'utf8');
+const MAX_CMDS_PER_SEAT_PER_TICK = 8; // net RateLimiter.cmdsPerTick
 const content = loadServerContent(DEFAULT_CONTENT_DIR, { extraLevels: { 'na-pvp-fixture': fixture } });
 
 function fakeSocket() {
@@ -154,7 +155,8 @@ test('spamming seat is rate-limited per tick, cannot abort room; other seat stil
   t.tickAll();
   for (let i = 0; i < 50; i++) r.a.say({ t: 'cmd', c: DRAW });
   r.b.say({ t: 'cmd', c: { type: 'DrawLine', from: 1, to: 0 } });
-  assert.equal(r.a.of('error').filter((e) => e.code === 'rate-limited').length, 50 - MAX_CMDS_PER_SEAT_PER_TICK);
+  const limited = r.a.of('error').filter((e) => e.code === 'rate-limited').length;
+  assert.ok(limited >= 20 && limited <= 50 - MAX_CMDS_PER_SEAT_PER_TICK, 'net limiter rejects; persistent abuse escalates to a disconnect (replies stop)');
   assert.equal(r.b.of('error').length, 0);
   for (let i = 0; i < 6; i++) t.tickAll();
   const landed = r.b.of('tick').flatMap((m) => m.c ?? []);

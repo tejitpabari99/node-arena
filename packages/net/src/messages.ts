@@ -6,7 +6,7 @@ import type { EndOutcome } from './outcome.js';
 export const ERROR_CODES = [
   'bad-json', 'too-large', 'bad-message', 'unknown-type', 'version-mismatch', 'not-authed', 'not-in-room',
   'not-host', 'not-your-seat', 'rate-limited', 'room-full', 'room-not-found', 'spectators-full', 'bad-lobby',
-  'not-ready', 'match-in-progress', 'desync', 'internal', 'paused', 'no-match',
+  'not-ready', 'match-in-progress', 'desync', 'internal', 'paused', 'no-match', 'draining',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
@@ -18,7 +18,7 @@ export type WireCommand = Command extends infer C ? (C extends { type: WireComma
 export type PauseReason = 'manual' | 'disconnect';
 export type PauseHold = { player: number; reason: PauseReason; connected: boolean; since: number };
 export type SeatKind = 'human' | 'bot' | 'empty';
-export type SeatStatus = 'connected' | 'grace' | 'bot';
+export type SeatStatus = 'connected' | 'away';
 export type SeatConfig = { kind: SeatKind; difficulty?: string; team: number };
 export type LobbySeat = SeatConfig & { occupant?: { nick: string; ready: boolean; status: SeatStatus } };
 export type StartSeat = { player: number; kind: SeatKind; team: number; nick: string; difficulty?: string };
@@ -64,7 +64,6 @@ export type TickMsg = { t: 'tick'; n: number; c?: Command[] };
 export type CatchupMsg = { t: 'catchup'; from: number; to: number; cmds: TickCmds[]; done: boolean };
 export type TicksMsg = { t: 'ticks'; from: number; to: number; cmds: TickCmds[] };
 export type DesyncMsg = { t: 'desync'; tick: number; serverHash: string };
-export type SeatStatusMsg = { t: 'seat.status'; player: number; status: SeatStatus; graceMs?: number };
 export type EndMsg = { t: 'end'; outcome: EndOutcome; finalTick: number; finalHash: string };
 export type PongMsg = { t: 'pong'; id: number; tick: number };
 /** Full pause snapshot (SP07). `tick` = frozen tick (next to close); `budgets[i]` ms remaining, null = bot/unlimited. */
@@ -73,11 +72,13 @@ export type PauseStateMsg = {
   holds: PauseHold[]; budgets: (number | null)[];
 };
 export type StartCancelMsg = { t: 'start.cancel'; matchId: string };
+/** Server is draining for a restart (SP09): `deadlineMs` = remaining ms (relative, skew-safe like `start`). */
+export type ServerDrainingMsg = { t: 'server.draining'; deadlineMs: number };
 export type ErrorMsg = { t: 'error'; code: ErrorCode; detail?: string };
 
 export type ServerMessage =
   | WelcomeMsg | RoomJoinedMsg | LobbyStateMsg | RoomClosedMsg | StartMsg | TickMsg | CatchupMsg
-  | TicksMsg | DesyncMsg | SeatStatusMsg | EndMsg | PongMsg | PauseStateMsg | StartCancelMsg | ErrorMsg;
+  | TicksMsg | DesyncMsg | EndMsg | PongMsg | PauseStateMsg | StartCancelMsg | ServerDrainingMsg | ErrorMsg;
 
 export type ClientMessageType = ClientMessage['t'];
 export type ServerMessageType = ServerMessage['t'];

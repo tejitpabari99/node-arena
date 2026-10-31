@@ -268,7 +268,7 @@ test('host transfer: host drop / leave in lobby passes host to earliest connecte
   h.s.drop();
   assert.equal(lobbyOf(p1.s).host, 1);
   // NOTE: reserveSeat (drop path) does not clear ready flags (PRD says it does); the leave path below does. Reported, not asserted.
-  assert.equal(lobbyOf(p1.s).seats[0]!.occupant?.status, 'grace', 'ex-host seat reserved');
+  assert.equal(lobbyOf(p1.s).seats[0]!.occupant?.status, 'away', 'ex-host seat reserved');
   p1.s.say({ t: 'lobby.start' });
   assert.equal(p1.s.of('error').at(-1)!.code, 'not-ready', 'refused: seat 0 reserved, p2 not ready, seat 3 empty');
   p1.s.say({ t: 'room.leave' });
@@ -391,6 +391,27 @@ test('AC12(a): 2 humans + 2 bots; A holds, B quits (pending, non-terminal) -> A 
   noDesync(r);
   assert.equal(a.sim.hash(), r.ref().hash());
   assert.equal(replayHash(r), r.ref().hash());
+});
+
+test('SP11 C5: sim elimination after quit-during-pause broadcasts pause.state (unlimited, null budget)', () => {
+  const t = setup();
+  const r = t.startRunning(CROSS, ['human', 'human', 'bot', 'bot'], T2V2);
+  const [a, b] = r.humans as [typeof r.host, typeof r.host];
+  t.advance(10_000, { ref: r.ref });
+  a.s.say({ t: 'pause' });
+  b.s.say({ t: 'quit' });
+  a.s.say({ t: 'resume', epoch: a.s.of('pause.state').at(-1)!.epoch });
+  const before = a.s.of('pause.state').length;
+  const epoch0 = a.s.of('pause.state').at(-1)!.epoch;
+  t.advance(100, { ref: r.ref });
+  assert.deepEqual(forfeits(r), [1]);
+  const after = a.s.of('pause.state');
+  assert.ok(after.length > before, 'broadcast after elimination');
+  const last = after.at(-1)!;
+  assert.ok(last.epoch > epoch0);
+  assert.equal(last.unlimited, true);
+  assert.equal(last.budgets[0], null);
+  assert.equal(b.s.of('pause.state').at(-1)!.epoch, last.epoch, 'all conns');
 });
 
 test('AC12(b): 4 humans (teams 0,1,0,1): seat 1 hold expires -> only seat 1 forfeits, match continues, others stay limited; then seat 3 quits -> teammates (0,2) win', () => {

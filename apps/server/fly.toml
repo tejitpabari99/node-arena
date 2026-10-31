@@ -1,7 +1,8 @@
 # NOTE: app name per SP04 PRD decision 12; owner must `fly apps create` it (or edit here).
 app = 'node-arena-server'
 primary_region = 'ewr'
-kill_timeout = 10 # server drain hard-exits at 8 s
+kill_signal = 'SIGTERM'
+kill_timeout = 40 # DRAIN_MS 30 s + 2 s close grace + 1 s = hard exit 33 s, +5 s margin (see hardExitMs in src/main.ts)
 
 [build]
   dockerfile = 'Dockerfile'

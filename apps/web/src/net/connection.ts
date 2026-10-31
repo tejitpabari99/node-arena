@@ -16,6 +16,13 @@ export const JITTER = 0.2;
 export const GIVE_UP_MS = 60_000;
 export const CLOSE_SUPERSEDED = 4000;
 export const CLOSE_VERSION = 4003;
+/** Server closes a seated reconnect that asks for a full catch-up again within CATCHUP_MIN_GAP_MS (server limits.ts). Retryable. */
+export const CLOSE_RATE_LIMITED = 4005;
+export const CATCHUP_MIN_GAP_MS = 5000;
+/** Reconnect after a 4005 waits at least this long so the next catch-up is allowed. */
+export const RATE_LIMITED_MIN_DELAY_MS = CATCHUP_MIN_GAP_MS + 500;
+/** Backoff attempt/outage counters reset only after a connection stays welcomed this long (welcome precedes a rate-limit close). */
+export const STABLE_MS = 10_000;
 /** App-level `ping` cadence while connected (server also pongs; refreshes its lastSeen when WS ping frames are not relayed). */
 export const PING_INTERVAL_MS = 3000;
 
@@ -31,8 +38,21 @@ export interface PvpConnectionOpts {
   now?: () => number;
 }
 
+/** Client-local backoff state for the banner (not wire). */
+export interface ConnInfo {
+  /** Reconnect attempts scheduled in the current outage (0 once stable). */
+  attempt: number;
+  /** Absolute `now()` ms of the pending reconnect, null when none is scheduled. */
+  nextRetryAt: number | null;
+  outageStartedAt: number | null;
+  /** Close code of the most recent socket close, null before any. */
+  lastCloseCode: number | null;
+}
+
 export interface PvpConnection {
   readonly state: ConnState;
+  /** Current backoff info; already updated when `onState` callbacks run. */
+  readonly info: ConnInfo;
   send(msg: ClientMessage): boolean;
   onMessage(cb: (msg: ServerMessage) => void): () => void;
   onState(cb: (state: ConnState) => void): () => void;
@@ -61,9 +81,14 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
   let closed = false;
   let pingTimer: unknown = null;
   let pingId = 0;
+  let stableTimer: unknown = null;
+  let rateLimited = false;
+  let nextRetryAt: number | null = null;
+  let lastCloseCode: number | null = null;
 
-  const setState = (s: ConnState) => {
-    if (state === s) return;
+  /** `force` re-notifies on an unchanged state so subscribers re-read `info` (e.g. reconnect attempt counter). */
+  const setState = (s: ConnState, force = false) => {
+    if (state === s && !force) return;
     state = s;
     for (const cb of [...stateCbs]) cb(s);
   };
@@ -76,16 +101,19 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
       schedulePing(s);
     }, PING_INTERVAL_MS);
   };
+  const stopStable = () => { if (stableTimer !== null) { clearT(stableTimer); stableTimer = null; } };
   const detach = (s: WebSocketLike) => { s.onopen = s.onmessage = s.onclose = s.onerror = null; };
   const terminal = (s: ConnState) => {
     if (timer !== null) { clearT(timer); timer = null; }
     stopPing();
+    stopStable();
     if (sock) { const old = sock; sock = null; detach(old); try { old.close(); } catch { /* ignore */ } }
     setState(s);
   };
 
   const open = () => {
     timer = null;
+    nextRetryAt = null;
     const s = o.createSocket(o.url);
     sock = s;
     s.onopen = () => {
@@ -100,7 +128,10 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
       const r = parseServerMessage(ev.data);
       if (!r.ok) return;
       const m = r.msg;
-      if (m.t === 'welcome') { attempt = 0; outageStart = null; }
+      if (m.t === 'welcome') {
+        stopStable();
+        stableTimer = setT(() => { stableTimer = null; if (sock === s) { attempt = 0; outageStart = null; } }, STABLE_MS);
+      }
       if (m.t === 'error' && m.code === 'version-mismatch') { terminal('refused'); return; }
       for (const cb of [...msgCbs]) cb(m);
     };
@@ -109,6 +140,9 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
       if (sock !== s) return;
       sock = null;
       stopPing();
+      stopStable();
+      lastCloseCode = ev.code;
+      rateLimited = ev.code === CLOSE_RATE_LIMITED;
       if (ev.code === CLOSE_SUPERSEDED) { setState('superseded'); return; }
       if (ev.code === CLOSE_VERSION) { setState('refused'); return; }
       scheduleReconnect();
@@ -119,10 +153,13 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
     if (closed) return;
     const t = now();
     if (outageStart === null) outageStart = t;
-    const delay = backoffDelay(attempt, rand());
-    if (t - outageStart + delay > GIVE_UP_MS) { setState('lost'); return; }
+    let delay = backoffDelay(attempt, rand());
+    if (rateLimited) delay = Math.max(delay, RATE_LIMITED_MIN_DELAY_MS);
+    rateLimited = false;
+    if (t - outageStart + delay > GIVE_UP_MS) { nextRetryAt = null; setState('lost'); return; }
     attempt++;
-    setState('reconnecting');
+    nextRetryAt = t + delay;
+    setState('reconnecting', true);
     timer = setT(open, delay);
   };
 
@@ -130,6 +167,7 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
 
   return {
     get state() { return state; },
+    get info() { return { attempt, nextRetryAt, outageStartedAt: outageStart, lastCloseCode }; },
     send(msg) {
       if (state !== 'connected' || !sock) return false;
       try { sock.send(encode(msg)); return true; } catch { return false; }
@@ -144,7 +182,8 @@ export function createPvpConnection(o: PvpConnectionOpts): PvpConnection {
     },
     close() {
       closed = true;
-      terminal(state);
+      nextRetryAt = null;
+    terminal(state);
     },
   };
 }

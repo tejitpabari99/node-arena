@@ -1,6 +1,6 @@
 import { encode, parseClientMessage, type ClientMessage, type ErrorCode, type ServerMessage } from '@node-arena/net';
 
-import { CLOSE_RATE_LIMITED, type ConnGuard } from './limits.js';
+import { BACKPRESSURE_CLOSE_BYTES, CLOSE_BACKPRESSURE, CLOSE_RATE_LIMITED, type ConnGuard } from './limits.js';
 
 /** Transport-agnostic socket. `main.ts` wraps `ws` into this (Task 7). */
 export interface Socket {
@@ -71,14 +71,27 @@ export class Conn {
   get authed(): boolean { return this.playerId !== undefined; }
 
   send(msg: ServerMessage): void {
-    if (this.closed) return;
+    if (this.closed || this.overBuffer()) return;
     this.socket.send(encode(msg));
   }
 
   /** Pre-encoded frame (shared across recipients, e.g. tick). */
   sendFrame(raw: string): void {
-    if (this.closed) return;
+    if (this.closed || this.overBuffer()) return;
     this.socket.send(raw);
+  }
+
+  /** Catch-up chunk: skips the per-send backpressure check (caller checks `overBuffer` once up front). */
+  sendUnchecked(msg: ServerMessage): void {
+    if (this.closed) return;
+    this.socket.send(encode(msg));
+  }
+
+  /** Slow/abusive reader: close instead of queueing more (bounds ws memory). */
+  overBuffer(): boolean {
+    if (this.socket.bufferedAmount <= BACKPRESSURE_CLOSE_BYTES) return false;
+    this.close(CLOSE_BACKPRESSURE, 'backpressure');
+    return true;
   }
 
   sendError(code: ErrorCode, detail?: string): void {

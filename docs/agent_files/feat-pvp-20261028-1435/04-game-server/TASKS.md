@@ -120,7 +120,7 @@ What changes at a high level: fake-socket scenarios with client hash equality: 2
 Done when: all scenarios green in `pnpm test`.
 
 ## Task 19 — [M3] Disconnect grace, bot takeover, resume, reclaim (superseded by SP07)
-Superseded in part by SP07 (2026-10-29): fully superseded; no work remains here. Human grace -> bot takeover, bot -> connected reclaim and `seat.status grace/bot` driving are dropped (R14/R15 SUPERSEDED, Decision 9 void); the minimum token reconnect, 30 s cumulative disconnect budget, lobby 30 s seat reserve and forfeit now live in SP07 (M2). Remaining M3 server work is task 20 (auto-resync, load smoke). Historical description follows.
+Superseded in part by SP07 (2026-10-29) and SP11 (2026-10-30, void closing pointer): fully superseded; no work remains here. Human grace -> bot takeover, bot -> connected reclaim and `seat.status grace/bot` driving are dropped (R14/R15 SUPERSEDED, Decision 9 void); the minimum token reconnect, 30 s cumulative disconnect budget, lobby 30 s seat reserve and forfeit now live in SP07 (M2). Remaining M3 server work is task 20 (auto-resync, load smoke). Historical description follows.
 What it is / what it means: R14, R15, Decision 9, Disconnect FSM.
 What changes at a high level: per-seat FSM `connected -> grace(30 s) -> bot`, `grace -> connected` on resume (token + catch-up), `bot -> connected` on reclaim (bot dropped next tick); `seat.status` broadcast every transition, also in lobby (30 s seat free); commands from non-connected seats dropped. Takeover uses a fresh normal seat bot at tick T. M2 behaviour (returns as spectator) replaced.
 Done when (historical, not to be built): fake-clock tests: bot commands appear after 30 s and clients stay hash-equal; resume in grace converges; reclaim after takeover works.
@@ -129,6 +129,7 @@ Done when (historical, not to be built): fake-clock tests: bot commands appear a
 What it is / what it means: R16, R19. Remaining M3 per SP07 amendment (2026-10-29), alongside SIGTERM drain / restart recovery (task 16 still lists drain; PRD amendment text calls it M3, R18 table says M2 - verify at implementation).
 What changes at a high level: after `desync`, resend full log as `catchup` from 0, limit 1 per 10 s per seat. Load script runs N concurrent bot-filled rooms and reports tick lateness p50/p99, RSS and CPU per room.
 Done when: forced mismatch resyncs and converges; 20-room smoke shows loop lateness p99 < 25 ms and RSS < 200 MB, with CPU/room reported.
+Superseded 2026-10-30 by [SP08](../08-desync-resync/PRD.md) (resync) and [SP10](../10-load-smoke/PRD.md) (load smoke); drain by [SP09](../09-drain-restart/PRD.md).
 
 ## Manual steps (owner)
 `fly apps create`, confirm app name/region, set `FLY_API_TOKEN` GitHub secret (SP06 consumes), set `ALLOWED_ORIGINS`.

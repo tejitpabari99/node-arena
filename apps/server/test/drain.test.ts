@@ -1,0 +1,180 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { test } from 'node:test';
+import { WebSocket } from 'ws';
+import { PROTOCOL_VERSION, type ServerMessage } from '@node-arena/net';
+import { parseConfig } from '../src/config.js';
+import { loadServerContent } from '../src/content.js';
+import { hardExitMs, startServer } from '../src/main.js';
+import { createLogger } from '../src/log.js';
+
+const content = loadServerContent(parseConfig({}).contentDir);
+const boot = () => startServer(parseConfig({ PORT: '0', HOST: '127.0.0.1', ALLOW_NO_ORIGIN: '1' }), { content, log: createLogger({ level: 'error' }) });
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+interface Client { ws: WebSocket; msgs: ServerMessage[]; say(m: object): void; until(t: string, pred?: (m: ServerMessage) => boolean): Promise<ServerMessage>; closed: Promise<number> }
+async function connect(port: number, nick: string, tok: string): Promise<Client> {
+  const ws = new WebSocket(`ws://127.0.0.1:${port}`);
+  const msgs: ServerMessage[] = [];
+  ws.on('message', (d) => msgs.push(JSON.parse(String(d)) as ServerMessage));
+  const closed = new Promise<number>((r) => ws.on('close', (c) => r(c)));
+  await new Promise<void>((r) => ws.once('open', () => r()));
+  const say = (m: object): void => { ws.send(JSON.stringify(m)); };
+  const until = async (t: string, pred: (m: ServerMessage) => boolean = () => true): Promise<ServerMessage> => {
+    for (let i = 0; i < 1500; i++) { const m = msgs.find((x) => x.t === t && pred(x)); if (m) return m; await sleep(10); }
+    throw new Error(`timeout waiting for ${t}; got ${msgs.map((m) => m.t).join(',')}`);
+  };
+  say({ t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick, token: tok.repeat(32).slice(0, 32) });
+  await until('welcome');
+  return { ws, msgs, say, until, closed };
+}
+const errs = (c: Client) => c.msgs.filter((m): m is Extract<ServerMessage, { t: 'error' }> => m.t === 'error').map((m) => m.code);
+
+async function soloMatch(c: Client): Promise<string> {
+  c.say({ t: 'room.create' });
+  const joined = await c.until('room.joined') as Extract<ServerMessage, { t: 'room.joined' }>;
+  const ls = await c.until('lobby.state') as Extract<ServerMessage, { t: 'lobby.state' }>;
+  c.say({ t: 'lobby.update', levelId: ls.levelId, seats: [{ kind: 'human', team: 0 }, { kind: 'bot', team: 1, difficulty: 'easy' }] });
+  c.say({ t: 'lobby.start' });
+  await c.until('start');
+  await sleep(3400); // 3-2-1 countdown: disconnect/quit before tick 0 would cancel the start
+  return joined.code;
+}
+
+test('DRAIN_MS config: default 30000, range 0-120000', () => {
+  assert.equal(parseConfig({}).drainMs, 30000);
+  assert.equal(parseConfig({ DRAIN_MS: '0' }).drainMs, 0);
+  assert.equal(parseConfig({ DRAIN_MS: '120000' }).drainMs, 120000);
+  assert.throws(() => parseConfig({ DRAIN_MS: '120001' }));
+  assert.throws(() => parseConfig({ DRAIN_MS: 'x' }));
+  assert.equal(hardExitMs(30000), 33000);
+  assert.equal(hardExitMs(0), 8000);
+});
+
+test('drain: refuses create/join/start/rematch, serves token reattach, healthz draining stays 200', async () => {
+  const srv = await boot();
+  const a = await connect(srv.port, 'Ann', 'a'), b = await connect(srv.port, 'Bob', 'b');
+  const code = await soloMatch(a);
+  const idle = await connect(srv.port, 'Cy', 'c');
+  const lobbyHost = await connect(srv.port, 'Di', 'd');
+  lobbyHost.say({ t: 'room.create' }); await lobbyHost.until('room.joined');
+  try {
+    const done = srv.drain({ windowMs: 10_000, minMs: 10_000 });
+    assert.equal(srv.phase(), 'draining');
+    b.say({ t: 'room.create' });
+    b.say({ t: 'room.join', code, role: 'watch' });
+    b.say({ t: 'room.join', code, role: 'play' });
+    idle.say({ t: 'rematch' });
+    lobbyHost.say({ t: 'lobby.start' });
+    await sleep(300);
+    assert.deepEqual(errs(b), ['draining', 'draining', 'draining']);
+    assert.deepEqual(errs(idle), ['draining']);
+    assert.deepEqual(errs(lobbyHost), ['draining']);
+    const res = await fetch(`http://127.0.0.1:${srv.port}/healthz`);
+    assert.equal(res.status, 200);
+    const j = await res.json() as Record<string, unknown>;
+    assert.equal(j.ok, true); assert.equal(j.draining, true);
+    // Token reattach into the running match is not refused.
+    a.ws.close(); await a.closed;
+    const a2 = await connect(srv.port, 'Ann', 'a');
+    await a2.until('start'); await a2.until('catchup');
+    assert.deepEqual(errs(a2), []);
+    void done;
+  } finally { await srv.close(); }
+});
+
+test('healthz draining is false while serving', async () => {
+  const srv = await boot();
+  try {
+    const j = await (await fetch(`http://127.0.0.1:${srv.port}/healthz`)).json() as Record<string, unknown>;
+    assert.equal(j.draining, false);
+  } finally { await srv.close(); }
+});
+
+test('drain with no active match completes at the minimum (~3 s) and closes with server-restart', async () => {
+  const srv = await boot();
+  const a = await connect(srv.port, 'Ann', 'a');
+  a.say({ t: 'room.create' }); await a.until('room.joined');
+  const t0 = Date.now();
+  await srv.drain({ windowMs: 30_000 });
+  const dt = Date.now() - t0;
+  assert.ok(dt >= 2800 && dt < 6000, `drain took ${dt}`);
+  assert.equal(await a.closed, 1001);
+  assert.deepEqual(a.msgs.find((m) => m.t === 'room.closed'), { t: 'room.closed', reason: 'server-restart' });
+  assert.equal(srv.phase(), 'exited');
+});
+
+test('a match ending naturally mid-window delivers end; drain then finishes before the window', async () => {
+  const srv = await boot();
+  const a = await connect(srv.port, 'Ann', 'a');
+  await soloMatch(a);
+  const t0 = Date.now();
+  const done = srv.drain({ windowMs: 20_000, minMs: 500 });
+  await sleep(1000);
+  a.say({ t: 'quit' });
+  const end = await a.until('end') as Extract<ServerMessage, { t: 'end' }>;
+  assert.ok(end.finalTick >= 0);
+  await done;
+  assert.ok(Date.now() - t0 < 12_000, `took ${Date.now() - t0}`);
+  assert.ok(a.msgs.findIndex((m) => m.t === 'end') < a.msgs.findIndex((m) => m.t === 'room.closed'));
+});
+
+test('drain({windowMs:0}) is the legacy immediate shutdown', async () => {
+  const srv = await boot();
+  const a = await connect(srv.port, 'Ann', 'a');
+  a.say({ t: 'room.create' }); await a.until('room.joined');
+  await srv.drain({ windowMs: 0 });
+  assert.deepEqual(a.msgs.find((m) => m.t === 'room.closed'), { t: 'room.closed', reason: 'shutdown' });
+});
+
+test('server.draining: every existing and late authed conn gets exactly one notice with sensible deadlineMs', async () => {
+  const srv = await boot();
+  const a = await connect(srv.port, 'Ann', 'a'), b = await connect(srv.port, 'Bob', 'b');
+  const raw = new WebSocket(`ws://127.0.0.1:${srv.port}`); // connected, never sent hello: not authed, gets nothing
+  const rawMsgs: string[] = [];
+  raw.on('message', (d) => rawMsgs.push(String(d)));
+  await new Promise<void>((r) => raw.once('open', () => r()));
+  const notices = (c: Client) => c.msgs.filter((m): m is Extract<ServerMessage, { t: 'server.draining' }> => m.t === 'server.draining');
+  try {
+    assert.equal(notices(a).length, 0);
+    const done = srv.drain({ windowMs: 12_000, minMs: 12_000 });
+    await a.until('server.draining'); await b.until('server.draining');
+    await sleep(300);
+    const late = await connect(srv.port, 'Cy', 'c');
+    await late.until('server.draining');
+    await sleep(1200); // spans two 500 ms drain polls: the notice is never repeated
+    for (const c of [a, b, late]) assert.equal(notices(c).length, 1);
+    for (const c of [a, b]) assert.ok(notices(c)[0]!.deadlineMs > 11_000 && notices(c)[0]!.deadlineMs <= 12_000, String(notices(c)[0]!.deadlineMs));
+    const l = notices(late)[0]!.deadlineMs;
+    assert.ok(l > 9_000 && l < notices(a)[0]!.deadlineMs, String(l));
+    assert.deepEqual(late.msgs.slice(0, 2).map((m) => m.t), ['welcome', 'server.draining']);
+    assert.equal(rawMsgs.length, 0);
+    void done;
+  } finally { raw.terminate(); await srv.close(); }
+});
+
+test('running match is aborted at the deadline: room.closed{server-restart}, no end, 1001, exit within window + 3 s', async () => {
+  const srv = await boot();
+  const a = await connect(srv.port, 'Ann', 'a');
+  await soloMatch(a);
+  const windowMs = 4000;
+  const t0 = Date.now();
+  await srv.drain({ windowMs });
+  const dt = Date.now() - t0;
+  assert.ok(dt >= windowMs - 200, `aborted too early: ${dt}`);
+  assert.ok(dt <= windowMs + 3000, `exit too late: ${dt}`);
+  assert.equal(await a.closed, 1001);
+  assert.deepEqual(a.msgs.find((m) => m.t === 'room.closed'), { t: 'room.closed', reason: 'server-restart' });
+  assert.equal(a.msgs.some((m) => m.t === 'end'), false);
+  assert.equal(srv.phase(), 'exited');
+});
+
+test('fly.toml: kill_signal SIGTERM and kill_timeout exceeds the default-DRAIN_MS hard exit', () => {
+  const toml = readFileSync(new URL('../fly.toml', import.meta.url), 'utf8');
+  const kt = /^kill_timeout\s*=\s*(\d+)/m.exec(toml);
+  assert.ok(kt, 'kill_timeout present');
+  assert.match(toml, /^kill_signal\s*=\s*'SIGTERM'/m);
+  const hardS = hardExitMs(parseConfig({}).drainMs) / 1000;
+  assert.ok(Number(kt[1]) > hardS, `kill_timeout ${kt[1]} must exceed hard exit ${hardS}`);
+  assert.ok(Number(kt[1]) >= hardS + 5, 'keeps a 5 s margin');
+});

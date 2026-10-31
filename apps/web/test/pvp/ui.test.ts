@@ -107,7 +107,7 @@ describe('Lobby M2 full', () => {
     expect(byId(v, 'lobby-ready')).toBeTruthy(); expect(byId(v, 'lobby-start')).toBeUndefined();
   });
   it('start blockers: disconnected/reserved seat, empty seats ignored', () => {
-    const grace = lobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'human', team: 1, occupant: { nick: 'b', ready: true, status: 'grace' } }]);
+    const grace = lobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'human', team: 1, occupant: { nick: 'b', ready: true, status: 'away' } }]);
     expect(startBlocker(grace)).toBe('Waiting for player to reconnect');
     const v = Lobby(lobbyProps({ lobby: grace })); expect(byId(v, 'lobby-start')!.props.disabled).toBe(true);
     expect(text(byId(SeatRow({ index: 1, seat: grace.seats[1]!, you: false, host: false }), 'lobby-seat-1'))).toContain('Not connected');
@@ -130,5 +130,14 @@ describe('Picker Play online', () => {
     expect(byId(Picker(base), 'pvp-play')).toBeUndefined();
     const fn = vi.fn(), v = Picker({ ...base, onPlayOnline: fn });
     (byId(v, 'pvp-play')!.props.onClick as () => void)(); expect(fn).toHaveBeenCalledOnce();
+  });
+});
+
+describe('PvpLayer leave', () => {
+  it('eliminated seat and spectators leave directly; live seats confirm quit', async () => {
+    const { leaveNeedsConfirm } = await import('../../src/ui/pvp/PvpLayer');
+    expect(leaveNeedsConfirm(1, false)).toBe(true);
+    expect(leaveNeedsConfirm(1, true)).toBe(false);
+    expect(leaveNeedsConfirm(null, false)).toBe(false);
   });
 });

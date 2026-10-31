@@ -4,6 +4,7 @@ import { PROTOCOL_VERSION, type ServerMessage } from '@node-arena/net';
 import type { ClockRoom } from '../src/clock.js';
 import { DEFAULT_CONTENT_DIR } from '../src/config.js';
 import { loadServerContent } from '../src/content.js';
+import { Conn } from '../src/conn.js';
 import { createHub } from '../src/hub.js';
 import { IpLimits, TokenBucket } from '../src/limits.js';
 import { createMatchController } from '../src/match.js';
@@ -39,10 +40,11 @@ function setup(opts: { maxRooms?: number; maxConns?: number } = {}) {
   const ipLimits = new IpLimits(() => now);
   const ctl = createMatchController({ clock, now: () => now, log });
   const starts: MatchStart[] = [];
+  const rooms: Parameters<typeof ctl.catchUp>[0][] = [];
   const mgr = createRoomManager({
     content, clock, now: () => now, inputDelay: 3, log, ipLimits, maxRooms: opts.maxRooms ?? 40,
-    onStart: (r, m) => { starts.push(m); ctl.onStart(r, m); },
-    onMatchMessage: ctl.onMessage,
+    onStart: (r, m) => { starts.push(m); rooms.push(r); ctl.onStart(r, m); },
+    onMatchMessage: ctl.onMessage, onCatchUp: ctl.catchUp,
   });
   const hub = createHub({
     versions: content.versions, handler: mgr, secret: 's', log, ipLimits, now: () => now, maxConns: opts.maxConns ?? 200,
@@ -56,7 +58,7 @@ function setup(opts: { maxRooms?: number; maxConns?: number } = {}) {
     return s;
   };
   const tickAll = () => { for (const r of [...added]) r.tick(); };
-  return { client, hub, mgr, logs, tickAll, starts, advance: (ms: number) => { now += ms; } };
+  return { ctl, rooms, client, hub, mgr, logs, tickAll, starts, advance: (ms: number) => { now += ms; } };
 }
 
 test('41st room refused with room-full; 40 fit (distinct IPs)', () => {
@@ -181,4 +183,209 @@ test('lagging socket: skipped writes, batched ticks on drain, others unaffected;
   assert.equal(a.closed, undefined);
   const all = t.logs.join('\n');
   for (const ip of ['5.5.5.5', '6.6.6.6', '1.2.3.4']) assert.ok(!all.includes(ip), ip);
+});
+
+test('Conn.send closes (4006) instead of queueing when bufferedAmount over cap', () => {
+  const t = setup();
+  const s = t.client('7.7.7.7');
+  s.say({ t: 'ping', id: 1 });
+  assert.equal(s.of('pong').length, 1);
+  s.bufferedAmount = 3 * 1024 * 1024;
+  s.say({ t: 'ping', id: 2 });
+  assert.equal(s.closed, 4006);
+  assert.equal(s.of('pong').length, 1, 'nothing queued past the cap');
+});
+
+test('ping limiter entry removed on close', () => {
+  const t = setup();
+  const s = t.client('7.7.7.8');
+  s.say({ t: 'ping', id: 1 });
+  assert.equal(t.mgr.pingLimiterSize(), 1);
+  s.bufferedAmount = 3 * 1024 * 1024;
+  s.say({ t: 'ping', id: 2 });
+  assert.equal(s.closed, 4006);
+  assert.equal(t.mgr.pingLimiterSize(), 0);
+});
+
+test('catch-up amplification: watch/leave loop rate-limited; first seated reconnect still gets catch-up', () => {
+  const t = setup();
+  const a = t.client('5.5.5.5'), b = t.client('6.6.6.6');
+  a.say({ t: 'room.create' });
+  const code = a.of('room.joined')[0]!.code;
+  b.say({ t: 'room.join', code, role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'lobby.start' });
+  for (let i = 0; i < 5; i++) t.tickAll();
+  const w = t.client('8.8.8.8');
+  w.say({ t: 'room.join', code, role: 'watch' });
+  assert.equal(w.of('catchup').length > 0, true);
+  const n = w.of('catchup').length;
+  w.say({ t: 'room.leave' });
+  w.say({ t: 'room.join', code, role: 'watch' });
+  assert.equal(w.of('error').at(-1)?.code, 'rate-limited');
+  assert.equal(w.of('catchup').length, n, 'no second full log');
+  t.advance(5001);
+  w.say({ t: 'room.join', code, role: 'watch' });
+  assert.equal(w.of('catchup').length > n, true);
+  // seated reconnect: new socket, same token (b was TOKEN(2))
+  const hello = { t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick: 'P1', token: TOKEN(2) };
+  const b2 = fakeSocket('6.6.6.6');
+  t.hub.accept(b2 as never);
+  b2.say(hello);
+  assert.equal(b2.of('catchup').length > 0, true, 'first reconnect gets catch-up');
+  const b3 = fakeSocket('6.6.6.6');
+  t.hub.accept(b3 as never);
+  b3.say(hello);
+  assert.equal(b3.of('catchup').length, 0);
+  assert.equal(b3.closed, 4005);
+});
+
+test('IpLimits: 31st new connection/min refused (released slots still count); window recovers', () => {
+  let now = 0;
+  const l = new IpLimits(() => now);
+  for (let i = 0; i < 30; i++) { assert.ok(l.acquireConn('1.1.1.1'), `conn ${i}`); l.releaseConn('1.1.1.1'); }
+  assert.equal(l.acquireConn('1.1.1.1'), false);
+  assert.ok(l.acquireConn('1.1.1.2'));
+  now += 61_000;
+  assert.ok(l.acquireConn('1.1.1.1'));
+});
+
+function catchUpConn(buffered: number) {
+  const s = fakeSocket('9.9.9.9');
+  s.bufferedAmount = buffered;
+  const hooks = { onHello() {}, onMessage() {}, onClose() {} };
+  const c = new Conn(1, s as never, hooks, { setTimeout: () => 0, clearTimeout: () => {} }, () => {});
+  return { s, c };
+}
+
+function startedMatch() {
+  const t = setup();
+  const a = t.client('5.5.5.5'), b = t.client('6.6.6.6');
+  a.say({ t: 'room.create' });
+  const code = a.of('room.joined')[0]!.code;
+  b.say({ t: 'room.join', code, role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'lobby.start' });
+  const room = t.rooms[0]!;
+  const ls = t.ctl.inspect(room)!;
+  // 3 chunks of ~1 MB => > 2 MB catch-up in one synchronous turn.
+  const pad = 'x'.repeat(1_000_000);
+  (ls.log as { range: unknown }).range = () => [0, 1, 2].map((i) => ({ from: i, to: i + 1, cmds: [{ pad }] }));
+  return { t, room };
+}
+
+test('catch-up > 2 MB to a low-buffer conn completes (no per-chunk 4006)', () => {
+  const { t, room } = startedMatch();
+  const { s, c } = catchUpConn(0);
+  t.ctl.catchUp(room, c);
+  assert.equal(s.closed, undefined);
+  const chunks = s.of('catchup');
+  assert.equal(chunks.length, 3);
+  assert.equal(chunks.at(-1)?.done, true);
+});
+
+test('catch-up to a conn already over cap closes 4006 before sending', () => {
+  const { t, room } = startedMatch();
+  const { s, c } = catchUpConn(3 * 1024 * 1024);
+  t.ctl.catchUp(room, c);
+  assert.equal(s.closed, 4006);
+  assert.equal(s.of('catchup').length, 0);
+});
+
+// ---- SP08 Task 1: resync ----
+function runningRoom(t: ReturnType<typeof setup>) {
+  const a = t.client('5.5.5.5'), b = t.client('6.6.6.6');
+  a.say({ t: 'room.create' });
+  const code = a.of('room.joined')[0]!.code;
+  b.say({ t: 'room.join', code, role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'lobby.start' });
+  return { a, b, code };
+}
+
+test('resync: lobby/countdown/no room -> no-match, conn open, no limiter spent', () => {
+  const t = setup();
+  const lone = t.client('4.4.4.4');
+  lone.say({ t: 'resync' });
+  assert.equal(lone.of('error').at(-1)?.code, 'no-match');
+  const { a, b } = runningRoom(t); // countdown (no ticks yet)
+  a.say({ t: 'resync' });
+  assert.equal(a.of('error').at(-1)?.code, 'no-match');
+  const n = a.of('start').length;
+  for (let i = 0; i < 5; i++) t.tickAll();
+  t.advance(6000);
+  a.say({ t: 'resync' }); // first real resync still allowed (earlier no-match did not spend tokens)
+  assert.equal(a.of('start').length, n + 1);
+  assert.equal(b.closed, undefined);
+});
+
+test('covers SP08 S3: resync in running room -> start, chunked catchup (done last) in one turn; spectator youPlayer null', () => {
+  const t = setup();
+  const { a, code } = runningRoom(t);
+  for (let i = 0; i < 5; i++) t.tickAll();
+  t.advance(6000);
+  const before = a.sent.length;
+  a.say({ t: 'resync' });
+  const got = a.sent.slice(before);
+  const types = got.map((m) => m.t);
+  assert.equal(types[0], 'start');
+  assert.ok(types.slice(1).every((x) => x === 'catchup'), JSON.stringify(types));
+  const cu = got.filter((m) => m.t === 'catchup') as Extract<ServerMessage, { t: 'catchup' }>[];
+  assert.equal(cu[0]!.from, 0);
+  assert.equal(cu.at(-1)!.done, true);
+  assert.equal((got[0] as Extract<ServerMessage, { t: 'start' }>).youPlayer, 0);
+  const w = t.client('8.8.8.8');
+  w.say({ t: 'room.join', code, role: 'watch' });
+  t.advance(6000);
+  const wb = w.sent.length;
+  w.say({ t: 'resync' });
+  const ws = w.sent.slice(wb);
+  assert.equal(ws[0]!.t, 'start');
+  assert.equal((ws[0] as Extract<ServerMessage, { t: 'start' }>).youPlayer, null);
+  assert.equal(w.closed, undefined);
+});
+
+test('resync: second within 10 s -> rate-limited, conn open, no second attach; allowed after 10 s', () => {
+  const t = setup();
+  const { a } = runningRoom(t);
+  for (let i = 0; i < 5; i++) t.tickAll();
+  t.advance(6000);
+  a.say({ t: 'resync' });
+  const n = a.of('start').length;
+  t.advance(6000); // past the 5 s catch-up token, inside 10 s
+  a.say({ t: 'resync' });
+  assert.equal(a.of('error').at(-1)?.code, 'rate-limited');
+  assert.equal(a.of('start').length, n);
+  assert.equal(a.closed, undefined);
+  t.advance(4001);
+  a.say({ t: 'resync' });
+  assert.equal(a.of('start').length, n + 1);
+});
+
+test('resync right after a reconnect catch-up is refused by the catch-up token; conn stays open', () => {
+  const t = setup();
+  const { b } = runningRoom(t);
+  for (let i = 0; i < 5; i++) t.tickAll();
+  t.advance(6000);
+  const b2 = fakeSocket('6.6.6.6');
+  t.hub.accept(b2 as never);
+  b2.say({ t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick: 'P1', token: TOKEN(2) });
+  assert.ok(b2.of('start').length >= 1);
+  const n = b2.of('start').length;
+  b2.say({ t: 'resync' });
+  assert.equal(b2.of('error').at(-1)?.code, 'rate-limited');
+  assert.equal(b2.of('start').length, n);
+  assert.equal(b2.closed, undefined);
+  void b;
+});
+
+test('resyncBlocked peeks without spending; noteResync spends the 10 s window', () => {
+  let now = 0;
+  const l = new IpLimits(() => now);
+  assert.equal(l.resyncBlocked('p'), false);
+  assert.equal(l.resyncBlocked('p'), false);
+  l.noteResync('p');
+  assert.equal(l.resyncBlocked('p'), true);
+  now = 10_000;
+  assert.equal(l.resyncBlocked('p'), false);
 });

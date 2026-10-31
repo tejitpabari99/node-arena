@@ -1,11 +1,11 @@
 ---
 status: in-progress
-summary: Seven PvP sub-projects — all 95 M1/M2-labelled tasks done; six M3 backlog tasks; first Fly deployment and production acceptance pending.
-date: 2026-10-29
+summary: Eleven PvP sub-projects — M2 merged (#40, 993b796); M3 (SP08-SP11) implemented on feat/pvp-m3, 26/26 tasks done, CI green; first Fly deployment pending.
+date: 2026-10-30
 ---
 # Online PvP: PRD index
 
-M1 merged in #39; owner local play-test passed (2026-10-29). M2 code is implemented on branch `feat/pvp-m2`; first Fly deployment and production acceptance remain pending. [M1 implementation and validation summary](code-2026-10-29-0300.md).
+M1 merged in #39; owner local play-test passed (2026-10-29). M2 merged to main (#40, 993b796); M3 (SP08-SP11) implemented on `feat/pvp-m3` (26/26 tasks done; [run summary](code-2026-10-30-m3.md); acceptance map: [11-reconnect-polish/m3-acceptance-map.md](11-reconnect-polish/m3-acceptance-map.md); review: [review-2026-10-30-m3.md](review-2026-10-30-m3.md)); first Fly deployment and production acceptance remain pending. [M1 implementation and validation summary](code-2026-10-29-0300.md).
 
 Live private-room PvP (2-4 seats, teams, bots, spectators) via deterministic lockstep + server referee sim on Fly.io. Full rationale, verified facts and decision log: [brainstorm.md](brainstorm.md). Milestones: M1 = 2-tab local 1v1 owner play-test; M2 = full lobby/teams/bots/spectators/rematch/maps/Fly deploy (minimal play-link startup included in M1); M3 = broader reconnect hardening, desync resync, load test. **M2 also includes [SP07 pause/Quit/window-close forfeit](07-pause-forfeit/PRD.md) (settled, approved) and its minimum reconnect/catch-up.**
 
@@ -19,6 +19,10 @@ Live private-room PvP (2-4 seats, teams, bots, spectators) via deterministic loc
 | 05 | Web netplay (`apps/web`) | client | 01, 02, 03, 04 | M1 NetDriver, create/join, 2-seat lobby, result win/lose, desync toast; M2 full lobby, legend, catch-up, watch, rematch, deep links; M3 reconnect polish, resync | [05-web-netplay](05-web-netplay/PRD.md) |
 | 06 | Deploy, CI, e2e | ops | 04, 05 (02 handshake) | M1 `dev:pvp`, 2-browser e2e, CI steps, doc stubs; M2 Fly deploy workflow, ordering, Docker job, more specs, runbook; M3 - | [06-deploy-e2e](06-deploy-e2e/PRD.md) |
 | 07 | Pause, Quit and window-close forfeit | cross-cutting enhancement | 01, 02, 04, 05, 06 | M2 cumulative budget, confirmed Quit, deadline `Forfeit` command (RULES 3.2.0, PROTOCOL 2), heartbeat, minimum reconnect; all 13 tasks implemented | [07-pause-forfeit](07-pause-forfeit/PRD.md) |
+| 08 | Desync auto-resync | net + server + web | 02, 04, 05, 07 | M3 | [08-desync-resync](08-desync-resync/PRD.md) |
+| 09 | Drain-aware restart | server + web + deploy | 02, 04, 05, 07 | M3 | [09-drain-restart](09-drain-restart/PRD.md) |
+| 10 | Load smoke | tooling + server healthz | none (independent) | M3 | [10-load-smoke](10-load-smoke/PRD.md) |
+| 11 | Reconnect polish + protocol cleanup + M3 sweep | web + protocol | 08, 09 | M3 | [11-reconnect-polish](11-reconnect-polish/PRD.md) |
 
 ## Dependency graph
 ```mermaid
@@ -38,7 +42,10 @@ graph LR
   04 --> 07
   05 --> 07
   06 --> 07
+  08 --> 11
+  09 --> 11
 ```
+(M3: 08 and 09 depend on 02/04/05/07 and feed 11; 10 is independent.)
 (01 also feeds 02 as types only; 03 feeds the 04 M1 gate and 05 map picker.)
 
 ## M1 critical path (historical; local owner play-test approved)
@@ -105,7 +112,7 @@ Historical integration sequence was 01 → (02 || 03) → 04 → 05 → 06, with
 
 ## Tasks
 
-Current tracking-table totals: **95 done / 101 tasks**. All **48 M1-labelled** and **47 M2-labelled** tasks are done; **six M3** tasks remain `todo`. Counts preserve task milestone labels: SP01#11 remains labelled M2 even though placement ranking was promoted and completed for M1 coverage. No M3 task scope has changed.
+Current tracking-table totals: **95 done / 101 tasks** for SP01-07, plus **26 new M3 tasks** (SP08 5, SP09 8, SP10 6, SP11 7; all `done`) = **121 done / 127 listed**. The six old M3 rows below are superseded and still listed but must not be counted as remaining work: real remaining = 0 (SP08-11 done). All **48 M1-labelled** and **47 M2-labelled** tasks are done; **six old M3** rows (SP02#13, SP04#19/#20, SP05#16/#17/#18) remain `todo` and are superseded by SP08-SP11. Counts preserve task milestone labels: SP01#11 remains labelled M2 even though placement ranking was promoted and completed for M1 coverage. 
 
 | SP | TASKS | M1 | M2 | M3 | Total | Done |
 |---|---|---|---|---|---|---|
@@ -116,7 +123,13 @@ Current tracking-table totals: **95 done / 101 tasks**. All **48 M1-labelled** a
 | 05 | [05-web-netplay](05-web-netplay/TASKS.md) | 10 | 5 | 3 | 18 | 15 |
 | 06 | [06-deploy-e2e](06-deploy-e2e/TASKS.md) | 5 | 10 | 0 | 15 | 15 |
 | 07 | [07-pause-forfeit](07-pause-forfeit/TASKS.md) | 0 | 13 | 0 | 13 | 13 |
-| | **Total** | 48 | 47 | 6 | 101 | **95** |
+| 08 | [08-desync-resync](08-desync-resync/TASKS.md) | 0 | 0 | 5 | 5 | 5 |
+| 09 | [09-drain-restart](09-drain-restart/TASKS.md) | 0 | 0 | 8 | 8 | 8 |
+| 10 | [10-load-smoke](10-load-smoke/TASKS.md) | 0 | 0 | 6 | 6 | 6 |
+| 11 | [11-reconnect-polish](11-reconnect-polish/TASKS.md) | 0 | 0 | 7 | 7 | 7 |
+| | **Total (SP01-07)** | 48 | 47 | 6 (superseded, see M3 plan) | 101 | **95** |
+| | **New M3 (SP08-11)** | 0 | 0 | 26 | 26 | **26** |
+| | **Total (SP01-11)** | 48 | 47 | 32 listed (6 superseded + 26 live) | 127 | **121 done / 127 tasks; live remaining 0 (6 superseded)** |
 
 ### M1 execution order (historical; complete)
 Topological waves; `||` = independent, run at most 2 at a time (parallelism cap).
@@ -149,6 +162,25 @@ Implemented in interleaved dependency lanes: pure bot/map/catch-up foundations; 
 
 The branch already held **49 commits ahead of main through `d364c83`**, including SP07#13 and SP06 spectator/rematch. Resumed tail, now done: **SP06#11** (`62da259`, mismatch) → **SP06#13** (`274d3ce`, bot/Cross) → **SP06#14** (`3e47dd9`, docs). Final gate repairs: metadata-only golden refresh `0f00b6a` (simulation values/hashes unchanged), replay count `373a998`, FFT coverage count `d67e0ba`, and editor objective expectation `2b2f671`; production behavior unchanged by these repairs. [Resumed-delta review: PASS](06-deploy-e2e/review-2026-10-29-1754.md). [Final run summary](code-2026-10-29-1754.md): local CI **44 stages / 1570 passed**, full PvP **13 passed**; original full-web run had one stale assertion, then the affected spec passed **2/2** after repair (136 other executed web cases passed; no monolithic full-web exit-0 claim).
 
-### M3 backlog (not implemented)
+### M3 backlog (superseded 2026-10-30)
 
-Historical dependency outline: SP02#13 → SP04#19 → SP04#20 → SP05#17 → SP05#16 → SP05#18. Minimum reconnect/catch-up and runtime recreation were promoted to M2 by SP07. SP04#19's old grace/bot-takeover policy is superseded: **human disconnects use the cumulative budget and forfeit; no bot takeover**. The six M3 table entries remain unchanged backlog placeholders for broader hardening, auto-resync and load testing; reconcile the superseded policy before implementing them.
+Old rows SP02#13, SP04#19 (void, already superseded by SP07), SP04#20, SP05#16, SP05#17, SP05#18 are superseded by SP08-SP11; their Status values are unchanged and each now carries a pointer line. Replacement task tables: SP08-SP11 TASKS.md (26 tasks, listed above; the six superseded rows are not double counted as remaining).
+
+## M3 plan
+Scope: [SP08](08-desync-resync/PRD.md) desync auto-resync; [SP09](09-drain-restart/PRD.md) SIGTERM drain/abort notice; [SP10](10-load-smoke/PRD.md) report-only load smoke; [SP11](11-reconnect-polish/PRD.md) reconnect UX, protocol cleanup, M3 acceptance sweep.
+
+Locked decisions:
+- One shared `PROTOCOL_VERSION` 2 -> 3 bump for the whole milestone.
+- Land order SP08 -> SP09 -> SP11; SP10 independent.
+- Drain = abort with no result (no rules change).
+- Resync limit 1 per 10 s per seat/spectator; also spends `allowCatchUp` (1/5 s per player, 20/min per IP).
+- Net `createCatchup` is a test oracle only.
+- Already delivered in M2 fixes (dde99c1, 1a93075, 8528f00): hash suppression during catch-up, `onRoomClosed` hook, reconnect attempt reset (STABLE_MS), host-pass ready clear.
+
+Owner-only steps: first Fly deploy verification (`kill_timeout` >= 40 s allowed, no new-connection routing during stop, drain rehearsal on a live match); Fly load run and `MAX_ROOMS`/VM decision; deploy-timing preference. Tagged `[DEFERRED: owner verifies at first deploy]` in SP09/SP10.
+
+Orchestrator defaults (owner may override): see `[RESOLVED: orchestrator default]` tags in SP08-SP11.
+
+## M2 post-merge review
+M2 merged to main as #40 (993b796). Review: [review-2026-10-30-1617.md](review-2026-10-30-1617.md) (NEEDS_CHANGES, 5 must-fix). Fix commits: a0a63c4 (buffers, conn rate, catch-up limiter, ping cleanup), dde99c1 (room lifecycle), 1a93075 (feed flush, duplicate limiter, onRoomClosed), 8528f00 (web leave, 4005 backoff, stable reset, hash suppression).
+

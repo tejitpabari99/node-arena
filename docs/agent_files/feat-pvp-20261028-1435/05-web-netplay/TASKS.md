@@ -107,13 +107,16 @@ Superseded in part by SP07 (2026-10-29): minimum mid-match reconnect (same token
 What it is: R8 M3 (polish only).
 What changes (remaining): reconnect status polish on top of the SP07 basic flow (shown state, richer chips for other seats' away state); original text (re-handshake, rebuild via catch-up, runtime recreation) is delivered by SP07 in M2.
 Done when: polish items per PRD M3 pass; basic kill-socket resume with equal hash is covered by SP07.
+Superseded 2026-10-30 by [SP11](../11-reconnect-polish/PRD.md).
 
 ## Task 17 — [M3] Desync auto-resync (runtime recreation)
 What it is: R9 M3.
 What changes: on `desync`, toast then dispose client+sim, fresh `create(level, seed, {teams})`, new client, full catch-up, recreate runtime (controller owns it).
 Done when: forced desync converges to server hash in a test.
+Superseded 2026-10-30 by [SP08](../08-desync-resync/PRD.md).
 
 ## Task 18 — [M3] Acceptance sweep + doc notes
 What it is: closes M2/M3 acceptance criteria (pause/quit/reconnect acceptance is SP07's).
 What changes: fill gaps in tests against PRD acceptance list; short web netplay notes in existing docs where the doc gate requires. No new features.
 Done when: all gates green.
+Superseded 2026-10-30 by [SP11](../11-reconnect-polish/PRD.md) (acceptance sweep).

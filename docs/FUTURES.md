@@ -50,3 +50,8 @@ Source facts below describe Tower War; they are deferred in Node Arena. Research
 
 - **Cross balance.** FFA and adjacent-team imbalance observed in bot play; cause unproven. Investigate before tuning; no balance/content changes in this M2 run.
 - **Host-drop readiness.** Host disconnect leaves ready flags uncleared. Revisit lobby readiness policy and behavior; deferred from this M2 run.
+
+## From PvP M2 re-review (2026-10-30)
+
+- **Per-IP limiter scaling and NAT sharing.** Per-IP limit maps prune O(n) once past 10k entries; the 30/min connection and 20/min catch-up caps are shared by all clients behind one NAT. Consider amortized pruning and revisit caps/keying. [Review](agent_files/feat-pvp-20261028-1435/review-2026-10-30-1617.md).
+- **Absolute cap on paused rooms.** GC skips paused rooms, so a sole human with unlimited pause holds a room indefinitely while connected. Consider a 1 h absolute cap. [Review](agent_files/feat-pvp-20261028-1435/review-2026-10-30-1617.md).

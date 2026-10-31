@@ -88,6 +88,14 @@ export interface RoomManagerDeps {
   timers?: { setTimeout: (fn: () => void, ms: number) => unknown; clearTimeout: (h: never) => void };
   /** SP07 hook: true while the room has a pending pause/disconnect deadline; such rooms are never GC-dropped (only the hard cap / shutdown / abort remove them). Default false. */
   hasPendingDeadline?: (room: Room) => boolean;
+  /** Total ms the room's clock was frozen by pauses (extends the hard match cap). Default 0. */
+  pausedMsOf?: (room: Room) => number;
+  /** True if the seat is eliminated / pending forfeit in a running match (may leave without a quit). Default false. */
+  seatOut?: (room: Room, seat: number) => boolean;
+  /** SP09: true while the server drains; new work (create / join / start / rematch) is refused with `error draining`. Token reattach is unaffected. */
+  isDraining?: () => boolean;
+  /** Called whenever a room is removed (gc, abort, closeAll, empty): tear down per-room match state. */
+  onRoomClosed?: (room: Room) => void;
   /** Current lockstep tick for `pong`; default 0. */
   tickOf?: (room: Room) => number | undefined;
   onMatchMessage?: (room: Room, conn: Conn, seat: number, msg: ClientMessage) => boolean;
@@ -109,6 +117,8 @@ export interface RoomManager extends HubHandler {
   roomOf(conn: Conn): Room | undefined;
   roomCount(): number;
   runningCount(): number;
+  /** SP09: rooms in `countdown` or `running` (drain waits for these). */
+  activeMatchCount(): number;
   /** Drops ended/closed rooms older than the TTL and frees their players. */
   gc(): void;
   /** True while the room has a pending pause/disconnect deadline (SP07). */
@@ -117,6 +127,8 @@ export interface RoomManager extends HubHandler {
   drop(room: Room): void;
   /** Shutdown: sends `room.closed{reason}` to every conn in every room, marks rooms closed, and drops them. */
   closeAll(reason: string): void;
+  /** Test hook: live ping-limiter entries. */
+  pingLimiterSize(): number;
 }
 
 export function createRoomManager(deps: RoomManagerDeps): RoomManager {
@@ -166,7 +178,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     const seats: LobbySeat[] = room.seats.map((s, i) => {
       const out: LobbySeat = { kind: s.kind, team: s.team };
       if (s.difficulty !== undefined) out.difficulty = s.difficulty;
-      if (s.occupant !== undefined) out.occupant = { nick: s.occupant.nick, ready: isReady(room, i), status: s.occupant.conn.closed ? 'grace' : 'connected' };
+      if (s.occupant !== undefined) out.occupant = { nick: s.occupant.nick, ready: isReady(room, i), status: s.occupant.conn.closed ? 'away' : 'connected' };
       return out;
     });
     return { t: 'lobby.state', levelId: room.levelId, timeLimitSec: level.timeLimitSec ?? 0, host: room.host, seats, spectators: room.spectators.length };
@@ -189,7 +201,14 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     byPlayer.set(conn.playerId!, room);
   };
 
+  const refuseDraining = (conn: Conn): boolean => {
+    if (deps.isDraining?.() !== true) return false;
+    conn.sendError('draining', 'server restarting');
+    return true;
+  };
+
   const create_ = (conn: Conn): void => {
+    if (refuseDraining(conn)) return;
     if (byPlayer.has(conn.playerId!)) return conn.sendError('bad-lobby', 'already in a room');
     if (conn.ip !== undefined && deps.ipLimits?.allowCreate(conn.ip) === false) return conn.sendError('rate-limited', 'too many rooms created');
     if (defaultLevelId === undefined) return conn.sendError('internal', 'no pvp levels');
@@ -220,9 +239,33 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     if (end !== undefined) conn.send(end);
   };
 
+  const catchUpAllowed = (conn: Conn): boolean => deps.ipLimits?.allowCatchUp(conn.playerId!, conn.ip) ?? true;
+
+  /** SP08: client-requested self-heal. Replays the reconnect attach (start, full catch-up, pause.state, stored end); no hold bookkeeping, no sim/log mutation. */
+  const resync = (conn: Conn): void => {
+    const room = byPlayer.get(conn.playerId!);
+    const i = room === undefined ? -1 : seatOf(room, conn);
+    const who = i >= 0 ? 'seat' : 'spectator';
+    if (room === undefined || room.match === undefined || (room.state !== 'running' && room.state !== 'ended')) {
+      log?.info('resync', { room: room?.code, who, outcome: 'no-match' });
+      return conn.sendError('no-match');
+    }
+    const tick = deps.tickOf?.(room);
+    const fields = { room: room.code, matchId: room.match.matchId, who, seat: i >= 0 ? i : undefined, tick };
+    // Order matters: the resync window is spent only when catch-up also passes, so the client's single retry is not starved.
+    if (deps.ipLimits?.resyncBlocked(conn.playerId!) === true || !catchUpAllowed(conn)) {
+      log?.warn('resync', { ...fields, outcome: 'limited' });
+      return conn.sendError('rate-limited', 'resync too frequent');
+    }
+    deps.ipLimits?.noteResync(conn.playerId!);
+    log?.info('resync', { ...fields, outcome: 'allowed' });
+    attachMidMatch(room, conn, i >= 0 ? i : null, room.state === 'running');
+  };
+
   const watch = (conn: Conn, room: Room): void => {
     if (room.state !== 'lobby' && room.state !== 'countdown' && room.state !== 'running') return conn.sendError('match-in-progress');
     if (room.spectators.length >= MAX_SPECTATORS) return conn.sendError('spectators-full');
+    if (room.state !== 'lobby' && room.match !== undefined && !catchUpAllowed(conn)) return conn.sendError('rate-limited', 'catch-up too frequent');
     conn.send({ t: 'room.joined', code: room.code, you: { seat: null, host: false } });
     if (room.state !== 'lobby' && room.match !== undefined) {
       conn.send(lobbyState(room));
@@ -235,6 +278,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   };
 
   const join = (conn: Conn, code: string, role: 'play' | 'watch'): void => {
+    if (refuseDraining(conn)) return;
     if (byPlayer.has(conn.playerId!)) return conn.sendError('bad-lobby', 'already in a room');
     if (conn.ip !== undefined && deps.ipLimits?.joinBlocked(conn.ip) === true) return conn.sendError('rate-limited', 'too many failed joins');
     const room = rooms.get(code);
@@ -247,8 +291,9 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     const i = room.seats.findIndex((s) => s.kind === 'human' && s.occupant === undefined);
     if (i < 0) return conn.sendError('room-full');
     seat(room, conn, i);
+    room.host ??= pickHost(room); // hostless lobby (sole host dropped): the joiner is promoted
     log?.info('room.join', { room: code, seat: i, nick: conn.nick });
-    conn.send({ t: 'room.joined', code, you: { seat: i, host: false } });
+    conn.send({ t: 'room.joined', code, you: { seat: i, host: room.host === i } });
     broadcast(room);
   };
 
@@ -271,10 +316,15 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   const reserveSeat = (room: Room, i: number): void => {
     const o = room.seats[i]!.occupant!;
     clearReserve(o);
-    if (room.host === i) room.host = pickHost(room);
+    if (room.host === i) {
+      room.host = pickHost(room);
+      for (const s of room.seats) if (s.occupant) s.occupant.ready = false; // host passed: ready flags reset
+    }
     reserves.set(o, timers.setTimeout(() => {
       reserves.delete(o);
-      if (room.state === 'lobby' && room.seats[i]?.occupant === o && o.conn.closed) leave(o.conn);
+      // Find the occupant by identity: a host level change / seat flip may have moved it off index i.
+      const held = room.seats.some((s) => s.occupant === o) || room.spectators.includes(o);
+      if ((room.state === 'lobby' || room.state === 'ended') && held && o.conn.closed) leave(o.conn);
     }, SEAT_RESERVE_MS));
   };
 
@@ -286,7 +336,15 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     // Countdown: a seated leave cancels the start (full unwind), then the seat is freed like a lobby leave.
     if (i >= 0 && room.state === 'countdown') cancelCountdown(room, false);
     // Running: a seated leave is a quit (pending Forfeit; client confirms first).
-    if (i >= 0 && room.state === 'running') { deps.onMatchMessage?.(room, conn, i, { t: 'quit' }); return; }
+    if (i >= 0 && room.state === 'running') {
+      if (deps.seatOut?.(room, i) === true) { // eliminated / forfeited: unbind only; seat + sim state untouched
+        delete room.seats[i]!.occupant;
+        byPlayer.delete(conn.playerId!);
+        return;
+      }
+      deps.onMatchMessage?.(room, conn, i, { t: 'quit' });
+      return;
+    }
     if (i < 0) { // spectators may leave any time
       room.spectators = room.spectators.filter((o) => o.playerId !== conn.playerId);
       byPlayer.delete(conn.playerId!);
@@ -303,10 +361,11 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       room.spectators = [];
       rooms.delete(room.code);
       if (room.state === 'lobby') room.state = 'closed';
+      deps.onRoomClosed?.(room);
       log?.info('room.close', { room: room.code, reason: 'empty' });
       return;
     }
-    if (room.host === i) room.host = pickHost(room);
+    if (room.host === i || room.host === null) room.host = pickHost(room);
     for (const s of room.seats) if (s.occupant) s.occupant.ready = false;
     if (room.state === 'lobby') broadcast(room);
   };
@@ -375,6 +434,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
   };
 
   const start = (conn: Conn, room: Room): void => {
+    if (refuseDraining(conn)) return;
     if (room.host !== seatOf(room, conn)) return conn.sendError('not-host');
     if (room.state !== 'lobby') return conn.sendError('match-in-progress');
     for (let i = 0; i < room.seats.length; i++) {
@@ -414,6 +474,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
 
   /** Seated human back to lobby after `end`: same setup, ready cleared (sender ready), new seed on next start, spectators kept. */
   const rematch = (conn: Conn): void => {
+    if (refuseDraining(conn)) return;
     const room = byPlayer.get(conn.playerId ?? '');
     if (room === undefined) return conn.sendError('not-in-room');
     const i = seatOf(room, conn);
@@ -445,21 +506,22 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     for (const s of room.seats) if (s.occupant && byPlayer.get(s.occupant.playerId) === room) byPlayer.delete(s.occupant.playerId);
     for (const o of room.spectators) if (byPlayer.get(o.playerId) === room) byPlayer.delete(o.playerId);
     log?.info('room.gc', { room: room.code, state: room.state });
+    deps.onRoomClosed?.(room);
   };
 
   const gc = (): void => {
     const t = deps.now();
     for (const room of [...rooms.values()]) {
-      // Hard match cap = limit + 2 min: an abort, so it applies even with a pending deadline (the tick loop stops itself on 'closed').
+      // A paused room is off the clock: never capped (unlimited sole-human pause ends via the D14 idle close). Cap also grows by past paused time.
+      if (hasPendingDeadline(room)) continue;
       if ((room.state === 'countdown' || room.state === 'running') && room.match !== undefined && room.match.timeLimitTicks > 0
-        && t >= room.match.startAt + (room.match.timeLimitTicks * 1000) / TICK_RATE + MATCH_CAP_EXTRA_MS) {
+        && t >= room.match.startAt + (room.match.timeLimitTicks * 1000) / TICK_RATE + MATCH_CAP_EXTRA_MS + (deps.pausedMsOf?.(room) ?? 0)) {
         room.state = 'closed'; room.endedAt = t;
         log?.warn('room.close', { room: room.code, reason: 'match-cap' });
         notifyClosed(room, 'idle');
         drop(room);
         continue;
       }
-      if (hasPendingDeadline(room)) continue;
       if ((room.state === 'ended' || room.state === 'closed') && room.endedAt !== undefined && t - room.endedAt >= ENDED_ROOM_TTL_MS) { drop(room); continue; }
       if (room.state === 'lobby') {
         // Spectator sockets do not keep a lobby alive; only seated humans' sockets do.
@@ -499,6 +561,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       else if ((room.state === 'running' || room.state === 'ended') && room.match !== undefined) {
         // start -> catchup(0..next, last done) -> pause.state (if paused) -> stored end, all synchronous.
         // Hold bookkeeping first (broadcast skips this conn), so the snapshot attach sends is already post-reconnect.
+        if (!catchUpAllowed(conn)) { conn.sendError('rate-limited', 'catch-up too frequent'); conn.close(CLOSE_RATE_LIMITED, 'rate limited'); return; }
         if (room.state === 'running') deps.onSeatReconnect?.(room, i, conn);
         attachMidMatch(room, conn, i, room.state === 'running');
       }
@@ -518,7 +581,9 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     closeAll(reason) {
       for (const room of [...rooms.values()]) { notifyClosed(room, reason); room.state = 'closed'; drop(room); }
     },
+    pingLimiterSize: () => pingLimiter.size,
     runningCount: () => { let n = 0; for (const r of rooms.values()) if (r.state === 'running') n++; return n; },
+    activeMatchCount: () => { let n = 0; for (const r of rooms.values()) if (r.state === 'running' || r.state === 'countdown') n++; return n; },
     onClientMessage(conn, msg) {
       switch (msg.t) {
         case 'room.create': return create_(conn);
@@ -550,10 +615,12 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
           const room = byPlayer.get(conn.playerId!);
           return conn.send({ t: 'pong', id: msg.id, tick: (room === undefined ? undefined : deps.tickOf?.(room)) ?? 0 });
         }
-        default: return conn.sendError('internal', 'not supported yet'); // rematch/resync: later tasks
+        case 'resync': return resync(conn);
+        default: return conn.sendError('internal', 'not supported yet');
       }
     },
     onDisconnect(conn, reason) {
+      pingLimiter.reset(conn.id);
       // Superseded = same player on a new socket; onAuthed rebinds, so keep the seat.
       if (reason === 'superseded' || conn.playerId === undefined) return;
       const room = byPlayer.get(conn.playerId);
@@ -565,6 +632,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       if (room.state === 'running') { deps.onSeatDisconnect?.(room, seatOf(room, conn)); return; } // never closed here; SP07 deadlines / hard cap end it
       if (room.state === 'countdown') { reserveSeat(room, seatOf(room, conn)); cancelCountdown(room); return; }
       if (room.state === 'lobby') { reserveSeat(room, seatOf(room, conn)); broadcast(room); return; }
+      if (room.state === 'ended') { reserveSeat(room, seatOf(room, conn)); return; } // keep binding + stored end for a token reconnect (until reserve/GC/rematch)
       leave(conn);
     },
   };

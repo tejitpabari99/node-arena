@@ -8,6 +8,12 @@ export const MAX_CONNS_PER_IP = 8;
 export const CREATES_PER_MIN = 5;
 export const FAILED_JOINS_PER_MIN = 10;
 export const BACKPRESSURE_CLOSE_BYTES = 2 * 1024 * 1024;
+export const NEW_CONNS_PER_IP_PER_MIN = 30;
+/** Min gap between full-log catch-up attaches (watch / seated reconnect) per player. */
+export const CATCHUP_MIN_GAP_MS = 5000;
+export const CATCHUPS_PER_IP_PER_MIN = 20;
+/** Min gap between client `resync` requests per player id (seat or spectator). */
+export const RESYNC_MIN_GAP_MS = 10_000;
 export const CLOSE_RATE_LIMITED = 4005;
 export const CLOSE_BACKPRESSURE = 4006;
 
@@ -59,11 +65,18 @@ export class IpLimits {
   private readonly conns = new Map<string, number>();
   private readonly creates = new Map<string, Window>();
   private readonly fails = new Map<string, Window>();
+  private readonly newConns = new Map<string, Window>();
+  private readonly catchUpsByIp = new Map<string, Window>();
+  private readonly catchUpAt = new Map<string, number>();
+  private readonly resyncAt = new Map<string, number>();
   constructor(private readonly now: () => number) {}
 
   acquireConn(ip: string): boolean {
     const n = this.conns.get(ip) ?? 0;
     if (n >= MAX_CONNS_PER_IP) return false;
+    const w = this.win(this.newConns, ip, NEW_CONNS_PER_IP_PER_MIN);
+    if (w.full()) return false;
+    w.add();
     this.conns.set(ip, n + 1);
     return true;
   }
@@ -77,6 +90,35 @@ export class IpLimits {
     if (w.full()) return false;
     w.add();
     return true;
+  }
+  /** Counts a full catch-up attach; false = player attached <5 s ago or IP over 20/min. */
+  allowCatchUp(playerId: string, ip: string | undefined): boolean {
+    const t = this.now();
+    const last = this.catchUpAt.get(playerId);
+    if (last !== undefined && t - last < CATCHUP_MIN_GAP_MS) return false;
+    const w = ip === undefined ? undefined : this.win(this.catchUpsByIp, ip, CATCHUPS_PER_IP_PER_MIN);
+    if (w?.full() === true) return false;
+    w?.add();
+    if (this.catchUpAt.size > 10_000) for (const [k, v] of this.catchUpAt) if (t - v >= CATCHUP_MIN_GAP_MS) this.catchUpAt.delete(k);
+    this.catchUpAt.set(playerId, t);
+    return true;
+  }
+  /** Counts a `resync` request; false = this player resynced <10 s ago. Checked before `allowCatchUp`. */
+  allowResync(playerId: string): boolean {
+    if (this.resyncBlocked(playerId)) return false;
+    this.noteResync(playerId);
+    return true;
+  }
+  /** Peek only: true = this player resynced <10 s ago. Spends nothing. */
+  resyncBlocked(playerId: string): boolean {
+    const last = this.resyncAt.get(playerId);
+    return last !== undefined && this.now() - last < RESYNC_MIN_GAP_MS;
+  }
+  /** Records an accepted resync (call only after every check passed). */
+  noteResync(playerId: string): void {
+    const t = this.now();
+    if (this.resyncAt.size > 10_000) for (const [k, v] of this.resyncAt) if (t - v >= RESYNC_MIN_GAP_MS) this.resyncAt.delete(k);
+    this.resyncAt.set(playerId, t);
   }
   joinBlocked(ip: string): boolean { return this.win(this.fails, ip, FAILED_JOINS_PER_MIN).full(); }
   failedJoin(ip: string): void { this.win(this.fails, ip, FAILED_JOINS_PER_MIN).add(); }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { encode, PROTOCOL_VERSION, type ServerMessage, type Versions } from '@node-arena/net';
-import { createPvpConnection, backoffDelay, type ConnState, type WebSocketLike } from '../../src/net/connection';
+import { CATCHUP_MIN_GAP_MS, CLOSE_RATE_LIMITED, createPvpConnection, backoffDelay, type ConnState, type WebSocketLike } from '../../src/net/connection';
 
 const versions: Versions = { rules: 'r', schema: 's', content: 'c', bot: 'b' };
 
@@ -68,13 +68,59 @@ describe('PvpConnection', () => {
     expect(h.conn.state).toBe('connected');
   });
 
-  it('welcome resets backoff', () => {
+  const welcome = (h: ReturnType<typeof setup>) => h.last().recv(encode({ t: 'welcome', pv: 1, playerId: 'p', serverVersions: versions }));
+  it('welcome alone does not reset backoff; a stable connection does', () => {
     const h = setup();
     h.last().drop(); h.fire(); h.last().drop(); h.fire();
-    h.last().open();
-    h.last().recv(encode({ t: 'welcome', pv: 1, playerId: 'p', serverVersions: versions }));
+    h.last().open(); welcome(h);
+    h.last().drop();
+    expect(h.delays.at(-1)).toBe(2000); // third consecutive attempt: no reset yet
+    h.fire(); h.last().open(); welcome(h);
+    h.timers.sort((a, b) => a.at - b.at);
+    // advance fake time past STABLE_MS by firing timers in order until the connection is stable (ping timers re-arm)
+    for (let i = 0; i < 6 && h.timers.length > 0; i++) h.fire();
     h.last().drop();
     expect(h.delays.at(-1)).toBe(500);
+  });
+
+  it('close 4005 is retryable with backoff >= catch-up gap (5 s), growing across welcome->4005 cycles', () => {
+    const h = setup(() => 0.5);
+    const seen: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      h.last().open(); welcome(h);
+      h.last().drop(CLOSE_RATE_LIMITED);
+      expect(h.conn.state).toBe('reconnecting');
+      seen.push(h.delays.at(-1)!);
+      h.fire();
+    }
+    expect(Math.min(...seen)).toBeGreaterThanOrEqual(CATCHUP_MIN_GAP_MS);
+    expect(seen[5]!).toBeGreaterThan(seen[0]!); // attempt counter grew (not reset by welcome)
+    expect(h.socks.length).toBe(7);
+  });
+
+  it('info: attempt / nextRetryAt / outageStartedAt / lastCloseCode across a retry loop; readable in onState', () => {
+    const h = setup(() => 0.5);
+    expect(h.conn.info).toEqual({ attempt: 0, nextRetryAt: null, outageStartedAt: null, lastCloseCode: null });
+    const seen: unknown[] = [];
+    h.conn.onState((s) => seen.push({ s, ...h.conn.info }));
+    h.last().open(); h.last().drop(1006);
+    expect(h.conn.info).toEqual({ attempt: 1, nextRetryAt: 500, outageStartedAt: 0, lastCloseCode: 1006 });
+    expect(seen.at(-1)).toMatchObject({ s: 'reconnecting', attempt: 1, nextRetryAt: 500 });
+    h.fire();
+    expect(h.conn.info.nextRetryAt).toBeNull();
+    h.last().drop(1006);
+    expect(h.conn.info).toMatchObject({ attempt: 2, nextRetryAt: 500 + 1000, outageStartedAt: 0 });
+    expect(seen.at(-1)).toMatchObject({ s: 'reconnecting', attempt: 2 }); // re-notified although state was unchanged
+  });
+
+  it('info + 4005: stays reconnecting with nextRetryAt >= 5.5 s and lastCloseCode 4005, never lost', () => {
+    const h = setup(() => 0.5);
+    h.last().open(); welcome(h); h.last().drop(CLOSE_RATE_LIMITED);
+    expect(h.conn.state).toBe('reconnecting');
+    expect(h.conn.info.lastCloseCode).toBe(CLOSE_RATE_LIMITED);
+    expect(h.conn.info.nextRetryAt! - 0).toBeGreaterThanOrEqual(CATCHUP_MIN_GAP_MS);
+    h.fire(); h.last().open(); welcome(h);
+    expect(h.conn.state).toBe('connected');
   });
 
   it('no reconnect on close 4000 or 4003', () => {

@@ -317,12 +317,12 @@ test('AC9: lobby drop reserves seat 30 s (grace), host passes, Start refused, th
   a.drop();
   let ls = lobbyOf(b);
   assert.equal(ls.host, 1);
-  assert.equal(ls.seats[0]!.occupant?.status, 'grace');
+  assert.equal(ls.seats[0]!.occupant?.status, 'away');
   b.say({ t: 'lobby.start' });
   assert.equal(b.of('error').at(-1)!.code, 'not-ready'); // reserved occupant is not ready/connected
   assert.equal(t.starts.length, 0);
   t.advance(29_000);
-  assert.equal(lobbyOf(b).seats[0]!.occupant?.status, 'grace');
+  assert.equal(lobbyOf(b).seats[0]!.occupant?.status, 'away');
   t.advance(1_500);
   ls = lobbyOf(b);
   assert.equal(ls.seats[0]!.occupant, undefined);

@@ -1,21 +1,23 @@
-import { PROTOCOL_VERSION, ERROR_CODES, LockstepClient, toWireOutcome, type ClientMessage, type EndMsg, type ErrorCode, type LobbyStateMsg, type SeatConfig, type SeatStatusMsg, type ServerMessage, type StartMsg, type Versions } from '@node-arena/net';
+import { PROTOCOL_VERSION, ERROR_CODES, LockstepClient, toWireOutcome, type ClientMessage, type EndMsg, type ErrorCode, type LobbyStateMsg, type SeatConfig, type ServerMessage, type StartMsg, type Versions } from '@node-arena/net';
 import { listPvpMaps, loadContent, type PvpMapInfo, type CompiledLevel, type ContentFiles, type ManifestV2 } from '@node-arena/content';
 import { create, type Placement, type Sim } from '@node-arena/sim';
 import type { TickUpdate } from '../driver';
 import { NetDriver, type NetDriverOptions } from '../driver/net-driver';
 import type { LevelRuntime, RuntimeContext } from '../app/state';
-import { createPvpConnection, type ConnState, type PvpConnection, type PvpConnectionOpts } from '../net/connection';
+import { createPvpConnection, type ConnInfo, type ConnState, type PvpConnection, type PvpConnectionOpts } from '../net/connection';
 import { pauseRemaining, toPauseView, type PauseView } from './pause';
 import type { Identity } from '../net/identity';
 import type { RoomLink } from '../net/links';
 
-export type PvpScreen = 'idle' | 'menu' | 'connecting' | 'lobby' | 'countdown' | 'playing' | 'result';
+export type PvpScreen = 'idle' | 'menu' | 'connecting' | 'lobby' | 'countdown' | 'playing' | 'result' | 'restarted';
 export type PvpRole = 'play' | 'watch';
 
 export interface PvpSnapshot {
   screen: PvpScreen;
   nick: string;
   conn: ConnState | null;
+  /** Client-local backoff info for the connection banner. */
+  connInfo: ConnInfo | null;
   code: string | null;
   /** Own seat (null = spectator) once in a room. */
   seat: number | null;
@@ -28,14 +30,14 @@ export interface PvpSnapshot {
   end: EndMsg | null;
   /** Final per-team placements from the local sim (identical to server by determinism); null until result. */
   ranking: Placement[] | null;
-  /** Latest status per seat from `seat.status`. */
-  seatStatus: Record<number, { status: SeatStatusMsg['status']; graceMs?: number }>;
   /** Latest authoritative pause snapshot (null before the first / after a new match). */
   pause: PauseView | null;
   /** Short user-facing string; null when none. */
   error: string | null;
   serverUrl: string | null;
   pvpUnavailable: boolean;
+  /** SP09: server restart notice; `deadlineAt` is on the controller clock (`options.now`). Null when no notice received. */
+  draining: { deadlineAt: number } | null;
 }
 
 export const ERROR_STRINGS: Record<ErrorCode, string> = {
@@ -59,11 +61,15 @@ export const ERROR_STRINGS: Record<ErrorCode, string> = {
   'internal': 'Server error. Try again.',
   'paused': 'The match is paused.',
   'no-match': 'No match is running.',
+  'draining': "Server restarting - you can't start a new match.",
 };
 export const errorString = (code: string): string => (ERROR_CODES as readonly string[]).includes(code) ? ERROR_STRINGS[code as ErrorCode] : 'Something went wrong.';
 
+/** SP09 D11: terminal strings after the server restarted under a room. */
+export const RESTARTED_MATCH_STRING = 'Server restarted. Your match ended with no result.';
+export const RESTARTED_ROOM_STRING = 'Server restarted. Room closed.';
 const CLOSED_STRINGS: Record<string, string> = {
-  shutdown: 'Server is shutting down.', 'server-restart': 'Server restarted. Room closed.', internal: 'Room closed by a server error.', idle: 'Room closed (idle).',
+  shutdown: RESTARTED_ROOM_STRING, 'server-restart': RESTARTED_ROOM_STRING, internal: 'Room closed by a server error.', idle: 'Room closed (idle).',
 };
 
 const CONN_STRINGS: Partial<Record<ConnState, string>> = {
@@ -100,7 +106,14 @@ export const RESULT_FALLBACK_MS = 3000;
 export const SIM_MISMATCH_STRING = 'Game content differs from the server. Reload to update.';
 
 /** Non-snapshot notifications for the UI layer. */
-export type PvpEvent = { t: 'desync'; tick: number; serverHash: string; localTick: number; localHash: string } | { t: 'sync-lost' };
+export type PvpEvent = { t: 'desync'; tick: number; serverHash: string; localTick: number; localHash: string } | { t: 'resync'; reason: ResyncReason } | { t: 'sync-lost' };
+export type ResyncReason = 'desync' | 'push-error';
+/** Auto-resyncs allowed per match before the terminal SYNC_LOST_STRING. */
+export const MAX_RESYNCS = 3;
+/** Server detail marking a refused resync (vs ping/conn/command rate limits). */
+const RESYNC_LIMITED_DETAIL = 'resync too frequent';
+/** Delay before the single retry of a `rate-limited` resync (matches the server's 5 s catch-up token + margin). */
+export const RESYNC_RETRY_MS = 5500;
 export const SYNC_LOST_STRING = 'Out of sync. Leave and rejoin.';
 
 type Pending = { t: 'room.create' } | { t: 'room.join'; code: string; role: PvpRole };
@@ -114,13 +127,13 @@ export function createPvpController(options: PvpOptions) {
   let mismatchedBeforeReload = false;
   try { mismatchedBeforeReload = sessionStorage.getItem(mismatchKey) === buildKey; } catch { /* storage unavailable */ }
   const listeners = new Set<() => void>(), events = new Set<(u: TickUpdate) => void>(), pvpEvents = new Set<(e: PvpEvent) => void>();
-  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false });
+  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, connInfo: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false, draining: null });
   let state = initial();
   let conn: PvpConnection | null = null, offs: Array<() => void> = [];
   let lastEpoch = -1, autoResumed = -1, pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
   const publish = (patch: Partial<PvpSnapshot> = {}) => { if (disposed) return; state = { ...state, ...patch }; listeners.forEach((fn) => fn()); };
   // Match resources, generation-scoped (mirrors AppController.startLevel).
-  let generation = 0, driver: NetDriver | null = null, runtime: LevelRuntime | undefined, matchManifest: ManifestV2 | undefined, fallbackTimer: unknown = null, syncLost = false, compiledCache: ReturnType<typeof loadContent> | undefined;
+  let generation = 0, driver: NetDriver | null = null, runtime: LevelRuntime | undefined, matchManifest: ManifestV2 | undefined, fallbackTimer: unknown = null, syncLost = false, resyncInFlight = false, resyncRetried = false, resyncCount = 0, resyncTimer: unknown = null, compiledCache: ReturnType<typeof loadContent> | undefined;
   const now = () => (options.now ?? (() => performance.now()))();
   const setTimer = options.setTimer ?? ((fn, ms) => setTimeout(fn, ms)), clearTimer = options.clearTimer ?? ((id) => clearTimeout(id as ReturnType<typeof setTimeout>));
   const clearMatch = () => {
@@ -128,6 +141,9 @@ export function createPvpController(options: PvpOptions) {
     lastEpoch = -1; autoResumed = -1;
     if (fallbackTimer !== null) clearTimer(fallbackTimer);
     fallbackTimer = null;
+    resyncInFlight = false; resyncRetried = false;
+    if (resyncTimer !== null) clearTimer(resyncTimer);
+    resyncTimer = null;
     const d = driver, r = runtime; driver = null; runtime = undefined; matchManifest = undefined;
     d?.dispose(); r?.dispose();
   };
@@ -163,6 +179,30 @@ export function createPvpController(options: PvpOptions) {
     publish({ error: SYNC_LOST_STRING });
     pvpEvents.forEach((fn) => fn({ t: 'sync-lost' }));
   };
+  /**
+   * Self-heal (SP08): ask the server to replay the match. One request in flight (cleared by the next `start`, which rebuilds
+   * sim/lockstep/driver/runtime); capped per match; anything else falls to the terminal "Leave and rejoin".
+   */
+  const requestResync = (reason: ResyncReason) => {
+    if (syncLost || resyncInFlight || !driver || (state.screen !== 'countdown' && state.screen !== 'playing')) return;
+    if (resyncCount >= MAX_RESYNCS) return markSyncLost(generation, `resync cap (${reason})`);
+    resyncCount++;
+    resyncInFlight = true; resyncRetried = false;
+    console.warn('[pvp] resync', reason, { n: resyncCount });
+    pvpEvents.forEach((fn) => fn({ t: 'resync', reason }));
+    dispatch({ t: 'resync' });
+  };
+  // Server refused the resync: retry `rate-limited` once after a delay, otherwise terminal.
+  const resyncRefused = (code: string) => {
+    const gen = generation;
+    if (code === 'rate-limited' && !resyncRetried) {
+      resyncRetried = true;
+      resyncTimer = setTimer(() => { resyncTimer = null; if (gen === generation && resyncInFlight && !syncLost) dispatch({ t: 'resync' }); }, RESYNC_RETRY_MS);
+      return;
+    }
+    resyncInFlight = false;
+    markSyncLost(gen, `resync refused (${code})`);
+  };
   // Own disconnect hold, caught up to the frozen tick: release it once per epoch (manual holds need a click).
   const maybeAutoResume = () => {
     const p = state.pause, me = state.seat;
@@ -183,7 +223,7 @@ export function createPvpController(options: PvpOptions) {
       return;
     }
     pending = null;
-    publish({ screen: reconnect && (prior === 'playing' || prior === 'result') ? 'playing' : 'countdown', start: m, end: null, ranking: null, seatStatus: {}, pause: null, error: null });
+    publish({ screen: reconnect && (prior === 'playing' || prior === 'result') ? 'playing' : 'countdown', start: m, end: null, ranking: null, pause: null, error: null });
     let owned: NetDriver | undefined, created: LevelRuntime | undefined;
     try {
       const teams = [...m.seats].sort((a, b) => a.player - b.player).map((x) => x.team);
@@ -205,11 +245,7 @@ export function createPvpController(options: PvpOptions) {
         onPushError: (result) => {
           if (gen !== generation) return;
           console.warn('[pvp] tick stream error', result);
-          // M1 has no server catch-up: the stream is dead after a gap. Tell the user (once per match).
-          if (syncLost) return;
-          syncLost = true;
-          publish({ error: SYNC_LOST_STRING });
-          pvpEvents.forEach((fn) => fn({ t: 'sync-lost' }));
+          requestResync('push-error');
         },
       };
       owned = (options.createDriver ?? ((o) => new NetDriver(o)))(dopts);
@@ -251,12 +287,13 @@ export function createPvpController(options: PvpOptions) {
         const host = state.seat !== null && m.host === state.seat;
         // Rematch (R7): after `end`, the server resets the room and broadcasts lobby.state; leave the result screen.
         if (skipLobby) skipLobby = false;
-        else if (state.screen === 'result') { clearMatch(); publish({ screen: 'lobby', lobby: m, host, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null }); break; }
+        else if (state.screen === 'result') { clearMatch(); publish({ screen: 'lobby', lobby: m, host, start: null, end: null, ranking: null, pause: null, error: null }); break; }
         publish({ lobby: m, host });
         break;
       }
       case 'start':
         lastEpoch = -1; // epoch is per match; every start (rematch or reconnect) restarts it
+        if (state.start?.matchId !== m.matchId) resyncCount = 0; // cap is per match
         // Reconnect re-sends `start` + full catchup: recreate sim/lockstep/runtime and replay from tick 0 (D5).
         void startMatch(m, !!driver && state.start?.matchId === m.matchId);
         break;
@@ -264,6 +301,7 @@ export function createPvpController(options: PvpOptions) {
         driver?.push(m);
         break;
       case 'pause.state': {
+        if (!driver) break;
         if (m.epoch <= lastEpoch) break;
         lastEpoch = m.epoch;
         driver?.setFrozen(m.paused ? m.tick : null);
@@ -276,10 +314,7 @@ export function createPvpController(options: PvpOptions) {
         if (state.start?.matchId !== m.matchId || state.end) break;
         clearMatch();
         syncLost = false;
-        publish({ screen: 'lobby', start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null });
-        break;
-      case 'seat.status':
-        publish({ seatStatus: { ...state.seatStatus, [m.player]: m.graceMs === undefined ? { status: m.status } : { status: m.status, graceMs: m.graceMs } } });
+        publish({ screen: 'lobby', start: null, end: null, ranking: null, pause: null, error: null });
         break;
       case 'end': {
         if (!driver || state.end) break;
@@ -294,12 +329,26 @@ export function createPvpController(options: PvpOptions) {
         const localHash = driver?.sim.hash() ?? '', localTick = driver?.tick ?? -1;
         console.warn('[pvp] desync', { tick: m.tick, serverHash: m.serverHash, localTick, localHash });
         pvpEvents.forEach((fn) => fn({ t: 'desync', tick: m.tick, serverHash: m.serverHash, localTick, localHash }));
+        requestResync('desync');
         break;
       }
-      case 'room.closed':
+      case 'room.closed': {
+        if (m.reason === 'shutdown' || (m.reason === 'server-restart' && state.draining)) {
+          // Terminal "server restarted" screen with a single Back to menu action; connection and match are torn down.
+          const inMatch = (state.screen === 'countdown' || state.screen === 'playing') && !state.end;
+          drop();
+          state = { ...initial(), screen: 'restarted', error: inMatch ? RESTARTED_MATCH_STRING : RESTARTED_ROOM_STRING };
+          listeners.forEach((fn) => fn());
+          break;
+        }
         reset(CLOSED_STRINGS[m.reason] ?? 'Room closed.');
         break;
+      }
+      case 'server.draining':
+        publish({ draining: { deadlineAt: now() + m.deadlineMs } });
+        break;
       case 'error':
+        if (resyncInFlight && ((m.code === 'rate-limited' && m.detail === RESYNC_LIMITED_DETAIL) || m.code === 'no-match') && driver) { resyncRefused(m.code); break; }
         if (state.screen === 'connecting') reset(errorString(m.code));
         else if (!syncLost || !driver) publish({ error: errorString(m.code) });
         break;
@@ -315,18 +364,18 @@ export function createPvpController(options: PvpOptions) {
       return;
     }
     if (s === 'superseded') { reset(msg ?? null); return; }
-    publish({ conn: s, ...(msg ? { error: msg } : s === 'connected' || s === 'connecting' ? { error: state.error === CONN_STRINGS.lost ? null : state.error } : {}) });
+    publish({ conn: s, connInfo: conn?.info ?? null, ...(msg ? { error: msg } : s === 'connected' || s === 'connecting' ? { error: state.error === CONN_STRINGS.lost ? null : state.error } : {}) });
   };
 
   const connect = (action: Pending | null) => {
     if (disposed || !options.serverUrl || state.pvpUnavailable) return;
     drop();
     pending = action;
-    state = { ...state, screen: 'connecting', code: null, seat: null, host: false, lobby: null, start: null, end: null, ranking: null, seatStatus: {}, pause: null, error: null, role: action?.t === 'room.join' ? action.role : 'play' };
+    state = { ...state, screen: 'connecting', code: null, seat: null, host: false, lobby: null, start: null, end: null, ranking: null, pause: null, error: null, role: action?.t === 'room.join' ? action.role : 'play' };
     const make = options.createConnection ?? createPvpConnection;
     conn = make({ url: options.serverUrl, nick: options.identity.nick, token: options.identity.token, versions: options.versions, createSocket: options.createSocket });
     offs = [conn.onMessage(onMessage), conn.onState(onState)];
-    state = { ...state, conn: conn.state };
+    state = { ...state, conn: conn.state, connInfo: conn.info };
     listeners.forEach((fn) => fn());
   };
 
@@ -382,10 +431,22 @@ export function createPvpController(options: PvpOptions) {
       dispatch({ t: 'lobby.ready', ready: !cur });
     },
     /** Seated player on the result screen asks the server to return the room to the lobby. */
-    rematch() { if (state.screen === 'result' && state.seat !== null) dispatch({ t: 'rematch' }); },
+    rematch() {
+      if (state.screen !== 'result' || state.seat === null) return;
+      if (state.draining) { publish({ error: ERROR_STRINGS.draining }); return; }
+      dispatch({ t: 'rematch' });
+    },
+    /** Terminal "server restarted" screen -> online menu (a fresh connection is made by the next menu action). */
+    backToMenu() { if (state.screen === 'restarted') reset(null); },
+    /** Remaining ms of the restart window (0 once past); null without a notice. */
+    drainRemaining(at: number = now()): number | null { return state.draining ? Math.max(0, state.draining.deadlineAt - at) : null; },
     /** Host-only: full lobby edit (level change resets seats server-side). */
     updateLobby(levelId: string, seats: SeatConfig[]) { if (state.screen === 'lobby' && state.host) dispatch({ t: 'lobby.update', levelId, seats }); },
-    start() { if (state.screen === 'lobby' && state.host) dispatch({ t: 'lobby.start' }); },
+    start() {
+      if (state.screen !== 'lobby' || !state.host) return;
+      if (state.draining) { publish({ error: ERROR_STRINGS.draining }); return; }
+      dispatch({ t: 'lobby.start' });
+    },
     leave() {
       if (state.screen === 'idle' || state.screen === 'menu') return;
       dispatch({ t: 'room.leave' });

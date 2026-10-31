@@ -15,6 +15,14 @@ import { createMatchController } from './match.js';
 import { createRoomManager } from './room.js';
 
 export const MAX_PAYLOAD = 4096;
+/** SP09: shortest drain (ms) so the notice is delivered even with no active match; socket close grace after the window. */
+export const DRAIN_MIN_MS = 3000;
+export const CLOSE_GRACE_MS = 2000;
+export const DRAIN_POLL_MS = 500;
+/** Process hard-exit bound (ms) for a drain of `windowMs`: window + close grace + 1 s; 0 = legacy 8 s. */
+export function hardExitMs(windowMs: number): number {
+  return windowMs <= 0 ? 8000 : windowMs + CLOSE_GRACE_MS + 1000;
+}
 
 export function serverName(): string {
   return '@node-arena/server';
@@ -66,10 +74,18 @@ export interface RunningServer {
   close(): Promise<void>;
   /** Graceful drain: stop accepting, `room.closed{shutdown}` to all rooms, close sockets 1001. Resolves when sockets are gone (<= `graceMs`). */
   shutdown(graceMs?: number): Promise<void>;
+  /**
+   * SP09: SIGTERM path. Keeps serving, refuses new work (`error draining`), then closes everything with `room.closed{server-restart}` when
+   * the window elapses or no match is active (after `minMs`, default 3 s). `windowMs` 0 = legacy immediate `shutdown()`.
+   */
+  drain(opts?: { windowMs?: number; minMs?: number }): Promise<void>;
+  /** serving -> draining -> closing -> exited. */
+  phase(): 'serving' | 'draining' | 'closing' | 'exited';
 }
 
 /** Wires config -> content -> clock -> match -> rooms -> hub -> http+ws. */
 export async function startServer(config: Config, opts: StartOpts = {}): Promise<RunningServer> {
+  let phase: 'serving' | 'draining' | 'closing' | 'exited' = 'serving';
   const log = opts.log ?? createLogger({ level: config.logLevel });
   const content = opts.content ?? loadServerContentOrExit(config.contentDir);
   const now = (): number => performance.now();
@@ -83,17 +99,23 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
     content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, ipLimits, log,
     tickOf: (r) => match.inspect(r)?.nextTick, onStart: match.onStart, onStartCancel: (r) => match.cancel(r), onMatchMessage: match.onMessage, onCatchUp: match.catchUp,
     onSeatDisconnect: match.onSeatDisconnect, onSeatReconnect: match.onSeatReconnect, pauseStateOf: match.pauseState, endOf: match.endOf, hasPendingDeadline: match.hasPendingDeadline,
+    pausedMsOf: match.pausedMs, seatOut: match.seatOut, onRoomClosed: (r) => match.cancel(r), isDraining: () => phase !== 'serving',
   });
-  const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns, ipLimits, now });
+  let drainDeadline: number | undefined;
+  const drainRemaining = (): number | undefined => drainDeadline === undefined ? undefined : Math.max(0, Math.round(drainDeadline - now()));
+  const hub = createHub({ versions: content.versions, log, handler: rooms, maxConns: config.maxConns, ipLimits, now, drainRemainingMs: drainRemaining });
   clock.start();
   const startedAt = Date.now();
 
   const http: Server = createServer((req, res) => {
     const path = (req.url ?? '').split('?')[0];
     if (req.method === 'GET' && path === '/healthz') {
+      const late = clock.lateness();
+      const cpu = process.cpuUsage();
       const body = JSON.stringify({
         ok: true, rooms: rooms.roomCount(), conns: hub.connCount(),
-        running: rooms.runningCount(), lateP99Ms: clock.lateness().p99,
+        running: rooms.runningCount(), draining: phase !== 'serving', lateP99Ms: late.p99, lateP50Ms: late.p50,
+        rss: process.memoryUsage().rss, cpuMs: Math.round((cpu.user + cpu.system) / 1000),
         uptimeS: Math.floor((Date.now() - startedAt) / 1000),
         versions: { ...content.versions, protocol: PROTOCOL_VERSION },
       });
@@ -127,17 +149,19 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
   const port = (http.address() as AddressInfo).port;
   log.info('server.listening', { port, host: config.host });
 
-  let draining: Promise<void> | undefined;
-  const shutdown = (graceMs = 6000): Promise<void> => draining ??= (async () => {
-    log.info('server.shutdown', { rooms: rooms.roomCount(), conns: hub.connCount() });
+  let closing: Promise<void> | undefined;
+  /** Closes rooms (reason), sockets 1001, then http. `graceMs` bounds the wait for clients to close. */
+  const closeSequence = (reason: string, graceMs: number): Promise<void> => closing ??= (async () => {
+    phase = 'closing';
+    log.info('server.shutdown', { reason, rooms: rooms.roomCount(), conns: hub.connCount() });
     const stopped = new Promise<void>((r) => { http.close(() => r()); });
     clock.stop();
     hub.stop();
-    rooms.closeAll('shutdown');
+    rooms.closeAll(reason);
     const gone: Array<Promise<void>> = [];
     for (const c of wss.clients) {
       gone.push(new Promise<void>((r) => { c.once('close', () => r()); }));
-      try { c.close(1001, 'shutdown'); } catch { c.terminate(); }
+      try { c.close(1001, reason); } catch { c.terminate(); }
     }
     let timer: NodeJS.Timeout | undefined;
     const deadline = new Promise<void>((r) => { timer = setTimeout(r, graceMs); });
@@ -147,11 +171,42 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
     await new Promise<void>((r) => wss.close(() => r()));
     http.closeAllConnections();
     await stopped;
+    phase = 'exited';
+  })();
+
+  let drainRun: Promise<void> | undefined;
+  let endWindow: (() => void) | undefined;
+  let pollTimer: NodeJS.Timeout | undefined;
+  const shutdown = (graceMs = 6000): Promise<void> => {
+    endWindow?.();
+    return closeSequence('shutdown', graceMs);
+  };
+  const drain = (dopts: { windowMs?: number; minMs?: number } = {}): Promise<void> => drainRun ??= (async () => {
+    const windowMs = dopts.windowMs ?? config.drainMs;
+    if (windowMs <= 0) return shutdown();
+    const minMs = Math.min(dopts.minMs ?? DRAIN_MIN_MS, windowMs);
+    const t0 = now();
+    phase = 'draining';
+    drainDeadline = t0 + windowMs;
+    hub.broadcast({ t: 'server.draining', deadlineMs: windowMs });
+    log.info('server.draining', { windowMs, active: rooms.activeMatchCount(), rooms: rooms.roomCount(), conns: hub.connCount() });
+    await new Promise<void>((resolve) => {
+      endWindow = resolve;
+      pollTimer = setInterval(() => {
+        const elapsed = now() - t0;
+        if (elapsed >= windowMs || (elapsed >= minMs && rooms.activeMatchCount() === 0)) resolve();
+      }, DRAIN_POLL_MS);
+      pollTimer.unref();
+    });
+    clearInterval(pollTimer);
+    log.info('server.drain_end', { elapsedMs: Math.round(now() - t0), active: rooms.activeMatchCount() });
+    await closeSequence('server-restart', CLOSE_GRACE_MS);
   })();
 
   return {
-    port, content, shutdown,
+    port, content, shutdown, drain, phase: () => phase,
     close: async () => {
+      clearInterval(pollTimer);
       clock.stop();
       hub.stop();
       for (const c of wss.clients) c.terminate();
@@ -176,11 +231,11 @@ function main(): void {
       if (once) return;
       once = true;
       log.info('server.signal', { signal: sig });
-      setTimeout(() => process.exit(1), 8000).unref();
-      srv.shutdown().then(() => process.exit(0), crash('shutdown_failed'));
+      setTimeout(() => process.exit(1), hardExitMs(config.drainMs)).unref();
+      srv.drain().then(() => process.exit(0), crash('shutdown_failed'));
     };
-    process.once('SIGTERM', () => drain('SIGTERM'));
-    process.once('SIGINT', () => drain('SIGINT'));
+    process.on('SIGTERM', () => drain('SIGTERM'));
+    process.on('SIGINT', () => drain('SIGINT'));
   }).catch(crash('boot_failed'));
 }
 

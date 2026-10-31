@@ -28,12 +28,19 @@ const server: ServerMessage[] = [
     timeLimitTicks: 6000, hashInterval: 20, seats: [{ player: 0, kind: 'human', team: 0, nick: 'a' }, { player: 1, kind: 'bot', team: 1, nick: '', difficulty: 'easy' }] },
   { t: 'tick', n: 5 }, { t: 'tick', n: 6, c: [{ type: 'CutLine', player: 0, from: 1, to: 2 }] },
   { t: 'catchup', from: 0, to: 9, cmds, done: false }, { t: 'ticks', from: 10, to: 12, cmds: [] },
-  { t: 'desync', tick: 20, serverHash: H }, { t: 'seat.status', player: 1, status: 'grace', graceMs: 5000 },
-  { t: 'seat.status', player: 1, status: 'bot' },
+  { t: 'desync', tick: 20, serverHash: H },
   { t: 'end', outcome: { outcome: 'victory', winners: [0, 2], winner: 0 }, finalTick: 100, finalHash: H },
   { t: 'end', outcome: { outcome: 'draw', winners: [], winner: null }, finalTick: 100, finalHash: H },
   { t: 'pong', id: 3, tick: 7 }, { t: 'error', code: 'rate-limited', detail: 'slow' }, { t: 'error', code: 'internal' },
 ];
+
+test('SP11: SeatStatus is connected|away; grace/bot and seat.status rejected', () => {
+  const lobby = (status: string) => encodeServer({ t: 'lobby.state', levelId: 'l', timeLimitSec: 300, host: null, spectators: 0, seats: [{ kind: 'human', team: 0, occupant: { nick: 'a', ready: false, status } }] } as never);
+  assert.equal(parseServerMessage(lobby('away')).ok, true);
+  assert.equal(parseServerMessage(lobby('connected')).ok, true);
+  for (const s of ['grace', 'bot']) assert.equal(parseServerMessage(lobby(s)).ok, false, s);
+  assert.equal(parseServerMessage(JSON.stringify({ t: 'seat.status', player: 1, status: 'away' })).ok, false);
+});
 
 test('every client message round-trips', () => {
   for (const m of client) assert.deepEqual(parseClientMessage(encodeClient(m)), { ok: true, msg: m });
@@ -107,6 +114,10 @@ test('server: tolerant of unknown fields, ignorable unknown t, still validates',
   assert.equal(code(parseServerMessage('{"t":"pong","id":-1,"tick":2}')), 'bad-message');
   assert.equal(code(parseServerMessage('{"t":"desync","tick":20,"serverHash":"nothex"}')), 'bad-message');
   assert.equal(code(parseServerMessage('{"t":"error","code":"made-up"}')), 'bad-message');
+  assert.deepEqual(parseServerMessage('{"t":"server.draining","deadlineMs":30000}'), { ok: true, msg: { t: 'server.draining', deadlineMs: 30000 } });
+  assert.deepEqual(parseServerMessage('{"t":"error","code":"draining"}'), { ok: true, msg: { t: 'error', code: 'draining' } });
+  for (const bad of ['{"t":"server.draining"}', '{"t":"server.draining","deadlineMs":-1}', '{"t":"server.draining","deadlineMs":1.5}', '{"t":"server.draining","deadlineMs":"30"}'])
+    assert.equal(code(parseServerMessage(bad)), 'bad-message', bad);
   assert.equal(code(parseServerMessage('nope')), 'bad-json');
   assert.equal(code(parseServerMessage('[1]')), 'bad-message');
   assert.equal(code(parseServerMessage(' '.repeat(2 ** 20 + 1))), 'too-large');
