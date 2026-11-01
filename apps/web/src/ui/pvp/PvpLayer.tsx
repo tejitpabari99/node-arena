@@ -6,6 +6,7 @@ import { SYNC_LOST_STRING, type PvpController } from '../../pvp/controller';
 import { shareLinks } from '../../net/links';
 import { Lobby } from './Lobby';
 import { PvpMenu } from './PvpMenu';
+import { RoomForm } from './RoomForm';
 import type { LevelThumbnailService } from '../../render/level-thumbnail';
 import { PvpResult } from './PvpResult';
 import { ConnBanner } from './ConnBanner';
@@ -15,7 +16,9 @@ export function PvpLayer({pvp,thumbs}:{pvp:PvpController;thumbs?:LevelThumbnailS
   const [s,setS]=useState(pvp.snapshot()),[code,setCode]=useState(pvp.snapshot().code??'');
   useLayoutEffect(()=>pvp.subscribe(()=>setS(pvp.snapshot())),[pvp]);
   if(s.screen==='menu'||s.screen==='connecting'){
+    const maps=pvp.maps(),d=s.createDraft;
     return <PvpMenu view={s.menuView} joinRole={s.joinRole} nick={s.nickDraft} code={code} error={s.error} unavailable={s.pvpUnavailable||s.screen==='connecting'} reload={s.conn==='refused'&&!s.pvpUnavailable} onNick={v=>pvp.setNick(v)} onCode={setCode} onGoCreate={()=>pvp.goCreate()} onGoJoin={()=>pvp.goJoin()} onRole={r=>pvp.chooseRole(r)} onJoin={(c,r)=>pvp.join(c,r)} onBack={()=>pvp.back()} onDismissError={()=>pvp.dismissError()}>
+      {d&&<RoomForm nick={s.nickDraft} draft={d} maps={maps} thumbs={thumbs} unavailable={s.pvpUnavailable||s.screen==='connecting'||(s.conn==='refused'&&!s.pvpUnavailable)} onNick={v=>pvp.setNick(v)} onType={t=>pvp.draftType(t)} onMap={id=>pvp.draftMap(id)} onPlayers={n=>pvp.draftPlayers(n)} onTeams={n=>pvp.draftTeams(n)} onRow={(i,p)=>pvp.draftRow(i,p)} onCreate={()=>pvp.createRoom()}/>}
     </PvpMenu>;
   }
   if(s.screen==='restarted')return <section class="picker panel pvp-panel" aria-label="Server restarted">
