@@ -13,7 +13,7 @@ const pretty=(id:string)=>id.replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperC
 export function PvpLayer({pvp}:{pvp:PvpController}){
   const [s,setS]=useState(pvp.snapshot()),[code,setCode]=useState(pvp.snapshot().code??'');
   useLayoutEffect(()=>pvp.subscribe(()=>setS(pvp.snapshot())),[pvp]);
-  if(s.screen==='menu'||s.screen==='connecting')return <PvpMenu nick={s.nick} code={code} error={s.error} unavailable={s.pvpUnavailable||s.screen==='connecting'} reload={s.conn==='refused'&&!s.pvpUnavailable} onNick={v=>pvp.setNick(v)} onCode={setCode} onCreate={()=>pvp.create()} onJoin={()=>pvp.join(code)} onWatch={()=>pvp.watch(code)} onBack={()=>pvp.close()} onDismissError={()=>pvp.dismissError()}/>;
+  if(s.screen==='menu'||s.screen==='connecting')return <PvpMenu nick={s.nickDraft} code={code} error={s.error} unavailable={s.pvpUnavailable||s.screen==='connecting'} reload={s.conn==='refused'&&!s.pvpUnavailable} onNick={v=>pvp.setNick(v)} onCode={setCode} onCreate={()=>pvp.create()} onJoin={()=>pvp.join(code)} onWatch={()=>pvp.watch(code)} onBack={()=>pvp.close()} onDismissError={()=>pvp.dismissError()}/>;
   if(s.screen==='restarted')return <section class="picker panel pvp-panel" aria-label="Server restarted">
     <p class="pvp-error" role="alert" data-testid="pvp-restarted">{s.error}</p>
     <button class="level-card menu-button" data-testid="pvp-restarted-menu" onClick={()=>pvp.backToMenu()}>Back to menu</button>

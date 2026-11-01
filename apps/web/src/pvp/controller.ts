@@ -6,7 +6,7 @@ import { NetDriver, type NetDriverOptions } from '../driver/net-driver';
 import type { LevelRuntime, RuntimeContext } from '../app/state';
 import { createPvpConnection, type ConnInfo, type ConnState, type PvpConnection, type PvpConnectionOpts } from '../net/connection';
 import { pauseRemaining, toPauseView, type PauseView } from './pause';
-import type { Identity } from '../net/identity';
+import { NICK_MAX, type Identity } from '../net/identity';
 import type { RoomLink } from '../net/links';
 
 export type PvpScreen = 'idle' | 'menu' | 'connecting' | 'lobby' | 'countdown' | 'playing' | 'result' | 'restarted';
@@ -15,6 +15,8 @@ export type PvpRole = 'play' | 'watch';
 export interface PvpSnapshot {
   screen: PvpScreen;
   nick: string;
+  /** Untrimmed nickname as typed (forms bind to this; `nick` is the sanitized persisted value). */
+  nickDraft: string;
   conn: ConnState | null;
   /** Client-local backoff info for the connection banner. */
   connInfo: ConnInfo | null;
@@ -127,7 +129,7 @@ export function createPvpController(options: PvpOptions) {
   let mismatchedBeforeReload = false;
   try { mismatchedBeforeReload = sessionStorage.getItem(mismatchKey) === buildKey; } catch { /* storage unavailable */ }
   const listeners = new Set<() => void>(), events = new Set<(u: TickUpdate) => void>(), pvpEvents = new Set<(e: PvpEvent) => void>();
-  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, conn: null, connInfo: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false, draining: null });
+  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, nickDraft: options.identity.nick, conn: null, connInfo: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false, draining: null });
   let state = initial();
   let conn: PvpConnection | null = null, offs: Array<() => void> = [];
   let lastEpoch = -1, autoResumed = -1, pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
@@ -157,7 +159,7 @@ export function createPvpController(options: PvpOptions) {
     return loaded()?.compiled[id];
   };
   const drop = () => { skipLobby = false; clearMatch(); offs.forEach((f) => f()); offs = []; const c = conn; conn = null; welcomed = false; pending = null; c?.close(); };
-  const reset = (error: string | null) => { drop(); state = { ...initial(), screen: 'menu', error }; listeners.forEach((fn) => fn()); };
+  const reset = (error: string | null) => { drop(); state = { ...initial(), screen: 'menu', error, nickDraft: state.nickDraft }; listeners.forEach((fn) => fn()); };
   const dispatch = (m: ClientMessage) => { conn?.send(m); };
 
   const finishResult = (gen: number) => {
@@ -409,7 +411,8 @@ export function createPvpController(options: PvpOptions) {
       // Check compatibility again after reload, without creating or joining a room.
       if (mismatchedBeforeReload) connect(null);
     },
-    setNick(nick: string) { publish({ nick: options.identity.setNick(nick) }); },
+    /** Persists the sanitized nick on every call; keeps the raw draft (spaces intact) for the form. */
+    setNick(nick: string) { publish({ nick: options.identity.setNick(nick), nickDraft: nick.slice(0, NICK_MAX) }); },
     create() { if (state.screen === 'menu') connect({ t: 'room.create' }); },
     join(code: string, role: PvpRole = 'play') { if (state.screen === 'menu') connect({ t: 'room.join', code: code.trim().toUpperCase(), role }); },
     watch(code: string) { api.join(code, 'watch'); },
