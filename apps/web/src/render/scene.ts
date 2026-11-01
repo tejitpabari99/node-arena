@@ -2,6 +2,7 @@ import { Color, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
 import type { ManifestV2 } from '@node-arena/content';
 import type { SimEvent } from '@node-arena/defs';
 import type { SimView } from '@node-arena/sim';
+import { configureArt, artFrame, setRes } from './art.js';
 import { Disposables } from './disposables.js';
 import { fitCamera, HUD_PADDING, levelVisualBounds, zoomFraming, type HudPadding } from './camera.js';
 import { createMirroredWorldRoot } from './world-root.js';
@@ -33,16 +34,17 @@ export function createLevelScene(options: SceneOptions) {
   const renderer = new WebGLRenderer({ antialias: true });
   renderer.domElement.style.display = 'block';
   parent.appendChild(renderer.domElement);
+  configureArt(renderer, scene, level.theme, parent);
   const worldRoot = createMirroredWorldRoot(); scene.add(worldRoot);
   const world = createWorldRenderer(scene, manifest, { ...options.worldOptions, worldRoot });
   const ids = level.buildings.map(b => b.id);
   let bounds = levelVisualBounds(view,ids,world.anchors), disposed = false, zoomed = options.zoomed ?? false;
-  const render = () => { if (!disposed) renderer.render(scene,camera); };
+  const render = () => { if (!disposed) { artFrame(scene,renderer); renderer.render(scene,camera); } };
   const resize = () => {
     if (disposed) return;
     const width = Math.max(1,parent.clientWidth), height = Math.max(1,parent.clientHeight);
     renderer.setPixelRatio(Math.min(2,Math.max(1,window.devicePixelRatio || 1)));
-    renderer.setSize(width,height);
+    renderer.setSize(width,height); setRes(width,height);
     fitCamera(camera,bounds,manifest.camera,width/height,{width,height,padding: options.padding ?? HUD_PADDING},zoomFraming(zoomed));
     render();
   };

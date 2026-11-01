@@ -36,7 +36,7 @@ export function createEnvironment(manifest: ManifestV2, materials: MaterialCache
     async setLevel(level, themeId) {
       const theme = manifest.themes[themeId]; if (!theme) throw new Error(`Unresolved theme ${themeId}`);
       if (light) light.group.removeFromParent();
-      light = buildLightRig(theme.light); root.add(light.group);
+      light = buildLightRig(theme.light, 50, themeId); root.add(light.group);
       await Promise.all([ground.setLevel(level.bounds, theme), elements.setLevel(level.elements, theme.obstacle, themeId)]);
     },
     update: (view, dtMs) => lanes.update(view, dtMs),

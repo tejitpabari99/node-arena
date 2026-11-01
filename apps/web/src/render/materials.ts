@@ -1,5 +1,6 @@
 import { Color, LinearMipmapLinearFilter, MeshLambertMaterial, NoColorSpace, SRGBColorSpace, type Texture } from 'three';
 import type { ManifestV2 } from '@node-arena/content';
+import { artMaterial } from './art.js';
 
 type TeamDef = ManifestV2['visuals'][string]['team'];
 
@@ -37,7 +38,7 @@ export class MaterialCache {
   material(family: string, team: string, texturePath: string): MeshLambertMaterial {
     const k = `${family}\u0000${team}`;
     let m = this.materials.get(k);
-    if (!m) { m = new MeshLambertMaterial({ map: this.texture(texturePath) }); this.materials.set(k, m); }
+    if (!m) { const tex = this.texture(texturePath); m = (artMaterial(family, team, texturePath, tex) as MeshLambertMaterial | null) ?? new MeshLambertMaterial({ map: tex }); this.materials.set(k, m); }
     return m;
   }
   /** Material for a visual's `team.textures[team]`; throws on a team with no texture. */
