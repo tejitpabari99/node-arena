@@ -83,7 +83,7 @@ export function createAppController(options: AppOptions) {
         runtime?.frame({sim:owned.sim,alpha:0,steps:0,paused:owned.paused});publish();if(options.autoStart!==false)owned.start();
       }catch(error){created?.dispose();owned?.dispose();if(!disposed&&token===generation)fail(error);}
     },
-    openPicker(){if(disposed)return;++generation;clear();const pickerView:PickerView=state.levelId&&state.customLevels.some(l=>l.id===state.levelId)?'custom':state.levelId?'campaign':state.pickerView;state={...state,screen:loaded?'picker':'error',loading:false,restartPopup:false,result:null,pickerView};publish();},
+    openPicker(){if(disposed)return;++generation;clear();const pickerView:PickerView=state.levelId&&state.customLevels.some(l=>l.id===state.levelId)?(import.meta.env.DEV?'custom':'main'):state.levelId?'campaign':state.pickerView==='custom'&&!import.meta.env.DEV?'main':state.pickerView;state={...state,screen:loaded?'picker':'error',loading:false,restartPopup:false,result:null,pickerView};publish();},
     setPickerView(pickerView:PickerView){if(disposed)return;state={...state,pickerView};publish();},
     pause(){if(state.screen!=='playing'||finishingOn)return;runtime?.cancel();driver?.pause();},
     resume(){if(state.screen!=='playing'||!state.restartPopup)return;driver?.resume();if(driver&&!driver.paused){state={...state,restartPopup:false};runtime?.refresh();publish();}},

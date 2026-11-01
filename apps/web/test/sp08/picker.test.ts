@@ -1,6 +1,6 @@
 import { it,expect } from 'vitest';
 import type { VNode } from 'preact';
-import { Picker } from '../../src/ui/Picker';
+import { Picker, LevelThumb } from '../../src/ui/Picker';
 import { defaultSave } from '../../src/save';
 import type { AppSnapshot } from '../../src/app/state';
 function cards(node:unknown,out:VNode<Record<string,unknown>>[]=[]){if(Array.isArray(node))node.forEach(n=>cards(n,out));else if(node&&typeof node==='object'&&'props' in node){const n=node as VNode<Record<string,unknown>>;if(n.props['data-level-id'])out.push(n);cards(n.props.children,out);}return out;}
@@ -12,12 +12,17 @@ it('shows main menu, campaign without edit links, and custom cards named with ed
   function find(node:unknown,test:(n:VNode<Record<string,unknown>>)=>boolean,out:VNode<Record<string,unknown>>[]=[]):VNode<Record<string,unknown>>[]{if(Array.isArray(node))node.forEach(n=>find(n,test,out));else if(node&&typeof node==='object'&&'props' in node){const n=node as VNode<Record<string,unknown>>;if(test(n))out.push(n);find(n.props.children,test,out);}return out;}
   const cls=(n:VNode<Record<string,unknown>>)=>String(n.props.class??'');
   const main=Picker({state:{...base,pickerView:'main'} as unknown as AppSnapshot,...callbacks});
-  expect(find(main,n=>cls(n).includes('menu-button')).length).toBe(2);expect(find(main,n=>cls(n).startsWith('level-grid')).map(cls)).toEqual(['level-grid menu']);
+  expect(find(main,n=>cls(n).includes('menu-tile')).length).toBe(2);expect(find(main,n=>cls(n).startsWith('level-grid'))).toHaveLength(0);expect(find(main,n=>cls(n)==='menu-stack')).toHaveLength(1);
+  const withOnline=Picker({state:{...base,pickerView:'main'} as unknown as AppSnapshot,...callbacks,onPlayOnline:()=>{}});
+  expect(find(withOnline,n=>cls(n).includes('menu-tile')).map(n=>(n.props.children as VNode).props.children)).toEqual(['Campaign','Custom','Play online']);
+  expect(find(withOnline,n=>n.props['data-testid']==='pvp-play')).toHaveLength(1);
   const campaign=Picker({state:{...base,pickerView:'campaign'} as unknown as AppSnapshot,...callbacks});
   expect(find(campaign,n=>cls(n).startsWith('level-grid')).map(cls)).toEqual(['level-grid campaign']);expect(find(campaign,n=>cls(n)==='level-edit')).toHaveLength(0);
   const custom=Picker({state:{...base,pickerView:'custom'} as unknown as AppSnapshot,...callbacks}),nodes=cards(custom);
   expect(find(custom,n=>cls(n).startsWith('level-grid')).map(cls)).toEqual(['level-grid custom']);
   expect(nodes[0]!.props['aria-label']).toBe('My battle');expect(nodes[0]!.props.disabled).toBe(false);
-  expect((nodes[0]!.props.children as VNode[])[0]!.props.children).toBe('My battle');
+  const kids=nodes[0]!.props.children as VNode<Record<string,unknown>>[];
+  expect(kids[0]!.type).toBe(LevelThumb);expect(kids[0]!.props.id).toBe('na-test');
+  expect(find(custom,n=>n.props.children==='My battle')).toHaveLength(0); // name is not printed
   expect(find(custom,n=>cls(n)==='level-edit')).toHaveLength(1);expect(find(custom,n=>cls(n).includes('create-card'))).toHaveLength(1);
 });

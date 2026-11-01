@@ -58,6 +58,7 @@ test('Custom → Create custom level from shared dialog → place → Save → a
 });
 
 test('custom win has no Next level or "All levels complete"; Levels returns to Custom; campaign cards have no Edit', async ({ page }) => {
+  test.skip(!development, 'Custom is development-only');
   await page.goto('/?test=1&fixture=win');
   await page.getByRole('button', { name: 'Campaign', exact: true }).click();
   await expect(page.locator('.level-edit')).toHaveCount(0);
