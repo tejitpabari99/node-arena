@@ -158,7 +158,7 @@ test('host-only edits: non-host update/start -> not-host; host update ok', () =>
   assert.equal(b.last('lobby.state')!.levelId, FIX);
 });
 
-test('level change resets seats + ready; occupants keep seats; unknown level / seat edits refused', () => {
+test('level change applies supplied seats + clears ready; occupants keep seats; unknown level / seat edits refused', () => {
   const { client } = setup();
   const a = client('Ann'), b = client('Bob');
   a.say({ t: 'room.create' });
@@ -378,14 +378,15 @@ test('covers task11: seat edits clear non-host ready', () => {
   assert.equal(a.last('lobby.state')!.seats[1]!.occupant?.ready, false);
 });
 
-test('covers task11: level change resets edited seats to defaults', () => {
+test('covers task11: level change applies the supplied seats (no reset to defaults)', () => {
   const { a, levelId, mgr } = lobby2();
   const other = content.pvpLevelIds.find((id) => id !== levelId && content.compiled[id]!.players.length === 2)!;
   a.say({ t: 'lobby.update', levelId, seats: [seatsOf(a)[0]!, { kind: 'bot', team: 1, difficulty: 'hard' }] });
-  a.say({ t: 'lobby.update', levelId: other, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
+  a.say({ t: 'lobby.update', levelId: other, seats: [{ kind: 'human', team: 0 }, { kind: 'bot', team: 1, difficulty: 'hard' }] });
   const ls = a.last('lobby.state')!;
   assert.equal(ls.levelId, other);
-  assert.deepEqual(ls.seats.map((x) => x.kind), ['human', 'human']);
+  assert.deepEqual(ls.seats.map((x) => x.kind), ['human', 'bot']);
+  assert.equal(ls.spectators, 1);
   assert.equal(ls.timeLimitSec, content.compiled[other]!.timeLimitSec ?? 0);
   assert.ok(mgr.roomCount() === 1);
 });
@@ -449,11 +450,10 @@ test('app ping answers pong (not internal); flood is rate-limited', () => {
   assert.ok(!a.sent.some((m) => m.t === 'error' && m.code === 'internal'));
 });
 
-// SP02 Task 2: dynamic seats. Skipped until SP02 T6 (applyConfig, range validation, room.create config).
-const SP02_T6 = { skip: 'enabled in SP02 T5/T6' };
+// SP02 Task 2/6: dynamic seats (applyConfig, range validation, room.create config).
 const humanBot = (n: number) => Array.from({ length: n }, (_, i) => (i === 0 ? { kind: 'human', team: 0 } : { kind: 'bot', difficulty: 'easy', team: i % 2 }));
 
-test('covers R-SEA-01: lobby.update on cross accepts 2/3/4 seats; 1 or 5 -> bad-lobby', SP02_T6, () => {
+test('covers R-SEA-01: lobby.update on cross accepts 2/3/4 seats; 1 or 5 -> bad-lobby', () => {
   const { client } = setup();
   const a = client('Ann');
   a.say({ t: 'room.create' });
@@ -461,14 +461,14 @@ test('covers R-SEA-01: lobby.update on cross accepts 2/3/4 seats; 1 or 5 -> bad-
     a.say({ t: 'lobby.update', levelId: 'na-pvp-cross', seats: humanBot(n) });
     assert.equal(a.last('lobby.state')!.seats.length, n);
   }
-  for (const n of [1, 5]) {
+  for (const [n, code_] of [[1, 'bad-message'], [5, 'bad-lobby']] as const) { // 1 seat: wire validator; 5: exceeds map maxPlayers
     a.clear();
     a.say({ t: 'lobby.update', levelId: 'na-pvp-cross', seats: humanBot(n) });
-    assert.equal(a.last('error')!.code, 'bad-lobby');
+    assert.equal(a.last('error')!.code, code_);
   }
 });
 
-test('covers R-SEA-01: duel maps accept exactly 2 seats (3 -> bad-lobby)', SP02_T6, () => {
+test('covers R-SEA-01: duel maps accept exactly 2 seats (3 -> bad-lobby)', () => {
   const { client } = setup();
   const a = client('Ann');
   a.say({ t: 'room.create' });
@@ -479,7 +479,7 @@ test('covers R-SEA-01: duel maps accept exactly 2 seats (3 -> bad-lobby)', SP02_
   assert.equal(a.last('error')!.code, 'bad-lobby');
 });
 
-test('covers R-SEA-01: level switch applies the new seat array atomically; overflow occupants become spectators', SP02_T6, () => {
+test('covers R-SEA-01: level switch applies the new seat array atomically; overflow occupants become spectators', () => {
   const { client } = setup();
   const a = client('Ann'), b = client('Bob'), c = client('Cy');
   a.say({ t: 'room.create' });
@@ -494,7 +494,7 @@ test('covers R-SEA-01: level switch applies the new seat array atomically; overf
   assert.equal(ls.spectators, 1);
 });
 
-test('covers R-SEA-01: room.create with levelId+seats installs config; start with 3 seats (2 humans + bot) begins', SP02_T6, () => {
+test('covers R-SEA-01: room.create with levelId+seats installs config; start with 3 seats (2 humans + bot) begins', () => {
   const { client, starts } = setup();
   const a = client('Ann'), b = client('Bob');
   a.say({ t: 'room.create', levelId: 'na-pvp-cross', seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }, { kind: 'bot', difficulty: 'easy', team: 2 }] });

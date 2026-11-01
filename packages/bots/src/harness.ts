@@ -1,6 +1,6 @@
 import type { CompiledLevel } from '@node-arena/content';
 import {
-  create, createReplayRecorder, type Command, type ReplayMetadata,
+  create, createReplayRecorder, forSeats, type Command, type ReplayMetadata,
   type ReplayRecord, type SeatSetup, type Sim, type SimView,
 } from '@node-arena/sim';
 import { guardBotContext, type Bot } from './index.js';
@@ -78,7 +78,9 @@ function scriptedBot(controller: ScriptedController): Bot {
 }
 
 function controllersFor(options: MatchOptions): Bot[] {
-  const { level, seed } = options;
+  const { seed } = options;
+  // Seat-reduced view (R-SEA-01): a pvp `teams` setup shorter than the level keeps only the first teams.length slots.
+  const level = options.teams ? forSeats(options.level, options.teams.length) : options.level;
   const count = level.players.length;
   const overrides = new Map<number, Bot>();
   for (const controller of options.controllers ?? []) {
