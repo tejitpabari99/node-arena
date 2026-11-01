@@ -1,6 +1,7 @@
 import { isLevelUnlocked, type AppSnapshot, type PickerView } from '../app/state';
 import { uiSprites } from './assets';
-export interface PickerProps { state: AppSnapshot; onStart(id:string):void; onMute():void; onCredits():void; onPlayOnline?():void; onView?(view:PickerView):void }
+import type { LevelThumbnailService } from '../render/level-thumbnail';
+export interface PickerProps { state: AppSnapshot; onStart(id:string):void; onMute():void; onCredits():void; onPlayOnline?():void; thumbs?:LevelThumbnailService; onView?(view:PickerView):void }
 const TITLES:Record<PickerView,string>={main:'Choose your battle',campaign:'Campaign',custom:'Custom levels'};
 export function Picker({state,onStart,onMute,onCredits,onPlayOnline,onView=()=>undefined}:PickerProps) {
   const muted=state.save.settings.musicMute&&state.save.settings.sfxMute;

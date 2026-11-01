@@ -10,6 +10,7 @@ import { createIdentity } from './net/identity';
 import { currentServerUrl } from './net/server-url';
 import { parseRoomLink, stripRoomParams } from './net/links';
 import { webVersions } from './net/versions';
+import { createWebGlLevelThumbnails } from './render/level-thumbnail';
 import './style.css';
 async function main(){
   const root=document.getElementById('app');if(!root)throw Error('Missing app root');
@@ -26,7 +27,8 @@ async function main(){
   const pvp=createPvpController({identity:createIdentity(),serverUrl:currentServerUrl(),versions:webVersions(),createSocket:url=>new WebSocket(url) as unknown as WebSocketLike,files,manifest:()=>app.manifest,createRuntime});
   const sync=()=>{const state=app.snapshot(),p=pvp.snapshot().screen,pvpShown=(p==='countdown'||p==='playing'||p==='result')&&!!pvp.driver;arena.hidden=p!=='idle'?!pvpShown:state.screen!=='playing'&&state.screen!=='result'&&!app.driver;};
   const unsubscribe=[app.subscribe(sync),pvp.subscribe(sync)];
-  const unmount=mountApp(app,root,undefined,pvp),audio=connectAppAudio(app);
+  const thumbs=createWebGlLevelThumbnails(files,webVersions().content);
+  const unmount=mountApp(app,root,undefined,pvp,thumbs),audio=connectAppAudio(app);
   if(harness){harness.applyPvp(pvp);window.__na=harness.connect(app,pvp);}
   await app.boot();
   const query=new URLSearchParams(location.search);
@@ -42,6 +44,6 @@ async function main(){
     pvp.openLink(parseRoomLink(location.search));
   }
   else await harness?.autoLoad(app);
-  if(import.meta.hot)import.meta.hot.dispose(()=>{window.__na?.dispose();delete window.__na;audio.dispose();unsubscribe.forEach(u=>u());unmount();pvp.dispose();app.dispose();arena.remove();});
+  if(import.meta.hot)import.meta.hot.dispose(()=>{window.__na?.dispose();delete window.__na;audio.dispose();unsubscribe.forEach(u=>u());unmount();pvp.dispose();thumbs.dispose();app.dispose();arena.remove();});
 }
 void main();
