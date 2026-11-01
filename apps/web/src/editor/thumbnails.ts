@@ -1,10 +1,8 @@
-import { compileLevel, computeRequires, loadCatalog, loadLevel } from '@node-arena/content';
-import { create, createTroopBuffer } from '@node-arena/sim';
-import { Box3, TextureLoader, Vector3 } from 'three';
+import { compileLevel, computeRequires, loadLevel } from '@node-arena/content';
+import { Box3, Vector3 } from 'three';
 import { contentFiles } from '../app/boot.js';
-import { loadManifest } from '../manifest/load.js';
 import { fitCamera } from '../render/camera.js';
-import { createLevelScene } from '../render/scene.js';
+import { createThumbnailGl } from '../render/level-thumbnail.js';
 import { blankDocument, type LevelDoc } from './document.js';
 import type { LibraryItem } from './model.js';
 
@@ -19,7 +17,6 @@ export interface ThumbnailRenderer {
 export type ThumbnailRendererFactory = () => Promise<ThumbnailRenderer>;
 
 const SIZE = 128, HELPER = { x: 6, z: 6 };
-const frame = () => new Promise<void>(done => requestAnimationFrame(() => requestAnimationFrame(() => done())));
 
 function itemDoc(item: LibraryItem, theme: string): LevelDoc {
   const doc = { ...blankDocument('na-thumb', theme, 'small'), buildings: [] as LevelDoc['buildings'] };
@@ -30,56 +27,31 @@ function itemDoc(item: LibraryItem, theme: string): LevelDoc {
   return doc;
 }
 
-/** One offscreen host + one scene, re-leveled per item. Real manifest, catalog, compile and sim, as the editor viewport does. */
+/** One shared offscreen host + scene (render/level-thumbnail), re-leveled per item. Real manifest, catalog, compile and sim, as the editor viewport does. */
 export const createWebGlThumbnailRenderer: ThumbnailRendererFactory = async () => {
-  const manifest = await loadManifest();
-  const catalog = loadCatalog(contentFiles(), { themes: Object.keys(manifest.themes), colorKeys: Object.keys(manifest.palettes) });
-  const theme = Object.keys(manifest.themes)[0]!;
-  const loader = new TextureLoader(), textureLoads: Promise<void>[] = [];
-  let textureError: unknown;
-  const textureLoader = (path: string) => {
-    let loaded!: () => void;
-    textureLoads.push(new Promise<void>(resolve => { loaded = resolve; }));
-    return loader.load(`/${path}`, loaded, undefined, error => { textureError ??= error; loaded(); });
-  };
-  const host = document.createElement('div');
-  Object.assign(host.style, { position: 'fixed', left: '-9999px', top: '0', width: `${SIZE}px`, height: `${SIZE}px`, pointerEvents: 'none' });
-  document.body.appendChild(host);
+  const gl = await createThumbnailGl(contentFiles());
   const compile = (item: LibraryItem) => {
-    const doc = itemDoc(item, theme);
-    const level = compileLevel(catalog, loadLevel(catalog, { ...doc, requires: computeRequires(catalog, doc) }).level);
-    return { level, sim: create(level, 1) };
+    const doc = itemDoc(item, gl.theme);
+    return compileLevel(gl.catalog, loadLevel(gl.catalog, { ...doc, requires: computeRequires(gl.catalog, doc) }).level);
   };
-  let scene: ReturnType<typeof createLevelScene> | undefined;
   return {
-    async render(item) {
-      textureLoads.length = 0; textureError = undefined; // a failure or stale loads from an earlier item must not poison this one
-      const { level, sim } = compile(item);
-      if (!scene) { scene = createLevelScene({ level, view: sim.view, manifest, parent: host, worldOptions: { textureLoader } }); await scene.ready; }
-      else await scene.world.setLevel(level, level.theme);
-      // Initial sim state applies neutral team textures and selects the one visible building stage.
-      scene.world.setShowTowerRanges(false);
-      scene.update({ view: sim.view, troops: createTroopBuffer(0), n: 0, alpha: 0 }, [], 0);
-      await Promise.all(textureLoads);
-      if (textureError) throw textureError;
-      await frame(); // let the scene's ResizeObserver run before we override the camera
+    render(item) {
       const obstacle = item.startsWith('obstacle-');
-      const hidden = obstacle ? 'b0' : undefined;
-      if (hidden) scene.scene.getObjectByName(hidden)!.visible = false;
-      scene.scene.getObjectByName('world:labels')!.visible = false;
-      const box = new Box3();
-      if (obstacle) box.setFromCenterAndSize(new Vector3(0, .5, 0), new Vector3(1.2, .8, 1.2));
-      else {
-        const a = scene.world.anchors.building('b0')!, r = a.radius;
-        box.expandByPoint(new Vector3(a.pos.x - r, 0, -a.pos.z - r)); box.expandByPoint(new Vector3(a.pos.x + r, a.pos.y + r, -a.pos.z + r)); box.expandByScalar(r * .7);
-      }
-      fitCamera(scene.camera, box, { ...manifest.camera, margin: 0 }, 1, undefined, 1);
-      scene.camera.updateMatrixWorld();
-      scene.scene.updateMatrixWorld(true);
-      scene.render();
-      return scene.canvas.toDataURL('image/png');
+      return gl.render(compile(item), {
+        width: SIZE, height: SIZE,
+        hide: obstacle ? ['b0'] : [],
+        frameCamera({ scene, manifest }) {
+          const box = new Box3();
+          if (obstacle) box.setFromCenterAndSize(new Vector3(0, .5, 0), new Vector3(1.2, .8, 1.2));
+          else {
+            const a = scene.world.anchors.building('b0')!, r = a.radius;
+            box.expandByPoint(new Vector3(a.pos.x - r, 0, -a.pos.z - r)); box.expandByPoint(new Vector3(a.pos.x + r, a.pos.y + r, -a.pos.z + r)); box.expandByScalar(r * .7);
+          }
+          fitCamera(scene.camera, box, { ...manifest.camera, margin: 0 }, 1, undefined, 1);
+        },
+      });
     },
-    dispose() { scene?.dispose(); scene = undefined; host.remove(); },
+    dispose() { gl.dispose(); },
   };
 };
 
