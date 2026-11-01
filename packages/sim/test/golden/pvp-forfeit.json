@@ -1,7 +1,7 @@
 {
   "format": 1,
   "metadata": {
-    "rulesVersion": "3.2.0",
+    "rulesVersion": "3.3.0",
     "schemaVersion": "2.0.0",
     "contentVersion": "2.6.0"
   },
@@ -354,7 +354,7 @@
       "name": "pvp-forfeit",
       "replay": {
         "header": {
-          "rulesVersion": "3.2.0",
+          "rulesVersion": "3.3.0",
           "schemaVersion": "2.0.0",
           "contentVersion": "2.6.0",
           "levelId": "golden-pvp-forfeit",
