@@ -118,7 +118,7 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
   await expect(page.locator('.level-grid.campaign .level-card')).toHaveCount(20);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await page.getByRole('button', { name: 'Custom', exact: true }).click();
-  await expect(page.locator('.level-grid.custom .level-card').filter({ hasText: 'na-play-browser' })).toBeEnabled();
+  await expect(page.locator('.level-grid.custom .level-card').and(page.locator('[aria-label*="na-play-browser"]'))).toBeEnabled();
   expect(errors).toEqual([]);
 });
 

@@ -16,7 +16,7 @@ it('renders optional custom section and keeps campaign/custom result navigation 
     await browserExpect(page.locator('.level-edit')).toHaveCount(0);await page.getByRole('button',{name:'Back',exact:true}).click();
     await page.goto(url+'?custom=1');await openCustom();
     const custom=page.locator('.level-grid.custom .level-card[data-level-id]');await browserExpect(custom).toHaveCount(2);
-    expect(await custom.locator('span').allTextContents()).toEqual(['First custom battle','Last custom battle']);
+    expect(await custom.evaluateAll(cards=>cards.map(c=>c.getAttribute('aria-label')))).toEqual(['First custom battle','Last custom battle']);expect(await custom.locator('span').count()).toBe(0); // names live in aria-label only
     await browserExpect(custom.nth(1)).toBeEnabled();await custom.first().click();
     await browserExpect(page.locator('.battle-level')).toHaveText('First custom battle');
     await page.evaluate(()=>Reflect.get(window,'customTest').step());await browserExpect(page.getByRole('heading',{name:'Victory!'})).toBeVisible();
