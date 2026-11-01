@@ -32,7 +32,7 @@ async function main(){
   if(harness){harness.applyPvp(pvp);window.__na=harness.connect(app,pvp);}
   await app.boot();
   const query=new URLSearchParams(location.search);
-  if(query.get('view')==='custom')app.setPickerView('custom');
+  if(import.meta.env.DEV&&query.get('view')==='custom')app.setPickerView('custom');
   if(query.has('room')){
     // Deep link (`?room=CODE[&watch]`): params are cleaned once the player leaves the room flow.
     let inRoom=false;
