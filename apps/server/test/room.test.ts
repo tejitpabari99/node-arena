@@ -446,3 +446,61 @@ test('app ping answers pong (not internal); flood is rate-limited', () => {
   assert.ok(a.sent.some((m) => m.t === 'error' && m.code === 'rate-limited'));
   assert.ok(!a.sent.some((m) => m.t === 'error' && m.code === 'internal'));
 });
+
+// SP02 Task 2: dynamic seats. Skipped until SP02 T6 (applyConfig, range validation, room.create config).
+const SP02_T6 = { skip: 'enabled in SP02 T5/T6' };
+const humanBot = (n: number) => Array.from({ length: n }, (_, i) => (i === 0 ? { kind: 'human', team: 0 } : { kind: 'bot', difficulty: 'easy', team: i % 2 }));
+
+test('covers R-SEA-01: lobby.update on cross accepts 2/3/4 seats; 1 or 5 -> bad-lobby', SP02_T6, () => {
+  const { client } = setup();
+  const a = client('Ann');
+  a.say({ t: 'room.create' });
+  for (const n of [2, 3, 4]) {
+    a.say({ t: 'lobby.update', levelId: 'na-pvp-cross', seats: humanBot(n) });
+    assert.equal(a.last('lobby.state')!.seats.length, n);
+  }
+  for (const n of [1, 5]) {
+    a.clear();
+    a.say({ t: 'lobby.update', levelId: 'na-pvp-cross', seats: humanBot(n) });
+    assert.equal(a.last('error')!.code, 'bad-lobby');
+  }
+});
+
+test('covers R-SEA-01: duel maps accept exactly 2 seats (3 -> bad-lobby)', SP02_T6, () => {
+  const { client } = setup();
+  const a = client('Ann');
+  a.say({ t: 'room.create' });
+  a.say({ t: 'lobby.update', levelId: 'na-pvp-duel-s', seats: humanBot(2) });
+  assert.equal(a.last('lobby.state')!.seats.length, 2);
+  a.clear();
+  a.say({ t: 'lobby.update', levelId: 'na-pvp-duel-s', seats: humanBot(3) });
+  assert.equal(a.last('error')!.code, 'bad-lobby');
+});
+
+test('covers R-SEA-01: level switch applies the new seat array atomically; overflow occupants become spectators', SP02_T6, () => {
+  const { client } = setup();
+  const a = client('Ann'), b = client('Bob'), c = client('Cy');
+  a.say({ t: 'room.create' });
+  a.say({ t: 'lobby.update', levelId: 'na-pvp-cross', seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }, { kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
+  b.say({ t: 'room.join', code: code(a), role: 'play' });
+  c.say({ t: 'room.join', code: code(a), role: 'play' });
+  a.say({ t: 'lobby.update', levelId: 'na-pvp-duel-s', seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
+  const ls = a.last('lobby.state')!;
+  assert.equal(ls.levelId, 'na-pvp-duel-s');
+  assert.equal(ls.seats.length, 2);
+  assert.equal(ls.seats[1]!.occupant?.nick, 'Bob');
+  assert.equal(ls.spectators, 1);
+});
+
+test('covers R-SEA-01: room.create with levelId+seats installs config; start with 3 seats (2 humans + bot) begins', SP02_T6, () => {
+  const { client, starts } = setup();
+  const a = client('Ann'), b = client('Bob');
+  a.say({ t: 'room.create', levelId: 'na-pvp-cross', seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }, { kind: 'bot', difficulty: 'easy', team: 2 }] });
+  assert.equal(a.last('lobby.state')!.seats.length, 3);
+  b.say({ t: 'room.join', code: code(a), role: 'play' });
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'lobby.start' });
+  assert.equal(a.last('error'), undefined);
+  assert.equal(starts.length, 1);
+  assert.equal(starts[0]!.seats.length, 3);
+});

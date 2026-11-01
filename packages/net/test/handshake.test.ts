@@ -57,3 +57,6 @@ test('accepts any bot version; onBotMismatch logged only', () => {
 test('auth ignored', () => {
   assert.ok(checkHello(hello({ auth: 'whatever' }), server, { playerId: 'p' }).ok);
 });
+
+// SP02 Task 2: enabled in SP02 T5 (PROTOCOL_VERSION 3 -> 4).
+test('covers R-SEA-01: PROTOCOL_VERSION is 4 (variable seat arrays)', { skip: 'enabled in SP02 T5' }, () => { assert.equal(PROTOCOL_VERSION, 4); });
