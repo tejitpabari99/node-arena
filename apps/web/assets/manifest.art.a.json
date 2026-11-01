@@ -1,0 +1,102 @@
+{
+  "$schema": "../../../packages/content/schemas/manifest-art.schema.json",
+  "schemaVersion": "2.0.0",
+  "visuals": {
+    "building.house-wt1": {
+      "model": {
+        "parts": "art/models/set-a/barracks.glb"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-atlas.png",
+        "mask": "art/textures/reart-atlas-mask.png"
+      },
+      "scale": 1.2,
+      "label": {
+        "height": 2.2
+      }
+    },
+    "building.house-wt2": {
+      "model": {
+        "parts": "art/models/set-a/factory.glb"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-atlas.png",
+        "mask": "art/textures/reart-atlas-mask.png"
+      },
+      "scale": 1.2,
+      "label": {
+        "height": 1.7
+      }
+    },
+    "building.tower": {
+      "model": {
+        "parts": "art/models/set-a/tower.glb"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-atlas.png",
+        "mask": "art/textures/reart-atlas-mask.png"
+      },
+      "scale": 1.2,
+      "label": {
+        "height": 2.6
+      }
+    },
+    "unit.soldier": {
+      "model": {
+        "parts": "art/models/set-a/soldier.glb",
+        "lod": "art/models/set-a/soldier-lod1.glb"
+      },
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-atlas.png",
+        "mask": "art/textures/reart-atlas-mask.png"
+      }
+    },
+    "unit.tank": {
+      "model": {
+        "parts": "art/models/set-a/tank.glb"
+      },
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-atlas.png",
+        "mask": "art/textures/reart-atlas-mask.png"
+      }
+    }
+  }
+}
