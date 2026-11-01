@@ -6,14 +6,18 @@ import { SYNC_LOST_STRING, type PvpController } from '../../pvp/controller';
 import { shareLinks } from '../../net/links';
 import { Lobby } from './Lobby';
 import { PvpMenu } from './PvpMenu';
+import type { LevelThumbnailService } from '../../render/level-thumbnail';
 import { PvpResult } from './PvpResult';
 import { ConnBanner } from './ConnBanner';
 import { DrainBanner } from './DrainBanner';
 const pretty=(id:string)=>id.replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-export function PvpLayer({pvp}:{pvp:PvpController}){
+export function PvpLayer({pvp,thumbs}:{pvp:PvpController;thumbs?:LevelThumbnailService|undefined}){
   const [s,setS]=useState(pvp.snapshot()),[code,setCode]=useState(pvp.snapshot().code??'');
   useLayoutEffect(()=>pvp.subscribe(()=>setS(pvp.snapshot())),[pvp]);
-  if(s.screen==='menu'||s.screen==='connecting')return <PvpMenu nick={s.nickDraft} code={code} error={s.error} unavailable={s.pvpUnavailable||s.screen==='connecting'} reload={s.conn==='refused'&&!s.pvpUnavailable} onNick={v=>pvp.setNick(v)} onCode={setCode} onCreate={()=>pvp.create()} onJoin={()=>pvp.join(code)} onWatch={()=>pvp.watch(code)} onBack={()=>pvp.close()} onDismissError={()=>pvp.dismissError()}/>;
+  if(s.screen==='menu'||s.screen==='connecting'){
+    return <PvpMenu view={s.menuView} joinRole={s.joinRole} nick={s.nickDraft} code={code} error={s.error} unavailable={s.pvpUnavailable||s.screen==='connecting'} reload={s.conn==='refused'&&!s.pvpUnavailable} onNick={v=>pvp.setNick(v)} onCode={setCode} onGoCreate={()=>pvp.goCreate()} onGoJoin={()=>pvp.goJoin()} onRole={r=>pvp.chooseRole(r)} onJoin={(c,r)=>pvp.join(c,r)} onBack={()=>pvp.back()} onDismissError={()=>pvp.dismissError()}>
+    </PvpMenu>;
+  }
   if(s.screen==='restarted')return <section class="picker panel pvp-panel" aria-label="Server restarted">
     <p class="pvp-error" role="alert" data-testid="pvp-restarted">{s.error}</p>
     <button class="level-card menu-button" data-testid="pvp-restarted-menu" onClick={()=>pvp.backToMenu()}>Back to menu</button>

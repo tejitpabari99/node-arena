@@ -20,32 +20,43 @@ const text = (n: unknown): string => Array.isArray(n) ? n.map(text).join('') : n
 const seat = (kind: 'human' | 'bot', team: number, occupant?: { nick: string; ready: boolean }) => ({ kind, team, ...(occupant ? { occupant: { ...occupant, status: 'connected' as const } } : {}) });
 const lobby = (seats: LobbyStateMsg['seats'], host: number | null = 0): LobbyStateMsg => ({ t: 'lobby.state', levelId: 'duel-s', timeLimitSec: 60, host, spectators: 0, seats });
 
-const menuProps = (o: Partial<Parameters<typeof PvpMenu>[0]> = {}) => ({ nick: 'Ann', code: '', error: null, onNick: () => {}, onCode: () => {}, onCreate: () => {}, onJoin: () => {}, onWatch: () => {}, onBack: () => {}, onDismissError: () => {}, ...o });
+const menuProps = (o: Partial<Parameters<typeof PvpMenu>[0]> = {}) => ({ view: 'home' as const, joinRole: 'play' as const, nick: 'Ann', code: '', error: null, onNick: () => {}, onCode: () => {}, onGoCreate: () => {}, onGoJoin: () => {}, onRole: () => {}, onJoin: () => {}, onBack: () => {}, onDismissError: () => {}, ...o });
 const lobbyProps = (o: Partial<Parameters<typeof Lobby>[0]> = {}) => ({ code: 'ABCD', lobby: lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1)]), seat: 0, host: true, conn: 'connected' as const, error: null, levelName: 'Duel S', seatColors: ['#f00', '#00f'], onReady: () => {}, onStart: () => {}, onLeave: () => {}, onRetry: () => {}, onDismissError: () => {}, ...o });
 
+const click = (n: N | undefined) => (n!.props.onClick as () => void)();
 describe('PvpMenu', () => {
-  it('renders nick, create, code input, join; wires callbacks', () => {
-    const onCreate = vi.fn(), onJoin = vi.fn();
-    const v = PvpMenu(menuProps({ code: 'ABCD', onCreate, onJoin }));
+  it('home shows exactly two tiles', () => {
+    const onGoCreate = vi.fn(), onGoJoin = vi.fn(), v = PvpMenu(menuProps({ onGoCreate, onGoJoin }));
+    expect(find(v, (n) => String(n.props.class ?? '').includes('menu-tile'))).toHaveLength(2);
+    click(byId(v, 'pvp-create-tile')); click(byId(v, 'pvp-join-tile'));
+    expect(onGoCreate).toHaveBeenCalledOnce(); expect(onGoJoin).toHaveBeenCalledOnce();
+    expect(byId(v, 'pvp-nick')).toBeUndefined();
+  });
+  it('role chooser: Participant -> play, Spectate -> watch', () => {
+    const onRole = vi.fn(), v = PvpMenu(menuProps({ view: 'join-role', onRole }));
+    click(byId(v, 'pvp-role-play')); click(byId(v, 'pvp-role-watch'));
+    expect(onRole.mock.calls).toEqual([['play'], ['watch']]);
+  });
+  it('join form order nick, code, Join last; submit uses role; disabled until valid', () => {
+    const onJoin = vi.fn(), v = PvpMenu(menuProps({ view: 'join-form', joinRole: 'watch', code: 'ABCD', onJoin }));
+    const ids = find(v, (n) => typeof n.props['data-testid'] === 'string').map((n) => n.props['data-testid']);
+    expect(ids.filter((i) => ['pvp-nick', 'pvp-code-input', 'pvp-join'].includes(i as string))).toEqual(['pvp-nick', 'pvp-code-input', 'pvp-join']);
+    expect(ids[ids.length - 1]).toBe('pvp-join');
     expect(byId(v, 'pvp-nick')!.props.maxLength).toBe(20);
-    expect(byId(v, 'pvp-code-input')).toBeTruthy();
-    (byId(v, 'pvp-create')!.props.onClick as () => void)(); (byId(v, 'pvp-join')!.props.onClick as () => void)();
-    expect(onCreate).toHaveBeenCalledOnce(); expect(onJoin).toHaveBeenCalledOnce();
+    const form = find(v, (n) => n.type === 'form')[0]!, preventDefault = vi.fn();
+    (form.props.onSubmit as (e: unknown) => void)({ preventDefault });
+    expect(onJoin).toHaveBeenCalledWith('ABCD', 'watch'); expect(preventDefault).toHaveBeenCalled();
+    expect(byId(v, 'pvp-join')!.props.disabled).toBe(false);
+    expect(byId(PvpMenu(menuProps({ view: 'join-form', code: '' })), 'pvp-join')!.props.disabled).toBe(true);
+    expect(byId(PvpMenu(menuProps({ view: 'join-form', nick: ' ', code: 'X' })), 'pvp-join')!.props.disabled).toBe(true);
+    onJoin.mockClear();
+    (find(PvpMenu(menuProps({ view: 'join-form', code: '', onJoin })), (n) => n.type === 'form')[0]!.props.onSubmit as (e: unknown) => void)({ preventDefault });
+    expect(onJoin).not.toHaveBeenCalled();
   });
-  it('watch button wires onWatch and needs nick + code', () => {
-    const onWatch = vi.fn();
-    (byId(PvpMenu(menuProps({ code: 'ABCD', onWatch })), 'pvp-watch')!.props.onClick as () => void)();
-    expect(onWatch).toHaveBeenCalledOnce();
-    expect(byId(PvpMenu(menuProps({ code: '' })), 'pvp-watch')!.props.disabled).toBe(true);
-    expect(byId(PvpMenu(menuProps({ nick: ' ', code: 'X' })), 'pvp-watch')!.props.disabled).toBe(true);
+  it('back and error text', () => {
+    const onBack = vi.fn(); click(byId(PvpMenu(menuProps({ onBack })), 'pvp-back')); expect(onBack).toHaveBeenCalledOnce();
+    expect(text(byId(PvpMenu(menuProps({ error: 'Room not found.' })), 'pvp-error'))).toContain('Room not found.');
   });
-  it('disables create/join on empty nick, join on empty code', () => {
-    const v = PvpMenu(menuProps({ nick: '  ', code: 'X' }));
-    expect(byId(v, 'pvp-create')!.props.disabled).toBe(true); expect(byId(v, 'pvp-join')!.props.disabled).toBe(true);
-    const w = PvpMenu(menuProps({ code: '' }));
-    expect(byId(w, 'pvp-create')!.props.disabled).toBe(false); expect(byId(w, 'pvp-join')!.props.disabled).toBe(true);
-  });
-  it('shows error text', () => { expect(text(byId(PvpMenu(menuProps({ error: 'Room not found.' })), 'pvp-error'))).toContain('Room not found.'); });
 });
 
 describe('Lobby', () => {

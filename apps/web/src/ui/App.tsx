@@ -17,7 +17,7 @@ export function App({app,onEditLevel,pvp,thumbs}:{app:AppController;onEditLevel?
   return <>
     {state.screen==='boot'&&<section class="panel loading" role="status">Loading battle…</section>}
     {state.screen==='picker'&&!pvpActive&&(credits?<Credits onBack={()=>setCredits(false)}/>:<Picker state={state} {...(thumbs?{thumbs}:{})} onView={v=>app.setPickerView(v)} onStart={id=>{void app.startLevel(id);}} onMute={mute} onCredits={()=>setCredits(true)} {...(pvp&&pvp.snapshot().serverUrl?{onPlayOnline:()=>pvp.open()}:{})}/>)}
-    {pvp&&pvpActive&&<PvpLayer pvp={pvp}/>}
+    {pvp&&pvpActive&&<PvpLayer pvp={pvp} thumbs={thumbs}/>}
     {(state.screen==='playing'||state.screen==='result')&&!pvpActive&&<Hud state={state} app={app} onMute={mute} onEditLevel={onEditLevel}/>}
     {state.screen==='error'&&<section class="panel error" role="alert"><h1>Could not load battle</h1><p>{state.error instanceof Error?state.error.message:String(state.error)}</p><button onClick={()=>{void app.retry();}}>Retry</button><button onClick={()=>app.openPicker()}>Levels</button></section>}
     {!!state.notices.length&&<aside class="notice" role="status">{state.notices.map(n=><p key={n}>{n}</p>)}<button onClick={()=>app.dismissNotices()}>Dismiss</button></aside>}
