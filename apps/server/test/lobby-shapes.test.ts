@@ -329,10 +329,10 @@ test('lobby rule rejections', () => {
   assert.equal(err(p1.s), 'not-host');
   p1.s.say({ t: 'lobby.update', levelId: CROSS, seats: lobbyOf(h.s).seats.map((s) => ({ kind: s.kind, team: s.team })) });
   assert.equal(err(p1.s), 'not-host');
-  h.s.say({ t: 'lobby.update', levelId: 'nope', seats: [] });
+  h.s.say({ t: 'lobby.update', levelId: 'nope', seats: [{ kind: 'human', team: 0 }, { kind: 'bot', team: 1 }] });
   assert.equal(err(h.s), 'bad-lobby');
   h.s.say({ t: 'lobby.update', levelId: CROSS, seats: [{ kind: 'human', team: 0 }] });
-  assert.equal(err(h.s), 'bad-lobby'); // seat count
+  assert.equal(err(h.s), 'bad-message'); // seat count < 2 now rejected on the wire (SP02 T5)
   h.s.say({ t: 'lobby.update', levelId: CROSS, seats: [{ kind: 'bot', team: 0 }, { kind: 'human', team: 1 }, { kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
   assert.equal(err(h.s), 'bad-lobby'); // host seat must be human
   h.s.say({ t: 'lobby.ready', ready: true });

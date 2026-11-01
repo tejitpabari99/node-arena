@@ -18,6 +18,7 @@ export const MAX_SERVER_BYTES = 1 << 20;
 export const MAX_AUTH_LEN = 2048;
 export const MAX_INT = 2147483647;
 const MAX_SEATS = 8;
+const MIN_SEATS = 2;
 const MAX_SHORT = 64;
 const MAX_DETAIL = 256;
 const MAX_CMDS = 20000;
@@ -50,8 +51,8 @@ function oneOf<T extends string>(v: unknown, set: readonly T[]): T {
 function opt<T>(o: Rec, k: string, f: (v: unknown) => T): T | undefined {
   return has(o, k) && o[k] !== undefined ? f(o[k]) : undefined;
 }
-function arr<T>(v: unknown, max: number, f: (v: unknown) => T): T[] {
-  if (!Array.isArray(v) || v.length > max) return bad();
+function arr<T>(v: unknown, max: number, f: (v: unknown) => T, min = 0): T[] {
+  if (!Array.isArray(v) || v.length > max || v.length < min) return bad();
   const out: T[] = [];
   for (const x of v) out.push(f(x));
   return out;
@@ -131,7 +132,7 @@ function startSeat(v: unknown): StartSeat {
 
 const CLIENT_FIELDS: Record<string, readonly string[]> = {
   hello: ['t', 'pv', 'versions', 'nick', 'token', 'auth'],
-  'room.create': ['t'], 'room.join': ['t', 'code', 'role'], 'room.leave': ['t'],
+  'room.create': ['t', 'levelId', 'seats'], 'room.join': ['t', 'code', 'role'], 'room.leave': ['t'],
   'lobby.update': ['t', 'levelId', 'seats'], 'lobby.ready': ['t', 'ready'], 'lobby.start': ['t'], rematch: ['t'],
   cmd: ['t', 'c', 'cid'], hash: ['t', 'tick', 'h'], resync: ['t'], ping: ['t', 'id'],
   pause: ['t'], resume: ['t', 'epoch'], quit: ['t'],
@@ -150,12 +151,18 @@ function clientMsg(o: Rec): ClientMessage {
         },
         { auth: opt(o, 'auth', (x) => str(x, MAX_AUTH_LEN, 0)) },
       ) as ClientMessage;
-    case 'room.create': return { t };
+    case 'room.create': {
+      // levelId + seats: both or neither.
+      if (has(o, 'levelId') !== has(o, 'seats')) bad();
+      return has(o, 'levelId')
+        ? { t, levelId: str(o.levelId), seats: arr(o.seats, MAX_SEATS, (s) => seatConfig(s, true), MIN_SEATS) }
+        : { t };
+    }
     case 'room.join':
       return { t, code: typeof o.code === 'string' && CODE.test(o.code) ? o.code : bad(), role: oneOf(o.role, ['play', 'watch'] as const) };
     case 'room.leave': return { t };
     case 'lobby.update':
-      return { t, levelId: str(o.levelId), seats: arr(o.seats, MAX_SEATS, (s) => seatConfig(s, true)) };
+      return { t, levelId: str(o.levelId), seats: arr(o.seats, MAX_SEATS, (s) => seatConfig(s, true), MIN_SEATS) };
     case 'lobby.ready': return { t, ready: bool(o.ready) };
     case 'lobby.start': return { t };
     case 'rematch': return { t };

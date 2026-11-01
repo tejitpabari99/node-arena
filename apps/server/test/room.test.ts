@@ -135,7 +135,7 @@ test('create/join while already in a room refused', () => {
 test('lobby messages outside a room -> not-in-room', () => {
   const { client } = setup();
   const a = client('Ann');
-  for (const m of [{ t: 'lobby.start' }, { t: 'lobby.ready', ready: true }, { t: 'lobby.update', levelId: FIX, seats: [] }]) {
+  for (const m of [{ t: 'lobby.start' }, { t: 'lobby.ready', ready: true }, { t: 'lobby.update', levelId: FIX, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }] }]) {
     a.say(m);
     assert.equal(a.last('error')!.code, 'not-in-room');
   }
@@ -336,12 +336,14 @@ test('covers task11: bot difficulty defaults to normal; invalid difficulty / tea
     [h, { kind: 'bot', team: 1, difficulty: 'nightmare' }],
     [h, { kind: 'human', team: 1, difficulty: 'easy' }],
     [h, { kind: 'bot', team: 99 }],
-    [h],
   ]) {
     a.clear();
     edit(bad);
     assert.equal(a.last('error')!.code, 'bad-lobby');
   }
+  a.clear();
+  edit([h]); // length 1: rejected by the wire validator (SP02 T5)
+  assert.equal(a.last('error')!.code, 'bad-message');
 });
 
 test('covers task11: host seat cannot become bot/empty', () => {
@@ -380,7 +382,7 @@ test('covers task11: level change resets edited seats to defaults', () => {
   const { a, levelId, mgr } = lobby2();
   const other = content.pvpLevelIds.find((id) => id !== levelId && content.compiled[id]!.players.length === 2)!;
   a.say({ t: 'lobby.update', levelId, seats: [seatsOf(a)[0]!, { kind: 'bot', team: 1, difficulty: 'hard' }] });
-  a.say({ t: 'lobby.update', levelId: other, seats: [] });
+  a.say({ t: 'lobby.update', levelId: other, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
   const ls = a.last('lobby.state')!;
   assert.equal(ls.levelId, other);
   assert.deepEqual(ls.seats.map((x) => x.kind), ['human', 'human']);

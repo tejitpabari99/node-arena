@@ -180,9 +180,8 @@ test('server: start.hashInterval must be 20; client hash tick % 20', () => {
   for (const v of [10, 0, 40, '20', null]) assert.equal(code(parseServerMessage(JSON.stringify({ ...start, hashInterval: v }))), 'bad-message');
 });
 
-// SP02 Task 2: tests below are enabled in SP02 T5 (room.create config, lobby.update min 2, PROTOCOL 4).
-const SP02_T5 = { skip: 'enabled in SP02 T5' };
-test('covers R-SEA-01: room.create accepts both or neither of levelId/seats', SP02_T5, () => {
+// SP02 T5: room.create config, lobby.update min 2.
+test('covers R-SEA-01: room.create accepts both or neither of levelId/seats', () => {
   const seats = JSON.stringify([{ kind: 'human', team: 0 }, { kind: 'bot', difficulty: 'easy', team: 1 }]);
   assert.equal(parseClientMessage(`{"t":"room.create","levelId":"l","seats":${seats}}`).ok, true);
   assert.equal(parseClientMessage('{"t":"room.create"}').ok, true);
@@ -191,7 +190,7 @@ test('covers R-SEA-01: room.create accepts both or neither of levelId/seats', SP
   assert.equal(parseClientMessage('{"t":"room.create","levelId":"l","seats":[{"kind":"human","team":0}]}').ok, false);
   assert.equal(parseClientMessage(`{"t":"room.create","levelId":"l","seats":${seats},"x":1}`).ok, false);
 });
-test('covers R-SEA-01: lobby.update seats length must be 2..MAX_SEATS (1 rejected, 2 and 8 ok, 9 rejected)', SP02_T5, () => {
+test('covers R-SEA-01: lobby.update seats length must be 2..MAX_SEATS (1 rejected, 2 and 8 ok, 9 rejected)', () => {
   const upd = (n: number) => JSON.stringify({ t: 'lobby.update', levelId: 'l', seats: Array.from({ length: n }, (_, i) => ({ kind: i === 0 ? 'human' : 'bot', team: i })) });
   assert.equal(parseClientMessage(upd(1)).ok, false);
   assert.equal(parseClientMessage(upd(2)).ok, true);

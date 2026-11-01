@@ -18,12 +18,12 @@ const state = (over: Record<string, unknown> = {}) => ({
   budgets: [12000, 30000, null, null], ...over,
 });
 
-test('protocol version is 3 and handshake gates it', () => {
-  assert.equal(PROTOCOL_VERSION, 3);
+test('protocol version is 4 and handshake gates it', () => {
+  assert.equal(PROTOCOL_VERSION, 4);
   const versions = { rules: '2.0.0', schema: '1', content: 'abc', bot: '1' };
   const hello = (pv: number) => ({ t: 'hello' as const, pv, versions, nick: 'a', token: 'f'.repeat(32) });
-  assert.equal(checkHello(hello(2), versions, { playerId: 'p' }).ok, false);
-  assert.equal(checkHello(hello(3), versions, { playerId: 'p' }).ok, true);
+  assert.equal(checkHello(hello(3), versions, { playerId: 'p' }).ok, false);
+  assert.equal(checkHello(hello(4), versions, { playerId: 'p' }).ok, true);
 });
 
 test('error codes include paused and no-match', () => {
