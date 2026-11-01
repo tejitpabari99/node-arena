@@ -8,15 +8,22 @@ import { createPvpConnection, type ConnInfo, type ConnState, type PvpConnection,
 import { pauseRemaining, toPauseView, type PauseView } from './pause';
 import { NICK_MAX, type Identity } from '../net/identity';
 import type { RoomLink } from '../net/links';
+import { canCreate, clampDraft, draftToSeats, newDraft, setMap, setPlayers, setRow, setTeams, setType, type CreateDraft, type DraftRow, type RoomType } from './room-draft';
 
 export type PvpScreen = 'idle' | 'menu' | 'connecting' | 'lobby' | 'countdown' | 'playing' | 'result' | 'restarted';
 export type PvpRole = 'play' | 'watch';
+export type MenuView = 'home' | 'join-role' | 'join-form' | 'create';
 
 export interface PvpSnapshot {
   screen: PvpScreen;
   nick: string;
   /** Untrimmed nickname as typed (forms bind to this; `nick` is the sanitized persisted value). */
   nickDraft: string;
+  /** Online menu navigation; `joinRole` applies to 'join-form'. */
+  menuView: MenuView;
+  joinRole: PvpRole;
+  /** Pre-room create form; null until the create view is first opened. */
+  createDraft: CreateDraft | null;
   conn: ConnState | null;
   /** Client-local backoff info for the connection banner. */
   connInfo: ConnInfo | null;
@@ -118,7 +125,7 @@ const RESYNC_LIMITED_DETAIL = 'resync too frequent';
 export const RESYNC_RETRY_MS = 5500;
 export const SYNC_LOST_STRING = 'Out of sync. Leave and rejoin.';
 
-type Pending = { t: 'room.create' } | { t: 'room.join'; code: string; role: PvpRole };
+type Pending = { t: 'room.create'; levelId?: string; seats?: SeatConfig[] } | { t: 'room.join'; code: string; role: PvpRole };
 
 export function createPvpController(options: PvpOptions) {
   const mismatchKey = 'nodearena:pvp:mismatch';
@@ -129,7 +136,7 @@ export function createPvpController(options: PvpOptions) {
   let mismatchedBeforeReload = false;
   try { mismatchedBeforeReload = sessionStorage.getItem(mismatchKey) === buildKey; } catch { /* storage unavailable */ }
   const listeners = new Set<() => void>(), events = new Set<(u: TickUpdate) => void>(), pvpEvents = new Set<(e: PvpEvent) => void>();
-  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, nickDraft: options.identity.nick, conn: null, connInfo: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false, draining: null });
+  const initial = (): PvpSnapshot => ({ screen: 'idle', nick: options.identity.nick, nickDraft: options.identity.nick, menuView: 'home', joinRole: 'play', createDraft: null, conn: null, connInfo: null, code: null, seat: null, host: false, role: 'play', lobby: null, start: null, end: null, ranking: null, pause: null, error: null, serverUrl: options.serverUrl, pvpUnavailable: false, draining: null });
   let state = initial();
   let conn: PvpConnection | null = null, offs: Array<() => void> = [];
   let lastEpoch = -1, autoResumed = -1, pending: Pending | null = null, welcomed = false, disposed = false, skipLobby = false;
@@ -159,7 +166,7 @@ export function createPvpController(options: PvpOptions) {
     return loaded()?.compiled[id];
   };
   const drop = () => { skipLobby = false; clearMatch(); offs.forEach((f) => f()); offs = []; const c = conn; conn = null; welcomed = false; pending = null; c?.close(); };
-  const reset = (error: string | null) => { drop(); state = { ...initial(), screen: 'menu', error, nickDraft: state.nickDraft }; listeners.forEach((fn) => fn()); };
+  const reset = (error: string | null) => { drop(); state = { ...initial(), screen: 'menu', error, nickDraft: state.nickDraft, createDraft: state.createDraft }; listeners.forEach((fn) => fn()); };
   const dispatch = (m: ClientMessage) => { conn?.send(m); };
 
   const finishResult = (gen: number) => {
@@ -381,6 +388,11 @@ export function createPvpController(options: PvpOptions) {
     listeners.forEach((fn) => fn());
   };
 
+  const editDraft = (f: (d: CreateDraft, m: PvpMapInfo) => CreateDraft) => {
+    const d = state.createDraft, m = d && api.maps().find((x) => x.id === d.mapId);
+    if (state.screen === 'menu' && d && m) publish({ createDraft: f(d, m) });
+  };
+
   const api = {
     snapshot: () => state,
     subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
@@ -413,7 +425,33 @@ export function createPvpController(options: PvpOptions) {
     },
     /** Persists the sanitized nick on every call; keeps the raw draft (spaces intact) for the form. */
     setNick(nick: string) { publish({ nick: options.identity.setNick(nick), nickDraft: nick.slice(0, NICK_MAX) }); },
+    /** Bare create (server defaults); the guided flow uses createRoom(). */
     create() { if (state.screen === 'menu') connect({ t: 'room.create' }); },
+    /** Create with the form's map + seats (room.create{levelId, seats}). */
+    createRoom() {
+      if (state.screen !== 'menu' || !state.createDraft) return;
+      const map = api.maps().find((m) => m.id === state.createDraft!.mapId);
+      if (!map || !canCreate(state.createDraft)) return;
+      connect({ t: 'room.create', levelId: map.id, seats: draftToSeats(state.createDraft, map) });
+    },
+    goCreate() {
+      if (state.screen !== 'menu') return;
+      const maps = api.maps(), cur = state.createDraft, map = cur && maps.find((m) => m.id === cur.mapId);
+      publish({ menuView: 'create', error: null, createDraft: cur && map ? clampDraft(cur, map) : newDraft(maps) });
+    },
+    goJoin() { if (state.screen === 'menu') publish({ menuView: 'join-role', error: null }); },
+    chooseRole(role: PvpRole) { if (state.screen === 'menu') publish({ menuView: 'join-form', joinRole: role, error: null }); },
+    /** One level up; from home it closes the layer (main menu). */
+    back() {
+      if (state.screen !== 'menu') return;
+      if (state.menuView === 'home') { api.close(); return; }
+      publish({ menuView: state.menuView === 'join-form' ? 'join-role' : 'home', error: null });
+    },
+    draftType(type: RoomType) { editDraft((d, m) => setType(d, type, m)); },
+    draftMap(id: string) { const m = api.maps().find((x) => x.id === id); if (m) editDraft((d) => setMap(d, m)); },
+    draftPlayers(n: number) { editDraft((d, m) => setPlayers(d, n, m)); },
+    draftTeams(n: number) { editDraft((d, m) => setTeams(d, n, m)); },
+    draftRow(index: number, patch: Partial<DraftRow>) { editDraft((d, m) => setRow(d, index, patch, m)); },
     join(code: string, role: PvpRole = 'play') { if (state.screen === 'menu') connect({ t: 'room.join', code: code.trim().toUpperCase(), role }); },
     watch(code: string) { api.join(code, 'watch'); },
     openLink(link: RoomLink | null) {
@@ -421,7 +459,7 @@ export function createPvpController(options: PvpOptions) {
       if (state.screen === 'idle') publish({ screen: 'menu', error: null });
       if (state.screen !== 'menu') return;
       if (!link) { publish({ error: 'Invalid room code. Enter a 4-character code.' }); return; }
-      publish({ code: link.code });
+      publish({ code: link.code, menuView: 'join-form', joinRole: link.role });
       if (!options.serverUrl) { publish({ error: 'Online play is unavailable.' }); return; }
 
       // A first-time visitor supplies a nickname in the existing menu, then presses Join.
