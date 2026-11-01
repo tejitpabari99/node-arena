@@ -7,7 +7,7 @@ export default defineConfig({
   outputDir: '../../test-results/pvp/playwright',
   fullyParallel: false,
   workers: 1,
-  timeout: 60000,
+  timeout: 120000, // room creates are IP rate limited (5/min); createRoom may back off
   preserveOutput: 'always',
   use: { baseURL: 'http://127.0.0.1:4173', trace: 'retain-on-failure' },
   projects: [{

@@ -1,17 +1,54 @@
 import { expect, type NewPlayerPage } from './fixtures';
 import type { Page } from '@playwright/test';
 
+/** Home -> Create a room -> (optional form edits) -> Create room; returns the room code from the live lobby. */
+export async function createRoom(page: Page, nick: string, edit?: (page: Page) => Promise<void>): Promise<string> {
+  await page.goto('/');
+  await page.getByTestId('pvp-play').click();
+  await page.getByTestId('pvp-create-tile').click();
+  await page.getByTestId('pvp-nick').fill(nick);
+  if (edit) await edit(page);
+  // The server allows 5 room creates per minute per IP (CREATES_PER_MIN); the suite shares one IP, so back off and retry.
+  for (let attempt = 0; ; attempt++) {
+    await page.getByTestId('pvp-create').click();
+    const limited = page.getByTestId('pvp-error').filter({ hasText: 'Too fast' });
+    await expect(page.getByTestId('lobby-code').or(limited)).toBeVisible({ timeout: 10_000 });
+    if (await page.getByTestId('lobby-code').isVisible()) break;
+    expect(attempt, 'room create rate limit never cleared').toBeLessThan(5);
+    await page.waitForTimeout(15_000);
+    await page.getByRole('button', { name: 'Dismiss' }).click();
+  }
+  const code = ((await page.getByTestId('lobby-code').textContent()) ?? '').trim();
+  expect(code).toMatch(/^[A-Z0-9]{4}$/);
+  return code;
+}
+
+/** Home -> Join a match -> role -> nick + code -> Join. */
+export async function joinRoom(page: Page, code: string, nick: string, role: 'play' | 'watch' = 'play', expectLobby = true): Promise<void> {
+  await page.goto('/');
+  await page.getByTestId('pvp-play').click();
+  await page.getByTestId('pvp-join-tile').click();
+  await page.getByTestId(role === 'play' ? 'pvp-role-play' : 'pvp-role-watch').click();
+  await page.getByTestId('pvp-nick').fill(nick);
+  await page.getByTestId('pvp-code-input').fill(code);
+  await page.getByTestId('pvp-join').click();
+  if (expectLobby) await expect(page.getByTestId('lobby-code')).toHaveText(code); // mid-match joins skip the lobby
+}
+
+export async function setBot(page: Page, seat: number, difficulty: 'easy' | 'normal' | 'hard' = 'easy'): Promise<void> {
+  await page.getByTestId(`seat-kind-${seat}`).selectOption('bot');
+  await page.getByTestId(`seat-difficulty-${seat}`).selectOption(difficulty);
+  await expect(page.getByTestId(`seat-kind-${seat}`)).toHaveValue('bot');
+  await expect(page.getByTestId(`seat-difficulty-${seat}`)).toHaveValue(difficulty);
+}
+
 export async function openMatch(newPlayerPage: NewPlayerPage): Promise<{ a: Page; b: Page; code: string }> {
   const a = await newPlayerPage();
   const b = await newPlayerPage();
-  await a.goto('/?nick=Alice');
-  await a.getByTestId('pvp-play').click();
-  await a.getByTestId('pvp-create').click();
-  const code = ((await a.getByTestId('lobby-code').textContent()) ?? '').trim();
-  expect(code).not.toBe('');
-  await expect(a.getByTestId('lobby-map')).toContainText('Duel S');
-  await b.goto(`/?room=${code}&nick=Bob`);
-  await expect(b.getByTestId('lobby-code')).toHaveText(code);
+  const code = await createRoom(a, 'Alice');
+  await expect(a.getByTestId('map-na-pvp-duel-s')).toHaveAttribute('aria-pressed', 'true');
+  await joinRoom(b, code, 'Bob');
+  await expect(a.getByTestId('lobby-seat-1')).toContainText('Bob');
   await b.getByTestId('lobby-ready').click();
   await expect(a.getByTestId('lobby-start')).toBeEnabled();
   await a.getByTestId('lobby-start').click();
