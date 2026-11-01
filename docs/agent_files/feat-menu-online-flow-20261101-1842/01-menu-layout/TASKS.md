@@ -8,10 +8,10 @@ Source of truth: docs/agent_files/feat-menu-online-flow-20261101-1842/01-menu-la
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Shared level-thumbnail core + service | none | todo |
-| 2 | Editor thumbnails onto shared core | 1 | todo |
-| 3 | Stacked menu, DEV-only Custom, thumbnail cards | 1 | todo |
-| 4 | E2E and gate fixups | 2, 3 | todo |
+| 1 | Shared level-thumbnail core + service | none | done |
+| 2 | Editor thumbnails onto shared core | 1 | done |
+| 3 | Stacked menu, DEV-only Custom, thumbnail cards | 1 | done |
+| 4 | E2E and gate fixups | 2, 3 | done |
 
 ## Task 1 — Shared level-thumbnail core + service
 What it is: new `render/level-thumbnail.ts` with `renderLevelThumbnail(level, size)` (full compiled level, top-down iso, labels hidden, camera fit to bounds, ~256x160) and `LevelThumbnailService` (`get`/`request`/`subscribe`).

@@ -8,12 +8,12 @@ Source of truth: docs/agent_files/feat-menu-online-flow-20261101-1842/02-dynamic
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Rule text, changelog, RULES_VERSION 3.3.0 | none | todo |
-| 2 | Failing tests (sim, net, server) tagged R-SEA-01 | 1 | todo |
-| 3 | Sim `forSeats` + create() integration | 2 | todo |
-| 4 | Content: cross reorder, maxPlayers, locks, goldens | 3 | todo |
-| 5 | Net: room.create config, validators, PROTOCOL 4 | 2 | todo |
-| 6 | Server: applyConfig, range validation, players.length audit | 3, 4, 5 | todo |
+| 1 | Rule text, changelog, RULES_VERSION 3.3.0 | none | done |
+| 2 | Failing tests (sim, net, server) tagged R-SEA-01 | 1 | done |
+| 3 | Sim `forSeats` + create() integration | 2 | done |
+| 4 | Content: cross reorder, maxPlayers, locks, goldens | 3 | done |
+| 5 | Net: room.create config, validators, PROTOCOL 4 | 2 | done |
+| 6 | Server: applyConfig, range validation, players.length audit | 3, 4, 5 | done |
 
 ## Task 1 — Rule text, changelog, RULES_VERSION 3.3.0
 What it is: the mechanics contract change, before any test or code.
