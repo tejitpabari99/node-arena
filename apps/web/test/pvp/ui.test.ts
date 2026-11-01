@@ -79,7 +79,7 @@ describe('Lobby', () => {
 });
 
 describe('Lobby M2 full', () => {
-  const maps = [{ id: 'duel-s', name: 'Duel S', seats: 2, teams: [0, 1], timeLimitSec: 60, theme: 't' }, { id: 'cross', name: 'Cross', seats: 4, teams: [0, 1, 0, 1], timeLimitSec: 60, theme: 't' }];
+  const maps = [{ id: 'duel-s', name: 'Duel S', maxPlayers: 2, teams: [0, 1], timeLimitSec: 60, theme: 't' }, { id: 'cross', name: 'Cross', maxPlayers: 4, teams: [0, 1, 0, 1], timeLimitSec: 60, theme: 't' }];
   const two = lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1, { nick: 'b', ready: true })]);
   const rowProps = (n: N) => n.props as unknown as Parameters<typeof SeatRow>[0];
   it('host sees map cards and seat controls; picking wires callbacks', () => {

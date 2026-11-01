@@ -44,7 +44,7 @@ export function Lobby({code,lobby,seat,host,conn,error,levelName,seatColors,drai
     <p class="lobby-map" data-testid="lobby-map">Map: {levelName}</p>
     {maps.length>0&&<ul class="map-list" aria-label="Maps">{maps.map(m=><li key={m.id}>
       <button class="level-card menu-button" data-testid={`lobby-map-${m.id}`} aria-pressed={m.id===lobby?.levelId} disabled={!host} onClick={()=>onMap?.(m.id)}>
-        <span>{m.name}</span><small>{m.seats} seats</small>
+        <span>{m.name}</span><small>{m.maxPlayers} seats</small>
       </button></li>)}</ul>}
     <ul class="seat-list">{(lobby?.seats??[]).map((s,i)=><SeatRow key={i} index={i} seat={s} color={seatColors[i]} you={i===seat} host={i===lobby?.host} teamCount={teamCount} editable={host} onChange={change}/>)}</ul>
     {links&&<div class="lobby-links">

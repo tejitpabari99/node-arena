@@ -21,8 +21,8 @@ test('listPvpMaps: exactly the shipped pvp maps in pvp.json order', async () => 
   for (const m of maps) {
     const lv = c.compiled[m.id]!;
     assert.equal(m.name, c.levels[m.id]!.level.name);
-    assert.equal(m.seats, lv.players.length);
-    assert.equal(m.teams.length, m.seats);
+    assert.equal(m.maxPlayers, lv.players.length);
+    assert.equal(m.teams.length, m.maxPlayers);
     assert.equal(m.timeLimitSec, lv.timeLimitSec);
     assert.equal(m.theme, lv.theme);
     assert.equal(lv.objective, 'pvp');
