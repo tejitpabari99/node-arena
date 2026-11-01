@@ -83,3 +83,17 @@ export function seatsToDraft(lobby: { levelId: string; seats: readonly SeatConfi
 /** Team type needs at least 2 distinct teams in use (PvP is always satisfied with >=2 players). */
 export const distinctTeams = (d: CreateDraft): number => new Set(d.type === 'pvp' ? d.rows.map((_, i) => i) : d.rows.map((r) => r.team)).size;
 export const canCreate = (d: CreateDraft): boolean => distinctTeams(d) >= 2;
+
+type LiveSeat = { kind: string; occupant?: unknown };
+/** "-" Players is locked while the last row is held by another human (host row 0 never counts). */
+export const lastRowHeld = (seats: readonly LiveSeat[]): boolean => {
+  const i = seats.length - 1;
+  return i > 0 && seats[i]!.kind === 'human' && !!seats[i]!.occupant;
+};
+/** Players moved to spectators between two lobby states: occupied seats lost AND spectators gained. */
+export function movedToSpectators<S extends LiveSeat>(prev: { seats: readonly S[]; spectators: number } | null, next: { seats: readonly S[]; spectators: number }): number {
+  if (!prev) return 0;
+  const occ = (s: readonly S[]) => s.filter((x) => x.occupant).length;
+  return Math.max(0, Math.min(occ(prev.seats) - occ(next.seats), next.spectators - prev.spectators));
+}
+export const movedToast = (n: number): string => `${n} player${n === 1 ? '' : 's'} moved to spectators`;

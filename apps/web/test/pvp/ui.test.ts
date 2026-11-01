@@ -3,7 +3,9 @@ import type { VNode } from 'preact';
 import type { LobbyStateMsg } from '@node-arena/net';
 import { PvpMenu } from '../../src/ui/pvp/PvpMenu';
 import { Lobby, startBlocker } from '../../src/ui/pvp/Lobby';
-import { SeatRow } from '../../src/ui/pvp/SeatRow';
+import { RoomForm, type RoomFormProps } from '../../src/ui/pvp/RoomForm';
+import { lastRowHeld, movedToSpectators, movedToast } from '../../src/pvp/room-draft';
+import type { PvpMapInfo } from '@node-arena/content';
 import { Picker } from '../../src/ui/Picker';
 import { defaultSave } from '../../src/save';
 import type { AppSnapshot } from '../../src/app/state';
@@ -21,7 +23,7 @@ const seat = (kind: 'human' | 'bot', team: number, occupant?: { nick: string; re
 const lobby = (seats: LobbyStateMsg['seats'], host: number | null = 0): LobbyStateMsg => ({ t: 'lobby.state', levelId: 'duel-s', timeLimitSec: 60, host, spectators: 0, seats });
 
 const menuProps = (o: Partial<Parameters<typeof PvpMenu>[0]> = {}) => ({ view: 'home' as const, joinRole: 'play' as const, nick: 'Ann', code: '', error: null, onNick: () => {}, onCode: () => {}, onGoCreate: () => {}, onGoJoin: () => {}, onRole: () => {}, onJoin: () => {}, onBack: () => {}, onDismissError: () => {}, ...o });
-const lobbyProps = (o: Partial<Parameters<typeof Lobby>[0]> = {}) => ({ code: 'ABCD', lobby: lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1)]), seat: 0, host: true, conn: 'connected' as const, error: null, levelName: 'Duel S', seatColors: ['#f00', '#00f'], onReady: () => {}, onStart: () => {}, onLeave: () => {}, onRetry: () => {}, onDismissError: () => {}, ...o });
+const lobbyProps = (o: Partial<Parameters<typeof Lobby>[0]> = {}) => ({ code: 'ABCD', lobby: lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1)]), seat: 0, host: true, conn: 'connected' as const, error: null, nick: 'Ann', seatColors: ['#f00', '#00f'], onReady: () => {}, onStart: () => {}, onLeave: () => {}, onRetry: () => {}, onDismissError: () => {}, ...o });
 
 const click = (n: N | undefined) => (n!.props.onClick as () => void)();
 describe('PvpMenu', () => {
@@ -59,78 +61,100 @@ describe('PvpMenu', () => {
   });
 });
 
+const maps = [{ id: 'duel-s', name: 'Duel S', maxPlayers: 2, teams: [0, 1], timeLimitSec: 60, theme: 't' }, { id: 'cross', name: 'Cross', maxPlayers: 4, teams: [0, 1, 0, 1], timeLimitSec: 60, theme: 't' }] as unknown as PvpMapInfo[];
+const crossLobby = (seats: LobbyStateMsg['seats'], spectators = 0): LobbyStateMsg => ({ ...lobby(seats), levelId: 'cross', spectators });
 describe('Lobby', () => {
-  it('shows code, conn state and 2 seat rows', () => {
-    const v = Lobby(lobbyProps());
+  it('shows code, conn state, live form rows with joiner nick and Open', () => {
+    const v = Lobby(lobbyProps({ maps }));
     expect(text(byId(v, 'lobby-code'))).toBe('ABCD'); expect(text(byId(v, 'conn-state'))).toBe('connected');
-    expect(find(v, (n) => (n.type as unknown) === SeatRow)).toHaveLength(2);
-    const r0 = SeatRow({ index: 0, seat: lobbyProps().lobby!.seats[0]!, you: true, host: true }), r1 = SeatRow({ index: 1, seat: lobbyProps().lobby!.seats[1]!, you: false, host: false });
-    expect(byId(r0, 'lobby-seat-0')).toBeTruthy(); expect(text(r0)).toContain('a (you)'); expect(text(r1)).toContain('Open');
+    const live = find(v, (n) => (n.type as unknown) === RoomForm)[0]!, f = RoomForm(live.props as unknown as RoomFormProps);
+    expect(text(byId(f, 'pvp-nick-label'))).toContain('Ann'); expect(byId(f, 'pvp-nick')).toBeUndefined();
+    expect(text(byId(f, 'lobby-seat-0'))).toContain('Player 1 · a'); expect(text(byId(f, 'lobby-seat-1'))).toContain('Open');
+    const joined = Lobby(lobbyProps({ maps, lobby: lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1, { nick: 'Bob', ready: false })]) }));
+    expect(text(byId(RoomForm(find(joined, (n) => (n.type as unknown) === RoomForm)[0]!.props as unknown as RoomFormProps), 'lobby-seat-1'))).toContain('Bob');
+  });
+  it('bot rows are labelled Bot1, Bot2', () => {
+    const l = crossLobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'human', team: 1 }, { kind: 'bot', team: 2, difficulty: 'easy' }, { kind: 'bot', team: 3, difficulty: 'easy' }]);
+    const f = RoomForm(find(Lobby(lobbyProps({ maps, lobby: l })), (n) => (n.type as unknown) === RoomForm)[0]!.props as unknown as RoomFormProps);
+    expect(text(byId(f, 'lobby-seat-2'))).toContain('Bot1'); expect(text(byId(f, 'lobby-seat-3'))).toContain('Bot2');
   });
   it('host start disabled with reason until opponent joins and readies', () => {
     expect(startBlocker(lobbyProps().lobby)).toBe('Waiting for opponent');
-    const v = Lobby(lobbyProps());
+    const v = Lobby(lobbyProps({ maps }));
     expect(byId(v, 'lobby-start')!.props.disabled).toBe(true); expect(text(byId(v, 'lobby-reason'))).toBe('Waiting for opponent');
     const joined = lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1, { nick: 'b', ready: false })]);
     expect(startBlocker(joined)).toBe('Waiting for ready');
     const ready = lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1, { nick: 'b', ready: true })]);
     expect(startBlocker(ready)).toBeNull();
-    const onStart = vi.fn(), w = Lobby(lobbyProps({ lobby: ready, onStart }));
+    const onStart = vi.fn(), w = Lobby(lobbyProps({ maps, lobby: ready, onStart }));
     expect(byId(w, 'lobby-start')!.props.disabled).toBe(false); expect(byId(w, 'lobby-reason')).toBeUndefined();
     (byId(w, 'lobby-start')!.props.onClick as () => void)(); expect(onStart).toHaveBeenCalledOnce();
+    expect(startBlocker(lobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'bot', team: 0, difficulty: 'easy' }]))).toBe('Need at least 2 teams');
   });
   it('guest sees ready toggle, no start; Leave and retry wired', () => {
     const onReady = vi.fn(), onLeave = vi.fn(), onRetry = vi.fn();
     const l = lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1, { nick: 'b', ready: false })]);
-    const v = Lobby(lobbyProps({ lobby: l, seat: 1, host: false, conn: 'lost', onReady, onLeave, onRetry }));
+    const v = Lobby(lobbyProps({ maps, lobby: l, seat: 1, host: false, conn: 'lost', onReady, onLeave, onRetry }));
     expect(byId(v, 'lobby-start')).toBeUndefined(); expect(byId(v, 'lobby-ready')!.props['aria-pressed']).toBe(false);
     (byId(v, 'lobby-ready')!.props.onClick as () => void)(); (byId(v, 'lobby-leave')!.props.onClick as () => void)(); (byId(v, 'conn-retry')!.props.onClick as () => void)();
     expect(onReady).toHaveBeenCalledOnce(); expect(onLeave).toHaveBeenCalledOnce(); expect(onRetry).toHaveBeenCalledOnce();
   });
+  it('spectator sees Spectating and no Ready', () => {
+    const v = Lobby(lobbyProps({ maps, host: false, seat: null }));
+    expect(byId(v, 'lobby-ready')).toBeUndefined(); expect(text(v)).toContain('Spectating');
+  });
 });
 
-describe('Lobby M2 full', () => {
-  const maps = [{ id: 'duel-s', name: 'Duel S', maxPlayers: 2, teams: [0, 1], timeLimitSec: 60, theme: 't' }, { id: 'cross', name: 'Cross', maxPlayers: 4, teams: [0, 1, 0, 1], timeLimitSec: 60, theme: 't' }];
+describe('Lobby live edits', () => {
   const two = lobby([seat('human', 0, { nick: 'a', ready: true }), seat('human', 1, { nick: 'b', ready: true })]);
-  const rowProps = (n: N) => n.props as unknown as Parameters<typeof SeatRow>[0];
-  it('host sees map cards and seat controls; picking wires callbacks', () => {
-    const onMap = vi.fn(), onSeat = vi.fn();
-    const v = Lobby(lobbyProps({ lobby: two, maps, onMap, onSeat }));
-    expect(byId(v, 'lobby-map-duel-s')!.props.disabled).toBe(false); expect(byId(v, 'lobby-map-cross')).toBeTruthy();
-    (byId(v, 'lobby-map-cross')!.props.onClick as () => void)(); expect(onMap).toHaveBeenCalledWith('cross');
-    const r1 = find(v, (n) => (n.type as unknown) === SeatRow)[1]!;
-    const row = SeatRow(rowProps(r1));
-    const kind = byId(row, 'seat-kind-1')!, team = byId(row, 'seat-team-1')!;
-    expect(byId(row, 'seat-kind-0')).toBeUndefined();
-    (r1.props.onChange as (i: number, p: object) => void)(1, { kind: 'bot' });
-    expect(onSeat).toHaveBeenCalledWith([{ kind: 'human', team: 0 }, { kind: 'bot', team: 1, difficulty: 'normal' }]);
-    (r1.props.onChange as (i: number, p: object) => void)(1, { team: 0 });
-    expect(onSeat).toHaveBeenLastCalledWith([{ kind: 'human', team: 0 }, { kind: 'human', team: 0 }]);
-    expect(kind.props.value).toBe('human'); expect(team.props.value).toBe('1');
-    expect(byId(SeatRow({ ...rowProps(r1), seat: { kind: 'bot', team: 1, difficulty: 'hard' } }), 'seat-difficulty-1')!.props.value).toBe('hard');
-    expect(byId(SeatRow({ ...rowProps(r1), seat: { kind: 'human', team: 1 } }), 'seat-difficulty-1')).toBeUndefined();
+  const form = (o: Partial<Parameters<typeof Lobby>[0]> = {}) => find(Lobby(lobbyProps({ maps, ...o })), (n) => (n.type as unknown) === RoomForm)[0]!.props as unknown as RoomFormProps;
+  it('host edits send one update with levelId + seats', () => {
+    const onUpdate = vi.fn(), onHint = vi.fn(), p = form({ lobby: two, onUpdate, onHint });
+    p.onMap('cross');
+    expect(onUpdate).toHaveBeenLastCalledWith('cross', [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }]);
+    p.onRow(1, { kind: 'bot' });
+    expect(onUpdate).toHaveBeenLastCalledWith('duel-s', [{ kind: 'human', team: 0 }, { kind: 'bot', difficulty: 'normal', team: 1 }]);
+    expect(onUpdate).toHaveBeenCalledTimes(2);
+    const q = form({ lobby: crossLobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'human', team: 1 }]), onUpdate });
+    q.onPlayers(4);
+    expect(onUpdate).toHaveBeenLastCalledWith('cross', [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }, { kind: 'human', team: 2 }, { kind: 'human', team: 3 }]);
   });
-  it('non-host: read-only seats and map cards, Ready shown', () => {
-    const v = Lobby(lobbyProps({ lobby: two, maps, host: false, seat: 1 }));
-    expect(byId(v, 'lobby-map-cross')!.props.disabled).toBe(true);
-    const r = SeatRow({ ...rowProps(find(v, (n) => (n.type as unknown) === SeatRow)[1]!) });
-    expect(byId(r, 'seat-kind-1')).toBeUndefined(); expect(byId(r, 'seat-team-1')).toBeUndefined(); expect(byId(r, 'seat-team-label-1')).toBeTruthy();
-    expect(byId(v, 'lobby-ready')).toBeTruthy(); expect(byId(v, 'lobby-start')).toBeUndefined();
+  it('non-host form is read-only', () => {
+    const f = RoomForm(form({ lobby: two, host: false, seat: 1 }));
+    expect(byId(f, 'map-cross')!.props.disabled).toBe(true); expect(byId(f, 'type-team')!.props.disabled).toBe(true);
+    expect(byId(f, 'seat-kind-1')).toBeUndefined(); expect(byId(f, 'seat-team-label-1')).toBeTruthy();
+    expect(text(byId(f, 'lobby-seat-1'))).toContain('(you)');
   });
-  it('start blockers: disconnected/reserved seat, empty seats ignored', () => {
-    const grace = lobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'human', team: 1, occupant: { nick: 'b', ready: true, status: 'away' } }]);
-    expect(startBlocker(grace)).toBe('Waiting for player to reconnect');
-    const v = Lobby(lobbyProps({ lobby: grace })); expect(byId(v, 'lobby-start')!.props.disabled).toBe(true);
-    expect(text(byId(SeatRow({ index: 1, seat: grace.seats[1]!, you: false, host: false }), 'lobby-seat-1'))).toContain('Not connected');
-    const withBot = lobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'bot', team: 1, difficulty: 'easy' }, { kind: 'empty', team: 0 }]);
-    expect(startBlocker(withBot)).toBeNull();
+  it('"-" is locked with a hint while another human holds the last row', () => {
+    const held = crossLobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'human', team: 1 }, { kind: 'human', team: 2 }, seat('human', 3, { nick: 'z', ready: false })]);
+    const f = RoomForm(form({ lobby: held }));
+    expect(byId(f, 'players-minus')!.props.disabled).toBe(true); expect(byId(f, 'players-hint')).toBeTruthy();
+    const free = crossLobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'human', team: 1 }, { kind: 'human', team: 2 }, { kind: 'human', team: 3 }]);
+    const g = RoomForm(form({ lobby: free }));
+    expect(byId(g, 'players-minus')!.props.disabled).toBe(false); expect(byId(g, 'players-hint')).toBeUndefined();
+    expect(lastRowHeld(held.seats)).toBe(true); expect(lastRowHeld(free.seats)).toBe(false);
   });
-  it('share links with copy buttons and spectator count', () => {
+  it('copy links and spectator count', () => {
     const onCopy = vi.fn(), links = { play: 'http://x/?room=ABCD', watch: 'http://x/?room=ABCD&watch' };
-    const v = Lobby(lobbyProps({ lobby: { ...two, spectators: 3 }, links, onCopy }));
+    const v = Lobby(lobbyProps({ maps, lobby: { ...two, spectators: 3 }, links, onCopy }));
     (byId(v, 'copy-play-link')!.props.onClick as () => void)(); (byId(v, 'copy-watch-link')!.props.onClick as () => void)();
     expect(onCopy).toHaveBeenNthCalledWith(1, links.play); expect(onCopy).toHaveBeenNthCalledWith(2, links.watch);
     expect(text(byId(v, 'lobby-spectators'))).toContain('3');
+  });
+  it('start blockers: disconnected seat, empty seats ignored', () => {
+    const grace = lobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'human', team: 1, occupant: { nick: 'b', ready: true, status: 'away' } }]);
+    expect(startBlocker(grace)).toBe('Waiting for player to reconnect');
+    expect(byId(Lobby(lobbyProps({ maps, lobby: grace })), 'lobby-start')!.props.disabled).toBe(true);
+    const withBot = lobby([seat('human', 0, { nick: 'a', ready: true }), { kind: 'bot', team: 1, difficulty: 'easy' }, { kind: 'empty', team: 0 }]);
+    expect(startBlocker(withBot)).toBeNull();
+  });
+  it('moved-to-spectators diff toast', () => {
+    const full = { seats: [seat('human', 0, { nick: 'a', ready: true }), seat('human', 1, { nick: 'b', ready: true })], spectators: 0 };
+    expect(movedToSpectators(full, { seats: [full.seats[0]!, { kind: 'bot', team: 1, difficulty: 'easy' }], spectators: 1 })).toBe(1);
+    expect(movedToSpectators(full, { seats: [full.seats[0]!, { kind: 'human', team: 1 }], spectators: 0 })).toBe(0); // plain leave
+    expect(movedToSpectators(full, { ...full, spectators: 1 })).toBe(0); // spectator joined
+    expect(movedToSpectators(null, full)).toBe(0);
+    expect(movedToast(1)).toBe('1 player moved to spectators'); expect(movedToast(2)).toBe('2 players moved to spectators');
   });
 });
 
