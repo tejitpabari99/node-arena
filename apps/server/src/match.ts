@@ -321,8 +321,9 @@ export function createMatchController(deps: MatchDeps): MatchController {
   const onSeatDisconnect = (room: Room, seat: number): void => {
     const m = active.get(room);
     if (m === undefined || room.state !== 'running') return;
+    const before = m.pause.epoch();
     const r = m.pause.disconnect(seat);
-    if (!r.ok) return;
+    if (!r.ok || m.pause.epoch() === before) return; // heartbeat timeout then socket close both land here: act once
     log?.info('pause.disconnect', { room: room.code, seat });
     publish(room, m);
   };

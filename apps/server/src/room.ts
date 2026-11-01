@@ -328,6 +328,13 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     }, SEAT_RESERVE_MS));
   };
 
+  /** Ended room with no live socket and no open seat-reserve (reconnect window): nobody can see the stored `end`, so it need not wait out ENDED_ROOM_TTL. */
+  const endedAndAbandoned = (room: Room): boolean => {
+    if (room.state !== 'ended') return false;
+    const occ = [...room.seats.flatMap((s) => (s.occupant ? [s.occupant] : [])), ...room.spectators];
+    return occ.every((o) => o.conn.closed && !reserves.has(o));
+  };
+
   const leave = (conn: Conn): void => {
     const room = byPlayer.get(conn.playerId ?? '');
     if (room === undefined) return;
@@ -349,6 +356,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       room.spectators = room.spectators.filter((o) => o.playerId !== conn.playerId);
       byPlayer.delete(conn.playerId!);
       if (room.state === 'lobby') broadcast(room);
+      else if (endedAndAbandoned(room)) drop(room);
       return;
     }
     if (room.state !== 'lobby' && room.state !== 'ended') return;
@@ -365,6 +373,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       log?.info('room.close', { room: room.code, reason: 'empty' });
       return;
     }
+    if (endedAndAbandoned(room)) { drop(room); return; } // e.g. other seat's socket died mid-match (no reserve was set)
     if (room.host === i || room.host === null) room.host = pickHost(room);
     for (const s of room.seats) if (s.occupant) s.occupant.ready = false;
     if (room.state === 'lobby') broadcast(room);
@@ -523,6 +532,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
         continue;
       }
       if ((room.state === 'ended' || room.state === 'closed') && room.endedAt !== undefined && t - room.endedAt >= ENDED_ROOM_TTL_MS) { drop(room); continue; }
+      if (endedAndAbandoned(room)) { drop(room); continue; }
       if (room.state === 'lobby') {
         // Spectator sockets do not keep a lobby alive; only seated humans' sockets do.
         if (room.seats.every((s) => s.occupant === undefined || s.occupant.conn.closed)) {

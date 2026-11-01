@@ -201,6 +201,26 @@ test('heartbeat timeout opens a disconnect hold', () => {
   assert.equal(t.rooms.size, 0);
 });
 
+test('heartbeat timeout then socket close publishes the disconnect hold once', () => {
+  const t = setup();
+  const r = startRunning(t);
+  const n = r.b.of('pause.state').length;
+  t.mgr.onHeartbeatTimeout!(r.room.seats[0]!.occupant!.conn);
+  r.a.drop();
+  assert.equal(r.b.of('pause.state').length, n + 1);
+});
+
+test('ended room is dropped when a seat died mid-match and the other occupant leaves (no 10 min lingering)', () => {
+  const t = setup();
+  const r = startRunning(t);
+  r.b.drop(); // running: no seat reserve is set
+  t.advance(31_000); // disconnect budget expires -> forfeit -> ended
+  assert.equal(r.room.state, 'ended');
+  assert.equal(t.mgr.roomCount(), 1);
+  r.a.say({ t: 'room.leave' });
+  assert.equal(t.mgr.roomCount(), 0);
+});
+
 // ---- SP07 Task 7: forfeit emission, terminal flush, reserve ----
 
 const replayHash = (t: ReturnType<typeof setup>, r: ReturnType<typeof startRunning>): string => {
