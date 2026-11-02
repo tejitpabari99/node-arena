@@ -109,6 +109,7 @@ Fly `fly.toml [env]` sets `ALLOWED_ORIGINS`; the Dockerfile sets `PORT=8080`, `C
 | `MAX_CONNS` | 200 | Past the cap new sockets close with 1013 |
 | `CONTENT_DIR` | repo `packages/content/data` | Image sets `/app/content-data/data` |
 | `DRAIN_MS` | 30000 | SIGTERM drain window, 0-120000; 0 = immediate close. Keep `kill_timeout` in `fly.toml` above `DRAIN_MS/1000 + 3` (see [Drain on SIGTERM](#drain-on-sigterm)) |
+| `CREATES_PER_MIN` | 5 | Room creates per minute per IP, 1..100000. Test only: `apps/web/playwright.pvp.config.ts` sets 1000 because the whole e2e suite shares one IP. Never set in prod |
 | `LOG_LEVEL` | info | |
 
 ## Desync resync

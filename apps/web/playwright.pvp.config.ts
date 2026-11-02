@@ -7,7 +7,7 @@ export default defineConfig({
   outputDir: '../../test-results/pvp/playwright',
   fullyParallel: false,
   workers: 1,
-  timeout: 120000, // room creates are IP rate limited (5/min); createRoom may back off
+  timeout: 60000,
   preserveOutput: 'always',
   use: { baseURL: 'http://127.0.0.1:4173', trace: 'retain-on-failure' },
   projects: [{
@@ -20,7 +20,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'node ../server/dist/main.js',
-      env: { PORT: '8081', HOST: '127.0.0.1', ALLOWED_ORIGINS: 'http://127.0.0.1:4173', LOG_LEVEL: 'warn' },
+      env: { PORT: '8081', HOST: '127.0.0.1', ALLOWED_ORIGINS: 'http://127.0.0.1:4173', LOG_LEVEL: 'warn', CREATES_PER_MIN: '1000' /* e2e suite shares one IP */ },
       url: 'http://127.0.0.1:8081/healthz',
       reuseExistingServer: false,
     },

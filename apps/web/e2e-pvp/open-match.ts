@@ -8,16 +8,8 @@ export async function createRoom(page: Page, nick: string, edit?: (page: Page) =
   await page.getByTestId('pvp-create-tile').click();
   await page.getByTestId('pvp-nick').fill(nick);
   if (edit) await edit(page);
-  // The server allows 5 room creates per minute per IP (CREATES_PER_MIN); the suite shares one IP, so back off and retry.
-  for (let attempt = 0; ; attempt++) {
-    await page.getByTestId('pvp-create').click();
-    const limited = page.getByTestId('pvp-error').filter({ hasText: 'Too fast' });
-    await expect(page.getByTestId('lobby-code').or(limited)).toBeVisible({ timeout: 10_000 });
-    if (await page.getByTestId('lobby-code').isVisible()) break;
-    expect(attempt, 'room create rate limit never cleared').toBeLessThan(5);
-    await page.waitForTimeout(15_000);
-    await page.getByRole('button', { name: 'Dismiss' }).click();
-  }
+  await page.getByTestId('pvp-create').click();
+  await expect(page.getByTestId('lobby-code')).toBeVisible();
   const code = ((await page.getByTestId('lobby-code').textContent()) ?? '').trim();
   expect(code).toMatch(/^[A-Z0-9]{4}$/);
   return code;

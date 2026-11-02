@@ -93,7 +93,7 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
     now, setTimeout: (fn, ms) => setTimeout(fn, ms), clearTimeout: (h) => clearTimeout(h as never),
     log: (ev, f) => log.warn(ev, f),
   });
-  const ipLimits = new IpLimits(now);
+  const ipLimits = new IpLimits(now, config.createsPerMin);
   const match = createMatchController({ clock, now, log, onAbort: (r) => rooms.drop(r) });
   const rooms = createRoomManager({
     content, clock, now, inputDelay: config.inputDelay, maxRooms: config.maxRooms, ipLimits, log,
