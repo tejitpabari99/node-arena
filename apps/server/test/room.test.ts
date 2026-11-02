@@ -610,3 +610,232 @@ test('covers review-5: displaced players become spectators even past MAX_SPECTAT
   assert.equal(late.last('error')!.code, 'spectators-full');
   assert.ok(levelId);
 });
+
+// ---- Coverage gaps (n<N lobby flows) ----
+const CROSS = 'na-pvp-cross';
+const H4 = [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }, { kind: 'human', team: 0 }, { kind: 'human', team: 1 }];
+const rejoined = (s: Sock) => s.sent.filter((m) => m.t === 'room.joined');
+
+test('covers R-SEA-01: room.create invalid configs -> bad-lobby, no room leaked, creator can retry', () => {
+  const { client, mgr } = setup();
+  const a = client('Ann');
+  const h = { kind: 'human', team: 0 };
+  const b = (team: number, difficulty = 'easy') => ({ kind: 'bot', team, difficulty });
+  const cases: Array<[string, string, object[]]> = [
+    ['unknown level', 'nope', [h, b(1)]],
+    ['unknown level (non-pvp id)', 'levelview-1', [h, b(1)]],
+    ['seat 0 bot', CROSS, [b(0), { kind: 'human', team: 1 }]],
+    ['seat 0 empty', CROSS, [{ kind: 'empty', team: 0 }, b(1)]],
+    ['seats > map max (5 on cross)', CROSS, [h, b(1), b(2), b(3), b(0)]],
+    ['seats > map max (3 on duel)', 'na-pvp-duel-s', [h, b(1), b(0)]],
+    ['team >= n', CROSS, [h, b(2)]],
+    ['difficulty on human', CROSS, [{ kind: 'human', team: 0, difficulty: 'easy' }, b(1)]],
+    ['invalid bot difficulty', CROSS, [h, b(1, 'nightmare')]],
+  ];
+  for (const [name, levelId, seats] of cases) {
+    a.clear();
+    a.say({ t: 'room.create', levelId, seats });
+    assert.equal(a.last('error')?.code, 'bad-lobby', `${name}: ${JSON.stringify(a.sent)}`);
+    assert.equal(a.last('room.joined'), undefined, name);
+    assert.equal(mgr.roomCount(), 0, `${name}: no room leaked`);
+  }
+  a.clear();
+  a.say({ t: 'room.create', levelId: CROSS, seats: [h, b(-1)] }); // negative team: wire validator
+  assert.equal(a.last('error')!.code, 'bad-message');
+  assert.equal(mgr.roomCount(), 0);
+  a.clear();
+  a.say({ t: 'room.create', levelId: CROSS, seats: [h, b(1), b(2)] }); // creator can retry with a valid config
+  assert.equal(a.last('error'), undefined);
+  assert.equal(a.last('lobby.state')!.seats.length, 3);
+  assert.deepEqual(a.last('room.joined')!.you, { seat: 0, host: true });
+  assert.equal(mgr.roomCount(), 1);
+});
+
+test('covers R-SEA-01: lobby.update level-change from a non-host is rejected and changes nothing', () => {
+  const { a, b, levelId, mgr } = lobby2();
+  const other = content.pvpLevelIds.find((id) => id !== levelId && content.compiled[id]!.players.length === 2)!;
+  const cd = code(a);
+  b.clear(); a.clear();
+  b.say({ t: 'lobby.update', levelId: other, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
+  assert.equal(b.last('error')!.code, 'not-host');
+  assert.equal(mgr.room(cd)!.levelId, levelId);
+  assert.equal(a.last('lobby.state'), undefined, 'no broadcast');
+  assert.equal(rejoined(b).length, 0);
+  b.say({ t: 'lobby.update', levelId: CROSS, seats: H4 }); // bigger map too
+  assert.equal(b.last('error')!.code, 'not-host');
+  assert.equal(mgr.room(cd)!.seats.length, 2);
+});
+
+test('covers R-SEA-01: lobby.update during countdown/running/ended -> match-in-progress, seats unchanged', () => {
+  const { a, b, levelId, mgr } = lobby2();
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'lobby.start' });
+  const room = mgr.room(code(a))!;
+  assert.equal(room.state, 'countdown');
+  const upd = { t: 'lobby.update', levelId: CROSS, seats: H4 };
+  for (const state of ['countdown', 'running', 'ended'] as const) {
+    room.state = state;
+    a.clear();
+    a.say(upd);
+    assert.equal(a.last('error')!.code, 'match-in-progress', state);
+    assert.equal(room.levelId, levelId, state);
+    assert.equal(room.seats.length, 2, state);
+    assert.equal(a.last('lobby.state'), undefined, state);
+    b.clear();
+    b.say(upd); // non-host: not-host wins over state
+    assert.equal(b.last('error')!.code, 'not-host', state);
+  }
+});
+
+test('covers R-SEA-01: lobby.start refuses a seat count outside 2..map max (internal state)', () => {
+  const { client, mgr, starts } = setup();
+  const a = client('Ann');
+  a.say({ t: 'room.create', levelId: CROSS, seats: [{ kind: 'human', team: 0 }, { kind: 'bot', team: 1, difficulty: 'easy' }, { kind: 'bot', team: 2, difficulty: 'easy' }] });
+  const room = mgr.room(code(a))!;
+  const saved = room.seats.slice();
+  a.clear();
+  a.say({ t: 'lobby.start' });
+  assert.equal(a.last('error'), undefined, '3 seats start');
+  assert.equal(starts.length, 1);
+  room.state = 'lobby'; room.match = undefined; room.startAt = undefined;
+  room.seats = saved.slice(0, 1);
+  a.say({ t: 'lobby.start' });
+  assert.equal(a.last('error')!.code, 'bad-lobby');
+  assert.match((a.last('error') as { detail?: string }).detail ?? '', /out of range/);
+  room.seats = [...saved, { kind: 'bot', team: 3, difficulty: 'easy' }, { kind: 'bot', team: 0, difficulty: 'easy' }];
+  a.say({ t: 'lobby.start' });
+  assert.match((a.last('error') as { detail?: string }).detail ?? '', /out of range/);
+  assert.equal(starts.length, 1, 'no extra start');
+  room.seats = saved.slice(0, 2).map((s, i) => ({ ...s, team: i })); // back in range
+  a.say({ t: 'lobby.start' });
+  assert.equal(starts.length, 2);
+});
+
+test('covers R-SEA-01: same-level shrink 4->3 moves the seat-3 occupant to spectators; others keep seats', () => {
+  const env = setup();
+  const [a, b, c, d] = ['Ann', 'Bob', 'Cy', 'Di'].map((n) => env.client(n)) as [Sock, Sock, Sock, Sock];
+  a.say({ t: 'room.create', levelId: CROSS, seats: H4 });
+  const cd = code(a);
+  for (const s of [b, c, d]) s.say({ t: 'room.join', code: cd, role: 'play' });
+  assert.equal(d.last('room.joined')!.you.seat, 3);
+  for (const s of [b, c, d]) s.say({ t: 'lobby.ready', ready: true });
+  for (const s of [a, b, c, d]) s.clear();
+  a.say({ t: 'lobby.update', levelId: CROSS, seats: H4.slice(0, 3).map((s, i) => ({ ...s, team: i })) });
+  const ls = a.last('lobby.state')!;
+  assert.equal(ls.seats.length, 3);
+  assert.deepEqual(ls.seats.map((s) => s.occupant?.nick), ['Ann', 'Bob', 'Cy']);
+  assert.equal(ls.spectators, 1);
+  assert.deepEqual(d.last('room.joined')!.you, { seat: null, host: false });
+  assert.equal(rejoined(b).length, 0);
+  assert.equal(rejoined(c).length, 0);
+  assert.ok(ls.seats.slice(1).every((s) => s.occupant?.ready === false), 'config change clears ready');
+});
+
+test('covers R-SEA-01: same-level grow 2->4 keeps occupants and adds open seats', () => {
+  const env = setup();
+  const a = env.client('Ann'), b = env.client('Bob'), c = env.client('Cy');
+  a.say({ t: 'room.create', levelId: CROSS, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
+  const cd = code(a);
+  b.say({ t: 'room.join', code: cd, role: 'play' });
+  b.clear();
+  a.say({ t: 'lobby.update', levelId: CROSS, seats: H4 });
+  const ls = a.last('lobby.state')!;
+  assert.equal(ls.seats.length, 4);
+  assert.equal(ls.seats[0]!.occupant?.nick, 'Ann');
+  assert.equal(ls.seats[1]!.occupant?.nick, 'Bob');
+  assert.equal(ls.seats[2]!.occupant, undefined);
+  assert.equal(ls.seats[3]!.occupant, undefined);
+  assert.equal(ls.spectators, 0);
+  assert.equal(rejoined(b).length, 0, 'unmoved occupant is not re-told');
+  c.say({ t: 'room.join', code: cd, role: 'play' });
+  assert.equal(c.last('room.joined')!.you.seat, 2, 'a joiner takes the new open seat');
+});
+
+test('covers R-SEA-01: human->bot flip on an occupied 4-seat row sends the occupant to spectators; bot->human leaves the seat open', () => {
+  const env = setup();
+  const [a, b, c] = ['Ann', 'Bob', 'Cy'].map((n) => env.client(n)) as [Sock, Sock, Sock];
+  a.say({ t: 'room.create', levelId: CROSS, seats: H4 });
+  const cd = code(a);
+  b.say({ t: 'room.join', code: cd, role: 'play' });
+  c.say({ t: 'room.join', code: cd, role: 'play' });
+  const flipped = H4.map((s, i) => (i === 2 ? { kind: 'bot', team: s.team, difficulty: 'hard' } : s));
+  b.clear(); c.clear(); a.clear();
+  a.say({ t: 'lobby.update', levelId: CROSS, seats: flipped });
+  assert.deepEqual(c.last('room.joined')!.you, { seat: null, host: false });
+  assert.ok(c.sent.findIndex((m) => m.t === 'room.joined') < c.sent.findIndex((m) => m.t === 'lobby.state'), 'room.joined before lobby.state');
+  assert.equal(rejoined(b).length, 0);
+  let ls = a.last('lobby.state')!;
+  assert.equal(ls.seats[2]!.kind, 'bot');
+  assert.equal(ls.seats[2]!.occupant, undefined);
+  assert.equal(ls.spectators, 1);
+  a.clear(); c.clear();
+  a.say({ t: 'lobby.update', levelId: CROSS, seats: H4 }); // bot -> human
+  ls = a.last('lobby.state')!;
+  assert.equal(ls.seats[2]!.kind, 'human');
+  assert.equal(ls.seats[2]!.occupant, undefined, 'spectator is not auto-reseated');
+  assert.equal(ls.spectators, 1);
+  assert.equal(rejoined(c).length, 0, 'spectator is not moved back');
+  const d = env.client('Di');
+  d.say({ t: 'room.join', code: cd, role: 'play' });
+  assert.equal(d.last('room.joined')!.you.seat, 2);
+});
+
+test('covers R-SEA-01: difficulty/team-only edits send no room.joined (notifyMoved) but do broadcast lobby.state', () => {
+  const env = setup();
+  const a = env.client('Ann'), b = env.client('Bob');
+  a.say({ t: 'room.create', levelId: CROSS, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }, { kind: 'bot', team: 2, difficulty: 'easy' }] });
+  b.say({ t: 'room.join', code: code(a), role: 'play' });
+  a.clear(); b.clear();
+  a.say({ t: 'lobby.update', levelId: CROSS, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }, { kind: 'bot', team: 2, difficulty: 'hard' }] });
+  a.say({ t: 'lobby.update', levelId: CROSS, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 0 }, { kind: 'bot', team: 1, difficulty: 'hard' }] });
+  for (const s of [a, b]) {
+    assert.equal(rejoined(s).length, 0);
+    assert.equal(s.sent.filter((m) => m.t === 'lobby.state').length, 2);
+  }
+  assert.equal(b.last('lobby.state')!.seats[1]!.team, 0);
+  assert.equal(b.last('lobby.state')!.seats[2]!.difficulty, 'hard');
+});
+
+test('covers R-SEA-01: host leaving with spectators present passes host on; last seated leave closes the room and tells spectators', () => {
+  const env = setup();
+  const a = env.client('Ann'), b = env.client('Bob'), s = env.client('Sam');
+  a.say({ t: 'room.create' });
+  const cd = code(a);
+  b.say({ t: 'room.join', code: cd, role: 'play' });
+  s.say({ t: 'room.join', code: cd, role: 'watch' });
+  assert.equal(a.last('lobby.state')!.spectators, 1);
+  a.say({ t: 'room.leave' });
+  assert.equal(b.last('lobby.state')!.host, 1);
+  assert.deepEqual(b.last('lobby.state')!.seats.map((x) => x.occupant?.nick), [undefined, 'Bob']);
+  assert.equal(b.last('lobby.state')!.spectators, 1);
+  s.clear();
+  b.say({ t: 'room.leave' });
+  assert.equal(env.mgr.roomCount(), 0);
+  assert.equal(s.last('room.closed')?.reason, 'empty', 'orphaned spectator is told the room is gone');
+  s.say({ t: 'room.create' }); // and is free to create again
+  assert.equal(s.last('error'), undefined);
+  assert.equal(env.mgr.roomCount(), 1);
+});
+
+test('covers R-SEA-01: spectator cap recovers after displacement over the cap (leave -> join works again)', () => {
+  const { a, edit, client } = lobby2();
+  const cd = code(a);
+  const ws = Array.from({ length: 8 }, (_, i) => client(`W${i}`));
+  for (const w of ws) w.say({ t: 'room.join', code: cd, role: 'watch' });
+  edit([seatsOf(a)[0]!, { kind: 'bot', team: 1, difficulty: 'easy' }]); // Bob displaced: 9 spectators
+  assert.equal(a.last('lobby.state')!.spectators, 9);
+  const late = client('Late');
+  late.say({ t: 'room.join', code: cd, role: 'watch' });
+  assert.equal(late.last('error')!.code, 'spectators-full');
+  ws[0]!.say({ t: 'room.leave' });
+  assert.equal(a.last('lobby.state')!.spectators, 8);
+  late.clear();
+  late.say({ t: 'room.join', code: cd, role: 'watch' });
+  assert.equal(late.last('error')!.code, 'spectators-full', 'still at cap');
+  ws[1]!.say({ t: 'room.leave' });
+  late.clear();
+  late.say({ t: 'room.join', code: cd, role: 'watch' });
+  assert.equal(late.last('error'), undefined);
+  assert.deepEqual(late.last('room.joined')!.you, { seat: null, host: false });
+  assert.equal(a.last('lobby.state')!.spectators, 8);
+});

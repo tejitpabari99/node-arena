@@ -405,7 +405,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     byPlayer.delete(conn.playerId!);
     if (i < 0) { if (room.state === 'lobby') broadcast(room); return; }
     if (!room.seats.some((s) => s.occupant)) {
-      for (const o of room.spectators) byPlayer.delete(o.playerId);
+      for (const o of room.spectators) { byPlayer.delete(o.playerId); if (!o.conn.closed) o.conn.send({ t: 'room.closed', reason: 'empty' }); }
       room.spectators = [];
       rooms.delete(room.code);
       if (room.state === 'lobby') room.state = 'closed';

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import type { Command } from '@node-arena/defs';
 import { PROTOCOL_VERSION, LockstepClient, createCatchup, createJoinLate, type ServerMessage } from '@node-arena/net';
-import { create, createTroopBuffer, type Sim } from '@node-arena/sim';
+import { create, createReplayRecorder, createTroopBuffer, playReplay, type Sim } from '@node-arena/sim';
 import type { ClockRoom } from '../src/clock.js';
 import { DEFAULT_CONTENT_DIR } from '../src/config.js';
 import { loadServerContent } from '../src/content.js';
@@ -467,4 +467,135 @@ test('AC12(c): 2 humans + 2 bots, both humans away at first expiry -> draw; Forf
   assert.equal(over.outcome, 'draw');
   assert.equal(over.winner, null);
   assert.equal(replayHash(r), r.ref().hash());
+});
+
+// ---------------- R-SEA-01: n < N (Cross, 3 of 4 slots) ----------------
+
+/** Authored owner slots >= n: the buildings that must stay out of the match as neutrals. */
+const deadSlotBuildings = (r: R, n: number): number[] => r.match.level.buildings.flatMap((b, i) => (b.owner >= n ? [i] : []));
+
+test('covers R-SEA-01: Cross 3 seats (all human): quit and pause-expiry forfeit only real seats; match ends with neutral slot homes, no phantom seat', () => {
+  const t = setup();
+  const r = t.startRunning(CROSS, H(3), [0, 1, 2]);
+  assert.equal(r.match.seats.length, 3);
+  assert.deepEqual(r.match.teams, [0, 1, 2]);
+  assert.equal(r.room().seats.length, 3);
+  assert.equal(r.ref().view.players.length, 3);
+  assert.equal(r.ref().view.eliminatedAt.length, 3);
+  const dead = deadSlotBuildings(r, 3);
+  assert.ok(dead.length > 0);
+  assert.ok(dead.every((i) => r.ref().view.buildings.owner[i] === -1), 'dead slot starts neutral');
+  t.advance(10_000, { ref: r.ref });
+  // seat 1 pauses and never returns: its hold expires -> only seat 1 forfeits
+  r.humans[1]!.s.say({ t: 'pause' });
+  const frozen = r.ls().nextTick;
+  t.advance(30_200);
+  t.advance(1_000, { ref: r.ref });
+  assert.equal(r.room().state, 'running');
+  assert.deepEqual(forfeits(r), [1]);
+  assert.equal(r.ls().log.commands.find((e) => (e.cmd as Command).type === 'Forfeit')!.tick, frozen);
+  assert.equal(ownedBy(r.ref(), 1), 0);
+  assert.equal(r.ref().view.over, null);
+  assert.equal(t.ctl.pauseState(r.room())!.budgets.length, 3, 'pause snapshot has exactly n budgets');
+  // seat 2 quits: only seat 0 left -> victory
+  r.humans[2]!.s.say({ t: 'quit' });
+  assert.equal(r.room().state, 'ended');
+  assert.deepEqual(forfeits(r), [1, 2]);
+  const end = r.humans[0]!.s.of('end')[0]!;
+  assert.equal(end.outcome.outcome, 'victory');
+  assert.deepEqual(end.outcome.winners, [0]);
+  assert.equal(end.finalHash, r.ref().hash());
+  const owners = Array.from(r.ref().view.buildings.owner);
+  assert.ok(owners.every((o) => o >= -1 && o < 3), 'no owner outside seats 0..2');
+  assert.ok(dead.some((i) => owners[i] === -1), 'untouched dead-slot homes stay neutral at the end');
+  assert.equal(replayHash(r), r.ref().hash());
+  noDesync(r);
+});
+
+test('covers R-SEA-01: Cross 3 seats (2 humans + bot): quit forfeits only that seat, the bot seat plays on and wins; bot never indexes seat 3', () => {
+  const t = setup();
+  const r = t.startRunning(CROSS, ['human', 'human', 'bot'], [0, 1, 2]);
+  t.advance(8_000, { ref: r.ref });
+  r.humans[0]!.s.say({ t: 'quit' });
+  t.advance(1_000, { ref: r.ref });
+  assert.deepEqual(forfeits(r), [0]);
+  assert.equal(r.room().state, 'running');
+  r.humans[1]!.s.say({ t: 'quit' });
+  assert.equal(r.room().state, 'ended');
+  assert.deepEqual(forfeits(r), [0, 1]);
+  const end = r.humans[0]!.s.of('end')[0]!;
+  assert.equal(end.outcome.outcome, 'victory');
+  assert.deepEqual(end.outcome.winners, [2]);
+  assert.ok(r.ls().log.commands.every((e) => (e.cmd as { player: number }).player <= 2), 'no command names seat 3');
+});
+
+test('covers R-SEA-01: n<N full match: referee and client-equivalent create(level, seed, {teams}) agree on hash after N ticks; recorder header teams.length == n', () => {
+  const t = setup();
+  const r = t.startRunning(CROSS, ['human', 'human', 'bot'], [0, 1, 2]);
+  t.advance(25_000, { ref: r.ref });
+  noDesync(r);
+  const tickN = r.ref().view.tick;
+  assert.ok(tickN >= 400);
+  // Independent client-equivalent sim fed the same command log.
+  assert.equal(replayHash(r), r.ref().hash());
+  for (const c of r.humans) {
+    assert.equal(c.sim.view.players.length, 3);
+    assert.equal(c.sim.view.tick, tickN);
+    assert.equal(c.sim.hash(), r.ref().hash());
+  }
+  // A from-scratch sim built exactly like the client does (teams from start.seats), stepped idle, differs from the played one but is reproducible.
+  const startSeats = r.humans[0]!.s.of('start').at(-1)!.seats;
+  assert.equal(startSeats.length, 3);
+  const teams = startSeats.map((x) => x.team);
+  assert.deepEqual(teams, r.match.teams);
+  const a = create(r.match.level, r.match.seed, { teams }), b = create(r.match.level, r.match.seed, { teams });
+  for (let i = 0; i < tickN; i++) { a.step([], { events: false }); b.step([], { events: false }); }
+  assert.equal(a.hash(), b.hash());
+  assert.equal(a.view.players.length, r.ref().view.players.length);
+  // Recorder header carries n teams and the logged match replays to the referee hash.
+  const metadata = { rulesVersion: content.versions.rules, schemaVersion: content.versions.schema, contentVersion: content.versions.content };
+  const rec = createReplayRecorder(r.match.level, r.match.seed, metadata, { teams: r.match.teams });
+  const base = rec.record();
+  assert.equal(base.header.teams!.length, 3);
+  assert.equal(base.header.teams!.length, r.match.seats.length);
+  const ls = r.ls();
+  const checkpoints: { tick: number; hash: string }[] = [];
+  for (let k = 20; k <= tickN; k += 20) checkpoints.push({ tick: k, hash: ls.log.checkpoint(k)! });
+  const res = playReplay({ metadata, level: r.match.level }, {
+    ...base, commands: ls.log.commands.map((e) => ({ tick: e.tick, cmd: e.cmd as never })), checkpoints, finalTick: tickN, finalHash: r.ref().hash(), outcome: r.ref().view.over,
+  });
+  assert.equal(res.ok, true);
+  assert.equal(res.sim.view.players.length, 3);
+  assert.equal(res.sim.hash(), r.ref().hash());
+});
+
+test('covers R-SEA-01: rematch keeps the n<N seat count, teams and kinds; the second match runs on 3 seats with equal hashes', () => {
+  const t = setup();
+  const r = t.startRunning(CROSS, ['human', 'human', 'bot'], [0, 1, 1]);
+  const [a, b] = r.humans as [typeof r.host, typeof r.host];
+  t.advance(5_000, { ref: r.ref });
+  b.s.say({ t: 'quit' });
+  t.advance(500, { ref: r.ref });
+  a.s.say({ t: 'quit' });
+  assert.equal(r.room().state, 'ended');
+  b.s.say({ t: 'rematch' });
+  a.s.say({ t: 'rematch' });
+  assert.equal(r.room().state, 'lobby');
+  const ls = lobbyOf(a.s);
+  assert.equal(ls.seats.length, 3);
+  assert.deepEqual(ls.seats.map((s) => s.kind), ['human', 'human', 'bot']);
+  assert.deepEqual(ls.seats.map((s) => s.team), [0, 1, 1]);
+  assert.equal(ls.levelId, CROSS);
+  a.s.say({ t: 'lobby.start' });
+  const m2 = t.starts[t.starts.length - 1]!;
+  assert.notEqual(m2.seed, r.match.seed);
+  assert.deepEqual(m2.teams, [0, 1, 1]);
+  assert.equal(m2.seats.length, 3);
+  t.advance(3100);
+  assert.equal(r.room().state, 'running');
+  const ref2 = () => t.ctl.simOf(r.room())!;
+  assert.equal(ref2().view.players.length, 3);
+  t.advance(6_000, { ref: ref2 });
+  assert.equal(a.s.of('desync').length + b.s.of('desync').length, 0);
+  assert.equal(a.sim.hash(), ref2().hash());
 });
