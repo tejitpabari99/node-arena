@@ -214,3 +214,43 @@ test('covers R10: bot in a 2v2 never targets or draws to ally buildings; neutral
   const ffa = fakeView({ owner: [0, 1, 2, 3, -1], level: [5, 1, 4, 3, 2], teams: [0, 1, 2, 3] });
   assert.deepEqual(bots.sortedTargets(ffa, 0), [1, 4, 3, 2]);
 });
+
+test('covers R3: pvp targets tied on (key, dist2) are shuffled by the seat stream, not kept in index order; default order unchanged', () => {
+  // 0 = seat0 home at centre, 1 = seat1 home far away, 2..4 = three equal neutrals at equal distance from seat0.
+  const view = fakeView({ owner: [0, 1, -1, -1, -1], level: [5, 5, 3, 3, 3], xz: [[0, 0], [9000, 0], [1000, 0], [0, 1000], [-1000, 0]] });
+  const firsts = new Set();
+  for (let v = 0; v < 12; v++) {
+    const order = bots.sortedTargets(view, 0, true, seq([v]));
+    assert.deepEqual([...order].sort(), [1, 2, 3, 4]); // permutation, nothing lost
+    assert.equal(order[3], 1); // strictly weaker key (3) before the level-5 target stays first: the tied run is [2,3,4], then 1
+    assert.deepEqual(order, bots.sortedTargets(view, 0, true, seq([v]))); // same stream, same order
+    firsts.add(order[0]);
+  }
+  assert.deepEqual([...firsts].sort(), [2, 3, 4]); // every tied target can come first
+  assert.deepEqual(bots.sortedTargets(view, 0, true), [2, 3, 4, 1]); // no rng: index tie only
+  assert.deepEqual(bots.sortedTargets(view, 0, false, seq([5])), [2, 3, 4, 1]); // non-pvp ignores rng
+  // distinct dist2 still orders before the shuffle: nearer neutral is always first
+  const nearer = fakeView({ owner: [0, 1, -1, -1, -1], level: [5, 5, 3, 3, 3], xz: [[0, 0], [9000, 0], [2000, 0], [1000, 0], [1000, 0]] });
+  for (let v = 0; v < 6; v++) assert.ok([3, 4].includes(bots.sortedTargets(nearer, 0, true, seq([v]))[0]));
+});
+
+test('covers R3: pvp seat bots start at an independent per-seat phase within one action delay; non-pvp starts at 0', () => {
+  const params = { kind: 'tw', actionDelayMs: 2000, behavior: 'attackOnly', script: [] };
+  const firstActionTick = (level, seed, seat) => {
+    const bot = bots.createSeatBot(level, seed, seat, params);
+    const game = sim.create(level, 1);
+    for (let t = 0; t < 45; t++) { if (bot.decide({ view: game.view, canDraw: (p, f, to) => game.canDraw(p, f, to) }, t).length) return t; }
+    return -1;
+  };
+  const pvp = require('./pvp-fixture.cjs').pvpLevel([0, 1, -1], [0, 1]);
+  const other = { ...pvp, objective: 'captureAll' };
+  const ticks = new Set();
+  for (let seed = 1; seed <= 12; seed++) for (const seat of [0, 1]) {
+    const t = firstActionTick(pvp, seed, seat);
+    assert.ok(t >= 0 && t <= 40, `seed ${seed} seat ${seat}: first action ${t}`);
+    assert.equal(t, firstActionTick(pvp, seed, seat)); // deterministic
+    ticks.add(t);
+  }
+  assert.ok(ticks.size > 3, `phases should vary, got ${[...ticks]}`);
+  assert.equal(firstActionTick(other, 1, 0), 40); // timer 0: acts when 2000 ms elapsed (check-then-add: tick 40)
+});
