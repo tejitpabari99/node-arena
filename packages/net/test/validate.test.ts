@@ -197,3 +197,22 @@ test('covers R-SEA-01: lobby.update seats length must be 2..MAX_SEATS (1 rejecte
   assert.equal(parseClientMessage(upd(8)).ok, true);
   assert.equal(parseClientMessage(upd(9)).ok, false);
 });
+
+test('covers R-SEA-01: room.create / lobby.update reject non-array seats, non-string levelId, unknown seat fields and extra keys', () => {
+  const ok = [{ kind: 'human', team: 0 }, { kind: 'bot', difficulty: 'easy', team: 1 }];
+  for (const t of ['room.create', 'lobby.update']) {
+    const msg = (over: Record<string, unknown>) => JSON.stringify({ t, levelId: 'l', seats: ok, ...over });
+    assert.equal(parseClientMessage(msg({})).ok, true, t);
+    for (const bad of [
+      { seats: 'human,bot' }, { seats: { 0: ok[0], 1: ok[1], length: 2 } }, { seats: null }, { seats: 2 },
+      { levelId: 5 }, { levelId: null }, { levelId: ['l'] }, { levelId: '' },
+      { extra: 1 }, { timeLimitSec: 60 },
+      { seats: [{ kind: 'human', team: 0, ready: true }, ok[1]] },
+      { seats: [{ kind: 'human', team: 0 }, { kind: 'bot', team: 1, occupant: { nick: 'x' } }] },
+      { seats: [{ kind: 'human', team: 0 }, { kind: 'bot', team: 1.5 }] },
+      { seats: [{ kind: 'human', team: 0 }, { kind: 'robot', team: 1 }] },
+      { seats: [{ kind: 'human', team: 0 }, 'bot'] },
+      { seats: [{ kind: 'human', team: 0 }, null] },
+    ]) assert.equal(parseClientMessage(msg(bad)).ok, false, `${t} ${JSON.stringify(bad)}`);
+  }
+});
