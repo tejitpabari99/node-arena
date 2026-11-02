@@ -48,3 +48,21 @@ test('pvp Cross smoke: FFA and 2v2 variants terminate, 0 rejected, deterministic
     if (name === '2v2 0011') for (const [seat, share] of a.seatShares.entries()) if (share !== null) assert.ok(share >= 20 && share <= 80, `${name} seat ${seat} share ${share}%`);
   }
 });
+
+// R-SEA-01 n<N: a 3-seat Cross match (slot 3 home neutral) must end; report-only, no seat-share bound.
+test('covers R-SEA-01: pvp Cross 3-seat (identity teams) terminates within the time cap, 0 rejected, deterministic', () => {
+  const level = loadContent(data).compiled['na-pvp-cross']!;
+  const teams = [0, 1, 2];
+  const run: PlayPvp = (l, seed, ad, max) => {
+    const controllers = l.players.slice(0, teams.length).map((_, seat) => proxyController(l, seed, seat, ad));
+    const r = runMatch({ level: l, seed, maxTicks: max, controllers, record: false, teams });
+    return { outcome: r.outcome.outcome, ticks: r.ticks, finalHash: r.stats.finalHash, winners: [...('winners' in r.outcome ? r.outcome.winners ?? [] : [])], rejected: r.stats.rejected };
+  };
+  const a = pvpFairness(level, 3, 10, [2000], run);
+  const b = pvpFairness(level, 3, 10, [2000], run);
+  assert.equal(a.runs, 10);
+  assert.equal(a.truncated, 0, '3-seat Cross must not stall past the time limit');
+  assert.equal(a.victory + a.timeLimit + a.draws, a.runs);
+  assert.equal(a.rejected, 0);
+  assert.deepEqual(a.hashes, b.hashes);
+});
