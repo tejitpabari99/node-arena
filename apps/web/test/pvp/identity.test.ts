@@ -90,3 +90,40 @@ describe('stripRoomParams', () => {
     expect(stripRoomParams('')).toBe('');
   });
 });
+
+describe('identity storage edge cases', () => {
+  const withBlob = (raw: string) => { const local = new Mem(); local.m.set(PVP_KEY, raw); return local; };
+  it.each([['"just a string"'], ['[1,2]'], ['null'], ['42'], ['{"v":1}'], ['{"v":1,"nick":5}'], ['{"v":1,"nick":null}'], ['{"v":1,"nick":["a"]}'], ['']])('wrong shape %s -> empty nick, regenerated token, blob rewritten to the default', (raw) => {
+    const local = withBlob(raw), session = new Mem();
+    session.setItem(PVP_TOKEN_KEY, 'b'.repeat(32));
+    const id = createIdentity({ local, session, randomBytes: rnd });
+    expect(id.nick).toBe('');
+    expect(id.token).toMatch(/^[0-9a-f]{32}$/); expect(id.token).not.toBe('b'.repeat(32));
+    expect(JSON.parse(local.m.get(PVP_KEY)!)).toEqual({ v: 1, nick: '' });
+  });
+  it('a long stored nick is truncated on load', () => {
+    const id = createIdentity({ local: withBlob(JSON.stringify({ v: 1, nick: ' ' + 'y'.repeat(40) })), session: new Mem(), randomBytes: rnd });
+    expect(id.nick).toBe('y'.repeat(20));
+  });
+  it('storage that throws on read only still yields a usable identity; writes that throw keep the in-memory nick', () => {
+    const noRead: KV = { getItem() { throw new Error('r'); }, setItem() { /* ok */ } };
+    const a = createIdentity({ local: noRead, session: noRead, randomBytes: rnd });
+    expect(a.nick).toBe(''); expect(a.token).toMatch(/^[0-9a-f]{32}$/);
+    const noWrite: KV = { getItem: () => null, setItem() { throw new Error('w'); } };
+    const b = createIdentity({ local: noWrite, session: noWrite, randomBytes: rnd });
+    expect(b.setNick('Zed')).toBe('Zed'); expect(b.nick).toBe('Zed');
+    expect(b.token).toMatch(/^[0-9a-f]{32}$/);
+  });
+  it('a missing global storage (no deps) falls back to memory', () => {
+    const id = createIdentity({ randomBytes: rnd });
+    expect(id.setNick('Q')).toBe('Q'); expect(id.token).toHaveLength(32);
+  });
+  it('setNick truncates to NICK_MAX after trimming and persists every change', () => {
+    const local = new Mem(), id = createIdentity({ local, session: new Mem(), randomBytes: rnd });
+    expect(id.setNick('  ' + 'z'.repeat(25) + '  ')).toBe('z'.repeat(20));
+    expect(id.setNick('')).toBe('');
+    expect(id.setNick('   ')).toBe('');
+    expect(local.writes.filter((k) => k === PVP_KEY)).toHaveLength(3);
+    expect(JSON.parse(local.m.get(PVP_KEY)!)).toEqual({ v: 1, nick: '' });
+  });
+});

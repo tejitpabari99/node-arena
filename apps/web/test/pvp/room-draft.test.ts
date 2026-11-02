@@ -4,7 +4,7 @@ import { createIdentity, PVP_KEY, type KV } from '../../src/net/identity';
 import { createPvpController } from '../../src/pvp/controller';
 import type { PvpConnection } from '../../src/net/connection';
 import type { ClientMessage, ServerMessage, Versions } from '@node-arena/net';
-import { botLabels, canCreate, clampDraft, defaultTeam, deriveType, draftToSeats, newDraft, playersMax, seatsToDraft, setMap, setPlayers, setRow, setTeams, setType, teamsMax, type CreateDraft } from '../../src/pvp/room-draft';
+import { botLabels, canCreate, clampDraft, defaultTeam, deriveType, draftToSeats, movedToast, movedToSpectators, newDraft, playersMax, seatsToDraft, setMap, setPlayers, setRow, setTeams, setType, teamsMax, type CreateDraft } from '../../src/pvp/room-draft';
 
 const map = (id: string, maxPlayers: number): PvpMapInfo => ({ id, name: id, maxPlayers, teams: Array.from({ length: maxPlayers }, (_, i) => i), timeLimitSec: null, theme: 't' });
 const duel = map('duel', 2), cross = map('cross', 4), big = map('big', 12);
@@ -139,5 +139,93 @@ describe('controller navigation + createRoom', () => {
     h.push(welcome); expect(h.sent).toEqual([{ t: 'room.join', code: 'ABCD', role: 'watch' }]);
     const g = setup(''); g.ctl.openLink({ code: 'ABCD', role: 'play' });
     expect(g.ctl.snapshot()).toMatchObject({ menuView: 'join-form', screen: 'menu', code: 'ABCD' });
+  });
+});
+
+describe('draft edge cases', () => {
+  const crossT: PvpMapInfo = { ...cross, teams: [0, 0, 1, 1] };
+  const busy = (): CreateDraft => {
+    let d = setType(setPlayers(newDraft([crossT])!, 4, crossT), 'team', crossT);
+    d = setTeams(d, 4, crossT);
+    d = setRow(setRow(d, 1, { kind: 'bot', difficulty: 'hard' }, crossT), 3, { kind: 'bot', difficulty: 'easy' }, crossT);
+    return setRow(d, 3, { team: 3 }, crossT);
+  };
+  it('map change cross(4) -> duel(2) clamps players, teams and rows, keeping bot rows and valid team ids', () => {
+    const d = busy();
+    expect(d).toMatchObject({ players: 4, teams: 4 });
+    const n = setMap(d, duel);
+    expect(n).toMatchObject({ mapId: 'duel', type: 'team', players: 2, teams: 2 });
+    expect(n.rows).toHaveLength(2);
+    expect(n.rows[0]!.kind).toBe('human');
+    expect(n.rows[1]).toMatchObject({ kind: 'bot', difficulty: 'hard' });
+    expect(n.rows.every((r) => r.team >= 0 && r.team < n.teams)).toBe(true);
+    // Coming back up regrows with default human rows and keeps what survived.
+    const back = setPlayers(setMap(n, cross), 4, cross);
+    expect(back.rows[1]).toMatchObject({ kind: 'bot' }); expect(back.rows[3]!.kind).toBe('human');
+  });
+  it('draftToSeats never emits a team id >= seat count, even from stale drafts', () => {
+    const stale: CreateDraft = { type: 'team', mapId: 'cross', players: 4, teams: 4, rows: [0, 1, 2, 3].map((team) => ({ kind: 'human' as const, difficulty: 'normal' as const, team })) };
+    for (const m of [duel, cross, big]) for (const type of ['pvp', 'team'] as const) for (const players of [0, 1, 2, 3, 4, 9]) for (const teams of [0, 1, 2, 3, 4, 9]) {
+      const seats = draftToSeats({ ...stale, type, players, teams }, m);
+      expect(seats.length).toBeGreaterThanOrEqual(2);
+      expect(seats.every((s) => s.team >= 0 && s.team < seats.length)).toBe(true);
+    }
+    expect(draftToSeats({ ...stale, players: 2 }, duel).map((s) => s.team)).toEqual([0, 1]);
+  });
+  it('teams > players clamps to players (and to MAX_TEAMS)', () => {
+    expect(clampDraft({ ...newDraft([cross])!, type: 'team', players: 2, teams: 4 }, cross).teams).toBe(2);
+    expect(clampDraft({ ...newDraft([cross])!, type: 'team', players: 3, teams: 4 }, cross).teams).toBe(3);
+    expect(clampDraft({ ...newDraft([big])!, type: 'team', players: 8, teams: 8 }, big).teams).toBe(4);
+    expect(setTeams(setPlayers(newDraft([cross])!, 3, cross), 4, cross).teams).toBe(3);
+  });
+  it('Team -> PvP with non-dense live ids resets to identity teams', () => {
+    const live = seatsToDraft({ levelId: 'cross', seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 2 }, { kind: 'human', team: 2 }] }, cross);
+    expect(live).toMatchObject({ type: 'team', teams: 3 });
+    const p = setType(live, 'pvp', cross);
+    expect(p.rows.map((r) => r.team)).toEqual([0, 1, 2]);
+    expect(draftToSeats(p, cross).map((s) => s.team)).toEqual([0, 1, 2]);
+    // And back to Team: valid ids only.
+    const t = setType(p, 'team', cross);
+    expect(t.rows.every((r) => r.team < t.teams)).toBe(true);
+  });
+  it('bot labels renumber after a middle bot row is removed', () => {
+    let d = setPlayers(newDraft([cross])!, 4, cross);
+    d = [1, 2, 3].reduce((acc, i) => setRow(acc, i, { kind: 'bot' }, cross), d);
+    expect(botLabels(d.rows)).toEqual([null, 'Bot1', 'Bot2', 'Bot3']);
+    d = setRow(d, 2, { kind: 'human' }, cross);
+    expect(botLabels(d.rows)).toEqual([null, 'Bot1', null, 'Bot2']);
+    expect(botLabels(setPlayers(d, 3, cross).rows)).toEqual([null, 'Bot1', null]);
+  });
+  it('row 0 is always the human host', () => {
+    const d = setPlayers(newDraft([cross])!, 3, cross);
+    expect(setRow(d, 0, { kind: 'bot' }, cross)).toBe(d);
+    expect(clampDraft({ ...d, rows: d.rows.map((r) => ({ ...r, kind: 'bot' as const })) }, cross).rows.map((r) => r.kind)).toEqual(['human', 'bot', 'bot']);
+    const live = seatsToDraft({ levelId: 'cross', seats: [{ kind: 'bot', difficulty: 'easy', team: 0 }, { kind: 'human', team: 1 }] }, cross);
+    expect(live.rows[0]!.kind).toBe('human');
+    expect(draftToSeats(live, cross)[0]!.kind).toBe('human');
+  });
+  it('defaultTeam uses the authored pairing only when the used slice has `teams` distinct ids', () => {
+    expect([0, 1].map((i) => defaultTeam(i, 'team', 2, crossT, 2))).toEqual([0, 1]);
+    expect([0, 1, 2, 3].map((i) => defaultTeam(i, 'team', 2, crossT, 4))).toEqual([0, 0, 1, 1]);
+    expect([0, 1, 2].map((i) => defaultTeam(i, 'team', 2, crossT, 3))).toEqual([0, 0, 1]);
+    expect([0, 1].map((i) => defaultTeam(i, 'pvp', 2, crossT, 2))).toEqual([0, 1]);
+  });
+  it('movedToSpectators: null prev, same count, decrease without gain, partial gain', () => {
+    const occ = (n: number) => ({ nick: String(n), ready: true, status: 'connected' });
+    const seatsOf = (n: number) => Array.from({ length: 4 }, (_, i) => ({ kind: 'human', ...(i < n ? { occupant: occ(i) } : {}) }));
+    const st = (n: number, spectators: number) => ({ seats: seatsOf(n), spectators });
+    expect(movedToSpectators(null, st(2, 5))).toBe(0);
+    expect(movedToSpectators(st(3, 1), st(3, 1))).toBe(0);
+    expect(movedToSpectators(st(3, 1), st(2, 1))).toBe(0); // leave
+    expect(movedToSpectators(st(2, 0), st(3, 0))).toBe(0); // join
+    expect(movedToSpectators(st(3, 0), st(1, 1))).toBe(1); // 2 lost, 1 gained -> 1
+    expect(movedToSpectators(st(3, 0), st(1, 2))).toBe(2);
+    expect(movedToSpectators(st(3, 2), st(2, 1))).toBe(0); // spectators dropped
+    expect(movedToSpectators(st(3, 0), st(2, 4))).toBe(1); // bounded by seats lost
+  });
+  it('movedToast singular/plural', () => {
+    expect(movedToast(1)).toBe('1 player moved to spectators');
+    expect(movedToast(2)).toBe('2 players moved to spectators');
+    expect(movedToast(7)).toBe('7 players moved to spectators');
   });
 });
