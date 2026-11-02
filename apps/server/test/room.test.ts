@@ -575,6 +575,28 @@ test('covers review-2: player moved to spectators while away can reconnect and i
   assert.equal(a.last('lobby.state')!.spectators, 1);
 });
 
+test('moved spectator reconnecting during countdown is rebound and told seat null (no dead socket)', () => {
+  const env = setup();
+  const four = content.pvpLevelIds.find((id) => content.compiled[id]!.players.length >= 3)!;
+  const two = content.pvpLevelIds.find((id) => content.compiled[id]!.players.length === 2)!;
+  const n = content.compiled[four]!.players.length;
+  const a = env.client('Ann'), b = env.client('Bob'), c = env.client('Cy');
+  a.say({ t: 'room.create', levelId: four, seats: Array.from({ length: n }, (_, i) => ({ kind: 'human', team: i % 2 })) });
+  const cd = code(a);
+  b.say({ t: 'room.join', code: cd, role: 'play' });
+  c.say({ t: 'room.join', code: cd, role: 'play' });
+  c.drop();
+  a.say({ t: 'lobby.update', levelId: two, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
+  b.say({ t: 'lobby.ready', ready: true });
+  a.say({ t: 'lobby.start' });
+  assert.equal(env.mgr.room(cd)!.state, 'countdown');
+  const c2 = fakeSocket();
+  env.hub.accept(c2);
+  c2.say({ t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick: 'Cy', token: `${String(3).padStart(8, '0')}a1b2c3d4e5f60718293a4b5c` });
+  assert.deepEqual(c2.last('room.joined')!.you, { seat: null, host: false });
+  assert.equal(c2.last('error'), undefined);
+});
+
 test('covers review-5: displaced players become spectators even past MAX_SPECTATORS; new watchers are still refused', () => {
   const { a, b, edit, client, levelId } = lobby2();
   const cd = code(a);
