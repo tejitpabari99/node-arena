@@ -380,3 +380,75 @@ test('covers R-SEA-01: replay with n < N records teams, plays back ok and detect
     assert.throws(() => api.playReplay({ metadata, level: cross }, r), /Invalid|SeatSetup/);
   }
 });
+
+// --- n < N: neutral dead-slot buildings in outcome logic ---
+const crossN = (n, teams) => api.createState(loadedLevels()['na-pvp-cross'], 3, { teams: teams ?? teamsFor(n) });
+const unusedIdx = (n) => loadedLevels()['na-pvp-cross'].buildings.map((b, i) => (b.owner >= n ? i : -1)).filter((i) => i >= 0);
+const ownedIdx = (s, seat) => Array.from(s.buildings.owner).map((o, i) => (o === seat ? i : -1)).filter((i) => i >= 0);
+
+test('covers R-SEA-01: a captured unused-slot building counts for its captor (keeps seat alive, ranks as a building)', () => {
+  const s = crossN(2);
+  const dead = unusedIdx(2);
+  assert.ok(dead.length > 0);
+  assert.ok(dead.every((i) => s.buildings.owner[i] === -1));
+  for (const i of ownedIdx(s, 1)) s.buildings.owner[i] = 0; // seat 1 loses every authored building ...
+  s.buildings.owner[dead[0]] = 1; // ... but holds one captured neutral from the dead slot
+  s.tick = 5;
+  const ev = win(s);
+  assert.equal(s.players.eliminatedAt[1], -1, 'captured building keeps seat 1 alive');
+  assert.deepEqual(ev.filter((e) => e.type === 'SeatEliminated'), []);
+  assert.equal(s.over, null);
+  // timeout ranking counts it as a building
+  s.tick = limitTick(s);
+  win(s);
+  const row = s.over.ranking.find((r) => r.seats.includes(1));
+  assert.equal(row.buildings, 1);
+  assert.ok(s.over.ranking.find((r) => r.seats.includes(0)).buildings > 1);
+});
+
+test('covers R-SEA-01: victory and elimination ignore the dead slot; remaining neutral buildings are not an enemy team', () => {
+  const s = crossN(3);
+  const dead = unusedIdx(3);
+  assert.ok(dead.length > 0);
+  s.tick = 9;
+  for (const i of [...ownedIdx(s, 1), ...ownedIdx(s, 2)]) s.buildings.owner[i] = 0; // seats 1,2 lose everything
+  const ev = win(s);
+  assert.deepEqual(ev.filter((e) => e.type === 'SeatEliminated').map((e) => e.player), [1, 2]);
+  assert.equal(s.players.eliminatedAt.length, 3, 'no phantom seat 3');
+  assert.deepEqual(outcomeOnly(s.over), { outcome: 'victory', winner: 0, winners: [0] });
+  assert.ok(dead.every((i) => s.buildings.owner[i] === -1), 'dead-slot buildings stay neutral at victory');
+  // draw / zero survivors path also ignores the dead slot
+  const z = crossN(2);
+  for (const i of [...ownedIdx(z, 0), ...ownedIdx(z, 1)]) z.buildings.owner[i] = -1;
+  win(z);
+  assert.deepEqual(Array.from(z.players.eliminatedAt), [0, 0]);
+  assert.equal(z.over.outcome, 'draw');
+});
+
+test('covers R-SEA-01: forSeats edge inputs: n >= N returns the same level, invalid n throws, n < 2 is reduced but unplayable', () => {
+  const cross = loadedLevels()['na-pvp-cross'];
+  const N = cross.players.length;
+  assert.equal(api.forSeats(cross, N), cross);
+  assert.equal(api.forSeats(cross, N + 1), cross);
+  assert.equal(api.forSeats(cross, 99), cross);
+  for (const bad of [-1, 1.5, NaN, Infinity, -Infinity, '3', null, undefined]) assert.throws(() => api.forSeats(cross, bad), /invalid seat count/, String(bad));
+  assert.equal(api.forSeats(cross, 0).players.length, 0);
+  const one = api.forSeats(cross, 1);
+  assert.equal(one.players.length, 1);
+  assert.ok(one.buildings.every((b) => b.owner <= 0));
+  assert.throws(() => api.create(cross, 1, { teams: [0] }), /SeatSetup/, 'create still requires 2 seats');
+  // idempotent: reducing an already reduced level again is a no-op by value
+  const two = api.forSeats(cross, 2);
+  assert.deepEqual(api.forSeats(two, 2), two);
+  assert.equal(api.forSeats(two, 3), two);
+});
+
+test('covers R-SEA-01: non-pvp objective is unaffected by seat reduction (all players and owners kept)', () => {
+  const c = compiledGolden();
+  assert.notEqual(c.objective, 'pvp');
+  const sim = api.create(c, 3);
+  assert.equal(sim.view.players.length, c.players.length);
+  c.buildings.forEach((b, i) => assert.equal(sim.view.buildings.owner[i], b.owner));
+  assert.throws(() => api.create(c, 3, { teams: [0, 1].slice(0, c.players.length - 1) }), /SeatSetup/);
+  assert.equal(api.createState(c, 3).level, c, 'no reduction path for captureAll');
+});
