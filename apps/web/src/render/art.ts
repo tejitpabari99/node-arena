@@ -14,7 +14,10 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { HalfFloatType, MeshLambertMaterial, Vector2, WebGLRenderTarget, type Camera } from 'three';
 
 /** SCRATCH: ?models=future (or lineup ?set=future) switches models + ground + obstacles + lighting + bloom together. */
-export const FUTURE = typeof location !== 'undefined' && (() => { const q = new URLSearchParams(location.search); return q.get('models') === 'future' || q.get('set') === 'future'; })();
+export const XMAS = typeof location !== 'undefined' && (() => { const q = new URLSearchParams(location.search); return q.get('models') === 'xmas' || q.get('set') === 'xmas'; })();
+export const FUTURE = XMAS || (typeof location !== 'undefined' && (() => { const q = new URLSearchParams(location.search); return q.get('models') === 'future' || q.get('set') === 'future'; })());
+/** Christmas palette (UI designer reference). */
+export const XMAS_PALETTE = { night: '#1d2a4a', pole: '#12304a', snow: '#f4f8fd', shade: '#c3d4e8', ginger: '#bf7a3f', icing: '#fff8ee', candyRed: '#d8343c', pine: '#2e6b46', gold: '#f0be45', window: '#ffc76b' };
 /** Future palette (UI designer reference). */
 export const FUTURE_PALETTE = { void: '#070d17', deck: '#222a36', plate: '#4b5667', hull: '#cbd5e0', cyan: '#3fe6ff', amber: '#ffb347', violet: '#a284ff', ice: '#b9d6e6' };
 const GLOW_K = 2.1;
@@ -28,10 +31,10 @@ function glowPatch(shader: { fragmentShader: string; uniforms: Record<string, { 
 /** Ground/obstacle material (atlas or tile texture whose alpha encodes glow). */
 function futureMaterial(fam: Fam, map: Texture, path: string): Material {
   const ground = fam === 'ground';
-  const m = new MeshStandardMaterial({ map, roughness: ground ? 0.5 : 0.45, metalness: ground ? 0.35 : 0.3 });
+  const m = new MeshStandardMaterial({ map, roughness: XMAS ? 0.88 : ground ? 0.5 : 0.45, metalness: XMAS ? 0 : ground ? 0.35 : 0.3 });
   m.userData['fam'] = fam; m.userData['future'] = true;
-  if (ground && /ice/.test(path)) { m.color.setRGB(0.5, 0.56, 0.62); m.metalness = 0.1; }
-  m.onBeforeCompile = sh => glowPatch(sh as never, false, ground ? 0.75 : 1.5);
+  if (!XMAS && ground && /ice/.test(path)) { m.color.setRGB(0.5, 0.56, 0.62); m.metalness = 0.1; }
+  m.onBeforeCompile = sh => glowPatch(sh as never, false, XMAS ? (ground ? 1.1 : 1.3) : ground ? 0.75 : 1.5);
   m.customProgramCacheKey = () => 'future-' + fam;
   if (/future-atlas/.test(path)) { map.generateMipmaps = false; map.minFilter = map.magFilter = NearestFilter; }
   return m;
@@ -39,14 +42,14 @@ function futureMaterial(fam: Fam, map: Texture, path: string): Material {
 /** tintMask replacement: team colour via mask, glow via base alpha, standard (metal) shading. */
 export function futureTint(base: Texture, mask: Texture, hex: string): MeshLambertMaterial {
   for (const t of [base, mask]) { t.generateMipmaps = false; t.minFilter = t.magFilter = NearestFilter; }
-  const m = new MeshStandardMaterial({ map: base, roughness: 0.42, metalness: 0.35 });
+  const m = new MeshStandardMaterial({ map: base, roughness: XMAS ? 0.8 : 0.42, metalness: XMAS ? 0 : 0.35 });
   const uTeam = { value: new Color(hex) }, uMask = { value: mask };
   m.userData['fam'] = 'prop'; m.userData['future'] = true;
   m.onBeforeCompile = sh => {
     sh.uniforms['uTeam'] = uTeam; sh.uniforms['uMask'] = uMask;
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uTeam;\nuniform sampler2D uMask;')
       .replace('#include <map_fragment>', '#include <map_fragment>\n\tdiffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * uTeam, texture2D( uMask, vMapUv ).r );');
-    glowPatch(sh as never, true, 1.7);
+    glowPatch(sh as never, true, XMAS ? 1.3 : 1.7);
   };
   m.customProgramCacheKey = () => 'future-tint';
   return m as unknown as MeshLambertMaterial;
@@ -59,7 +62,7 @@ export function futureRender(renderer: WebGLRenderer, scene: Scene, camera: Came
   if (!composer) {
     const rt = new WebGLRenderTarget(curW, curH, { type: HalfFloatType, samples: 4 });
     composer = new EffectComposer(renderer, rt); composer.addPass(new RenderPass(scene, camera));
-    bloom = new UnrealBloomPass(new Vector2(curW, curH), 0.32, 0.5, 0.8); composer.addPass(bloom); composer.addPass(new OutputPass());
+    bloom = XMAS ? new UnrealBloomPass(new Vector2(curW, curH), 0.38, 0.65, 1.05) : new UnrealBloomPass(new Vector2(curW, curH), 0.32, 0.5, 0.8); composer.addPass(bloom); composer.addPass(new OutputPass());
     composer.setSize(curW, curH);
   } else (composer.passes[0] as RenderPass).camera = camera;
   composer.render(); return true;
@@ -130,6 +133,16 @@ export function artMaterial(family: string, _team: string, path: string, map: Te
 }
 
 export function artLights(rig: LightRig, themeId: string): void {
+  if (XMAS) {
+    const d = rig.directional, snow = themeId === 'snow';
+    if (rig.ambient) rig.group.remove(rig.ambient);
+    rig.group.add(new HemisphereLight(snow ? '#9cc8f0' : '#a3b8ea', snow ? '#2c3a52' : '#343b5a', snow ? 0.62 : 0.6));
+    d.color.set('#ffd2a0'); d.intensity = snow ? 1.55 : 1.7; d.position.set(-22, 26, 20);
+    d.castShadow = true; d.shadow.mapSize.set(2048, 2048);
+    const c = d.shadow.camera; c.left = -36; c.right = 36; c.top = 36; c.bottom = -36; c.near = 1; c.far = 120;
+    d.shadow.bias = -0.0005; d.shadow.normalBias = 0.02; d.shadow.radius = 4;
+    return;
+  }
   if (FUTURE) {
     const d = rig.directional, snow = themeId === 'snow';
     if (rig.ambient) rig.group.remove(rig.ambient);
@@ -172,6 +185,14 @@ const SKY: Record<ArtId, { grass: string; snow: string }> = {
 };
 
 export function configureArt(renderer: WebGLRenderer, scene: Scene, themeId: string, parent: HTMLElement): void {
+  if (XMAS) {
+    const snow = themeId === 'snow', bg = snow ? XMAS_PALETTE.pole : XMAS_PALETTE.night;
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = PCFShadowMap;
+    renderer.toneMapping = ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+    scene.background = new Color(bg); scene.fog = new FogExp2(bg, 0.0045);
+    const pm = new PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.35; pm.dispose();
+    return;
+  }
   if (FUTURE) {
     const snow = themeId === 'snow';
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = PCFShadowMap;

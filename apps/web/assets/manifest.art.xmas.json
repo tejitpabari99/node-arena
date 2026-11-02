@@ -1,0 +1,138 @@
+{
+  "$schema": "../../../packages/content/schemas/manifest-art.schema.json",
+  "schemaVersion": "2.0.0",
+  "visuals": {
+    "building.house-wt1": {
+      "model": {
+        "parts": "art/models/set-xmas/barracks.glb"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-xmas-atlas.png",
+        "mask": "art/textures/reart-xmas-atlas-mask.png"
+      },
+      "scale": 2,
+      "label": {
+        "height": 1.8
+      }
+    },
+    "building.house-wt2": {
+      "model": {
+        "parts": "art/models/set-xmas/factory.glb"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-xmas-atlas.png",
+        "mask": "art/textures/reart-xmas-atlas-mask.png"
+      },
+      "scale": 2,
+      "label": {
+        "height": 1.5
+      }
+    },
+    "building.tower": {
+      "model": {
+        "parts": "art/models/set-xmas/tower.glb"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-xmas-atlas.png",
+        "mask": "art/textures/reart-xmas-atlas-mask.png"
+      },
+      "scale": 2,
+      "label": {
+        "height": 2.1
+      }
+    },
+    "unit.soldier": {
+      "model": {
+        "parts": "art/models/set-xmas/soldier.glb",
+        "lod": "art/models/set-xmas/soldier-lod1.glb"
+      },
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-xmas-atlas.png",
+        "mask": "art/textures/reart-xmas-atlas-mask.png"
+      }
+    },
+    "unit.tank": {
+      "model": {
+        "parts": "art/models/set-xmas/tank.glb"
+      },
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-xmas-atlas.png",
+        "mask": "art/textures/reart-xmas-atlas-mask.png"
+      }
+    },
+    "fx.projectile": {
+      "model": {
+        "parts": "art/models/set-xmas/projectile.glb"
+      },
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-xmas-atlas.png",
+        "mask": "art/textures/reart-xmas-atlas-mask.png"
+      }
+    }
+  },
+  "themes": {
+    "green": {
+      "ground": {
+        "mesh": "art/models/set-xmas/ground-green.glb",
+        "texture": "art/textures/xmas-ground-cobble.png"
+      },
+      "obstacle": {
+        "small": "art/models/set-xmas/obstacle-green.glb#small",
+        "big": "art/models/set-xmas/obstacle-green.glb#big",
+        "texture": "art/textures/reart-xmas-atlas.png"
+      },
+      "sky": "#1d2a4a"
+    },
+    "snow": {
+      "ground": {
+        "mesh": "art/models/set-xmas/ground-snow.glb",
+        "texture": "art/textures/xmas-ground-candy.png"
+      },
+      "obstacle": {
+        "small": "art/models/set-xmas/obstacle-snow.glb#small",
+        "big": "art/models/set-xmas/obstacle-snow.glb#big",
+        "texture": "art/textures/reart-xmas-atlas.png"
+      },
+      "sky": "#12304a"
+    }
+  }
+}

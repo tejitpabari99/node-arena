@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { tintMaskMaterial } from '/src/render/materials.ts';
-import { FUTURE, artLights, artMaterial, configureArt, futureRender, setRes } from '/src/render/art.ts';
+import { FUTURE, XMAS, artLights, artMaterial, configureArt, futureRender, setRes } from '/src/render/art.ts';
 const q = new URLSearchParams(location.search);
 const set = q.get('set') || 'a', mode = q.get('mode') || 'buildings', pitch = +(q.get('pitch') || 42), theme = q.get('theme') || 'grass';
 const P = { blue: '#2E8BFF', green: '#35B84A', red: '#F0313F', yellow: '#FDC534', gray: '#8C8C8C' };
@@ -16,12 +16,12 @@ sc.add(amb, dl);
 if (FUTURE) { configureArt(r, sc, theme === 'snow' ? 'snow' : 'green', document.body); artLights({ group: sc, directional: dl, ambient: amb }, theme === 'snow' ? 'snow' : 'green'); }
 const tl = new THREE.TextureLoader();
 const tex = (p, data) => { const t = tl.load(p); t.colorSpace = data ? THREE.NoColorSpace : THREE.SRGBColorSpace; t.flipY = false; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; t.anisotropy = 4; return t; };
-const AT = FUTURE ? 'reart-future-atlas' : 'reart-atlas';
+const AT = XMAS ? 'reart-xmas-atlas' : FUTURE ? 'reart-future-atlas' : 'reart-atlas';
 const base = tex(`/art/textures/${AT}.png`), mask = tex(`/art/textures/${AT}-mask.png`, true);
 const mats = {}; const mat = team => mats[team] ??= tintMaskMaterial(base, mask, P[team]);
 const load = n => new GLTFLoader().loadAsync(`/art/models/set-${set}/${n}.glb`);
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshLambertMaterial({ color: theme === 'snow' ? '#eef4f8' : '#9cc13a' })); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.002; sc.add(ground);
-if (FUTURE) { const gt = tex('/art/textures/future-ground-' + (theme === 'snow' ? 'ice' : 'deck') + '.png'); gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(6, 4); ground.material = artMaterial('ground', 'x', 'g', gt); ground.receiveShadow = true; }
+if (FUTURE) { const gt = tex(XMAS ? '/art/textures/xmas-ground-' + (theme === 'snow' ? 'candy' : 'cobble') + '.png' : '/art/textures/future-ground-' + (theme === 'snow' ? 'ice' : 'deck') + '.png'); gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(XMAS ? 3 : 6, XMAS ? 2 : 4); ground.material = artMaterial('ground', 'x', 'g', gt); ground.receiveShadow = true; }
 function place(obj, x, z, team, yaw = 0, s = 1) { obj.traverse(o => { if (o.isMesh) o.material = mat(team); }); obj.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); obj.position.set(x, 0, z); obj.rotation.y = yaw; obj.scale.setScalar(s); sc.add(obj); return obj; }
 const cam = new THREE.PerspectiveCamera(+q.get('fov') || 24, W / H, 0.1, 200);
 function frame(cx, cz, dist) { const p = pitch * Math.PI / 180, yaw = (+q.get('yaw') || 0) * Math.PI / 180; cam.position.set(cx + Math.sin(yaw) * Math.cos(p) * dist, Math.sin(p) * dist, cz + Math.cos(yaw) * Math.cos(p) * dist); cam.lookAt(cx, +(q.get('ly') || 0.8), cz); }

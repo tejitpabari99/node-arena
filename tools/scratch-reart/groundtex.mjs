@@ -75,3 +75,4 @@ export function iceHex() {
     return [c, glow];
   });
 }
+export { render, h2, vnoise, fbm, clamp, mix, smooth, S };
