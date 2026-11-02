@@ -35,6 +35,14 @@ describe('draft helpers', () => {
     d = setPlayers(d, 2, cross); expect(d.teams).toBe(2);
     d = setMap(setPlayers(d, 4, cross), duel); expect(d).toMatchObject({ mapId: 'duel', players: 2 });
   });
+  it('Team default pairing follows the map authored teams when the team count matches (Cross opposite corners)', () => {
+    const crossT: PvpMapInfo = { ...cross, teams: [0, 0, 1, 1] };
+    expect([0, 1, 2, 3].map((i) => defaultTeam(i, 'team', 2, crossT))).toEqual([0, 0, 1, 1]);
+    expect([0, 1, 2, 3].map((i) => defaultTeam(i, 'team', 3, crossT))).toEqual([0, 1, 2, 0]); // count mismatch: round-robin
+    expect([0, 1, 2, 3].map((i) => defaultTeam(i, 'team', 2, cross))).toEqual([0, 1, 0, 1]); // identity-authored map: round-robin
+    const d = setPlayers(setType(newDraft([crossT])!, 'team', crossT), 4, crossT);
+    expect(d.rows.map((r) => r.team)).toEqual([0, 0, 1, 1]);
+  });
   it('team assignment: round-robin vs identity; host stays human', () => {
     expect([0, 1, 2, 3].map((i) => defaultTeam(i, 'team', 2))).toEqual([0, 1, 0, 1]);
     expect([0, 1, 2].map((i) => defaultTeam(i, 'pvp', 2))).toEqual([0, 1, 2]);

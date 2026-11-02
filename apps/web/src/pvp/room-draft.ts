@@ -13,17 +13,26 @@ const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, M
 
 export const playersMax = (map: Pick<PvpMapInfo, 'maxPlayers'>): number => Math.max(MIN_PLAYERS, Math.min(map.maxPlayers, MAX_PLAYERS));
 export const teamsMax = (players: number): number => Math.max(MIN_TEAMS, Math.min(MAX_TEAMS, players));
-/** Default team for row i: identity in PvP, round-robin in Team. */
-export const defaultTeam = (i: number, type: RoomType, teams: number): number => type === 'pvp' ? i : i % teams;
-const humanRow = (i: number, type: RoomType, teams: number): DraftRow => ({ kind: 'human', difficulty: 'normal', team: defaultTeam(i, type, teams) });
+type MapTeams = Partial<Pick<PvpMapInfo, 'teams'>>;
+/**
+ * Default team for row i: identity in PvP; in Team the map's authored pairing when it has exactly `teams` distinct teams
+ * (so Cross keeps opposite-corner allies), else round-robin.
+ */
+export const defaultTeam = (i: number, type: RoomType, teams: number, map?: MapTeams): number => {
+  if (type === 'pvp') return i;
+  const authored = map?.teams;
+  if (authored !== undefined && i < authored.length && new Set(authored).size === teams && authored.every((t) => t >= 0 && t < teams)) return authored[i]!;
+  return i % teams;
+};
+const humanRow = (i: number, type: RoomType, teams: number, map?: MapTeams): DraftRow => ({ kind: 'human', difficulty: 'normal', team: defaultTeam(i, type, teams, map) });
 
 /** Normalises any draft against its map: clamps players/teams, resizes rows, host human, valid teams. */
-export function clampDraft(d: CreateDraft, map: Pick<PvpMapInfo, 'maxPlayers'>): CreateDraft {
+export function clampDraft(d: CreateDraft, map: Pick<PvpMapInfo, 'maxPlayers'> & MapTeams): CreateDraft {
   const players = clamp(d.players, MIN_PLAYERS, playersMax(map));
   const teams = clamp(d.teams, MIN_TEAMS, teamsMax(players));
   const rows = Array.from({ length: players }, (_, i): DraftRow => {
     const r = d.rows[i];
-    if (!r) return humanRow(i, d.type, teams);
+    if (!r) return humanRow(i, d.type, teams, map);
     const row: DraftRow = { kind: i === 0 ? 'human' : r.kind, difficulty: r.difficulty, team: d.type === 'pvp' ? i : clamp(r.team, 0, teams - 1) };
     return row;
   });
@@ -37,7 +46,7 @@ export function newDraft(maps: readonly PvpMapInfo[]): CreateDraft | null {
 }
 
 export function setType(d: CreateDraft, type: RoomType, map: PvpMapInfo): CreateDraft {
-  const rows = d.rows.map((r, i) => ({ ...r, team: defaultTeam(i, type, d.teams) }));
+  const rows = d.rows.map((r, i) => ({ ...r, team: defaultTeam(i, type, d.teams, map) }));
   return clampDraft({ ...d, type, rows }, map);
 }
 /** Map change keeps players/teams/rows where valid, clamping to the new map. */

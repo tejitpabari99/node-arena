@@ -23,13 +23,13 @@
       "id": "p3",
       "kind": "human",
       "colorKey": "green",
-      "team": 1
+      "team": 0
     },
     {
       "id": "p2",
       "kind": "human",
       "colorKey": "red",
-      "team": 0
+      "team": 1
     },
     {
       "id": "p4",
