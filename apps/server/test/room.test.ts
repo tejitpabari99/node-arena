@@ -551,3 +551,26 @@ test('covers review-1: shrinking map tells displaced occupants they are spectato
   assert.deepEqual(c.last('room.joined')!.you, { seat: null, host: false });
   assert.equal(b.sent.filter((m) => m.t === 'room.joined').length, 1); // Bob kept seat 1: only the original join
 });
+
+test('covers review-2: player moved to spectators while away can reconnect and is not evicted by the reserve timer', () => {
+  const env = setup();
+  const four = content.pvpLevelIds.find((id) => content.compiled[id]!.players.length >= 3);
+  const two = content.pvpLevelIds.find((id) => content.compiled[id]!.players.length === 2)!;
+  assert.ok(four);
+  const n = content.compiled[four]!.players.length;
+  const a = env.client('Ann'), b = env.client('Bob'), c = env.client('Cy');
+  a.say({ t: 'room.create', levelId: four, seats: Array.from({ length: n }, (_, i) => ({ kind: 'human', team: i % 2 })) });
+  const cd = code(a);
+  b.say({ t: 'room.join', code: cd, role: 'play' });
+  c.say({ t: 'room.join', code: cd, role: 'play' });
+  c.drop(); // away in seat 2, reserve timer armed
+  a.say({ t: 'lobby.update', levelId: two, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
+  assert.equal(a.last('lobby.state')!.spectators, 1);
+  const c2 = fakeSocket();
+  env.hub.accept(c2);
+  c2.say({ t: 'hello', pv: PROTOCOL_VERSION, versions: content.versions, nick: 'Cy', token: `${String(3).padStart(8, '0')}a1b2c3d4e5f60718293a4b5c` });
+  assert.deepEqual(c2.last('room.joined')!.you, { seat: null, host: false });
+  assert.ok(c2.last('lobby.state'));
+  for (const p of env.pending.filter((x) => x.ms === 30_000)) p.fn(); // reserve fires: rebound player stays
+  assert.equal(a.last('lobby.state')!.spectators, 1);
+});

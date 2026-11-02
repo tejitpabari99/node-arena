@@ -613,7 +613,16 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       const room = byPlayer.get(conn.playerId ?? '');
       if (room === undefined) return;
       const i = seatOf(room, conn);
-      if (i < 0) return;
+      if (i < 0) {
+        // Moved to the spectators while away (lobby edit): rebind so the reserve timer does not evict them, and tell them where they are.
+        const sp = room.spectators.find((o) => o.playerId === conn.playerId);
+        if (sp === undefined || (room.state !== 'lobby' && room.state !== 'ended')) return;
+        clearReserve(sp);
+        sp.conn = conn;
+        conn.send({ t: 'room.joined', code: room.code, you: { seat: null, host: false } });
+        if (room.state === 'lobby') conn.send(lobbyState(room));
+        return;
+      }
       clearReserve(room.seats[i]!.occupant!);
       room.seats[i]!.occupant!.conn = conn;
       if (room.host === null && (room.state === 'lobby' || room.state === 'ended')) room.host = i; // returning member of a hostless room
