@@ -55,3 +55,13 @@ Source facts below describe Tower War; they are deferred in Node Arena. Research
 
 - **Per-IP limiter scaling and NAT sharing.** Per-IP limit maps prune O(n) once past 10k entries; the 30/min connection and 20/min catch-up caps are shared by all clients behind one NAT. Consider amortized pruning and revisit caps/keying. [Review](agent_files/feat-pvp-20261028-1435/review-2026-10-30-1617.md).
 - **Absolute cap on paused rooms.** GC skips paused rooms, so a sole human with unlimited pause holds a room indefinitely while connected. Consider a 1 h absolute cap. [Review](agent_files/feat-pvp-20261028-1435/review-2026-10-30-1617.md).
+
+## From menu/online flow (2026-11-02)
+
+- **Automatic prefix-fairness gate.** Slot-order fairness for every seat-count prefix is a manual authoring rule ([LEVELS_GUIDE.md](LEVELS_GUIDE.md#5a-pvp-maps)); add a gate in `validate:levels` / balance. Current measurements: Cross default 2v2 `[0,0,1,1]` seat decisive share 90/90/10/10 at delay 2000 (lower seat indexes favoured; FFA seat 1 = 100%), so the 20-80% Cross assertions in `tools/test/balance-pvp.test.ts` fail until bots/sim seat-order bias is investigated.
+- **Remove the `empty` seat kind from the wire.** Kept (rejected by Start, no longer produced by the UI) to avoid a protocol break; remove at the next PROTOCOL bump.
+- **Persistent thumbnail cache.** Map thumbnails are re-rendered per session; cache across reloads.
+- **Maps with more than 4 slots.** The form caps players at `min(map slots, 8)` and teams at 4; no shipped map has more than 4 slots.
+- **Failed thumbnails are never retried.** A map whose thumbnail render fails stays blank until reload.
+- **Editor thumbnails create a separate GL host per form open.** Share one renderer/host across forms.
+
