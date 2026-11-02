@@ -1,6 +1,6 @@
 import { Color, LinearMipmapLinearFilter, MeshLambertMaterial, NoColorSpace, SRGBColorSpace, type Texture } from 'three';
 import type { ManifestV2 } from '@node-arena/content';
-import { artMaterial } from './art.js';
+import { artMaterial, FUTURE, futureTint } from './art.js';
 
 type TeamDef = ManifestV2['visuals'][string]['team'];
 
@@ -77,6 +77,7 @@ export class MaterialCache {
  * Uses `vMapUv` (three r186 map varying; shared by `map` and the mask sample).
  */
 export function tintMaskMaterial(base: Texture, mask: Texture, hex: string): MeshLambertMaterial {
+  if (FUTURE) return futureTint(base, mask, hex);
   const m = new MeshLambertMaterial({ map: base }), uTeam = { value: new Color(hex) }, uMask = { value: mask };
   m.onBeforeCompile = shader => {
     shader.uniforms['uTeam'] = uTeam; shader.uniforms['uMask'] = uMask;

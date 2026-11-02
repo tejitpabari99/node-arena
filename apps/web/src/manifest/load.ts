@@ -22,7 +22,7 @@ export function parseManifest(value: unknown, registry?: Pick<RendererRegistry, 
 /** Transport failures retry twice; malformed JSON/schema fails immediately with typed context. */
 /** SCRATCH: ?models=a|b selects a re-art model set's merged manifest. */
 const MODELS = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('models') : null;
-const DEFAULT_SRC = MODELS === 'a' || MODELS === 'b' ? `/manifest.${MODELS}.json` : '/manifest.json';
+const DEFAULT_SRC = MODELS === 'a' || MODELS === 'b' || MODELS === 'future' ? `/manifest.${MODELS}.json` : '/manifest.json';
 export async function loadManifest(src = DEFAULT_SRC, fetcher: typeof fetch = fetch, registry?: Pick<RendererRegistry, 'has'>): Promise<ManifestV2> {
   let response: Response | undefined;
   for (let attempt = 0; attempt < 3; attempt++) {

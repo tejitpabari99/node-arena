@@ -1,0 +1,138 @@
+{
+  "$schema": "../../../packages/content/schemas/manifest-art.schema.json",
+  "schemaVersion": "2.0.0",
+  "visuals": {
+    "building.house-wt1": {
+      "model": {
+        "parts": "art/models/set-future/barracks.glb"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-future-atlas.png",
+        "mask": "art/textures/reart-future-atlas-mask.png"
+      },
+      "scale": 1.7,
+      "label": {
+        "height": 1.7
+      }
+    },
+    "building.house-wt2": {
+      "model": {
+        "parts": "art/models/set-future/factory.glb"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-future-atlas.png",
+        "mask": "art/textures/reart-future-atlas-mask.png"
+      },
+      "scale": 1.7,
+      "label": {
+        "height": 1.5
+      }
+    },
+    "building.tower": {
+      "model": {
+        "parts": "art/models/set-future/tower.glb"
+      },
+      "stages": [
+        {
+          "mesh": "stage0"
+        },
+        {
+          "mesh": "stage1"
+        },
+        {
+          "mesh": "stage2"
+        }
+      ],
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-future-atlas.png",
+        "mask": "art/textures/reart-future-atlas-mask.png"
+      },
+      "scale": 1.7,
+      "label": {
+        "height": 2
+      }
+    },
+    "unit.soldier": {
+      "model": {
+        "parts": "art/models/set-future/soldier.glb",
+        "lod": "art/models/set-future/soldier-lod1.glb"
+      },
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-future-atlas.png",
+        "mask": "art/textures/reart-future-atlas-mask.png"
+      }
+    },
+    "unit.tank": {
+      "model": {
+        "parts": "art/models/set-future/tank.glb"
+      },
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-future-atlas.png",
+        "mask": "art/textures/reart-future-atlas-mask.png"
+      }
+    },
+    "fx.projectile": {
+      "model": {
+        "parts": "art/models/set-future/projectile.glb"
+      },
+      "team": {
+        "mode": "tintMask",
+        "base": "art/textures/reart-future-atlas.png",
+        "mask": "art/textures/reart-future-atlas-mask.png"
+      }
+    }
+  },
+  "themes": {
+    "green": {
+      "ground": {
+        "mesh": "art/models/set-future/ground-green.glb",
+        "texture": "art/textures/future-ground-deck.png"
+      },
+      "obstacle": {
+        "small": "art/models/set-future/obstacle-green.glb#small",
+        "big": "art/models/set-future/obstacle-green.glb#big",
+        "texture": "art/textures/reart-future-atlas.png"
+      },
+      "sky": "#070d17"
+    },
+    "snow": {
+      "ground": {
+        "mesh": "art/models/set-future/ground-snow.glb",
+        "texture": "art/textures/future-ground-ice.png"
+      },
+      "obstacle": {
+        "small": "art/models/set-future/obstacle-snow.glb#small",
+        "big": "art/models/set-future/obstacle-snow.glb#big",
+        "texture": "art/textures/reart-future-atlas.png"
+      },
+      "sky": "#0a1620"
+    }
+  }
+}

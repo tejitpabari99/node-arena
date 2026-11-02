@@ -7,6 +7,64 @@ import {
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { LightRig } from './light-rig.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { HalfFloatType, MeshLambertMaterial, Vector2, WebGLRenderTarget, type Camera } from 'three';
+
+/** SCRATCH: ?models=future (or lineup ?set=future) switches models + ground + obstacles + lighting + bloom together. */
+export const FUTURE = typeof location !== 'undefined' && (() => { const q = new URLSearchParams(location.search); return q.get('models') === 'future' || q.get('set') === 'future'; })();
+/** Future palette (UI designer reference). */
+export const FUTURE_PALETTE = { void: '#070d17', deck: '#222a36', plate: '#4b5667', hull: '#cbd5e0', cyan: '#3fe6ff', amber: '#ffb347', violet: '#a284ff', ice: '#b9d6e6' };
+const GLOW_K = 2.1;
+function glowPatch(shader: { fragmentShader: string; uniforms: Record<string, { value: unknown }> }, tint: boolean, k = GLOW_K): void {
+  shader.uniforms['uGlowK'] = { value: k };
+  let f = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uGlowK;\nfloat gM;');
+  f = f.replace('#include <map_fragment>', '#include <map_fragment>\n\tgM = clamp((1.0 - sampledDiffuseColor.a) * 2.0, 0.0, 1.0);' + (tint ? '' : ''));
+  f = f.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n\ttotalEmissiveRadiance += diffuseColor.rgb * uGlowK * gM;');
+  shader.fragmentShader = f;
+}
+/** Ground/obstacle material (atlas or tile texture whose alpha encodes glow). */
+function futureMaterial(fam: Fam, map: Texture, path: string): Material {
+  const ground = fam === 'ground';
+  const m = new MeshStandardMaterial({ map, roughness: ground ? 0.5 : 0.45, metalness: ground ? 0.35 : 0.3 });
+  m.userData['fam'] = fam; m.userData['future'] = true;
+  if (ground && /ice/.test(path)) { m.color.setRGB(0.5, 0.56, 0.62); m.metalness = 0.1; }
+  m.onBeforeCompile = sh => glowPatch(sh as never, false, ground ? 0.75 : 1.5);
+  m.customProgramCacheKey = () => 'future-' + fam;
+  if (/future-atlas/.test(path)) { map.generateMipmaps = false; map.minFilter = map.magFilter = NearestFilter; }
+  return m;
+}
+/** tintMask replacement: team colour via mask, glow via base alpha, standard (metal) shading. */
+export function futureTint(base: Texture, mask: Texture, hex: string): MeshLambertMaterial {
+  for (const t of [base, mask]) { t.generateMipmaps = false; t.minFilter = t.magFilter = NearestFilter; }
+  const m = new MeshStandardMaterial({ map: base, roughness: 0.42, metalness: 0.35 });
+  const uTeam = { value: new Color(hex) }, uMask = { value: mask };
+  m.userData['fam'] = 'prop'; m.userData['future'] = true;
+  m.onBeforeCompile = sh => {
+    sh.uniforms['uTeam'] = uTeam; sh.uniforms['uMask'] = uMask;
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uTeam;\nuniform sampler2D uMask;')
+      .replace('#include <map_fragment>', '#include <map_fragment>\n\tdiffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * uTeam, texture2D( uMask, vMapUv ).r );');
+    glowPatch(sh as never, true, 1.7);
+  };
+  m.customProgramCacheKey = () => 'future-tint';
+  return m as unknown as MeshLambertMaterial;
+}
+
+let composer: EffectComposer | null = null, bloom: UnrealBloomPass | null = null, curW = 1440, curH = 810;
+/** Renders through bloom when FUTURE; returns false when the caller should render normally. */
+export function futureRender(renderer: WebGLRenderer, scene: Scene, camera: Camera): boolean {
+  if (!FUTURE) return false;
+  if (!composer) {
+    const rt = new WebGLRenderTarget(curW, curH, { type: HalfFloatType, samples: 4 });
+    composer = new EffectComposer(renderer, rt); composer.addPass(new RenderPass(scene, camera));
+    bloom = new UnrealBloomPass(new Vector2(curW, curH), 0.32, 0.5, 0.8); composer.addPass(bloom); composer.addPass(new OutputPass());
+    composer.setSize(curW, curH);
+  } else (composer.passes[0] as RenderPass).camera = camera;
+  composer.render(); return true;
+}
+
 
 export type ArtId = 'v1' | 'v2' | 'v3' | 'v4';
 const raw = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('art') : null;
@@ -52,6 +110,7 @@ function grade(art: ArtId, fam: Fam, theme: 'grass' | 'snow'): string {
 const ramp = (() => { const d = new DataTexture(new Uint8Array([120, 190, 255]), 3, 1, RedFormat); d.minFilter = d.magFilter = NearestFilter; d.needsUpdate = true; return d; })();
 
 export function artMaterial(family: string, _team: string, path: string, map: Texture): Material | null {
+  if (FUTURE) return futureMaterial(famOf(family), map, path || '');
   if (!ART) return null;
   const fam = famOf(family), theme: 'grass' | 'snow' = /snow/.test(path) ? 'snow' : 'grass';
   let m: Material;
@@ -71,6 +130,16 @@ export function artMaterial(family: string, _team: string, path: string, map: Te
 }
 
 export function artLights(rig: LightRig, themeId: string): void {
+  if (FUTURE) {
+    const d = rig.directional, snow = themeId === 'snow';
+    if (rig.ambient) rig.group.remove(rig.ambient);
+    rig.group.add(new HemisphereLight(snow ? '#8cc4f0' : '#86a8e0', snow ? '#14202c' : '#141b27', snow ? 0.6 : 0.9));
+    d.color.set(snow ? '#c4e4ff' : '#cfe4ff'); d.intensity = snow ? 1.9 : 2.8; d.position.set(-16, 34, 16);
+    d.castShadow = true; d.shadow.mapSize.set(2048, 2048);
+    const c = d.shadow.camera; c.left = -34; c.right = 34; c.top = 34; c.bottom = -34; c.near = 1; c.far = 120;
+    d.shadow.bias = -0.0005; d.shadow.normalBias = 0.02; d.shadow.radius = 3;
+    return;
+  }
   if (!ART) return;
   const d = rig.directional, snow = themeId === 'snow';
   const shadow = (size: number, radius: number, bias: number) => {
@@ -103,6 +172,15 @@ const SKY: Record<ArtId, { grass: string; snow: string }> = {
 };
 
 export function configureArt(renderer: WebGLRenderer, scene: Scene, themeId: string, parent: HTMLElement): void {
+  if (FUTURE) {
+    const snow = themeId === 'snow';
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = PCFShadowMap;
+    renderer.toneMapping = ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95;
+    scene.background = new Color(snow ? '#0a1620' : '#070d17');
+    scene.fog = new FogExp2(snow ? '#0a1620' : '#070d17', 0.004);
+    const pm = new PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.4; pm.dispose();
+    return;
+  }
   if (!ART) return;
   const snow = themeId === 'snow';
   renderer.shadowMap.enabled = true;
@@ -156,7 +234,7 @@ function smoothed(g: BufferGeometry): BufferGeometry {
 const pairs: { src: InstancedMesh; out: InstancedMesh }[] = [];
 
 export function artFrame(scene: Scene, _renderer: WebGLRenderer): void {
-  if (!ART) return;
+  if (!ART && !FUTURE) return;
   const todo: Mesh[] = [];
   scene.traverse(o => { const m = o as Mesh; if (m.isMesh && !m.userData['artDone'] && !m.userData['isOutline']) todo.push(m); });
   for (const m of todo) {
@@ -166,6 +244,7 @@ export function artFrame(scene: Scene, _renderer: WebGLRenderer): void {
     if (fam === 'ground') { m.receiveShadow = true; continue; }
     if (fam === 'fx') continue;
     m.castShadow = true; m.receiveShadow = true;
+    if (FUTURE) continue;
     if (ART === 'v2') {
       const g = smoothed(m.geometry);
       let o: Mesh;
@@ -179,4 +258,4 @@ export function artFrame(scene: Scene, _renderer: WebGLRenderer): void {
   for (const p of pairs) { p.out.count = p.src.count; p.out.visible = p.src.visible; }
 }
 
-export function setRes(w: number, h: number): void { uRes.value = [w, h]; }
+export function setRes(w: number, h: number): void { uRes.value = [w, h]; curW = w; curH = h; composer?.setSize(w, h); }

@@ -19,6 +19,8 @@ export const SW = {
   mortar: [0x6E6B64, 0], hazard: [0xE0B53A, 0],
 };
 export const SWN = Object.keys(SW);
+/** SCRATCH: swap in another swatch table ([hex, mask, glow?]) before building a set (e.g. future). */
+export function useSwatches(t) { for (const k of Object.keys(SW)) delete SW[k]; Object.assign(SW, t); SWN.length = 0; SWN.push(...Object.keys(SW)); }
 const CELL = 8, COLS = 8;
 const cellOf = k => { const i = SWN.indexOf(k); if (i < 0) throw new Error('swatch ' + k); return i; };
 
@@ -34,22 +36,33 @@ export function atlasPngs() {
   });
   return { base: png(W, H, 2, rgb), mask: png(W, H, 0, grey), W, H };
 }
+export function atlasPngsRGBA() {
+  const W = COLS * CELL, H = Math.ceil(SWN.length / COLS) * CELL;
+  const rgba = Buffer.alloc(W * H * 4, 0), grey = Buffer.alloc(W * H, 0);
+  SWN.forEach((k, i) => {
+    const [hex, m, gl = 0] = SW[k], cx = (i % COLS) * CELL, cy = Math.floor(i / COLS) * CELL;
+    for (let y = 0; y < CELL; y++) for (let x = 0; x < CELL; x++) {
+      const p = (cy + y) * W + cx + x;
+      rgba[p * 4] = hex >> 16 & 255; rgba[p * 4 + 1] = hex >> 8 & 255; rgba[p * 4 + 2] = hex & 255; rgba[p * 4 + 3] = 255 - Math.round(gl * 127); grey[p] = m;
+    }
+  });
+  return { base: png(W, H, 6, rgba), mask: png(W, H, 0, grey), W, H };
+}
 const crcT = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
 const crc = b => { let c = 0xFFFFFFFF; for (const x of b) c = crcT[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
 function chunk(type, data) { const len = Buffer.alloc(4); len.writeUInt32BE(data.length); const td = Buffer.concat([Buffer.from(type), data]); const c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]); }
-function png(W, H, colorType, data) {
-  const bpp = colorType === 2 ? 3 : 1, raw = Buffer.alloc((W * bpp + 1) * H);
+export function png(W, H, colorType, data) {
+  const bpp = colorType === 6 ? 4 : colorType === 2 ? 3 : 1, raw = Buffer.alloc((W * bpp + 1) * H);
   for (let y = 0; y < H; y++) { raw[y * (W * bpp + 1)] = 0; data.copy(raw, y * (W * bpp + 1) + 1, y * W * bpp, (y + 1) * W * bpp); }
   const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(W, 0); ihdr.writeUInt32BE(H, 4); ihdr[8] = 8; ihdr[9] = colorType;
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }
 
 // ---- geometry helpers. All return BufferGeometry (non-indexed, flat normals, uv at swatch centre).
-const ROWS = Math.ceil(SWN.length / COLS);
 function finish(g, sw, m) {
   g = g.index ? g.toNonIndexed() : g;
   if (m) { g.applyMatrix4(m); }
-  const i = cellOf(sw), u = ((i % COLS) + 0.5) / COLS, v = (Math.floor(i / COLS) + 0.5) / ROWS;
+  const ROWS = Math.ceil(SWN.length / COLS), i = cellOf(sw), u = ((i % COLS) + 0.5) / COLS, v = (Math.floor(i / COLS) + 0.5) / ROWS;
   const n = g.attributes.position.count, uv = new Float32Array(n * 2);
   for (let k = 0; k < n; k++) { uv[k * 2] = u; uv[k * 2 + 1] = v; }
   const out = new T.BufferGeometry();
@@ -153,3 +166,7 @@ export function deathClip(parts, hip, { dur = 0.7, ang = -1.45, drop = 0.3, axis
   parts.forEach((pt, j) => { tracks.push(pTrack(pt.name, times, per[j].p), qTrack(pt.name, times, per[j].q)); });
   return new T.AnimationClip('Death', dur, tracks);
 }
+
+Kit.prototype.torus = function (sw, R, r, x = 0, y = 0, z = 0, rt = 4, seg = 24, rx = Math.PI / 2) { return this.add(finish(new T.TorusGeometry(R, r, rt, seg), sw, M(x, y, z, rx, 0, 0))); };
+/** capsule-ish ellipsoid along z (plasma bolt etc.) */
+Kit.prototype.ellip = function (sw, rx, ry, rz, x = 0, y = 0, z = 0, ws = 8, hs = 6) { return this.add(finish(new T.SphereGeometry(1, ws, hs), sw, M(x, y, z, 0, 0, 0, rx, ry, rz))); };
