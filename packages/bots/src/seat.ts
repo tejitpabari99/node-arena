@@ -2,7 +2,7 @@ import { createStreams, type Command } from '@node-arena/sim';
 import type { CompiledLevel, SeatBot } from '@node-arena/content';
 import type { Bot, BotContext } from './index.js';
 import { createScriptRunner } from './script.js';
-import { decideDefault, type DefaultState, type SeatRng } from './tw-ai.js';
+import { decideDefault, MS_PER_TICK, type DefaultState, type SeatRng } from './tw-ai.js';
 
 export interface SeatState extends DefaultState {
   /** True once the script queue is exhausted (default AI then runs forever). */
@@ -21,7 +21,9 @@ export function createSeatBot(
 ): Bot {
   const rng = createStreams(matchSeed).fork('bot.tw', seatIndex);
   const runner = script ?? (params.script && params.script.length > 0 ? createScriptRunner(params.script) : undefined);
-  const state: SeatState = { timer: 0, scriptDone: runner === undefined };
+  // pvp: independent per-seat phase (seat stream), so identical-delay seats do not act on the same ticks forever; that lockstep keeps symmetric positions symmetric (mirrored stalemates, tie-order bias).
+  const phase = level.objective === 'pvp' && params.actionDelayMs >= MS_PER_TICK ? MS_PER_TICK * rng.below(Math.floor(params.actionDelayMs / MS_PER_TICK)) : 0;
+  const state: SeatState = { timer: phase, scriptDone: runner === undefined };
   return {
     player: seatIndex,
     decide(ctx, tick) {

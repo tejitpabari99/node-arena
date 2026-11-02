@@ -48,11 +48,25 @@ function nearestOwnDist2(view: SimView, me: number, i: number): number {
 /**
  * All non-own, non-ally buildings (neutral, hostile, towers included) ascending by (key, index).
  * `byDistance` (pvp only) inserts a tie-break: (key, dist2 to nearest own building, index), so mirrored seats pick mirrored targets.
+ * With `rng` too (pvp), targets still tied on (key, dist2) are shuffled by the seat's own stream instead of kept in index order:
+ * an index tie-break picks the same building for every seat and favours whoever sits next to low-index buildings (seat-order bias).
  */
-export function sortedTargets(view: SimView, me: number, byDistance = false): number[] {
+export function sortedTargets(view: SimView, me: number, byDistance = false, rng?: SeatRng): number[] {
   const keyed: { i: number; key: number; d: number }[] = [];
   for (let i = 0; i < view.ids.buildings.length; i++) if (!owned(view, me, i) && !isAlly(view, me, i)) keyed.push({ i, key: targetKey(view, i), d: byDistance ? nearestOwnDist2(view, me, i) : 0 });
-  return keyed.sort((a, b) => a.key - b.key || a.d - b.d || a.i - b.i).map(e => e.i);
+  keyed.sort((a, b) => a.key - b.key || a.d - b.d || a.i - b.i);
+  if (byDistance && rng) {
+    for (let start = 0; start < keyed.length;) {
+      let end = start + 1;
+      while (end < keyed.length && keyed[end]!.key === keyed[start]!.key && keyed[end]!.d === keyed[start]!.d) end++;
+      for (let k = end - 1; k > start; k--) { // Fisher-Yates over the tied run, one seat-stream draw per swap
+        const j = start + rng.below(k - start + 1);
+        const t = keyed[k]!; keyed[k] = keyed[j]!; keyed[j] = t;
+      }
+      start = end;
+    }
+  }
+  return keyed.map(e => e.i);
 }
 
 /** Own line-drawing buildings with a free slot, ascending index. */
@@ -73,7 +87,7 @@ export function countOwned(view: SimView, me: number): number {
 const draw = (player: number, from: number, to: number): Command => ({ type: 'DrawLine', player, from, to });
 
 function attack(view: SimView, canDraw: CanDraw, rng: SeatRng, me: number, free: readonly number[], byDistance: boolean): Command | null {
-  for (const t of sortedTargets(view, me, byDistance)) {
+  for (const t of sortedTargets(view, me, byDistance, byDistance ? rng : undefined)) {
     const cand = free.slice();
     while (cand.length > 0) {
       const k = rng.below(cand.length);
