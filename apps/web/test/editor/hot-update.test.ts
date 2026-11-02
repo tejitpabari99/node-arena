@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { createEditorWriteGuard, shouldSkipEditorHotUpdate } from '../../src/dev/editor-middleware.js';
+import { createEditorWriteGuard, invalidateEditorContent, shouldSkipEditorHotUpdate } from '../../src/dev/editor-middleware.js';
 
 const level = '/r/packages/content/data/levels/na-x.json';
 it('skips hot updates for editor-written content only during and shortly after a write', () => {
@@ -15,4 +15,17 @@ it('skips hot updates for editor-written content only during and shortly after a
   expect(shouldSkipEditorHotUpdate(level, guard)).toBe(true);
   t += 200;
   expect(shouldSkipEditorHotUpdate(level, guard)).toBe(false);
+});
+
+it('after an editor write drops cached content transforms and re-attaches their watches', () => {
+  const invalidated: string[] = [], watched: string[] = [], unwatched: string[] = [];
+  const mod = (file: string) => ({ file });
+  const graph = {
+    idToModuleMap: new Map([['a', mod('/r/packages/content/data/campaigns/custom.json')], ['b', mod('/r/apps/web/src/app/boot.ts')], ['c', mod('/r/apps/web/src/main.tsx')]]),
+    invalidateModule: (m: { file: string }) => { invalidated.push(m.file); },
+  };
+  invalidateEditorContent({ environments: { client: { moduleGraph: graph } }, watcher: { unwatch: (f: string) => { unwatched.push(f); }, add: (f: string) => { watched.push(f); } } } as never);
+  expect(invalidated).toEqual(['/r/packages/content/data/campaigns/custom.json', '/r/apps/web/src/app/boot.ts']);
+  expect(unwatched).toEqual(['/r/packages/content/data/campaigns/custom.json']);
+  expect(watched).toEqual(unwatched);
 });
