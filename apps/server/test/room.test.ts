@@ -506,3 +506,48 @@ test('covers R-SEA-01: room.create with levelId+seats installs config; start wit
   assert.equal(starts.length, 1);
   assert.equal(starts[0]!.seats.length, 3);
 });
+
+test('covers review-1: lobby edits send room.joined to occupants whose seat/role/host changed', () => {
+  const { a, b, edit } = lobby2();
+  // human row flipped to bot: Bob becomes a spectator and is told so
+  b.clear();
+  edit([seatsOf(a)[0]!, { kind: 'bot', team: 1, difficulty: 'easy' }]);
+  assert.deepEqual(b.last('room.joined')!.you, { seat: null, host: false });
+  // flip back is a no-op for the (spectator) Bob: still no seat
+  b.clear();
+  a.clear();
+  edit([{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }]);
+  assert.equal(b.last('room.joined'), undefined);
+  assert.equal(a.sent.some((m) => m.t === 'room.joined'), false);
+});
+
+test('covers review-1: host passed to seat 1 then map change moves them to seat 0 and says so', () => {
+  const { a, b, levelId, mgr } = lobby2();
+  const other = content.pvpLevelIds.find((id) => id !== levelId && content.compiled[id]!.players.length === 2)!;
+  a.drop(); // host leaves socket: Bob becomes host at seat 1
+  assert.equal(b.last('lobby.state')!.host, 1);
+  b.clear();
+  b.say({ t: 'lobby.update', levelId: other, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
+  assert.deepEqual(b.last('room.joined')!.you, { seat: 0, host: true });
+  assert.ok(b.sent.findIndex((m) => m.t === 'room.joined') < b.sent.findIndex((m) => m.t === 'lobby.state'));
+  assert.equal(b.last('lobby.state')!.host, 0);
+  assert.equal(mgr.roomCount(), 1);
+});
+
+test('covers review-1: shrinking map tells displaced occupants they are spectators', () => {
+  const env = setup();
+  const four = content.pvpLevelIds.find((id) => content.compiled[id]!.players.length >= 3);
+  const two = content.pvpLevelIds.find((id) => content.compiled[id]!.players.length === 2)!;
+  if (four === undefined) return;
+  const n = content.compiled[four]!.players.length;
+  const a = env.client('Ann'), b = env.client('Bob'), c = env.client('Cy');
+  a.say({ t: 'room.create', levelId: four, seats: Array.from({ length: n }, (_, i) => ({ kind: 'human', team: i % 2 })) });
+  const cd = code(a);
+  b.say({ t: 'room.join', code: cd, role: 'play' });
+  c.say({ t: 'room.join', code: cd, role: 'play' });
+  assert.equal(c.last('room.joined')!.you.seat, 2);
+  c.clear();
+  a.say({ t: 'lobby.update', levelId: two, seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }] });
+  assert.deepEqual(c.last('room.joined')!.you, { seat: null, host: false });
+  assert.equal(b.sent.filter((m) => m.t === 'room.joined').length, 1); // Bob kept seat 1: only the original join
+});

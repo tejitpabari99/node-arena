@@ -418,6 +418,24 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     if (room.state === 'lobby') broadcast(room);
   };
 
+  /** Seat index (null = spectator) + host flag per occupant, to detect moves caused by a lobby edit. */
+  const placements = (room: Room): Map<Occupant, { seat: number | null; host: boolean }> => {
+    const m = new Map<Occupant, { seat: number | null; host: boolean }>();
+    room.seats.forEach((s, i) => { if (s.occupant) m.set(s.occupant, { seat: i, host: room.host === i }); });
+    for (const o of room.spectators) m.set(o, { seat: null, host: false });
+    return m;
+  };
+
+  /** Tell every occupant whose seat/role/host flag changed (room.joined is the client's only source of its own seat). Sent before the lobby.state broadcast. */
+  const notifyMoved = (room: Room, before: Map<Occupant, { seat: number | null; host: boolean }>): void => {
+    for (const [o, prev] of before) {
+      const i = room.seats.findIndex((s) => s.occupant === o);
+      const seat_ = i < 0 ? null : i;
+      const host = i >= 0 && room.host === i;
+      if (seat_ !== prev.seat || host !== prev.host) o.conn.send({ t: 'room.joined', code: room.code, you: { seat: seat_, host } });
+    }
+  };
+
   /**
    * Atomically installs a lobby config. Same level: occupants keep their seat index when it still exists and is human, else become spectators.
    * Level change: occupants (host first, then seat order) refill the new human seats in order, host -> seat 0, overflow -> spectators; ready cleared.
@@ -426,6 +444,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     const hostSeat = seatOf(room, conn);
     const next = checkConfig(levelId, seatsIn);
     if (typeof next === 'string') return conn.sendError('bad-lobby', next);
+    const before = placements(room);
     if (levelId !== room.levelId) {
       const hostOcc = room.seats[hostSeat]!.occupant!;
       const occ = [hostOcc, ...room.seats.flatMap((s) => (s.occupant && s.occupant !== hostOcc ? [s.occupant] : []))];
@@ -439,6 +458,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       room.seats = want;
       room.host = 0;
       log?.info('lobby.level', { room: room.code, levelId, seats: want.length });
+      notifyMoved(room, before);
       return broadcast(room);
     }
     if (hostSeat >= next.length || next[hostSeat]!.kind !== 'human') return conn.sendError('bad-lobby', 'host seat must be human');
@@ -453,6 +473,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     for (const cur of room.seats) if (cur.occupant !== undefined && !out.some((s) => s.occupant === cur.occupant)) room.spectators.push(cur.occupant); // removed / flipped away
     room.seats = out;
     if (changed) for (const s of room.seats) if (s.occupant) s.occupant.ready = false;
+    notifyMoved(room, before);
     broadcast(room);
   };
 
