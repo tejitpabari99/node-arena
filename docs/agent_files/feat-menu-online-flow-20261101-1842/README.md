@@ -25,7 +25,7 @@ graph LR
 - Menu: three stacked full-width rectangles; Custom hidden unless `import.meta.env.DEV`; custom cards show thumbnail only (name in aria-label).
 - Thumbnails: live offscreen WebGL render of the compiled level, in-memory cache, sequential queue.
 - Seats: map max = `players.length`; match uses first n slots in `players[]` order; unused slots' buildings -> neutral (authored level); no level-schema change; cross reordered so prefixes are fair.
-- Versions: RULES 3.2.0 -> 3.3.0 (minor), PROTOCOL 3 -> 4, contentVersion bump; SCHEMA unchanged; BOT_VERSION 2.5.0 -> 2.5.2 (bot identity changes in SP02).
+- Versions: RULES 3.2.0 -> 3.3.0 (minor), PROTOCOL 3 -> 4, contentVersion bump; SCHEMA unchanged; BOT_VERSION 2.6.0 (incl. PvP tie shuffle + per-seat phase) (bot identity changes in SP02).
 - Wire: `lobby.update`/`lobby.state`/`start` seat arrays vary 2..max; `room.create` gains optional `{levelId, seats}`.
 - Flow: room is created when host presses "Create room"; the same form then becomes the live lobby (code, links, Start); Type is UI-only (PvP = identity teams, Team = explicit teams).
 - Nickname: existing `localStorage['nodearena:pvp']`, persisted per keystroke with untrimmed draft; prefilled in all forms; read-only in-room.

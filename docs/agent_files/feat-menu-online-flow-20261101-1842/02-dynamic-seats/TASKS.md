@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 6 tasks in AGENTS.md order - rules text + RULES 3.3.0, tests, sim forSeats, content/cross reorder + locks, net PROTOCOL 4, server range validation + audit.
 date: 2026-11-01
 ---

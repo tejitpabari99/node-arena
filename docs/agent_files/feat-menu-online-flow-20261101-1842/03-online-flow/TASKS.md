@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 6 tasks - nickname fix, controller nav/draft state + helpers, join flow, RoomForm pre-room, live room, e2e-pvp rewrite and final gates.
 date: 2026-11-01
 ---
@@ -8,12 +8,12 @@ Source of truth: docs/agent_files/feat-menu-online-flow-20261101-1842/03-online-
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Nickname draft/persistence fix | none | todo |
-| 2 | Controller nav, draft state, pure helpers | 1 | todo |
-| 3 | Online home + join flow (Participant/Spectate) | 2 | todo |
-| 4 | RoomForm pre-room (create) | 2, 3 | todo |
-| 5 | Live host/joiner/spectator room | 4 | todo |
-| 6 | e2e-pvp rewrite, cleanup, final gates | 3, 4, 5 | todo |
+| 1 | Nickname draft/persistence fix | none | done |
+| 2 | Controller nav, draft state, pure helpers | 1 | done |
+| 3 | Online home + join flow (Participant/Spectate) | 2 | done |
+| 4 | RoomForm pre-room (create) | 2, 3 | done |
+| 5 | Live host/joiner/spectator room | 4 | done |
+| 6 | e2e-pvp rewrite, cleanup, final gates | 3, 4, 5 | done |
 
 ## Task 1 — Nickname draft/persistence fix
 What it is: fix swallowed trailing space; persist on every keystroke.

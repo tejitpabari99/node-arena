@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 4 tasks - shared level-thumbnail core + service, editor refactor onto it, stacked menu + DEV-gated Custom with thumbnail cards, e2e/gate fixups.
 date: 2026-11-01
 ---
