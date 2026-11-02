@@ -1,0 +1,12 @@
+import { chromium } from '/root/projects/node-arena/node_modules/.pnpm/playwright@1.64.0/node_modules/playwright/index.mjs';
+const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const p = await (await b.newContext({ viewport: { width: 1440, height: 810 } })).newPage();
+const seen = new Set();
+p.on('response', r => { if (r.status() >= 400 || /\.(png|glb|json)/.test(r.url()) && r.status() !== 200) console.log('HTTP', r.status(), r.url()); });
+p.on('requestfailed', r => console.log('FAIL', r.url(), r.failure()?.errorText));
+p.on('console', m => { const t = m.text().slice(0, 200); if (!seen.has(t)) { seen.add(t); console.log(m.type(), t); } });
+p.on('pageerror', e => console.log('PAGEERR', String(e).slice(0, 300)));
+await p.goto('http://127.0.0.1:4330/?level=3&models=future');
+await p.waitForTimeout(20000);
+console.log('canvas', await p.evaluate(() => { const c = document.querySelector('#arena canvas'); return c ? [c.width, c.height] : null; }));
+await b.close();

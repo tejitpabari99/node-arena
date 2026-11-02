@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Christmas battle A</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Playfair+Display:wght@600&family=Nunito+Sans:wght@400;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+@keyframes twinkle{0%,100%{opacity:1}50%{opacity:.6}}
+</style>
+</helmet>
+<div style="width: 1440px; height: 810px; position: relative; overflow: hidden; background: #12304a; font-family: 'Nunito Sans', sans-serif;">
+  <img src="/_blob/a24f171aecdf3080771b341a5ddf62ea" alt="" style="position:absolute;left:0;top:0;width:1440px;height:810px;">
+
+  <!-- pause -->
+  <button type="button" aria-label="Pause" style="position:absolute;left:24px;top:22px;width:52px;height:52px;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#2e6b46,#173f2b);border:3px solid #f0be45;border-radius:50%;box-shadow:0 0 0 2px #7a5410,0 6px 14px rgba(0,0,0,0.45),inset 0 2px 0 rgba(255,255,255,0.2);">
+    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff8ee" stroke-width="3.2" stroke-linecap="round"><path d="M8 5v14M16 5v14"/></svg>
+  </button>
+  <div aria-hidden="true" style="position:absolute;left:30px;top:16px;width:40px;height:9px;background:#f4f8fd;border-radius:9px 9px 3px 3px;box-shadow:inset 0 -2px 0 #c3d4e8;"></div>
+  <!-- zoom -->
+  <button type="button" aria-label="Zoom" style="position:absolute;left:24px;top:81px;width:52px;height:52px;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#2e6b46,#173f2b);border:3px solid #f0be45;border-radius:50%;box-shadow:0 0 0 2px #7a5410,0 6px 14px rgba(0,0,0,0.45),inset 0 2px 0 rgba(255,255,255,0.2);">
+    <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff8ee" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5M10.5 8v5M8 10.5h5"/></svg>
+  </button>
+
+  <!-- ownership bar -->
+  <div style="position:absolute;left:497px;top:14px;width:446px;height:52px;">
+    <div aria-hidden="true" style="position:absolute;left:30px;right:30px;top:-6px;height:12px;background:#f4f8fd;border-radius:12px 12px 4px 4px;box-shadow:inset 0 -3px 0 #c3d4e8;z-index:3;"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,#1b4a35,#0e2a22);border:3px solid #f0be45;border-radius:8px;box-shadow:0 0 0 2px #7a5410,0 8px 18px rgba(0,0,0,0.5);"></div>
+    <div role="img" aria-label="Territory ownership: blue 34 percent, red 22, green 18, yellow 14, gray 12" style="position:absolute;left:8px;top:8px;width:430px;height:36px;display:flex;border-radius:4px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.5);">
+      <div style="width:34%;background:#2E8BFF;"></div>
+      <div style="width:22%;background:#F0313F;"></div>
+      <div style="width:18%;background:#35B84A;"></div>
+      <div style="width:14%;background:#FDC534;"></div>
+      <div style="width:12%;background:#8C8C8C;"></div>
+    </div>
+    <div aria-hidden="true" style="position:absolute;left:8px;top:8px;width:430px;height:36px;border-radius:4px;background:linear-gradient(180deg,rgba(255,255,255,0.28),rgba(255,255,255,0) 50%);"></div>
+    <!-- bow ends -->
+    <div aria-hidden="true" style="position:absolute;left:-8px;top:16px;width:14px;height:20px;background:#d8343c;border:2px solid #f0be45;border-radius:50%;z-index:4;"></div>
+    <div aria-hidden="true" style="position:absolute;right:-8px;top:16px;width:14px;height:20px;background:#d8343c;border:2px solid #f0be45;border-radius:50%;z-index:4;"></div>
+  </div>
+
+  <!-- level plaque -->
+  <div style="position:absolute;left:0;top:72px;width:1440px;display:flex;justify-content:center;">
+    <div style="position:relative;display:flex;align-items:center;">
+      <div aria-hidden="true" style="width:34px;height:26px;background:#a8242c;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,30% 50%);margin-right:-4px;"></div>
+      <div style="position:relative;padding:5px 30px;background:linear-gradient(180deg,#d8343c,#a8242c);border:2px solid #f0be45;border-radius:3px;box-shadow:0 4px 10px rgba(0,0,0,0.45);font-family:'Cinzel Decorative',serif;font-weight:700;font-size:18px;letter-spacing:2px;color:#fff8ee;">Level 3</div>
+      <div aria-hidden="true" style="width:34px;height:26px;background:#a8242c;clip-path:polygon(0 0,100% 0,70% 50%,100% 100%,0 100%);margin-left:-4px;"></div>
+    </div>
+  </div>
+
+  <!-- string lights along top edge -->
+  <div aria-hidden="true" style="position:absolute;left:0;top:0;width:1440px;height:12px;overflow:hidden;opacity:0.9;background:radial-gradient(circle at 20px 4px,#ff4b4b 4px,transparent 5px),radial-gradient(circle at 60px 6px,#62f28f 4px,transparent 5px),radial-gradient(circle at 100px 4px,#ffe27a 4px,transparent 5px),radial-gradient(circle at 140px 6px,#5db8ff 4px,transparent 5px);background-size:160px 12px;animation:twinkle 3s ease-in-out infinite;"></div>
+
+  <!-- sound -->
+  <button type="button" aria-label="Sound on" style="position:absolute;left:1367px;top:22px;width:52px;height:52px;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#24467a,#14284a);border:3px solid #f0be45;border-radius:50%;box-shadow:0 0 0 2px #7a5410,0 6px 14px rgba(0,0,0,0.45),inset 0 2px 0 rgba(255,255,255,0.2);">
+    <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff8ee" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg>
+  </button>
+  <div aria-hidden="true" style="position:absolute;left:1373px;top:16px;width:40px;height:9px;background:#f4f8fd;border-radius:9px 9px 3px 3px;box-shadow:inset 0 -2px 0 #c3d4e8;"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":810}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

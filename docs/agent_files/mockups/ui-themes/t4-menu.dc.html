@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tabletop menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans+SC:wght@500;700;800&family=Bitter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 810px; position: relative; overflow: hidden; background: #2a1c12; font-family: 'Bitter', serif;">
+<img src="/_blob/dfd12b1be7478ef9f23a8d94fb4938ca" alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform: scale(1.06); filter: sepia(0.25) saturate(1.05) brightness(0.5) hue-rotate(-6deg) blur(8px);">
+<div style="position:absolute; inset:0; background: rgba(255,150,60,0.12); mix-blend-mode:soft-light;"></div>
+<div style="position:absolute; inset:0; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(25,14,6,0.7) 100%);"></div>
+
+<div style="position:absolute; left:0; top:116px; width:1440px; text-align:center; font-family:'Alegreya Sans SC', sans-serif; font-weight:800; font-size:92px; line-height:1; letter-spacing:0.1em; color:#f6e7c3; text-shadow: 0 3px 0 #3b2a1e, 0 10px 26px rgba(0,0,0,0.65);">NODE ARENA</div>
+<div style="position:absolute; left:560px; top:238px; width:320px; height:0; border-top:2px dashed #c89b4a;"></div>
+
+<button type="button" style="position:absolute; left:510px; top:320px; width:420px; height:64px; box-sizing:border-box; border:3px solid #c89b4a; border-radius:6px; background: repeating-linear-gradient(90deg, rgba(0,0,0,0.07) 0 2px, rgba(0,0,0,0) 2px 9px), linear-gradient(#8a5a35, #6a4227); color:#fbf0d4; font-family:'Alegreya Sans SC', sans-serif; font-weight:700; font-size:28px; letter-spacing:0.12em; box-shadow: inset 0 2px 0 rgba(255,220,160,0.3), 0 6px 14px rgba(0,0,0,0.55); cursor:pointer;">Campaign</button>
+<button type="button" style="position:absolute; left:510px; top:400px; width:420px; height:64px; box-sizing:border-box; border:3px solid #a9803f; border-radius:6px; background: repeating-linear-gradient(90deg, rgba(0,0,0,0.07) 0 2px, rgba(0,0,0,0) 2px 9px), linear-gradient(#6d4529, #523320); color:#f6e7c3; font-family:'Alegreya Sans SC', sans-serif; font-weight:700; font-size:28px; letter-spacing:0.12em; box-shadow: inset 0 2px 0 rgba(255,220,160,0.2), 0 6px 14px rgba(0,0,0,0.55); cursor:pointer;">Custom</button>
+<button type="button" style="position:absolute; left:510px; top:480px; width:420px; height:64px; box-sizing:border-box; border:3px solid #a9803f; border-radius:6px; background: repeating-linear-gradient(90deg, rgba(0,0,0,0.07) 0 2px, rgba(0,0,0,0) 2px 9px), linear-gradient(#6d4529, #523320); color:#f6e7c3; font-family:'Alegreya Sans SC', sans-serif; font-weight:700; font-size:28px; letter-spacing:0.12em; box-shadow: inset 0 2px 0 rgba(255,220,160,0.2), 0 6px 14px rgba(0,0,0,0.55); cursor:pointer;">Play online</button>
+
+<button type="button" style="position:absolute; left:40px; top:742px; height:40px; padding:0 20px; box-sizing:border-box; border:2px dashed #c89b4a; border-radius:4px; background:#3b2a1e; color:#f6e7c3; font-family:'Bitter', serif; font-weight:600; font-size:14px; letter-spacing:0.06em; cursor:pointer;">Credits</button>
+
+<button type="button" aria-label="Sound" style="position:absolute; left:1369px; top:17px; width:48px; height:48px; box-sizing:border-box; padding:0; display:flex; align-items:center; justify-content:center; border:2px dashed #c89b4a; border-radius:8px; background:#3b2a1e; color:#f6e7c3; box-shadow: 0 3px 8px rgba(0,0,0,0.5); cursor:pointer;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 010 6M18 6.5a8 8 0 010 11"/></svg>
+</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":810}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

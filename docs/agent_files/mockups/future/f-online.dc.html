@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Future create room</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 810px; position: relative; overflow: hidden; background: #070d17; font-family: 'Exo 2', sans-serif; color: #eafbff;">
+  <img src="/_blob/8486c76dd5f124ae562a87e9219686ad" alt="" style="position: absolute; left: -30px; top: -30px; width: 1500px; height: 870px; object-fit: cover; filter: blur(8px) brightness(0.4);">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(63,230,255,0.04) 0 1px, transparent 1px 3px);"></div>
+
+  <div style="position: absolute; left: 130px; top: 24px; width: 1180px; height: 762px; padding: 1px; box-sizing: border-box; background: linear-gradient(160deg, #3fe6ff, rgba(63,230,255,0.2) 25%, rgba(63,230,255,0.2) 75%, #3fe6ff); clip-path: polygon(30px 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%, 0 30px);">
+    <div style="width: 100%; height: 100%; box-sizing: border-box; padding: 28px 40px 30px; background: rgba(7,15,26,0.9); backdrop-filter: blur(10px); clip-path: polygon(29px 0, 100% 0, 100% calc(100% - 29px), calc(100% - 29px) 100%, 0 100%, 0 29px);">
+
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <button aria-label="Back" style="width: 40px; height: 40px; padding: 0; border: 1px solid rgba(63,230,255,0.55); background: rgba(63,230,255,0.06); cursor: pointer; display: flex; align-items: center; justify-content: center; clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3fe6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <h2 style="margin: 0; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 28px; letter-spacing: 0.16em; text-transform: uppercase; text-shadow: 0 0 14px rgba(63,230,255,0.5);">Create a room</h2>
+        </div>
+        <span style="font-size: 13px; letter-spacing: 0.3em; color: #3fe6ff; text-transform: uppercase;">Online · Lobby</span>
+      </div>
+      <div aria-hidden="true" style="margin-top: 16px; height: 1px; background: linear-gradient(90deg, #3fe6ff, transparent);"></div>
+
+      <div style="margin-top: 22px; display: flex; gap: 40px;">
+        <!-- left column -->
+        <div style="width: 500px; display: flex; flex-direction: column; gap: 20px;">
+          <div>
+            <label for="nick" style="display: block; font-size: 13px; letter-spacing: 0.22em; color: #a9bfce; text-transform: uppercase;">Nickname</label>
+            <input id="nick" type="text" value="Commander" style="margin-top: 8px; width: 100%; box-sizing: border-box; height: 44px; padding: 0 14px; background: #0b1826; color: #eafbff; border: 1px solid rgba(63,230,255,0.5); border-left: 3px solid #3fe6ff; font-family: 'Exo 2', sans-serif; font-size: 16px;">
+          </div>
+
+          <div>
+            <div id="lbl-type" style="font-size: 13px; letter-spacing: 0.22em; color: #a9bfce; text-transform: uppercase;">Type</div>
+            <div role="radiogroup" aria-labelledby="lbl-type" style="margin-top: 8px; display: flex; gap: 12px;">
+              <button role="radio" aria-checked="true" style="flex: 1; height: 56px; border: 0; padding: 1px; cursor: pointer; background: #3fe6ff; clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);">
+                <span style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 54px; background: linear-gradient(90deg, #3fe6ff, #1fa9d6); color: #04101a; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.2em; clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px);">
+                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#04101a" stroke-width="2" stroke-linecap="round"><path d="M5 19L19 5M14 5h5v5M5 5l14 14"/></svg>PvP</span>
+              </button>
+              <button role="radio" aria-checked="false" style="flex: 1; height: 56px; border: 0; padding: 1px; cursor: pointer; background: rgba(63,230,255,0.4); clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);">
+                <span style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 54px; background: #0b1826; color: #eafbff; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.2em; clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px);">
+                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3fe6ff" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20c0-4 3-6 6-6s6 2 6 6M14 14c4 0 8 2 8 6"/></svg>Team</span>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div id="lbl-map" style="font-size: 13px; letter-spacing: 0.22em; color: #a9bfce; text-transform: uppercase;">Map</div>
+            <div role="radiogroup" aria-labelledby="lbl-map" style="margin-top: 8px; display: flex; gap: 12px;">
+              <button role="radio" aria-checked="true" style="flex: 1; padding: 1px; border: 0; cursor: pointer; background: #3fe6ff; clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); text-align: left;">
+                <span style="display: block; background: #0b1826; clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px);">
+                  <span style="display: block; height: 124px; overflow: hidden;"><img src="/_blob/8486c76dd5f124ae562a87e9219686ad" alt="Tech deck map thumbnail" style="width: 100%; height: 124px; object-fit: cover; display: block;"></span>
+                  <span style="display: block; padding: 8px 12px; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.16em; color: #eafbff;">TECH DECK</span>
+                </span>
+              </button>
+              <button role="radio" aria-checked="false" style="flex: 1; padding: 1px; border: 0; cursor: pointer; background: rgba(63,230,255,0.4); clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); text-align: left;">
+                <span style="display: block; background: #0b1826; clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px);">
+                  <span style="display: block; height: 124px; overflow: hidden;"><img src="/_blob/949f93db9f4c12b01257fb877784901f" alt="Ice colony map thumbnail" style="width: 100%; height: 124px; object-fit: cover; display: block;"></span>
+                  <span style="display: block; padding: 8px 12px; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.16em; color: #eafbff;">ICE COLONY</span>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px;">
+            <div style="flex: 1;">
+              <div id="lbl-pl" style="font-size: 13px; letter-spacing: 0.22em; color: #a9bfce; text-transform: uppercase;">Players</div>
+              <div style="margin-top: 8px; display: flex; align-items: center; height: 46px; border: 1px solid rgba(63,230,255,0.45); background: #0b1826;">
+                <button aria-label="Fewer players" style="width: 46px; height: 44px; border: 0; background: rgba(63,230,255,0.1); color: #3fe6ff; font-family: 'Orbitron', sans-serif; font-size: 22px; cursor: pointer;">&minus;</button>
+                <output aria-labelledby="lbl-pl" style="flex: 1; text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 20px;">4</output>
+                <button aria-label="More players" style="width: 46px; height: 44px; border: 0; background: rgba(63,230,255,0.1); color: #3fe6ff; font-family: 'Orbitron', sans-serif; font-size: 22px; cursor: pointer;">+</button>
+              </div>
+            </div>
+            <div style="flex: 1;">
+              <div id="lbl-tm" style="font-size: 13px; letter-spacing: 0.22em; color: #a9bfce; text-transform: uppercase;">Teams</div>
+              <div style="margin-top: 8px; display: flex; align-items: center; height: 46px; border: 1px solid rgba(63,230,255,0.45); background: #0b1826;">
+                <button aria-label="Fewer teams" style="width: 46px; height: 44px; border: 0; background: rgba(63,230,255,0.1); color: #3fe6ff; font-family: 'Orbitron', sans-serif; font-size: 22px; cursor: pointer;">&minus;</button>
+                <output aria-labelledby="lbl-tm" style="flex: 1; text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 20px;">2</output>
+                <button aria-label="More teams" style="width: 46px; height: 44px; border: 0; background: rgba(63,230,255,0.1); color: #3fe6ff; font-family: 'Orbitron', sans-serif; font-size: 22px; cursor: pointer;">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- right column -->
+        <div style="flex: 1; display: flex; flex-direction: column;">
+          <div style="font-size: 13px; letter-spacing: 0.22em; color: #a9bfce; text-transform: uppercase;">Players · 4 slots</div>
+          <ul style="list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px;">
+            <li style="display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 14px; background: rgba(63,230,255,0.07); border-left: 4px solid #2E8BFF;">
+              <span style="flex: 1; font-weight: 600; font-size: 16px;">Player 1 <span style="color: #3fe6ff;">(you)</span></span>
+              <label for="t1" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);">Player 1 team</label>
+              <select id="t1" style="width: 130px; height: 38px; padding: 0 10px; background: #0b1826; color: #eafbff; border: 1px solid rgba(63,230,255,0.5); font-family: 'Exo 2', sans-serif; font-size: 14px;"><option>Team 1</option><option>Team 2</option></select>
+            </li>
+            <li style="display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 14px; background: rgba(63,230,255,0.07); border-left: 4px solid #F0313F;">
+              <span style="width: 70px; font-weight: 600; font-size: 16px;">Bot1</span>
+              <label for="b1k" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);">Bot1 kind</label>
+              <select id="b1k" style="width: 90px; height: 38px; padding: 0 8px; background: #0b1826; color: #eafbff; border: 1px solid rgba(63,230,255,0.5); font-family: 'Exo 2', sans-serif; font-size: 14px;"><option>Bot</option><option>Human</option></select>
+              <label for="b1d" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);">Bot1 difficulty</label>
+              <select id="b1d" style="width: 110px; height: 38px; padding: 0 8px; background: #0b1826; color: #eafbff; border: 1px solid rgba(63,230,255,0.5); font-family: 'Exo 2', sans-serif; font-size: 14px;"><option>Normal</option><option>Easy</option><option>Hard</option></select>
+              <label for="b1t" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);">Bot1 team</label>
+              <select id="b1t" style="flex: 1; min-width: 0; height: 38px; padding: 0 8px; background: #0b1826; color: #eafbff; border: 1px solid rgba(63,230,255,0.5); font-family: 'Exo 2', sans-serif; font-size: 14px;"><option>Team 2</option><option>Team 1</option></select>
+            </li>
+            <li style="display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 14px; background: rgba(255,255,255,0.03); border-left: 4px dashed #5d7185;">
+              <span style="width: 70px; font-size: 16px; color: #a9bfce;">Open</span>
+              <label for="o1k" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);">Slot 3 kind</label>
+              <select id="o1k" style="width: 90px; height: 38px; padding: 0 8px; background: #0b1826; color: #eafbff; border: 1px solid rgba(63,230,255,0.5); font-family: 'Exo 2', sans-serif; font-size: 14px;"><option>Human</option><option>Bot</option></select>
+              <label for="o1t" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);">Slot 3 team</label>
+              <select id="o1t" style="flex: 1; min-width: 0; height: 38px; padding: 0 8px; background: #0b1826; color: #eafbff; border: 1px solid rgba(63,230,255,0.5); font-family: 'Exo 2', sans-serif; font-size: 14px;"><option>Team 1</option><option>Team 2</option></select>
+            </li>
+            <li style="display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 14px; background: rgba(255,255,255,0.03); border-left: 4px dashed #5d7185;">
+              <span style="width: 70px; font-size: 16px; color: #a9bfce;">Open</span>
+              <label for="o2k" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);">Slot 4 kind</label>
+              <select id="o2k" style="width: 90px; height: 38px; padding: 0 8px; background: #0b1826; color: #eafbff; border: 1px solid rgba(63,230,255,0.5); font-family: 'Exo 2', sans-serif; font-size: 14px;"><option>Human</option><option>Bot</option></select>
+              <label for="o2t" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);">Slot 4 team</label>
+              <select id="o2t" style="flex: 1; min-width: 0; height: 38px; padding: 0 8px; background: #0b1826; color: #eafbff; border: 1px solid rgba(63,230,255,0.5); font-family: 'Exo 2', sans-serif; font-size: 14px;"><option>Team 2</option><option>Team 1</option></select>
+            </li>
+          </ul>
+          <div style="flex: 1;"></div>
+          <button style="height: 68px; border: 0; cursor: pointer; clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px); background: linear-gradient(90deg, #3fe6ff, #1fa9d6); color: #04101a; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 20px; letter-spacing: 0.22em; text-transform: uppercase;">Create room</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":810}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
