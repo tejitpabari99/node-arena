@@ -54,7 +54,6 @@ export function Lobby({code,lobby,seat,host,conn,error,nick,seatColors,draining=
       <button class="text-button" data-testid="copy-watch-link" onClick={()=>onCopy?.(links.watch)}>Copy watch link</button>
     </div>}
     {lobby&&draft&&<RoomForm live={{lobby,seat,editable:host,colors:seatColors}} nick={nick} draft={draft} maps={maps} thumbs={thumbs}
-      onNick={()=>{}} onCreate={()=>{}}
       onType={(t:RoomType)=>apply((d,m)=>setType(d,t,m))} onMap={id=>{const m=maps.find(x=>x.id===id);if(m)apply(d=>setMap(d,m));}}
       onPlayers={n=>apply((d,m)=>setPlayers(d,n,m))} onTeams={n=>apply((d,m)=>setTeams(d,n,m))} onRow={(i:number,p:Partial<DraftRow>)=>apply((d,m)=>setRow(d,i,p,m))}/>}
     {toast&&<Toast message={toast} testId="toast-moved"/>}

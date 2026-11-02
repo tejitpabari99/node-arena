@@ -15,6 +15,7 @@ import type { ServerContent } from './content.js';
 export const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 export const CODE_LENGTH = 4;
 export const COUNTDOWN_MS = 3000;
+/** Cap for new watchers only: players displaced by a lobby edit always become spectators, so the count may exceed it (bounded by the room's seat count). */
 export const MAX_SPECTATORS = 8;
 export const ENDED_ROOM_TTL_MS = 10 * 60_000;
 /** A lobby whose seated humans have no open socket is dropped after this (>= the 30 s seat reserve, SP07). */

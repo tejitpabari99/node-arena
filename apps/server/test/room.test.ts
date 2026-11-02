@@ -574,3 +574,17 @@ test('covers review-2: player moved to spectators while away can reconnect and i
   for (const p of env.pending.filter((x) => x.ms === 30_000)) p.fn(); // reserve fires: rebound player stays
   assert.equal(a.last('lobby.state')!.spectators, 1);
 });
+
+test('covers review-5: displaced players become spectators even past MAX_SPECTATORS; new watchers are still refused', () => {
+  const { a, b, edit, client, levelId } = lobby2();
+  const cd = code(a);
+  for (let i = 0; i < 8; i++) client(`W${i}`).say({ t: 'room.join', code: cd, role: 'watch' });
+  assert.equal(a.last('lobby.state')!.spectators, 8);
+  edit([seatsOf(a)[0]!, { kind: 'bot', team: 1, difficulty: 'easy' }]);
+  assert.equal(a.last('lobby.state')!.spectators, 9);
+  assert.deepEqual(b.last('room.joined')!.you, { seat: null, host: false });
+  const late = client('Late');
+  late.say({ t: 'room.join', code: cd, role: 'watch' });
+  assert.equal(late.last('error')!.code, 'spectators-full');
+  assert.ok(levelId);
+});

@@ -19,6 +19,9 @@ export function PvpLayer({pvp,thumbs}:{pvp:PvpController;thumbs?:LevelThumbnailS
   useLayoutEffect(()=>pvp.subscribe(()=>setS(pvp.snapshot())),[pvp]);
   const [hint,setHint]=useState<TypeHint|null>(null),[moved,setMoved]=useState<string|null>(null),prevLobby=useRef<LobbyStateMsg|null>(null);
   useEffect(()=>{if(s.screen!=='lobby'){setHint(null);prevLobby.current=null;}},[s.screen,s.code]);
+  // Host's Team/PvP choice from the create form survives room creation (the lobby alone cannot tell 2 distinct teams from PvP). Same-map guard avoids applying a stale draft.
+  const cd=s.createDraft,lv=s.lobby;
+  useEffect(()=>{if(s.screen==='lobby'&&s.host&&cd&&lv&&cd.mapId===lv.levelId)setHint(h=>h??{type:cd.type,teams:cd.teams});},[s.screen,s.code,s.host,cd,lv?.levelId]);
   useEffect(()=>{
     const cur=s.screen==='lobby'?s.lobby:null,n=cur?movedToSpectators(prevLobby.current,cur):0;
     prevLobby.current=cur;

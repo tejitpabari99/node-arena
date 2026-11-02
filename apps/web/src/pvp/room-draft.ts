@@ -85,7 +85,8 @@ const isDifficulty = (x: unknown): x is Difficulty => x === 'easy' || x === 'nor
 export function seatsToDraft(lobby: { levelId: string; seats: readonly SeatConfig[] }, map: PvpMapInfo): CreateDraft {
   const type = deriveType(lobby.seats);
   const rows: DraftRow[] = lobby.seats.map((s) => ({ kind: s.kind === 'bot' ? 'bot' : 'human', difficulty: isDifficulty(s.difficulty) ? s.difficulty : 'normal', team: s.team }));
-  const teams = type === 'team' ? new Set(lobby.seats.map((s) => s.team)).size : MIN_TEAMS;
+  // max id + 1 (not distinct count) so non-dense ids like [0,2,2] are preserved instead of renumbered by clamp.
+  const teams = type === 'team' ? Math.max(...lobby.seats.map((s) => s.team)) + 1 : MIN_TEAMS;
   return clampDraft({ type, mapId: lobby.levelId, players: rows.length, teams, rows }, map);
 }
 

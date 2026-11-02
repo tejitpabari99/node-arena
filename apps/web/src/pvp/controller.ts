@@ -426,6 +426,7 @@ export function createPvpController(options: PvpOptions) {
     /** Persists the sanitized nick on every call; keeps the raw draft (spaces intact) for the form. */
     setNick(nick: string) { publish({ nick: options.identity.setNick(nick), nickDraft: nick.slice(0, NICK_MAX) }); },
     /** Bare create (server defaults); the guided flow uses createRoom(). */
+    /** test-only: bare create with server defaults (test-harness/index.ts, unit test); the UI uses createRoom(). */
     create() { if (state.screen === 'menu') connect({ t: 'room.create' }); },
     /** Create with the form's map + seats (room.create{levelId, seats}). */
     createRoom() {
@@ -453,6 +454,7 @@ export function createPvpController(options: PvpOptions) {
     draftTeams(n: number) { editDraft((d, m) => setTeams(d, n, m)); },
     draftRow(index: number, patch: Partial<DraftRow>) { editDraft((d, m) => setRow(d, index, patch, m)); },
     join(code: string, role: PvpRole = 'play') { if (state.screen === 'menu') connect({ t: 'room.join', code: code.trim().toUpperCase(), role }); },
+    /** test-only: join as spectator by code (test-harness/index.ts, unit test); the UI uses join(code, 'watch'). */
     watch(code: string) { api.join(code, 'watch'); },
     openLink(link: RoomLink | null) {
       // A play-link supplies its own handshake action; do not replace it with the reload probe.

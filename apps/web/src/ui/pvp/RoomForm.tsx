@@ -10,7 +10,8 @@ export interface LiveRoom { lobby:LobbyStateMsg; seat:number|null; editable:bool
 export interface RoomFormProps {
   live?:LiveRoom;
   nick:string; draft:CreateDraft; maps:readonly PvpMapInfo[]; thumbs?:LevelThumbnailService|undefined; unavailable?:boolean;
-  onNick(v:string):void; onType(t:RoomType):void; onMap(id:string):void; onPlayers(n:number):void; onTeams(n:number):void; onRow(i:number,patch:Partial<DraftRow>):void; onCreate():void;
+  /** Pre-room only (live rooms show a read-only nickname). */
+  onNick?(v:string):void; onType(t:RoomType):void; onMap(id:string):void; onPlayers(n:number):void; onTeams(n:number):void; onRow(i:number,patch:Partial<DraftRow>):void; onCreate?():void;
 }
 function Stepper({id,label,value,min,max,onChange,readOnly=false,minusLocked=false}:{id:string;label:string;value:number;min:number;max:number;onChange(n:number):void;readOnly?:boolean;minusLocked?:boolean}){
   return <div class="pvp-field pvp-stepper" role="group" aria-label={label}><span>{label}</span>
@@ -25,8 +26,8 @@ export function RoomForm({live,nick,draft,maps,thumbs,unavailable=false,onNick,o
     {Array.from({length:draft.teams},(_,t)=><option key={t} value={String(t)}>{`Team ${t+1}`}</option>)}</select>;
   const ro=!!live&&!live.editable,lseats=live?.lobby.seats??[],locked=!!live&&lastRowHeld(lseats);
   const ok=!unavailable&&nickValid(nick)&&canCreate(draft);
-  return <form class="pvp-form room-form" onSubmit={e=>{e.preventDefault();if(ok)onCreate();}}>
-    {live?<p class="pvp-field" data-testid="pvp-nick-label"><span>Nickname</span><strong>{nick}</strong></p>:NickField({nick,onNick})}
+  return <form class="pvp-form room-form" onSubmit={e=>{e.preventDefault();if(ok)onCreate?.();}}>
+    {live?<p class="pvp-field" data-testid="pvp-nick-label"><span>Nickname</span><strong>{nick}</strong></p>:NickField({nick,onNick:onNick??(()=>{})})}
     <div class="pvp-field"><span>Type</span><div class="type-tiles">
       <button type="button" class="level-card menu-button" data-testid="type-pvp" disabled={ro} aria-pressed={!team} onClick={()=>onType('pvp')}><span>PvP</span></button>
       <button type="button" class="level-card menu-button" data-testid="type-team" disabled={ro} aria-pressed={team} onClick={()=>onType('team')}><span>Team</span></button>

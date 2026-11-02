@@ -43,6 +43,12 @@ describe('draft helpers', () => {
     const d = setPlayers(setType(newDraft([crossT])!, 'team', crossT), 4, crossT);
     expect(d.rows.map((r) => r.team)).toEqual([0, 0, 1, 1]);
   });
+  it('seatsToDraft preserves non-dense team ids', () => {
+    const d = seatsToDraft({ levelId: 'cross', seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 2 }, { kind: 'human', team: 2 }] }, cross);
+    expect(d.type).toBe('team');
+    expect(d.rows.map((r) => r.team)).toEqual([0, 2, 2]);
+    expect(draftToSeats(d, cross).map((s) => s.team)).toEqual([0, 2, 2]);
+  });
   it('team assignment: round-robin vs identity; host stays human', () => {
     expect([0, 1, 2, 3].map((i) => defaultTeam(i, 'team', 2))).toEqual([0, 1, 0, 1]);
     expect([0, 1, 2].map((i) => defaultTeam(i, 'pvp', 2))).toEqual([0, 1, 2]);
