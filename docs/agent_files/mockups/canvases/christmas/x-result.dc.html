@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Christmas victory</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Playfair+Display:ital,wght@0,600;1,500&family=Nunito+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+@keyframes snowfall{from{background-position:0 0,0 0}to{background-position:60px 400px,-40px 300px}}
+@keyframes twinkle{0%,100%{opacity:1}50%{opacity:.55}}
+</style>
+</helmet>
+<div style="width: 1440px; height: 810px; position: relative; overflow: hidden; background: #12304a; font-family: 'Nunito Sans', sans-serif; color: #f4f8fd;">
+  <img src="/_blob/a24f171aecdf3080771b341a5ddf62ea" alt="" style="position:absolute;left:0;top:0;width:1440px;height:810px;">
+  <div style="position:absolute;inset:0;background:rgba(14,22,44,0.68);"></div>
+  <div aria-hidden="true" style="position:absolute;inset:0;background-image:radial-gradient(circle,rgba(244,248,253,0.85) 1.6px,transparent 2.4px),radial-gradient(circle,rgba(244,248,253,0.55) 1.2px,transparent 2px);background-size:140px 130px,90px 110px;animation:snowfall 30s linear infinite;opacity:0.6;"></div>
+
+  <div role="dialog" aria-label="Victory" style="position:absolute;left:430px;top:130px;width:580px;height:560px;">
+    <!-- snow cap -->
+    <div aria-hidden="true" style="position:absolute;left:30px;right:30px;top:-16px;height:26px;background:#f4f8fd;border-radius:26px 26px 8px 8px;box-shadow:inset 0 -6px 0 #c3d4e8;z-index:3;"></div>
+    <div aria-hidden="true" style="position:absolute;left:90px;top:-30px;width:70px;height:26px;background:#f4f8fd;border-radius:26px 26px 0 0;z-index:3;"></div>
+    <div aria-hidden="true" style="position:absolute;right:120px;top:-26px;width:90px;height:22px;background:#f4f8fd;border-radius:22px 22px 0 0;z-index:3;"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,#1b4a35,#0e2a22);border:4px solid #f0be45;border-radius:10px;box-shadow:0 0 0 3px #7a5410,0 24px 60px rgba(0,0,0,0.65);"></div>
+    <div style="position:absolute;left:12px;top:12px;right:12px;bottom:12px;border:1px solid rgba(240,190,69,0.45);border-radius:6px;"></div>
+    <!-- string lights across popup top -->
+    <div aria-hidden="true" style="position:absolute;left:16px;top:14px;width:548px;height:20px;overflow:hidden;background:radial-gradient(circle at 20px 8px,#ff4b4b 4px,transparent 5px),radial-gradient(circle at 60px 11px,#62f28f 4px,transparent 5px),radial-gradient(circle at 100px 8px,#ffe27a 4px,transparent 5px),radial-gradient(circle at 140px 11px,#5db8ff 4px,transparent 5px);background-size:160px 20px;animation:twinkle 3s ease-in-out infinite;z-index:2;"></div>
+
+    <div style="position:absolute;left:0;top:56px;width:580px;text-align:center;z-index:2;">
+      <svg aria-hidden="true" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#f0be45" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.7 6.7 19.6l1.1-6L3.4 9.4l6-.8z" fill="rgba(240,190,69,0.2)"/></svg>
+      <h2 style="margin:6px 0 0;font-family:'Cinzel Decorative',serif;font-weight:900;font-size:58px;letter-spacing:4px;line-height:1.1;color:#f0be45;text-shadow:0 3px 0 #7a5410,0 6px 16px rgba(0,0,0,0.5);">Victory</h2>
+      <div style="margin-top:6px;font-family:'Playfair Display',serif;font-style:italic;font-size:20px;color:#f4f8fd;">The village is yours</div>
+    </div>
+
+    <!-- stats -->
+    <div style="position:absolute;left:60px;top:292px;width:460px;z-index:2;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:12px 4px;border-bottom:2px dotted rgba(240,190,69,0.55);">
+        <span style="font-weight:800;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#c3d4e8;">Time</span>
+        <span style="font-family:'Playfair Display',serif;font-weight:600;font-size:26px;color:#fff8ee;">[TIME]</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:12px 4px;border-bottom:2px dotted rgba(240,190,69,0.55);">
+        <span style="font-weight:800;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#c3d4e8;">Units sent</span>
+        <span style="font-family:'Playfair Display',serif;font-weight:600;font-size:26px;color:#fff8ee;">[UNITS SENT]</span>
+      </div>
+    </div>
+
+    <!-- buttons -->
+    <div style="position:absolute;left:60px;top:430px;width:460px;z-index:2;display:flex;flex-direction:column;gap:14px;">
+      <button type="button" style="position:relative;height:60px;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:14px;font-family:'Cinzel Decorative',serif;font-weight:700;font-size:22px;letter-spacing:3px;color:#fff8ee;background:linear-gradient(180deg,#e0454c,#a8242c);border:3px solid #f0be45;border-radius:4px;box-shadow:0 0 0 2px #7a5410,0 8px 18px rgba(0,0,0,0.45),inset 0 2px 0 rgba(255,255,255,0.25);overflow:hidden;">
+        <span aria-hidden="true" style="position:absolute;left:0;top:0;bottom:0;width:12px;background:repeating-linear-gradient(45deg,#fff8ee 0 6px,#d8343c 6px 12px);"></span>
+        <span>Next</span>
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f0be45" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <div style="display:flex;gap:14px;">
+        <button type="button" style="flex:1;height:52px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Cinzel Decorative',serif;font-weight:700;font-size:17px;letter-spacing:2px;color:#fff8ee;background:linear-gradient(180deg,#2e6b46,#173f2b);border:2px solid #f0be45;border-radius:4px;box-shadow:inset 0 2px 0 rgba(255,255,255,0.18);">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0be45" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 108-8H7M7 1l-3 3 3 3"/></svg>
+          <span>Replay</span>
+        </button>
+        <button type="button" style="flex:1;height:52px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Cinzel Decorative',serif;font-weight:700;font-size:17px;letter-spacing:2px;color:#fff8ee;background:linear-gradient(180deg,#24467a,#14284a);border:2px solid #f0be45;border-radius:4px;box-shadow:inset 0 2px 0 rgba(255,255,255,0.18);">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0be45" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7M6 10v10h12V10"/></svg>
+          <span>Menu</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":810}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

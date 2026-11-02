@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Future battle A</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 810px; position: relative; overflow: hidden; background: #070d17; font-family: 'Exo 2', sans-serif; color: #eafbff;">
+  <img src="/_blob/8486c76dd5f124ae562a87e9219686ad" alt="Tech deck battle map" style="position: absolute; left: 0; top: 0; width: 1440px; height: 810px; object-fit: cover;">
+
+  <button aria-label="Pause" style="position: absolute; left: 28px; top: 26px; width: 44px; height: 44px; padding: 0; border: 1px solid rgba(63,230,255,0.6); background: rgba(7,13,23,0.72); backdrop-filter: blur(6px); clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3fe6ff" stroke-width="2.2" stroke-linecap="round"><path d="M8 5v14M16 5v14"/></svg>
+  </button>
+  <button aria-label="Zoom" style="position: absolute; left: 28px; top: 85px; width: 44px; height: 44px; padding: 0; border: 1px solid rgba(63,230,255,0.6); background: rgba(7,13,23,0.72); backdrop-filter: blur(6px); clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3fe6ff" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21M10.5 8v5M8 10.5h5"/></svg>
+  </button>
+  <button aria-label="Sound on" style="position: absolute; left: 1371px; top: 19px; width: 44px; height: 44px; padding: 0; border: 1px solid rgba(63,230,255,0.6); background: rgba(7,13,23,0.72); backdrop-filter: blur(6px); clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3fe6ff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+  </button>
+
+  <div role="img" aria-label="Territory ownership: blue 34, red 22, green 18, yellow 14, gray 12 percent" style="position: absolute; left: 497px; top: 18px; width: 446px; height: 44px; background: linear-gradient(90deg, #3fe6ff, rgba(63,230,255,0.15) 15%, rgba(63,230,255,0.15) 85%, #3fe6ff); padding: 1px; box-sizing: border-box; clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);">
+    <div style="width: 100%; height: 100%; background: rgba(7,13,23,0.82); clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 13px, 100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%, 0 calc(100% - 13px), 0 13px); display: flex; align-items: center; justify-content: center;">
+      <div style="width: 430px; height: 36px; display: flex; gap: 2px; margin-left: 0;">
+        <div style="width: 34%; background: #2E8BFF; color: #04101a; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;">34</div>
+        <div style="width: 22%; background: #F0313F; color: #04101a; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;">22</div>
+        <div style="width: 18%; background: #35B84A; color: #04101a; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;">18</div>
+        <div style="width: 14%; background: #FDC534; color: #04101a; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;">14</div>
+        <div style="width: 12%; background: #8C8C8C; color: #04101a; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;">12</div>
+      </div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 520px; width: 400px; top: 68px; text-align: center;">
+    <span style="display: inline-block; padding: 4px 18px; background: rgba(7,13,23,0.7); border-bottom: 1px solid #3fe6ff; font-family: 'Orbitron', sans-serif; font-weight: 500; font-size: 13px; letter-spacing: 0.3em; color: #eafbff; text-transform: uppercase;">Level 4</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":810}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
