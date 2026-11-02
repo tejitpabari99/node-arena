@@ -1,0 +1,189 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-01T20:00:00Z"
+ },
+ "title": "Node Arena Re-art and Model Sets",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "r1-grass": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 810,
+   "title": "Re-art V1 \u00b7 Painted miniature \u2014 Grass"
+  },
+  "r1-snow": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 810,
+   "title": "Re-art V1 \u00b7 Painted miniature \u2014 Snow"
+  },
+  "r2-grass": {
+   "x": 0,
+   "y": 1230,
+   "w": 1440,
+   "h": 810,
+   "title": "Re-art V2 \u00b7 Stylized toon \u2014 Grass"
+  },
+  "r2-snow": {
+   "x": 1520,
+   "y": 1230,
+   "w": 1440,
+   "h": 810,
+   "title": "Re-art V2 \u00b7 Stylized toon \u2014 Snow"
+  },
+  "r3-grass": {
+   "x": 0,
+   "y": 2460,
+   "w": 1440,
+   "h": 810,
+   "title": "Re-art V3 \u00b7 Realistic-lite \u2014 Grass"
+  },
+  "r3-snow": {
+   "x": 1520,
+   "y": 2460,
+   "w": 1440,
+   "h": 810,
+   "title": "Re-art V3 \u00b7 Realistic-lite \u2014 Snow"
+  },
+  "r4-grass": {
+   "x": 0,
+   "y": 3690,
+   "w": 1440,
+   "h": 810,
+   "title": "Re-art V4 \u00b7 Clay + team accents \u2014 Grass"
+  },
+  "r4-snow": {
+   "x": 1520,
+   "y": 3690,
+   "w": 1440,
+   "h": 810,
+   "title": "Re-art V4 \u00b7 Clay + team accents \u2014 Snow"
+  },
+  "m-a-grass": {
+   "x": 0,
+   "y": 4920,
+   "w": 1440,
+   "h": 810,
+   "title": "Model set A \u00b7 Modern Outpost \u2014 Grass"
+  },
+  "m-a-snow": {
+   "x": 1520,
+   "y": 4920,
+   "w": 1440,
+   "h": 810,
+   "title": "Model set A \u00b7 Modern Outpost \u2014 Snow"
+  },
+  "m-a-lineup": {
+   "x": 3040,
+   "y": 4920,
+   "w": 1440,
+   "h": 810,
+   "title": "Model set A \u00b7 Building stages"
+  },
+  "m-a-units": {
+   "x": 4560,
+   "y": 4920,
+   "w": 1440,
+   "h": 810,
+   "title": "Model set A \u00b7 Units"
+  },
+  "m-b-grass": {
+   "x": 0,
+   "y": 6150,
+   "w": 1440,
+   "h": 810,
+   "title": "Model set B \u00b7 Frontier Stronghold \u2014 Grass"
+  },
+  "m-b-snow": {
+   "x": 1520,
+   "y": 6150,
+   "w": 1440,
+   "h": 810,
+   "title": "Model set B \u00b7 Frontier Stronghold \u2014 Snow"
+  },
+  "m-b-lineup": {
+   "x": 3040,
+   "y": 6150,
+   "w": 1440,
+   "h": 810,
+   "title": "Model set B \u00b7 Building stages"
+  },
+  "m-b-units": {
+   "x": 4560,
+   "y": 6150,
+   "w": 1440,
+   "h": 810,
+   "title": "Model set B \u00b7 Units"
+  }
+ },
+ "order": [
+  "r1-grass",
+  "r1-snow",
+  "r2-grass",
+  "r2-snow",
+  "r3-grass",
+  "r3-snow",
+  "r4-grass",
+  "r4-snow",
+  "m-a-grass",
+  "m-a-snow",
+  "m-a-lineup",
+  "m-a-units",
+  "m-b-grass",
+  "m-b-snow",
+  "m-b-lineup",
+  "m-b-units"
+ ],
+ "notes": {
+  "reart": {
+   "x": 0,
+   "y": -300,
+   "text": "Re-art (real 3D renders, not applied) \u2014 V1 Painted miniature",
+   "kind": "title1",
+   "maxW": 2960
+  },
+  "reart2": {
+   "x": 0,
+   "y": 930,
+   "text": "V2 Stylized toon (outlines)",
+   "kind": "title1",
+   "maxW": 2960
+  },
+  "reart3": {
+   "x": 0,
+   "y": 2160,
+   "text": "V3 Realistic-lite",
+   "kind": "title1",
+   "maxW": 2960
+  },
+  "reart4": {
+   "x": 0,
+   "y": 3390,
+   "text": "V4 Clay + team accents",
+   "kind": "title1",
+   "maxW": 2960
+  },
+  "modelA": {
+   "x": 0,
+   "y": 4620,
+   "text": "New models A \u00b7 Modern Outpost (procedural concept, not applied)",
+   "kind": "title1",
+   "maxW": 6000
+  },
+  "modelB": {
+   "x": 0,
+   "y": 5850,
+   "text": "New models B \u00b7 Frontier Stronghold (procedural concept, not applied)",
+   "kind": "title1",
+   "maxW": 6000
+  }
+ },
+ "designSystems": []
+}
