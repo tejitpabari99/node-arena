@@ -40,8 +40,15 @@ describe('draft helpers', () => {
     expect([0, 1, 2, 3].map((i) => defaultTeam(i, 'team', 2, crossT))).toEqual([0, 0, 1, 1]);
     expect([0, 1, 2, 3].map((i) => defaultTeam(i, 'team', 3, crossT))).toEqual([0, 1, 2, 0]); // count mismatch: round-robin
     expect([0, 1, 2, 3].map((i) => defaultTeam(i, 'team', 2, cross))).toEqual([0, 1, 0, 1]); // identity-authored map: round-robin
-    const d = setPlayers(setType(newDraft([crossT])!, 'team', crossT), 4, crossT);
+    const d = setType(setPlayers(newDraft([crossT])!, 4, crossT), 'team', crossT);
     expect(d.rows.map((r) => r.team)).toEqual([0, 0, 1, 1]);
+  });
+  it('Team default with fewer players than the map uses authored teams only if the used slice has `teams` distinct ids', () => {
+    const crossT: PvpMapInfo = { ...cross, teams: [0, 0, 1, 1] };
+    const mk = (players: number) => setType(setPlayers(newDraft([crossT])!, players, crossT), 'team', crossT);
+    expect(mk(2).rows.map((r) => r.team)).toEqual([0, 1]);
+    expect(canCreate(mk(2))).toBe(true);
+    expect(mk(4).rows.map((r) => r.team)).toEqual([0, 0, 1, 1]);
   });
   it('seatsToDraft preserves non-dense team ids', () => {
     const d = seatsToDraft({ levelId: 'cross', seats: [{ kind: 'human', team: 0 }, { kind: 'human', team: 2 }, { kind: 'human', team: 2 }] }, cross);
