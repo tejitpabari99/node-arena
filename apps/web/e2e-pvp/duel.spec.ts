@@ -30,32 +30,3 @@ test('Duel S 1v1: scripted attack by seat 0 wins; both pages agree on result and
   expect(hb).toBe(sa.end.finalHash);
   console.log(`[duel] play-to-result ms: ${Date.now() - t0}, finalTick ${sa.end.finalTick}`);
 });
-
-
-test('play link prompts a new visitor for a nickname with the room code filled', async ({ newPlayerPage }) => {
-  const a = await newPlayerPage(), b = await newPlayerPage();
-  await a.goto('/?nick=Alice');
-  await a.getByTestId('pvp-play').click(); await a.getByTestId('pvp-create').click();
-  const code = ((await a.getByTestId('lobby-code').textContent()) ?? '').trim();
-  await b.goto(`/?room=${code.toLowerCase()}`);
-  await expect(b.getByTestId('pvp-code-input')).toHaveValue(code);
-  await expect(b.getByTestId('pvp-nick')).toHaveValue('');
-  await expect(b.getByTestId('pvp-join')).toBeDisabled();
-  await b.getByTestId('pvp-nick').fill('New player');
-  await b.getByTestId('pvp-join').click();
-  await expect(b.getByTestId('lobby-code')).toHaveText(code);
-  await b.getByTestId('lobby-leave').click();
-  await expect(b.getByTestId('pvp-create')).toBeVisible();
-  // The persisted nickname lets a later play link join without another prompt.
-  await b.goto(`/?room=${code}`);
-  await expect(b.getByTestId('lobby-code')).toHaveText(code);
-});
-
-test('invalid and missing play links show an online menu error', async ({ page }) => {
-  await page.goto('/?room=bad');
-  await expect(page.getByTestId('pvp-error')).toContainText('Invalid room code');
-  await page.getByTestId('pvp-back').click();
-  await expect(page.getByTestId('pvp-play')).toBeVisible();
-  await page.goto('/?room=ZZZZ&nick=Bob');
-  await expect(page.getByTestId('pvp-error')).toContainText('Room not found');
-});

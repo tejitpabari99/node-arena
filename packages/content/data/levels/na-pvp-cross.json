@@ -20,16 +20,16 @@
       "team": 0
     },
     {
-      "id": "p2",
-      "kind": "human",
-      "colorKey": "red",
-      "team": 1
-    },
-    {
       "id": "p3",
       "kind": "human",
       "colorKey": "green",
       "team": 0
+    },
+    {
+      "id": "p2",
+      "kind": "human",
+      "colorKey": "red",
+      "team": 1
     },
     {
       "id": "p4",

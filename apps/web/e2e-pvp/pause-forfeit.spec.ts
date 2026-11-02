@@ -67,7 +67,7 @@ test('Quit asks to confirm: No keeps playing, Yes forfeits (opponent wins, same 
 // Replaces the M1 "reload exposes sync loss" spec: M2 reconnects a reloaded client and catches it up.
 test('reload mid-match: disconnect hold, catch-up, auto-resume, same hash on both sides', async ({ newPlayerPage }) => {
   test.setTimeout(120_000);
-  const { a, b } = await openMatch(newPlayerPage);
+  const { a, b, code } = await openMatch(newPlayerPage);
   await started(a); await started(b);
   const matchId = await b.evaluate(() => (window as any).__na.pvp.state().start.matchId);
   const sentTypes: string[] = [];
@@ -78,7 +78,8 @@ test('reload mid-match: disconnect hold, catch-up, auto-resume, same hash on bot
     if (++manifestRequests === 1) await new Promise((r) => setTimeout(r, 1500));
     await route.continue();
   });
-  await b.reload();
+  // A reload keeps the play link only for deep-link joiners; menu joiners reload to the home menu, so re-enter via the link.
+  await b.goto(`/?room=${code}`);
   await expect(a.getByTestId('pvp-pause-hold-1')).toBeVisible({ timeout: 15_000 });
   await expect.poll(() => b.evaluate(() => (window as any).__na?.pvp.state().start?.matchId), { timeout: 30_000 }).toBe(matchId);
   for (const p of [a, b]) await expect(p.getByTestId('pvp-pause-overlay')).toHaveCount(0, { timeout: 30_000 });

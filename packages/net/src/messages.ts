@@ -28,7 +28,8 @@ export type { EndOutcome } from './outcome.js';
 
 // Client -> Server
 export type HelloMsg = { t: 'hello'; pv: number; versions: Versions; nick: string; token: string; auth?: string };
-export type RoomCreateMsg = { t: 'room.create' };
+/** `levelId` + `seats` are both present or both absent (absent = server defaults). */
+export type RoomCreateMsg = { t: 'room.create'; levelId?: string; seats?: SeatConfig[] };
 export type RoomJoinMsg = { t: 'room.join'; code: string; role: 'play' | 'watch' };
 export type RoomLeaveMsg = { t: 'room.leave' };
 export type LobbyUpdateMsg = { t: 'lobby.update'; levelId: string; seats: SeatConfig[] };

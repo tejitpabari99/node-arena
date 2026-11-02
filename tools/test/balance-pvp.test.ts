@@ -44,7 +44,25 @@ test('pvp Cross smoke: FFA and 2v2 variants terminate, 0 rejected, deterministic
     assert.equal(a.truncated, 0, `${name}: must terminate`);
     assert.equal(a.rejected, 0, `${name}: rejected`);
     assert.deepEqual(a.hashes, b.hashes, `${name}: rerun hash mismatch`);
-    // Seat-order bias is report-only (see `pnpm balance --mode pvp`): measured FFA seat 2 = 100% and 2v2 [0,0,1,1] team {0,1} = 100% at delay 2000 (owner/bot-tuning follow-up). Bound asserted only for the default teams.
-    if (name === '2v2 0101') for (const [seat, share] of a.seatShares.entries()) if (share !== null) assert.ok(share >= 20 && share <= 80, `${name} seat ${seat} share ${share}%`);
+    // Seat-order bias is report-only (see `pnpm balance --mode pvp`) except for the authored default teams. Cross slots are ordered p1,p3,p2,p4 (SP02: first-N prefix) with authored teams [0,0,1,1] = p1+p3 vs p2+p4 (opposite corners, the pre-reorder default pairing).
+    if (name === '2v2 0011') for (const [seat, share] of a.seatShares.entries()) if (share !== null) assert.ok(share >= 20 && share <= 80, `${name} seat ${seat} share ${share}%`);
   }
+});
+
+// R-SEA-01 n<N: a 3-seat Cross match (slot 3 home neutral) must end; report-only, no seat-share bound.
+test('covers R-SEA-01: pvp Cross 3-seat (identity teams) terminates within the time cap, 0 rejected, deterministic', () => {
+  const level = loadContent(data).compiled['na-pvp-cross']!;
+  const teams = [0, 1, 2];
+  const run: PlayPvp = (l, seed, ad, max) => {
+    const controllers = l.players.slice(0, teams.length).map((_, seat) => proxyController(l, seed, seat, ad));
+    const r = runMatch({ level: l, seed, maxTicks: max, controllers, record: false, teams });
+    return { outcome: r.outcome.outcome, ticks: r.ticks, finalHash: r.stats.finalHash, winners: [...('winners' in r.outcome ? r.outcome.winners ?? [] : [])], rejected: r.stats.rejected };
+  };
+  const a = pvpFairness(level, 3, 10, [2000], run);
+  const b = pvpFairness(level, 3, 10, [2000], run);
+  assert.equal(a.runs, 10);
+  assert.equal(a.truncated, 0, '3-seat Cross must not stall past the time limit');
+  assert.equal(a.victory + a.timeLimit + a.draws, a.runs);
+  assert.equal(a.rejected, 0);
+  assert.deepEqual(a.hashes, b.hashes);
 });

@@ -2,6 +2,7 @@
 // `./internal` (`@node-arena/sim/internal`), a superset of this file for tests and SP04 seam work.
 export { TICK_RATE, idiv, mulDiv, isqrt, Sfc32, mixSeed, fnv1a32 } from './math.js';
 export { create, type Sim } from './sim.js';
+export { forSeats } from './seats.js';
 export { createReplayRecorder, playReplay, type ReplayMetadata, type ReplayJson, type ReplayRecord, type ReplaySource, type ReplayRecorder, type ReplayResult } from './replay.js';
 export type { Command, CommandId, RejectReason, SimEvent, EventOf } from '@node-arena/defs';
 export type { Outcome, Placement, SeatSetup } from './types.js';

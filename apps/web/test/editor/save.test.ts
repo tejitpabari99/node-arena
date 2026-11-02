@@ -260,7 +260,7 @@ it('saves pvp levels to pvp.json, never custom.json; objective and team retained
   const written = JSON.parse(await disk('na-pvp-cross')) as NextLevel;
   expect(written.buildings[0]!.level).toBe(edited.buildings[0]!.level);
   expect(written.objective).toBe('pvp');
-  expect(written.players.map(p => p.team)).toEqual([0, 1, 0, 1]);
+  expect(written.players.map(p => p.team)).toEqual([0, 0, 1, 1]);
   expect(await campaign().catch(() => null)).toBe(before);
   const list = JSON.parse(await readFile(join(dir, 'data/campaigns/pvp.json'), 'utf8')) as { entries: { level: string }[] };
   expect(list.entries.filter(e => e.level === 'na-pvp-cross')).toHaveLength(1);

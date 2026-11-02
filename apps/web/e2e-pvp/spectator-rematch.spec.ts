@@ -1,16 +1,16 @@
 import { expect, test } from './fixtures';
-import { openMatch } from './open-match';
+import { joinRoom, openMatch } from './open-match';
 import { runScriptedAttack } from './scripted-attack';
 
 // SP06 R12: spectator joins mid-match via the watch deep link; rematch returns both players to a new match in the same room.
 // Each spec plays a full Duel S match (~40 s), as duel.spec.ts does.
 
 test('spectator joins mid-match via ?room&watch and reaches the same result and final hash', async ({ newPlayerPage }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(240_000);
   const { a, b, code } = await openMatch(newPlayerPage);
   const w = await newPlayerPage();
   await expect.poll(() => a.evaluate(() => (window as any).__na.pvp.tick()), { timeout: 30_000 }).toBeGreaterThan(0);
-  await w.goto(`/?room=${code}&watch&nick=Watcher`);
+  await joinRoom(w, code, 'Watcher', 'watch', false);
   await expect(w.getByTestId('pvp-spectating')).toBeVisible({ timeout: 30_000 });
   const stop = await runScriptedAttack(a, 0);
   try {

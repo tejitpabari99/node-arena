@@ -67,3 +67,31 @@ test('auxiliary golden command-only logs coexist with recordings without running
   const result = run('replay:verify', dir, '--format', 'json');
   assert.equal(result.status, 0, result.stdout); assert.match(result.report.summary, /1 replays verified of 1/);
 });
+test('covers R-SEA-01: replay:verify passes an n<N Cross replay (header teams = n), fails when teams are stripped or padded', async t => {
+  const dir = await directory(t);
+  const files = await loadFiles(join(root, 'packages/content')); const loaded = loadContent(splitFiles(files).data);
+  const level = loaded.compiled['na-pvp-cross']!;
+  const metadata = JSON.parse(files['content.json'] as string);
+  const teams = [0, 1, 2];
+  assert.ok(teams.length < level.players.length);
+  const recorder = createReplayRecorder(level, 5, metadata, { teams });
+  for (let tick = 0; tick < 60; tick++) recorder.step(tick === 3 ? [{ type: 'DrawLine', player: 0, from: 0, to: 4 }] : []);
+  const replay = recorder.record();
+  assert.deepEqual(replay.header.teams, teams);
+  assert.ok(replay.commands.length >= 1);
+  const file = join(dir, 'cross3.replay.json');
+  await writeFile(file, JSON.stringify(replay));
+  const ok = run('replay:verify', file, '--format', 'json'); assert.equal(ok.status, 0, ok.stdout); assert.match(ok.report.summary, /1 replay/);
+  // Dropping teams replays as a full 4-seat default match: checkpoints diverge.
+  const { teams: _t, ...headerNoTeams } = replay.header;
+  await writeFile(file, JSON.stringify({ ...replay, header: headerNoTeams }));
+  assert.equal(run('replay:verify', file, '--format', 'json').status, 1);
+  // Padding to 4 teams is a different (full) match.
+  await writeFile(file, JSON.stringify({ ...replay, header: { ...replay.header, teams: [0, 1, 2, 3] } }));
+  assert.equal(run('replay:verify', file, '--format', 'json').status, 1);
+  // Header teams on a non-pvp level are rejected.
+  const campaign = createReplayRecorder(loaded.compiled['levelview-1']!, 1, metadata); campaign.step([]);
+  const rec = campaign.record();
+  await writeFile(file, JSON.stringify({ ...rec, header: { ...rec.header, teams: [0, 1] } }));
+  assert.equal(run('replay:verify', file, '--format', 'json').status, 1);
+});

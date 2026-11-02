@@ -4,6 +4,7 @@ import { TICK_RATE, idiv, isqrt, mulDiv } from './math.js';
 import { createCrossings, refreshCrossings } from './crossings.js';
 import { TroopRing } from './ring.js';
 import { createStreams } from './streams.js';
+import { forSeats } from './seats.js';
 import { IMPLS, MODULE_ORDER } from './modules/index.js';
 import type { Buildings, Channel, CompiledLevel, SeatSetup, SimState } from './types.js';
 
@@ -88,7 +89,15 @@ export function hostile(state: SimState | Int32Array, a: number, b: number): boo
   return team[a] !== team[b];
 }
 
-export function createState(level: CompiledLevel, seed: number, setup?: SeatSetup): SimState {
+/** A pvp setup with fewer teams than slots selects the first n slots (R-SEA-01); anything else is left to `resolveTeams` validation. */
+function reduceToSeats(level: CompiledLevel, setup: SeatSetup | undefined): CompiledLevel {
+  const t = (setup as { teams?: unknown } | undefined)?.teams;
+  if (level.objective !== 'pvp' || !Array.isArray(t) || t.length < 2 || t.length >= level.players.length) return level;
+  return forSeats(level, t.length);
+}
+
+export function createState(authored: CompiledLevel, seed: number, setup?: SeatSetup): SimState {
+  const level = reduceToSeats(authored, setup);
   const unitOf = validateLevel(level);
   const team = resolveTeams(level, setup);
   const n = level.buildings.length;

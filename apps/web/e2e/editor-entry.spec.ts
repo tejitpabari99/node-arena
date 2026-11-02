@@ -41,7 +41,7 @@ test('test-hooks build does not expose development Edit links', async ({ page })
   await expect(page.locator('.level-grid.campaign .level-card')).toHaveCount(20);
   await expect(page.getByRole('link', { name: /^Edit / })).toHaveCount(0);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await page.getByRole('button', { name: 'Custom', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Custom', exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: /^Edit / })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Create custom level' })).toHaveCount(0);
 });

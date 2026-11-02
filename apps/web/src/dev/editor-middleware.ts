@@ -2,7 +2,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { Connect, Plugin } from 'vite';
+import type { Connect, Plugin, ViteDevServer } from 'vite';
 import { ContentLoadError } from '@node-arena/content';
 import { duplicateEditorLevel, EditorSaveError, saveEditorLevel } from '../../../../tools/src/editor-ops.js';
 import { prepareEditorProxy, runEditorProxy, type EditorProxyRunner, type EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
@@ -99,7 +99,7 @@ const isEditorContentFile = (file: string) => /\/data\/levels\/[^/]+\.json$/.tes
 export function shouldSkipEditorHotUpdate(file: string, guard: { isEditorWrite(): boolean } = editorWrites): boolean {
   return guard.isEditorWrite() && isEditorContentFile(file);
 }
-export function createEditorMiddleware(levelsDir: string, options: { runProxy?: EditorProxyRunner; runFinalize?: EditorFinalizeRunner; runStatus?: typeof editorFinalizeStatus; jobs?: ReturnType<typeof createEditorJobGate>; writes?: ReturnType<typeof createEditorWriteGuard> } = {}): Connect.NextHandleFunction {
+export function createEditorMiddleware(levelsDir: string, options: { runProxy?: EditorProxyRunner; runFinalize?: EditorFinalizeRunner; runStatus?: typeof editorFinalizeStatus; jobs?: ReturnType<typeof createEditorJobGate>; writes?: ReturnType<typeof createEditorWriteGuard>; onContentWritten?: () => void } = {}): Connect.NextHandleFunction {
   let statusInFlight: { revision: number; promise: ReturnType<typeof editorFinalizeStatus> } | undefined;
   async function readLevel(id: string): Promise<{ id: string; name: string }> {
     const path = await editorLevelPath(levelsDir, id);
@@ -186,7 +186,7 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
           if (!value || typeof value.id !== 'string') throw new EditorHttpError(400, 'Duplicate requires an id');
           await editorLevelPath(levelsDir, value.id);
           const release = (options.jobs ?? editorJobs).acquireSave(), done = (options.writes ?? editorWrites).begin();
-          try { json(res, 200, await duplicateEditorLevel(resolve(levelsDir, '../..'), value.id)); }
+          try { const result = await duplicateEditorLevel(resolve(levelsDir, '../..'), value.id); options.onContentWritten?.(); json(res, 200, result); }
           finally { release(); done(); }
           return;
         }
@@ -197,7 +197,7 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
           if (!value || typeof value.id !== 'string' || (value.copy !== undefined && typeof value.copy !== 'boolean')) throw new EditorHttpError(400, 'Save requires an id, level and optional copy flag');
           await editorLevelPath(levelsDir, value.id, true);
           const release = (options.jobs ?? editorJobs).acquireSave(), done = (options.writes ?? editorWrites).begin();
-          try { json(res, 200, await saveEditorLevel(resolve(levelsDir, '../..'), value.id, value.level, value.copy === true)); }
+          try { const result = await saveEditorLevel(resolve(levelsDir, '../..'), value.id, value.level, value.copy === true); options.onContentWritten?.(); json(res, 200, result); }
           finally { release(); done(); }
           return;
         }
@@ -227,11 +227,28 @@ export function createEditorMiddleware(levelsDir: string, options: { runProxy?: 
   };
 }
 
+const isContentModule = (file: string) => /\/packages\/content\/data\/.+\.json$/.test(file.replaceAll('\\', '/')) || file.replaceAll('\\', '/').endsWith('/src/app/boot.ts');
+/**
+ * The editor writes content by atomic rename, after which the file watcher can stay blind to the new inode (no change event,
+ * so no invalidation, and the next page load serves a stale content glob/custom.json). Because hot updates for these writes are
+ * skipped, drop the cached transforms of the content JSON and of its eager-glob importer ourselves and re-attach the watches. No client message is sent.
+ */
+export function invalidateEditorContent(server: Pick<ViteDevServer, 'environments' | 'watcher'>): void {
+  for (const environment of Object.values(server.environments)) {
+    const graph = environment.moduleGraph, seen = new Set<unknown>();
+    for (const mod of [...graph.idToModuleMap.values()]) if (mod.file && isContentModule(mod.file)) {
+      graph.invalidateModule(mod, seen as Set<never>, Date.now(), false);
+      // Re-attach the watch to the renamed-in inode so later content edits (e.g. a test or the user restoring a file) are seen again.
+      if (mod.file.includes('/packages/content/data/')) { server.watcher.unwatch(mod.file); server.watcher.add(mod.file); }
+    }
+  }
+}
+
 export function editorPlugin(levelsDir: string): Plugin {
   return {
     name: 'node-arena-editor',
     apply: 'serve',
-    configureServer(server) { server.middlewares.use(createEditorMiddleware(levelsDir)); },
+    configureServer(server) { server.middlewares.use(createEditorMiddleware(levelsDir, { onContentWritten: () => invalidateEditorContent(server) })); },
     // Editor Save rewrites eagerly-globbed content JSON; without this Vite full-reloads the page.
     handleHotUpdate({ file }) { if (shouldSkipEditorHotUpdate(file)) return []; },
   };

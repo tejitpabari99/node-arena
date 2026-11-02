@@ -13,6 +13,7 @@ test('version mismatch reloads the document, disables online play if still misma
   try {
     await page.goto(`/?server=ws://127.0.0.1:${server.port}`);
     await page.getByTestId('pvp-play').click();
+    await page.getByTestId('pvp-create-tile').click();
     await page.getByTestId('pvp-nick').fill('Mismatch');
     await page.getByTestId('pvp-create').click();
     await expect(page.getByTestId('pvp-error')).toContainText('A newer version of Node Arena is available - reload');
@@ -26,9 +27,8 @@ test('version mismatch reloads the document, disables online play if still misma
     expect(await page.evaluate(() => (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming).type)).toBe('reload');
     await page.getByTestId('pvp-play').click();
     await expect(page.getByTestId('pvp-error')).toContainText('PvP unavailable: this build differs from the server');
-    await page.getByTestId('pvp-code-input').fill('ZZZZ');
-    await expect(page.getByTestId('pvp-create')).toBeDisabled();
-    await expect(page.getByTestId('pvp-join')).toBeDisabled();
+    await expect(page.getByTestId('pvp-create-tile')).toBeDisabled();
+    await expect(page.getByTestId('pvp-join-tile')).toBeDisabled();
     await page.getByTestId('pvp-back').click();
     await page.getByRole('button', { name: 'Campaign', exact: true }).click();
     await page.locator('[data-level-id]').first().click();
@@ -38,7 +38,9 @@ test('version mismatch reloads the document, disables online play if still misma
     content.versions.rules = original;
     await page.reload();
     await page.getByTestId('pvp-play').click();
-    await expect(page.getByTestId('pvp-create')).toBeEnabled();
+    await expect(page.getByTestId('pvp-create-tile')).toBeEnabled();
+    await page.getByTestId('pvp-create-tile').click();
+    await page.getByTestId('pvp-nick').fill('Mismatch');
     await page.getByTestId('pvp-create').click();
     await expect(page.getByTestId('lobby-code')).toBeVisible();
   } finally {

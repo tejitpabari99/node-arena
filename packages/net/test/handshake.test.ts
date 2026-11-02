@@ -57,3 +57,12 @@ test('accepts any bot version; onBotMismatch logged only', () => {
 test('auth ignored', () => {
   assert.ok(checkHello(hello({ auth: 'whatever' }), server, { playerId: 'p' }).ok);
 });
+
+test('covers R-SEA-01: PROTOCOL_VERSION is 4 (variable seat arrays)', () => { assert.equal(PROTOCOL_VERSION, 4); });
+
+test('covers R-SEA-01: protocol v3 client (fixed 4-seat arrays) is refused with version-mismatch', () => {
+  assert.equal(PROTOCOL_VERSION, 4);
+  const e = refused(hello({ pv: 3 }));
+  assert.match(e.detail ?? '', /3|protocol/i);
+  refused(hello({ pv: 0 }));
+});

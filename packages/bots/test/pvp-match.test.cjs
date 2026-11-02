@@ -125,3 +125,95 @@ test('covers R10: seat driver presets, determinism, set/clear, player check', ()
   assert.equal(a, run());
   assert.ok(a.includes('"player":1'));
 });
+
+// --- n < N (R-SEA-01) on the real Cross map ---
+const crossLevel = () => require('../../sim/test/fixtures.cjs').content.loadContent(require('../../sim/test/fixtures.cjs').dataFiles()).compiled['na-pvp-cross'];
+
+test('covers R-SEA-01: seat driver on forSeats(cross, 3) targets neutral homes, never indexes seat 3, is deterministic', () => {
+  const bots = require('../src/index.ts');
+  const sim = require('../../sim/src/index.ts');
+  const cross = crossLevel();
+  const deadHomes = new Set(cross.buildings.map((b, i) => (b.owner === 3 ? i : -1)).filter((i) => i >= 0));
+  assert.ok(deadHomes.size > 0);
+  const run = () => {
+    const level = sim.forSeats(cross, 3);
+    const s = sim.create(cross, 21, { teams: [0, 1, 2] });
+    const d = bots.createSeatDriver(level, 21);
+    for (const seat of [0, 1, 2]) d.setBot(seat, bots.BOT_PRESETS.hard);
+    assert.throws(() => d.setBot(3, bots.BOT_PRESETS.hard), RangeError);
+    assert.equal(d.has(3), false);
+    const log = [];
+    for (let t = 0; t < 1500 && !s.view.over; t++) {
+      const cmds = d.commands(s);
+      for (const c of cmds) assert.ok(c.player >= 0 && c.player <= 2, `player ${c.player}`);
+      log.push(cmds);
+      s.step(cmds);
+    }
+    assert.equal(s.view.players.length, 3);
+    assert.equal(s.rejected, 0);
+    return { log, hash: s.hash() };
+  };
+  const a = run(), b = run();
+  assert.equal(JSON.stringify(a.log), JSON.stringify(b.log));
+  assert.equal(a.hash, b.hash);
+  const draws = a.log.flat().filter((c) => c.type === 'DrawLine');
+  assert.ok(draws.length > 0);
+  assert.ok(draws.some((c) => deadHomes.has(c.to)), 'a bot targets a neutral dead-slot home');
+});
+
+test('covers R-SEA-01: harness teams shorter than the level reduce via forSeats (controller range follows seats)', () => {
+  const bots = require('../src/index.ts');
+  const cross = crossLevel();
+  const r = bots.runMatch({ level: cross, seed: 5, teams: [0, 1], maxTicks: 40 });
+  assert.equal(r.stats.players.length, 2);
+  assert.equal(r.ticks, 40);
+  const noop = (player) => ({ player, decide: () => [] });
+  assert.doesNotThrow(() => bots.runMatch({ level: cross, seed: 5, teams: [0, 1], maxTicks: 5, controllers: [noop(1)] }));
+  assert.throws(() => bots.runMatch({ level: cross, seed: 5, teams: [0, 1], maxTicks: 5, controllers: [noop(2)] }), RangeError);
+  assert.doesNotThrow(() => bots.runMatch({ level: cross, seed: 5, teams: [0, 1, 0, 1], maxTicks: 5, controllers: [noop(3)] }));
+  const again = bots.runMatch({ level: cross, seed: 5, teams: [0, 1], maxTicks: 40 });
+  assert.equal(again.stats.finalHash, r.stats.finalHash);
+});
+
+test('covers R-SEA-01: pvp target shuffle is deterministic per seat stream; different seat streams differ', () => {
+  const bots = require('../src/index.ts');
+  const sim = require('../../sim/src/index.ts');
+  const { createStreams } = sim;
+  const view = {
+    over: null, players: [{ team: 0 }, { team: 1 }],
+    ids: { buildings: ['b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6'], players: ['p0', 'p1'], elements: [] },
+    buildings: { owner: [0, 1, -1, -1, -1, -1, -1], level: [5, 5, 3, 3, 3, 3, 3], lines: [0, 0, 0, 0, 0, 0, 0] },
+    buildingStatic: [[0, 0], [9000, 0], [1000, 0], [0, 1000], [-1000, 0], [0, -1000], [700, 700]].map(([x, z]) => ({ x, z, special: false, drawsLines: true })),
+    lines: [], freeSlots: () => 2,
+  };
+  const order = (seed, seat) => {
+    const rng = createStreams(seed).fork('bot.tw', seat);
+    return bots.sortedTargets(view, 0, true, rng).join(',');
+  };
+  assert.equal(order(7, 0), order(7, 0));
+  assert.equal(order(7, 1), order(7, 1));
+  const distinct = new Set();
+  for (let seat = 0; seat < 8; seat++) distinct.add(order(7, seat));
+  assert.ok(distinct.size > 1, 'seat streams give different tie orders');
+  const bySeed = new Set();
+  for (let seed = 1; seed <= 8; seed++) bySeed.add(order(seed, 0));
+  assert.ok(bySeed.size > 1, 'match seeds give different tie orders');
+});
+
+test('covers R-SEA-01: pvp phase is 0 when actionDelayMs is below one tick (no rng draw, no throw)', () => {
+  const bots = require('../src/index.ts');
+  const sim = require('../../sim/src/index.ts');
+  const pvp = require('./pvp-fixture.cjs').pvpLevel([0, 1, -1], [0, 1]);
+  const first = (seed, seat, actionDelayMs) => {
+    const bot = bots.createSeatBot(pvp, seed, seat, { kind: 'tw', actionDelayMs, behavior: 'attackOnly', script: [] });
+    const game = sim.create(pvp, 1);
+    for (let t = 0; t < 10; t++) if (bot.decide({ view: game.view, canDraw: (p, f, to) => game.canDraw(p, f, to) }, t).length) return t;
+    return -1;
+  };
+  const seen = new Set();
+  for (let seed = 1; seed <= 10; seed++) for (const seat of [0, 1]) seen.add(first(seed, seat, 49));
+  assert.equal(seen.size, 1, `identical start for every seed/seat, got ${[...seen]}`);
+  assert.ok([...seen][0] >= 0);
+  for (let seed = 1; seed <= 3; seed++) assert.doesNotThrow(() => first(seed, 0, 0));
+  assert.equal(first(1, 0, 49), first(2, 1, 1));
+});

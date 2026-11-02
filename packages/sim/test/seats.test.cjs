@@ -35,13 +35,14 @@ test('covers R-TEM-01: level default teams applied; setup overrides; allies not 
   assert.equal(api.hostile(o.team, 1, 2), true);
 });
 
-test('covers R-SEA-01: SeatSetup validation rejects bad length, out-of-range, non-integer and single team', () => {
+test('covers R-SEA-01: SeatSetup validation rejects too long/short length, out-of-range, non-integer and single team', () => {
   const l = level3(); l.objective = 'pvp';
-  for (const teams of [[0, 1], [0, 1, 1, 0], [0, 1, 3], [0, 1, -1], [0, 1, 0.5], [0, 0, 0], [0, 1, '1'], [0, 1, NaN]]) {
+  for (const teams of [[0], [], [0, 1, 1, 0], [0, 1, 3], [0, 1, -1], [0, 1, 0.5], [0, 0, 0], [0, 1, '1'], [0, 1, NaN]]) {
     assert.throws(() => api.create(l, 1, { teams }), /SeatSetup/, JSON.stringify(teams));
   }
   assert.throws(() => api.create(l, 1, {}), /SeatSetup/);
   assert.doesNotThrow(() => api.create(l, 1, { teams: [0, 1, 2] }));
+  assert.equal(api.create(l, 1, { teams: [0, 1] }).view.players.length, 2); // 3.3.0: prefix of slots
 });
 
 test('covers R-SEA-01: SeatSetup on a captureAll level throws; crafted campaign replay with header teams is rejected', () => {
@@ -276,4 +277,178 @@ test('covers R-WIN-07: building count beats troop count and surviving allied tea
     { team: 1, seats: [2], rank: 2, buildings: 1, troops: 50, eliminatedAt: null },
     { team: 2, seats: [3], rank: 3, buildings: 1, troops: 20, eliminatedAt: null },
   ]);
+});
+
+// --- dynamic seats (R-SEA-01, 3.3.0): n of N slots; unused slots' buildings neutral ---
+const { content } = require('./fixtures.cjs');
+const { dataFiles } = require('./fixtures.cjs');
+const loadedLevels = () => content.loadContent(dataFiles()).compiled;
+const identity = (n) => Array.from({ length: n }, (_, i) => i);
+const teamsFor = (n) => (n === 2 ? [0, 1] : n === 3 ? [0, 1, 2] : [0, 1, 0, 1]);
+
+test('covers R-SEA-01: forSeats keeps first n slots, neutralizes unused slots buildings at authored level, same id/simHash', () => {
+  const cross = loadedLevels()['na-pvp-cross'];
+  assert.equal(cross.players.length, 4);
+  for (const n of [2, 3]) {
+    const r = api.forSeats(cross, n);
+    assert.deepEqual(r.players.map((p) => p.id), cross.players.slice(0, n).map((p) => p.id));
+    assert.equal(r.id, cross.id);
+    assert.equal(r.simHash, cross.simHash);
+    assert.equal(r.buildings.length, cross.buildings.length);
+    cross.buildings.forEach((b, i) => {
+      assert.equal(r.buildings[i].owner, b.owner >= n ? -1 : b.owner, `n=${n} b${i}`);
+      assert.equal(r.buildings[i].level, b.level);
+      assert.equal(r.buildings[i].id, b.id);
+    });
+    assert.ok(cross.buildings.some((b) => b.owner >= n), 'fixture has unused-slot buildings');
+  }
+  assert.equal(api.forSeats(cross, 4), cross);
+  const before = JSON.stringify(cross);
+  api.forSeats(cross, 2);
+  assert.equal(JSON.stringify(cross), before, 'pure: input not mutated');
+});
+
+test('covers R-SEA-01: create with n < N on cross; unused homes neutral in sim.view; players indexed 0..n-1', () => {
+  const cross = loadedLevels()['na-pvp-cross'];
+  for (const n of [2, 3, 4]) {
+    const sim = api.create(cross, 7, { teams: teamsFor(n) });
+    assert.equal(sim.view.players.length, n, `players n=${n}`);
+    assert.equal(sim.view.eliminatedAt.length, n);
+    cross.buildings.forEach((b, i) => {
+      const want = b.owner >= n ? -1 : b.owner;
+      assert.equal(sim.view.buildings.owner[i], want, `n=${n} b${i}`);
+    });
+  }
+  const sim = api.create(cross, 7, { teams: [0, 1] });
+  assert.ok(Array.from(sim.view.buildings.owner).some((o) => o === -1));
+  assert.ok(Array.from(sim.view.buildings.owner).every((o) => o >= -1 && o < 2));
+  const none = (() => { const s = api.createState(cross, 7, { teams: [0, 1] }); return Array.from(s.players.eliminatedAt); })();
+  assert.deepEqual(none, [-1, -1]);
+});
+
+test('covers R-SEA-01: duel maps run with n = 2 (full N) unchanged; pvp levels reject n outside 2..N', () => {
+  const all = loadedLevels();
+  for (const id of ['na-pvp-duel-s', 'na-pvp-duel-m']) {
+    const l = all[id];
+    assert.equal(l.players.length, 2);
+    assert.equal(api.forSeats(l, 2), l);
+    assert.doesNotThrow(() => api.create(l, 3, { teams: [0, 1] }));
+    assert.throws(() => api.create(l, 3, { teams: [0, 1, 2] }), /SeatSetup/);
+    assert.throws(() => api.create(l, 3, { teams: [0] }), /SeatSetup/);
+  }
+  const cross = all['na-pvp-cross'];
+  assert.throws(() => api.create(cross, 3, { teams: [0, 1, 0, 1, 0] }), /SeatSetup/);
+  assert.throws(() => api.create(cross, 3, { teams: [0] }), /SeatSetup/);
+  assert.throws(() => api.create(cross, 3, { teams: [0, 0] }), /SeatSetup/);
+  assert.throws(() => api.create(cross, 3, { teams: [0, 2] }), /SeatSetup/);
+});
+
+test('covers R-SEA-01: full-N hash unchanged by seat reduction path; n < N hash differs', () => {
+  const cross = loadedLevels()['na-pvp-cross'];
+  const defaults = cross.players.map((p) => p.team);
+  const h = (setup) => api.hashState(api.createState(cross, 5, setup));
+  assert.equal(h({ teams: defaults }), h(undefined), 'explicit full-N setup equals authored default');
+  assert.equal(h({ teams: defaults }), api.hashState(api.createState(api.forSeats(cross, 4), 5, { teams: defaults })));
+  assert.notEqual(h({ teams: [0, 1] }), h({ teams: defaults }));
+  assert.notEqual(h({ teams: [0, 1] }), h({ teams: [0, 1, 2] }));
+  const d = loadedLevels()['na-pvp-duel-s'];
+  assert.equal(api.hashState(api.createState(d, 5, { teams: [0, 1] })), api.hashState(api.createState(d, 5)));
+});
+
+test('covers R-SEA-01: unused-slot neutral buildings behave as neutral (no growth for owner, capturable count as neutral); deterministic run to a step', () => {
+  const cross = loadedLevels()['na-pvp-cross'];
+  const a = api.create(cross, 9, { teams: [0, 1] }), b = api.create(cross, 9, { teams: [0, 1] });
+  for (let i = 0; i < 200; i++) { a.step([]); b.step([]); }
+  assert.equal(a.hash(), b.hash());
+  const neutrals = Array.from(a.view.buildings.owner).map((o, i) => (o === -1 ? i : -1)).filter((i) => i >= 0);
+  assert.ok(neutrals.length > 0);
+  for (const i of neutrals) assert.equal(a.view.buildings.owner[i], -1);
+});
+
+test('covers R-SEA-01: replay with n < N records teams, plays back ok and detects tamper', () => {
+  const cross = loadedLevels()['na-pvp-cross'];
+  for (const n of [2, 3]) {
+    const setup = { teams: teamsFor(n) };
+    const rec = api.createReplayRecorder(cross, 4, metadata, setup);
+    for (let i = 0; i < 30; i++) rec.step([]);
+    const r = rec.record();
+    assert.deepEqual(r.header.teams, setup.teams);
+    const res = api.playReplay({ metadata, level: cross }, r);
+    assert.equal(res.ok, true, `n=${n}`);
+    assert.equal(res.sim.view.players.length, n);
+    r.header.teams = [...setup.teams, 0, 1, 0, 1];
+    assert.throws(() => api.playReplay({ metadata, level: cross }, r), /Invalid|SeatSetup/);
+  }
+});
+
+// --- n < N: neutral dead-slot buildings in outcome logic ---
+const crossN = (n, teams) => api.createState(loadedLevels()['na-pvp-cross'], 3, { teams: teams ?? teamsFor(n) });
+const unusedIdx = (n) => loadedLevels()['na-pvp-cross'].buildings.map((b, i) => (b.owner >= n ? i : -1)).filter((i) => i >= 0);
+const ownedIdx = (s, seat) => Array.from(s.buildings.owner).map((o, i) => (o === seat ? i : -1)).filter((i) => i >= 0);
+
+test('covers R-SEA-01: a captured unused-slot building counts for its captor (keeps seat alive, ranks as a building)', () => {
+  const s = crossN(2);
+  const dead = unusedIdx(2);
+  assert.ok(dead.length > 0);
+  assert.ok(dead.every((i) => s.buildings.owner[i] === -1));
+  for (const i of ownedIdx(s, 1)) s.buildings.owner[i] = 0; // seat 1 loses every authored building ...
+  s.buildings.owner[dead[0]] = 1; // ... but holds one captured neutral from the dead slot
+  s.tick = 5;
+  const ev = win(s);
+  assert.equal(s.players.eliminatedAt[1], -1, 'captured building keeps seat 1 alive');
+  assert.deepEqual(ev.filter((e) => e.type === 'SeatEliminated'), []);
+  assert.equal(s.over, null);
+  // timeout ranking counts it as a building
+  s.tick = limitTick(s);
+  win(s);
+  const row = s.over.ranking.find((r) => r.seats.includes(1));
+  assert.equal(row.buildings, 1);
+  assert.ok(s.over.ranking.find((r) => r.seats.includes(0)).buildings > 1);
+});
+
+test('covers R-SEA-01: victory and elimination ignore the dead slot; remaining neutral buildings are not an enemy team', () => {
+  const s = crossN(3);
+  const dead = unusedIdx(3);
+  assert.ok(dead.length > 0);
+  s.tick = 9;
+  for (const i of [...ownedIdx(s, 1), ...ownedIdx(s, 2)]) s.buildings.owner[i] = 0; // seats 1,2 lose everything
+  const ev = win(s);
+  assert.deepEqual(ev.filter((e) => e.type === 'SeatEliminated').map((e) => e.player), [1, 2]);
+  assert.equal(s.players.eliminatedAt.length, 3, 'no phantom seat 3');
+  assert.deepEqual(outcomeOnly(s.over), { outcome: 'victory', winner: 0, winners: [0] });
+  assert.ok(dead.every((i) => s.buildings.owner[i] === -1), 'dead-slot buildings stay neutral at victory');
+  // draw / zero survivors path also ignores the dead slot
+  const z = crossN(2);
+  for (const i of [...ownedIdx(z, 0), ...ownedIdx(z, 1)]) z.buildings.owner[i] = -1;
+  win(z);
+  assert.deepEqual(Array.from(z.players.eliminatedAt), [0, 0]);
+  assert.equal(z.over.outcome, 'draw');
+});
+
+test('covers R-SEA-01: forSeats edge inputs: n >= N returns the same level, invalid n throws, n < 2 is reduced but unplayable', () => {
+  const cross = loadedLevels()['na-pvp-cross'];
+  const N = cross.players.length;
+  assert.equal(api.forSeats(cross, N), cross);
+  assert.equal(api.forSeats(cross, N + 1), cross);
+  assert.equal(api.forSeats(cross, 99), cross);
+  for (const bad of [-1, 1.5, NaN, Infinity, -Infinity, '3', null, undefined]) assert.throws(() => api.forSeats(cross, bad), /invalid seat count/, String(bad));
+  assert.equal(api.forSeats(cross, 0).players.length, 0);
+  const one = api.forSeats(cross, 1);
+  assert.equal(one.players.length, 1);
+  assert.ok(one.buildings.every((b) => b.owner <= 0));
+  assert.throws(() => api.create(cross, 1, { teams: [0] }), /SeatSetup/, 'create still requires 2 seats');
+  // idempotent: reducing an already reduced level again is a no-op by value
+  const two = api.forSeats(cross, 2);
+  assert.deepEqual(api.forSeats(two, 2), two);
+  assert.equal(api.forSeats(two, 3), two);
+});
+
+test('covers R-SEA-01: non-pvp objective is unaffected by seat reduction (all players and owners kept)', () => {
+  const c = compiledGolden();
+  assert.notEqual(c.objective, 'pvp');
+  const sim = api.create(c, 3);
+  assert.equal(sim.view.players.length, c.players.length);
+  c.buildings.forEach((b, i) => assert.equal(sim.view.buildings.owner[i], b.owner));
+  assert.throws(() => api.create(c, 3, { teams: [0, 1].slice(0, c.players.length - 1) }), /SeatSetup/);
+  assert.equal(api.createState(c, 3).level, c, 'no reduction path for captureAll');
 });

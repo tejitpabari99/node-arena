@@ -69,7 +69,7 @@ export class IpLimits {
   private readonly catchUpsByIp = new Map<string, Window>();
   private readonly catchUpAt = new Map<string, number>();
   private readonly resyncAt = new Map<string, number>();
-  constructor(private readonly now: () => number) {}
+  constructor(private readonly now: () => number, private readonly createsPerMin = CREATES_PER_MIN) {}
 
   acquireConn(ip: string): boolean {
     const n = this.conns.get(ip) ?? 0;
@@ -86,7 +86,7 @@ export class IpLimits {
   }
   /** Counts a create attempt; false = over 5/min. */
   allowCreate(ip: string): boolean {
-    const w = this.win(this.creates, ip, CREATES_PER_MIN);
+    const w = this.win(this.creates, ip, this.createsPerMin);
     if (w.full()) return false;
     w.add();
     return true;

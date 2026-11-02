@@ -1,34 +1,17 @@
 import type { Page } from '@playwright/test';
-import { expect, test, type NewPlayerPage } from './fixtures';
+import { expect, test } from './fixtures';
+import { createRoom, joinRoom, setBot } from './open-match';
 
-// SP06 R12: exercise the real lobby pickers and server bots; no commands or sim overrides.
-async function createLobby(newPlayerPage: NewPlayerPage) {
-  const host = await newPlayerPage();
-  await host.goto('/?nick=Host');
-  await host.getByTestId('pvp-play').click();
-  await host.getByTestId('pvp-create').click();
-  await expect(host.getByTestId('lobby-code')).toBeVisible();
-  const code = (await host.getByTestId('lobby-code').innerText()).trim();
-  expect(code).toMatch(/^[A-Z0-9]{4}$/);
-  return { host, code };
-}
-
-async function setBot(host: Page, seat: number) {
-  await host.getByTestId(`seat-kind-${seat}`).selectOption('bot');
-  await host.getByTestId(`seat-difficulty-${seat}`).selectOption('easy');
-  await expect(host.getByTestId(`seat-kind-${seat}`)).toHaveValue('bot');
-  await expect(host.getByTestId(`seat-difficulty-${seat}`)).toHaveValue('easy');
-}
-
+// SP06 R12 / SP03: exercise the real create form and server bots; no commands or sim overrides.
 async function started(page: Page) {
   await expect.poll(() => page.evaluate(() => window.__na?.pvp?.tick()), { timeout: 30_000 }).toBeGreaterThan(0);
 }
 
 test('one human starts alone against an easy bot and reaches the result @slow', async ({ newPlayerPage }) => {
   test.setTimeout(210_000);
-  const { host } = await createLobby(newPlayerPage);
-  await expect(host.getByTestId('lobby-map')).toContainText('Duel S');
-  await setBot(host, 1);
+  const host = await newPlayerPage();
+  await createRoom(host, 'Host', async (p) => { await setBot(p, 1); });
+  await expect(host.getByTestId('lobby-seat-1')).toContainText('Bot1');
   await expect(host.getByTestId('lobby-start')).toBeEnabled();
   await host.getByTestId('lobby-start').click();
   await started(host);
@@ -48,21 +31,26 @@ test('one human starts alone against an easy bot and reaches the result @slow', 
 });
 
 test('Cross 2v2: two humans and two easy bots stay hash-equal for ten seconds, then leave', async ({ newPlayerPage }) => {
-  test.setTimeout(75_000);
-  const { host, code } = await createLobby(newPlayerPage);
-  await host.getByTestId('lobby-map-na-pvp-cross').click();
-  await expect(host.getByTestId('lobby-map')).toContainText('Cross');
-  await setBot(host, 2);
-  await setBot(host, 3);
-  // Explicitly preserve the intended two teams: one human and one bot on each.
-  for (const [seat, team] of [[0, 0], [1, 1], [2, 0], [3, 1]]) {
-    await host.getByTestId(`seat-team-${seat}`).selectOption(String(team));
-    await expect(host.getByTestId(`seat-team-${seat}`)).toHaveValue(String(team));
-  }
+  test.setTimeout(150_000);
+  const host = await newPlayerPage();
+  const code = await createRoom(host, 'Host', async (p) => {
+    await p.getByTestId('map-na-pvp-cross').click();
+    await p.getByTestId('players-plus').click(); await p.getByTestId('players-plus').click();
+    await expect(p.getByTestId('players-value')).toHaveText('4');
+    await p.getByTestId('type-team').click();
+    await setBot(p, 2); await setBot(p, 3);
+    // One human and one bot on each of two teams.
+    for (const [seat, team] of [[0, 0], [1, 1], [2, 0], [3, 1]]) {
+      await p.getByTestId(`seat-team-${seat}`).selectOption(String(team));
+      await expect(p.getByTestId(`seat-team-${seat}`)).toHaveValue(String(team));
+    }
+  });
+  await expect(host.getByTestId('lobby-seat-2')).toContainText('Bot1');
+  await expect(host.getByTestId('lobby-seat-3')).toContainText('Bot2');
   const guest = await newPlayerPage();
-  await guest.goto(`/?room=${code}&nick=Guest`);
-  await expect(guest.getByTestId('lobby-code')).toHaveText(code);
+  await joinRoom(guest, code, 'Guest');
   for (const seat of [2, 3]) await expect(guest.getByTestId(`seat-team-label-${seat}`)).toContainText('easy');
+  await expect(host.getByTestId('lobby-seat-1')).toContainText('Guest');
   await guest.getByTestId('lobby-ready').click();
   await expect(host.getByTestId('lobby-start')).toBeEnabled();
   await host.getByTestId('lobby-start').click();
@@ -73,7 +61,6 @@ test('Cross 2v2: two humans and two easy bots stay hash-equal for ten seconds, t
     ]);
   }
   // 20 ticks/s: the first and last samples span 200 ticks = ten seconds.
-  // Historical hashes avoid racing reads of clients currently rendering adjacent ticks.
   for (const tick of [50, 100, 150, 200, 250]) {
     const hashes = await Promise.all([host, guest].map(async page => {
       await expect.poll(() => page.evaluate(t => window.__na!.pvp!.hashAt(t), tick), { timeout: 20_000 }).not.toBeNull();
@@ -84,6 +71,44 @@ test('Cross 2v2: two humans and two easy bots stay hash-equal for ten seconds, t
   for (const page of [host, guest]) {
     await expect(page.getByTestId('toast-desync')).toHaveCount(0);
     await page.evaluate(() => window.__na!.pvp!.actions.leave());
-    await expect(page.getByTestId('pvp-create')).toBeVisible();
+    await expect(page.getByTestId('pvp-create-tile')).toBeVisible();
   }
+});
+
+test('3 seats: host + one human + one bot start and tick on Cross', async ({ newPlayerPage }) => {
+  test.setTimeout(150_000);
+  const host = await newPlayerPage();
+  const code = await createRoom(host, 'Host', async (p) => {
+    await p.getByTestId('map-na-pvp-cross').click();
+    await p.getByTestId('players-plus').click();
+    await expect(p.getByTestId('players-value')).toHaveText('3');
+    await setBot(p, 2);
+  });
+  const guest = await newPlayerPage();
+  await joinRoom(guest, code, 'Guest');
+  await guest.getByTestId('lobby-ready').click();
+  await host.getByTestId('lobby-start').click();
+  await Promise.all([host, guest].map(started));
+  expect(await host.evaluate(() => window.__na!.pvp!.state().start!.seats.map(({ kind }) => kind))).toEqual(['human', 'human', 'bot']);
+});
+
+test('4 seats of Cross free-for-all with three humans waiting shows blockers and start-ready', async ({ newPlayerPage }) => {
+  test.setTimeout(150_000);
+  const host = await newPlayerPage();
+  const code = await createRoom(host, 'Host', async (p) => {
+    await p.getByTestId('map-na-pvp-cross').click();
+    await p.getByTestId('players-plus').click(); await p.getByTestId('players-plus').click();
+    await expect(p.getByTestId('players-value')).toHaveText('4');
+  });
+  const guests = [await newPlayerPage(), await newPlayerPage(), await newPlayerPage()];
+  for (const [i, g] of guests.entries()) await joinRoom(g, code, `G${i + 1}`);
+  await expect(host.getByTestId('lobby-start')).toBeDisabled();
+  for (const g of guests) await g.getByTestId('lobby-ready').click();
+  await expect(host.getByTestId('lobby-start')).toBeEnabled();
+  // A held last row locks "-"; shrinking is only possible once it is free.
+  await expect(host.getByTestId('players-minus')).toBeDisabled();
+  await expect(host.getByTestId('players-hint')).toBeVisible();
+  await host.getByTestId('lobby-start').click();
+  await Promise.all([host, ...guests].map(started));
+  expect(await host.evaluate(() => window.__na!.pvp!.state().start!.seats.length)).toBe(4);
 });

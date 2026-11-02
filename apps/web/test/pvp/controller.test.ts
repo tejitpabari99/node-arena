@@ -73,6 +73,15 @@ describe('PvpController lobby flow', () => {
     h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: null, host: false } });
     expect(h.ctl.snapshot().role).toBe('watch');
   });
+  it('repeated room.joined mid-lobby updates seat/host/role (moved by a host map edit)', () => {
+    const h = setup(); h.ctl.open(); h.ctl.create(); h.c.push(welcome);
+    h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: true } }); h.c.push(lobby(1));
+    expect(h.ctl.snapshot()).toMatchObject({ seat: 1, host: true, role: 'play' });
+    h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 0, host: true } }); h.c.push(lobby(0));
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'lobby', seat: 0, host: true });
+    h.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: null, host: false } }); h.c.push(lobby(0));
+    expect(h.ctl.snapshot()).toMatchObject({ screen: 'lobby', seat: null, host: false, role: 'watch' });
+  });
   it('play link without a nickname prompts with the room code before joining', () => {
     const h = setup();
     h.ctl.openLink({ code: 'ABCD', role: 'play' });

@@ -1,6 +1,6 @@
 # Node Arena — Game Rules
 
-RULES_VERSION: 3.2.0
+RULES_VERSION: 3.3.0
 
 This is the mechanics contract for Node Arena, motivated by Tower War (APK 1.29.3). It is a full rewrite; there are no profiles and no v1 compatibility. Rules own **structure and formulas**; every tunable number (speeds, coefficients, caps, radii, thresholds) lives in authored content under a named parameter, and rules only name the resolved parameter. The simulation must follow these rules; presentation, bots and tools consume the same mechanics. Tower War defaults appear only in the §7 glossary and in the §5 worked examples.
 
@@ -150,7 +150,7 @@ A line has an owner, a source house, a target building, its own spawn timer (R-S
 
 ### R-ENT-04
 
-A player's identity is its team unless a `SeatSetup` assigns teams (R-TEM-01): each player id is its own team. Player kinds are human, ai and neutral. Two owners are hostile when they are on different teams, so with the default teams every owner that is not the same owner is hostile, including AI against AI; a neutral building is hostile to every non-neutral troop. Human players, AI and bots submit identical commands, pass identical validation and receive no mechanical privileges.
+A player's identity is its team unless a `SeatSetup` assigns teams (R-TEM-01): each player id is its own team. Player kinds are human, ai and neutral. Two owners are hostile when they are on different teams, so with the default teams every owner that is not the same owner is hostile, including AI against AI; a neutral building is hostile to every non-neutral troop. In `pvp`, buildings of slots unused by a match with fewer seats than slots are ordinary neutral buildings (R-SEA-01): no growth or spawn, towers fire per R-TWR, capturable. Human players, AI and bots submit identical commands, pass identical validation and receive no mechanical privileges.
 
 *Source:* 03#5.2.
 
@@ -163,6 +163,8 @@ A player's identity is its team unless a `SeatSetup` assigns teams (R-TEM-01): e
 *Supersedes:* v1 R-ENT-04 (team field).
 
 *Amended:* 3.1.0 (team = player id unless a `SeatSetup` assigns teams; hostile = different team). Campaign behaviour unchanged.
+
+*Amended:* 3.3.0 (neutral buildings of unused pvp slots).
 
 ## 3. Rules by area
 
@@ -498,7 +500,7 @@ Obstacles are static, unowned, take no part in winning and do not interact with 
 
 ### R-SEA-01
 
-A `pvp` match has 2 to 4 seats; every seat is occupied for the whole match and there are no empty or neutral-seat placeholders. Whether a seat is driven by a person or a bot is decided outside the simulation (lobby or server): the level's player `kind` is a slot placeholder, and every seat submits the same commands under the same validation with no mechanical privilege (R-ENT-04). `create(level, seed, setup?)` takes an optional `SeatSetup` whose `teams[i]` is the team id of seat `i`. The simulation never reads seat kinds to decide an outcome.
+A `pvp` match has 2 to `level.players.length` seats (`N` slots authored by the map), at most 4 today. A match with `n` seats uses the first `n` slots of `level.players` in authored order; seat `i` is slot `i`, and seats are indexed `0..n-1`. Every seat is occupied for the whole match and there are no empty seats. Each building authored for a slot `>= n` becomes neutral (owner `-1`, R-ENT-04) at its authored level; those slots take no part in the match. `n` is `SeatSetup.teams.length`; an absent setup means `n = N`, identical to the pre-3.3.0 behavior. Whether a seat is driven by a person or a bot is decided outside the simulation (lobby or server): the level's player `kind` is a slot placeholder, and every seat submits the same commands under the same validation with no mechanical privilege (R-ENT-04). `create(level, seed, setup?)` takes an optional `SeatSetup` whose `teams[i]` is the team id of seat `i`. The simulation never reads seat kinds to decide an outcome.
 
 *Source:* Node Arena (PvP design, SP01).
 
@@ -508,9 +510,11 @@ A `pvp` match has 2 to 4 seats; every seat is occupied for the whole match and t
 
 *Since:* 3.1.0.
 
+*Amended:* 3.3.0 (variable seat count `2..N`; unused slots' buildings neutral).
+
 ### R-TEM-01
 
-Teams are static for a match. `SeatSetup.teams[i]` (integers `0..n-1`, at least two distinct) names seat `i`'s team; a level may carry default teams, and an absent setup means identity (each seat is its own team). Two seats are allies when their team ids are equal and hostile otherwise (R-ENT-04). `SeatSetup` applies to objective `pvp` only: `create` rejects a setup for any other objective and replay playback rejects a header `teams` on a non-pvp level. The neutral owner is never an ally. Teams do not change during a match, and ally buildings are never shared or jointly controlled: each building has exactly one owner.
+Teams are static for a match. `SeatSetup.teams[i]` (integers `0..n-1` where `n = SeatSetup.teams.length` is the seat count, `2 <= n <= level.players.length` per R-SEA-01, at least two distinct) names seat `i`'s team; a level may carry default teams, and an absent setup means identity (each seat is its own team). Two seats are allies when their team ids are equal and hostile otherwise (R-ENT-04). `SeatSetup` applies to objective `pvp` only: `create` rejects a setup for any other objective and replay playback rejects a header `teams` on a non-pvp level. The neutral owner is never an ally. Teams do not change during a match, and ally buildings are never shared or jointly controlled: each building has exactly one owner.
 
 *Source:* Node Arena (PvP design, SP01).
 
@@ -519,6 +523,8 @@ Teams are static for a match. `SeatSetup.teams[i]` (integers `0..n-1`, at least 
 *Examples:* none.
 
 *Since:* 3.1.0.
+
+*Amended:* 3.3.0 (`n` = seat count, may be less than the level's slot count).
 
 ### R-TEM-02
 
@@ -847,6 +853,7 @@ One row per content key: the key rules name, its Tower War source, the rule ids 
 
 | RULES_VERSION | Date | Change |
 |---|---|---|
+| 3.3.0 | 2026-11-01 | Additive; no existing replay outcome changes (full-seat matches, campaign and pvp replays are identical; only `rulesVersion` metadata moves). R-SEA-01 amended: a pvp match has `2..level.players.length` seats using a prefix of the authored slots; buildings of unused slots become neutral at their authored level. R-TEM-01 (`n` = seat count) and R-ENT-04 (neutral note) amended in place. `SCHEMA_VERSION` unchanged. Content note: `na-pvp-cross` slot order changed to `p1,p3,p2,p4` (authored teams `[0,0,1,1]`); the default pairing (p1+p3 vs p2+p4, opposite corners) is preserved, but seat indexes differ, so default Cross replays/goldens were regenerated via content (not a rules change). |
 | 3.2.0 | 2026-10-29 | Additive; no existing replay outcome changes (campaign and pvp replays without `Forfeit` are identical; only `rulesVersion` metadata moves). New area FFT: `Forfeit` system command (R-FFT-01 effect, R-FFT-02 validity/phase-1 order/system-only provenance, R-FFT-03 outcome interaction). Amended in place: R-ELM-01 (second elimination cause), R-WIN-04 and R-WIN-06(b) (cross-references), §4 phase 1 and 9 rows, §4.1 (command set union). `SCHEMA_VERSION` unchanged. |
 | 3.1.0 | 2026-10-28 | Additive; campaign replays unchanged. New objective `pvp`: seats and teams (R-SEA-01, R-TEM-01), ally non-aggression and reinforcement (R-TEM-02, R-TEM-03), seat elimination (R-ELM-01), last-team victory, timeout ranking, draw and placement (R-WIN-04..07). Amended in place: R-ENT-04 (team = player id unless a `SeatSetup` assigns teams), R-WIN-01..03 scoped to `captureAll`. Hash gains a pvp-only tail (§4.2). `SCHEMA_VERSION` unchanged. |
 | 3.0.0 | 2026-10-23 | **Replay outcomes may change.** R-TWR-02: a ready tower with no troop target shoots in-reach opponent (non-neutral hostile) houses before neutral houses; neutral houses only when no opponent house is in reach. Deviation from decomp ordering, justified by playtest. Troop targeting unchanged. |

@@ -15,6 +15,7 @@ import type { ServerContent } from './content.js';
 export const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 export const CODE_LENGTH = 4;
 export const COUNTDOWN_MS = 3000;
+/** Cap for new watchers only: players displaced by a lobby edit always become spectators, so the count may exceed it (bounded by the room's seat count). */
 export const MAX_SPECTATORS = 8;
 export const ENDED_ROOM_TTL_MS = 10 * 60_000;
 /** A lobby whose seated humans have no open socket is dropped after this (>= the 30 s seat reserve, SP07). */
@@ -67,6 +68,9 @@ export interface Room {
   /** Current connections of seated members (single mutable source; rebound on reconnect). */
   conns(): Conn[];
 }
+
+/** Fewest seats a pvp match may have (R-SEA-01). */
+const MIN_SEATS = 2;
 
 export const BOT_DIFFICULTIES = ['easy', 'normal', 'hard'] as const;
 
@@ -153,9 +157,37 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
 
   const defaultLevelId = content.pvpLevelIds[0];
 
-  const defaultSeats = (levelId: string): Seat[] => {
-    const level = content.compiled[levelId]!;
-    return level.players.map((p, i): Seat => ({ kind: 'human', team: p.team ?? i }));
+  /** Default lobby config: host + one open human seat, identity teams (R-SEA-01: any 2..max seat count is valid). */
+  const defaultSeats = (): Seat[] => [{ kind: 'human', team: 0 }, { kind: 'human', team: 1 }];
+
+  /** Normalises one wire seat: difficulty only on bots (default normal); returns undefined if invalid. */
+  const normSeat = (s: SeatConfig, n: number): SeatConfig | undefined => {
+    if (!Number.isInteger(s.team) || s.team < 0 || s.team >= n) return undefined;
+    if (s.kind !== 'bot') return s.difficulty === undefined ? { kind: s.kind, team: s.team } : undefined;
+    const difficulty = s.difficulty ?? 'normal';
+    if (!(BOT_DIFFICULTIES as readonly string[]).includes(difficulty)) return undefined;
+    return { kind: 'bot', team: s.team, difficulty };
+  };
+
+  /** Validates a full config (known level, 2 <= seats <= map maxPlayers, valid seats, seat 0 human); returns normalised seats or an error string. */
+  const checkConfig = (levelId: string, seats: readonly SeatConfig[]): SeatConfig[] | string => {
+    if (!content.pvpLevelIds.includes(levelId)) return 'unknown level';
+    const max = content.compiled[levelId]!.players.length;
+    if (seats.length < MIN_SEATS || seats.length > max) return `seat count must be 2..${max} for level`;
+    const out: SeatConfig[] = [];
+    for (const raw of seats) {
+      const s = normSeat(raw, seats.length);
+      if (s === undefined) return 'invalid seat';
+      out.push(s);
+    }
+    if (out[0]!.kind !== 'human') return 'host seat must be human';
+    return out;
+  };
+
+  const toSeat = (c: SeatConfig): Seat => {
+    const out: Seat = { kind: c.kind, team: c.team };
+    if (c.difficulty !== undefined) out.difficulty = c.difficulty;
+    return out;
   };
 
   const newCode = (): string | undefined => {
@@ -207,16 +239,24 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     return true;
   };
 
-  const create_ = (conn: Conn): void => {
+  const create_ = (conn: Conn, cfg?: { levelId: string; seats: readonly SeatConfig[] }): void => {
     if (refuseDraining(conn)) return;
     if (byPlayer.has(conn.playerId!)) return conn.sendError('bad-lobby', 'already in a room');
     if (conn.ip !== undefined && deps.ipLimits?.allowCreate(conn.ip) === false) return conn.sendError('rate-limited', 'too many rooms created');
     if (defaultLevelId === undefined) return conn.sendError('internal', 'no pvp levels');
     if (rooms.size >= maxRooms) return conn.sendError('room-full', 'server at room capacity');
+    let levelId: string = defaultLevelId;
+    let seats: Seat[] = defaultSeats();
+    if (cfg !== undefined) {
+      const checked = checkConfig(cfg.levelId, cfg.seats);
+      if (typeof checked === 'string') return conn.sendError('bad-lobby', checked);
+      levelId = cfg.levelId;
+      seats = checked.map(toSeat);
+    }
     const code = newCode();
     if (code === undefined) return conn.sendError('internal', 'no free room code');
     const room: Room = {
-      code, state: 'lobby', host: 0, levelId: defaultLevelId, seats: defaultSeats(defaultLevelId), spectators: [], startAt: undefined, match: undefined,
+      code, state: 'lobby', host: 0, levelId, seats, spectators: [], startAt: undefined, match: undefined,
       conns: () => [...room.seats.flatMap((s) => (s.occupant ? [s.occupant.conn] : [])), ...room.spectators.map((o) => o.conn)],
     };
     rooms.set(code, room);
@@ -365,7 +405,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     byPlayer.delete(conn.playerId!);
     if (i < 0) { if (room.state === 'lobby') broadcast(room); return; }
     if (!room.seats.some((s) => s.occupant)) {
-      for (const o of room.spectators) byPlayer.delete(o.playerId);
+      for (const o of room.spectators) { byPlayer.delete(o.playerId); if (!o.conn.closed) o.conn.send({ t: 'room.closed', reason: 'empty' }); }
       room.spectators = [];
       rooms.delete(room.code);
       if (room.state === 'lobby') room.state = 'closed';
@@ -379,58 +419,70 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     if (room.state === 'lobby') broadcast(room);
   };
 
-  /** Normalises one wire seat: difficulty only on bots (default normal); returns undefined if invalid. */
-  const normSeat = (s: SeatConfig, n: number): SeatConfig | undefined => {
-    if (!Number.isInteger(s.team) || s.team < 0 || s.team >= n) return undefined;
-    if (s.kind !== 'bot') return s.difficulty === undefined ? { kind: s.kind, team: s.team } : undefined;
-    const difficulty = s.difficulty ?? 'normal';
-    if (!(BOT_DIFFICULTIES as readonly string[]).includes(difficulty)) return undefined;
-    return { kind: 'bot', team: s.team, difficulty };
+  /** Seat index (null = spectator) + host flag per occupant, to detect moves caused by a lobby edit. */
+  const placements = (room: Room): Map<Occupant, { seat: number | null; host: boolean }> => {
+    const m = new Map<Occupant, { seat: number | null; host: boolean }>();
+    room.seats.forEach((s, i) => { if (s.occupant) m.set(s.occupant, { seat: i, host: room.host === i }); });
+    for (const o of room.spectators) m.set(o, { seat: null, host: false });
+    return m;
+  };
+
+  /** Tell every occupant whose seat/role/host flag changed (room.joined is the client's only source of its own seat). Sent before the lobby.state broadcast. */
+  const notifyMoved = (room: Room, before: Map<Occupant, { seat: number | null; host: boolean }>): void => {
+    for (const [o, prev] of before) {
+      const i = room.seats.findIndex((s) => s.occupant === o);
+      const seat_ = i < 0 ? null : i;
+      const host = i >= 0 && room.host === i;
+      if (seat_ !== prev.seat || host !== prev.host) o.conn.send({ t: 'room.joined', code: room.code, you: { seat: seat_, host } });
+    }
+  };
+
+  /**
+   * Atomically installs a lobby config. Same level: occupants keep their seat index when it still exists and is human, else become spectators.
+   * Level change: occupants (host first, then seat order) refill the new human seats in order, host -> seat 0, overflow -> spectators; ready cleared.
+   */
+  const applyConfig = (conn: Conn, room: Room, levelId: string, seatsIn: readonly SeatConfig[]): void => {
+    const hostSeat = seatOf(room, conn);
+    const next = checkConfig(levelId, seatsIn);
+    if (typeof next === 'string') return conn.sendError('bad-lobby', next);
+    const before = placements(room);
+    if (levelId !== room.levelId) {
+      const hostOcc = room.seats[hostSeat]!.occupant!;
+      const occ = [hostOcc, ...room.seats.flatMap((s) => (s.occupant && s.occupant !== hostOcc ? [s.occupant] : []))];
+      const want = next.map(toSeat);
+      const free = want.flatMap((s, i) => (s.kind === 'human' ? [i] : []));
+      occ.forEach((o, k) => {
+        o.ready = false;
+        if (k < free.length) want[free[k]!]!.occupant = o; else room.spectators.push(o);
+      });
+      room.levelId = levelId;
+      room.seats = want;
+      room.host = 0;
+      log?.info('lobby.level', { room: room.code, levelId, seats: want.length });
+      notifyMoved(room, before);
+      return broadcast(room);
+    }
+    if (hostSeat >= next.length || next[hostSeat]!.kind !== 'human') return conn.sendError('bad-lobby', 'host seat must be human');
+    let changed = next.length !== room.seats.length;
+    const out: Seat[] = next.map((c, i) => {
+      const cur = room.seats[i];
+      if (cur === undefined || cur.kind !== c.kind || cur.team !== c.team || cur.difficulty !== c.difficulty) changed = true;
+      const seat_ = toSeat(c);
+      if (cur?.occupant !== undefined && c.kind === 'human') seat_.occupant = cur.occupant;
+      return seat_;
+    });
+    for (const cur of room.seats) if (cur.occupant !== undefined && !out.some((s) => s.occupant === cur.occupant)) room.spectators.push(cur.occupant); // removed / flipped away
+    room.seats = out;
+    if (changed) for (const s of room.seats) if (s.occupant) s.occupant.ready = false;
+    notifyMoved(room, before);
+    broadcast(room);
   };
 
   const update = (conn: Conn, room: Room, msg: Extract<ClientMessage, { t: 'lobby.update' }>): void => {
     const hostSeat = seatOf(room, conn);
     if (room.host !== hostSeat) return conn.sendError('not-host');
     if (room.state !== 'lobby') return conn.sendError('match-in-progress');
-    if (!content.pvpLevelIds.includes(msg.levelId)) return conn.sendError('bad-lobby', 'unknown level');
-    if (msg.levelId !== room.levelId) {
-      // Level change resets seats to defaults (msg.seats ignored); occupants refill in seat order, ready cleared, host -> seat 0.
-      const want = defaultSeats(msg.levelId);
-      const occ = room.seats.flatMap((s) => (s.occupant ? [s.occupant] : []));
-      if (occ.length > want.length) return conn.sendError('bad-lobby', 'too many players for level');
-      const hostOcc = room.seats[room.host!]!.occupant!;
-      const rest = occ.filter((o) => o !== hostOcc);
-      room.levelId = msg.levelId;
-      room.seats = want;
-      [hostOcc, ...rest].forEach((o, i) => { o.ready = false; room.seats[i]!.occupant = o; });
-      room.host = 0;
-      log?.info('lobby.level', { room: room.code, levelId: room.levelId });
-      return broadcast(room);
-    }
-    const n = room.seats.length;
-    if (msg.seats.length !== n) return conn.sendError('bad-lobby', 'seat count must match level');
-    const next: SeatConfig[] = [];
-    for (const raw of msg.seats) {
-      const s = normSeat(raw, n);
-      if (s === undefined) return conn.sendError('bad-lobby', 'invalid seat');
-      next.push(s);
-    }
-    if (next[hostSeat]!.kind !== 'human') return conn.sendError('bad-lobby', 'host seat must be human');
-    let changed = false;
-    next.forEach((c, i) => {
-      const cur = room.seats[i]!;
-      if (cur.kind === c.kind && cur.team === c.team && cur.difficulty === c.difficulty) return;
-      changed = true;
-      if (cur.occupant !== undefined && c.kind !== 'human') { // occupied human seat flipped away: occupant -> spectator
-        room.spectators.push(cur.occupant);
-        delete cur.occupant;
-      }
-      const out: Seat = { kind: c.kind, team: c.team, ...(cur.occupant ? { occupant: cur.occupant } : {}) };
-      if (c.difficulty !== undefined) out.difficulty = c.difficulty;
-      room.seats[i] = out;
-    });
-    if (changed) for (const s of room.seats) if (s.occupant) s.occupant.ready = false;
-    broadcast(room);
+    applyConfig(conn, room, msg.levelId, msg.seats);
   };
 
   const ready = (conn: Conn, room: Room, ready_: boolean): void => {
@@ -446,6 +498,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     if (refuseDraining(conn)) return;
     if (room.host !== seatOf(room, conn)) return conn.sendError('not-host');
     if (room.state !== 'lobby') return conn.sendError('match-in-progress');
+    if (room.seats.length < MIN_SEATS || room.seats.length > content.compiled[room.levelId]!.players.length) return conn.sendError('bad-lobby', 'seat count out of range');
     for (let i = 0; i < room.seats.length; i++) {
       const s = room.seats[i]!;
       if (s.kind === 'empty' || (s.kind === 'human' && s.occupant === undefined)) return conn.sendError('bad-lobby', 'seats not filled');
@@ -561,7 +614,16 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
       const room = byPlayer.get(conn.playerId ?? '');
       if (room === undefined) return;
       const i = seatOf(room, conn);
-      if (i < 0) return;
+      if (i < 0) {
+        // Moved to the spectators while away (lobby edit): rebind so the reserve timer does not evict them, and tell them where they are.
+        const sp = room.spectators.find((o) => o.playerId === conn.playerId);
+        if (sp === undefined) return;
+        clearReserve(sp);
+        sp.conn = conn;
+        conn.send({ t: 'room.joined', code: room.code, you: { seat: null, host: false } });
+        if (room.state === 'lobby' || room.state === 'ended') conn.send(lobbyState(room));
+        return;
+      }
       clearReserve(room.seats[i]!.occupant!);
       room.seats[i]!.occupant!.conn = conn;
       if (room.host === null && (room.state === 'lobby' || room.state === 'ended')) room.host = i; // returning member of a hostless room
@@ -596,7 +658,7 @@ export function createRoomManager(deps: RoomManagerDeps): RoomManager {
     activeMatchCount: () => { let n = 0; for (const r of rooms.values()) if (r.state === 'running' || r.state === 'countdown') n++; return n; },
     onClientMessage(conn, msg) {
       switch (msg.t) {
-        case 'room.create': return create_(conn);
+        case 'room.create': return create_(conn, msg.levelId !== undefined && msg.seats !== undefined ? { levelId: msg.levelId, seats: msg.seats } : undefined);
         case 'room.join': return join(conn, msg.code, msg.role);
         case 'room.leave': return leave(conn);
         case 'rematch': return rematch(conn);

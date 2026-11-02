@@ -4,25 +4,46 @@ import { PvpHud, buildPauseUi } from './PvpHud';
 import { DESYNC_TOAST, Toast } from './Toast';
 import { SYNC_LOST_STRING, type PvpController } from '../../pvp/controller';
 import { shareLinks } from '../../net/links';
-import { Lobby } from './Lobby';
+import { Lobby, type TypeHint } from './Lobby';
+import { movedToSpectators, movedToast } from '../../pvp/room-draft';
+import type { LobbyStateMsg } from '@node-arena/net';
 import { PvpMenu } from './PvpMenu';
+import { RoomForm } from './RoomForm';
+import type { LevelThumbnailService } from '../../render/level-thumbnail';
 import { PvpResult } from './PvpResult';
 import { ConnBanner } from './ConnBanner';
 import { DrainBanner } from './DrainBanner';
-const pretty=(id:string)=>id.replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-export function PvpLayer({pvp}:{pvp:PvpController}){
+export const TOAST_MS=5000;
+export function PvpLayer({pvp,thumbs}:{pvp:PvpController;thumbs?:LevelThumbnailService|undefined}){
   const [s,setS]=useState(pvp.snapshot()),[code,setCode]=useState(pvp.snapshot().code??'');
   useLayoutEffect(()=>pvp.subscribe(()=>setS(pvp.snapshot())),[pvp]);
-  if(s.screen==='menu'||s.screen==='connecting')return <PvpMenu nick={s.nick} code={code} error={s.error} unavailable={s.pvpUnavailable||s.screen==='connecting'} reload={s.conn==='refused'&&!s.pvpUnavailable} onNick={v=>pvp.setNick(v)} onCode={setCode} onCreate={()=>pvp.create()} onJoin={()=>pvp.join(code)} onWatch={()=>pvp.watch(code)} onBack={()=>pvp.close()} onDismissError={()=>pvp.dismissError()}/>;
+  const [hint,setHint]=useState<TypeHint|null>(null),[moved,setMoved]=useState<{text:string;id:number}|null>(null),prevLobby=useRef<LobbyStateMsg|null>(null);
+  useEffect(()=>{if(s.screen!=='lobby'){setHint(null);setMoved(null);prevLobby.current=null;}},[s.screen,s.code]);
+  // Host's Team/PvP choice from the create form survives room creation (the lobby alone cannot tell 2 distinct teams from PvP). Same-map guard avoids applying a stale draft.
+  const cd=s.createDraft,lv=s.lobby;
+  useEffect(()=>{if(s.screen==='lobby'&&s.host&&cd&&lv&&cd.mapId===lv.levelId)setHint(h=>h??{type:cd.type,teams:cd.teams});},[s.screen,s.code,s.host,cd,lv?.levelId]);
+  useEffect(()=>{
+    const cur=s.screen==='lobby'?s.lobby:null,n=cur?movedToSpectators(prevLobby.current,cur):0;
+    prevLobby.current=cur;
+    if(n>0)setMoved(m=>({text:movedToast(n),id:(m?.id??0)+1}));
+  },[s.lobby,s.screen]);
+  // Own timer keyed on the toast: later lobby updates must not cancel it (that left the toast stuck).
+  useEffect(()=>{if(!moved)return;const t=setTimeout(()=>setMoved(null),TOAST_MS);return()=>clearTimeout(t);},[moved]);
+  if(s.screen==='menu'||s.screen==='connecting'){
+    const maps=pvp.maps(),d=s.createDraft;
+    return <PvpMenu view={s.menuView} joinRole={s.joinRole} nick={s.nickDraft} code={code} error={s.error} unavailable={s.pvpUnavailable||s.screen==='connecting'} reload={s.conn==='refused'&&!s.pvpUnavailable} onNick={v=>pvp.setNick(v)} onCode={setCode} onGoCreate={()=>pvp.goCreate()} onGoJoin={()=>pvp.goJoin()} onRole={r=>pvp.chooseRole(r)} onJoin={(c,r)=>pvp.join(c,r)} onBack={()=>pvp.back()} onDismissError={()=>pvp.dismissError()}>
+      {d&&<RoomForm nick={s.nickDraft} draft={d} maps={maps} thumbs={thumbs} unavailable={s.pvpUnavailable||s.screen==='connecting'||(s.conn==='refused'&&!s.pvpUnavailable)} onNick={v=>pvp.setNick(v)} onType={t=>pvp.draftType(t)} onMap={id=>pvp.draftMap(id)} onPlayers={n=>pvp.draftPlayers(n)} onTeams={n=>pvp.draftTeams(n)} onRow={(i,p)=>pvp.draftRow(i,p)} onCreate={()=>pvp.createRoom()}/>}
+    </PvpMenu>;
+  }
   if(s.screen==='restarted')return <section class="picker panel pvp-panel" aria-label="Server restarted">
     <p class="pvp-error" role="alert" data-testid="pvp-restarted">{s.error}</p>
     <button class="level-card menu-button" data-testid="pvp-restarted-menu" onClick={()=>pvp.backToMenu()}>Back to menu</button>
   </section>;
   if(s.screen==='lobby'){
     const maps=pvp.maps(),level=s.lobby?pvp.level(s.lobby.levelId):undefined,palettes=(pvp.options.manifest?.()?.palettes??{}) as Record<string,string>;
-    return <Lobby code={s.code} lobby={s.lobby} seat={s.seat} host={s.host} conn={s.conn} error={s.error} levelName={s.lobby?(maps.find(m=>m.id===s.lobby!.levelId)?.name??pretty(s.lobby.levelId)):''}
-      maps={maps} links={s.code&&typeof location!=='undefined'?shareLinks(location.origin,location.pathname,s.code):null}
-      onMap={id=>pvp.updateLobby(id,[])} onSeat={seats=>s.lobby&&pvp.updateLobby(s.lobby.levelId,seats)} onCopy={t=>{try{void navigator.clipboard?.writeText(t);}catch{/* clipboard unavailable */}}}
+    return <Lobby toast={moved?.text??null} code={s.code} lobby={s.lobby} seat={s.seat} host={s.host} conn={s.conn} error={s.error} nick={s.nick}
+      maps={maps} thumbs={thumbs} hint={hint} onHint={setHint} links={s.code&&typeof location!=='undefined'?shareLinks(location.origin,location.pathname,s.code):null}
+      onUpdate={(id,seats)=>pvp.updateLobby(id,seats)} onCopy={t=>{try{void navigator.clipboard?.writeText(t);}catch{/* clipboard unavailable */}}}
       seatColors={(level?.players??[]).map(p=>palettes[p.colorKey])} draining={!!s.draining} onReady={()=>pvp.ready()} onStart={()=>pvp.start()} onLeave={()=>pvp.leave()} onRetry={()=>pvp.retry()} onDismissError={()=>pvp.dismissError()}/>;
   }
   if((s.screen==='countdown'||s.screen==='playing')&&s.error===SYNC_LOST_STRING)return <section class="picker panel pvp-panel" aria-label="Connection interrupted">
@@ -34,7 +55,6 @@ export function PvpLayer({pvp}:{pvp:PvpController}){
   if(s.screen==='result'&&s.end)return <><ConnBanner conn={s.conn} info={s.connInfo} onRetry={()=>pvp.retry()}/><PvpResult outcome={s.end.outcome} seat={s.seat} ranking={s.ranking} seats={s.start?.seats} draining={!!s.draining} onLeave={()=>pvp.leave()} onRematch={()=>pvp.rematch()}/></>;
   return null;
 }
-export const TOAST_MS=5000;
 /** Leave asks for quit confirmation only for a seat still in the match; spectators and eliminated seats leave directly. */
 export const leaveNeedsConfirm=(seat:number|null,eliminated:boolean):boolean=>seat!==null&&!eliminated;
 function PvpPlaying({pvp}:{pvp:PvpController}){

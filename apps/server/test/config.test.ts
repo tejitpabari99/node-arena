@@ -17,6 +17,12 @@ test('config parses values', () => {
   assert.deepEqual(c.allowedOrigins, ['https://a.web.app', 'https://b--*.web.app']); assert.equal(c.contentDir, '/x');
 });
 
+test('CREATES_PER_MIN defaults to 5, parses, and rejects bad values', () => {
+  assert.equal(parseConfig({}).createsPerMin, 5);
+  assert.equal(parseConfig({ CREATES_PER_MIN: '1000' }).createsPerMin, 1000);
+  for (const v of ['0', 'x', '-1']) assert.throws(() => parseConfig({ CREATES_PER_MIN: v }), ConfigError, v);
+});
+
 test('config rejects bad env, listing all errors', () => {
   for (const env of [{ INPUT_DELAY: '0' }, { INPUT_DELAY: '11' }, { PORT: 'abc' }, { PORT: '70000' }, { MAX_ROOMS: '0' }, { MAX_CONNS: '-1' }, { LOG_LEVEL: 'loud' }, { ALLOW_NO_ORIGIN: 'maybe' }, { ALLOWED_ORIGINS: 'not-an-origin' }]) {
     assert.throws(() => parseConfig(env), ConfigError, JSON.stringify(env));
