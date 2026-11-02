@@ -99,24 +99,24 @@
     "ticks": 1228,
     "finalHash": "71e32bae24b9176c"
   },
+  "na-pvp-cross": {
+    "outcome": "victory",
+    "ticks": 1411,
+    "finalHash": "efe3a1a0ded4a35f"
+  },
+  "na-pvp-duel-m": {
+    "outcome": "victory",
+    "ticks": 4944,
+    "finalHash": "b8e9569eaa08ca56"
+  },
+  "na-pvp-duel-s": {
+    "outcome": "victory",
+    "ticks": 1459,
+    "finalHash": "a82edd399faf6861"
+  },
   "na-trial": {
     "outcome": "won",
     "ticks": 218,
     "finalHash": "076df6ca20233bc8"
-  },
-  "na-pvp-duel-s": {
-    "outcome": "victory",
-    "ticks": 3938,
-    "finalHash": "a8d4b97bde8616ad"
-  },
-  "na-pvp-duel-m": {
-    "outcome": "victory",
-    "ticks": 3082,
-    "finalHash": "2498f0f887d9bf18"
-  },
-  "na-pvp-cross": {
-    "outcome": "victory",
-    "ticks": 4270,
-    "finalHash": "9e9db8091ea848e4"
   }
 }
