@@ -15,7 +15,7 @@ function files(): Record<string, object> {
     modules: { level: { maxLevel: 64 }, drawsLines: {}, spawns: { troop: 'soldier', spawnSpeed: 0.5, lineSpawnPenalty: 0.3 }, grows: { growTime } },
   });
   return {
-    'data/balance.json': { $schema: 'x/balance.schema.json', schemaVersion: SV, stageThresholds: [10, 30], spawn: { aliveCap: 30 }, growth: { base: 0.9 }, contactDistance: 0.7, laneHalfWidth: 0.19 },
+    'data/balance.json': { $schema: 'x/balance.schema.json', schemaVersion: SV, stageThresholds: [10, 30], spawn: { aliveCap: 30 }, growth: { base: 0.9 }, contactDistance: 0.7, laneHalfWidth: 0.19, minBuildingDistance: 3.5 },
     'data/units/soldier.json': { $schema: 'x/unit.schema.json', schemaVersion: SV, id: 'soldier', visual: 'unit.soldier', speed: 5, hp: 1, attack: 1, defense: 1 },
     'data/units/tank.json': { $schema: 'x/unit.schema.json', schemaVersion: SV, id: 'tank', visual: 'unit.tank', speed: 5, hp: 2, attack: 2, defense: 1 },
     'data/buildings/house-wt1.json': house('house-wt1', 1.7),
@@ -185,14 +185,16 @@ test('level validation: every failure reports file + JSON pointer', () => {
   expectIssue(() => content.loadLevel(cat(), level(), 'data/levels/other.json'), 'data/levels/other.json', '/id', /file name/);
 });
 
-test('warnings: footprint overlap and element outside bounds are logged, not fatal', () => {
+test('footprint overlap is a spacing error; outside elements remain warnings', () => {
   const l = level();
   l.buildings[1].pos = { x: -5.5, z: 0.5 }; // 0.5 / 0.5 apart, boxes 1.5 wide
   l.elements.push({ id: 'e1', archetype: 'obstacle', pos: { x: 25, z: 25 }, yawDeg: 0 });
+  expectIssue(() => content.loadLevel(cat(), l), 'data/levels/lv-test.json', '/buildings/1/pos', /minimum/);
+  l.buildings[1].pos = { x: 4, z: .5 };
   const r = content.loadLevel(cat(), l);
-  assert.deepEqual(r.warnings.map((w) => [w.file, w.pointer]), [['data/levels/lv-test.json', '/buildings/1/pos'], ['data/levels/lv-test.json', '/elements/1/pos']]);
+  assert.deepEqual(r.warnings.map((w) => [w.file, w.pointer]), [['data/levels/lv-test.json', '/elements/1/pos']]);
   assert.equal(content.compileLevel(cat(), r.level).elements.length, 2);
-  const apart = level(); apart.buildings[1].pos = { x: -3, z: 0 };
+  const apart = level(); apart.buildings[1].pos = { x: -2.5, z: 0 };
   assert.deepEqual(content.loadLevel(cat(), apart).warnings, []);
 });
 
@@ -324,4 +326,20 @@ test('campaign compile unchanged by team field: no team key, null limit stays nu
   const c = compile();
   assert.equal(c.timeLimitSec, null);
   assert.ok(c.players.every((p) => !('team' in p)));
+});
+
+// Removing the pairwise spacing error must make this boundary regression fail.
+test('covers R-ENT-05: every too-close pair is an error naming both ids; 3.50 passes', () => {
+  const c = cat(), l = level();
+  l.buildings[0].pos = { x: 0, z: 0 };
+  l.buildings[1].pos = { x: 3.49, z: 0 };
+  l.buildings[2].pos = { x: 0, z: 3.49 };
+  const errors = failures(() => content.loadLevel(c, l));
+  assert.equal(errors.length, 2);
+  assert.match(errors[0]!.message, /b0.*b1|b1.*b0/);
+  assert.match(errors[0]!.message, /3\.49/);
+  assert.equal(errors[0]!.pointer, '/buildings/1/pos');
+  assert.match(errors[1]!.message, /b0.*b2|b2.*b0/);
+  l.buildings[1].pos.x = 3.5; l.buildings[2].pos.z = 3.5;
+  assert.doesNotThrow(() => content.loadLevel(c, l));
 });

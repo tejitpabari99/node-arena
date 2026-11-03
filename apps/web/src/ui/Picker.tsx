@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { isLevelUnlocked, type AppSnapshot, type PickerView } from '../app/state';
 import { uiSprites } from './assets';
 import type { LevelThumbnailService } from '../render/level-thumbnail';
-export interface PickerProps { state: AppSnapshot; onStart(id:string):void; onMute():void; onCredits():void; onPlayOnline?():void; thumbs?:LevelThumbnailService; onView?(view:PickerView):void }
+export interface PickerProps { state: AppSnapshot; onStart(id:string):void; onMute():void; onPlayOnline?():void; thumbs?:LevelThumbnailService; onView?(view:PickerView):void }
 // Literal import.meta.env.DEV lets production builds drop Custom (and the string) entirely.
 const TITLES:Record<PickerView,string>={main:'Choose your battle',campaign:'Campaign',custom:import.meta.env.DEV?'Custom levels':'Choose your battle'};
 /** Map thumbnail for a custom level; neutral placeholder until the service has (or if it failed to make) one. Name stays in the card's aria-label. */
@@ -12,7 +12,7 @@ export function LevelThumb({thumbs,id}:{thumbs?:LevelThumbnailService|undefined;
   const url=thumbs?.get(id);
   return url?<img class="level-thumb" src={url} alt="" draggable={false}/>:<i class="level-thumb placeholder" aria-hidden="true"/>;
 }
-export function Picker({state,onStart,onMute,onCredits,onPlayOnline,thumbs,onView=()=>undefined}:PickerProps) {
+export function Picker({state,onStart,onMute,onPlayOnline,thumbs,onView=()=>undefined}:PickerProps) {
   const muted=state.save.settings.musicMute&&state.save.settings.sfxMute;
   const view=!import.meta.env.DEV&&state.pickerView==='custom'?'main':state.pickerView;
   const focus=[...state.levels,...state.customLevels].find(l=>l.id===state.save.lastLevel&&isLevelUnlocked(state,l.id))?.id??state.levels[0]?.id;
@@ -37,6 +37,5 @@ export function Picker({state,onStart,onMute,onCredits,onPlayOnline,thumbs,onVie
         <LevelThumb thumbs={thumbs} id={level.id}/><small>{completed?'✓':'Play'}</small>
       </button>{edit(level.id)}</div>;
     })}{import.meta.env.DEV&&<div class="level-choice"><a class="level-card create-card" href="/editor.html?create=1"><span>Create custom level</span></a></div>}</div>}
-    <footer><button class="text-button" onClick={onCredits}>Credits</button></footer>
   </section>;
 }

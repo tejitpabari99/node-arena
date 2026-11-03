@@ -8,13 +8,15 @@ import tank from '../../../content/data/units/tank.json';
 
 /**
  * Golden/bench levels are authored as inline level JSON and compiled with 02's `loadLevel` + `compileLevel`
- * against the shipped catalog (no SP05 campaign files). Browser-safe: only JSON imports and content exports.
+ * against shipped mechanics (no SP05 campaign files); synthetic geometry uses a test-only spacing catalog. Browser-safe: only JSON imports and content exports.
  */
 let cached: Catalog | undefined;
 export function catalog(): Catalog {
   if (cached) return cached;
   const built = buildCatalog({
-    'data/balance.json': balance,
+    // Mechanics fixtures intentionally isolate short lanes, shooter reach and collisions.
+    // Production catalogs keep 3.5; this test-only tunable preserves the fixture timings.
+    'data/balance.json': { ...balance, minBuildingDistance: .001 },
     'data/units/soldier.json': soldier,
     'data/units/tank.json': tank,
     'data/buildings/house-wt1.json': houseWt1,

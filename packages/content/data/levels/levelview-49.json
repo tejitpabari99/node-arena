@@ -86,8 +86,8 @@
       "id": "b0",
       "archetype": "house-wt2",
       "pos": {
-        "x": -3.25,
-        "z": 0
+        "x": -3.5,
+        "z": 0.01
       },
       "owner": null,
       "level": 8,
@@ -97,8 +97,8 @@
       "id": "b1",
       "archetype": "house-wt1",
       "pos": {
-        "x": -0.25,
-        "z": -0.1
+        "x": 0.0,
+        "z": -0.11
       },
       "owner": null,
       "level": 5,

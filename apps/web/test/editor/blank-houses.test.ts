@@ -25,15 +25,15 @@ describe('blank document base houses', () => {
         expect(h.pos.x).toBeGreaterThanOrEqual(doc.bounds.minX + 2); expect(h.pos.x).toBeLessThanOrEqual(doc.bounds.maxX - 2);
         expect(h.pos.z).toBeGreaterThanOrEqual(doc.bounds.minZ + 2); expect(h.pos.z).toBeLessThanOrEqual(doc.bounds.maxZ - 2);
       }
-      expect(Math.hypot(a!.pos.x - b!.pos.x, a!.pos.z - b!.pos.z)).toBeGreaterThanOrEqual(3);
+      expect(Math.hypot(a!.pos.x - b!.pos.x, a!.pos.z - b!.pos.z)).toBeGreaterThanOrEqual(3.5);
       expect(ownershipIssues(doc, troops())).toEqual([]);
       expect(() => validateEditorDocument(catalog, doc, doc.id)).not.toThrow();
     }
   });
   it('accepts an injected random source', () => {
     const lo = blankDocument('na-houses', 'green', 'medium', () => 0), hi = blankDocument('na-houses', 'green', 'medium', () => 1);
-    expect(lo.buildings.map(b => b.pos)).toEqual([{ x: -8, z: -8 }, { x: 1.5, z: -8 }]);
-    expect(hi.buildings.map(b => b.pos)).toEqual([{ x: -1.5, z: 8 }, { x: 8, z: 8 }]);
+    expect(lo.buildings.map(b => b.pos)).toEqual([{ x: -8, z: -8 }, { x: 1.75, z: -8 }]);
+    expect(hi.buildings.map(b => b.pos)).toEqual([{ x: -1.75, z: 8 }, { x: 8, z: 8 }]);
   });
 });
 
@@ -89,4 +89,10 @@ describe('preview of a draft without buildings', () => {
     const again = convertAuthored<Parameters<typeof compileLevel>[1]>('x', { ...deleted, requires: [] }, 'level');
     expect(compileLevel(catalog, again).buildings).toHaveLength(0);
   });
+});
+
+it('blank creation keeps the closest possible starting houses 3.5 apart', () => {
+  const values = [1, 0, 0, 0];
+  const doc = blankDocument('na-gap', 'green', 'small', () => values.shift() ?? 0);
+  expect(Math.hypot(doc.buildings[0]!.pos.x - doc.buildings[1]!.pos.x, doc.buildings[0]!.pos.z - doc.buildings[1]!.pos.z)).toBeGreaterThanOrEqual(3.5);
 });

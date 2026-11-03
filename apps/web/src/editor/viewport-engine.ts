@@ -5,7 +5,7 @@ import { contentFiles } from '../app/boot.js';
 import { loadManifest } from '../manifest/load.js';
 import { fitCamera, HUD_PADDING, levelVisualBounds, paddingFractions, zoomFraming } from '../render/camera.js';
 import { createLevelScene } from '../render/scene.js';
-import { buildableArea, clampPoint, snapPosition, type Area, type DocOp, type LibraryItem } from './model.js';
+import { buildableArea, clampPoint, reduceDocument, snapPosition, type Area, type DocOp, type LibraryItem } from './model.js';
 import type { LevelDoc } from './document.js';
 import { groundAt, pickObstacle, type Point, type Selection } from './picking.js';
 
@@ -85,7 +85,12 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   const blankCamera = new PerspectiveCamera(45, 1, .1, 1000), blankRoot = new Object3D();
   const ghost = document.createElement('div'); ghost.className = 'editor-ghost'; ghost.hidden = true; parent.append(ghost);
   let placement: { item: LibraryItem; id: number } | undefined;
-  let ghostPoint: Point | null = null;
+  let ghostPoint: Point | null = null, blocked = false;
+  function markBlocked(op: DocOp) {
+    blocked = !!workingDoc && reduceDocument(workingDoc, op, currentArea()) === workingDoc;
+    ghost.classList.toggle('editor-ghost-blocked', blocked);
+    for (const node of groupGhosts) node.classList.toggle('editor-ghost-blocked', blocked);
+  }
   function showGhost(point: Point | null, label: string) {
     ghostPoint = point; ghost.hidden = !point;
     if (!point) return;
@@ -195,7 +200,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     return { x: rect.left + (v.x + 1) * rect.width / 2, y: rect.top + (1 - v.y) * rect.height / 2 };
   }
   function updateCursor() { parent.style.cursor = gesture?.pan ? 'grabbing' : hand || space ? 'grab' : ''; }
-  function cancel() { for (const node of groupGhosts) node.remove(); groupGhosts.length = 0; gesture = undefined; placement = undefined; ghostPoint = null; ghost.hidden = true; marquee.hidden = true; updateCursor(); }
+  function cancel() { for (const node of groupGhosts) node.remove(); groupGhosts.length = 0; gesture = undefined; placement = undefined; ghostPoint = null; blocked = false; ghost.classList.remove('editor-ghost-blocked'); ghost.hidden = true; marquee.hidden = true; updateCursor(); }
   function down(event: PointerEvent) {
     if (!scene || gesture || placement || !event.isPrimary || ![0, 1, 2].includes(event.button)) return;
     const panning = event.button !== 0 || event.altKey || hand || space;
@@ -228,6 +233,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
         const node = document.createElement('div'); node.className = 'editor-ghost editor-group-ghost'; node.textContent = item.id;
         Object.assign(node.style, { left: `${p.x - rect.left}px`, top: `${p.y - rect.top}px` }); parent.append(node); groupGhosts.push(node);
       }
+      if (ghostPoint) markBlocked({ type: 'move-selection', targets: gesture.targets, delta: { x: ghostPoint.x - gesture.origin.x, z: ghostPoint.z - gesture.origin.z } });
     } else if (gesture.empty && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > 5) {
       const rect = parent.getBoundingClientRect(); marquee.hidden = false;
       Object.assign(marquee.style, { left: `${Math.min(gesture.x, event.clientX) - rect.left}px`, top: `${Math.min(gesture.y, event.clientY) - rect.top}px`, width: `${Math.abs(event.clientX - gesture.x)}px`, height: `${Math.abs(event.clientY - gesture.y)}px` });
@@ -236,7 +242,7 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
   }
   function up(event: PointerEvent) {
     if (!gesture || gesture.id !== event.pointerId) return;
-    if (!gesture.pan && gesture.target && ghostPoint && inside(event.clientX, event.clientY)) {
+    if (!blocked && !gesture.pan && gesture.target && ghostPoint && inside(event.clientX, event.clientY)) {
       callbacks.edit?.({ type: 'move-selection', targets: gesture.targets, delta: { x: ghostPoint.x - gesture.origin!.x, z: ghostPoint.z - gesture.origin!.z } });
     }
     if (!gesture.pan && !marquee.hidden && level) {
@@ -258,10 +264,11 @@ export function createEditorViewport(parent: HTMLElement, callbacks: {
     if (!placement || event.pointerId !== placement.id) return;
     const point = inside(event.clientX, event.clientY) ? at(event.clientX, event.clientY) : null;
     callbacks.pointer?.(point); showGhost(point ? clampPoint(snapPosition(point), currentArea()) : null, placement.item);
+    if (ghostPoint) markBlocked({ type: 'place', item: placement.item, pos: ghostPoint });
   }
   function dragUp(event: PointerEvent) {
     if (!placement || event.pointerId !== placement.id) return;
-    const item = placement.item, pos = inside(event.clientX, event.clientY) ? at(event.clientX, event.clientY) : null;
+    const item = placement.item, pos = !blocked && inside(event.clientX, event.clientY) ? at(event.clientX, event.clientY) : null;
     cancel();
     if (pos) callbacks.edit?.({ type: 'place', item, pos: clampPoint(snapPosition(pos), currentArea()) });
   }

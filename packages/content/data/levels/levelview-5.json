@@ -58,7 +58,7 @@
       "archetype": "house-wt1",
       "pos": {
         "x": 2.18,
-        "z": 4.61
+        "z": 4.69
       },
       "owner": "p2",
       "level": 2,
@@ -69,7 +69,7 @@
       "archetype": "house-wt1",
       "pos": {
         "x": 2.15,
-        "z": -5.55
+        "z": -5.82
       },
       "owner": "p2",
       "level": 2,
@@ -80,7 +80,7 @@
       "archetype": "house-wt1",
       "pos": {
         "x": 2.24,
-        "z": -2.3
+        "z": -2.31
       },
       "owner": "p2",
       "level": 2,
@@ -91,7 +91,7 @@
       "archetype": "house-wt1",
       "pos": {
         "x": 2.29,
-        "z": 0.99
+        "z": 1.19
       },
       "owner": "p2",
       "level": 2,

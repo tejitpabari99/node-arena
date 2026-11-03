@@ -1,6 +1,6 @@
 # Node Arena — Game Rules
 
-RULES_VERSION: 3.3.0
+RULES_VERSION: 3.4.0
 
 This is the mechanics contract for Node Arena, motivated by Tower War (APK 1.29.3). It is a full rewrite; there are no profiles and no v1 compatibility. Rules own **structure and formulas**; every tunable number (speeds, coefficients, caps, radii, thresholds) lives in authored content under a named parameter, and rules only name the resolved parameter. The simulation must follow these rules; presentation, bots and tools consume the same mechanics. Tower War defaults appear only in the §7 glossary and in the §5 worked examples.
 
@@ -165,6 +165,14 @@ A player's identity is its team unless a `SeatSetup` assigns teams (R-TEM-01): e
 *Amended:* 3.1.0 (team = player id unless a `SeatSetup` assigns teams; hostile = different team). Campaign behaviour unchanged.
 
 *Amended:* 3.3.0 (neutral buildings of unused pvp slots).
+
+### R-ENT-05
+
+Every pair of buildings must be at least `minBuildingDistance` world units apart, center to center (default 3.5). This applies to every archetype and owner in campaign, PvP and custom levels. A distance below the minimum, allowing only a 1e-6 world-unit comparison tolerance, is a hard content validation error naming both buildings. Elements and obstacles are unconstrained. The editor blocks invalid placement and movement; existing violating saved custom levels fail validation without migration.
+
+*Params:* `balance.minBuildingDistance`.
+
+*Since:* 3.4.0.
 
 ## 3. Rules by area
 
@@ -853,6 +861,7 @@ One row per content key: the key rules name, its Tower War source, the rule ids 
 
 | RULES_VERSION | Date | Change |
 |---|---|---|
+| 3.4.0 | 2026-11-03 | Additive authoring constraint R-ENT-05: minimum building center distance, default 3.5 world units; hard validation errors and editor enforcement. Existing valid replay outcomes unchanged. Three shipped campaign layouts nudged through content versioning. |
 | 3.3.0 | 2026-11-01 | Additive; no existing replay outcome changes (full-seat matches, campaign and pvp replays are identical; only `rulesVersion` metadata moves). R-SEA-01 amended: a pvp match has `2..level.players.length` seats using a prefix of the authored slots; buildings of unused slots become neutral at their authored level. R-TEM-01 (`n` = seat count) and R-ENT-04 (neutral note) amended in place. `SCHEMA_VERSION` unchanged. Content note: `na-pvp-cross` slot order changed to `p1,p3,p2,p4` (authored teams `[0,0,1,1]`); the default pairing (p1+p3 vs p2+p4, opposite corners) is preserved, but seat indexes differ, so default Cross replays/goldens were regenerated via content (not a rules change). |
 | 3.2.0 | 2026-10-29 | Additive; no existing replay outcome changes (campaign and pvp replays without `Forfeit` are identical; only `rulesVersion` metadata moves). New area FFT: `Forfeit` system command (R-FFT-01 effect, R-FFT-02 validity/phase-1 order/system-only provenance, R-FFT-03 outcome interaction). Amended in place: R-ELM-01 (second elimination cause), R-WIN-04 and R-WIN-06(b) (cross-references), §4 phase 1 and 9 rows, §4.1 (command set union). `SCHEMA_VERSION` unchanged. |
 | 3.1.0 | 2026-10-28 | Additive; campaign replays unchanged. New objective `pvp`: seats and teams (R-SEA-01, R-TEM-01), ally non-aggression and reinforcement (R-TEM-02, R-TEM-03), seat elimination (R-ELM-01), last-team victory, timeout ranking, draw and placement (R-WIN-04..07). Amended in place: R-ENT-04 (team = player id unless a `SeatSetup` assigns teams), R-WIN-01..03 scoped to `captureAll`. Hash gains a pvp-only tail (§4.2). `SCHEMA_VERSION` unchanged. |

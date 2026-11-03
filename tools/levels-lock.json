@@ -32,7 +32,7 @@
   "levelview-14": {
     "outcome": "truncated",
     "ticks": 20000,
-    "finalHash": "675cf279ece3673d"
+    "finalHash": "b2663840d43075a7"
   },
   "levelview-15": {
     "outcome": "truncated",
@@ -81,13 +81,13 @@
   },
   "levelview-49": {
     "outcome": "won",
-    "ticks": 1465,
-    "finalHash": "c8ca089653f90df2"
+    "ticks": 1466,
+    "finalHash": "c965b4cf6dd40a93"
   },
   "levelview-5": {
     "outcome": "won",
-    "ticks": 602,
-    "finalHash": "029adbb75b7d57e0"
+    "ticks": 463,
+    "finalHash": "57a27b393c32a4cb"
   },
   "levelview-6": {
     "outcome": "won",

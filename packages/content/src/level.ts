@@ -129,7 +129,9 @@ export function validateLevel(catalog: Catalog, level: NextLevel, file: string):
   for (let a = 0; a < placed.length; a++) {
     for (let c = a + 1; c < placed.length; c++) {
       const p = placed[a]!, q = placed[c]!;
-      if (p.x === q.x && p.z === q.z) err(`/buildings/${q.i}/pos`, `Coincident with building at /buildings/${p.i}`);
+      // Catalog distances are milli-units: .001 here is the 1e-6 world-unit tolerance.
+      const distance = Math.hypot(p.x - q.x, p.z - q.z);
+      if (distance < catalog.balance.minBuildingDistance - .001) err(`/buildings/${q.i}/pos`, `${distance === 0 ? 'Coincident: ' : ''}buildings "${level.buildings[p.i]!.id}" and "${level.buildings[q.i]!.id}" are ${distance / 1000} world units apart; minimum ${catalog.balance.minBuildingDistance / 1000}`);
       else if (overlaps(p, q)) warn(`/buildings/${q.i}/pos`, `Footprint overlaps building at /buildings/${p.i}`);
     }
   }
