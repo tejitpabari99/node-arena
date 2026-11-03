@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 4 tasks: move/split docs + repoint refs, extend check:docs, write new top-level/concept/ADR docs, write reference/testing/implementation pages + AGENTS pointer table.
 date: 2026-11-03
 ---
@@ -8,10 +8,10 @@ Source of truth: docs/agent_files/feat-online-polish-20261103-0028/03-docs-restr
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Relocate and split existing docs, repoint all refs | SP01, SP02, SP04 | todo |
-| 2 | Extend check:docs (links, folder indexes) | 1 | todo |
-| 3 | Mission, architecture, concepts, ADRs | 1, 2 | todo |
-| 4 | Reference, testing, implementation pages, AGENTS pointers | 3 | todo |
+| 1 | Relocate and split existing docs, repoint all refs | SP01, SP02, SP04 | done |
+| 2 | Extend check:docs (links, folder indexes) | 1 | done |
+| 3 | Mission, architecture, concepts, ADRs | 1, 2 | done |
+| 4 | Reference, testing, implementation pages, AGENTS pointers | 3 | done |
 
 ## Task 1 — Relocate and split existing docs, repoint all refs
 What it is / what it means: Lossless move of the six flat docs into the target tree (R1, R3, R5, R6; D1–D5, D8).
