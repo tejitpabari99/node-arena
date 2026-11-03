@@ -1,7 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { isCredited } from '@node-arena/content';
-/** Shipped asset folders whose every file must have a CREDITS.md row, even when no manifest key references it. */
+/** Shipped asset folders whose every file must have a credits.md row, even when no manifest key references it. */
 export const CREDITED_DIRS = ['models', 'textures', 'fx', 'audio', 'fonts'] as const;
 async function walk(base: string, prefix: string): Promise<string[]> {
   let entries;
@@ -13,7 +13,7 @@ async function walk(base: string, prefix: string): Promise<string[]> {
   }
   return out;
 }
-/** Asset files on disk (models/, audio/) with no CREDITS.md row. */
+/** Asset files on disk (models/, audio/) with no credits.md row. */
 export async function uncreditedAssets(assetsDir: string, credits: string): Promise<string[]> {
   const files = (await Promise.all(CREDITED_DIRS.map(dir => walk(assetsDir, dir)))).flat();
   return files.filter(file => !isCredited(file, credits));

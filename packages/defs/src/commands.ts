@@ -2,7 +2,7 @@ import Type, { type Static } from 'typebox';
 
 const index = () => Type.Integer({ minimum: 0, maximum: 2147483647 });
 
-/** Closed command set (GAME_RULES.md 4.1). Boosters are deferred. Reject reasons for DrawLine: 03 R4; 04 appends blocker codes. */
+/** Closed command set (game-rules.md 4.1). Boosters are deferred. Reject reasons for DrawLine: 03 R4; 04 appends blocker codes. */
 export const COMMANDS = {
   DrawLine: {
     id: 'DrawLine',

@@ -54,7 +54,7 @@ function readBaseline(dir: string, ref: string): ContentBaseline | undefined {
 }
 async function main() {
   const dir = resolve(option('--dir', fileURLToPath(new URL('..', import.meta.url))));
-  const rules = await readFile(resolve(option('--rules', fileURLToPath(new URL('../../../docs/GAME_RULES.md', import.meta.url)))), 'utf8');
+  const rules = await readFile(resolve(option('--rules', fileURLToPath(new URL('../../../docs/specs/game-rules.md', import.meta.url)))), 'utf8');
   const check = args.includes('--check');
   const base = option('--base', process.env.VERSION_GUARD_BASE || 'HEAD');
   const baseline = check ? readBaseline(dir, base) : undefined;

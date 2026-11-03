@@ -89,12 +89,12 @@ test('check:manifest reports an uncredited asset as a warning and exits 0', asyn
   await cp(join(root, 'apps/web/assets'), dir, { recursive: true });
   await mkdir(join(dir, 'models/owner'), { recursive: true });
   await writeFile(join(dir, 'models/owner/mine.glb'), 'x');
-  const credits = join(dir, 'CREDITS.md'); await writeFile(credits, '# Credits\n');
+  const credits = join(dir, 'credits.md'); await writeFile(credits, '# Credits\n');
   const result = run('check:manifest', '--assets-dir', dir, '--credits', credits);
   assert.equal(result.status, 0, result.stdout);
   assert.equal(result.report.ok, true);
   assert.deepEqual(result.report.errors, []);
-  assert.ok(result.report.warnings.some((w: { message: string }) => /missing from CREDITS\.md/.test(w.message) && /models\/owner\/mine\.glb/.test(w.message)), result.stdout);
+  assert.ok(result.report.warnings.some((w: { message: string }) => /missing from credits\.md/.test(w.message) && /models\/owner\/mine\.glb/.test(w.message)), result.stdout);
 });
 
 test('validate:content supports a no-baseline override and still rejects stale locks', async t => {

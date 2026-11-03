@@ -15,7 +15,7 @@ function fixture(t: { after: (fn: () => void) => void }) {
     writeFileSync(resolve(dir, file), text);
   };
   put('package.json', JSON.stringify({ scripts: { build: 'true', 'check:docs': 'true' } }));
-  for (const doc of ['README.md', 'AGENTS.md', 'tools/README.md', 'docs/CONTENT_GUIDE.md', 'docs/LEVELS_GUIDE.md', 'docs/CREDITS.md']) put(doc);
+  for (const doc of ['README.md', 'AGENTS.md', 'tools/README.md', 'docs/implementation/content-authoring.md', 'docs/implementation/owner-art.md', 'docs/implementation/level-import.md', 'docs/reference/level-coverage.md', 'docs/reference/credits.md', 'docs/operations/pvp-server.md']) put(doc);
   put('AGENTS.md', '`pnpm build`, `pnpm run check:docs`');
   return { dir, put };
 }
@@ -74,4 +74,11 @@ test('CLI reports JSON and Markdown with success/failure exit status and rejects
   assert.equal(JSON.parse(bad.stdout).errors[0].file, 'README.md');
   assert.match(run().stdout, /check:docs: FAIL/);
   assert.equal(run('--bogus', 'x').status, 1);
+});
+
+test('relocated guide fragments retain repository-path validation', async t => {
+  const { dir, put } = fixture(t);
+  put('docs/implementation/owner-art.md', '`apps/web/assets/missing.png`');
+  const result = await checkDocs(dir);
+  assert.ok(result.errors.some(error => error.file === 'docs/implementation/owner-art.md' && error.message.includes('missing.png')));
 });

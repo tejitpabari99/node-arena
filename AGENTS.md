@@ -33,9 +33,9 @@ Main scripts (root `package.json`; Node >=22.13, pnpm 10.34.6):
 - `pnpm check:docs`, `pnpm check:parked`, `pnpm check:parked --strict`
 - Full command inventory and gate semantics: `tools/README.md`.
 
-Rules authority: `docs/GAME_RULES.md` is the v2 mechanics contract. Stable `R-AREA-NN` IDs require real test titles containing `covers R-...`; IDs are never reused; a retired rule is deleted with its tests (history lives in git). Mechanics order: rule text + changelog + `RULES_VERSION` bump (major = existing replay outcomes change, minor = additive, patch = clarification), then tests, then code. Tunable values live in content; change content version/hash when identities move. Bot identity changes also require `BOT_VERSION`.
+Rules authority: `docs/specs/game-rules.md` is the v2 mechanics contract. Stable `R-AREA-NN` IDs require real test titles containing `covers R-...`; IDs are never reused; a retired rule is deleted with its tests (history lives in git). Mechanics order: rule text + changelog + `RULES_VERSION` bump (major = existing replay outcomes change, minor = additive, patch = clarification), then tests, then code. Tunable values live in content; change content version/hash when identities move. Bot identity changes also require `BOT_VERSION`.
 
-Docs: `docs/CONTENT_GUIDE.md` covers authoring/version guards; `docs/LEVELS_GUIDE.md` covers import/feature coverage and dropped data. Pipeline docs go in `docs/agent_files/<branch-slug>-<YYYYMMDD-HHMM>/` (see `.agents/skills/_shared/dev-common.md`; reuse the existing folder for the branch). Deferred ideas go in `docs/FUTURES.md`.
+Docs: `docs/implementation/content-authoring.md` covers authoring/version guards; `docs/implementation/level-import.md` covers import and authoring; `docs/reference/level-coverage.md` records feature coverage and dropped data. Pipeline docs go in `docs/agent_files/<branch-slug>-<YYYYMMDD-HHMM>/` (see `.agents/skills/_shared/dev-common.md`; reuse the existing folder for the branch). Deferred ideas go in `docs/decisions/futures.md`.
 
 ## Principal Orchestrator Mode
 Act as principal architect and orchestrator. Break work down and delegate execution to sub-agents; do not implement directly.

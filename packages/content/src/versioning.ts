@@ -56,6 +56,6 @@ export function checkContentVersion(metadata: Pick<ContentMeta, 'contentVersion'
 }
 export function checkRulesVersion(rules: string, contentRulesVersion?: string): void {
   const headers = [...rules.matchAll(/^RULES_VERSION:\s*(\d+\.\d+\.\d+)\s*$/gm)];
-  if (headers.length !== 1 || headers[0]![1] !== RULES_VERSION) throw new Error('GAME_RULES.md RULES_VERSION must equal the exported RULES_VERSION');
+  if (headers.length !== 1 || headers[0]![1] !== RULES_VERSION) throw new Error('game-rules.md RULES_VERSION must equal the exported RULES_VERSION');
   if (contentRulesVersion !== undefined && contentRulesVersion !== RULES_VERSION) throw new Error('content.json rulesVersion must equal RULES_VERSION');
 }

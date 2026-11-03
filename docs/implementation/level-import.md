@@ -1,8 +1,8 @@
 # Node Arena levels guide
 
-How Tower War (TW) levels become Node Arena level files, and how to add more. Goal: a later level is a data row, not an importer rewrite. Companion: [CONTENT_GUIDE.md](CONTENT_GUIDE.md) (lock, versions, schemas), [GAME_RULES.md](GAME_RULES.md) (mechanics), [FUTURES.md](FUTURES.md) (deferred work).
+How Tower War (TW) levels become Node Arena level files, and how to add more. Goal: a later level is a data row, not an importer rewrite. Companion: [content-authoring.md](content-authoring.md) (lock, versions, schemas), [game-rules.md](../specs/game-rules.md) (mechanics), [futures.md](../decisions/futures.md) (deferred work).
 
-> Assets based on / motivated by Tower War. See [credits](CREDITS.md).
+> Assets based on / motivated by Tower War. See [credits](../reference/credits.md).
 
 Run everything from the repository root.
 
@@ -48,7 +48,7 @@ Scripts: `pnpm import:tw [--range A-B] [--only id[,id]] [--skip-blocked] [--chec
    The report also lists, per written level, the dropped tokens, inactive obstacle children (count and ids) and elements outside the bounds (count and ids).
 3. Read the blocked report: each line is `position, id, reasons`. A reason names the feature row (`Wall`, `Mine`, `River`, ...) with `archetype: null`, an unregistered theme, or a refused dialect. Registered themes are explicit: the `themes` ids of the v2 asset manifest (`apps/web/assets/manifest.json`, currently `green`, `snow`); the importer fails if that manifest is missing or not v2. A level whose position needs another theme (e.g. `lava` from position 41) is blocked until the art pipeline adds that theme to the manifest. Blocked levels write nothing (no `--allow-blocked`; an unplayable level fails `validate:content`).
 4. The campaign file is **merged by position** into the committed one, never rebuilt from the requested range: entries at other positions and hand-authored (`na-`) entries are kept. A blocked level (or a row that would leave a gap) ends the contiguous prefix relative to the merged campaign; later rows are not touched. `--skip-blocked` writes a sparse list (keeps `position`) and removes blocked positions. A level that fails to parse (long, v0 or boss dialect, or a prefab level whose committed ext file is missing) is reported as blocked for that level and does not abort the batch; for a missing prefab file copy its ext file from the extract's converted/ext-prefab folder into the importer's prefab folder. Positions 1-3 are tutorials and absent.
-5. For importable levels: `pnpm content:lock`, bump `contentVersion` in `packages/content/content.json` and `BOT_VERSION` (new AI seats), see [CONTENT_GUIDE.md](CONTENT_GUIDE.md) "Versions and hashes". The importer prints this reminder; it never edits either file.
+5. For importable levels: `pnpm content:lock`, bump `contentVersion` in `packages/content/content.json` and `BOT_VERSION` (new AI seats), see [content-authoring.md](content-authoring.md) "Versions and hashes". The importer prints this reminder; it never edits either file.
 6. Verify: `pnpm check:import`, `pnpm validate:content --base HEAD`, `pnpm check:content --base HEAD`.
 
 Output is idempotent and deterministic (`JSON.stringify(obj, null, 2) + "\n"`, schema key order, authored array order).
@@ -56,7 +56,7 @@ Output is idempotent and deterministic (`JSON.stringify(obj, null, 2) + "\n"`, s
 ## 3. Add a feature to unlock levels
 
 1. Pick the next feature by its "Delta" in the section 5 snapshot table (or by the blocked report).
-2. Define the module/archetype using the new-behaviour flow in [CONTENT_GUIDE.md](CONTENT_GUIDE.md) ("Add a module (new behaviour)"): rule text in `docs/GAME_RULES.md` + changelog + `RULES_VERSION`, def, sim binding, data file, `covers R-...` tests, `pnpm content:schemas`.
+2. Define the module/archetype using the new-behaviour flow in [content-authoring.md](content-authoring.md) ("Add a module (new behaviour)"): rule text in `docs/specs/game-rules.md` + changelog + `RULES_VERSION`, def, sim binding, data file, `covers R-...` tests, `pnpm content:schemas`.
 3. A new element/building kind is **a feature-map row + an emitter (+ a param table) + an archetype/module**. The feature-map row is the only archetype resolver: gate and mapper both read it.
    - Row shape: `{ "tw": <TW list/construct>, "action": "map" | "drop" | "block", "kind": "building" | "element" | "param" | "bot", "archetype": <id or null> }`.
    - `map` + `archetype: null` = construct recognised, no archetype yet: levels carrying it are blocked. Setting `archetype` to the new id unblocks the gate, but the mapper then needs an **emitter** registered under the same `tw` token (building emitters carry the param table that turns TW params into module overrides; element emitters turn a TW list into elements). A map row with an archetype and no emitter is a `MapError`, never a silent loss.
@@ -89,7 +89,7 @@ Custom levels live only in `packages/content/data/campaigns/custom.json`, never 
 2. Omit `source` (optional; `campaignPosition`/`dialect` only describe TW origin). Set `theme`, `bounds`, `objective`, `timeLimitSec`.
 3. `players`: exactly one human, first; 1..`aiMax` AI seats, each with a `bot` block (kind `tw` with `actionDelayMs`, `behavior`, optional `script`).
 4. `buildings` / `elements`: archetypes from `packages/content/data/buildings/` and `packages/content/data/elements/`.
-5. `requires` is filled **manually** (sorted set of modules used, `bot:<kind>` per seat kind, `objective:<id>`). A wrong list fails validation with the expected set; paste it. Automatic fill (`validate:content --fix-requires`) is deferred, see [FUTURES.md](FUTURES.md).
+5. `requires` is filled **manually** (sorted set of modules used, `bot:<kind>` per seat kind, `objective:<id>`). A wrong list fails validation with the expected set; paste it. Automatic fill (`validate:content --fix-requires`) is deferred, see [futures.md](../decisions/futures.md).
 6. Add `{ "level": "<your na- id>", "position": N }` to `packages/content/data/campaigns/custom.json`, with `id: "custom"`, `schemaVersion: "1.0.0"`, and `$schema: "../../schemas/campaign.schema.json"`. Create it on the first custom entry; remove the file when its last entry is removed. Use the next position (`max + 1`, starting at 1) for custom picker order. Keep Common positions 4–23 unchanged. The importer leaves `na-` files alone.
 7. Bump `contentVersion`; new or changed AI levels also require a `BOT_VERSION` bump. Run `pnpm content:lock`, `pnpm levels:lock --levels <your na- id>`, `pnpm validate:content --base HEAD`, `pnpm check:content --base HEAD`, and `pnpm validate:levels`. Selected lock generation merges into the existing lock; use `pnpm levels:lock` to create or regenerate the complete lock.
 
@@ -98,66 +98,12 @@ Custom levels live only in `packages/content/data/campaigns/custom.json`, never 
 Hand-authored symmetric maps for human-vs-human play (SP03). They are `objective: "pvp"` levels in their own `pvp` campaign list, separate from Common (positions 4-23, unchanged) and Custom.
 
 - **Naming and files:** `packages/content/data/levels/na-pvp-<name>.json` (current: `na-pvp-duel-s`, `na-pvp-duel-m`, `na-pvp-cross`). Listed in `packages/content/data/campaigns/pvp.json` (`id: "pvp"`, positions from 1). Teams live in `players[].team` (authored default pairing; the Team-type create form uses it when its team count matches).
-- **Seat count and slot order:** a match has `2..players.length` seats (at most 4 today). A match with `n` seats uses the first `n` entries of `players[]` in authored order (seat `i` = slot `i`); buildings of unused slots become neutral at their authored level. Authoring rule: slot order must be fair for every prefix (every `n` from 2 up), e.g. Cross is ordered W, E, N, S (`p1,p3,p2,p4`) so a duel is opposite corners, and its authored teams `[0,0,1,1]` keep the default 2v2 as opposite-corner allies. No automatic prefix-fairness gate yet, see [FUTURES.md](FUTURES.md).
+- **Seat count and slot order:** a match has `2..players.length` seats (at most 4 today). A match with `n` seats uses the first `n` entries of `players[]` in authored order (seat `i` = slot `i`); buildings of unused slots become neutral at their authored level. Authoring rule: slot order must be fair for every prefix (every `n` from 2 up), e.g. Cross is ordered W, E, N, S (`p1,p3,p2,p4`) so a duel is opposite corners, and its authored teams `[0,0,1,1]` keep the default 2v2 as opposite-corner allies. No automatic prefix-fairness gate yet, see [futures.md](../decisions/futures.md).
 - **Symmetry sidecar:** the level schema has no symmetry field. `tools/pvp-symmetry.json` maps level id to `"d2"` (identity, mirror-x, mirror-z, rot180) or `"d4"` (adds rot90/270 and diagonal mirrors). A `na-pvp-*` level without an entry fails `validate:levels`. The checker (`tools/src/pvp-symmetry.ts`) runs on the compiled level in integer milli-units, no tolerance: every building and element must map onto a counterpart with equal archetype, variant and merged modules, and the owner seat permutation is derived, not authored. Element yaw is not compared. Nudging anything by 0.001 or swapping an owner fails.
 - **Gates:** `pnpm validate:levels` has a pvp branch (no idle-human/solvable checks): symmetry; all-idle seed 1 gives `draw`; seeds 1..4 x delays 1000/2000 with every seat on the human-proxy bot must have no rejected commands, terminate, and rerun to the same hash; seed 1 / delay 2000 outcome is locked in `tools/levels-lock.json` (`victory|timeLimit|draw` allowed for pvp). Campaign path is unchanged.
 - **Fairness:** `pnpm balance --mode pvp` is report-only self-play (every seat the same proxy). The balance gate in `tools/test/balance-pvp.test.ts` covers every PvP map plus Cross default 2v2 (the bot uses a PvP tie shuffle and per-seat phase to remove seat-index bias); strict win-rate gates are intentionally absent (bot changes would flake them).
 - **Versions:** new pvp levels are additive: `contentVersion` minor bump (2.3.4 -> 2.4.0 for Duel S). Bot-behavior changes (pvp distance tie-break) bump `BOT_VERSION` (2.4.6). A content version bump also requires `pnpm sim:golden --update` (golden envelopes embed `contentVersion`; only those lines change if outcomes are stable).
 - **Add a map:** (1) write `na-pvp-<name>.json` with `objective: "pvp"` and `requires` incl. `objective:pvp`; (2) add its id to `tools/pvp-symmetry.json`; (3) add `{ "level": id, "position": N }` to `packages/content/data/campaigns/pvp.json`; (4) bump `contentVersion` (minor), then `pnpm content:lock`, `pnpm levels:lock --levels <id>`, `pnpm sim:golden --update`, `pnpm bots:golden` (`--update` if envelopes embed the version); (5) run `pnpm validate:levels`, `pnpm validate:content --base HEAD`, `pnpm check:content --base HEAD`, `pnpm check:manifest`, `pnpm check:docs`; (6) check `pnpm balance --mode pvp`.
-
-## 5. Coverage tracker
-
-### Snapshot (static, from the 06 research section 7.2 / 02 seed; not recomputed)
-
-"Delta" = additional campaign levels (of 1,012 JSON levels) fully supported once the feature exists; obstacles, cargo and scripted AI count as decor in the base row. Order of middle rows is a choice. A recomputed/generated table needs the follow-up census task (a census script, not built).
-
-| Feature (to register) | First pos | Cumulative levels | Delta | Owner SP |
-|---|---|---|---|---|
-| Houses WT1/WT2 + default AI (base) | 4 | 38 | 38 | 02/03 |
-| walls, mines | 24 / 36 | 60 | +22 | 04 |
-| resource piles | 67 | 138 | +78 | 04 |
-| tower (`shoots`) | 4 | 312 | +174 | 03/04 |
-| artillery house WT3 | 45 | 386 | +74 | 01/03 |
-| rivers (+river obstacles) | 103 / 140 | 446 | +60 | 04 |
-| rocket tower, capture rocket tower | 216 / 89 | 731 | +285 | 04 |
-| selectable fortress | 182 | 899 | +168 | 04 |
-| trolley, railway, AI rail moves | 267 / 330 | 1,012 | +113 | 04 |
-
-### Our 20 (positions 4-23), exact, recounted from the committed files
-
-Features excluding houses WT1/WT2 and cargo (dropped everywhere):
-
-| Layer | Levels (position) | Count |
-|---|---|---|
-| base only (no obstacle, no tower, no script) | 8 | 1 |
-| + obstacles (`blocksLines`), no tower, no script | 5, 12, 17, 23 | 4 (cum. 5) |
-| + tower, no script | 4, 7, 9, 14, 16, 19 | 6 (cum. 11) |
-| + scripted AI (`bot.script` non-empty) | 6, 10, 11, 13, 15, 18, 20, 21, 22 | 9 (cum. 20) |
-
-Totals: 13 obstacle levels (5, 6, 7, 10, 11, 12, 13, 16, 17, 19, 20, 22, 23), 10 tower levels (4, 6, 7, 9, 14, 16, 18, 19, 21, 22), 9 scripted levels. Themes: positions 4-20 `green`, 21-23 `snow` (`DEFAULT_ENV_SHIFT = 0` in the gate module).
-
-### Deviations from TW (shipped 20)
-
-- **cargo** dropped in all 20 (owner decision).
-- **wall** dropped in `levelview-100-es` (position 23) only, via `onlyLevels` in `tools/src/import-tw/feature-map.json` (recorded token `wall`). Other wall levels (24, 25, ...) stay blocked.
-- **tutorial scripts** (`BaseTutorial`, `TutorLevelBase`) on the two prefab levels (`levelview-182-nb` pos 10, `levelview-100-es` pos 23) are not data: `tutorial-script` in `source.dropped`.
-- **Building collider yaw deviation.** Buildings use the rules-contract AABB, 1.5 × 1.5 (half-size 750 milli); the dumped `Building` trigger has local yaw ≈15°. That prefab yaw is intentionally not applied: buildings have no authored rotation, and GAME_RULES E-TOWER fixes the axis-aligned reach example.
-- **Obstacle archetype default.** Hand-authored obstacles without an instance footprint use child 0's dumped box, rounded to 0.713 × 0.713. Imported children retain their own rounded boxes and world `yawDeg`; no importer regeneration is needed.
-- **collider fallback: not used.** The real collider dump `tools/src/import-tw/prefab/colliders.json` exists; obstacle footprints are one box + yaw per child.
-- `sc` (building param) dropped everywhere; `AiRM` (AI rail moves) dropped if present and recorded as `ai-rail-move`. `MinRD` / `MaxRD` are AI reaction delays: dropped and **not recorded** (`record: false`).
-
-## 6. Fidelity ledger
-
-Computed from `source.dropped` in the imported `levelview-*` files under `packages/content/data/levels/`. Custom `na-*` copies omit `source`; they do not extend this imported-fidelity ledger.
-
-| Dropped token | Levels | Notes |
-|---|---|---|
-| `cargo` | all 20 | TW cargo pickups not modelled |
-| `sc` | all 20 | building param, no equivalent |
-| `tutorial-script` | `levelview-182-nb` (10), `levelview-100-es` (23) | prefab levels, scripted components |
-| `wall` | `levelview-100-es` (23) | one wall; level plays without it |
-
-No imported campaign level drops anything else. Inactive obstacle children are not in `source.dropped` (they are logged by the importer only).
 
 ## 7. Gotchas
 

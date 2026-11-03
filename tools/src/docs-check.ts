@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import type { Diagnostic } from './output.js';
 
-const pathDocs = ['README.md', 'tools/README.md', 'docs/CONTENT_GUIDE.md', 'docs/LEVELS_GUIDE.md', 'docs/CREDITS.md'];
+const pathDocs = ['README.md', 'tools/README.md', 'docs/implementation/content-authoring.md', 'docs/implementation/owner-art.md', 'docs/implementation/level-import.md', 'docs/reference/level-coverage.md', 'docs/reference/credits.md'];
 const escapeRegex = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Explicit templates and shell/code expressions are not concrete repository paths. */

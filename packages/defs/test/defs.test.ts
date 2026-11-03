@@ -7,16 +7,16 @@ import {
   type Command, type ModuleId, type SimEvent,
 } from '../src/index.js';
 
-const rules = readFileSync(new URL('../../../docs/GAME_RULES.md', import.meta.url), 'utf8');
+const rules = readFileSync(new URL('../../../docs/specs/game-rules.md', import.meta.url), 'utf8');
 const ruleHeadings = new Set([...rules.matchAll(/^### (R-[A-Z]+-\d+)\s*$/gm)].map((m) => m[1]));
 
-test('module ids match def ids and ruleIds exist in GAME_RULES.md', () => {
+test('module ids match def ids and ruleIds exist in game-rules.md', () => {
   assert.deepEqual(Object.keys(MODULES).sort(), ['blocksLines', 'drawsLines', 'grows', 'level', 'shoots', 'spawns']);
   for (const [key, def] of Object.entries(MODULES)) {
     assert.equal(def.id, key);
     assert.equal(def.feature, key);
     assert.ok(def.ruleIds.length > 0, key);
-    for (const id of def.ruleIds) assert.ok(ruleHeadings.has(id), `${key}: ${id} not in GAME_RULES.md`);
+    for (const id of def.ruleIds) assert.ok(ruleHeadings.has(id), `${key}: ${id} not in game-rules.md`);
     for (const phase of def.phases) assert.ok(PHASES.includes(phase));
   }
   for (const def of [...Object.values(COMMANDS), ...Object.values(OBJECTIVES)]) {
@@ -24,7 +24,7 @@ test('module ids match def ids and ruleIds exist in GAME_RULES.md', () => {
   }
 });
 
-test('PHASES is the 9-name tuple of GAME_RULES section 4', () => {
+test('PHASES is the 9-name tuple of game-rules section 4', () => {
   assert.equal(PHASES.length, 9);
   assert.equal(PHASES[1], 'reserved');
 });

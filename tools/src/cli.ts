@@ -51,7 +51,7 @@ async function main(): Promise<void> {
   }
   const dir = resolve(opts['--dir'] ?? resolve(root, 'packages/content'));
   if (command === 'check:rules') {
-    const result = await checkRules(resolve(opts['--rules'] ?? resolve(root, 'docs/GAME_RULES.md')), resolve(opts['--packages-dir'] ?? resolve(root, 'packages')));
+    const result = await checkRules(resolve(opts['--rules'] ?? resolve(root, 'docs/specs/game-rules.md')), resolve(opts['--packages-dir'] ?? resolve(root, 'packages')));
     report.summary = result.summary; report.errors.push(...result.errors); report.ok = result.errors.length === 0; return;
   }
   if (command === 'replay:verify') {
@@ -126,11 +126,11 @@ async function main(): Promise<void> {
     const assetIssues = await checkManifestAssets(manifest as Parameters<typeof checkManifestAssets>[0], assetsDir, lockPath, assetWarnings);
     report.warnings.push(...assetWarnings.map(message => ({ file: manifestPath, pointer: '', message })));
     if (assetIssues.length) { report.errors.push(...assetIssues.map(message => ({ file: manifestPath, pointer: '', message }))); return; }
-    // Default to the repository CREDITS.md (the default path may be absent; an explicit --credits must exist).
-    const credits = opts['--credits'] ? await readText(resolve(opts['--credits'])) : await readText(resolve(root, 'docs/CREDITS.md')).catch(() => '');
+    // Default to the repository credits.md (the default path may be absent; an explicit --credits must exist).
+    const credits = opts['--credits'] ? await readText(resolve(opts['--credits'])) : await readText(resolve(root, 'docs/reference/credits.md')).catch(() => '');
     const missing = await uncreditedAssets(assetsDir, credits);
     // Owner-made art needs no credit (R6/D8): uncredited files warn, never fail.
-    if (missing.length) report.warnings.push({ file: manifestPath, pointer: '', message: `Asset files missing from CREDITS.md: ${missing.join(', ')}` });
+    if (missing.length) report.warnings.push({ file: manifestPath, pointer: '', message: `Asset files missing from credits.md: ${missing.join(', ')}` });
     report.summary = 'Manifest schema, content cross-checks, asset files/hashes/budgets valid (credits warn only).';
   }
   report.ok = true;

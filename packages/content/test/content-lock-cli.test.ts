@@ -8,11 +8,11 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { hashFixture } from './hash-fixture.js';
 const script = fileURLToPath(new URL('../scripts/content-lock.ts', import.meta.url));
-const cli = (dir: string, ...args: string[]) => spawnSync(process.execPath, ['--import', 'tsx', script, '--dir', join(dir, 'packages/content'), '--rules', join(dir, 'docs/GAME_RULES.md'), ...args], { encoding: 'utf8' });
+const cli = (dir: string, ...args: string[]) => spawnSync(process.execPath, ['--import', 'tsx', script, '--dir', join(dir, 'packages/content'), '--rules', join(dir, 'docs/specs/game-rules.md'), ...args], { encoding: 'utf8' });
 function workspace() {
   const dir = mkdtempSync(join(tmpdir(), 'content-lock-'));
-  mkdirSync(join(dir, 'docs'), { recursive: true });
-  writeFileSync(join(dir, 'docs/GAME_RULES.md'), `RULES_VERSION: ${RULES_VERSION}\n`);
+  mkdirSync(join(dir, 'docs/specs'), { recursive: true });
+  writeFileSync(join(dir, 'docs/specs/game-rules.md'), `RULES_VERSION: ${RULES_VERSION}\n`);
   mkdirSync(join(dir, 'packages/content'), { recursive: true });
   mkdirSync(join(dir, 'packages/bots/src'), { recursive: true });
   writeFileSync(join(dir, 'packages/bots/src/version.ts'), "export const BOT_VERSION = '2.0.0';\n");
@@ -49,7 +49,7 @@ test('CLI writes lock, detects stale output and rejects regenerated unversioned 
     files['content.json'].contentVersion = '2.0.1'; writeFixture(dir, files);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.equal(result.status, 0, result.stderr);
     result = cli(dir, '--check', '--base', 'missing-ref'); assert.notEqual(result.status, 0);
-    writeFileSync(join(dir, 'docs/GAME_RULES.md'), 'RULES_VERSION: 99.0.0\n');
+    writeFileSync(join(dir, 'docs/specs/game-rules.md'), 'RULES_VERSION: 99.0.0\n');
     result = cli(dir, '--check', '--base', 'HEAD'); assert.notEqual(result.status, 0); assert.match(result.stderr, /RULES_VERSION/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
@@ -114,7 +114,7 @@ test('no-baseline CLI and environment overrides allow version resets while check
     assert.notEqual(result.status, 0); assert.match(result.stderr, /stale/);
     assert.equal(cli(dir).status, 0);
     result = cli(dir, '--check', '--base', 'none'); assert.equal(result.status, 0, result.stderr);
-    result = spawnSync(process.execPath, ['--import', 'tsx', script, '--dir', join(dir, 'packages/content'), '--rules', join(dir, 'docs/GAME_RULES.md'), '--check'], { encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: 'none' } });
+    result = spawnSync(process.execPath, ['--import', 'tsx', script, '--dir', join(dir, 'packages/content'), '--rules', join(dir, 'docs/specs/game-rules.md'), '--check'], { encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: 'none' } });
     assert.equal(result.status, 0, result.stderr);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.notEqual(result.status, 0); assert.match(result.stderr, /contentVersion/);
   } finally { rmSync(dir, { recursive: true, force: true }); }

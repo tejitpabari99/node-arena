@@ -18,7 +18,7 @@ async function directory(t: { after(fn: () => Promise<void>): void }) {
 async function rulesFixture(t: { after(fn: () => Promise<void>): void }, rules: string, source: string) {
   const dir = await directory(t); const packages = join(dir, 'packages');
   await mkdir(join(packages, 'fixture/test'), { recursive: true });
-  const rulesFile = join(dir, 'GAME_RULES.md'); await writeFile(rulesFile, rules);
+  const rulesFile = join(dir, 'game-rules.md'); await writeFile(rulesFile, rules);
   await writeFile(join(packages, 'fixture/test/rules.test.ts'), source);
   return ['--rules', rulesFile, '--packages-dir', packages];
 }

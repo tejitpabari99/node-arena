@@ -6,7 +6,7 @@ import * as content from '../src/index.js';
 import { ContentLoadError } from '../src/index.js';
 
 const url = (rel: string) => new URL(rel, import.meta.url);
-const rules = readFileSync(url('../../../docs/GAME_RULES.md'), 'utf8');
+const rules = readFileSync(url('../../../docs/specs/game-rules.md'), 'utf8');
 
 /** Active rule ids: `### R-XXX-NN` headings that are not tombstoned (mirrors tools/src/rules.ts for the shapes in use). */
 function activeRuleIds(md: string): Set<string> {
@@ -28,7 +28,7 @@ function activeRuleIds(md: string): Set<string> {
   return active;
 }
 
-test('ruleIds parity: every MODULES/COMMANDS/OBJECTIVES ruleId is an active GAME_RULES heading', () => {
+test('ruleIds parity: every MODULES/COMMANDS/OBJECTIVES ruleId is an active game-rules heading', () => {
   const active = activeRuleIds(rules);
   assert.ok(active.size > 20);
   const defs = [...Object.values(MODULES), ...Object.values(COMMANDS), ...Object.values(OBJECTIVES)];
