@@ -11,6 +11,7 @@ function find(node: unknown, test: (n: N) => boolean, out: N[] = []): N[] {
   else if (node && typeof node === 'object' && 'props' in node) { const n = node as N; if (test(n)) out.push(n); find(n.props.children, test, out); }
   return out;
 }
+const text = (node: unknown): string => Array.isArray(node) ? node.map(text).join('') : node && typeof node === 'object' && 'props' in node ? text((node as N).props.children) : typeof node === 'string' || typeof node === 'number' ? String(node) : '';
 const win: EndOutcome = { outcome: 'victory', winners: [0], winner: 0 };
 describe('PvpResult', () => {
   it('winner sees Victory, loser sees Defeat, in BattlePopup with pvp-result testid', () => {
@@ -37,14 +38,28 @@ describe('PvpResult N-seat / draw / rematch', () => {
     { team: 1, seats: [2], rank: 2, buildings: 0, troops: 0, eliminatedAt: 100 },
   ];
   const team: EndOutcome = { outcome: 'victory', winners: [0, 1], winner: 0 };
-  it('renders placement rows with nick, team, buildings, troops', () => {
+  it('renders teams in ranking order in a table without rank numbers; winners bold and eliminated counts replaced', () => {
     const v = PvpResult({ outcome: team, seat: 2, ranking, seats, onLeave: () => {} });
-    const r0 = find(v, (n) => n.props['data-testid'] === 'result-placement-0')[0]!, r1 = find(v, (n) => n.props['data-testid'] === 'result-placement-1')[0]!;
-    const t = (n: N): string => JSON.stringify(n.props.children);
-    expect(t(r0)).toContain('ann & bob'); expect(t(r0)).toContain('Team 1'); expect(t(r0)).toContain('5'); expect(t(r0)).toContain('20');
-    expect(t(r1)).toContain('cy'); expect(t(r1)).toContain('Team 2');
+    const table = find(v, n => n.type === 'table')[0]!;
+    expect(table.props.class).toBe('result-table');
+    expect(find(table, n => n.type === 'th').map(text)).toEqual(['Team', 'Buildings', 'Troops']);
+    const rows = find(table, n => n.type === 'tr' && n.props['data-testid'] !== undefined);
+    expect(rows.map(n => n.props['data-testid'])).toEqual(['result-placement-0', 'result-placement-1']);
+    expect(rows.every(n => n.type === 'tr')).toBe(true);
+    expect(find(rows[0], n => n.type === 'td').map(text)).toEqual(['Team 1 (ann & bob)', '5 buildings', '20 troops']);
+    expect(rows[0]!.props.class).toBe('winner');
+    const loserCells = find(rows[1], n => n.type === 'td');
+    expect(loserCells.map(text)).toEqual(['Team 2 (cy)', 'Eliminated']);
+    expect(loserCells[1]!.props.colSpan).toBe(2);
+    expect(rows[1]!.props.class).toBe('out');
+    expect(find(v, n => n.type === 'ol' || n.props.class === 'rank')).toHaveLength(0);
     expect(find(v, (n) => (n.type as unknown) === BattlePopup)[0]!.props.title).toBe('Defeat');
     expect(find(v, (n) => n.props['data-testid'] === 'result-team')).toHaveLength(1);
+  });
+  it('uses singular counts for one building and troop, with seat fallback names', () => {
+    const v = PvpResult({ outcome: win, seat: 0, ranking: [{ team: 2, seats: [3], rank: 1, buildings: 1, troops: 1, eliminatedAt: null }], onLeave: () => {} });
+    const row = find(v, n => n.props['data-testid'] === 'result-placement-0')[0]!;
+    expect(find(row, n => n.type === 'td').map(text)).toEqual(['Team 3 (Seat 4)', '1 building', '1 troop']);
   });
   it('team-win: teammate sees Victory; spectator sees "X won"', () => {
     expect(resultTitle(team, 1)).toBe('Victory!');

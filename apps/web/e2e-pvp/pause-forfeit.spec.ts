@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { openMatch } from './open-match';
+import { createRoom, openMatch, setBot } from './open-match';
 import type { Page } from '@playwright/test';
 
 // SP07 Task 13: two-browser pause / Quit / window-close acceptance (AC10). The 30 s budget is the real server value
@@ -62,6 +62,50 @@ test('Quit asks to confirm: No keeps playing, Yes forfeits (opponent wins, same 
   const [sa, sb] = await Promise.all([a, b].map((p) => p.evaluate(() => (window as any).__na.pvp.state())));
   for (const s of [sa, sb]) { expect(s.end.outcome.outcome).toBe('victory'); expect(s.end.outcome.winner).toBe(0); }
   expect(sa.end.finalHash).toBe(sb.end.finalHash);
+});
+
+test('paused match: either human can Leave, No returns to the frozen timer, Yes forfeits for both clients', async ({ newPlayerPage }) => {
+  const { a, b } = await openMatch(newPlayerPage);
+  await started(a); await started(b);
+  await a.getByTestId('pvp-pause').click();
+  for (const p of [a, b]) {
+    await expect(p.getByTestId('pvp-pause-leave')).toBeVisible();
+    await expect(p.getByTestId('pause-timer')).toContainText('Time left ');
+  }
+  await b.waitForTimeout(500);
+  const timer = await b.getByTestId('pause-timer').textContent();
+  const frozenTick = await tick(b);
+  await b.getByTestId('pvp-pause-leave').click();
+  await expect(b.getByTestId('pvp-quit-text')).toBeVisible();
+  await expect(b.getByTestId('pvp-pause-overlay')).toHaveCount(0);
+  await b.getByTestId('pvp-quit-no').click();
+  await expect(b.getByTestId('pvp-pause-overlay')).toBeVisible();
+  await expect(b.getByTestId('pause-timer')).toHaveText(timer!);
+  expect(await tick(b)).toBe(frozenTick);
+  await b.getByTestId('pvp-pause-leave').click();
+  await b.getByTestId('pvp-quit-yes').click();
+  await expect(a.getByTestId('pvp-result')).toContainText('Victory!', { timeout: 20_000 });
+  await expect(b.getByTestId('pvp-result')).toContainText('Defeat', { timeout: 20_000 });
+  const [sa, sb] = await Promise.all([a, b].map(p => p.evaluate(() => (window as any).__na.pvp.state())));
+  expect(sa.end.outcome.winner).toBe(0);
+  expect(sa.end.finalHash).toBe(sb.end.finalHash);
+});
+
+test('paused bot room: Leave confirms and forfeits while the unlimited hold is open', async ({ newPlayerPage }) => {
+  const host = await newPlayerPage();
+  await createRoom(host, 'Host', async p => { await setBot(p, 1); });
+  await host.getByTestId('lobby-start').click();
+  await started(host);
+  await host.getByTestId('pvp-pause').click();
+  await expect(host.getByTestId('pvp-pause-overlay')).toBeVisible();
+  await expect(host.getByTestId('pvp-pause-remaining-0')).toHaveCount(0);
+  await host.getByTestId('pvp-pause-leave').click();
+  await expect(host.getByTestId('pvp-pause-overlay')).toHaveCount(0);
+  await host.getByTestId('pvp-quit-no').click();
+  await expect(host.getByTestId('pvp-pause-overlay')).toBeVisible();
+  await host.getByTestId('pvp-pause-leave').click();
+  await host.getByTestId('pvp-quit-yes').click();
+  await expect(host.getByTestId('pvp-result')).toContainText('Defeat', { timeout: 20_000 });
 });
 
 // Replaces the M1 "reload exposes sync loss" spec: M2 reconnects a reloaded client and catches it up.

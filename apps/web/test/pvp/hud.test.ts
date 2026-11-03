@@ -14,7 +14,7 @@ function find(node: unknown, test: (n: N) => boolean, out: N[] = []): N[] {
 }
 const byId = (root: unknown, id: string) => find(root, (n) => n.props['data-testid'] === id)[0];
 const text = (n: unknown): string => Array.isArray(n) ? n.map(text).join('') : n && typeof n === 'object' && 'props' in n ? text((n as N).props.children) : typeof n === 'string' || typeof n === 'number' ? String(n) : '';
-const props = (o: Partial<PvpHudProps> = {}): PvpHudProps => ({ segments: [{ player: 0, colorKey: 'a', permille: 600 }, { player: 1, colorKey: 'b', permille: 400 }], palettes: { a: '#f00', b: '#00f' }, ticksLeft: 20 * 90, seat: 0, menuOpen: false, onLeave: () => {}, ...o });
+const props = (o: Partial<PvpHudProps> = {}): PvpHudProps => ({ segments: [{ player: 0, colorKey: 'a', permille: 600 }, { player: 1, colorKey: 'b', permille: 400 }], palettes: { a: '#f00', b: '#00f' }, ticksLeft: 20 * 90, hasLimit: true, canLeave: true, seat: 0, menuOpen: false, onLeave: () => {}, ...o });
 
 describe('PvpHud catch-up overlay', () => {
   it('renders Catching up N% only when progress given', () => {
@@ -148,6 +148,35 @@ describe('pause UI', () => {
   it('countdown at 0 renders 0:00 and nothing else changes', () => {
     const v = PvpHud(props({ pause: buildPauseUi(pv(), [0, 20000], 1, nicks, false) }));
     expect(text(byId(v, 'pvp-pause-remaining-0'))).toBe('0:00');
+  });
+  it('pause Leave is available to active seats regardless of hold ownership, including unlimited bot rooms', () => {
+    for (const ownHold of [true, false]) for (const unlimited of [true, false]) {
+      const onLeave = vi.fn();
+      const pause = { ...buildPauseUi(pv(), [25000, 20000], 0, nicks, false), ownHold, unlimited };
+      const v = PvpHud(props({ pause, canLeave: true, onLeave }));
+      (byId(v, 'pvp-pause-leave')!.props.onClick as () => void)();
+      expect(onLeave).toHaveBeenCalledOnce();
+    }
+  });
+  it('pause Leave is absent for spectators and eliminated seats', () => {
+    for (const seat of [0, null]) {
+      const pause = buildPauseUi(pv(), [25000, 20000], seat, nicks, seat !== null);
+      expect(byId(PvpHud(props({ pause, seat, canLeave: false })), 'pvp-pause-leave')).toBeUndefined();
+    }
+  });
+  it('pause shows the frozen match timer only for time-limited levels', () => {
+    const pause = buildPauseUi(pv(), [25000, 20000], 0, nicks, false);
+    expect(text(byId(PvpHud(props({ pause })), 'pause-timer'))).toBe('Time left 1:30');
+    expect(byId(PvpHud(props({ pause, hasLimit: false })), 'pause-timer')).toBeUndefined();
+  });
+  it('quit confirmation hides the Paused popup and closing it returns to Paused', () => {
+    const pause = buildPauseUi(pv(), [25000, 20000], 0, nicks, false);
+    const v = PvpHud(props({ pause, confirmQuit: true }));
+    expect(byId(v, 'pvp-pause-overlay')).toBeUndefined();
+    expect(byId(v, 'pvp-pause-leave')).toBeUndefined();
+    expect(byId(v, 'pause-timer')).toBeUndefined();
+    expect(byId(v, 'pvp-quit-yes')).toBeDefined();
+    expect(byId(PvpHud(props({ pause, confirmQuit: false })), 'pvp-pause-overlay')).toBeDefined();
   });
   it('quit confirm: Yes/No wired; absent by default', () => {
     expect(byId(PvpHud(props()), 'pvp-quit-yes')).toBeUndefined();

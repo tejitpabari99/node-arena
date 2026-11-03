@@ -5,7 +5,7 @@ import { runScriptedAttack } from './scripted-attack';
 // SP06 R12: spectator joins mid-match via the watch deep link; rematch returns both players to a new match in the same room.
 // Each spec plays a full Duel S match (~40 s), as duel.spec.ts does.
 
-test('spectator joins mid-match via ?room&watch and reaches the same result and final hash', async ({ newPlayerPage }) => {
+test('spectator joins mid-match via ?room&watch and reaches the same result and final hash', async ({ newPlayerPage }, testInfo) => {
   test.setTimeout(240_000);
   const { a, b, code } = await openMatch(newPlayerPage);
   const w = await newPlayerPage();
@@ -24,7 +24,30 @@ test('spectator joins mid-match via ?room&watch and reaches the same result and 
   expect(sw.end.outcome.winner).toBe(0);
   expect(sw.end.finalHash).toBe(sa.end.finalHash);
   expect(sw.end.finalTick).toBe(sa.end.finalTick);
-  await expect(w.getByTestId('result-placement-0')).toBeAttached();
+  await expect(w.getByTestId('result-placement-0')).toHaveJSProperty('tagName', 'TR');
+  for (const [width, height] of [[360, 800], [1280, 800]]) {
+    await a.setViewportSize({ width, height });
+    const table = a.getByTestId('result-placements');
+    await expect(table).toHaveClass('result-table');
+    await expect(table.getByRole('columnheader')).toHaveText(['Team', 'Buildings', 'Troops']);
+    const layout = await table.evaluate(el => {
+      const rect = el.getBoundingClientRect();
+      const winner = el.querySelector('.winner')!;
+      const cells = Array.from(winner.querySelectorAll('td'));
+      const headers = Array.from(el.querySelectorAll('th'));
+      return { left: rect.left, right: rect.right, scroll: el.scrollWidth, client: el.clientWidth,
+        rightEdges: cells.map(cell => cell.getBoundingClientRect().right), headerEdges: headers.map(cell => cell.getBoundingClientRect().right),
+        weight: getComputedStyle(winner).fontWeight, out: getComputedStyle(el.querySelector('.out')!).opacity };
+    });
+    expect(layout.left).toBeGreaterThanOrEqual(0);
+    expect(layout.right).toBeLessThanOrEqual(width);
+    expect(layout.scroll).toBeLessThanOrEqual(layout.client);
+    expect(layout.rightEdges).toEqual(layout.headerEdges);
+    expect(layout.weight).toBe('700');
+    expect(layout.out).toBe('0.55');
+    await a.screenshot({ path: testInfo.outputPath(`result-${width}.png`) });
+  }
+
   void b;
 });
 

@@ -12,5 +12,5 @@ function preset(actionDelayMs: number): SeatBot {
 export const BOT_PRESETS: Readonly<Record<BotDifficulty, SeatBot>> = Object.freeze({
   easy: preset(3000),
   normal: preset(1500),
-  hard: preset(700),
+  hard: preset(1000),
 });
