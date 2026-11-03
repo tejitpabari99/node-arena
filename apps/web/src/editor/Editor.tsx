@@ -26,7 +26,7 @@ import type { Selection } from './picking.js';
 import type { EditorFinalizeEvent } from '../../../../tools/src/editor-finalize.js';
 import type { EditorProxyEvent } from '../../../../tools/src/editor-solvable.js';
 import { finalizeLevel, readFinalizeStatus, checkSolvable, EditorApiError, duplicateLevel, listLevels, saveLevel } from './api.js';
-import { buildableArea, copySelection, createHistory, historyReducer, placeCenter, scriptRemovalMessages, type Clipboard, type DocHistory, type HistoryAction, type LibraryItem } from './model.js';
+import { buildableArea, copySelection, createHistory, historyReducer, pasteOffset, placeCenter, reduceDocument, scriptRemovalMessages, type Clipboard, type DocHistory, type HistoryAction, type LibraryItem } from './model.js';
 import type { LevelDoc } from './document.js';
 import { useInitialLoad } from './useInitialLoad.js';
 import { confirmAction } from './confirm-flow.js';
@@ -292,7 +292,12 @@ export function Editor() {
     deleteSelection() { if (selection.length) dispatch({ type: 'edit', op: { type: 'delete-many', targets: selection }, area }); },
     select: next => { viewport.current?.select(next); },
     copy() { setClipboard(copySelection(doc, selection)); pasteCount.current = 0; },
-    paste() { if (!clipboard) return; pasteCount.current++; dispatch({ type: 'edit', op: { type: 'paste', clipboard, offset: { x: .5 * pasteCount.current, z: .5 * pasteCount.current } }, area }); },
+    paste() {
+      if (!clipboard) return;
+      const op = { type: 'paste', clipboard, offset: pasteOffset(pasteCount.current + 1) } as const;
+      if (reduceDocument(doc, op, area) === doc) return; // rejected (e.g. spacing): don't advance the count
+      pasteCount.current++; dispatch({ type: 'edit', op, area });
+    },
     save: doSave, saveState, dirty,
   } : null;
   const toolbar = doc && ctx && <EditorCtx.Provider value={ctx}><TopBar failureSeq={manualFailures} issues={shownIssues} warnings={validation.warnings} saveMessage={saveMessage} issueLabel={issueLabel}

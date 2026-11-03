@@ -85,6 +85,8 @@ export function growBounds(doc: LevelDoc): LevelDoc {
   const g = boundsFromPositions(out);
   return { ...doc, bounds: { minX: Math.min(b.minX, g.minX), maxX: Math.max(b.maxX, g.maxX), minZ: Math.min(b.minZ, g.minZ), maxZ: Math.max(b.maxZ, g.maxZ) } };
 }
+/** Paste offset for the nth consecutive paste; step is the min building spacing so a pasted building clears its source (R-ENT-05). */
+export function pasteOffset(n: number): Point { return { x: MIN_BUILDING_DISTANCE * n, z: MIN_BUILDING_DISTANCE * n }; }
 /** Pure structural edits; invalid changed pairs are rejected atomically. */
 export function reduceDocument(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
   const next = applyOp(doc, op, area);

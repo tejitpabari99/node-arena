@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { blankDocument } from '../../src/editor/document.js';
-import { copySelection, createHistory, historyReducer, reduceDocument, snapPosition, snapYaw } from '../../src/editor/model.js';
+import { MIN_BUILDING_DISTANCE } from '../../src/editor/balance.js';
+import { copySelection, createHistory, historyReducer, pasteOffset, reduceDocument, snapPosition, snapYaw } from '../../src/editor/model.js';
 
 function fixture() {
   const doc = { ...blankDocument('na-layout', 'green', 'medium'), buildings: [] as ReturnType<typeof blankDocument>['buildings'] };
@@ -19,6 +20,19 @@ it('coalesces multi-move into one exact undo', () => {
   expect(state.present.buildings[0]!.pos).toEqual({ x: -1, z: 5 });
   expect(state.present.elements[0]!.pos).toEqual({ x: -3, z: 5 });
   expect(state.past).toHaveLength(1); expect(historyReducer(state, { type: 'undo' }).present).toBe(doc);
+});
+it('first and repeated UI pastes of a building land >= min spacing (R-ENT-05)', () => {
+  const doc = fixture(), clipboard = copySelection(doc, [{ kind: 'building', id: 'b0' }, { kind: 'obstacle', id: 'e0' }]);
+  let cur = doc;
+  for (let n = 1; n <= 3; n++) {
+    const next = reduceDocument(cur, { type: 'paste', clipboard, offset: pasteOffset(n) });
+    expect(next).not.toBe(cur);
+    expect(next.buildings).toHaveLength(cur.buildings.length + 1);
+    expect(next.elements).toHaveLength(cur.elements.length + 1);
+    const added = next.buildings.at(-1)!;
+    for (const other of cur.buildings) expect(Math.hypot(added.pos.x - other.pos.x, added.pos.z - other.pos.z)).toBeGreaterThanOrEqual(MIN_BUILDING_DISTANCE - 1e-6);
+    cur = next;
+  }
 });
 it('copies and pastes detached item fields with collision-free identities and preserved offsets', () => {
   const doc = fixture(), clipboard = copySelection(doc, [{ kind: 'building', id: 'b0' }, { kind: 'obstacle', id: 'e0' }]);
