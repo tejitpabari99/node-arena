@@ -3,13 +3,13 @@
 Landscape Node Arena client: Vite + Preact + Three.js, local campaign progress and audio settings. Node >=22.13, pnpm 10.34.6. Run commands from the repository root.
 
 - `apps/web/src/app/` — picker, match lifecycle and runtime.
-- `apps/web/src/ui/` — 20 campaign cards, building ownership HUD, dialogs and credits.
+- `apps/web/src/ui/` — 20 campaign cards, building ownership HUD, dialogs and online forms.
 - `apps/web/src/render/` — world renderer, camera and one mirrored world root.
 - `apps/web/src/input/` — pointer draw, swipe/right-button cut and hold eraser through GameDriver.
-- `apps/web/src/save/`, `apps/web/src/audio/` — v2 local progress, four audio preferences and gesture-gated playback; old saves backed up/reset.
+- `apps/web/src/save/`, `apps/web/src/audio/` — current-format local progress, four audio preferences and gesture-gated playback; invalid/mismatched saves backed up/reset.
 - `apps/web/src/test-harness/` — development/test-build hooks; excluded from ordinary production.
 - `apps/web/test/sp07/`, `apps/web/test/sp08/`, `apps/web/e2e/` — renderer/shell tests, real driver commands, campaign camera sizes and content identity parity.
-- `apps/web/assets/` — imported art/audio/UI and v2 manifests; see [credits](../../docs/reference/credits.md).
+- `apps/web/assets/` — imported art/audio/UI and presentation manifests; see [credits](../../docs/reference/credits.md).
 
 | Command | Purpose |
 |---|---|
@@ -26,3 +26,5 @@ Install Chromium before browser checks: `pnpm --filter @node-arena/web exec play
 Harness URL: `/?test=1&level=1&seed=1` selects manual ticks and isolated progress; window.__na exposes probes/driver commands. Fixture query values win/loss require test=1 and development/test bundles. The hash-parity HTML entry is emitted only by the test build. Production excludes these hooks.
 
 See [root development](../../README.md#development), [gates/tools](../../tools/README.md) and [level import](../../docs/implementation/level-import.md) and [fidelity](../../docs/reference/level-coverage.md).
+
+Implementation details: [web client](../../docs/implementation/web-client.md); stored identities: [versions](../../docs/reference/versions.md).

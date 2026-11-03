@@ -33,9 +33,31 @@ Main scripts (root `package.json`; Node >=22.13, pnpm 10.34.6):
 - `pnpm check:docs`, `pnpm check:parked`, `pnpm check:parked --strict`
 - Full command inventory and gate semantics: `tools/README.md`.
 
-Rules authority: `docs/specs/game-rules.md` is the v2 mechanics contract. Stable `R-AREA-NN` IDs require real test titles containing `covers R-...`; IDs are never reused; a retired rule is deleted with its tests (history lives in git). Mechanics order: rule text + changelog + `RULES_VERSION` bump (major = existing replay outcomes change, minor = additive, patch = clarification), then tests, then code. Tunable values live in content; change content version/hash when identities move. Bot identity changes also require `BOT_VERSION`.
+Rules authority: `docs/specs/game-rules.md` is the current mechanics contract. Stable `R-AREA-NN` IDs require real test titles containing `covers R-...`; IDs are never reused; a retired rule is deleted with its tests (history lives in git). Mechanics order: rule text + changelog + `RULES_VERSION` bump (major = existing replay outcomes change, minor = additive, patch = clarification), then tests, then code. Tunable values live in content; change content version/hash when identities move. Bot identity changes also require `BOT_VERSION`.
 
 Docs: `docs/implementation/content-authoring.md` covers authoring/version guards; `docs/implementation/level-import.md` covers import and authoring; `docs/reference/level-coverage.md` records feature coverage and dropped data. Pipeline docs go in `docs/agent_files/<branch-slug>-<YYYYMMDD-HHMM>/` (see `.agents/skills/_shared/dev-common.md`; reuse the existing folder for the branch). Deferred ideas go in `docs/decisions/futures.md`.
+
+## Where docs go
+
+[Mission](docs/mission.md) takes priority for product scope; [docs index](docs/README.md) routes readers by question.
+
+| Location | Purpose / audience |
+|---|---|
+| `docs/mission.md` | Product scope and documentation authority; players/contributors |
+| `docs/architecture.md` | Dependencies and runtime data flow; contributors |
+| `docs/concepts/` | Explanations of determinism, content and PvP; contributors |
+| `docs/implementation/` | Authoring procedures and implementation maps; implementers |
+| `docs/reference/` | Values, versions, fidelity and credits; contributors/asset owners |
+| `docs/decisions/` | Accepted ADRs and deferred choices; maintainers |
+| `docs/testing/` | Gates, browser evidence and release checks; contributors/owners |
+| `docs/specs/` | Normative mechanics and stable rule IDs; designers/implementers |
+| `docs/operations/` | Deployment, health, rollback and capacity; server owner |
+| `docs/contracts/` | Schema and wire-type pointers; content/protocol consumers |
+| `docs/research/` | Historical research evidence; investigators |
+| `docs/img/` | Recorded screenshots; repository readers |
+| `docs/agent_files/` | Branch designs, tasks, run/review records; agents/reviewers |
+
+**ADR required for** changes to the determinism model, server/client authority, protocol admission policy, content/version/hash policy, package dependency boundaries, shared input/layout contracts, or deployment/persistence topology. Record Status, Date, Context, Decision and Consequences under `docs/decisions/`, and update its README. Follow the existing rules/content change order for the affected mechanics and values.
 
 ## Principal Orchestrator Mode
 Act as principal architect and orchestrator. Break work down and delegate execution to sub-agents; do not implement directly.

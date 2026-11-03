@@ -91,4 +91,4 @@ pnpm assets:manifest --check
 
 Use the [art:status command](../../tools/README.md#gates) for the remaining replacement inventory. It reads the merged manifest, so merge first. The inventory counts file-valued fields (not unique files), excludes scalar sky/light settings, labels remaining model/texture imports TW and other stock paths stock, and treats only the art path prefix as replaced. This is useful even if a patch changes only lighting or points outside that prefix; strict mode will still report remaining stock files.
 
-Art-only edits affect presentation, not simHash or bot identity: no contentVersion, RULES_VERSION or BOT_VERSION bump and no content/level lock regeneration. Adding or changing a level's simulation data follows the normal version/hash process in this guide.
+Art-only edits affect presentation, not simHash or bot identity: no contentVersion, RULES_VERSION or BOT_VERSION bump and no content/level lock regeneration. Adding or changing a level's simulation data follows the normal version/hash process in [content authoring](content-authoring.md#versions-and-hashes).

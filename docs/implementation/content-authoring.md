@@ -22,7 +22,7 @@ Dependency direction: defs <- content <- sim <- bots. A level declares `requires
 | Change | Authored files | Then run |
 |---|---|---|
 | New tower/house of an existing kind (numbers, modules) | 1 file: a building JSON in `packages/content/data/buildings/` | lock + version bump only once a level uses it |
-| New level | 2 files: level JSON in `packages/content/data/levels/` and an entry in `packages/content/data/campaigns/common.json` | `pnpm content:lock`, bump versions |
+| New level | 2 files: level JSON in `packages/content/data/levels/` and an entry in the appropriate custom/PvP campaign list | `pnpm content:lock`, bump versions |
 | New unit with existing behaviour | 1 file: a unit JSON in `packages/content/data/units/`, referenced from a building's `spawns.troop` | `pnpm content:lock` |
 | New module (wall, mine, rocket tower) | rule text, def file, sim binding, building/element JSON, tests | `pnpm content:schemas`, `pnpm content:lock` |
 | New bot kind or command | def entry plus implementation | schema regen / type errors guide the rest |
@@ -39,10 +39,10 @@ The building `kind` is currently `house` or `tower`. A new kind value is a schem
 
 ### Add a level (2 files)
 
-1. Create the level JSON in `packages/content/data/levels/`; `id` must equal the file name. Easiest start: copy `packages/content/data/levels/levelview-1.json`. Key order: `$schema, schemaVersion, id, name, source, theme, bounds, objective, timeLimitSec, players, buildings, elements, requires`.
-2. Add `{ "level": "<id>", "position": N }` to `entries` in `packages/content/data/campaigns/common.json`. A level absent from the campaign still validates; the entry is what makes it part of the campaign. An entry naming an unknown level is an error.
-3. `requires` is derived, not chosen: it must equal the sorted set of modules used by its archetypes/elements, `bot:<kind>` for each seat kind and `objective:<id>`. A wrong list fails with the exact expected set in the message, so paste it. Example for `levelview-1`: `bot:tw, drawsLines, grows, level, objective:captureAll, shoots, spawns`.
-4. Level rules enforced by the validator: exactly one human, first in `players[]`, and 1..`aiMax` AI seats (see `packages/defs/src/objectives.ts`); every AI seat has a `bot` block of a registered kind whose building references exist; building ids unique; positions inside `bounds` and not coincident; `level <= maxLevel`; at least one building without `ignoreForWin`; `theme` and player `colorKey` must exist in the manifest when one is supplied.
+1. Create the level JSON in `packages/content/data/levels/`; `id` must equal the file name. For a solo map, start from `packages/content/data/levels/levelview-1.json`; PvP authoring follows the [PvP map contract](level-import.md#5a-pvp-maps). Key order: `$schema, schemaVersion, id, name, source, theme, bounds, objective, timeLimitSec, players, buildings, elements, requires`.
+2. Add `{ "level": "<id>", "position": N }` to `entries` in `packages/content/data/campaigns/custom.json` for original solo maps, or `packages/content/data/campaigns/pvp.json` for PvP maps. Keep Common positions 4–23 unchanged; follow the [level authoring workflow](level-import.md#4-author-an-original-level). A level absent from the campaign still validates; the entry is what makes it part of the campaign. An entry naming an unknown level is an error.
+3. `requires` is derived, not chosen: it must equal the sorted set of modules used by its archetypes/elements, `bot:<kind>` for each authored bot kind and `objective:<id>`. A wrong list fails with the exact expected set in the message, so paste it. Example for `levelview-1`: `bot:tw, drawsLines, grows, level, objective:captureAll, shoots, spawns`.
+4. Seat validation depends on the objective: `captureAll` has exactly one human first in `players[]` and 1..`aiMax` AI seats, each with a registered `bot` block whose building references exist (see `packages/defs/src/objectives.ts`). A `pvp` map authors 2–4 human placeholder seats with no bot blocks; the lobby configures runtime bot seats, and every PvP building has `ignoreForWin=false` (see the [PvP map contract](level-import.md#5a-pvp-maps)). Shared validation requires building ids unique; positions inside `bounds` and separated by the shared minimum building distance; `level <= maxLevel`; at least one building without `ignoreForWin`; `theme` and player `colorKey` must exist in the manifest when one is supplied.
 5. Run `pnpm content:lock` (adds a `levels` entry and one `bots` entry per AI seat in `packages/content/hashes.lock.json`) and bump versions (below).
 
 Verified: adding a second level from a copy of `levelview-1` changes the lock for both `levels` and `bots`, so it needs a `contentVersion` bump **and** a `BOT_VERSION` bump.
@@ -58,7 +58,7 @@ Order matters; the compiler and `tsc` catch a missed step.
 1. Rules first, per [game-rules.md](../specs/game-rules.md): rule text with new `R-AREA-NN` ids, changelog entry, bump `RULES_VERSION` (see Versions).
 2. Def: create `packages/defs/src/modules/<id>.def.ts` with `defineModule({ id, appliesTo: 'building' | 'element', params, ruleIds, phases })` (model on `packages/defs/src/modules/spawns.def.ts`). Use `fx3()`, `count()` and `unitId()` from `packages/defs/src/params.ts`; keep `additionalProperties: false`.
 3. Register: import it and add one line to `MODULES` in `packages/defs/src/index.ts`. `ModuleId`, schema bags, `CAPABILITIES` and level `requires` follow automatically.
-4. Sim binding: create `packages/sim/src/modules/<id>.ts` exporting a `SimModule` (`state` columns, `phases`, `hooks`; see `packages/sim/src/types.ts`) and add it to `IMPLS` in `packages/sim/src/modules/index.ts`. `IMPLS` is `satisfies Record<ModuleId, SimModule>`: a missing or extra key is a compile error (`pnpm typecheck:sim`). Some existing bindings are stubs owned by later sub-projects (for example `packages/sim/src/modules/blocksLines.ts`).
+4. Sim binding: create `packages/sim/src/modules/<id>.ts` exporting a `SimModule` (`state` columns, `phases`, `hooks`; see `packages/sim/src/types.ts`) and add it to `IMPLS` in `packages/sim/src/modules/index.ts`. `IMPLS` is `satisfies Record<ModuleId, SimModule>`: a missing or extra key is a compile error (`pnpm typecheck:sim`). The [binding map](../../packages/sim/src/modules/index.ts) is exhaustive over the current module registry.
 5. Data: add the module bag to a building or element JSON.
 6. Tests with titles containing `covers R-...` for every new rule id (`pnpm check:rules`).
 7. `pnpm content:schemas` (commit the regenerated files in `packages/content/schemas/`), then lock + bumps. Levels using the module now list it in `requires`.
@@ -99,13 +99,15 @@ One entity per JSON file; `$schema` points at the generated editor schema and `s
 
 Author `fx3` fields in ordinary units with at most three decimals. The loader scales fields tagged `x-unit: fx3` by `FIXED_POINT_SCALE = 1000` (`speed: 5` loads as 5000). Counts (`level`, `maxLevel`, `hp`) stay integers; `timeLimitSec` is integer seconds or `null`. Non-finite values, excess precision and scaled magnitudes beyond `2147483647` are errors. Do not author milli-values or scale loaded data twice.
 
+Every building pair must meet `balance.minBuildingDistance` (currently 3.5 world units in [balance.json](../../packages/content/data/balance.json)), regardless of owner/archetype. [R-ENT-05](../specs/game-rules.md#r-ent-05) makes violations a hard error for campaign, custom and PvP levels. The editor shares the catalog value for placement/movement; elements and obstacles are unconstrained.
+
 Coordinates: levels use world units with `x` and `z`; `bounds` must contain every building. Footprints are `box` (`w`, `d`) or `circle` (`radius`). See [level-import.md](level-import.md) for the coordinate frame, rotation and imported footprint policy.
 
 Elements (such as `obstacle`) carry module bags and optional `variants` (`small`, `big`); a level element may name one variant.
 
 ## Load, validate and compile
 
-The browser-safe package API takes a path-keyed file map of JSON strings or objects. `validateContent` returns located errors and warnings (supplying the hosted manifest also checks visual, theme and color keys); `loadContent` validates and converts tagged units, throwing with file/JSON-pointer diagnostics. `compileLevel(...)` produces the `CompiledLevel` simulation boundary (players and buildings sorted by id, owners as indices, `-1` neutral). Loading, validation, compilation and hashing use no Node APIs; Node-only scripts do disk and git access. Generated schemas come from the TypeBox sources: edit those and regenerate, never hand-edit `packages/content/schemas/`.
+The browser-safe package API takes a path-keyed file map of JSON strings or objects. `validateContent` returns located errors and warnings (supplying the hosted manifest also checks visual, theme and color keys); `loadContent` validates and converts tagged units, throwing with file/JSON-pointer diagnostics. `compileLevel(...)` produces the `CompiledLevel` simulation boundary (players and buildings in authored semantic order, units sorted by id, owners as indices, `-1` neutral). Loading, validation, compilation and hashing use no Node APIs; Node-only scripts do disk and git access. Generated schemas come from the TypeBox sources: edit those and regenerate, never hand-edit `packages/content/schemas/`.
 
 ## Regenerate and verify
 

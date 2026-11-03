@@ -39,11 +39,11 @@ Source facts below describe Tower War; they are deferred in Node Arena. Research
 - **CrossingSource seam.** SP04 used direct geometry/crossing handling; a generic crossing-source abstraction was deferred. Revisit when new path modifiers demand it. [Source crossing/rivers/gates](../research/tower-wars/03-core-mechanics.md), [SP04 settled design](../agent_files/feat-tower-war-port-20261022-0321/04-geometry-shooters/PRD.md).
 - **Web bundle budget gate.** Still deferred beyond asset triangle/texture budgets (earlier port entry above); size the gate from actual client output. [Asset/architecture evidence](../research/tower-wars/06-gap-map-and-architecture.md), [SP09 gate scope](../agent_files/feat-tower-war-port-20261022-0321/09-gates-tooling-docs/PRD.md).
 
-## From level editor v1 (2026-10-24)
+## From local level editor (2026-10-24)
 
 - **Bot script editing.** Current editor removes a player's script when a referenced building is deleted; authoring scripts remains deferred.
-- **Level deletion UI (v1.1 or later).** No editor delete flow; future work must remove the `na-*` file and custom entry, removing `custom.json` when empty, then refresh versions/locks.
-- **Campaign/custom level reorder UI.** Positions remain authored data; no ordering tool in v1.
+- **Level deletion UI (future editor release).** No editor delete flow; future work must remove the `na-*` file and custom entry, removing `custom.json` when empty, then refresh versions/locks.
+- **Campaign/custom level reorder UI.** Positions remain authored data; no ordering tool in the current editor.
 - **Hot reload of external level edits.** No live reconciliation into an open draft; reload/reopen deliberately. [Current editor workflow](../implementation/level-import.md#4-author-an-original-level).
 
 ## From PvP M2 play-test (2026-10-29)
@@ -66,3 +66,7 @@ Source facts below describe Tower War; they are deferred in Node Arena. Research
 - **Failed thumbnails are never retried.** A map whose thumbnail render fails stays blank until reload.
 - **Editor thumbnails create a separate GL host per form open.** Share one renderer/host across forms.
 
+
+## Documentation follow-ups
+
+- **Generated balance reference.** Generate the [balance-value snapshot](../reference/balance-values.md) from named keys in `packages/content/data/balance.json` and selected archetype/unit data, preserving source keys and human explanations. The current table is maintained by hand.
