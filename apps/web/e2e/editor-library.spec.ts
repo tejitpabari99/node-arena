@@ -16,6 +16,6 @@ test('Library: five ordered tiles with art or text fallback; drag places an item
   expect(before).toBeGreaterThan(0);
   const box = (await page.getByLabel('Edit viewport').boundingBox())!, source = (await page.getByRole('button', { name: 'Place tower', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
-  await page.mouse.move(box.x + box.width * .5, box.y + box.height * .5, { steps: 8 }); await page.mouse.up();
+  await page.mouse.move(box.x + box.width * .5, box.y + box.height * .2, { steps: 8 }); await page.mouse.up();
   await expect(page.getByTestId('viewport-selection')).toContainText('building');
 });

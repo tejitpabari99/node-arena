@@ -17,10 +17,11 @@ async function mockSave(page: Page, hold?: Promise<void>) {
   });
   return posted;
 }
-async function placeBuilding(page: Page, at = .45) {
+/** Drop points (viewport fractions) that clear the copied level's buildings by the R-ENT-05 minimum spacing. */
+async function placeBuilding(page: Page, at: readonly [number, number] = [.5, .2]) {
   const box = (await page.getByLabel('Edit viewport').boundingBox())!, item = page.getByRole('button', { name: 'Place house-wt1', exact: true }), source = (await item.boundingBox())!;
   await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
-  await page.mouse.move(box.x + box.width * at, box.y + box.height * at, { steps: 8 }); await page.mouse.up();
+  await page.mouse.move(box.x + box.width * at[0], box.y + box.height * at[1], { steps: 8 }); await page.mouse.up();
 }
 
 test('chip walks Unsaved, Saving, Saved and back to Unsaved on edit', async ({ page }) => {
@@ -142,7 +143,7 @@ test('a failed autosave shows the error chip and is not retried until the next e
   await page.clock.runFor(60100);
   expect(calls).toBe(2);
   fail = false;
-  await placeBuilding(page, .6);
+  await placeBuilding(page, [.8, .2]);
   await page.clock.runFor(30100);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   expect(calls).toBe(3);

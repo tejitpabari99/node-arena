@@ -8,7 +8,7 @@ async function open(page: Page, archetype = 'house-wt1', params?: LevelDoc['buil
     doc.buildings = [
       { id: 'b0', archetype, pos: { x: -4, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false, ...(params ? { params } : {}) },
       { id: 'b1', archetype: 'house-wt1', pos: { x: 4, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
-      { id: 'b2', archetype: 'house-wt1', pos: { x: 4, z: 3 }, owner: null, level: 1, ignoreForWin: false },
+      { id: 'b2', archetype: 'house-wt1', pos: { x: 4, z: 4 }, owner: null, level: 1, ignoreForWin: false },
     ];
     doc.elements = [{ id: 'e0', archetype: 'obstacle', variant: 'small', pos: { x: 0, z: 0 }, yawDeg: 0 }];
     await route.fulfill({ json: doc });

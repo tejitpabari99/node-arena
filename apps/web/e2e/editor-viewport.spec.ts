@@ -1,4 +1,4 @@
-import { undo as editorUndo, openFile, openCopied } from './editor-helpers.js';
+import { undo as editorUndo, openFile, openCopied, flushEdits } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 const development = process.env.WEB_TEST_SERVER === 'dev';
@@ -175,15 +175,20 @@ test('failed rebuild keeps the last scene with an error badge, disables picking,
     await page.mouse.move(src.x + src.width / 2, src.y + src.height / 2); await page.mouse.down();
     await page.mouse.move(drop.x, drop.y, { steps: 8 }); await page.mouse.up();
   };
-  // The view is stable across edits, so re-dropping at one screen point lands on the identical snapped
-  // position: the second drop is a coincident building and the compile fails.
+  // Place a tower (selected afterwards), then mark every building optional: no building left to win -> compile fails.
   await place();
   await expect(status).toContainText('Ready');
-  await place();
+  const optional = async () => {
+    await page.locator('[data-section=selection] details:has(> summary:text-is("Owner and level"))').evaluate(d => { (d as HTMLDetailsElement).open = true; });
+    await page.getByLabel('Optional target (not needed to win)').check();
+    await flushEdits(page);
+  };
+  await optional();
+  for (const id of ['b0', 'b1']) { await page.getByLabel('Selected item', { exact: true }).selectOption(`building:${id}`); await optional(); }
   await expect(badge).toBeVisible();
   await expect(badge).toHaveAttribute('role', 'alert');
   await expect(badge).toContainText('Preview out of date');
-  await expect(badge).toContainText('Coincident');
+  await expect(badge).toContainText('must not be ignoreForWin');
   await expect(status).not.toContainText('Preview unavailable');
   await expect(page.getByLabel('Edit viewport').locator('canvas')).toBeVisible();
   // Picking is disabled while stale, even directly on the previously rendered tower.
