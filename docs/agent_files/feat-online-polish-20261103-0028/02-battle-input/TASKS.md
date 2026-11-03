@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 4 tasks for SP02 battle input: min tower spacing rule + level nudges + editor, bigger pick radius, fading cut ribbon, Credits UI removal.
 date: 2026-11-03
 ---
@@ -8,10 +8,10 @@ Source of truth: docs/agent_files/feat-online-polish-20261103-0028/02-battle-inp
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Min tower spacing (R-ENT-05) end to end | none | todo |
-| 2 | Enlarged tower pick radius | none | todo |
-| 3 | Fading glow cut ribbon | none | todo |
-| 4 | Remove Credits from web UI | none | todo |
+| 1 | Min tower spacing (R-ENT-05) end to end | none | done |
+| 2 | Enlarged tower pick radius | none | done |
+| 3 | Fading glow cut ribbon | none | done |
+| 4 | Remove Credits from web UI | none | done |
 
 ## Task 1 — Min tower spacing (R-ENT-05) end to end
 What it is / what it means: Every building pair must be at least 3.5 world units apart, center to center, as a formal rule enforced as a hard error everywhere (D2, D3, D4, D5).
