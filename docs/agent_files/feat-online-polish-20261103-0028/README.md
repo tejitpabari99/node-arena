@@ -59,3 +59,6 @@ Execution order: 01 ∥ 02 -> 04 -> 03. Current state: 01 done (3/3 tasks), 02 d
 
 ## Open questions for owner
 - SP04 OPEN-6: `Supersedes:`/`Since:` removal makes `R-GRW`/`R-SPN` docs lose rationale; assumed acceptable. [RESOLVED: acceptable — owner chose full history wipe; rationale worth keeping captured as ADRs by SP03.]
+
+## PR #45 final review
+- [review-2026-11-03-PR45.md](review-2026-11-03-PR45.md) — whole-branch review, NEEDS_CHANGES -> fixed
