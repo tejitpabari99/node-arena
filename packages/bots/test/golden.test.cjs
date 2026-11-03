@@ -40,12 +40,12 @@ test('covers R6: updateFile rejects an update without a BOT_VERSION bump and lea
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bots-golden-'));
   const file = path.join(dir, 'bots.json');
   try {
-    fs.writeFileSync(file, '{"botVersion":"2.0.0"}\n');
-    await assert.rejects(updateFile(file, { botVersion: '2.0.0', results: [] }, ['2.0.0']), /must increase/);
-    await assert.rejects(updateFile(file, { botVersion: '2.0.1', results: [] }, ['2.0.1', '2.0.0']), /must increase/);
-    assert.equal(fs.readFileSync(file, 'utf8'), '{"botVersion":"2.0.0"}\n');
-    await updateFile(file, { botVersion: '2.0.1', results: [] }, ['2.0.0', undefined]);
-    assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).botVersion, '2.0.1');
+    fs.writeFileSync(file, '{"botVersion":"1.0.0"}\n');
+    await assert.rejects(updateFile(file, { botVersion: '1.0.0', results: [] }, ['1.0.0']), /must increase/);
+    await assert.rejects(updateFile(file, { botVersion: '1.0.1', results: [] }, ['1.0.1', '1.0.0']), /must increase/);
+    assert.equal(fs.readFileSync(file, 'utf8'), '{"botVersion":"1.0.0"}\n');
+    await updateFile(file, { botVersion: '1.0.1', results: [] }, ['1.0.0', undefined]);
+    assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).botVersion, '1.0.1');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 

@@ -620,7 +620,7 @@ Examples assume the stated Tower War default values (§7). They illustrate rules
 
 ## 6. Reserved modules — not implemented
 
-These are future elements, not active rules and not registry entries. They have no `R-` headings; a heading is an active rule. Level import and validation reject them until they ship (see the SP02 registry). **Shipping an element** means a new three-letter area, rule ids, a minor `RULES_VERSION` bump (2.x.0), a registry entry, schema support and tests together. Tuning values belong in content. Phase anchors are `preContact`, `postContact` or `postArrival` within the §4 phase that owns them.
+These are future elements, not active rules and not registry entries. They have no `R-` headings; a heading is an active rule. Level import and validation reject them until they ship (see the SP02 registry). **Shipping an element** means a new three-letter area, rule ids, a minor `RULES_VERSION` bump (1.x.0), a registry entry, schema support and tests together. Tuning values belong in content. Phase anchors are `preContact`, `postContact` or `postArrival` within the §4 phase that owns them.
 
 | Element | Intended behaviour | TW source | Hook points (validation / phase anchor / win / hash) |
 |---|---|---|---|
