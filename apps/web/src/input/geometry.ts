@@ -15,3 +15,23 @@ export function segmentDistance(a: Point2, b: Point2, c: Point2, d: Point2): num
 /** Hit radii in CSS px for a lane with half width `halfLanePx`: right-click/hover vs swipe. */
 export const hoverRadius = (halfLanePx: number) => Math.max(12, halfLanePx + 4);
 export const swipeRadius = (halfLanePx: number) => Math.max(8, halfLanePx);
+
+/** World-unit margin around each building footprint; projected picks have a 22 CSS px floor. */
+export const PICK_MARGIN = .35;
+interface PickAnchor { readonly pos: { readonly x: number; readonly z: number }; readonly radius: number }
+interface ScreenAnchor extends Point2 { readonly radius: number }
+/** Ground fallback after mesh picking; projected center distance resolves overlapping touch floors. */
+export function pickBuilding(ground: { x: number; z: number }, pointer: Point2, anchors: readonly (PickAnchor | undefined)[], screens: readonly ScreenAnchor[]): number | null {
+  let nearest = Infinity, building: number | null = null;
+  for (let i = 0; i < anchors.length; i++) {
+    const anchor = anchors[i], screen = screens[i];
+    if (!anchor || !screen) continue;
+    const radius = anchor.radius + PICK_MARGIN;
+    const projectedRadius = screen.radius * radius / anchor.radius;
+    const screenDistance2 = (pointer.x - screen.x) ** 2 + (pointer.y - screen.y) ** 2;
+    const inside = projectedRadius < 22 ? screenDistance2 <= 22 ** 2
+      : (ground.x - anchor.pos.x) ** 2 + (ground.z - anchor.pos.z) ** 2 <= radius ** 2;
+    if (inside && screenDistance2 < nearest) { nearest = screenDistance2; building = i; }
+  }
+  return building;
+}

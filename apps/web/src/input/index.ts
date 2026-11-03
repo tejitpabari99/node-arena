@@ -3,7 +3,7 @@ import type { Command, Sim, DrawExplanation, RejectReason } from '@node-arena/si
 import type { WorldRenderer } from '../render/world.js';
 import type { BuildingAnchor } from '../render/building.js';
 import { DRAW_REASON_TEXT } from './reasons.js';
-import { segmentDistance } from './geometry.js';
+import { pickBuilding, segmentDistance } from './geometry.js';
 import { createGestureMachine, type GesturePoint } from './gestures.js';
 
 export interface InputControllerOptions {
@@ -53,18 +53,13 @@ export function createInputController(options: InputControllerOptions) {
   function local(event: PointerEvent) {
     point.x=event.clientX-left;point.y=event.clientY-top;point.building=null;
     if(!groundAt(point.x,point.y)) return point;
-    // Mesh hit catches roofs; footprint radius catches a building's ground anchor.
+    // Mesh hit catches roofs first; fallback expands the ground footprint and adds a touch floor.
     intersections.length=0;ray.intersectObjects(world.pickMeshes,false,intersections);
     for(const intersection of intersections) {
       const i=intersection.object.userData.buildingIndex as number | undefined;
       if(i!==undefined && anchors[i]) { point.building=i;return point; }
     }
-    let nearest=Infinity;
-    for(let i=0;i<anchors.length;i++) {
-      const a=anchors[i];if(!a) continue;
-      const d=Math.hypot(hit.x-a.pos.x,hit.z-a.pos.z)/a.radius;
-      if(d<=1 && d<nearest) {nearest=d;point.building=i;}
-    }
+    point.building=pickBuilding(hit,point,anchors,screens);
     return point;
   }
   let label: HTMLDivElement | undefined, marker: HTMLDivElement | undefined;

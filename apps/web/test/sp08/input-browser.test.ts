@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { chromium } from '@playwright/test';
 import { createServer } from 'vite';
 
-it('submits draw and swipe-cut commands from real browser pointer events under the single mirror', async () => {
+it('draws from outside the footprint and submits swipe-cut commands from real browser pointer events under the single mirror', async () => {
   const server=await createServer({configFile:false,root:process.cwd(),optimizeDeps:{noDiscovery:true,include:[]},server:{host:'127.0.0.1',port:0},plugins:[{name:'input-test-page',configureServer(s){s.middlewares.use('/__input',(_req,res)=>{res.setHeader('Content-Type','text/html');res.end('<canvas width="1000" height="1000" style="width:1000px;height:1000px;position:absolute;left:0;top:0"></canvas>');});}}]});
   await server.listen(); const browser=await chromium.launch({headless:true});
   try {
@@ -22,10 +22,12 @@ it('submits draw and swipe-cut commands from real browser pointer events under t
         blocked=false;oldRoof.visible=false;newRoof.visible=true;picks=[newRoof];
         const p=newRoof.position.clone().applyMatrix4(root.matrixWorld).project(camera);return {x:(p.x+1)*500,y:(1-p.y)*500};
       }});
-      createInputController({canvas:document.querySelector('canvas'),camera,sim,worldRoot:root,scene,world:{anchors:{building:(id:string)=>({pos:anchors[id==='a'?0:1],radius:.7})},get pickMeshes(){return picks;},previewLane:(_a:unknown,_b:unknown,color:string)=>{document.querySelector('canvas')!.dataset.previewColor=color;},clearPreview:()=>{},select:(i:number|null)=>{document.querySelector('canvas')!.dataset.selected=String(i);}},driver:{submit:(c:unknown)=>commands.push(c)}});
+      createInputController({canvas:document.querySelector('canvas'),camera,sim,worldRoot:root,scene,world:{anchors:{building:(id:string)=>({pos:anchors[id==='a'?0:1],radius:.75})},get pickMeshes(){return picks;},previewLane:(_a:unknown,_b:unknown,color:string)=>{document.querySelector('canvas')!.dataset.previewColor=color;},clearPreview:()=>{},select:(i:number|null)=>{document.querySelector('canvas')!.dataset.selected=String(i);}},driver:{submit:(c:unknown)=>commands.push(c)}});
+      const start = new Vector3(-3.05,0,1).applyMatrix4(root.matrixWorld).project(camera);
+      Object.assign(window,{expandedStart:{x:(start.x+1)*500,y:(1-start.y)*500}});
       return anchors.map((p: typeof Vector3)=>{p=p.clone().applyMatrix4(root.matrixWorld).project(camera);return {x:(p.x+1)*500,y:(1-p.y)*500};});
     });
-    const a=points[0]!,b=points[1]!;await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:5});await page.mouse.up();
+    const a=points[0]!,b=points[1]!,expanded=await page.evaluate(()=>Reflect.get(window,'expandedStart'));await page.mouse.move(expanded.x,expanded.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:5});await page.mouse.up();
     const x=(a.x+b.x)/2;await page.mouse.move(x,a.y-100);await page.mouse.down();await page.mouse.move(x,a.y+100,{steps:5});await page.mouse.up();
     expect(await page.evaluate(()=>Reflect.get(window,'inputCommands'))).toEqual([{type:'DrawLine',player:0,from:0,to:1},{type:'CutLine',player:0,from:0,to:1}]);
     await page.evaluate(()=>Reflect.get(window,'blockInput')());
