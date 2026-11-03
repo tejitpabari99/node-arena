@@ -8,7 +8,7 @@ test('version mismatch reloads the document, disables online play if still misma
   const config = parseConfig({ PORT: '0', HOST: '127.0.0.1', ALLOWED_ORIGINS: 'http://127.0.0.1:4173', LOG_LEVEL: 'error' });
   const content = loadServerContent(config.contentDir);
   const original = content.versions.rules;
-  content.versions.rules = '999.0.0';
+  content.versions.rules = `${Number(original.split('.')[0]) + 1}.0.0`;
   const server = await startServer(config, { content });
   try {
     await page.goto(`/?server=ws://127.0.0.1:${server.port}`);

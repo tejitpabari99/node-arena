@@ -103,7 +103,7 @@ it('returns the saved document, warnings and changed flag from the save endpoint
         body: JSON.stringify({ id: 'na-response', level, copy: true }),
       });
       expect(response.status).toBe(200);
-      expect(await response.json()).toMatchObject({ level: { id: 'na-response', editorVersion: '0.0.1' }, warnings: [], changed });
+      expect(await response.json()).toMatchObject({ level: { id: 'na-response', editorVersion: '1.0.0' }, warnings: [], changed });
     }
   } finally {
     if (saveServer) await new Promise<void>(done => saveServer!.close(() => done()));

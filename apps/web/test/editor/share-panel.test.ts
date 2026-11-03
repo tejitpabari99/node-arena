@@ -35,9 +35,9 @@ it('locks Save only when locked and job actions only while busy; dirty state is 
     }
   }
 });
-it('uses saved document version, with 0.0.0 for a never saved document', async () => {
+it('uses saved document version, with 1.0.0 for a never saved document', async () => {
   const savedDoc = { ...blankDocument('na-version', 'green', 'small'), editorVersion: '0.0.7' };
-  for (const [doc, expected] of [[null, 'Version 0.0.0'], [savedDoc, 'Version 0.0.7']] as const) {
+  for (const [doc, expected] of [[null, 'Version 1.0.0'], [savedDoc, 'Version 0.0.7']] as const) {
     const footer = (await tree({ savedDoc: doc })).find(node => node.props['data-testid'] === 'editor-version');
     expect(footer?.props.children).toBe(expected);
   }

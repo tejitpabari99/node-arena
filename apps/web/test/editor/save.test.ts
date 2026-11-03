@@ -50,7 +50,7 @@ it('opens all 20 campaign levels and saves copies without any content drift; sec
     expect(result.status, await result.text()).toBe(200);
     const bytes = await disk(id), actual = JSON.parse(bytes) as NextLevel;
     const expected = structuredClone(source); expected.id = id; delete expected.source;
-    expected.editorVersion = '0.0.1';
+    expected.editorVersion = '1.0.0';
     expect(actual).toEqual(expected);
     const unversioned = { ...actual }; delete unversioned.editorVersion;
     const sourceContent = structuredClone(source); sourceContent.id = id; delete sourceContent.source;
@@ -157,9 +157,9 @@ async function expectUntouched(id: string, before: { bytes: string; mtime: numbe
 
 it('stamps first saves and increments only real edits, ignoring even malformed client versions', async () => {
   const first = await saved('na-version', { ...original, editorVersion: { forged: true } });
-  expect(first).toMatchObject({ changed: true, level: { editorVersion: '0.0.1' }, warnings: [] });
+  expect(first).toMatchObject({ changed: true, level: { editorVersion: '1.0.0' }, warnings: [] });
   const next = await saved('na-version', { ...first.level, name: 'Edited', editorVersion: '999.999.999' });
-  expect(next).toMatchObject({ changed: true, level: { name: 'Edited', editorVersion: '0.0.2' } });
+  expect(next).toMatchObject({ changed: true, level: { name: 'Edited', editorVersion: '1.0.1' } });
 });
 
 it('leaves identical and canonical net-zero saves untouched and returns the disk document', async () => {
@@ -175,7 +175,7 @@ it('leaves identical and canonical net-zero saves untouched and returns the disk
   await expectUntouched('na-no-op', before);
 });
 
-it('keeps unchanged legacy files unversioned and starts at 0.0.1 on their first edit', async () => {
+it('keeps unchanged legacy files unversioned and starts at 1.0.0 on their first edit', async () => {
   const first = await saved('na-legacy', original);
   delete first.level.editorVersion;
   await writeFile(join(dir, 'data/levels/na-legacy.json'), JSON.stringify(first.level));
@@ -183,7 +183,7 @@ it('keeps unchanged legacy files unversioned and starts at 0.0.1 on their first 
   const unchanged = await saved('na-legacy', { ...first.level, editorVersion: 'invalid' });
   expect(unchanged.changed).toBe(false); expect(unchanged.level).not.toHaveProperty('editorVersion');
   await expectUntouched('na-legacy', before);
-  expect(await saved('na-legacy', { ...first.level, name: 'Legacy edit' })).toMatchObject({ changed: true, level: { editorVersion: '0.0.1' } });
+  expect(await saved('na-legacy', { ...first.level, name: 'Legacy edit' })).toMatchObject({ changed: true, level: { editorVersion: '1.0.0' } });
 });
 
 it('increments the disk patch component while preserving major and minor', async () => {
@@ -208,9 +208,9 @@ it('assigns monotonic non-skipping versions to parallel real saves of one level'
   const first = await saved('na-version-race', original);
   const results = await Promise.all(['First edit', 'Second edit', 'Third edit'].map(name => saved('na-version-race', { ...first.level, name })));
   // Concurrent HTTP requests may reach the server in a different order than they were started.
-  expect(results.map(result => result.level.editorVersion).sort()).toEqual(['0.0.2', '0.0.3', '0.0.4']);
+  expect(results.map(result => result.level.editorVersion).sort()).toEqual(['1.0.1', '1.0.2', '1.0.3']);
   expect(results.map(result => result.changed)).toEqual([true, true, true]);
-  expect(JSON.parse(await disk('na-version-race'))).toEqual(results.find(result => result.level.editorVersion === '0.0.4')!.level);
+  expect(JSON.parse(await disk('na-version-race'))).toEqual(results.find(result => result.level.editorVersion === '1.0.3')!.level);
 });
 
 it.each([{ repair: false, file: 'level' }, { repair: true, file: 'level' }, { repair: false, file: 'campaign' }, { repair: true, file: 'campaign' }])('detects external $file writes during unchanged saves (campaign repair: $repair)', async ({ repair, file }) => {
@@ -239,12 +239,12 @@ it('a changed:false response clears dirty when an undo snapshot carries an older
   const changed = await save(id, { ...first.level, name: 'Saved baseline' });
   expect(changed.status).toBe(200);
   const second = await changed.json() as { level: NextLevel };
-  const undoSnapshot = { ...second.level, editorVersion: '0.0.1' };
+  const undoSnapshot = { ...second.level, editorVersion: '1.0.0' };
   const response = await save(id, undoSnapshot);
   expect(response.status).toBe(200);
   const result = await response.json() as { level: NextLevel; changed: boolean };
   expect(result.changed).toBe(false);
-  expect(result.level.editorVersion).toBe('0.0.2');
+  expect(result.level.editorVersion).toBe('1.0.1');
   expect(isDirty(undoSnapshot, result.level)).toBe(false);
   expect(isDirty({ ...undoSnapshot, name: 'Edit during request' }, result.level)).toBe(true);
 });

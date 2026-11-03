@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '@node-arena/content';
 import { lstat, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -99,11 +100,14 @@ async function save(root: string, id: string, input: unknown, copy: boolean): Pr
   };
   const changed = onDisk === undefined || contentText(authored) !== contentText(onDisk);
   if (changed) {
-    const [major, minor, patch] = (onDisk?.editorVersion ?? '0.0.0').split('.');
-    authored.editorVersion = `${major}.${minor}.${BigInt(patch!) + 1n}`;
+    if (onDisk?.editorVersion === undefined) authored.editorVersion = '1.0.0';
+    else {
+      const [major, minor, patch] = onDisk.editorVersion.split('.');
+      authored.editorVersion = `${major}.${minor}.${BigInt(patch!) + 1n}`;
+    }
   }
   let campaign: NextCampaign;
-  if (originalCampaign === undefined) campaign = { $schema: '../../schemas/campaign.schema.json', schemaVersion: '2.0.0', id: campaignId, entries: [] };
+  if (originalCampaign === undefined) campaign = { $schema: '../../schemas/campaign.schema.json', schemaVersion: SCHEMA_VERSION, id: campaignId, entries: [] };
   else campaign = JSON.parse(originalCampaign) as NextCampaign;
   const campaignChanged = !campaign.entries.some(entry => entry.level === id);
   if (campaignChanged) campaign.entries.push({ level: id, position: Math.max(0, ...campaign.entries.map(entry => entry.position)) + 1 });

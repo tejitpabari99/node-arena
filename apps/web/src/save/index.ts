@@ -9,7 +9,7 @@ export interface SaveSettings {
 
 }
 export interface SaveData {
-  v: 2;
+  v: 1;
   completed: Record<string, { firstAt: string }>;
   settings: SaveSettings;
   lastLevel: string | null;
@@ -38,7 +38,7 @@ export interface SaveOptions {
 
 export function defaultSave(): SaveData {
   return {
-    v: 2, completed: Object.create(null) as SaveData['completed'],
+    v: 1, completed: Object.create(null) as SaveData['completed'],
     settings: { musicVol: 0.7, sfxVol: 1, musicMute: false, sfxMute: false },
     lastLevel: null,
   };
@@ -74,17 +74,17 @@ function settings(value: unknown): SaveSettings {
 function validateSave(value: unknown): SaveData {
   const source = record(value);
   exact(source, ['v', 'completed', 'settings', 'lastLevel']);
-  if (source.v !== 2) throw new Error('Invalid save version');
+  if (source.v !== 1) throw new Error('Invalid save version');
   const completed: SaveData['completed'] = Object.create(null) as SaveData['completed'];
   for (const [id, entry] of Object.entries(record(source.completed))) {
     const completion = record(entry);
     exact(completion, ['firstAt']);
     completed[id] = { firstAt: date(completion.firstAt) };
   }
-  return { v: 2, completed, settings: settings(source.settings), lastLevel: level(source.lastLevel) };
+  return { v: 1, completed, settings: settings(source.settings), lastLevel: level(source.lastLevel) };
 }
 
-/** Pure v2 validation. Historical saves are intentionally discarded. */
+/** Validate the current save format; discard mismatched saves. */
 export function decodeSave(raw: string): SaveData { return validateSave(JSON.parse(raw)); }
 
 function browserStorage(): SaveStorage | null {

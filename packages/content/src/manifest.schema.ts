@@ -2,7 +2,7 @@ import Type from 'typebox';
 import { ANIM_MODES, BUDGET_CLASSES, EVENTS, FX_KINDS, RENDER_KINDS, TEAM_MODES } from '@node-arena/defs';
 
 /** Manifest v2 file-format version (presentation only). Independent of the live v1 `MANIFEST_SCHEMA_VERSION`. */
-export const MANIFEST_SCHEMA_VERSION = '2.0.0';
+export const MANIFEST_SCHEMA_VERSION = '1.0.0';
 
 const closed = { additionalProperties: false };
 const key = () => Type.String({ minLength: 1 });

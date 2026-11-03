@@ -9,7 +9,7 @@ class MemoryStorage implements SaveStorage {
   setItem(key: string, value: string) { this.values.set(key, value); }
 }
 const v1 = defaultSave();
-const v0 = { ...v1, v: 1 };
+const v0 = { ...v1, v: 2 };
 const seeded = (value: unknown) => {
   const storage = new MemoryStorage();
   storage.setItem(SAVE_KEY, typeof value === 'string' ? value : JSON.stringify(value));

@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '@node-arena/content';
 import type { NextLevel } from '@node-arena/content';
 import { MIN_BUILDING_DISTANCE } from './balance.js';
 import { BASE_HOUSE } from './houses.js';
@@ -19,7 +20,7 @@ export function blankDocument(id: string, theme: string, size: SizePreset, rando
   if (!isDraftId(id)) throw new Error('Choose a new id: na- followed by 1–40 lowercase letters, digits or hyphens.');
   const half = { small: 6, medium: 10, large: 15 }[size];
   return {
-    $schema: '../../schemas/level.schema.json', schemaVersion: '2.0.0', id, name: id,
+    $schema: '../../schemas/level.schema.json', schemaVersion: SCHEMA_VERSION, id, name: id,
     theme, bounds: { minX: -half, maxX: half, minZ: -half, maxZ: half },
     objective: 'captureAll', timeLimitSec: null,
     players: [

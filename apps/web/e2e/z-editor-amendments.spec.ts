@@ -30,7 +30,7 @@ async function captureSaves(page: Page) {
   await page.route('**/__editor/save', route => {
     const level = (route.request().postDataJSON() as { level: LevelDoc }).level;
     snapshots.push(level);
-    return route.fulfill({ json: { level: { ...level, editorVersion: '0.0.1' }, warnings: [] } });
+    return route.fulfill({ json: { level: { ...level, editorVersion: '1.0.0' }, warnings: [] } });
   });
   return snapshots;
 }

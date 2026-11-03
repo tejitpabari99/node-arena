@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '@node-arena/content';
 // R2 level mapper: TwLevel (+ campaign position) -> canonical node-arena level object (serialize.ts writes the bytes).
 // Pure: no fs. A level with blocked[] yields `level: null` (nothing to write).
 import { readFileSync } from 'node:fs';
@@ -286,7 +287,7 @@ export function mapLevel(tw: TwLevel, position: number, catalog: Catalog, option
   if (dropped.size > 0) source['dropped'] = [...dropped].sort();
 
   const level: Obj = {
-    $schema: '../../schemas/level.schema.json', schemaVersion: '2.0.0', id: tw.id, name: tw.name, source,
+    $schema: '../../schemas/level.schema.json', schemaVersion: SCHEMA_VERSION, id: tw.id, name: tw.name, source,
     theme: themeFor(position, options.envShift), bounds, objective: 'captureAll', timeLimitSec: null,
     players, buildings, elements,
   };

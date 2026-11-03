@@ -53,16 +53,16 @@ test('level removal requires version bump; no baseline always passes', () => {
 
 test('current and baseline content metadata use the current content schema', () => {
   assert.equal(content.parseContentMeta({ ...hashFixture()['content.json'], contentVersion: '2.0.0' }).contentVersion, '2.0.0');
-  assert.throws(() => content.parseContentMeta({ ...hashFixture()['content.json'], schemaVersion: '1.0.0' }), content.ContentLoadError);
+  assert.throws(() => content.parseContentMeta({ ...hashFixture()['content.json'], schemaVersion: '99.0.0' }), content.ContentLoadError);
   assert.throws(() => content.parseContentMeta({ ...hashFixture()['content.json'], contentVersion: '2.0' }), content.ContentLoadError);
   assert.deepEqual(content.readBaselineVersion(JSON.stringify(hashFixture()['content.json'])), hashFixture()['content.json']);
-  assert.throws(() => content.readBaselineVersion('{"schemaVersion":"1.0.0","contentVersion":"1.1.6","x":1}'), content.ContentLoadError);
+  assert.throws(() => content.readBaselineVersion('{"schemaVersion":"0.9.0","contentVersion":"1.1.6","x":1}'), content.ContentLoadError);
   assert.throws(() => content.readBaselineVersion('{}'), content.ContentLoadError);
 });
 
 test('rules header, exported constant and content metadata must agree', () => {
   assert.doesNotThrow(() => content.checkRulesVersion(`RULES_VERSION: ${content.RULES_VERSION}\n`, content.RULES_VERSION));
-  assert.throws(() => content.checkRulesVersion('RULES_VERSION: 1.0.0\n', '1.0.0'), /RULES_VERSION/);
+  assert.throws(() => content.checkRulesVersion('RULES_VERSION: 99.0.0\n', '99.0.0'), /RULES_VERSION/);
   assert.throws(() => content.checkRulesVersion(`RULES_VERSION: ${content.RULES_VERSION}\n`, '99.0.1'), /rulesVersion/);
   assert.throws(() => content.checkRulesVersion('no header', '1.0.0'), /RULES_VERSION/);
 });

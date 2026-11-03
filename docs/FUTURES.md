@@ -58,7 +58,7 @@ Source facts below describe Tower War; they are deferred in Node Arena. Research
 
 ## From menu/online flow (2026-11-02)
 
-- **Automatic prefix-fairness gate.** Slot-order fairness for every seat-count prefix is a manual authoring rule ([LEVELS_GUIDE.md](LEVELS_GUIDE.md#5a-pvp-maps)); add a gate in `validate:levels` / balance. Current measurements after the 2.6.0 bot fix (`pnpm balance --mode pvp`, 120 runs): duel-s 48.7/51.3, duel-m 46.7/53.3, cross default 2v2 48.7/48.7/51.3/51.3.
+- **Automatic prefix-fairness gate.** Slot-order fairness for every seat-count prefix is a manual authoring rule ([LEVELS_GUIDE.md](LEVELS_GUIDE.md#5a-pvp-maps)); add a gate in `validate:levels` / balance. Current measurements after the bot fairness fix (`pnpm balance --mode pvp`, 120 runs): duel-s 48.7/51.3, duel-m 46.7/53.3, cross default 2v2 48.7/48.7/51.3/51.3.
 - **[DEFERRED] Residual sim seat-order tie-breaks.** Index-order tie-breaks in the sim (GAME_RULES ~line 57 index order; R-CMB-04 crossing order; arrival order) may still bias seat order; measured small on duel-s (~115/85 at delay 1000). Investigate before changing; a fix would need a major RULES bump.
 - **Remove the `empty` seat kind from the wire.** Kept (rejected by Start, no longer produced by the UI) to avoid a protocol break; remove at the next PROTOCOL bump.
 - **Persistent thumbnail cache.** Map thumbnails are re-rendered per session; cache across reloads.

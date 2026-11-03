@@ -1,6 +1,6 @@
 {
   "$schema": "../../../packages/content/schemas/manifest.schema.json",
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "1.0.0",
   "palettes": {
     "blue": "#2E8BFF",
     "green": "#35B84A",

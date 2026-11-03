@@ -26,7 +26,7 @@ export async function saveLevel(level: LevelDoc): Promise<{ level: LevelDoc; war
   return body;
 }
 
-export const versionOf = (level: LevelDoc): string => level.editorVersion ?? '0.0.0';
+export const versionOf = (level: LevelDoc): string => level.editorVersion ?? '1.0.0';
 export async function duplicateLevel(id: string): Promise<{ level: LevelDoc; warnings: ContentIssue[] }> {
   const response = await fetch('/__editor/duplicate', {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-NA-Editor': '1' },

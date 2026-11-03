@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import * as content from '../src/index.js';
 import { ContentLoadError } from '../src/index.js';
 
-const SV = '2.0.0';
+const SV = content.SCHEMA_VERSION;
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 const fp = { shape: 'box', w: 1.5, d: 1.5 };
 

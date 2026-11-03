@@ -5,7 +5,7 @@ import { createAjv } from '../src/index.js';
 
 const tex = (n: string) => ({ blue: `${n}_b.png`, green: `${n}_g.png`, red: `${n}_r.png`, yellow: `${n}_y.png`, gray: `${n}_n.png` });
 const fixture = () => ({
-  $schema: 'schemas/manifest.schema.json', schemaVersion: '2.0.0',
+  $schema: 'schemas/manifest.schema.json', schemaVersion: content.MANIFEST_SCHEMA_VERSION,
   palettes: { blue: '#3355ff', green: '#33aa44', red: '#dd3333', yellow: '#ddcc33', gray: '#888888' },
   visuals: {
     soldier: { kind: 'unit', model: { parts: 'models/tw/soldier.glb', budget: 'unit' }, team: { mode: 'textureSwap', textures: tex('soldier') }, anim: { mode: 'node-tracks', clips: { run: 'Run', death: 'Death' } }, scale: 1 },
@@ -25,8 +25,7 @@ const validate = createAjv().compile(content.ManifestSchema);
 const ok = (m: unknown) => validate(m);
 const mutate = (fn: (m: any) => void) => { const m = fixture() as any; fn(m); return m; };
 
-test('version 2.0.0; fixture validates schema + cross-checks', () => {
-  assert.equal(content.MANIFEST_SCHEMA_VERSION, '2.0.0');
+test('fixture validates the current manifest schema and cross-checks', () => {
   assert.equal(ok(fixture()), true, JSON.stringify(validate.errors));
   assert.deepEqual(content.crossCheckManifest(fixture() as any, catalog()), []);
 });

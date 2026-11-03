@@ -1,6 +1,6 @@
 {
   "$schema": "../../schemas/level.schema.json",
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "1.0.0",
   "id": "levelview-17",
   "name": "LevelView 17",
   "source": {

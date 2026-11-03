@@ -48,7 +48,7 @@ it('duplicates saved disk content, retaining name, dropping source and resetting
   await writeFile(join(root, 'data/levels/na-original.json'), JSON.stringify(saved));
   const before = await disk('na-original');
   const result = await duplicate('na-original');
-  const expected = { ...saved, id: 'na-original-copy', editorVersion: '0.0.1' }; delete expected.source;
+  const expected = { ...saved, id: 'na-original-copy', editorVersion: '1.0.0' }; delete expected.source;
   expect(result).toEqual({ level: expected, warnings: [] });
   expect(JSON.parse(await disk('na-original-copy'))).toEqual(expected);
   expect(await disk('na-original')).toBe(before);
@@ -101,7 +101,7 @@ it.each([
 it('copies imported sources with na- prefix without modifying the imported file', async () => {
   const before = await disk('levelview-1');
   const { level } = await duplicate('levelview-1');
-  expect(level).toMatchObject({ id: 'na-levelview-1-copy', name: source.name, editorVersion: '0.0.1' });
+  expect(level).toMatchObject({ id: 'na-levelview-1-copy', name: source.name, editorVersion: '1.0.0' });
   expect(level).not.toHaveProperty('source'); expect(await disk('levelview-1')).toBe(before);
 });
 it('rejects unsafe identities, missing sources, malformed bodies and escaping symlinks without writes', async () => {
@@ -131,9 +131,9 @@ it('exposes changed, duplicate and version display through the client API agains
   const nativeFetch = globalThis.fetch;
   vi.stubGlobal('fetch', (path: string, init?: RequestInit) => nativeFetch(new URL(path, origin), { ...init, headers: { ...init?.headers, Origin: origin } }));
   const saved = await api.saveLevel({ ...source, id: 'na-client' });
-  expect(saved.changed).toBe(true); expect(api.versionOf(saved.level)).toBe('0.0.1');
+  expect(saved.changed).toBe(true); expect(api.versionOf(saved.level)).toBe('1.0.0');
   expect((await api.saveLevel(saved.level)).changed).toBe(false);
-  expect(api.versionOf(source)).toBe('0.0.0');
+  expect(api.versionOf(source)).toBe('1.0.0');
   expect((await api.duplicateLevel(saved.level.id)).level.id).toBe('na-client-copy');
   await expect(api.duplicateLevel('na-missing')).rejects.toMatchObject({ status: 404 });
 });

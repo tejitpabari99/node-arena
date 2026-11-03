@@ -1,3 +1,4 @@
+import { RULES_VERSION } from '../src/index.js';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
@@ -11,7 +12,7 @@ const cli = (dir: string, ...args: string[]) => spawnSync(process.execPath, ['--
 function workspace() {
   const dir = mkdtempSync(join(tmpdir(), 'content-lock-'));
   mkdirSync(join(dir, 'docs'), { recursive: true });
-  writeFileSync(join(dir, 'docs/GAME_RULES.md'), 'RULES_VERSION: 3.4.0\n');
+  writeFileSync(join(dir, 'docs/GAME_RULES.md'), `RULES_VERSION: ${RULES_VERSION}\n`);
   mkdirSync(join(dir, 'packages/content'), { recursive: true });
   mkdirSync(join(dir, 'packages/bots/src'), { recursive: true });
   writeFileSync(join(dir, 'packages/bots/src/version.ts'), "export const BOT_VERSION = '2.0.0';\n");
@@ -48,7 +49,7 @@ test('CLI writes lock, detects stale output and rejects regenerated unversioned 
     files['content.json'].contentVersion = '2.0.1'; writeFixture(dir, files);
     result = cli(dir, '--check', '--base', 'HEAD'); assert.equal(result.status, 0, result.stderr);
     result = cli(dir, '--check', '--base', 'missing-ref'); assert.notEqual(result.status, 0);
-    writeFileSync(join(dir, 'docs/GAME_RULES.md'), 'RULES_VERSION: 1.0.0\n');
+    writeFileSync(join(dir, 'docs/GAME_RULES.md'), 'RULES_VERSION: 99.0.0\n');
     result = cli(dir, '--check', '--base', 'HEAD'); assert.notEqual(result.status, 0); assert.match(result.stderr, /RULES_VERSION/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

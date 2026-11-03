@@ -1,6 +1,6 @@
 # Node Arena — Game Rules
 
-RULES_VERSION: 3.4.0
+RULES_VERSION: 1.0.0
 
 This is the mechanics contract for Node Arena, motivated by Tower War (APK 1.29.3). Rules own **structure and formulas**; every tunable number (speeds, coefficients, caps, radii, thresholds) lives in authored content under a named parameter, and rules only name the resolved parameter. The simulation must follow these rules; presentation, bots and tools consume the same mechanics. Tower War defaults appear only in the §7 glossary and in the §5 worked examples.
 
@@ -58,7 +58,7 @@ Iteration orders are explicit and are the only tie-breaks. A line's `channelKey`
 
 ### R-TCK-04
 
-Progress is measured in `numericScale × tickRate` units per world unit. Each tick a troop advances by `speedMilli`, the compiled form of its type's `speed`; speed is constant per troop type and never changes mid-flight in 2.0.0. Line length between centre positions with milli-unit differences `dx`, `dy` is `isqrt((dx × tickRate)² + (dy × tickRate)²)` progress units. A departing troop starts at progress 0 in its departure tick; afterwards progress is elapsed ticks times `speedMilli`. Movement is analytic (evaluated from departure tick) rather than stepped per troop.
+Progress is measured in `numericScale × tickRate` units per world unit. Each tick a troop advances by `speedMilli`, the compiled form of its type's `speed`; speed is constant per troop type and never changes mid-flight. Line length between centre positions with milli-unit differences `dx`, `dy` is `isqrt((dx × tickRate)² + (dy × tickRate)²)` progress units. A departing troop starts at progress 0 in its departure tick; afterwards progress is elapsed ticks times `speedMilli`. Movement is analytic (evaluated from departure tick) rather than stepped per troop.
 
 *Source:* 03#4.5.
 
@@ -129,10 +129,6 @@ A player's identity is its team unless a `SeatSetup` assigns teams (R-TEM-01): e
 *Params:* Player `id`, `kind`; building `owner`.
 
 *Examples:* E-ARRIVAL.
-
-*Amended:* 3.1.0 (team = player id unless a `SeatSetup` assigns teams; hostile = different team). Campaign behaviour unchanged.
-
-*Amended:* 3.3.0 (neutral buildings of unused pvp slots).
 
 ### R-ENT-05
 
@@ -406,15 +402,13 @@ Obstacles are static, unowned, take no part in winning and do not interact with 
 
 ### R-SEA-01
 
-A `pvp` match has 2 to `level.players.length` seats (`N` slots authored by the map), at most 4 today. A match with `n` seats uses the first `n` slots of `level.players` in authored order; seat `i` is slot `i`, and seats are indexed `0..n-1`. Every seat is occupied for the whole match and there are no empty seats. Each building authored for a slot `>= n` becomes neutral (owner `-1`, R-ENT-04) at its authored level; those slots take no part in the match. `n` is `SeatSetup.teams.length`; an absent setup means `n = N`, identical to the pre-3.3.0 behavior. Whether a seat is driven by a person or a bot is decided outside the simulation (lobby or server): the level's player `kind` is a slot placeholder, and every seat submits the same commands under the same validation with no mechanical privilege (R-ENT-04). `create(level, seed, setup?)` takes an optional `SeatSetup` whose `teams[i]` is the team id of seat `i`. The simulation never reads seat kinds to decide an outcome.
+A `pvp` match has 2 to `level.players.length` seats (`N` slots authored by the map), at most 4 today. A match with `n` seats uses the first `n` slots of `level.players` in authored order; seat `i` is slot `i`, and seats are indexed `0..n-1`. Every seat is occupied for the whole match and there are no empty seats. Each building authored for a slot `>= n` becomes neutral (owner `-1`, R-ENT-04) at its authored level; those slots take no part in the match. `n` is `SeatSetup.teams.length`; an absent setup means `n = N`. Whether a seat is driven by a person or a bot is decided outside the simulation (lobby or server): the level's player `kind` is a slot placeholder, and every seat submits the same commands under the same validation with no mechanical privilege (R-ENT-04). `create(level, seed, setup?)` takes an optional `SeatSetup` whose `teams[i]` is the team id of seat `i`. The simulation never reads seat kinds to decide an outcome.
 
 *Source:* Node Arena (PvP design, SP01).
 
 *Params:* `level.players`, `SeatSetup.teams`, `timeLimitSec` (pvp default 480, i.e. 9600 ticks).
 
 *Examples:* none.
-
-*Amended:* 3.3.0 (variable seat count `2..N`; unused slots' buildings neutral).
 
 ### R-TEM-01
 
@@ -425,8 +419,6 @@ Teams are static for a match. `SeatSetup.teams[i]` (integers `0..n-1` where `n =
 *Params:* `SeatSetup.teams`, optional level player `team`.
 
 *Examples:* none.
-
-*Amended:* 3.3.0 (`n` = seat count, may be less than the level's slot count).
 
 ### R-TEM-02
 
@@ -458,8 +450,6 @@ In a `pvp` match a seat is eliminated when it owns no building and owns no troop
 
 *Examples:* none.
 
-*Amended:* 3.2.0 (second elimination cause: `Forfeit`, R-FFT-01).
-
 ### R-WIN-01
 
 In objective `captureAll`, the human wins when every building with `ignoreForWin = false` (neutral buildings included) is owned by the human. The remaining ignored buildings then flip to the human.
@@ -469,8 +459,6 @@ In objective `captureAll`, the human wins when every building with `ignoreForWin
 *Params:* `ignoreForWin` (TW `cbi`).
 
 *Examples:* E-OUTCOME.
-
-*Amended:* 3.1.0 (scoped to objective `captureAll`; objective `pvp` uses R-WIN-04..07).
 
 ### R-WIN-02
 
@@ -482,8 +470,6 @@ In objective `captureAll`, the human loses when they own no building with `ignor
 
 *Examples:* E-OUTCOME.
 
-*Amended:* 3.1.0 (scoped to objective `captureAll`; the no-draw statement applies to `captureAll` only, `pvp` may draw, R-WIN-06).
-
 ### R-WIN-03
 
 In objective `captureAll`, a level may set `timeLimitSec`; when absent there is no limit (no campaign level sets one). At phase 9, `tick >= timeLimitSec × tickRate` ends the match as a timeout loss, evaluated after win and loss in that tick (order win → loss → timeout: a win on the final tick counts as a win). Harness step caps are not outcomes. Once recorded, an outcome is final.
@@ -494,8 +480,6 @@ In objective `captureAll`, a level may set `timeLimitSec`; when absent there is 
 
 *Examples:* E-OUTCOME.
 
-*Amended:* 3.1.0 (scoped to objective `captureAll`; the `pvp` time limit is R-WIN-05).
-
 ### R-WIN-04
 
 In objective `pvp`, at phase 9 after elimination (R-ELM-01), when exactly one team has a non-eliminated seat the outcome is `victory` and the winners are all seats of that team, eliminated teammates included. `winner` is the lowest winning seat index. This check precedes the time limit (R-WIN-05): a last-team-standing result on the final tick is a `victory`. A seat eliminated by `Forfeit` (R-FFT-01) counts as eliminated here, so a forfeit can complete a last-team-standing victory (R-FFT-03). Once recorded, an outcome is final.
@@ -505,8 +489,6 @@ In objective `pvp`, at phase 9 after elimination (R-ELM-01), when exactly one te
 *Params:* None.
 
 *Examples:* none.
-
-*Amended:* 3.2.0 (cross-reference to `Forfeit`, R-FFT-03).
 
 ### R-WIN-05
 
@@ -527,8 +509,6 @@ In objective `pvp` the outcome `draw` occurs when (a) at the time limit two or m
 *Params:* None.
 
 *Examples:* none.
-
-*Amended:* 3.2.0 (case b cross-reference to `Forfeit`, R-FFT-03).
 
 ### R-WIN-07
 
@@ -657,7 +637,7 @@ These are future elements, not active rules and not registry entries. They have 
 | Double unit | Chance-based extra troop on spawn (skin power). | 03#4.3 | Validation: chance value; anchor within spawn; none; hash an extra random stream. |
 | Shield | Chance-based absorb of one hit (skin power, `Resurrection` stat). | 03#5.4 | Validation: chance value; anchor within contact/arrival; none; hash shield flag and stream. |
 
-**Deferred boosters.** Bomb and speed boosters are deferred and are not part of 2.0.0: there are no booster rule ids, no `UseBooster` command, no `bomb` random stream, no booster content keys and no per-troop speed state; phase 2 is kept free for the strike phase. Facts kept for revival: the bomb aims 3 times by default (APK remote-config default; the code-embedded fallback is 1), human only, starts after a delay and has a cooldown, strikes AI and neutral buildings by level then index and sets their level to 0 without capture; the speed booster multiplies troop speed and spawn rate, is activate-only for the rest of the match and affects troops already in flight (`OnChangeSpeedUp`). Revival is a new area `BST`, a minor bump, a `UseBooster` command, a `bomb` stream, a strike phase in slot 2, a per-troop speed column with re-anchoring and a spawn-rate factor in R-SPN-01. See `docs/FUTURES.md`.
+**Deferred boosters.** Bomb and speed boosters are deferred and are not part of the mechanics contract: there are no booster rule ids, no `UseBooster` command, no `bomb` random stream, no booster content keys and no per-troop speed state; phase 2 is kept free for the strike phase. Facts kept for revival: the bomb aims 3 times by default (APK remote-config default; the code-embedded fallback is 1), human only, starts after a delay and has a cooldown, strikes AI and neutral buildings by level then index and sets their level to 0 without capture; the speed booster multiplies troop speed and spawn rate, is activate-only for the rest of the match and affects troops already in flight (`OnChangeSpeedUp`). Revival is a new area `BST`, a minor bump, a `UseBooster` command, a `bomb` stream, a strike phase in slot 2, a per-troop speed column with re-anchoring and a spawn-rate factor in R-SPN-01. See `docs/FUTURES.md`.
 
 ## 7. Parameter glossary
 

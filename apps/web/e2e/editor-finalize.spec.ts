@@ -94,7 +94,7 @@ test('Finalize waits behind autosave and keeps edits and competing jobs locked t
     order.push('save'); const call = order.length;
     const level = route.request().postDataJSON().level as LevelDoc;
     await (call === 1 ? auto : manual);
-    saved = { ...level, editorVersion: `0.0.${call}` };
+    saved = { ...level, editorVersion: `1.0.${call - 1}` };
     await route.fulfill({ json: { level: saved, warnings: [], changed: true } });
   });
   await page.route('**/__editor/finalize', async route => {
@@ -132,7 +132,7 @@ test('a failed no-change save cannot Finalize using an older saved baseline', as
   let calls = 0, finalizes = 0;
   await page.route('**/__editor/save', async route => {
     calls++;
-    if (calls === 1) await route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '0.0.1' }, warnings: [], changed: true } });
+    if (calls === 1) await route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '1.0.0' }, warnings: [], changed: true } });
     else await route.fulfill({ status: 500, json: { error: 'disk unavailable' } });
   });
   await page.route('**/__editor/finalize', async route => { finalizes++; await route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }); });
@@ -149,7 +149,7 @@ test('a failed no-change save cannot Finalize using an older saved baseline', as
 test('starting Finalize closes an open Check details flyout', async ({ page }) => {
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev editor');
   await page.route('**/__editor/solvable', route => route.fulfill({ contentType: 'application/x-ndjson', body: JSON.stringify({ type: 'result', report: { totalWins: 2, runs: 3, ok: true } }) + '\n' }));
-  await page.route('**/__editor/save', route => route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '0.0.1' }, warnings: [], changed: true } }));
+  await page.route('**/__editor/save', route => route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '1.0.0' }, warnings: [], changed: true } }));
   await page.route('**/__editor/finalize', route => route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }));
   await page.setViewportSize({ width: 1440, height: 900 });
   await openCopied(page);
@@ -168,7 +168,7 @@ test('a successful save whose level-list refresh fails still lets Finalize proce
   test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev editor');
   let finalizes = 0, failList = false;
   await page.route('**/__editor/levels', route => failList ? route.fulfill({ status: 500, json: { error: 'list down' } }) : route.fallback());
-  await page.route('**/__editor/save', route => { failList = true; return route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '0.0.1' }, warnings: [], changed: true } }); });
+  await page.route('**/__editor/save', route => { failList = true; return route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '1.0.0' }, warnings: [], changed: true } }); });
   await page.route('**/__editor/finalize', route => { finalizes++; return route.fulfill({ contentType: 'application/x-ndjson', body: '{"type":"result"}\n' }); });
   await openCopied(page);
   await page.getByLabel('Level name', { exact: true }).fill('Edited before finalize');

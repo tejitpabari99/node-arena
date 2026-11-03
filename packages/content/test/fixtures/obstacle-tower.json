@@ -1,6 +1,6 @@
 {
   "$schema": "../../../schemas/level.schema.json",
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "1.0.0",
   "id": "synthetic-obstacle-tower",
   "name": "Synthetic obstacle + tower",
   "source": { "game": "tower-war", "gameVersion": "1.29.3", "asset": "synthetic", "dialect": "v1-short", "dropped": [] },

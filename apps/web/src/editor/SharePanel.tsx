@@ -82,7 +82,7 @@ export function SharePanel(p: SharePanelProps) {
         </span></div>
         {hasReport && <button ref={p.detailsRef ?? null} type="button" class="ed-btn ed-btn-ghost ed-share-details" onClick={p.onDetails}>Details</button>}
       </section>
-      <footer class="ed-share-version" data-testid="editor-version">{`Version ${p.savedDoc ? versionOf(p.savedDoc) : '0.0.0'}`}</footer>
+      <footer class="ed-share-version" data-testid="editor-version">{`Version ${p.savedDoc ? versionOf(p.savedDoc) : '1.0.0'}`}</footer>
     </div>}
   </span>;
 }

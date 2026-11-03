@@ -128,7 +128,7 @@ The closed schema is [manifest-art.schema.json](../packages/content/schemas/mani
 ```json
 {
   "$schema": "../../../packages/content/schemas/manifest-art.schema.json",
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "1.0.0",
   "visuals": {
     "building.tower": {
       "model": { "parts": "art/models/tower.glb" },
@@ -162,7 +162,7 @@ Only these fields are patchable:
 | `fx.<existing-id>` | `texture`, existing numeric `params` keys |
 | `events.<known-event-id>` | `sfx` only; a registered event need not already have importer audio |
 
-`$schema` and `schemaVersion` are optional metadata; supplied schemaVersion must be 2.0.0. Unknown fields and nulls fail. No new visual/theme/effect ids, kind changes, budget changes, palettes, camera or event-fx overrides. Except event audio and fields introduced by a team-mode switch, each patched field must still exist in the TW fragment; stale targets fail with the field name. The merged manifest must also satisfy the full manifest schema and content references.
+`$schema` and `schemaVersion` are optional metadata; supplied schemaVersion must be 1.0.0. Unknown fields and nulls fail. No new visual/theme/effect ids, kind changes, budget changes, palettes, camera or event-fx overrides. Except event audio and fields introduced by a team-mode switch, each patched field must still exist in the TW fragment; stale targets fail with the field name. The merged manifest must also satisfy the full manifest schema and content references.
 
 Merge order: base manifest (palettes/camera) → TW fragment (visuals/themes/fx and event-fx, plus stock event-audio defaults) → owner patch. Objects merge recursively; arrays and scalars replace whole. Thus a blue texture override preserves other colours, while `stages` or `light.dir` replaces its entire array. A `team.mode` change replaces the entire team object: supply both base/mask for tintMask, or the complete required texture set for textureSwap. There are no delete markers; remove a patch field and merge again to restore its importer value. Removing an event audio override restores the stock default (or removes audio if none exists). Repeated merges are stable. Do not edit the merged file to make an override.
 

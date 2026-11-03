@@ -1,3 +1,4 @@
+import { PROTOCOL_VERSION } from '@node-arena/net';
 import { describe, expect, it } from 'vitest';
 import type { ClientMessage, PauseStateMsg, ServerMessage, Versions } from '@node-arena/net';
 import { createPvpController } from '../../src/pvp/controller';
@@ -22,7 +23,7 @@ function game() {
     raf: () => 0, caf: () => {}, now: () => 100,
   });
   ctl.open(); ctl.create();
-  push({ t: 'welcome', pv: 4, playerId: 'p', serverVersions: versions });
+  push({ t: 'welcome', pv: PROTOCOL_VERSION, playerId: 'p', serverVersions: versions });
   push({ t: 'room.joined', code: 'ABCD', you: { seat: 0, host: true } });
   const start: ServerMessage = { t: 'start', matchId: 'm', levelId: 'l', simHash: '0123456789abcdef', seed: 1, seats: [{ player: 0, kind: 'human', team: 0, nick: 'a' }, { player: 1, kind: 'human', team: 1, nick: 'b' }], youPlayer: 0, inputDelay: 2, countdownMs: 3000, timeLimitTicks: 100, hashInterval: 10 };
   const ps = (o: Partial<PauseStateMsg> & { reason?: 'manual' | 'disconnect' } = {}): ServerMessage => ({ t: 'pause.state', epoch: 1, paused: true, tick: 5, unlimited: false, holds: [{ player: 0, reason: o.reason ?? 'disconnect', connected: true, since: 0 }], budgets: [30000, 30000], ...o } as ServerMessage);
@@ -37,7 +38,7 @@ describe('M2 reconnect', () => {
     for (let i = 0; i < 3; i++) g.push({ t: 'tick', n: i });
     g.ctl.driver!.advance();
     const old = g.ctl.driver;
-    g.push({ t: 'welcome', pv: 4, playerId: 'p', serverVersions: versions });
+    g.push({ t: 'welcome', pv: PROTOCOL_VERSION, playerId: 'p', serverVersions: versions });
     g.push({ t: 'room.joined', code: 'ABCD', you: { seat: 0, host: true } });
     g.push(g.start); g.push(g.catchup(5)); g.push(g.ps());
     await flush();
@@ -73,7 +74,7 @@ describe('M2 reconnect', () => {
     d.advance();
     expect(g.ctl.snapshot().screen).toBe('result');
     // reconnect: start, catchup, stored end
-    g.push({ t: 'welcome', pv: 4, playerId: 'p', serverVersions: versions });
+    g.push({ t: 'welcome', pv: PROTOCOL_VERSION, playerId: 'p', serverVersions: versions });
     g.push({ t: 'room.joined', code: 'ABCD', you: { seat: 0, host: true } });
     g.push(g.start); g.push(g.catchup(3));
     g.push({ t: 'end', outcome: { outcome: 'victory', winners: [0], winner: 0 }, finalTick: 3, finalHash: 'h3' } as never);

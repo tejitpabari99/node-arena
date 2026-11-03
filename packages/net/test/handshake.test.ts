@@ -1,10 +1,11 @@
+import { RULES_VERSION, SCHEMA_VERSION } from '@node-arena/content';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { checkHello } from '../src/handshake.js';
 import type { HelloMsg, Versions } from '../src/messages.js';
 import { PROTOCOL_VERSION } from '../src/version.js';
 
-const server: Versions = { rules: '2.1.0', schema: '3', content: 'abc', bot: '5' };
+const server: Versions = { rules: RULES_VERSION, schema: SCHEMA_VERSION, content: 'abc', bot: '5' };
 const hello = (over: Partial<HelloMsg> = {}, v: Partial<Versions> = {}): HelloMsg => ({
   t: 'hello', pv: PROTOCOL_VERSION, versions: { ...server, ...v }, nick: 'Ann', token: 'f'.repeat(32), ...over,
 });
@@ -30,8 +31,8 @@ test('welcome carries resume when supplied', () => {
 });
 
 test('refuses protocol mismatch', () => { refused(hello({ pv: PROTOCOL_VERSION + 1 })); });
-test('refuses rules major mismatch', () => { refused(hello({}, { rules: '3.1.0' })); });
-test('refuses rules minor mismatch', () => { refused(hello({}, { rules: '2.2.0' })); });
+test('refuses rules major mismatch', () => { refused(hello({}, { rules: `${Number(RULES_VERSION.split('.')[0]) + 1}.0.0` })); });
+test('refuses rules minor mismatch', () => { refused(hello({}, { rules: `${RULES_VERSION.split('.')[0]}.${Number(RULES_VERSION.split('.')[1]) + 1}.0` })); });
 test('refuses schema mismatch', () => { refused(hello({}, { schema: '4' })); });
 test('refuses content mismatch', () => { refused(hello({}, { content: 'xyz' })); });
 
@@ -44,7 +45,7 @@ test('refusal detail names the field and error carries server versions', () => {
 });
 
 test('accepts patch-only rules diff', () => {
-  assert.ok(checkHello(hello({}, { rules: '2.1.9' }), server, { playerId: 'p' }).ok);
+  assert.ok(checkHello(hello({}, { rules: `${RULES_VERSION.split('.').slice(0, 2).join('.')}.99` }), server, { playerId: 'p' }).ok);
 });
 
 test('accepts any bot version; onBotMismatch logged only', () => {
@@ -58,11 +59,9 @@ test('auth ignored', () => {
   assert.ok(checkHello(hello({ auth: 'whatever' }), server, { playerId: 'p' }).ok);
 });
 
-test('covers R-SEA-01: PROTOCOL_VERSION is 4 (variable seat arrays)', () => { assert.equal(PROTOCOL_VERSION, 4); });
-
-test('covers R-SEA-01: protocol v3 client (fixed 4-seat arrays) is refused with version-mismatch', () => {
-  assert.equal(PROTOCOL_VERSION, 4);
-  const e = refused(hello({ pv: 3 }));
-  assert.match(e.detail ?? '', /3|protocol/i);
+test('covers R-SEA-01: current protocol supports variable seat arrays and refuses other protocols', () => {
+  assert.equal(checkHello(hello(), server, { playerId: 'p' }).ok, true);
+  const e = refused(hello({ pv: PROTOCOL_VERSION + 1 }));
+  assert.match(e.detail ?? '', /protocol/i);
   refused(hello({ pv: 0 }));
 });

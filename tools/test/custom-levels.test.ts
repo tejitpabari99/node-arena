@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '@node-arena/content';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, cp, readFile, writeFile, readdir, rm } from 'node:fs/promises';
@@ -23,7 +24,7 @@ function fixture(): ContentFiles {
   const source = files['data/levels/levelview-1.json']!;
   const level = typeof source === 'string' ? JSON.parse(source) : source;
   files[`data/levels/${customId}.json`] = { ...level, id: customId, name: 'Tooling test' };
-  files['data/campaigns/custom.json'] = { $schema: '../../schemas/campaign.schema.json', schemaVersion: '2.0.0', id: 'custom', entries: [{ level: customId, position: 1 }] };
+  files['data/campaigns/custom.json'] = { $schema: '../../schemas/campaign.schema.json', schemaVersion: SCHEMA_VERSION, id: 'custom', entries: [{ level: customId, position: 1 }] };
   return files;
 }
 
@@ -44,7 +45,7 @@ test('file union rejects an orphan level and cross-list duplicates', () => {
   const files = fixture();
   delete files['data/campaigns/custom.json'];
   assert.throws(() => levels.campaignLevels(files), /differ/);
-  files['data/campaigns/custom.json'] = { $schema: '../../schemas/campaign.schema.json', schemaVersion: '2.0.0', id: 'custom', entries: [{ level: customId, position: 1 }, { level: 'levelview-1', position: 2 }] };
+  files['data/campaigns/custom.json'] = { $schema: '../../schemas/campaign.schema.json', schemaVersion: SCHEMA_VERSION, id: 'custom', entries: [{ level: customId, position: 1 }, { level: 'levelview-1', position: 2 }] };
   assert.throws(() => levels.campaignLevels(files), /differ|Common|custom/);
 });
 
@@ -133,7 +134,7 @@ test('levels:lock merge refuses missing, malformed and invalid existing locks wi
 });
 
 test('serializeLevel places editorVersion after name regardless of input key order', () => {
-  const level = { theme: 'green', editorVersion: '0.0.7', name: 'Custom', id: 'na-custom', schemaVersion: '2.0.0' };
+  const level = { theme: 'green', editorVersion: '0.0.7', name: 'Custom', id: 'na-custom', schemaVersion: SCHEMA_VERSION };
   const serialized = serializeLevel(level);
   assert.deepEqual(Object.keys(JSON.parse(serialized)), ['schemaVersion', 'id', 'name', 'editorVersion', 'theme']);
   assert.equal(serializeLevel(Object.fromEntries(Object.entries(level).reverse())), serialized);
