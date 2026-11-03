@@ -175,15 +175,15 @@ it('leaves identical and canonical net-zero saves untouched and returns the disk
   await expectUntouched('na-no-op', before);
 });
 
-it('keeps unchanged legacy files unversioned and starts at 1.0.0 on their first edit', async () => {
-  const first = await saved('na-legacy', original);
+it('keeps unchanged unversioned files unversioned and starts at 1.0.0 on their first edit', async () => {
+  const first = await saved('na-unversioned', original);
   delete first.level.editorVersion;
-  await writeFile(join(dir, 'data/levels/na-legacy.json'), JSON.stringify(first.level));
-  const before = await snapshot('na-legacy');
-  const unchanged = await saved('na-legacy', { ...first.level, editorVersion: 'invalid' });
+  await writeFile(join(dir, 'data/levels/na-unversioned.json'), JSON.stringify(first.level));
+  const before = await snapshot('na-unversioned');
+  const unchanged = await saved('na-unversioned', { ...first.level, editorVersion: 'invalid' });
   expect(unchanged.changed).toBe(false); expect(unchanged.level).not.toHaveProperty('editorVersion');
-  await expectUntouched('na-legacy', before);
-  expect(await saved('na-legacy', { ...first.level, name: 'Legacy edit' })).toMatchObject({ changed: true, level: { editorVersion: '1.0.0' } });
+  await expectUntouched('na-unversioned', before);
+  expect(await saved('na-unversioned', { ...first.level, name: 'Unversioned edit' })).toMatchObject({ changed: true, level: { editorVersion: '1.0.0' } });
 });
 
 it('increments the disk patch component while preserving major and minor', async () => {

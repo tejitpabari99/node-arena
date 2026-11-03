@@ -84,7 +84,7 @@ function validateSave(value: unknown): SaveData {
   return { v: 1, completed, settings: settings(source.settings), lastLevel: level(source.lastLevel) };
 }
 
-/** Validate the current save format; discard mismatched saves. */
+/** Validate the current save format. */
 export function decodeSave(raw: string): SaveData { return validateSave(JSON.parse(raw)); }
 
 function browserStorage(): SaveStorage | null {

@@ -478,7 +478,7 @@ describe('PvpController match lifecycle', () => {
       expect(h.ctl.snapshot()).toMatchObject({ screen: 'restarted', error: 'Server restarted. Room closed.' });
       const k = setup(); k.ctl.open(); k.ctl.create(); k.c.push(welcome);
       k.c.push({ t: 'room.joined', code: 'ABCD', you: { seat: 1, host: false } });
-      k.c.push({ t: 'room.closed', reason: 'server-restart' }); // no notice seen: legacy menu path, unified string
+      k.c.push({ t: 'room.closed', reason: 'server-restart' }); // no notice seen: menu restart path, unified string
       expect(k.ctl.snapshot()).toMatchObject({ screen: 'menu', error: 'Server restarted. Room closed.' });
     });
   });

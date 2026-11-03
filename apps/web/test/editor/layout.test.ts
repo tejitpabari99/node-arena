@@ -31,11 +31,11 @@ it('copies and pastes detached item fields with collision-free identities and pr
   expect(doc.buildings[0]!.params!.level).toEqual({ maxLevel: 5 });
   expect(clipboard.buildings[0]!.params!.level).toEqual({ maxLevel: 5 });
 });
-it('snaps positions by .25 and yaw by 15 degrees, optionally preserving unsnapped values', () => {
+it('always snaps positions by .25 and yaw by 15 degrees, wrapping angles', () => {
   expect(snapPosition({ x: 1.13, z: -2.14 })).toEqual({ x: 1.25, z: -2.25 });
-  expect(snapPosition({ x: 1.137, z: -2.146 }, false)).toEqual({ x: 1.14, z: -2.15 });
-  expect(snapYaw(359.999, false)).toBe(0); expect(snapYaw(360)).toBe(0);
-  expect(snapYaw(23)).toBe(30); expect(snapYaw(-23)).toBe(330); expect(snapYaw(23.127, false)).toBe(23.13);
+  expect(snapPosition({ x: 1.137, z: -2.146 })).toEqual({ x: 1.25, z: -2.25 });
+  expect(snapYaw(359.999)).toBe(0); expect(snapYaw(360)).toBe(0);
+  expect(snapYaw(23)).toBe(30); expect(snapYaw(-23)).toBe(330); expect(snapYaw(23.127)).toBe(30);
 });
 it('grow-only bounds: no-op identity, one-side growth, no shrink, inside items ignored, undo restores', () => {
   const doc = fixture();
@@ -84,7 +84,7 @@ it('reducer clamps place/move/move-selection/paste only when an area is carried'
   const pasted = reduceDocument(base, { type: 'paste', clipboard, offset: { x: 3, z: 0 } }, A).buildings.slice(1);
   expect(pasted.map(b => b.pos.x)).toEqual([20, 11]);
   expect(reduceDocument(base, { type: 'paste', clipboard, offset: { x: 3, z: 0 } }).buildings.slice(1).map(b => b.pos.x)).toEqual([22, 13]);
-  // legacy item outside the area is untouched by unrelated ops
-  const legacy = { ...base, buildings: [{ ...base.buildings[0]!, pos: { x: 90, z: 0 } }] };
-  expect(reduceDocument(legacy, { type: 'level-properties', value: legacy }, A).buildings[0]!.pos.x).toBe(90);
+  // An existing item outside the area is untouched by unrelated operations
+  const outside = { ...base, buildings: [{ ...base.buildings[0]!, pos: { x: 90, z: 0 } }] };
+  expect(reduceDocument(outside, { type: 'level-properties', value: outside }, A).buildings[0]!.pos.x).toBe(90);
 });

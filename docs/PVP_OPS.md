@@ -52,13 +52,13 @@ Manual server-only deploy: `gh workflow run deploy-server.yml`, or locally from 
 
 ### Drain on SIGTERM
 
-Fly sends `kill_signal = 'SIGTERM'` (explicit in `fly.toml`); SIGINT behaves the same. The server then drains for `DRAIN_MS` (default 30000, range 0-120000; 0 = legacy immediate close, `room.closed{shutdown}`):
+Fly sends `kill_signal = 'SIGTERM'` (explicit in `fly.toml`); SIGINT behaves the same. The server then drains for `DRAIN_MS` (default 30000, range 1-120000):
 - It keeps listening: `/healthz` stays HTTP 200 with `draining: true`, token reconnects into running matches still work, running matches keep ticking.
 - It refuses `room.create`, `room.join` (new members), `lobby.start` and `rematch` with `error{draining}`.
 - Every connection gets one `server.draining{deadlineMs}` (remaining ms) at drain start, or right after `welcome` when it connects later.
 - Early exit: once no match is in `countdown`/`running` (minimum 3 s so the notice is delivered) the drain ends. Otherwise it ends at the window.
 - At the end every room is closed with `room.closed{server-restart}` (running matches abort: no `end`, no result, no forfeit), sockets close with 1001 (2 s grace), then the process exits 0.
-- Hard exit (`hardExitMs`): `DRAIN_MS` + 2 s grace + 1 s = 33 s by default (8 s when `DRAIN_MS=0`). `kill_timeout` in `fly.toml` is 40 (hard exit + 5 s margin); a server test fails if it is not above the hard exit. If you raise `DRAIN_MS`, raise `kill_timeout` to `DRAIN_MS/1000 + 8`.
+- Hard exit (`hardExitMs`): `DRAIN_MS` + 2 s grace + 1 s = 33 s by default. `kill_timeout` in `fly.toml` is 40 (hard exit + 5 s margin); a server test fails if it is not above the hard exit. If you raise `DRAIN_MS`, raise `kill_timeout` to `DRAIN_MS/1000 + 8`.
 
 Check before deploying: `curl -fsS https://node-arena-server.fly.dev/healthz | jq '{running, rooms, draining}'`. `running` is matches in progress; deploy when it is 0 to finish in about 3 s.
 
@@ -108,7 +108,7 @@ Fly `fly.toml [env]` sets `ALLOWED_ORIGINS`; the Dockerfile sets `PORT=8080`, `C
 | `MAX_ROOMS` | 40 | |
 | `MAX_CONNS` | 200 | Past the cap new sockets close with 1013 |
 | `CONTENT_DIR` | repo `packages/content/data` | Image sets `/app/content-data/data` |
-| `DRAIN_MS` | 30000 | SIGTERM drain window, 0-120000; 0 = immediate close. Keep `kill_timeout` in `fly.toml` above `DRAIN_MS/1000 + 3` (see [Drain on SIGTERM](#drain-on-sigterm)) |
+| `DRAIN_MS` | 30000 | SIGTERM drain window, 1-120000. Keep `kill_timeout` in `fly.toml` above `DRAIN_MS/1000 + 3` (see [Drain on SIGTERM](#drain-on-sigterm)) |
 | `CREATES_PER_MIN` | 5 | Room creates per minute per IP, 1..100000. Test only: `apps/web/playwright.pvp.config.ts` sets 1000 because the whole e2e suite shares one IP. Never set in prod |
 | `LOG_LEVEL` | info | |
 

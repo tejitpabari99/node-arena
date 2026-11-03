@@ -6,7 +6,7 @@
       "@node-arena/content": ["../../packages/content/src/index.ts"]
     }
   },
-  "//": "SP07 isolated typecheck: only new SP07 files (legacy web is parked until SP08). Add files here as tasks land.",
+  "//": "Isolated render and manifest typecheck.",
   "include": [
     "src/render/registry.ts", "src/render/materials.ts", "src/render/gltf-cache.ts", "src/render/light-rig.ts",
     "src/manifest/model-ref.ts", "src/manifest/resolve.ts", "src/manifest/load.ts", "test/sp07/*.ts",

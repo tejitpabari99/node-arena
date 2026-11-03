@@ -3,7 +3,7 @@ import { ManifestSchema } from './manifest.schema.js';
 import { ManifestArtSchema } from './manifest-art.schema.js';
 import { BOT_KINDS, MODULES, OBJECTIVES, count, fx3, type ModuleId } from '@node-arena/defs';
 
-/** Content v2 schemas live beside v1 (`../core.schema.ts`); nothing here replaces the old game's data model. */
+/** Authored content schemas; schemaVersion identifies the current file format. */
 export const SCHEMA_VERSION = '1.0.0';
 
 const idPattern = '^[a-z0-9][a-z0-9-]*$';

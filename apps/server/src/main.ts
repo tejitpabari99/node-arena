@@ -19,9 +19,9 @@ export const MAX_PAYLOAD = 4096;
 export const DRAIN_MIN_MS = 3000;
 export const CLOSE_GRACE_MS = 2000;
 export const DRAIN_POLL_MS = 500;
-/** Process hard-exit bound (ms) for a drain of `windowMs`: window + close grace + 1 s; 0 = legacy 8 s. */
+/** Process hard-exit bound (ms): drain window + close grace + 1 s. */
 export function hardExitMs(windowMs: number): number {
-  return windowMs <= 0 ? 8000 : windowMs + CLOSE_GRACE_MS + 1000;
+  return windowMs + CLOSE_GRACE_MS + 1000;
 }
 
 export function serverName(): string {
@@ -76,7 +76,7 @@ export interface RunningServer {
   shutdown(graceMs?: number): Promise<void>;
   /**
    * SP09: SIGTERM path. Keeps serving, refuses new work (`error draining`), then closes everything with `room.closed{server-restart}` when
-   * the window elapses or no match is active (after `minMs`, default 3 s). `windowMs` 0 = legacy immediate `shutdown()`.
+   * the window elapses or no match is active (after `minMs`, default 3 s).
    */
   drain(opts?: { windowMs?: number; minMs?: number }): Promise<void>;
   /** serving -> draining -> closing -> exited. */
@@ -183,7 +183,6 @@ export async function startServer(config: Config, opts: StartOpts = {}): Promise
   };
   const drain = (dopts: { windowMs?: number; minMs?: number } = {}): Promise<void> => drainRun ??= (async () => {
     const windowMs = dopts.windowMs ?? config.drainMs;
-    if (windowMs <= 0) return shutdown();
     const minMs = Math.min(dopts.minMs ?? DRAIN_MIN_MS, windowMs);
     const t0 = now();
     phase = 'draining';

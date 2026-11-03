@@ -88,7 +88,7 @@ export function growBounds(doc: LevelDoc): LevelDoc {
 /** Pure structural edits; invalid changed pairs are rejected atomically. */
 export function reduceDocument(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
   const next = applyOp(doc, op, area);
-  // Validate changed pairs only: existing invalid saved documents are never migrated.
+  // Validate changed pairs only; leave other saved pairs unchanged.
   if (GROWING.has(op.type) && next !== doc) {
     for (let i = 0; i < next.buildings.length; i++) for (let j = i + 1; j < next.buildings.length; j++) {
       const a = next.buildings[i]!, b = next.buildings[j]!;
@@ -205,11 +205,11 @@ export function copySelection(doc: LevelDoc, targets: Selection[]): Clipboard {
   return structuredClone({ buildings: doc.buildings.filter(item => targets.some(t => t.kind === 'building' && t.id === item.id)), elements: doc.elements.filter(item => targets.some(t => t.kind === 'obstacle' && t.id === item.id)) });
 }
 const normalizeYaw = (value: number) => roundCoordinate(((roundCoordinate(value) % 360) + 360) % 360);
-/** Snapping is always on; `enabled` is kept only for test compatibility. */
-export function snapPosition(point: Point, enabled = true): Point {
-  const snap = (n: number) => roundCoordinate(enabled ? Math.round(n / .25) * .25 : n);
+/** Positions snap to the editor grid; yaw snaps to 15-degree steps. */
+export function snapPosition(point: Point): Point {
+  const snap = (n: number) => roundCoordinate(Math.round(n / .25) * .25);
   return { x: snap(point.x), z: snap(point.z) };
 }
-export function snapYaw(value: number, enabled = true): number {
-  return normalizeYaw(enabled ? Math.round(value / 15) * 15 : value);
+export function snapYaw(value: number): number {
+  return normalizeYaw(Math.round(value / 15) * 15);
 }

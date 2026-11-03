@@ -15,8 +15,6 @@
   --ed-z-pop: 5; --ed-z-toast: 15; --ed-z-modal: 20;
   --ed-controls-gutter: 56px;
 
-  /* Compatibility aliases while existing feature rules migrate to the primitives. */
-  --ed-panel: var(--ed-g-0); --ed-ink: var(--ed-text);
 }
 
 /* Base reset: chrome never inherits the game's root font or white text. */
@@ -30,13 +28,13 @@ body:has(.ed-shell):not(:has(.editor-play-overlay)), body:has(.editor-shell):not
   color-scheme: light;
 }
 
-.editor-workspace { position: relative; height: min(68vh, 760px); min-height: 360px; overflow: hidden; background: var(--ed-panel); border: 1px solid var(--ed-border); }
+.editor-workspace { position: relative; height: min(68vh, 760px); min-height: 360px; overflow: hidden; background: var(--ed-g-0); border: 1px solid var(--ed-border); }
 .editor-workspace canvas { touch-action: none; }
 .editor-marquee { position: absolute; z-index: 1; pointer-events: none; border: 1px solid #b8e0ff; background: #6cbcff33; }
 .editor-library-item { display: block; width: 100%; margin-bottom: 6px; touch-action: none; }
 .editor-ghost { position: absolute; z-index: 2; transform: translate(-50%, -50%); min-width: 44px; min-height: 32px; padding: 6px; box-sizing: border-box; border: 2px solid #c4e8ff; background: #78bdff66; color: white; font-size: 11px; pointer-events: none; }
 
-.editor-properties { margin: 16px 0; padding: 12px; background: var(--ed-panel); border: 1px solid var(--ed-border); border-radius: 6px; }
+.editor-properties { margin: 16px 0; padding: 12px; background: var(--ed-g-0); border: 1px solid var(--ed-border); border-radius: 6px; }
 .editor-properties summary { cursor: pointer; }
 .editor-properties fieldset { min-width: 0; border: 1px solid var(--ed-border); }
 .ed-toasts { position: absolute; z-index: var(--ed-z-toast); top: 12px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; max-width: min(560px, 90%); pointer-events: none; }
@@ -146,11 +144,11 @@ body:has(.ed-shell):not(:has(.editor-play-overlay)), body:has(.editor-shell):not
 /* Shell grid: no page scroll; left slot scrolls alone; canvas fills the rest. */
 html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-shell { isolation: isolate; display: grid; grid-template-rows: 56px minmax(0, 1fr); grid-template-columns: 300px minmax(0, 1fr); width: 100vw; height: 100vh; overflow: hidden; }
-.ed-top { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 0 12px; overflow: visible; background: var(--ed-panel); border-bottom: 1px solid var(--ed-border); }
+.ed-top { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 0 12px; overflow: visible; background: var(--ed-g-0); border-bottom: 1px solid var(--ed-border); }
 .ed-top h2 { margin: 0; font-size: 18px; }
-.ed-top a { color: var(--ed-ink); }
+.ed-top a { color: var(--ed-text); }
 .ed-top button { flex: none; padding: 6px 12px; }
-.ed-left { position: relative; grid-row: 2; grid-column: 1; overflow-y: auto; min-height: 0; padding: 12px; background: var(--ed-panel); border-right: 1px solid var(--ed-border); }
+.ed-left { position: relative; grid-row: 2; grid-column: 1; overflow-y: auto; min-height: 0; padding: 12px; background: var(--ed-g-0); border-right: 1px solid var(--ed-border); }
 .ed-canvas { background: linear-gradient(#73c7e6, #ccecf2); grid-row: 2; grid-column: 2; position: relative; min-width: 0; min-height: 0; overflow: hidden; }
 .ed-canvas .editor-workspace { height: 100%; min-height: 0; border: 0; background: transparent; }
 
@@ -162,7 +160,7 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-save-popover { max-height: 60vh; overflow: auto; }
 .ed-save-popover ul { margin: 0; padding-left: 18px; }
 .ed-popover-close { float: right; padding: 2px 10px; }
-.ed-spinner { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border: 2px solid var(--ed-border); border-top-color: var(--ed-ink); border-radius: 50%; animation: ed-spin .8s linear infinite; vertical-align: -1px; }
+.ed-spinner { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border: 2px solid var(--ed-border); border-top-color: var(--ed-text); border-radius: 50%; animation: ed-spin .8s linear infinite; vertical-align: -1px; }
 @keyframes ed-spin { to { transform: rotate(360deg); } }
 
 /* Share save and job panel. */
