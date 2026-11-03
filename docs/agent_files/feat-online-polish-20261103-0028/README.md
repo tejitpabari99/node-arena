@@ -40,4 +40,4 @@ Execution order: 01 ∥ 02 -> 04 -> 03. 01 and 02 share only `apps/web/src/style
 - E2E churn: pause-forfeit and spectator-rematch specs (SP01), picker tests (SP02).
 
 ## Open questions for owner
-- SP04 OPEN-6: `Supersedes:`/`Since:` removal makes `R-GRW`/`R-SPN` docs lose rationale; assumed acceptable (not yet confirmed).
+- SP04 OPEN-6: `Supersedes:`/`Since:` removal makes `R-GRW`/`R-SPN` docs lose rationale; assumed acceptable. [RESOLVED: acceptable — owner chose full history wipe; rationale worth keeping captured as ADRs by SP03.]

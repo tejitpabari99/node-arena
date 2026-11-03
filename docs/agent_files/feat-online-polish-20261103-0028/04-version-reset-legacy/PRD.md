@@ -105,7 +105,7 @@ Rejected: relaxing monotonic checks permanently; fake-bumping to 4.0.0; committi
 - [OPEN-3] `editorVersion`/`gameVersion`. [RESOLVED: owner: if our own product/app version strings, set to 1.0.0; leave only external/protocol codes (CLOSE_VERSION=4003, Tower War source metadata). Implementer verifies each field]
 - [OPEN-4] `DRAIN_MS=0` legacy shutdown. [RESOLVED: remove; keep only current drain behavior]
 - [OPEN-5] Rename `*-v2` test files. [RESOLVED: yes, drop the version suffix; `sp0N` dir names not covered by the decision, left unchanged]
-- [OPEN-6] `Supersedes:`/`Since:` removal makes `R-GRW`/`R-SPN` docs lose rationale; assumed acceptable.
+- [OPEN-6] `Supersedes:`/`Since:` removal makes `R-GRW`/`R-SPN` docs lose rationale; assumed acceptable. [RESOLVED: acceptable — owner chose full history wipe; any rationale worth keeping is captured as ADRs by SP03 docs restructure]
 - CI cannot re-verify normal gating until commit B. [DEFERRED] restore with SP03; AC below covers a local `--base HEAD` run.
 - Dist/prebuilt artifacts stale after constant changes. [RESOLVED: run `pnpm build:prerequisites` before gates.]
 
