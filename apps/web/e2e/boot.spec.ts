@@ -1,4 +1,6 @@
 import { expect,test } from '@playwright/test';
+import { defaultSave } from '../src/save/index.js';
+const CURRENT_SAVE_VERSION=defaultSave().v;
 const development=process.env.WEB_TEST_SERVER==='dev';
 test('fresh profile boots to main menu; Campaign shows 20 cards with only the first unlocked',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/?test=1');
@@ -11,12 +13,13 @@ test('fresh profile boots to main menu; Campaign shows 20 cards with only the fi
  await page.locator('.level-grid.campaign .level-card').first().click();await expect(page.locator('#game-hud')).toBeVisible();
  expect(errors).toEqual([]);
 });
-test('v1 save is discarded, backed up and never unlocks the v2 campaign',async({page})=>{
- await page.addInitScript(()=>localStorage.setItem('nodearena:save',JSON.stringify({v:1,completed:{old:{firstAt:'2026-01-01'}},lastLevel:'old',settings:{}})));
+test('save with a non-current version is discarded, backed up and never unlocks the campaign',async({page})=>{
+ const foreign=CURRENT_SAVE_VERSION+1;
+ await page.addInitScript(([v])=>localStorage.setItem('nodearena:save',JSON.stringify({v,completed:{old:{firstAt:'2026-01-01'}},lastLevel:'old',settings:{}})),[foreign]);
  await page.goto('/?test=1');await page.getByRole('button',{name:'Campaign',exact:true}).click();await expect(page.locator('.level-grid.campaign .level-card')).toHaveCount(20);
  await expect(page.locator('.level-grid.campaign .level-card:not(:disabled)')).toHaveCount(1);
- expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('nodearena:save')!).v)).toBe(2);
- expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('nodearena:save.bak')!).v)).toBe(1);
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('nodearena:save')!).v)).toBe(CURRENT_SAVE_VERSION);
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('nodearena:save.bak')!).v)).toBe(foreign);
 });
 
 test('production build has no Custom entry, even via ?view=custom',async({page})=>{
