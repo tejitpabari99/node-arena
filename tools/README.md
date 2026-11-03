@@ -34,9 +34,11 @@ Node-only tools run through the root pnpm scripts and `tools/src/cli.ts`. Run `p
 | `pnpm replay:verify golden` | Sim and bot golden replay records match headers, checkpoints, final hashes and outcomes; no bot execution |
 | `pnpm sim:golden` / `pnpm bots:golden` | Regenerate expected simulation/bot scenarios in memory and enforce golden identities/version guards |
 | `pnpm bench:sim` / `pnpm bench:bots` | Strict local performance budgets; `--ci` permits shared-runner budgets |
-| `pnpm check:docs` | Every root script is documented in this file or AGENTS; documented paths exist; removed tooling references fail |
+| `pnpm check:docs` | Root scripts documented here or in AGENTS; concrete repository paths exist; relative inline Markdown links and heading anchors resolve; maintained documentation folders index every sibling file; removed tooling references fail |
 | `pnpm art:status [--strict]` | Report-only list of merged-manifest file fields outside the art prefix, with TW/stock labels and replacement totals; strict exits 1 while any remain |
 | `pnpm check:parked --strict` | No parked CI entries, refused commands or parked source/test directories remain |
+
+The documentation gate checks inline-code repository paths in the root/tools READMEs and every Markdown page under `docs/{implementation,reference,operations,testing}/`. Navigation checks cover maintained `docs/` pages and the root/tools READMEs, including encoded destinations, queries and duplicate heading anchors. Each maintained docs folder needs a README linking every sibling file. Historical `docs/{agent_files,research,img}/` evidence is excluded from the new link/index checks to preserve frozen records; incoming links to that evidence still resolve. Fenced/inline code examples, external URLs and reference-style links are outside the inline-link check.
 
 Content/manifest/replay/level/balance reports use `--format md|json` (default Markdown). Failures exit 1; malformed command arguments fail. Caller-supplied paths resolve from the working directory. Defaults resolve from the repository. Common content options: `--dir`, `--base`, `--manifest`, `--assets-dir`, `--credits`, `--lock`; supported options depend on the command. Manifest credits default to `docs/reference/credits.md`; committed assets are checked without the extract. A custom assets directory omits the repo asset lock unless an explicit lock is supplied.
 

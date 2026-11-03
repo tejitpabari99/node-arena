@@ -33,7 +33,7 @@ The server keeps all rooms in memory: exactly one machine, and every deploy/rest
    gh run watch
    ```
    The first deploy had created 2 machines (Fly default HA); fixed 2026-10-31 with `fly scale count 1 -a node-arena-server --region ewr`. `--ha=false` prevents a repeat.
-   The workflow runs `flyctl deploy --remote-only --ha=false -c apps/server/fly.toml`, fails if the app does not have exactly 1 machine, then `node scripts/pvp-versions.mjs https://node-arena-server.fly.dev/healthz`, which fails if `/healthz` `versions` differ from this commit's built versions.
+   The workflow runs `flyctl deploy --remote-only --ha=false -c apps/server/fly.toml`, fails if the app does not have exactly 1 machine, then `node scripts/pvp-versions.mjs https://node-arena-server.fly.dev/healthz`, which fails if `https://node-arena-server.fly.dev/healthz` `versions` differ from this commit's built versions.
 6. Verify health ([Health](#health)), then run the [heartbeat check](#heartbeat-check-through-the-fly-edge-manual-once-after-first-deploy).
 7. Push to `main` (or run "Deploy") so the web build picks up the server URL; open the site and confirm the PvP menu entry appears.
 
@@ -43,17 +43,17 @@ Secrets are never in `fly.toml`; its `[env]` holds only `ALLOWED_ORIGINS`.
 
 `.github/workflows/deploy.yml` on push to `main`: `changes` -> `server` -> `web`.
 - `changes` runs `node scripts/server-changed.mjs <before> <sha>`; `server=true` when server-affecting paths changed (always on manual dispatch).
-- `server` calls `deploy-server.yml` (Fly deploy + versions smoke) only when `server=true`.
+- `server` calls `.github/workflows/deploy-server.yml` (Fly deploy + versions smoke) only when `server=true`.
 - `web` runs after `server` succeeded or was skipped. Server failure blocks the web deploy, so a new web never ships against a stale server.
 
 Manual server-only deploy: `gh workflow run deploy-server.yml`, or locally from the repo root: `fly deploy --remote-only -c apps/server/fly.toml`.
 
-`strategy = 'immediate'` on a single machine: total outage is the drain window plus boot (about 5-10 s), and live matches end. `deploy-server.yml` first fetches `/healthz` and emits a `::warning::` when `running > 0` (non-blocking; a fetch failure just skips it). Deploy when nobody is mid-match; there is no resume across restarts.
+`strategy = 'immediate'` on a single machine: total outage is the drain window plus boot (about 5-10 s), and live matches end. `.github/workflows/deploy-server.yml` first fetches `https://node-arena-server.fly.dev/healthz` and emits a `::warning::` when `running > 0` (non-blocking; a fetch failure just skips it). Deploy when nobody is mid-match; there is no resume across restarts.
 
 ### Drain on SIGTERM
 
 Fly sends `kill_signal = 'SIGTERM'` (explicit in `fly.toml`); SIGINT behaves the same. The server then drains for `DRAIN_MS` (default 30000, range 1-120000):
-- It keeps listening: `/healthz` stays HTTP 200 with `draining: true`, token reconnects into running matches still work, running matches keep ticking.
+- It keeps listening: `https://node-arena-server.fly.dev/healthz` stays HTTP 200 with `draining: true`, token reconnects into running matches still work, running matches keep ticking.
 - It refuses `room.create`, `room.join` (new members), `lobby.start` and `rematch` with `error{draining}`.
 - Every connection gets one `server.draining{deadlineMs}` (remaining ms) at drain start, or right after `welcome` when it connects later.
 - Early exit: once no match is in `countdown`/`running` (minimum 3 s so the notice is delivered) the drain ends. Otherwise it ends at the window.
@@ -107,7 +107,7 @@ Fly `fly.toml [env]` sets `ALLOWED_ORIGINS`; the Dockerfile sets `PORT=8080`, `C
 | `INPUT_DELAY` | 3 | Ticks, 1..10 |
 | `MAX_ROOMS` | 40 | |
 | `MAX_CONNS` | 200 | Past the cap new sockets close with 1013 |
-| `CONTENT_DIR` | repo `packages/content/data` | Image sets `/app/content-data/data` |
+| `CONTENT_DIR` | repo `packages/content/data` | Image sets `CONTENT_DIR=/app/content-data/data` |
 | `DRAIN_MS` | 30000 | SIGTERM drain window, 1-120000. Keep `kill_timeout` in `fly.toml` above `DRAIN_MS/1000 + 3` (see [Drain on SIGTERM](#drain-on-sigterm)) |
 | `CREATES_PER_MIN` | 5 | Room creates per minute per IP, 1..100000. Test only: `apps/web/playwright.pvp.config.ts` sets 1000 because the whole e2e suite shares one IP. Never set in prod |
 | `LOG_LEVEL` | info | |
@@ -132,7 +132,7 @@ The handshake requires exact protocol/schema/content versions and matching rules
 - Normal deploys are server-first, so stale cached tabs see the reload prompt.
 - Preview channels talk to the prod server; a PR that bumps versions sees "PvP unavailable" in its preview until merged.
 - Persistent mismatch in prod: compare `curl .../healthz` `versions` with the deployed web build; redeploy whichever side is old (`gh workflow run deploy.yml`, which also deploys the server).
-- A failed versions smoke in `deploy-server.yml` means Fly runs an image whose versions differ from the commit: check the build logs, redeploy.
+- A failed versions smoke in `.github/workflows/deploy-server.yml` means Fly runs an image whose versions differ from the commit: check the build logs, redeploy.
 
 ## Heartbeat check through the Fly edge (manual, once after first deploy)
 
@@ -168,7 +168,7 @@ Measured 2026-10-30 (4 vCPU box, in-process: harness shares the server process, 
 
 Max lateness is ramp (first ~8 s). The "rooms running" FAIL is a harness artifact (Duel S bot matches end ~34 s and rematch), not server rooms closing.
 
-If a run FAILs: lower `MAX_ROOMS` (fly secret/env) and/or move to a bigger VM (`fly scale vm` / `fly scale memory`). Owner: rerun in URL mode against Fly (needs several client IPs or a temporary limit bump for 20 rooms), compare with `/healthz` `lateP99Ms`/`rss`, then decide `MAX_ROOMS` (default 40) and VM size.
+If a run FAILs: lower `MAX_ROOMS` (fly secret/env) and/or move to a bigger VM (`fly scale vm` / `fly scale memory`). Owner: rerun in URL mode against Fly (needs several client IPs or a temporary limit bump for 20 rooms), compare with `https://node-arena-server.fly.dev/healthz` `lateP99Ms`/`rss`, then decide `MAX_ROOMS` (default 40) and VM size.
 
 ## Cost
 
@@ -180,11 +180,11 @@ One `shared-cpu-1x` / 256 MB machine, always on (`auto_stop_machines = 'off'`, `
 |---|---|
 | Deploy workflow fails at `flyctl deploy` with auth/app errors | `FLY_API_TOKEN` secret missing/expired or app name mismatch with `fly.toml` |
 | Smoke step fails on versions | Image not from this commit; see [Version skew](#version-skew) |
-| Smoke step cannot reach `/healthz` | `fly status`, `fly logs`; machine crashed on invalid env (exit 1 with config error); wrong URL after renaming the app |
+| Smoke step cannot reach `https://node-arena-server.fly.dev/healthz` | `fly status`, `fly logs`; machine crashed on invalid env (exit 1 with config error); wrong URL after renaming the app |
 | Browser WS refused / origin errors | `ALLOWED_ORIGINS` lacks the page origin; edit `fly.toml`, redeploy |
 | PvP entry hidden on prod site | Web built without `VITE_PVP_SERVER_URL` (check `PVP_SERVER_URL` var and fallback), or redeploy web |
 | Players dropped with 4004 | Heartbeat; see [heartbeat check](#heartbeat-check-through-the-fly-edge-manual-once-after-first-deploy) |
 | Players dropped with 4005/4006 | Rate limit / slow client; look at `fly logs` |
-| New connections closed 1013 | `MAX_CONNS` / per-IP cap hit; check `conns` in `/healthz` |
-| Matches lag | `lateP99Ms` in `/healthz`; upsize VM in `fly.toml` `[[vm]]` |
+| New connections closed 1013 | `MAX_CONNS` / per-IP cap hit; check `conns` in `https://node-arena-server.fly.dev/healthz` |
+| Matches lag | `lateP99Ms` in `https://node-arena-server.fly.dev/healthz`; upsize VM in `fly.toml` `[[vm]]` |
 | Matches vanish after a deploy | Expected: a deploy drains up to 30 s, then aborts live matches (`room.closed` server-restart) |
