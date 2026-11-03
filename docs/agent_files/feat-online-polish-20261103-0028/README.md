@@ -4,7 +4,7 @@ summary: Four sub-projects for online polish: PvP match UX (pause Leave, result 
 date: 2026-11-03
 ---
 # Online polish: PRD index
-Branch `feat/online-polish` (worktree `.worktrees/feat/online-polish`). PRDs and tasks approved. SP01 and SP02 complete; both reviews PASS. SP04 and SP03 pending. Paused after pushing SP01 + SP02 at the owner’s request.
+Branch `feat/online-polish` (worktree `.worktrees/feat/online-polish`). PRDs and tasks approved. SP01, SP02 and SP04 complete; all reviews PASS. Execution resumed; SP03 pending and next.
 
 ## Sub-projects
 | NN | Title | Scope | Depends on | Phase | PRD |
@@ -21,7 +21,13 @@ graph LR
   02 --> 04
   04 --> 03
 ```
-Execution order: 01 ∥ 02 -> 04 -> 03. Current state: 01 done (3/3 tasks), 02 done (4/4 tasks), 04 pending, 03 pending. 01 and 02 share only `apps/web/src/style.css` (disjoint blocks) and `App.tsx`.
+Execution order: 01 ∥ 02 -> 04 -> 03. Current state: 01 done (3/3 tasks), 02 done (4/4 tasks), 04 done (4/4 tasks; review PASS), 03 pending (next). 01 and 02 share only `apps/web/src/style.css` (disjoint blocks) and `App.tsx`.
+
+## SP04 completion evidence
+
+- [Code run and full verification](04-version-reset-legacy/code-2026-11-03-0224.md)
+- [Three-persona review — PASS](04-version-reset-legacy/review-2026-11-03-0226.md)
+- Source and regenerated artifacts complete through `68c76fb`; CI 44 gates, PvP 20/20 and campaign 20 levels passed. The one-time CI baseline override is restored only after the reset merges into main.
 
 ## Locked decisions (owner, 2026-11-03)
 - Branch: SP01 and SP02 do normal version bumps per repo rules so each commit passes gates; SP04 then resets every version to 1.0.0.
@@ -32,7 +38,7 @@ Execution order: 01 ∥ 02 -> 04 -> 03. Current state: 01 done (3/3 tasks), 02 d
 
 ## Cross-cutting risks
 - Shared files 01/02: `apps/web/src/style.css` (PvP block vs credits rules) and `apps/web/src/ui/App.tsx`. Keep edits in disjoint blocks; rebase whichever lands second; stage only own paths.
-- Version gates: SP01/02 bumps (RULES 3.4.0, contentVersion, locks, goldens) must pass gates per commit; SP04 needs one-time `--base none` (`CONTENT_BASE=none` in ci.yml), then normal baseline restored (commit B, may ride with SP03).
+- Version gates: SP01/02 bumps (RULES 3.4.0, contentVersion, locks, goldens) must pass gates per commit; SP04 needs one-time `--base none` (`CONTENT_BASE=none` in ci.yml), then normal baseline restored only after the reset merges into main (owner follow-up).
 - Golden regen in SP04 must show outcomes/ticks unchanged; header/hash-envelope diffs only.
 - Deploy: protocol 4 -> 1 hard-refuses old clients (close 4003, reload UX). Fly server + web must deploy together, via drain deploy; room loss accepted.
 - SP03 depends on SP02 having removed `Credits.tsx` (imports `docs/CREDITS.md?raw`); SP03 stops and flags if still present.

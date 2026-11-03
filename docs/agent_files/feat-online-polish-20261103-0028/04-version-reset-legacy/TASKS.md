@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: Four tasks to reset all versions to 1.0.0, wipe rule history and legacy code, regenerate locks/goldens, and restore normal version gating.
 date: 2026-11-03
 ---
@@ -8,10 +8,10 @@ Source of truth: docs/agent_files/feat-online-polish-20261103-0028/04-version-re
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Gate support for no-baseline + rules history wipe | SP01, SP02 | todo |
-| 2 | Version reset to 1.0.0 everywhere | 1 | todo |
-| 3 | Legacy/compat code removal | 2 | todo |
-| 4 | Regenerate locks/goldens, full verification, restore baseline gating | 3 | todo |
+| 1 | Gate support for no-baseline + rules history wipe | SP01, SP02 | done |
+| 2 | Version reset to 1.0.0 everywhere | 1 | done |
+| 3 | Legacy/compat code removal | 2 | done |
+| 4 | Regenerate locks/goldens, full verification, restore baseline gating | 3 | done |
 
 ## Task 1 — Gate support for no-baseline + rules history wipe
 What it is / what it means: Prepares tooling so the reset can pass monotonic-version guards, and removes rule-history machinery (PRD D2, D3, R3–R6).
