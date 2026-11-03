@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 summary: 3 tasks: soften online hard bot, pause popup Leave + timer, aligned rank-less result table
 date: 2026-11-03
 ---
@@ -8,9 +8,9 @@ Source of truth: docs/agent_files/feat-online-polish-20261103-0028/01-online-mat
 
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| 1 | Soften online hard bot preset | none | todo |
-| 2 | Pause popup: Leave + match timer | none | todo |
-| 3 | Result screen as aligned table | none | todo |
+| 1 | Soften online hard bot preset | none | done |
+| 2 | Pause popup: Leave + match timer | none | done |
+| 3 | Result screen as aligned table | none | done |
 
 ## Task 1 — Soften online hard bot preset
 What it is / what it means: Online `hard` bot acts every 700 ms (2.1x normal rate); owner wants it gentler. Covers D5, D6, R7.
