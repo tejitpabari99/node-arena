@@ -4,7 +4,7 @@ summary: Four sub-projects for online polish: PvP match UX (pause Leave, result 
 date: 2026-11-03
 ---
 # Online polish: PRD index
-Branch `feat/online-polish` (worktree `.worktrees/feat/online-polish`). PRDs approved; tasks not yet generated (dev-tasks).
+Branch `feat/online-polish` (worktree `.worktrees/feat/online-polish`). PRDs and tasks approved. SP01 and SP02 complete; both reviews PASS. SP04 and SP03 pending. Paused after pushing SP01 + SP02 at the owner’s request.
 
 ## Sub-projects
 | NN | Title | Scope | Depends on | Phase | PRD |
@@ -21,7 +21,7 @@ graph LR
   02 --> 04
   04 --> 03
 ```
-Execution order: 01 ∥ 02 -> 04 -> 03. 01 and 02 share only `apps/web/src/style.css` (disjoint blocks) and `App.tsx`.
+Execution order: 01 ∥ 02 -> 04 -> 03. Current state: 01 done (3/3 tasks), 02 done (4/4 tasks), 04 pending, 03 pending. 01 and 02 share only `apps/web/src/style.css` (disjoint blocks) and `App.tsx`.
 
 ## Locked decisions (owner, 2026-11-03)
 - Branch: SP01 and SP02 do normal version bumps per repo rules so each commit passes gates; SP04 then resets every version to 1.0.0.
