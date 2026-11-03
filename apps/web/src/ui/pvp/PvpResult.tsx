@@ -15,13 +15,16 @@ export interface PvpResultProps {
 }
 export function PvpResult({ outcome, seat, ranking = null, seats, draining = false, onLeave, onRematch }: PvpResultProps) {
   const nicks = seatNicks(seats), teamWin = outcome.winners.length > 1;
-  return <div data-testid="pvp-result"><BattlePopup title={resultTitle(outcome, seat, nicks)}>
+  return <div class="pvp-result" data-testid="pvp-result"><BattlePopup title={resultTitle(outcome, seat, nicks)}>
     {teamWin && seat !== null && <p data-testid="result-team">{outcome.winners.includes(seat) ? 'Your team won' : `${names(outcome.winners, nicks)} won`}</p>}
-    {ranking && ranking.length > 0 && <ol class="result-placements" data-testid="result-placements">{ranking.map((p, i) =>
-      <li key={p.team} data-testid={`result-placement-${i}`}>
-        <span class="rank">{p.rank}</span> <span class="nick">{names(p.seats, nicks)}</span> <span class="team">{`Team ${p.team + 1}`}</span>
-        {' '}<span class="buildings">{`${p.buildings} buildings`}</span> <span class="troops">{`${p.troops} troops`}</span>{p.eliminatedAt !== null && <span class="out"> out</span>}
-      </li>)}</ol>}
+    {ranking && ranking.length > 0 && <table class="result-table" data-testid="result-placements">
+      <thead><tr><th scope="col">Team</th><th scope="col">Buildings</th><th scope="col">Troops</th></tr></thead>
+      <tbody>{ranking.map((p, i) =>
+        <tr key={p.team} class={p.eliminatedAt !== null ? 'out' : p.seats.some(s => outcome.winners.includes(s)) ? 'winner' : undefined} data-testid={`result-placement-${i}`}>
+          <td>{`Team ${p.team + 1} (${names(p.seats, nicks)})`}</td>
+          {p.eliminatedAt !== null ? <td colSpan={2}>Eliminated</td> : <><td>{`${p.buildings} ${p.buildings === 1 ? 'building' : 'buildings'}`}</td><td>{`${p.troops} ${p.troops === 1 ? 'troop' : 'troops'}`}</td></>}
+        </tr>)}</tbody>
+    </table>}
     {seat !== null && onRematch && <button class="battle-action primary" data-testid="pvp-rematch" disabled={draining} onClick={onRematch}>Rematch</button>}
     <button class="battle-action primary" data-testid="pvp-result-leave" onClick={onLeave}>Leave</button>
   </BattlePopup></div>;
