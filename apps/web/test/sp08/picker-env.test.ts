@@ -14,7 +14,7 @@ const cls = (n: N) => String(n.props.class ?? '');
 const tiles = (v: unknown) => find(v, (n) => cls(n).includes('menu-tile')).map((n) => (n.props.children as N).props.children);
 const base = { save: defaultSave(), levels: [{ id: 'a', position: 4, number: 1, name: 'Level 1' }], customLevels: [{ id: 'na-test', position: 1, number: 1, name: 'My battle' }] };
 const state = (pickerView: string) => ({ ...base, pickerView }) as unknown as AppSnapshot;
-const plain = { onStart: () => {}, onMute: () => {}, onCredits: () => {} }, cb = { ...plain, onPlayOnline: () => {} };
+const plain = { onStart: () => {}, onMute: () => {} }, cb = { ...plain, onPlayOnline: () => {} };
 
 async function loadPicker(dev: boolean) {
   vi.resetModules();
