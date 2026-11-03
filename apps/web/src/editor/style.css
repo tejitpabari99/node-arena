@@ -240,3 +240,5 @@ html:has(.ed-shell), body:has(.ed-shell) { overflow: hidden; min-width: 0; }
 .ed-check-table thead th { font-weight: 600; }
 .ed-check-table td[data-won="true"] { font-weight: 600; }
 .ed-check-legend ul { margin: var(--ed-s-2) 0; padding-left: 18px; }
+
+.editor-ghost-blocked { border-color: #fb7185; background: #fb718566; }

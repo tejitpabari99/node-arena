@@ -6,7 +6,7 @@ function fixture() {
   const doc = { ...blankDocument('na-layout', 'green', 'medium'), buildings: [] as ReturnType<typeof blankDocument>['buildings'] };
   doc.bounds = { minX: -4, maxX: 8, minZ: -6, maxZ: 10 };
   doc.buildings = [
-    { id: 'b0', archetype: 'house-wt1', pos: { x: 1, z: 3 }, owner: 'p1', level: 1, ignoreForWin: false, params: { level: { maxLevel: 5 } } },
+    { id: 'b0', archetype: 'house-wt1', pos: { x: 1, z: 4 }, owner: 'p1', level: 1, ignoreForWin: false, params: { level: { maxLevel: 5 } } },
     { id: 'b1', archetype: 'house-wt1', pos: { x: 5, z: 1 }, owner: 'p2', level: 1, ignoreForWin: false },
     { id: 'b2', archetype: 'tower', pos: { x: 0, z: 0 }, owner: null, level: 1, ignoreForWin: false },
   ];
@@ -15,18 +15,18 @@ function fixture() {
 }
 it('coalesces multi-move into one exact undo', () => {
   const doc = fixture(), targets = [{ kind: 'building', id: 'b0' }, { kind: 'obstacle', id: 'e0' }] as const;
-  const state = historyReducer(createHistory(doc), { type: 'edit', op: { type: 'move-selection', targets: [...targets], delta: { x: 1.25, z: -2.5 } } });
-  expect(state.present.buildings[0]!.pos).toEqual({ x: 2.25, z: .5 });
-  expect(state.present.elements[0]!.pos).toEqual({ x: .25, z: 1.5 });
+  const state = historyReducer(createHistory(doc), { type: 'edit', op: { type: 'move-selection', targets: [...targets], delta: { x: -2, z: 1 } } });
+  expect(state.present.buildings[0]!.pos).toEqual({ x: -1, z: 5 });
+  expect(state.present.elements[0]!.pos).toEqual({ x: -3, z: 5 });
   expect(state.past).toHaveLength(1); expect(historyReducer(state, { type: 'undo' }).present).toBe(doc);
 });
 it('copies and pastes detached item fields with collision-free identities and preserved offsets', () => {
   const doc = fixture(), clipboard = copySelection(doc, [{ kind: 'building', id: 'b0' }, { kind: 'obstacle', id: 'e0' }]);
-  const next = reduceDocument(doc, { type: 'paste', clipboard, offset: { x: .5, z: .5 } });
-  const again = reduceDocument(next, { type: 'paste', clipboard, offset: { x: 1, z: 1 } });
+  const next = reduceDocument(doc, { type: 'paste', clipboard, offset: { x: 0, z: 4 } });
+  const again = reduceDocument(next, { type: 'paste', clipboard, offset: { x: 4, z: 4 } });
   expect(again.buildings.map(b => b.id)).toEqual(['b0', 'b1', 'b2', 'b3', 'b4']);
   expect(again.elements.map(e => e.id)).toEqual(['e0', 'e1', 'e2']);
-  expect(next.buildings[3]).toMatchObject({ pos: { x: 1.5, z: 3.5 }, owner: 'p1', params: { level: { maxLevel: 5 } } });
+  expect(next.buildings[3]).toMatchObject({ pos: { x: 1, z: 8 }, owner: 'p1', params: { level: { maxLevel: 5 } } });
   (next.buildings[3]!.params!.level as { maxLevel: number }).maxLevel = 9;
   expect(doc.buildings[0]!.params!.level).toEqual({ maxLevel: 5 });
   expect(clipboard.buildings[0]!.params!.level).toEqual({ maxLevel: 5 });
@@ -41,7 +41,7 @@ it('grow-only bounds: no-op identity, one-side growth, no shrink, inside items i
   const doc = fixture();
   const same = reduceDocument(doc, { type: 'move', target: { kind: 'building', id: 'b0' }, pos: { x: 2, z: 3 } });
   expect(same.bounds).toBe(doc.bounds);
-  expect(reduceDocument(doc, { type: 'move', target: { kind: 'building', id: 'b0' }, pos: { x: 1, z: 3 } })).toBe(doc);
+  expect(reduceDocument(doc, { type: 'move', target: { kind: 'building', id: 'b0' }, pos: { x: 1, z: 4 } })).toBe(doc);
   const state = historyReducer(createHistory(doc), { type: 'edit', op: { type: 'place', item: 'tower', pos: { x: 10.5, z: 0 } } });
   expect(state.present.bounds).toEqual({ minX: -4, maxX: 13, minZ: -6, maxZ: 10 });
   expect(historyReducer(state, { type: 'undo' }).present.bounds).toEqual({ minX: -4, maxX: 8, minZ: -6, maxZ: 10 });

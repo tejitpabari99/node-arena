@@ -1,5 +1,6 @@
 import { boundsFromPositions } from '@node-arena/content';
 import type { Catalog, CompiledFootprint, SeatBot } from '@node-arena/content';
+import { MIN_BUILDING_DISTANCE } from './balance.js';
 import type { LevelDoc } from './document.js';
 import { playerLabel } from './labels.js';
 import { roundCoordinate, type Point, type Selection } from './picking.js';
@@ -27,13 +28,14 @@ export function buildableArea(bounds: Area): Area {
 }
 
 /** Nearest unoccupied quarter-grid spot; spiral order breaks equal-distance ties deterministically. */
-export function placeCenter(doc: LevelDoc, item: LibraryItem, catalog: Pick<Catalog, 'buildings' | 'elements'>, area = buildableArea(doc.bounds)): Extract<DocOp, { type: 'place' }> | null {
+export function placeCenter(doc: LevelDoc, item: LibraryItem, catalog: Pick<Catalog, 'buildings' | 'elements' | 'balance'>, area = buildableArea(doc.bounds)): Extract<DocOp, { type: 'place' }> | null {
   const center = { x: quarter((area.minX + area.maxX) / 2), z: quarter((area.minZ + area.maxZ) / 2) };
   const obstacles = [
     ...doc.buildings.map(building => ({ pos: building.pos, footprint: catalog.buildings[building.archetype]?.footprint, scale: .001, yaw: 0 })),
     ...doc.elements.map(element => ({ pos: element.pos, footprint: element.footprint ?? catalog.elements[element.archetype]?.footprint, scale: element.footprint ? 1 : .001, yaw: element.yawDeg })),
   ];
   function occupied(point: Point) {
+    if (!item.startsWith('obstacle-') && doc.buildings.some(building => Math.hypot(point.x - building.pos.x, point.z - building.pos.z) < catalog.balance.minBuildingDistance / 1000 - 1e-6)) return true;
     return obstacles.some(obstacle => {
       const dx = point.x - obstacle.pos.x, dz = point.z - obstacle.pos.z;
       if (dx === 0 && dz === 0) return true;
@@ -83,9 +85,18 @@ export function growBounds(doc: LevelDoc): LevelDoc {
   const g = boundsFromPositions(out);
   return { ...doc, bounds: { minX: Math.min(b.minX, g.minX), maxX: Math.max(b.maxX, g.maxX), minZ: Math.min(b.minZ, g.minZ), maxZ: Math.max(b.maxZ, g.maxZ) } };
 }
-/** Pure structural edits; drag previews never enter this reducer. */
+/** Pure structural edits; invalid changed pairs are rejected atomically. */
 export function reduceDocument(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {
   const next = applyOp(doc, op, area);
+  // Validate changed pairs only: existing invalid saved documents are never migrated.
+  if (GROWING.has(op.type) && next !== doc) {
+    for (let i = 0; i < next.buildings.length; i++) for (let j = i + 1; j < next.buildings.length; j++) {
+      const a = next.buildings[i]!, b = next.buildings[j]!;
+      const oldA = doc.buildings.find(item => item.id === a.id), oldB = doc.buildings.find(item => item.id === b.id);
+      if (oldA?.pos === a.pos && oldB?.pos === b.pos) continue;
+      if (Math.hypot(a.pos.x - b.pos.x, a.pos.z - b.pos.z) < MIN_BUILDING_DISTANCE - 1e-6) return doc;
+    }
+  }
   return next !== doc && GROWING.has(op.type) ? growBounds(next) : next;
 }
 function applyOp(doc: LevelDoc, op: DocOp, area?: Area): LevelDoc {

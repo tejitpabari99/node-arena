@@ -76,3 +76,21 @@ test('Save persists missing-house drafts while Finalize fails at validate with t
     });
   });
 });
+
+test('Check and Finalize reject spacing violations before any version or lock mutation', async () => {
+  await fixture(async (content, level, dir) => {
+    level.buildings[1]!.pos = { ...level.buildings[0]!.pos, x: level.buildings[0]!.pos.x + 3.49 };
+    const meta = await readFile(resolve(content, 'content.json'), 'utf8');
+    await assert.rejects(prepareEditorProxy(content, level.id, level), error => {
+      assert.ok(error instanceof ContentLoadError);
+      assert.ok(error.errors.some(issue => issue.message.includes('minimum 3.5') && issue.message.includes(level.buildings[0]!.id) && issue.message.includes(level.buildings[1]!.id)));
+      return true;
+    });
+    await writeFile(resolve(content, 'data/levels', `${level.id}.json`), JSON.stringify(level));
+    await assert.rejects(exec(process.execPath, ['--import', require.resolve('tsx'), resolve(root, 'tools/src/editor-finalize-worker.ts'), 'validate', level.id], { cwd: dir }), error => {
+      assert.match(String((error as { stderr: string }).stderr), /minimum 3\.5/);
+      return true;
+    });
+    assert.equal(await readFile(resolve(content, 'content.json'), 'utf8'), meta);
+  });
+});

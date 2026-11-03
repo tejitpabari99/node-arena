@@ -13,13 +13,13 @@ it('uses the snapped buildable-area center for a free spot without mutating the 
   expect(placeCenter(doc, 'tower', catalog)).toEqual({ type: 'place', item: 'tower', pos: { x: 1.5, z: 2.5 } });
   expect(doc.buildings).toEqual([]); expect(doc.elements).toEqual([]);
 });
-it('nudges repeated buildings outside existing building footprints with deterministic nearest-distance ties', () => {
+it('nudges repeated buildings at least 3.5 units apart with deterministic nearest-distance ties', () => {
   let doc = blank();
   doc = reduceDocument(doc, placeCenter(doc, 'tower', catalog)!);
   const second = placeCenter(doc, 'tower', catalog)!;
-  expect(second.pos).toEqual({ x: 0, z: -1 });
+  expect(second.pos).toEqual({ x: 0, z: -3.5 });
   doc = reduceDocument(doc, second);
-  expect(placeCenter(doc, 'tower', catalog)!.pos).toEqual({ x: 1, z: 0 });
+  expect(placeCenter(doc, 'tower', catalog)!.pos).toEqual({ x: 3.5, z: 0 });
   expect(doc.buildings.map(item => item.id)).toEqual(['b0', 'b1']);
 });
 it('finds the nearest free snap instead of the first free corner of a spiral ring', () => {
@@ -42,4 +42,14 @@ it('stays inside the supplied area and returns null when no free snap exists', (
   expect(placeCenter(doc, 'tower', catalog, area)!.pos).toEqual({ x: .25, z: 0 });
   doc.elements[0]!.footprint = { shape: 'circle', radius: 1 };
   expect(placeCenter(doc, 'tower', catalog, area)).toBe(null);
+});
+
+it('blocks too-close placement and movement while allowing the 3.5 boundary and obstacles', () => {
+  let doc = reduceDocument(blank(), { type: 'place', item: 'tower', pos: { x: 0, z: 0 } });
+  expect(reduceDocument(doc, { type: 'place', item: 'tower', pos: { x: 3.49, z: 0 } })).toBe(doc);
+  doc = reduceDocument(doc, { type: 'place', item: 'tower', pos: { x: 3.5, z: 0 } });
+  expect(doc.buildings).toHaveLength(2);
+  expect(reduceDocument(doc, { type: 'move', target: { kind: 'building', id: 'b1' }, pos: { x: 3.49, z: 0 } })).toBe(doc);
+  expect(reduceDocument(doc, { type: 'move-selection', targets: [{ kind: 'building', id: 'b1' }], delta: { x: -.25, z: 0 } })).toBe(doc);
+  expect(reduceDocument(doc, { type: 'place', item: 'obstacle-small', pos: { x: 0, z: 0 } }).elements).toHaveLength(1);
 });

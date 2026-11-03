@@ -1,12 +1,13 @@
 import type { NextLevel } from '@node-arena/content';
+import { MIN_BUILDING_DISTANCE } from './balance.js';
 import { BASE_HOUSE } from './houses.js';
 
 export type LevelDoc = NextLevel;
 export type SizePreset = 'small' | 'medium' | 'large';
 export const isDraftId = (id: string): boolean => /^na-[a-z0-9-]{1,40}$/.test(id);
 
-const MARGIN = 2, GAP = 1.5;
-/** Human gets a house in the left zone, AI1 one in the right zone: inside bounds by MARGIN and at least 2*GAP apart, so 1.5-wide footprints never touch. */
+const MARGIN = 2, GAP = MIN_BUILDING_DISTANCE / 2;
+/** Human gets a house in the left zone, AI1 one in the right zone: inside bounds by MARGIN and at least 2*GAP apart, to satisfy the catalog minimum spacing. */
 function baseHouses(half: number, random: () => number): LevelDoc['buildings'] {
   const span = (lo: number, hi: number) => Math.round((lo + random() * (hi - lo)) * 100) / 100;
   const at = (id: string, owner: string, x: number) => ({ id, archetype: BASE_HOUSE, pos: { x, z: span(-half + MARGIN, half - MARGIN) }, owner, level: 1, ignoreForWin: false });

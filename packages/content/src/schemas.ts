@@ -81,6 +81,7 @@ export const BalanceSchema = Type.Object({
   growth: Type.Object({ base: fx3({ exclusiveMinimum: 0 }) }, { additionalProperties: false }),
   contactDistance: fx3({ exclusiveMinimum: 0 }),
   laneHalfWidth: fx3({ exclusiveMinimum: 0 }),
+  minBuildingDistance: fx3({ exclusiveMinimum: 0 }),
 }, options('balance'));
 
 /** `content.json`: version metadata for the whole dataset (not a catalog entity). */

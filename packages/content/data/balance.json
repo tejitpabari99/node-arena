@@ -5,5 +5,6 @@
   "spawn": { "aliveCap": 30 },
   "growth": { "base": 0.9 },
   "contactDistance": 0.7,
-  "laneHalfWidth": 0.19
+  "laneHalfWidth": 0.19,
+  "minBuildingDistance": 3.5
 }
