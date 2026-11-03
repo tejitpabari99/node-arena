@@ -17,7 +17,7 @@
     },
     "schemaVersion": {
       "type": "string",
-      "const": "2.0.0"
+      "const": "1.0.0"
     },
     "stageThresholds": {
       "type": "array",
