@@ -2,8 +2,10 @@
 
 Question-based documentation index for players, contributors and maintainers.
 
-| Folder | Purpose and audience |
+| File or folder | Purpose and audience |
 |---|---|
+| [mission.md](mission.md) | Product scope and documentation authority |
+| [architecture.md](architecture.md) | Workspace dependencies and campaign/PvP data flow |
 | [concepts/](concepts/README.md) | Concept explanations for contributors. |
 | [implementation/](implementation/README.md) | Authoring and implementation procedures for contributors. |
 | [reference/](reference/README.md) | Lookup tables and attribution for contributors and asset owners. |
