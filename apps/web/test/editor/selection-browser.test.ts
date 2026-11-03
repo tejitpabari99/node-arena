@@ -81,7 +81,7 @@ it('commits shape controls live, retains invalid text, and flushes a pending fie
   expect((await doc()).elements[0]).toMatchObject({ yawDeg: 45, footprint: { shape: 'box', w: 2, d: 1 } });
 });
 
-it('edits legacy single-tile rows with bounded length and rotation controls, one undo per rotation button', async () => {
+it('edits single-tile rows with bounded length and rotation controls, one undo per rotation button', async () => {
   await reset(); await selected('obstacle:row');
   const length = page.getByLabel('Length (tiles)', { exact: true }), rotation = page.getByLabel('Rotation', { exact: true });
   await domExpect(length).toHaveValue('1');

@@ -4,10 +4,10 @@ import { Picker, LevelThumb } from '../../src/ui/Picker';
 import { defaultSave } from '../../src/save';
 import type { AppSnapshot } from '../../src/app/state';
 function cards(node:unknown,out:VNode<Record<string,unknown>>[]=[]){if(Array.isArray(node))node.forEach(n=>cards(n,out));else if(node&&typeof node==='object'&&'props' in node){const n=node as VNode<Record<string,unknown>>;if(n.props['data-level-id'])out.push(n);cards(n.props.children,out);}return out;}
-it('renders completed, available and disabled locked cards, restoring last-played focus',()=>{const save=defaultSave();save.completed.a={firstAt:'2026-10-23'};save.lastLevel='b';const state={save,customLevels:[],pickerView:'campaign',levels:[{id:'a',position:4,number:1,name:'Level 1'},{id:'b',position:5,number:2,name:'Level 2'},{id:'c',position:6,number:3,name:'Level 3'}]} as unknown as AppSnapshot;const nodes=cards(Picker({state,onStart:()=>{},onMute:()=>{},onCredits:()=>{}}));expect(nodes.map(n=>n.props['data-state'])).toEqual(['completed','unlocked','locked']);expect(nodes.map(n=>n.props.disabled)).toEqual([false,false,true]);const focus=()=>{focused=true;};let focused=false;(nodes[1]!.ref as (e:unknown)=>void)({focus});expect(focused).toBe(true);});
+it('renders completed, available and disabled locked cards, restoring last-played focus',()=>{const save=defaultSave();save.completed.a={firstAt:'2026-10-23'};save.lastLevel='b';const state={save,customLevels:[],pickerView:'campaign',levels:[{id:'a',position:4,number:1,name:'Level 1'},{id:'b',position:5,number:2,name:'Level 2'},{id:'c',position:6,number:3,name:'Level 3'}]} as unknown as AppSnapshot;const nodes=cards(Picker({state,onStart:()=>{},onMute:()=>{}}));expect(nodes.map(n=>n.props['data-state'])).toEqual(['completed','unlocked','locked']);expect(nodes.map(n=>n.props.disabled)).toEqual([false,false,true]);const focus=()=>{focused=true;};let focused=false;(nodes[1]!.ref as (e:unknown)=>void)({focus});expect(focused).toBe(true);});
 
 it('shows main menu, campaign without edit links, and custom cards named with edit links',()=>{
-  const save=defaultSave(),callbacks={onStart:()=>{},onMute:()=>{},onCredits:()=>{}};
+  const save=defaultSave(),callbacks={onStart:()=>{},onMute:()=>{}};
   const base={save,levels:[{id:'a',position:4,number:1,name:'Level 1'}],customLevels:[{id:'na-test',position:1,number:1,name:'My battle'}]};
   function find(node:unknown,test:(n:VNode<Record<string,unknown>>)=>boolean,out:VNode<Record<string,unknown>>[]=[]):VNode<Record<string,unknown>>[]{if(Array.isArray(node))node.forEach(n=>find(n,test,out));else if(node&&typeof node==='object'&&'props' in node){const n=node as VNode<Record<string,unknown>>;if(test(n))out.push(n);find(n.props.children,test,out);}return out;}
   const cls=(n:VNode<Record<string,unknown>>)=>String(n.props.class??'');
@@ -25,4 +25,24 @@ it('shows main menu, campaign without edit links, and custom cards named with ed
   expect(kids[0]!.type).toBe(LevelThumb);expect(kids[0]!.props.id).toBe('na-test');
   expect(find(custom,n=>n.props.children==='My battle')).toHaveLength(0); // name is not printed
   expect(find(custom,n=>cls(n)==='level-edit')).toHaveLength(1);expect(find(custom,n=>cls(n).includes('create-card'))).toHaveLength(1);
+});
+
+it('main menu exposes sound and battle choices only', () => {
+  const state = { save: defaultSave(), levels: [], customLevels: [], pickerView: 'main' } as unknown as AppSnapshot;
+  const node = Picker({ state, onStart: () => {}, onMute: () => {}, onPlayOnline: () => {} });
+  const labels: string[] = [];
+  function text(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) return value.map(text).join('');
+    return value && typeof value === 'object' && 'props' in value ? text((value as VNode<{ children?: unknown }>).props.children) : '';
+  }
+  function walk(value: unknown) {
+    if (Array.isArray(value)) { value.forEach(walk); return; }
+    if (!value || typeof value !== 'object' || !('props' in value)) return;
+    const element = value as VNode<Record<string, unknown>>;
+    if (element.type === 'button') labels.push(String(element.props['aria-label'] ?? text(element.props.children)));
+    walk(element.props.children);
+  }
+  walk(node);
+  expect(labels).toEqual(['Mute sound', 'Campaign', 'Custom', 'Play online']);
 });

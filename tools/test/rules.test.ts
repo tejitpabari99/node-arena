@@ -18,7 +18,7 @@ async function directory(t: { after(fn: () => Promise<void>): void }) {
 async function rulesFixture(t: { after(fn: () => Promise<void>): void }, rules: string, source: string) {
   const dir = await directory(t); const packages = join(dir, 'packages');
   await mkdir(join(packages, 'fixture/test'), { recursive: true });
-  const rulesFile = join(dir, 'GAME_RULES.md'); await writeFile(rulesFile, rules);
+  const rulesFile = join(dir, 'game-rules.md'); await writeFile(rulesFile, rules);
   await writeFile(join(packages, 'fixture/test/rules.test.ts'), source);
   return ['--rules', rulesFile, '--packages-dir', packages];
 }
@@ -30,12 +30,12 @@ test('check:rules fails untested headings and unknown title tags', async t => {
   assert.ok(result.report.errors.some((e: {message: string}) => /R-LIN-02.*untested/.test(e.message)));
   assert.ok(result.report.errors.some((e: {message: string}) => /R-BOGUS-99.*unknown/.test(e.message)));
 });
-test('rule coverage ignores body references, code fences, tombstones and helper/comment tags', async t => {
-  const args = await rulesFixture(t, '### R-GEN-01\nReferences R-LIN-99.\n### R-OLD-01 — Tombstone\nRemoved.\n## Example referring to R-FAKE-02\n```md\n### R-FAKE-01\n```', "// test('covers R-GEN-01', () => {});\nconst helper = 'covers R-GEN-01';\ntest('unrelated', () => { const s = 'covers R-GEN-01'; });\ntest.skip('covers R-GEN-01', () => {});\ntest('covers R-GEN-01', {skip:true}, () => {});");
+test('rule coverage ignores body references, code fences and helper/comment tags', async t => {
+  const args = await rulesFixture(t, '### R-GEN-01\nReferences R-LIN-99.\n## Example referring to R-FAKE-02\n```md\n### R-FAKE-01\n```', "// test('covers R-GEN-01', () => {});\nconst helper = 'covers R-GEN-01';\ntest('unrelated', () => { const s = 'covers R-GEN-01'; });\ntest.skip('covers R-GEN-01', () => {});\ntest('covers R-GEN-01', {skip:true}, () => {});");
   let result = run('check:rules', ...args, '--format', 'json');
   assert.equal(result.status, 1); assert.equal(result.report.errors.length, 1); assert.match(result.report.errors[0].message, /R-GEN-01.*untested/);
   const packages = args[3]!;
-  await writeFile(join(packages, 'fixture/test/rules.test.ts'), "it(`covers R-GEN-01: ${'variant'}`, () => {}); test('covers R-OLD-01', () => {});");
+  await writeFile(join(packages, 'fixture/test/rules.test.ts'), "it(`covers R-GEN-01: ${'variant'}`, () => {});");
   result = run('check:rules', ...args, '--format', 'json'); assert.equal(result.status, 0, result.stdout);
 });
 test('disabled suite ancestry cannot satisfy rule coverage while matching active suites do', async t => {
@@ -82,4 +82,11 @@ test('coverage traversal skips build/dependencies and refuses test symlinks', as
   assert.equal(run('check:rules', ...args, '--format', 'json').status, 0);
   await symlink(join(packages, 'fixture/test/rules.test.ts'), join(packages, 'fixture/test/link.test.ts'));
   const result = run('check:rules', ...args, '--format', 'json'); assert.equal(result.status, 1); assert.match(result.report.errors[0].message, /symlink/i);
+});
+
+test('every rule heading requires coverage regardless of former retirement markers', async t => {
+  const args = await rulesFixture(t, '### R-OLD-01 — Tombstone\nStatus: tombstone.', "test('unrelated', () => {});");
+  const result = run('check:rules', ...args, '--format', 'json');
+  assert.equal(result.status, 1);
+  assert.match(result.report.errors[0].message, /R-OLD-01.*untested/);
 });

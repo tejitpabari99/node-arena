@@ -61,7 +61,7 @@ test('Duplicate requires a saved document, aborts on failed save then duplicates
     saved = { ...route.request().postDataJSON().level, editorVersion: '0.0.7' };
     return route.fulfill({ json: { level: saved, warnings: [] } });
   });
-  await page.route('**/__editor/duplicate', route => { duplicates++; return route.fulfill({ json: { level: { ...saved, id: `${saved.id}-copy`, editorVersion: '0.0.1' }, warnings: [] } }); });
+  await page.route('**/__editor/duplicate', route => { duplicates++; return route.fulfill({ json: { level: { ...saved, id: `${saved.id}-copy`, editorVersion: '1.0.0' }, warnings: [] } }); });
   await openCopied(page); await save(page);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
   await page.getByLabel('Level name', { exact: true }).fill('Edited duplicate'); await flushEdits(page);
@@ -74,7 +74,7 @@ test('Duplicate requires a saved document, aborts on failed save then duplicates
   fail = false; await page.getByTestId('confirm-save').click();
   await expect.poll(() => duplicates).toBe(1);
   await expect(page.getByLabel('Level name', { exact: true })).toHaveValue('Edited duplicate');
-  await share(page); await expect(page.getByTestId('editor-version')).toHaveText('Version 0.0.1');
+  await share(page); await expect(page.getByTestId('editor-version')).toHaveText('Version 1.0.0');
 });
 
 test('Check completion toast reopens Share and left flyout; Escape closes topmost without duplicate notices', async ({ page }) => {
@@ -115,7 +115,7 @@ test('Back failure keeps editing, Cancel keeps native guard, approved Discard le
 
 test('Back Save and leave waits for a successful save; clean Back leaves directly', async ({ page }) => {
   let release!: () => void; const held = new Promise<void>(resolve => { release = resolve; });
-  await page.route('**/__editor/save', async route => { await held; await route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '0.0.1' }, warnings: [] } }); });
+  await page.route('**/__editor/save', async route => { await held; await route.fulfill({ json: { level: { ...route.request().postDataJSON().level, editorVersion: '1.0.0' }, warnings: [] } }); });
   await openCopied(page); await page.getByTestId('back').click();
   await page.getByTestId('confirm-save').click(); await expect(page.getByTestId('confirm-save')).toBeDisabled();
   await expect(page).toHaveURL(/editor.html/); release(); await expect(page).toHaveURL(/\/\?view=custom$/);

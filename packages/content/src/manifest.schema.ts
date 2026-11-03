@@ -1,8 +1,8 @@
 import Type from 'typebox';
 import { ANIM_MODES, BUDGET_CLASSES, EVENTS, FX_KINDS, RENDER_KINDS, TEAM_MODES } from '@node-arena/defs';
 
-/** Manifest v2 file-format version (presentation only). Independent of the live v1 `MANIFEST_SCHEMA_VERSION`. */
-export const MANIFEST_SCHEMA_VERSION = '2.0.0';
+/** Presentation manifest file-format version. */
+export const MANIFEST_SCHEMA_VERSION = '1.0.0';
 
 const closed = { additionalProperties: false };
 const key = () => Type.String({ minLength: 1 });
@@ -34,9 +34,8 @@ const anim = Type.Union([
 const effect = { sfx: Type.Optional(key()), fx: Type.Optional(key()) };
 
 /**
- * Manifest v2 (02 R7 = 07 contract). `stages[]` is indexed by `view.buildings.stage - 1` (sim stage is 1-based)
+ * Presentation manifest. `stages[]` is indexed by `view.buildings.stage - 1` (sim stage is 1-based)
  * (length = `balance.stageThresholds.length + 1`, checked by `crossCheckManifest`; thresholds are content only).
- * Removed vs v1: tint, bob, build:'stacked', levelVisuals, colorblind, minLevel.
  */
 export const ManifestSchema = Type.Object({
   $schema: Type.String({ minLength: 1 }), schemaVersion: Type.Literal(MANIFEST_SCHEMA_VERSION),

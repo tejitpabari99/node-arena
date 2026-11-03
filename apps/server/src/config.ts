@@ -16,7 +16,7 @@ export interface Config {
   maxConns: number;
   contentDir: string;
   logLevel: LogLevel;
-  /** SIGTERM drain window in ms (SP09). 0 = legacy immediate shutdown. */
+  /** Positive SIGTERM drain window in ms. */
   drainMs: number;
   /** Room creates per minute per IP. Default 5; raised only by the CI/e2e PvP job (shared IP). */
   createsPerMin: number;
@@ -49,7 +49,7 @@ export function parseConfig(env: Env): Config {
   const inputDelay = intIn(env, 'INPUT_DELAY', 3, 1, 10, errors);
   const maxRooms = intIn(env, 'MAX_ROOMS', 40, 1, 100000, errors);
   const maxConns = intIn(env, 'MAX_CONNS', 200, 1, 100000, errors);
-  const drainMs = intIn(env, 'DRAIN_MS', 30000, 0, 120000, errors);
+  const drainMs = intIn(env, 'DRAIN_MS', 30000, 1, 120000, errors);
   const createsPerMin = intIn(env, 'CREATES_PER_MIN', CREATES_PER_MIN, 1, 100000, errors);
   const host = env.HOST === undefined || env.HOST === '' ? '0.0.0.0' : env.HOST;
   const allowedOrigins = (env.ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim()).filter((s) => s !== '');

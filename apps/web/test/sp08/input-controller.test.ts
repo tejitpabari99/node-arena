@@ -85,3 +85,39 @@ for (const button of [0, 2]) it(`cuts an early lane crossing through incremental
   expect(commands).toEqual([{ type: 'CutLine', player: 0, from: 0, to: 1 }]);
   input.dispose();
 });
+
+it('starts a real DrawLine from 1.05 world units outside the building center, leaving 1.2 as ground', () => {
+  const canvas = new Canvas(), camera = new PerspectiveCamera(45, 1, .1, 100);
+  camera.position.set(0, 10, 12); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
+  const root = new Group(); root.scale.z = -1; root.updateMatrixWorld();
+  const points = [new Vector3(-2, 0, 1), new Vector3(2, 0, 1)], commands: unknown[] = [];
+  const sim = { view: { players: [{ kind: 'human', colorKey: 'blue' }], ids: { buildings: ['a', 'b'] },
+    buildings: { owner: [0, -1] }, buildingStatic: [{ drawsLines: true }, { drawsLines: true }], lines: [], over: null }, canDraw: () => null } as unknown as Sim;
+  const world = { anchors: { building: (id: string) => ({ pos: points[id === 'a' ? 0 : 1]!, radius: .75, labelPos: new Vector3() }) },
+    pickMeshes: [], previewLane: () => {}, clearPreview: () => {}, select: () => {} };
+  const input = createInputController({ canvas: canvas as unknown as HTMLCanvasElement, camera, worldRoot: root, sim, world, driver: { submit: c => commands.push(c) } });
+  const screen = (p: Vector3) => { const v = p.clone().applyMatrix4(root.matrixWorld).project(camera); return { x: (v.x + 1) * 500, y: (1 - v.y) * 500 }; };
+  const target = screen(points[1]!);
+  for (const distance of [1.2, 1.05]) {
+    const source = screen(new Vector3(-2 - distance, 0, 1));
+    event(canvas, 'pointerdown', source.x, source.y); event(canvas, 'pointermove', target.x, target.y); event(canvas, 'pointerup', target.x, target.y);
+    expect(commands).toHaveLength(distance === 1.2 ? 0 : 1);
+  }
+  expect(commands).toEqual([{ type: 'DrawLine', player: 0, from: 0, to: 1 }]);
+  input.dispose();
+});
+
+it('keeps a cancelled cut ribbon fading while input is disabled, then disposes its mesh', () => {
+  const canvas = new Canvas(), camera = new PerspectiveCamera(45, 1, .1, 100), root = new Group(), scene = new Scene();
+  camera.position.set(0, 10, 12); camera.lookAt(0, 0, 0); camera.updateMatrixWorld(); root.updateMatrixWorld();
+  let time = 0, enabled = true;
+  const sim = { view: { players: [{ kind: 'human', colorKey: 'blue' }], ids: { buildings: [] }, buildings: { owner: [] }, buildingStatic: [], lines: [], over: null } } as unknown as Sim;
+  const input = createInputController({ canvas: canvas as unknown as HTMLCanvasElement, camera, worldRoot: root, scene, sim, now: () => time, isEnabled: () => enabled,
+    world: { anchors: { building: () => undefined }, pickMeshes: [], previewLane: () => {}, clearPreview: () => {}, select: () => {} }, driver: { submit() {} } });
+  event(canvas, 'pointerdown', 200, 500); event(canvas, 'pointermove', 400, 500); event(canvas, 'pointermove', 600, 500); input.refresh();
+  const ribbon = scene.children[0]!;
+  expect(ribbon.visible).toBe(true); expect(input.cancel()).toBe(true); expect(ribbon.visible).toBe(true);
+  enabled = false; time = 100; input.refresh(); expect(ribbon.visible).toBe(true);
+  time = 250; input.refresh(); expect(ribbon.visible).toBe(false);
+  input.dispose(); expect(scene.children).toEqual([]);
+});

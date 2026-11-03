@@ -134,13 +134,13 @@ describe('obstacles', () => {
       expect(r.root.children).toHaveLength(0); r.dispose();
     }
   });
-  it('renders authored row widths through the shared editor/game compiler while legacy elements remain single tiles', async () => {
+  it('renders authored row widths through the shared editor/game compiler while elements without width overrides remain single tiles', async () => {
     const { 'content.json': _meta, ...files } = await loadFiles(path.resolve(__dirname, '../../../../packages/content'));
     const catalog = loadCatalog(files);
     const authored = JSON.parse(files['data/levels/levelview-1.json'] as string) as NextLevel;
     authored.elements = [
       { id: 'row', archetype: 'obstacle', variant: 'small', pos: { x: 0, z: 0 }, yawDeg: 45, footprint: { shape: 'box', w: 3.565, d: .713 } },
-      { id: 'legacy', archetype: 'obstacle', variant: 'big', pos: { x: 4, z: 4 }, yawDeg: 0 },
+      { id: 'single', archetype: 'obstacle', variant: 'big', pos: { x: 4, z: 4 }, yawDeg: 0 },
     ];
     authored.requires = computeRequires(catalog, authored);
     const compiled = compileLevel(catalog, loadLevel(catalog, authored).level);

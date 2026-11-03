@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '../../../content/src/index.js';
 import { buildCatalog, compileLevel, computeRequires, loadLevel, type Catalog, type CompiledLevel } from '../../../content/src/index.js';
 import balance from '../../../content/data/balance.json';
 import houseWt1 from '../../../content/data/buildings/house-wt1.json';
@@ -8,13 +9,15 @@ import tank from '../../../content/data/units/tank.json';
 
 /**
  * Golden/bench levels are authored as inline level JSON and compiled with 02's `loadLevel` + `compileLevel`
- * against the shipped catalog (no SP05 campaign files). Browser-safe: only JSON imports and content exports.
+ * against shipped mechanics (no SP05 campaign files); synthetic geometry uses a test-only spacing catalog. Browser-safe: only JSON imports and content exports.
  */
 let cached: Catalog | undefined;
 export function catalog(): Catalog {
   if (cached) return cached;
   const built = buildCatalog({
-    'data/balance.json': balance,
+    // Mechanics fixtures intentionally isolate short lanes, shooter reach and collisions.
+    // Production catalogs keep 3.5; this test-only tunable preserves the fixture timings.
+    'data/balance.json': { ...balance, minBuildingDistance: .001 },
     'data/units/soldier.json': soldier,
     'data/units/tank.json': tank,
     'data/buildings/house-wt1.json': houseWt1,
@@ -41,7 +44,7 @@ export function buildLevel(id: string, buildings: readonly B[], options: LevelOp
   const xs = buildings.map((b) => b.at[0]), zs = buildings.map((b) => b.at[1]);
   const pid = (o: 0 | 1 | null) => (o === null ? null : `p${o + 1}`);
   const json = {
-    $schema: '../../schemas/level.schema.json', schemaVersion: '2.0.0', id, name: id, theme: 'green', objective: 'captureAll',
+    $schema: '../../schemas/level.schema.json', schemaVersion: SCHEMA_VERSION, id, name: id, theme: 'green', objective: 'captureAll',
     bounds: { minX: Math.min(...xs) - 5, maxX: Math.max(...xs) + 5, minZ: Math.min(...zs) - 5, maxZ: Math.max(...zs) + 5 },
     timeLimitSec: options.timeLimitSec ?? null,
     players: [
@@ -64,7 +67,7 @@ export function buildPvpLevel(id: string, seats: number, buildings: readonly { a
   const xs = buildings.map((b) => b.at[0]), zs = buildings.map((b) => b.at[1]);
   const colors = ['blue', 'red', 'green', 'yellow'];
   const json = {
-    $schema: '../../schemas/level.schema.json', schemaVersion: '2.0.0', id, name: id, theme: 'green', objective: 'pvp',
+    $schema: '../../schemas/level.schema.json', schemaVersion: SCHEMA_VERSION, id, name: id, theme: 'green', objective: 'pvp',
     bounds: { minX: Math.min(...xs) - 5, maxX: Math.max(...xs) + 5, minZ: Math.min(...zs) - 5, maxZ: Math.max(...zs) + 5 },
     timeLimitSec: null,
     players: Array.from({ length: seats }, (_, i) => ({ id: `p${i + 1}`, kind: 'human', colorKey: colors[i]! })),

@@ -4,7 +4,7 @@ import { canonicalJson } from './hash.js';
 import { parseAndConvert, type ContentSource } from './issues.js';
 import type { ContentMeta } from './schemas.js';
 
-export const RULES_VERSION = '3.3.0';
+export const RULES_VERSION = '1.0.0';
 export interface ReplayHeader {
   rulesVersion: string;
   schemaVersion: string;
@@ -17,7 +17,7 @@ export interface ReplayHeader {
 }
 /** `levels`: level id -> simHash; `bots`: `<levelId>#<playerId>` -> botHash. */
 export interface HashesLock { levels: Record<string, string>; bots: Record<string, string> }
-/** Baseline metadata only needs the version; older baselines carry other envelope fields. */
+/** Baseline metadata and lock constrain version bumps. */
 export interface ContentBaseline { metadata: Pick<ContentMeta, 'contentVersion'>; hashes: HashesLock }
 
 const sorted = (record: Record<string, string>): Record<string, string> =>
@@ -39,11 +39,9 @@ export function parseContentMeta(source: ContentSource, file = 'content.json'): 
   return parsed.value;
 }
 
-/** Baseline `content.json` may predate this schema; only `contentVersion` is read. */
-export function readBaselineVersion(source: string): Pick<ContentMeta, 'contentVersion'> {
-  const value = JSON.parse(source) as { contentVersion?: unknown };
-  if (typeof value.contentVersion !== 'string') throw new Error('Baseline content.json has no contentVersion');
-  return { contentVersion: value.contentVersion };
+/** Baseline content metadata obeys the current envelope schema. */
+export function readBaselineVersion(source: string): ContentMeta {
+  return parseContentMeta(source);
 }
 
 /** Compare against baseline metadata AND lock, never the newly regenerated lock. */
@@ -58,6 +56,6 @@ export function checkContentVersion(metadata: Pick<ContentMeta, 'contentVersion'
 }
 export function checkRulesVersion(rules: string, contentRulesVersion?: string): void {
   const headers = [...rules.matchAll(/^RULES_VERSION:\s*(\d+\.\d+\.\d+)\s*$/gm)];
-  if (headers.length !== 1 || headers[0]![1] !== RULES_VERSION) throw new Error('GAME_RULES.md RULES_VERSION must equal the exported RULES_VERSION');
+  if (headers.length !== 1 || headers[0]![1] !== RULES_VERSION) throw new Error('game-rules.md RULES_VERSION must equal the exported RULES_VERSION');
   if (contentRulesVersion !== undefined && contentRulesVersion !== RULES_VERSION) throw new Error('content.json rulesVersion must equal RULES_VERSION');
 }

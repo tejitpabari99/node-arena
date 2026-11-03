@@ -1,3 +1,4 @@
+import { PROTOCOL_VERSION } from '@node-arena/net';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LockstepClient, encode, parseServerMessage, type ClientMessage, type PauseStateMsg, type ServerMessage, type Versions } from '@node-arena/net';
 import type { Sim } from '@node-arena/sim';
@@ -88,7 +89,7 @@ describe('controller pause.state', () => {
       raf: () => 0, caf: () => {}, now: () => t,
     });
     ctl.open(); ctl.create();
-    push({ t: 'welcome', pv: 4, playerId: 'p', serverVersions: versions });
+    push({ t: 'welcome', pv: PROTOCOL_VERSION, playerId: 'p', serverVersions: versions });
     push({ t: 'room.joined', code: 'ABCD', you: { seat: 0, host: true } });
     const start = (matchId = 'm'): ServerMessage => ({ t: 'start', matchId, levelId: 'l', simHash: '0123456789abcdef', seed: 1, seats: [{ player: 0, kind: 'human', team: 0, nick: 'a' }, { player: 1, kind: 'human', team: 1, nick: 'b' }], youPlayer: 0, inputDelay: 2, countdownMs: 3000, timeLimitTicks: 100, hashInterval: 10 });
     return { ctl, push, start, setT: (x: number) => { t = x; }, view, sent };

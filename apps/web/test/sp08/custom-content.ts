@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '@node-arena/content';
 import type { ContentFiles } from '@node-arena/content';
 /** Synthetic files exercise the normal loader without changing shipped content or locks. */
 export function withoutCustomLevels(files:ContentFiles):ContentFiles {
@@ -8,6 +9,6 @@ export function withCustomLevels(files:ContentFiles):ContentFiles {
   const base=typeof source==='string'?JSON.parse(source):source;
   for(const [id,name] of [['na-first','First custom battle'],['na-last','Last custom battle']])
     copy[`data/levels/${id}.json`]=JSON.stringify({...base,id,name,source:undefined});
-  copy['data/campaigns/custom.json']=JSON.stringify({$schema:'../../schemas/campaign.schema.json',schemaVersion:'2.0.0',id:'custom',entries:[{level:'na-last',position:8},{level:'na-first',position:2}]});
+  copy['data/campaigns/custom.json']=JSON.stringify({$schema:'../../schemas/campaign.schema.json',schemaVersion: SCHEMA_VERSION,id:'custom',entries:[{level:'na-last',position:8},{level:'na-first',position:2}]});
   return copy;
 }

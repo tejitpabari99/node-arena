@@ -1,12 +1,13 @@
 import { expect, it } from 'vitest';
 import { blankDocument } from '../../src/editor/document.js';
-import { copySelection, createHistory, historyReducer, reduceDocument, snapPosition, snapYaw } from '../../src/editor/model.js';
+import { MIN_BUILDING_DISTANCE } from '../../src/editor/balance.js';
+import { copySelection, createHistory, historyReducer, pasteOffset, reduceDocument, snapPosition, snapYaw } from '../../src/editor/model.js';
 
 function fixture() {
   const doc = { ...blankDocument('na-layout', 'green', 'medium'), buildings: [] as ReturnType<typeof blankDocument>['buildings'] };
   doc.bounds = { minX: -4, maxX: 8, minZ: -6, maxZ: 10 };
   doc.buildings = [
-    { id: 'b0', archetype: 'house-wt1', pos: { x: 1, z: 3 }, owner: 'p1', level: 1, ignoreForWin: false, params: { level: { maxLevel: 5 } } },
+    { id: 'b0', archetype: 'house-wt1', pos: { x: 1, z: 4 }, owner: 'p1', level: 1, ignoreForWin: false, params: { level: { maxLevel: 5 } } },
     { id: 'b1', archetype: 'house-wt1', pos: { x: 5, z: 1 }, owner: 'p2', level: 1, ignoreForWin: false },
     { id: 'b2', archetype: 'tower', pos: { x: 0, z: 0 }, owner: null, level: 1, ignoreForWin: false },
   ];
@@ -15,33 +16,46 @@ function fixture() {
 }
 it('coalesces multi-move into one exact undo', () => {
   const doc = fixture(), targets = [{ kind: 'building', id: 'b0' }, { kind: 'obstacle', id: 'e0' }] as const;
-  const state = historyReducer(createHistory(doc), { type: 'edit', op: { type: 'move-selection', targets: [...targets], delta: { x: 1.25, z: -2.5 } } });
-  expect(state.present.buildings[0]!.pos).toEqual({ x: 2.25, z: .5 });
-  expect(state.present.elements[0]!.pos).toEqual({ x: .25, z: 1.5 });
+  const state = historyReducer(createHistory(doc), { type: 'edit', op: { type: 'move-selection', targets: [...targets], delta: { x: -2, z: 1 } } });
+  expect(state.present.buildings[0]!.pos).toEqual({ x: -1, z: 5 });
+  expect(state.present.elements[0]!.pos).toEqual({ x: -3, z: 5 });
   expect(state.past).toHaveLength(1); expect(historyReducer(state, { type: 'undo' }).present).toBe(doc);
+});
+it('first and repeated UI pastes of a building land >= min spacing (R-ENT-05)', () => {
+  const doc = fixture(), clipboard = copySelection(doc, [{ kind: 'building', id: 'b0' }, { kind: 'obstacle', id: 'e0' }]);
+  let cur = doc;
+  for (let n = 1; n <= 3; n++) {
+    const next = reduceDocument(cur, { type: 'paste', clipboard, offset: pasteOffset(n) });
+    expect(next).not.toBe(cur);
+    expect(next.buildings).toHaveLength(cur.buildings.length + 1);
+    expect(next.elements).toHaveLength(cur.elements.length + 1);
+    const added = next.buildings.at(-1)!;
+    for (const other of cur.buildings) expect(Math.hypot(added.pos.x - other.pos.x, added.pos.z - other.pos.z)).toBeGreaterThanOrEqual(MIN_BUILDING_DISTANCE - 1e-6);
+    cur = next;
+  }
 });
 it('copies and pastes detached item fields with collision-free identities and preserved offsets', () => {
   const doc = fixture(), clipboard = copySelection(doc, [{ kind: 'building', id: 'b0' }, { kind: 'obstacle', id: 'e0' }]);
-  const next = reduceDocument(doc, { type: 'paste', clipboard, offset: { x: .5, z: .5 } });
-  const again = reduceDocument(next, { type: 'paste', clipboard, offset: { x: 1, z: 1 } });
+  const next = reduceDocument(doc, { type: 'paste', clipboard, offset: { x: 0, z: 4 } });
+  const again = reduceDocument(next, { type: 'paste', clipboard, offset: { x: 4, z: 4 } });
   expect(again.buildings.map(b => b.id)).toEqual(['b0', 'b1', 'b2', 'b3', 'b4']);
   expect(again.elements.map(e => e.id)).toEqual(['e0', 'e1', 'e2']);
-  expect(next.buildings[3]).toMatchObject({ pos: { x: 1.5, z: 3.5 }, owner: 'p1', params: { level: { maxLevel: 5 } } });
+  expect(next.buildings[3]).toMatchObject({ pos: { x: 1, z: 8 }, owner: 'p1', params: { level: { maxLevel: 5 } } });
   (next.buildings[3]!.params!.level as { maxLevel: number }).maxLevel = 9;
   expect(doc.buildings[0]!.params!.level).toEqual({ maxLevel: 5 });
   expect(clipboard.buildings[0]!.params!.level).toEqual({ maxLevel: 5 });
 });
-it('snaps positions by .25 and yaw by 15 degrees, optionally preserving unsnapped values', () => {
+it('always snaps positions by .25 and yaw by 15 degrees, wrapping angles', () => {
   expect(snapPosition({ x: 1.13, z: -2.14 })).toEqual({ x: 1.25, z: -2.25 });
-  expect(snapPosition({ x: 1.137, z: -2.146 }, false)).toEqual({ x: 1.14, z: -2.15 });
-  expect(snapYaw(359.999, false)).toBe(0); expect(snapYaw(360)).toBe(0);
-  expect(snapYaw(23)).toBe(30); expect(snapYaw(-23)).toBe(330); expect(snapYaw(23.127, false)).toBe(23.13);
+  expect(snapPosition({ x: 1.137, z: -2.146 })).toEqual({ x: 1.25, z: -2.25 });
+  expect(snapYaw(359.999)).toBe(0); expect(snapYaw(360)).toBe(0);
+  expect(snapYaw(23)).toBe(30); expect(snapYaw(-23)).toBe(330); expect(snapYaw(23.127)).toBe(30);
 });
 it('grow-only bounds: no-op identity, one-side growth, no shrink, inside items ignored, undo restores', () => {
   const doc = fixture();
   const same = reduceDocument(doc, { type: 'move', target: { kind: 'building', id: 'b0' }, pos: { x: 2, z: 3 } });
   expect(same.bounds).toBe(doc.bounds);
-  expect(reduceDocument(doc, { type: 'move', target: { kind: 'building', id: 'b0' }, pos: { x: 1, z: 3 } })).toBe(doc);
+  expect(reduceDocument(doc, { type: 'move', target: { kind: 'building', id: 'b0' }, pos: { x: 1, z: 4 } })).toBe(doc);
   const state = historyReducer(createHistory(doc), { type: 'edit', op: { type: 'place', item: 'tower', pos: { x: 10.5, z: 0 } } });
   expect(state.present.bounds).toEqual({ minX: -4, maxX: 13, minZ: -6, maxZ: 10 });
   expect(historyReducer(state, { type: 'undo' }).present.bounds).toEqual({ minX: -4, maxX: 8, minZ: -6, maxZ: 10 });
@@ -84,7 +98,7 @@ it('reducer clamps place/move/move-selection/paste only when an area is carried'
   const pasted = reduceDocument(base, { type: 'paste', clipboard, offset: { x: 3, z: 0 } }, A).buildings.slice(1);
   expect(pasted.map(b => b.pos.x)).toEqual([20, 11]);
   expect(reduceDocument(base, { type: 'paste', clipboard, offset: { x: 3, z: 0 } }).buildings.slice(1).map(b => b.pos.x)).toEqual([22, 13]);
-  // legacy item outside the area is untouched by unrelated ops
-  const legacy = { ...base, buildings: [{ ...base.buildings[0]!, pos: { x: 90, z: 0 } }] };
-  expect(reduceDocument(legacy, { type: 'level-properties', value: legacy }, A).buildings[0]!.pos.x).toBe(90);
+  // An existing item outside the area is untouched by unrelated operations
+  const outside = { ...base, buildings: [{ ...base.buildings[0]!, pos: { x: 90, z: 0 } }] };
+  expect(reduceDocument(outside, { type: 'level-properties', value: outside }, A).buildings[0]!.pos.x).toBe(90);
 });

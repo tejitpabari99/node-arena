@@ -1,10 +1,11 @@
-import { BufferAttribute, BufferGeometry, Line, LineBasicMaterial, Matrix4, Plane, Raycaster, Vector2, Vector3, type Intersection, type Object3D, type PerspectiveCamera, type Scene } from 'three';
+import { Matrix4, Plane, Raycaster, Vector2, Vector3, type Intersection, type Object3D, type PerspectiveCamera, type Scene } from 'three';
 import type { Command, Sim, DrawExplanation, RejectReason } from '@node-arena/sim';
 import type { WorldRenderer } from '../render/world.js';
 import type { BuildingAnchor } from '../render/building.js';
 import { DRAW_REASON_TEXT } from './reasons.js';
-import { segmentDistance } from './geometry.js';
+import { pickBuilding, segmentDistance } from './geometry.js';
 import { createGestureMachine, type GesturePoint } from './gestures.js';
+import { createCutTrail } from './trail.js';
 
 export interface InputControllerOptions {
   canvas: HTMLCanvasElement; sim: Sim; camera: PerspectiveCamera;
@@ -24,11 +25,9 @@ export function createInputController(options: InputControllerOptions) {
   const anchors: (BuildingAnchor | undefined)[]=sim.view.ids.buildings.map(id=>world.anchors.building(id));
   const screens=anchors.map(()=>({x:0,y:0,radius:0}));
   const point: GesturePoint={x:0,y:0,building:null}, start={x:0,z:0}, end={x:0,z:0};
-  const positions=new Float32Array(128*3), trailGeometry=new BufferGeometry();
-  const trailAttribute=new BufferAttribute(positions,3); trailGeometry.setAttribute('position',trailAttribute);trailGeometry.setDrawRange(0,0);
-  const trailMaterial=new LineBasicMaterial({color:0xffffff,transparent:true,opacity:.8,depthWrite:false});
-  const trail=new Line(trailGeometry,trailMaterial);trail.visible=false;trail.frustumCulled=false;trail.renderOrder=4;options.scene?.add(trail);
-  let trailCount=0,disposed=false,width=1,height=1,left=0,top=0,groundHit=false;
+  const motion=canvas.ownerDocument.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const trail=createCutTrail(camera,{now,reducedMotion:()=>motion?.matches ?? false});options.scene?.add(trail.mesh);
+  let disposed=false,width=1,height=1,left=0,top=0,groundHit=false;
   const oldTouch=canvas.style.touchAction,oldCursor=canvas.style.cursor;
   canvas.style.touchAction='none';
   const human=options.seat===undefined ? sim.view.players.findIndex(player=>player.kind==='human') : (options.seat ?? -1);
@@ -53,18 +52,13 @@ export function createInputController(options: InputControllerOptions) {
   function local(event: PointerEvent) {
     point.x=event.clientX-left;point.y=event.clientY-top;point.building=null;
     if(!groundAt(point.x,point.y)) return point;
-    // Mesh hit catches roofs; footprint radius catches a building's ground anchor.
+    // Mesh hit catches roofs first; fallback expands the ground footprint and adds a touch floor.
     intersections.length=0;ray.intersectObjects(world.pickMeshes,false,intersections);
     for(const intersection of intersections) {
       const i=intersection.object.userData.buildingIndex as number | undefined;
       if(i!==undefined && anchors[i]) { point.building=i;return point; }
     }
-    let nearest=Infinity;
-    for(let i=0;i<anchors.length;i++) {
-      const a=anchors[i];if(!a) continue;
-      const d=Math.hypot(hit.x-a.pos.x,hit.z-a.pos.z)/a.radius;
-      if(d<=1 && d<nearest) {nearest=d;point.building=i;}
-    }
+    point.building=pickBuilding(hit,point,anchors,screens);
     return point;
   }
   let label: HTMLDivElement | undefined, marker: HTMLDivElement | undefined;
@@ -110,17 +104,16 @@ export function createInputController(options: InputControllerOptions) {
       world.previewLane(start,end,valid?sim.view.players[human]!.colorKey:'red');
       if(reason!==null && p.building!==null) feedback(from,p.building,reason,p.x,p.y);else clearFeedback();
     },
-    clear:()=>{clearFeedback();world.clearPreview();trail.visible=false;trailCount=0;trailGeometry.setDrawRange(0,0);},
+    clear:()=>{clearFeedback();world.clearPreview();trail.release();},
     eraser:active=>{canvas.style.cursor=active?'crosshair':oldCursor;},
     trail:p=>{
       if(!groundAt(p.x,p.y)) return;
-      if(trailCount===128) {positions.copyWithin(0,3);trailCount--;}
-      projected.set(hit.x,.075,hit.z).applyMatrix4(worldRoot.matrixWorld);
-      trailAttribute.setXYZ(trailCount++,projected.x,projected.y,projected.z);trailAttribute.needsUpdate=true;trailGeometry.setDrawRange(0,trailCount);trail.visible=true;
+      projected.set(hit.x,.15,hit.z).applyMatrix4(worldRoot.matrixWorld);
+      trail.append(projected);
     },
   });
   function cancel() {clearFlash();const id=machine.pointer;const active=machine.cancel();if(id>=0) release(id);return active;}
-  function refresh() {if(!enabled()) {cancel();return;}if(flashing && now()>=flashUntil) clearFlash();projectAnchors();machine.refresh();}
+  function refresh() {if(disposed) return;if(!enabled()) {cancel();trail.refresh();return;}if(flashing && now()>=flashUntil) clearFlash();projectAnchors();machine.refresh();trail.refresh();}
   function down(event: PointerEvent) {
     if(!enabled()) {cancel();return;} if(!event.isPrimary || machine.pointer>=0) return;
     clearFlash();measure();projectAnchors();if(!machine.down(event.pointerId,event.pointerType,event.button,local(event))) return;
@@ -141,7 +134,7 @@ export function createInputController(options: InputControllerOptions) {
     window?.removeEventListener('resize',measure);window?.removeEventListener('blur',cancel);window?.removeEventListener('keydown',key as EventListener);
     canvas.style.touchAction=oldTouch;canvas.style.cursor=oldCursor;
     label?.remove();marker?.remove();
-    trail.removeFromParent();trailGeometry.dispose();trailMaterial.dispose();
+    trail.dispose();
   }
   measure();projectAnchors();
   return {refresh,cancel,dispose};

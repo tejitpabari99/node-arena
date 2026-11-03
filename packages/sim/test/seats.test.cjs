@@ -42,7 +42,7 @@ test('covers R-SEA-01: SeatSetup validation rejects too long/short length, out-o
   }
   assert.throws(() => api.create(l, 1, {}), /SeatSetup/);
   assert.doesNotThrow(() => api.create(l, 1, { teams: [0, 1, 2] }));
-  assert.equal(api.create(l, 1, { teams: [0, 1] }).view.players.length, 2); // 3.3.0: prefix of slots
+  assert.equal(api.create(l, 1, { teams: [0, 1] }).view.players.length, 2); // Prefix of slots
 });
 
 test('covers R-SEA-01: SeatSetup on a captureAll level throws; crafted campaign replay with header teams is rejected', () => {
@@ -279,7 +279,7 @@ test('covers R-WIN-07: building count beats troop count and surviving allied tea
   ]);
 });
 
-// --- dynamic seats (R-SEA-01, 3.3.0): n of N slots; unused slots' buildings neutral ---
+// --- dynamic seats (R-SEA-01): n of N slots; unused slots' buildings neutral ---
 const { content } = require('./fixtures.cjs');
 const { dataFiles } = require('./fixtures.cjs');
 const loadedLevels = () => content.loadContent(dataFiles()).compiled;

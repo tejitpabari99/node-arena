@@ -17,7 +17,7 @@ function compare(a, b) {
   return 0;
 }
 function assertVersionBump(candidate, baseline) {
-  if (!baseline) return; // Initial bootstrap only.
+  if (!baseline) return; // No comparison baseline.
   const bumped = versionKeys.filter(key => compare(candidate.metadata[key], baseline.metadata[key]) > 0);
   if (versionKeys.some(key => compare(candidate.metadata[key], baseline.metadata[key]) < 0)) throw new Error('Golden versions must not decrease');
   if (!bumped.length) throw new Error('Golden update requires an increased authoritative version');
@@ -33,6 +33,7 @@ function assertVersionBump(candidate, baseline) {
   }
 }
 function gitBaseline(root, ref, file = relativeGolden) {
+  if (ref === 'none') return null;
   // Invalid/missing refs are errors; only an absent file in a valid commit is bootstrap.
   const revision = execFileSync('git', ['rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`], { cwd: root, encoding: 'utf8', stdio: 'pipe' }).trim();
   try { return JSON.parse(execFileSync('git', ['show', `${revision}:${file}`], { cwd: root, encoding: 'utf8', stdio: 'pipe' })); }

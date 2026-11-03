@@ -3,10 +3,14 @@ import { copyFrom, createBlank, openFile } from './editor-helpers.js';
 
 test.beforeEach(() => test.skip(process.env.WEB_TEST_SERVER !== 'dev', 'Dev-only editor'));
 
+/** Try drop points until one clears the base houses by the R-ENT-05 minimum spacing (their screen position varies with map size). */
 async function placeBuilding(page: Page) {
   const box = (await page.getByLabel('Edit viewport').boundingBox())!, item = page.getByRole('button', { name: 'Place house-wt1', exact: true }), source = (await item.boundingBox())!;
-  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
-  await page.mouse.move(box.x + box.width * .45, box.y + box.height * .45, { steps: 8 }); await page.mouse.up();
+  for (const [fx, fy] of [[.2, .2], [.5, .2], [.8, .2], [.2, .8], [.8, .8]] as const) {
+    await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
+    await page.mouse.move(box.x + box.width * fx, box.y + box.height * fy, { steps: 8 }); await page.mouse.up();
+    if (await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '3', { timeout: 1000 }).then(() => true, () => false)) return;
+  }
 }
 async function expectBlankRenders(page: Page, id: string, theme: string) {
   await expect(page.getByLabel('Level id', { exact: true })).toHaveText(id);

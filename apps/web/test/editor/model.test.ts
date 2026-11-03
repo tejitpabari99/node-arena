@@ -8,14 +8,16 @@ import * as model from '../../src/editor/model.js';
 it('places neutral archetype defaults with unique identities without mutating snapshots', () => {
   const doc = blankDocument('na-model', 'green', 'medium');
   let state = model.createHistory(doc);
+  let offset = 0;
   for (const item of ['house-wt1', 'house-wt2', 'tower', 'obstacle-small', 'obstacle-big'] as const) {
-    state = model.historyReducer(state, { type: 'edit', op: { type: 'place', item, pos: { x: 2.346, z: -3.456 } } });
+    state = model.historyReducer(state, { type: 'edit', op: { type: 'place', item, pos: { x: 2.346 + offset, z: -3.456 } } });
+    offset += 4;
   }
   expect(doc.buildings).toEqual([]);
   expect(state.present.buildings.map(b => [b.archetype, b.owner, b.level, b.pos])).toEqual([
-    ['house-wt1', null, 1, { x: 2.35, z: -3.46 }], ['house-wt2', null, 1, { x: 2.35, z: -3.46 }], ['tower', null, 1, { x: 2.35, z: -3.46 }],
+    ['house-wt1', null, 1, { x: 2.35, z: -3.46 }], ['house-wt2', null, 1, { x: 6.35, z: -3.46 }], ['tower', null, 1, { x: 10.35, z: -3.46 }],
   ]);
-  expect(state.present.elements.map(e => [e.variant, e.pos])).toEqual([['small', { x: 2.35, z: -3.46 }], ['big', { x: 2.35, z: -3.46 }]]);
+  expect(state.present.elements.map(e => [e.variant, e.pos])).toEqual([['small', { x: 14.35, z: -3.46 }], ['big', { x: 18.35, z: -3.46 }]]);
   expect(new Set([...state.present.buildings, ...state.present.elements].map(e => e.id)).size).toBe(5);
 });
 it('places one five-tile row with a single identity and deletes/undoes the whole row', () => {

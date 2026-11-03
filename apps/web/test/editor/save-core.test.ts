@@ -31,7 +31,7 @@ describe('dirty model', () => {
     expect(isDirty(sent, saved)).toBe(false);
     expect(isDirty({ ...sent, name: 'Concurrent edit' }, saved)).toBe(true);
     expect(isDirty({ ...sent, nested: { editorVersion: 'changed' } }, saved)).toBe(true);
-    expect(isDirty({ name: 'Legacy', editorVersion: '0.0.1' }, { name: 'Legacy' })).toBe(false);
+    expect(isDirty({ name: 'Unversioned', editorVersion: '0.0.1' }, { name: 'Unversioned' })).toBe(false);
   });
   it('formats status text with counted issues and a non-issue failure', () => {
     expect([chipText('saved', 0), chipText('saving', 0), chipText('unsaved', 0), chipText('error', 3), chipText('error', 0)]).toEqual(['✓ Saved', 'Saving…', 'Unsaved', '3 issues', "Can't save"]);

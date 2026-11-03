@@ -1,3 +1,4 @@
+import { MANIFEST_SCHEMA_VERSION, SCHEMA_VERSION } from '@node-arena/content';
 // Importer core (PRD 05 R4/R5): extract -> {path: bytes}. Pure w.r.t. the output dir (no writes); cli.ts does fs.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -48,15 +49,15 @@ export interface ImportResult {
 }
 
 /**
- * Registered theme set for the gate: the theme ids of the v2 asset manifest (`schemaVersion` 2.x with `themes`, shipped by SP07).
- * Throws when the manifest is absent, unreadable or not v2: there is no fallback set.
+ * Registered theme set for the gate: theme IDs from the current asset manifest.
+ * Throws when the manifest is absent, unreadable or has a mismatched schema version: there is no fallback set.
  */
 export function registeredThemes(manifestPath: string): readonly string[] {
   let m: unknown;
   try { m = JSON.parse(readFileSync(manifestPath, 'utf8')); } catch (e) { throw new Error(`cannot read theme registry ${manifestPath}: ${(e as Error).message}`); }
   const { schemaVersion, themes } = (typeof m === 'object' && m !== null ? m : {}) as { schemaVersion?: unknown; themes?: unknown };
-  if (typeof schemaVersion === 'string' && /^([2-9]|\d{2,})\./.test(schemaVersion) && typeof themes === 'object' && themes !== null) return Object.keys(themes);
-  throw new Error(`${manifestPath}: expected a v2 manifest (schemaVersion 2.x) with "themes" to register themes`);
+  if (schemaVersion === MANIFEST_SCHEMA_VERSION && typeof themes === 'object' && themes !== null) return Object.keys(themes);
+  throw new Error(`${manifestPath}: expected manifest schemaVersion ${MANIFEST_SCHEMA_VERSION} with "themes" to register themes`);
 }
 
 const PREFAB_HINT = 'if this is a prefab level, copy its .ext.json from $TW_EXTRACT/converted/ext-prefab/ into tools/src/import-tw/prefab/ and commit it';
@@ -120,7 +121,7 @@ export async function runImport(o: ImportOptions): Promise<ImportResult> {
     const merged = mergeCampaign(existingDoc?.entries ?? [], rows.map((r) => ({ slug: r.slug, position: r.entry.position, importable: r.result.level !== null })), { skipBlocked: o.skipBlocked ?? false, campaign: fullCampaign });
     campaign = merged.map((e) => ({ level: e.level, position: e.position }));
     if (merged.length > 0) {
-      const base: Record<string, unknown> = existingDoc ? { ...existingDoc } : { $schema: '../../schemas/campaign.schema.json', schemaVersion: '2.0.0', id: 'common' };
+      const base: Record<string, unknown> = existingDoc ? { ...existingDoc } : { $schema: '../../schemas/campaign.schema.json', schemaVersion: SCHEMA_VERSION, id: 'common' };
       files.set(CAMPAIGN_FILE, serializeCampaign({ ...base, entries: merged }));
     }
   }

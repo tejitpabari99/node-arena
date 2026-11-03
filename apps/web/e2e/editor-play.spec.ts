@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '@node-arena/content';
 import { undo as editorUndo, redo as editorRedo, save as editorSave, historyDisabled, share, openCopied, flushEdits, clearBuildings } from './editor-helpers.js';
 import { test, expect } from '@playwright/test';
 import type { SeatBot } from '@node-arena/content';
@@ -10,7 +11,7 @@ test('persistent editor banners stay below Play and return above the editor canv
     doc.buildings = [
       { id: 'b0', archetype: 'house-wt1', pos: { x: -3, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
       { id: 'b1', archetype: 'house-wt1', pos: { x: 3, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
-      { id: 'b2', archetype: 'house-wt1', pos: { x: 3, z: 3 }, owner: 'p2', level: 1, ignoreForWin: false },
+      { id: 'b2', archetype: 'house-wt1', pos: { x: 3, z: 4 }, owner: 'p2', level: 1, ignoreForWin: false },
     ];
     (doc.players[1]!.bot! as SeatBot).script = [{ op: 'line', own: 'b2', target: 'b0', afterMs: 0 }];
     await route.fulfill({ json: doc });
@@ -67,12 +68,12 @@ test('new → place → Save → real Play defeat → back → reload custom; ma
   await page.route('**/__editor/level/na-play-browser', route => route.fulfill({ json: saved }));
   await page.route('**/src/app/boot.ts', async route => {
     const response = await route.fetch();
-    const overlay = saved ? { [`data/levels/${saved.id}.json`]: JSON.stringify(saved), 'data/campaigns/custom.json': JSON.stringify({ $schema: '../../schemas/campaign.schema.json', schemaVersion: '2.0.0', id: 'custom', entries: [{ level: saved.id, position: 1 }] }) } : {};
+    const overlay = saved ? { [`data/levels/${saved.id}.json`]: JSON.stringify(saved), 'data/campaigns/custom.json': JSON.stringify({ $schema: '../../schemas/campaign.schema.json', schemaVersion: SCHEMA_VERSION, id: 'custom', entries: [{ level: saved.id, position: 1 }] }) } : {};
     await route.fulfill({ response, body: `${await response.text()}\nconst shippedFiles = contentFiles; contentFiles = () => ({...shippedFiles(), ...${JSON.stringify(overlay)}});` });
   });
   await page.goto('/editor.html');
   const baseline = await page.evaluate(() => {
-    const raw = JSON.stringify({ v: 2, completed: { 'levelview-1': { firstAt: '2026-01-01T00:00:00.000Z' } }, settings: { musicVol: .4, sfxVol: .5, musicMute: false, sfxMute: false }, lastLevel: 'levelview-1' });
+    const raw = JSON.stringify({ v: 1, completed: { 'levelview-1': { firstAt: '2026-01-01T00:00:00.000Z' } }, settings: { musicVol: .4, sfxVol: .5, musicMute: false, sfxMute: false }, lastLevel: 'levelview-1' });
     localStorage.setItem('nodearena:save', raw); localStorage.setItem('nodearena:save.bak', 'keep backup');
     return JSON.stringify({ ...localStorage });
   });

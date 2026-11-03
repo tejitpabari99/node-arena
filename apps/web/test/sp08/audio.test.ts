@@ -59,7 +59,7 @@ describe('manifest audio', () => {
 });
 
 import { loadAudioBuffers } from '../../src/audio/app';
-it('loads unique v2 event/visual audio paths and ignores transport failure and aborted decodes',async()=>{
+it('loads unique event/visual audio paths and ignores transport failure and aborted decodes',async()=>{
  const controller=new AbortController(),decoded={} as AudioBuffer;
  const manifest={events:{Clash:{sfx:'audio/a.ogg'},TowerShot:{sfx:'audio/b.ogg'}},visuals:{house:{sfx:'audio/a.ogg'}}} as unknown as ManifestV2;
  const fetched:string[]=[];const fetcher=async(url:RequestInfo|URL)=>{fetched.push(String(url));return {ok:!String(url).includes('b.ogg'),arrayBuffer:async()=>new ArrayBuffer(2)} as Response;};

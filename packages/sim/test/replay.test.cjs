@@ -86,18 +86,17 @@ test('resolveLevel source resolves by header level id; an untimed level imposes 
   assert.equal(api.playReplay({ metadata, resolveLevel: (id) => { assert.equal(id, 'levelview-1'); return level(); } }, rec).ok, true);
 });
 
-test('v1 replays are rejected: 1.x rulesVersion, v1 outcome shape (winnerTeam/draw), v1 header fields', () => {
+test('replays reject a foreign rules major, malformed outcome shapes and invalid hash widths', () => {
   const rec = recorded();
-  const v1 = structuredClone(rec); v1.header.rulesVersion = '1.0.0';
-  assert.throws(() => api.playReplay(source(), v1), /replay/i);
+  const foreign = structuredClone(rec); foreign.header.rulesVersion = `${Number(metadata.rulesVersion.split('.')[0]) + 1}.0.0`;
+  assert.throws(() => api.playReplay(source(), foreign), /replay/i);
   const winnerTeam = structuredClone(rec); winnerTeam.outcome = { outcome: 'won', winnerTeam: 0 };
   assert.throws(() => api.playReplay(source(), winnerTeam), /replay/i);
   const draw = structuredClone(rec); draw.outcome = { outcome: 'draw', winner: null };
   assert.throws(() => api.playReplay(source(), draw), /replay/i);
-  const v1hash = structuredClone(rec); v1hash.header.simHash = 'a'.repeat(32);
-  assert.throws(() => api.playReplay(source(), v1hash), /replay/i);
+  const badHash = structuredClone(rec); badHash.header.simHash = 'a'.repeat(32);
+  assert.throws(() => api.playReplay(source(), badHash), /replay/i);
   assert.equal(rec.header.rulesVersion, metadata.rulesVersion);
-  assert.equal(metadata.rulesVersion.split('.')[0], '3');
 });
 
 test('a finite time limit bounds finalTick; limit 0 (null) imposes none; outcome carries winner', () => {

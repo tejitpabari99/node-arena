@@ -115,11 +115,11 @@ test('all library archetypes populate blank drafts and persist after compilation
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '1');
   await drop('obstacle-big', 60, 30);
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-obstacles', '2');
-  await drop('house-wt1', -80, -20);
+  await drop('house-wt1', -250, -20);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await drop('house-wt2', 30, -20);
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
-  await drop('tower', 90, 40);
+  await drop('tower', 250, 40);
   await expect(page.locator('.ed-shell')).toHaveAttribute('data-buildings', '3');
   await expect(page.getByTestId('viewport-status')).toContainText('Ready');
   await editorSave(page);

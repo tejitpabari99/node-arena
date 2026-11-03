@@ -13,6 +13,7 @@ function runCi(overrides: NodeJS.ProcessEnv = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'ci-runner-'));
   try {
     const log = join(dir, 'calls');
+    writeFileSync(log, '');
     const pnpm = join(dir, 'pnpm');
     writeFileSync(pnpm, `#!/usr/bin/env bash
 set -eu
@@ -68,4 +69,21 @@ test('release CI clears the branch version override and enforces strict parked c
   assert.match(r.calls, /^bots:golden\|base=unset$/m);
   assert.match(r.calls, /^check:content --base HEAD\|base=unset$/m);
   assert.match(r.calls, /^check:parked --strict\|base=unset$/m);
+});
+
+for (const overrides of [{ CONTENT_BASE: 'none' }, { VERSION_GUARD_BASE: 'none' }]) {
+  test(`CI carries an explicit no-baseline override through content and golden gates: ${Object.keys(overrides)[0]}`, () => {
+    const r = runCi(overrides);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.calls, /^check:content --base none\|base=none$/m);
+    assert.match(r.calls, /^validate:content --base none\|base=none$/m);
+    assert.match(r.calls, /^sim:golden\|base=none$/m);
+    assert.match(r.calls, /^bots:golden\|base=none$/m);
+  });
+}
+test('CI continues rejecting invalid explicit baselines', () => {
+  const r = runCi({ CONTENT_BASE: 'missing-ref' });
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /not a valid commit/);
+  assert.equal(r.calls, '');
 });

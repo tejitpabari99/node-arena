@@ -23,21 +23,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Select content version baseline
-        env:
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
-          PUSH_BASE: ${{ github.event.before }}
-        run: |
-          base="$PR_BASE"
-          if [ -z "$base" ]; then base="$PUSH_BASE"; fi
-          if [ -z "$base" ] || [[ "$base" =~ ^0+$ ]]; then
-            if git rev-parse --verify 'HEAD^' >/dev/null 2>&1; then
-              base=HEAD^
-            else
-              base=HEAD
-            fi
-          fi
-          git rev-parse --verify "${base}^{commit}" >/dev/null
-          echo "CONTENT_BASE=$base" >> "$GITHUB_ENV"
+        # One-time pre-launch version reset. Restore normal baseline selection after merge.
+        run: echo "CONTENT_BASE=none" >> "$GITHUB_ENV"
       - name: Install Chromium for browser parity
         run: |
           pnpm --filter @node-arena/web exec playwright install --with-deps chromium

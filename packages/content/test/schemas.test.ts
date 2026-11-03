@@ -118,7 +118,7 @@ test('seat bot is validated by BOT_KINDS; ai needs no bot at schema level, extra
 
 function levelSample(overrides: { params?: Record<string, unknown> }): any {
   return {
-    $schema: '../schemas/level.schema.json', schemaVersion: '2.0.0', id: 'levelview-1', name: 'LevelView 1',
+    $schema: '../schemas/level.schema.json', schemaVersion: content.SCHEMA_VERSION, id: 'levelview-1', name: 'LevelView 1',
     source: { game: 'tower-war', gameVersion: '1.29.3', asset: 'LevelView 1', campaignPosition: 4, dialect: 'v1-short', dropped: ['cargo'] },
     theme: 'green', bounds: { minX: -9, maxX: 6, minZ: -7, maxZ: 8 },
     objective: 'captureAll', timeLimitSec: null,

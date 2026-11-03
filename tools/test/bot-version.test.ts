@@ -1,3 +1,4 @@
+import { RULES_VERSION } from '@node-arena/content';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
@@ -12,8 +13,8 @@ test('validate-content adapter catches regenerated bot locks and locates the req
   const root = await mkdtemp(join(tmpdir(), 'tools-bot-version-'));
   const dir = join(root, 'packages/content'); const source = join(root, 'packages/bots/src/version.ts');
   try {
-    await mkdir(dir, { recursive: true }); await mkdir(join(root, 'docs')); await mkdir(join(source, '..'), { recursive: true });
-    await writeFile(join(root, 'docs/GAME_RULES.md'), 'RULES_VERSION: 3.3.0\n');
+    await mkdir(dir, { recursive: true }); await mkdir(join(root, 'docs/specs'), { recursive: true }); await mkdir(join(source, '..'), { recursive: true });
+    await writeFile(join(root, 'docs/specs/game-rules.md'), `RULES_VERSION: ${RULES_VERSION}\n`);
     await writeFile(source, "export const BOT_VERSION = '1.0.0';\n");
     const files = hashFixture();
     await writeFile(join(dir, 'content.json'), JSON.stringify(files['content.json']));
@@ -26,6 +27,9 @@ test('validate-content adapter catches regenerated bot locks and locates the req
       assert.match((error as Error).message, /BOT_VERSION.*increase/);
       assert.equal((error as { file: string }).file, 'packages/bots/src/version.ts'); return true;
     });
+    await writeFile(source, "export const BOT_VERSION = '0.1.0';\n");
+    assert.match(await checkLock(files, dir, root, 'none'), /BOT_VERSION gates agree/);
+    await assert.rejects(checkLock(files, dir, root, 'HEAD'), /decrease/);
     await writeFile(source, "export const BOT_VERSION = '1.0.1';\n");
     assert.match(await checkLock(files, dir, root, 'HEAD'), /BOT_VERSION gates agree/);
     // Param drift (inline per-level v2 `bot` block: actionDelayMs) is caught the same way, without a bump.

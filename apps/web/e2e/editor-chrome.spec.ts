@@ -12,7 +12,7 @@ test('editor Play result shows Replay + Edit level (no Levels); Edit level retur
     doc.buildings = [
       { id: 'b0', archetype: 'house-wt1', pos: { x: -3, z: 0 }, owner: 'p1', level: 1, ignoreForWin: false },
       { id: 'b1', archetype: 'house-wt1', pos: { x: 3, z: 0 }, owner: 'p2', level: 1, ignoreForWin: false },
-      { id: 'b2', archetype: 'house-wt1', pos: { x: 3, z: 3 }, owner: 'p2', level: 1, ignoreForWin: false },
+      { id: 'b2', archetype: 'house-wt1', pos: { x: 3, z: 4 }, owner: 'p2', level: 1, ignoreForWin: false },
     ];
     (doc.players[1]!.bot! as SeatBot).script = [{ op: 'line', own: 'b2', target: 'b0', afterMs: 0 }];
     await route.fulfill({ json: doc });

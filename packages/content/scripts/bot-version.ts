@@ -13,6 +13,7 @@ export function botVersionFromSource(source: string): string {
   return match[2]!;
 }
 export function readBotVersion(root: string, ref?: string): string | undefined {
+  if (ref === 'none') return undefined;
   if (ref === undefined) {
     try { return botVersionFromSource(readFileSync(resolve(root, VERSION_PATH), 'utf8')); }
     catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined; throw error; }
@@ -23,10 +24,7 @@ export function readBotVersion(root: string, ref?: string): string | undefined {
   return botVersionFromSource(git('show', `${revision}:${VERSION_PATH}`));
 }
 export function checkBotVersion(currentHashes: Record<string, string>, baselineHashes: Record<string, string> | undefined, current: string | undefined, previous: string | undefined): void {
-  if (current === undefined) {
-    if (previous !== undefined) throw new Error('BOT_VERSION source is missing');
-    return; // Older standalone content-only fixtures have no bot package.
-  }
+  if (current === undefined) throw new Error('BOT_VERSION source is missing');
   if (!SEMVER.test(current) || (previous !== undefined && !SEMVER.test(previous))) throw new Error('BOT_VERSION must be canonical semver');
   if (previous === undefined) return; // First bot implementation establishes the baseline.
   const next = current.split('.').map(Number), old = previous.split('.').map(Number);

@@ -3,8 +3,8 @@ import { ManifestSchema } from './manifest.schema.js';
 import { ManifestArtSchema } from './manifest-art.schema.js';
 import { BOT_KINDS, MODULES, OBJECTIVES, count, fx3, type ModuleId } from '@node-arena/defs';
 
-/** Content v2 schemas live beside v1 (`../core.schema.ts`); nothing here replaces the old game's data model. */
-export const SCHEMA_VERSION = '2.0.0';
+/** Authored content schemas; schemaVersion identifies the current file format. */
+export const SCHEMA_VERSION = '1.0.0';
 
 const idPattern = '^[a-z0-9][a-z0-9-]*$';
 const id = () => Type.String({ pattern: idPattern });
@@ -81,6 +81,7 @@ export const BalanceSchema = Type.Object({
   growth: Type.Object({ base: fx3({ exclusiveMinimum: 0 }) }, { additionalProperties: false }),
   contactDistance: fx3({ exclusiveMinimum: 0 }),
   laneHalfWidth: fx3({ exclusiveMinimum: 0 }),
+  minBuildingDistance: fx3({ exclusiveMinimum: 0 }),
 }, options('balance'));
 
 /** `content.json`: version metadata for the whole dataset (not a catalog entity). */

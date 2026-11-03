@@ -161,7 +161,7 @@ describe('Lobby live edits', () => {
 describe('Picker Play online', () => {
   const state = { save: defaultSave(), levels: [], customLevels: [], pickerView: 'main' } as unknown as AppSnapshot;
   it('shows pvp-play only when onPlayOnline given', () => {
-    const base = { state, onStart: () => {}, onMute: () => {}, onCredits: () => {} };
+    const base = { state, onStart: () => {}, onMute: () => {} };
     expect(byId(Picker(base), 'pvp-play')).toBeUndefined();
     const fn = vi.fn(), v = Picker({ ...base, onPlayOnline: fn });
     (byId(v, 'pvp-play')!.props.onClick as () => void)(); expect(fn).toHaveBeenCalledOnce();

@@ -6,7 +6,7 @@ export interface ModuleDef<Id extends string = string, P extends TObject = TObje
   readonly appliesTo: 'building' | 'element';
   /** Param bag schema (full). Instance overrides validate against `Type.Partial(params)`. */
   readonly params: P;
-  /** Rule ids (GAME_RULES.md headings) this module implements. */
+  /** Rule ids (game-rules.md headings) this module implements. */
   readonly ruleIds: readonly string[];
   /** Phases the module may run in. */
   readonly phases: readonly Phase[];

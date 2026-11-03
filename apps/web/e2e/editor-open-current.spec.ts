@@ -4,7 +4,7 @@ import { openFile, save, share, flushEdits } from './editor-helpers.js';
 
 async function openFixture(page: Page) {
   const source = await (await page.request.get('/__editor/level/na-trial')).json() as LevelDoc;
-  const original = { ...source, name: 'Original on disk', editorVersion: '0.0.1' };
+  const original = { ...source, name: 'Original on disk', editorVersion: '1.0.0' };
   const other = { ...source, id: 'na-open-other', name: 'Other on disk', editorVersion: '0.0.4' };
   const disk = new Map([[original.id, original], [other.id, other]]);
   const writes: LevelDoc[] = [];
@@ -57,7 +57,7 @@ test('Open current + Discard installs the original disk snapshot without saving 
   await editCurrent(page); await requestCurrent(page); await page.getByTestId('confirm-discard').click();
   await expect(page.getByLabel('Level name', { exact: true })).toHaveValue(original.name);
   await expect(page.getByTestId('save-chip')).toHaveText('✓ Saved');
-  await share(page); await expect(page.getByTestId('editor-version')).toHaveText('Version 0.0.1');
+  await share(page); await expect(page.getByTestId('editor-version')).toHaveText('Version 1.0.0');
   expect(writes).toHaveLength(0);
 });
 

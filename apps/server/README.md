@@ -54,7 +54,7 @@ curl -fsS http://127.0.0.1:8080/healthz
 
 `GET /healthz` returns 200 JSON with `ok`, room/connection/running-match counts, `draining` (true after SIGTERM; stays 200), `lateP99Ms`, `uptimeS` and `versions` (protocol, rules, schema, content, bot). Responses use `Cache-Control: no-store`. Other HTTP paths return 404; the same listener accepts WebSocket connections.
 
-Protocol authority: [message types](../../packages/net/src/messages.ts), [validation](../../packages/net/src/validate.ts), [handshake](../../packages/net/src/handshake.ts) and [protocol version](../../packages/net/src/version.ts). The hello handshake requires exact protocol/schema/content versions and matching rules major/minor before room actions. Rules patch differences are accepted; bot-version differences are logged without refusing the connection. See [game rules](../../docs/GAME_RULES.md) for mechanics and version policy.
+Protocol authority: [message types](../../packages/net/src/messages.ts), [validation](../../packages/net/src/validate.ts), [handshake](../../packages/net/src/handshake.ts) and [protocol version](../../packages/net/src/version.ts). The hello handshake requires exact protocol/schema/content versions and matching rules major/minor before room actions. Rules patch differences are accepted; bot-version differences are logged without refusing the connection. See [game rules](../../docs/specs/game-rules.md) for mechanics and version policy.
 
 ## Docker and Fly
 
@@ -65,6 +65,8 @@ docker build -f apps/server/Dockerfile -t node-arena-server:local .
 docker run --rm -p 8080:8080 -e ALLOWED_ORIGINS=http://127.0.0.1:5173 node-arena-server:local
 ```
 
-The image builds workspace dependencies and packages production dependencies/content; runtime is a non-root Node process with a 192 MB JS heap cap. `SIGTERM` drains connections within 6 s, with an 8 s hard-exit deadline; Fly allows 10 s.
+The image builds workspace dependencies and packages production dependencies/content; runtime is a non-root Node process with a 192 MB JS heap cap. `SIGTERM`/`SIGINT` starts the default 30 s drain window; the [shutdown implementation](src/main.ts) adds a 2 s socket grace and 1 s hard-exit margin, giving a 33 s bound. [Fly configuration](fly.toml) allows 40 s; the default window comes from [server configuration](src/config.ts).
 
-Fly app `node-arena-server` uses one shared-cpu-1x/256 MB machine in `ewr`. Production deploy order is changes → server (Fly plus version smoke) → web (Firebase). Repo secret `FLY_API_TOKEN` authorizes Fly; repo variable `PVP_SERVER_URL` supplies the public WebSocket URL to web builds. First Fly deployment and live checks remain pending. See the [operations runbook](../../docs/PVP_OPS.md) for setup, origin configuration, deploy/rollback, health, logs, heartbeat verification and cost.
+Fly app `node-arena-server` uses one shared-cpu-1x/256 MB machine in `ewr`. Production deploy order is changes → server (Fly plus version smoke) → web (Firebase). Repo secret `FLY_API_TOKEN` authorizes Fly; repo variable `PVP_SERVER_URL` supplies the public WebSocket URL to web builds. Use the operations record for deployment evidence and perform the current-release checks; final production friend play-test approval remains pending. See the [operations runbook](../../docs/operations/pvp-server.md) for setup, origin configuration, deploy/rollback, health, logs, heartbeat verification and cost.
+
+See [server implementation](../../docs/implementation/pvp-server.md) for component responsibilities and [versions](../../docs/reference/versions.md) for handshake policy.

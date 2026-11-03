@@ -11,6 +11,7 @@ export function splitFiles(files: ContentFiles): { meta: string | object; data: 
 }
 // The baseline always refers to committed repository content, including when --dir supplies a fixture.
 export function readBaseline(root: string, ref: string): ContentBaseline | undefined {
+  if (ref === 'none') return undefined;
   const git = (...args: string[]) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   try {
     const revision = git('rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`);
@@ -29,7 +30,7 @@ export async function checkLock(files: ContentFiles, dir: string, root: string, 
   const { meta, data } = splitFiles(files);
   const metadata = parseContentMeta(meta);
   const loaded = loadContent(data);
-  try { checkRulesVersion(await readText(resolve(root, 'docs/GAME_RULES.md')), metadata.rulesVersion); }
+  try { checkRulesVersion(await readText(resolve(root, 'docs/specs/game-rules.md')), metadata.rulesVersion); }
   catch (error) { throw new LocatedError('content.json', (error as Error).message, '/rulesVersion'); }
   const hashes = generateHashes(loaded);
   if (canonicalJson(await readJson(resolve(dir, 'hashes.lock.json'), 'hashes.lock.json')) !== canonicalJson(hashes)) throw new LocatedError('hashes.lock.json', 'hashes.lock.json is stale; run pnpm content:lock');

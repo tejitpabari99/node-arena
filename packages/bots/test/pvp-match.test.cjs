@@ -92,7 +92,7 @@ test('covers R10: seat driver presets, determinism, set/clear, player check', ()
   const bots = require('../src/index.ts');
   const sim = require('../../sim/src/index.ts');
   const { pvpLevel } = require('./pvp-fixture.cjs');
-  assert.deepEqual(['easy', 'normal', 'hard'].map(k => bots.BOT_PRESETS[k].actionDelayMs), [3000, 1500, 700]);
+  assert.deepEqual(['easy', 'normal', 'hard'].map(k => bots.BOT_PRESETS[k].actionDelayMs), [3000, 1500, 1000]);
   for (const k of ['easy', 'normal', 'hard']) {
     assert.equal(bots.BOT_PRESETS[k].behavior, 'full');
     assert.equal(bots.BOT_PRESETS[k].script.length, 0);

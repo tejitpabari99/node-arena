@@ -74,7 +74,7 @@ test('Finalize validate step runs the pvp branch: clean passes, nudged Duel S re
     assert.match(clean.stdout, /"ok": true/);
     const path = resolve(content, 'data/levels/na-pvp-duel-s.json');
     const level = JSON.parse(await readFile(path, 'utf8')) as NextLevel;
-    level.buildings.find(b => b.owner === level.players[0]!.id)!.pos.x += 0.5;
+    level.buildings.find(b => b.owner === level.players[0]!.id)!.pos.x -= 0.5; // Move outward: isolate symmetry without violating minimum spacing.
     await writeFile(path, JSON.stringify(level));
     await assert.rejects(run('na-pvp-duel-s'), (error: { stdout: string }) => /Symmetry d2 fails/.test(error.stdout));
   } finally { await rm(dir, { recursive: true, force: true }); }

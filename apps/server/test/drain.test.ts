@@ -41,14 +41,15 @@ async function soloMatch(c: Client): Promise<string> {
   return joined.code;
 }
 
-test('DRAIN_MS config: default 30000, range 0-120000', () => {
+test('DRAIN_MS config: default 30000, range 1-120000', () => {
   assert.equal(parseConfig({}).drainMs, 30000);
-  assert.equal(parseConfig({ DRAIN_MS: '0' }).drainMs, 0);
+  assert.throws(() => parseConfig({ DRAIN_MS: '0' }), /DRAIN_MS/);
+  assert.equal(parseConfig({ DRAIN_MS: '1' }).drainMs, 1);
   assert.equal(parseConfig({ DRAIN_MS: '120000' }).drainMs, 120000);
   assert.throws(() => parseConfig({ DRAIN_MS: '120001' }));
   assert.throws(() => parseConfig({ DRAIN_MS: 'x' }));
   assert.equal(hardExitMs(30000), 33000);
-  assert.equal(hardExitMs(0), 8000);
+  assert.equal(hardExitMs(1), 3001);
 });
 
 test('drain: refuses create/join/start/rematch, serves token reattach, healthz draining stays 200', async () => {
@@ -119,12 +120,13 @@ test('a match ending naturally mid-window delivers end; drain then finishes befo
   assert.ok(a.msgs.findIndex((m) => m.t === 'end') < a.msgs.findIndex((m) => m.t === 'room.closed'));
 });
 
-test('drain({windowMs:0}) is the legacy immediate shutdown', async () => {
+test('the shortest configured drain sends notice and closes with server-restart', async () => {
   const srv = await boot();
   const a = await connect(srv.port, 'Ann', 'a');
   a.say({ t: 'room.create' }); await a.until('room.joined');
-  await srv.drain({ windowMs: 0 });
-  assert.deepEqual(a.msgs.find((m) => m.t === 'room.closed'), { t: 'room.closed', reason: 'shutdown' });
+  await srv.drain({ windowMs: parseConfig({ DRAIN_MS: '1' }).drainMs });
+  assert.deepEqual(a.msgs.find((m) => m.t === 'server.draining'), { t: 'server.draining', deadlineMs: 1 });
+  assert.deepEqual(a.msgs.find((m) => m.t === 'room.closed'), { t: 'room.closed', reason: 'server-restart' });
 });
 
 test('server.draining: every existing and late authed conn gets exactly one notice with sensible deadlineMs', async () => {

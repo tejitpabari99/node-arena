@@ -1,3 +1,4 @@
+import { MANIFEST_SCHEMA_VERSION } from '@node-arena/content';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -51,15 +52,17 @@ test('mergeCampaign: unknown entry fields (e.g. loop) are preserved', () => {
   assert.throws(() => parseCampaignDoc('{}'), /entries/);
 });
 
-test('registeredThemes: ids of the v2 manifest themes; no fallback (absent, unreadable or v1 manifest throws)', () => {
+test('registeredThemes: ids of the current manifest themes; missing, unreadable and mismatched manifests fail', () => {
   const dir = mkdtempSync(join(tmpdir(), 'na-themes-'));
   try {
     const p = join(dir, 'm.json');
     assert.throws(() => registeredThemes(p), /cannot read theme registry/);
     writeFileSync(p, JSON.stringify({ schemaVersion: '1.2.0', themes: { grass: {} } }));
-    assert.throws(() => registeredThemes(p), /expected a v2 manifest/);
-    writeFileSync(p, JSON.stringify({ schemaVersion: '2.0.0', themes: { green: {}, lava: {} } }));
+    assert.throws(() => registeredThemes(p), /expected manifest schemaVersion/);
+    writeFileSync(p, JSON.stringify({ schemaVersion: MANIFEST_SCHEMA_VERSION, themes: { green: {}, lava: {} } }));
     assert.deepEqual(registeredThemes(p), ['green', 'lava']);
+    writeFileSync(p, JSON.stringify({ schemaVersion: '99.0.0', themes: { green: {} } }));
+    assert.throws(() => registeredThemes(p), /expected/);
     writeFileSync(p, '{nope');
     assert.throws(() => registeredThemes(p), /cannot read theme registry/);
     // the committed manifest registers exactly the themes the importer can map today

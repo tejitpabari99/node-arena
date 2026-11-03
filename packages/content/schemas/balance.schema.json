@@ -7,7 +7,8 @@
     "spawn",
     "growth",
     "contactDistance",
-    "laneHalfWidth"
+    "laneHalfWidth",
+    "minBuildingDistance"
   ],
   "properties": {
     "$schema": {
@@ -16,7 +17,7 @@
     },
     "schemaVersion": {
       "type": "string",
-      "const": "2.0.0"
+      "const": "1.0.0"
     },
     "stageThresholds": {
       "type": "array",
@@ -66,6 +67,13 @@
       "x-unit": "fx3"
     },
     "laneHalfWidth": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 500,
+      "exclusiveMinimum": 0,
+      "x-unit": "fx3"
+    },
+    "minBuildingDistance": {
       "type": "number",
       "minimum": 0,
       "maximum": 500,

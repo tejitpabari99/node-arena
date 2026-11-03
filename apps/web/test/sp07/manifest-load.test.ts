@@ -1,3 +1,4 @@
+import { MANIFEST_SCHEMA_VERSION } from '@node-arena/content';
 import { describe, expect, it } from 'vitest';
 import { loadManifest, parseManifest } from '../../src/manifest/load.js';
 import { AssetError, ManifestError } from '../../src/manifest/resolve.js';
@@ -9,11 +10,11 @@ const ok = (body: unknown): Response => ({ ok: true, status: 200, json: async ()
 
 describe('parseManifest (v2)', () => {
   it('accepts the shipped manifest with the default (world-populated) registry', () => {
-    expect(parseManifest(manifestJson).schemaVersion).toBe('2.0.0');
+    expect(parseManifest(manifestJson).schemaVersion).toBe(MANIFEST_SCHEMA_VERSION);
   });
-  it('rejects a v1-shaped / malformed manifest with a typed schema error', () => {
-    const v1 = { ...json(), schemaVersion: '1.0.0' };
-    expect(() => parseManifest(v1)).toThrow(ManifestError);
+  it('rejects a mismatched or malformed manifest with a typed schema error', () => {
+    const mismatch = { ...json(), schemaVersion: '99.0.0' };
+    expect(() => parseManifest(mismatch)).toThrow(ManifestError);
     try { parseManifest({}); } catch (e) { expect((e as ManifestError).code).toBe('schema'); }
   });
   it('fails on kinds missing from an explicit registry, passes once registered', () => {
@@ -30,7 +31,7 @@ describe('parseManifest (v2)', () => {
 describe('loadManifest (v2)', () => {
   it('fetches and parses', async () => {
     const m = await loadManifest('/m.json', async () => ok(manifestJson));
-    expect(m.schemaVersion).toBe('2.0.0');
+    expect(m.schemaVersion).toBe(MANIFEST_SCHEMA_VERSION);
   });
   it('retries transport failures twice then throws AssetError', async () => {
     let calls = 0;

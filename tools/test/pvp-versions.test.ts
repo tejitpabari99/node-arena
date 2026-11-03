@@ -1,3 +1,5 @@
+import { RULES_VERSION } from '@node-arena/content';
+import { PROTOCOL_VERSION } from '../../packages/net/src/version.js';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -12,11 +14,11 @@ const mod = (await import(script)) as {
 };
 
 test('diffVersions: equal, changed, missing and extra keys', () => {
-  const e = { rules: '3.2.0', protocol: 2 };
-  assert.deepEqual(mod.diffVersions({ rules: '3.2.0', protocol: 2 }, e), []);
-  assert.equal(mod.diffVersions({ rules: '3.1.0', protocol: 2 }, e).length, 1);
-  assert.equal(mod.diffVersions({ rules: '3.2.0' }, e).length, 1);
-  assert.equal(mod.diffVersions({ rules: '3.2.0', protocol: 2, x: 1 }, e).length, 1);
+  const e = { rules: RULES_VERSION, protocol: PROTOCOL_VERSION };
+  assert.deepEqual(mod.diffVersions({ ...e }, e), []);
+  assert.equal(mod.diffVersions({ ...e, rules: '99.0.0' }, e).length, 1);
+  assert.equal(mod.diffVersions({ rules: RULES_VERSION }, e).length, 1);
+  assert.equal(mod.diffVersions({ ...e, x: 1 }, e).length, 1);
   assert.equal(mod.diffVersions(null, e).length, 2);
 });
 

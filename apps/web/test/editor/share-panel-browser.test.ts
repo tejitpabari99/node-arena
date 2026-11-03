@@ -24,7 +24,7 @@ it('opens a 320px Share dialog below the top bar, clear of map controls; version
   const panel = page.getByTestId('share-panel'), trigger = page.getByTestId('share-button');
   await domExpect(panel).toHaveAttribute('role', 'dialog'); await domExpect(panel).toHaveAccessibleName('Share');
   await domExpect(trigger).toHaveAttribute('aria-expanded', 'true'); await domExpect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
-  await domExpect(page.getByTestId('editor-version')).toHaveText('Version 0.0.0');
+  await domExpect(page.getByTestId('editor-version')).toHaveText('Version 1.0.0');
   const box = (await panel.boundingBox())!, button = (await trigger.boundingBox())!, controls = (await page.getByTestId('map-controls').boundingBox())!;
   expect(box.width).toBe(320); expect(box.y).toBeGreaterThanOrEqual(56); expect(box.x + box.width).toBeCloseTo(button.x + button.width, 0); expect(box.x + box.width).toBeLessThan(controls.x);
   expect(await panel.evaluate(el => getComputedStyle(el).zIndex)).toBe('5');
