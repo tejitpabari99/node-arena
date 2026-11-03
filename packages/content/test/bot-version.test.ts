@@ -25,7 +25,12 @@ test('Node adapter reads literal current and committed versions without executin
     execFileSync('git', ['-C', dir, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'baseline']);
     writeFileSync(path, "export const BOT_VERSION = '1.0.1';\n");
     assert.equal(readBotVersion(dir), '1.0.1'); assert.equal(readBotVersion(dir, 'HEAD'), '1.0.0');
+    assert.equal(readBotVersion(dir, 'none'), undefined);
     assert.throws(() => botVersionFromSource("export const BOT_VERSION = process.env.VERSION;"), /literal/);
     assert.throws(() => botVersionFromSource("throw new Error('executed'); export const BOT_VERSION = '1.0.0';"), /literal/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a missing current BOT_VERSION is rejected even without a baseline', () => {
+  assert.throws(() => checkBotVersion({}, undefined, undefined, undefined), /BOT_VERSION.*missing/);
 });

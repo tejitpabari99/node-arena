@@ -17,7 +17,7 @@ export interface ReplayHeader {
 }
 /** `levels`: level id -> simHash; `bots`: `<levelId>#<playerId>` -> botHash. */
 export interface HashesLock { levels: Record<string, string>; bots: Record<string, string> }
-/** Baseline metadata only needs the version; older baselines carry other envelope fields. */
+/** Baseline metadata and lock constrain version bumps. */
 export interface ContentBaseline { metadata: Pick<ContentMeta, 'contentVersion'>; hashes: HashesLock }
 
 const sorted = (record: Record<string, string>): Record<string, string> =>
@@ -39,11 +39,9 @@ export function parseContentMeta(source: ContentSource, file = 'content.json'): 
   return parsed.value;
 }
 
-/** Baseline `content.json` may predate this schema; only `contentVersion` is read. */
-export function readBaselineVersion(source: string): Pick<ContentMeta, 'contentVersion'> {
-  const value = JSON.parse(source) as { contentVersion?: unknown };
-  if (typeof value.contentVersion !== 'string') throw new Error('Baseline content.json has no contentVersion');
-  return { contentVersion: value.contentVersion };
+/** Baseline content metadata obeys the current envelope schema. */
+export function readBaselineVersion(source: string): ContentMeta {
+  return parseContentMeta(source);
 }
 
 /** Compare against baseline metadata AND lock, never the newly regenerated lock. */

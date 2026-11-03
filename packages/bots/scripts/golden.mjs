@@ -78,6 +78,7 @@ export function verifyBundle(expected, actual) {
 }
 /** Version of the golden at `ref` (default HEAD; VERSION_GUARD_BASE overrides). Absent file in a valid commit = bootstrap. */
 export function committedVersion(ref = process.env.VERSION_GUARD_BASE || 'HEAD', root = repoRoot, file = relativeGolden) {
+  if (ref === 'none') return undefined;
   const revision = execFileSync('git', ['rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`], { cwd: root, encoding: 'utf8', stdio: 'pipe' }).trim();
   try { return JSON.parse(execFileSync('git', ['show', `${revision}:${file}`], { cwd: root, encoding: 'utf8', stdio: 'pipe' })).botVersion; }
   catch (error) {

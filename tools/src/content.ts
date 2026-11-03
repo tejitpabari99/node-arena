@@ -11,6 +11,7 @@ export function splitFiles(files: ContentFiles): { meta: string | object; data: 
 }
 // The baseline always refers to committed repository content, including when --dir supplies a fixture.
 export function readBaseline(root: string, ref: string): ContentBaseline | undefined {
+  if (ref === 'none') return undefined;
   const git = (...args: string[]) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   try {
     const revision = git('rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`);

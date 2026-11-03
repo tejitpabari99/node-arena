@@ -61,3 +61,8 @@ test('covers R6: CLI --update without a BOT_VERSION bump is rejected', () => {
     assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).botVersion, current.botVersion);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('explicit no-baseline permits resetting bot golden versions without reading git', async () => {
+  const { committedVersion } = await golden();
+  assert.equal(committedVersion('none', '/no/repository'), undefined);
+});

@@ -26,6 +26,9 @@ test('validate-content adapter catches regenerated bot locks and locates the req
       assert.match((error as Error).message, /BOT_VERSION.*increase/);
       assert.equal((error as { file: string }).file, 'packages/bots/src/version.ts'); return true;
     });
+    await writeFile(source, "export const BOT_VERSION = '0.1.0';\n");
+    assert.match(await checkLock(files, dir, root, 'none'), /BOT_VERSION gates agree/);
+    await assert.rejects(checkLock(files, dir, root, 'HEAD'), /decrease/);
     await writeFile(source, "export const BOT_VERSION = '1.0.1';\n");
     assert.match(await checkLock(files, dir, root, 'HEAD'), /BOT_VERSION gates agree/);
     // Param drift (inline per-level v2 `bot` block: actionDelayMs) is caught the same way, without a bump.

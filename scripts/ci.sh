@@ -65,17 +65,21 @@ step() { # step <name> <command...>
 # Version-guard base precedence: explicit VERSION_GUARD_BASE > CONTENT_BASE (CI passes
 # the PR base / pre-push commit) > `git merge-base HEAD main` (or origin/main) for the
 # whole branch > HEAD^ (initial commit: HEAD). CI_RELEASE=1 (merge to main) runs with
-# VERSION_GUARD_BASE unset so scripts use their normal HEAD / HEAD^ guard.
+# VERSION_GUARD_BASE unset so scripts use their normal HEAD / HEAD^ guard, except
+# when an explicit none override establishes a new version baseline.
 cb="${CONTENT_BASE:-}"; [[ "$cb" =~ ^0+$ ]] && cb=""
-# An explicitly set base must resolve to a commit; only the automatic merge-base path may fall back.
+# An explicit base must be a commit or none; only automatic selection may fall back.
 for var in VERSION_GUARD_BASE CONTENT_BASE; do
   val="${!var:-}"
   [[ "$var" == CONTENT_BASE ]] && val="$cb"
-  if [[ -n "$val" ]] && ! git rev-parse --verify --end-of-options "${val}^{commit}" >/dev/null 2>&1; then
+  if [[ -n "$val" && "$val" != none ]] && ! git rev-parse --verify --end-of-options "${val}^{commit}" >/dev/null 2>&1; then
     echo "ci: $var='$val' is not a valid commit" >&2; exit 1
   fi
 done
-if [[ "${CI_RELEASE:-}" == "1" ]]; then
+if [[ "${VERSION_GUARD_BASE:-$cb}" == none ]]; then
+  base=none
+  export VERSION_GUARD_BASE=none
+elif [[ "${CI_RELEASE:-}" == "1" ]]; then
   unset VERSION_GUARD_BASE
   base="${cb:-HEAD^}"
 else
@@ -86,7 +90,7 @@ else
   [[ -z "$base" ]] && base=HEAD^
   export VERSION_GUARD_BASE="$base"
 fi
-if ! git rev-parse --verify --end-of-options "${base}^{commit}" >/dev/null 2>&1; then
+if [[ "$base" != none ]] && ! git rev-parse --verify --end-of-options "${base}^{commit}" >/dev/null 2>&1; then
   # An initial commit establishes the first content/version baseline.
   base=HEAD
   [[ -n "${VERSION_GUARD_BASE:-}" ]] && export VERSION_GUARD_BASE="$base"

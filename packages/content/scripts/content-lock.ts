@@ -31,6 +31,7 @@ async function dataFiles(dir: string, prefix = 'data'): Promise<ContentFiles> {
   return files;
 }
 function readBaseline(dir: string, ref: string): ContentBaseline | undefined {
+  if (ref === 'none') return undefined;
   const git = (...argv: string[]) => execFileSync('git', ['-C', dir, ...argv], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   const root = git('rev-parse', '--show-toplevel');
   const prefix = relative(root, dir).replaceAll('\\', '/');
@@ -43,7 +44,7 @@ function readBaseline(dir: string, ref: string): ContentBaseline | undefined {
       const lock = JSON.parse(git('show', '--end-of-options', `${ref}:${path('hashes.lock.json')}`)) as HashesLock;
       if (canonicalJson(lock) !== canonicalJson({ levels: {}, bots: {} })) throw new Error('Baseline has hashes but no content.json');
     }
-    return undefined; // Pre-content revision, including 656d0ca.
+    return undefined; // A revision without content establishes no baseline.
   }
   if (!names.has(path('hashes.lock.json'))) throw new Error('Baseline content.json exists but hashes.lock.json is missing');
   const raw = git('show', '--end-of-options', `${ref}:${path('content.json')}`);
@@ -55,7 +56,8 @@ async function main() {
   const dir = resolve(option('--dir', fileURLToPath(new URL('..', import.meta.url))));
   const rules = await readFile(resolve(option('--rules', fileURLToPath(new URL('../../../docs/GAME_RULES.md', import.meta.url)))), 'utf8');
   const check = args.includes('--check');
-  const baseline = check ? readBaseline(dir, option('--base', process.env.VERSION_GUARD_BASE || 'HEAD')) : undefined;
+  const base = option('--base', process.env.VERSION_GUARD_BASE || 'HEAD');
+  const baseline = check ? readBaseline(dir, base) : undefined;
   const files = await dataFiles(dir);
   const metadataRaw = await optionalRead(join(dir, 'content.json'));
   if (metadataRaw === null) throw new Error('content.json missing');
@@ -68,7 +70,7 @@ async function main() {
     if (lock === null || canonicalJson(JSON.parse(lock)) !== canonicalJson(hashes)) throw new Error('hashes.lock.json is stale or missing; run pnpm content:lock');
     checkContentVersion(metadata, hashes, baseline);
     const root = execFileSync('git', ['-C', dir, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
-    checkBotVersion(hashes.bots, baseline?.hashes.bots, readBotVersion(root), readBotVersion(root, option('--base', process.env.VERSION_GUARD_BASE || 'HEAD')));
+    checkBotVersion(hashes.bots, baseline?.hashes.bots, readBotVersion(root), readBotVersion(root, base));
   }
   const destination = join(dir, 'hashes.lock.json');
   if (check) {

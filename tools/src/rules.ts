@@ -4,34 +4,22 @@ import { walkFiles } from './walk.js';
 import type { Diagnostic } from './output.js';
 
 /** Only actual Markdown headings define rules; fenced examples and references do not. */
-function ruleIds(markdown: string): { active: Set<string>; known: Set<string> } {
-  const active = new Set<string>(), known = new Set<string>();
+function ruleIds(markdown: string): Set<string> {
+  const ids = new Set<string>();
   const lines = markdown.replace(/<!--[\s\S]*?-->/g, '').split(/\r?\n/);
-  let fence = '', current: { ids: string[]; depth: number; tombstone: boolean } | undefined;
-  const finish = () => {
-    if (current && !current.tombstone) for (const id of current.ids) active.add(id);
-  };
+  let fence = '';
   for (const line of lines) {
     const marker = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
     if (marker) { if (!fence) fence = marker; else if (marker[0] === fence[0] && marker.length >= fence.length) fence = ''; continue; }
     if (fence) continue;
-    const heading = /^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/.exec(line);
-    if (heading) {
-      const depth = heading[1]!.length;
-      if (current && depth <= current.depth) { finish(); current = undefined; }
-      const id = /^`?(R-[A-Z]+-\d+)\b`?/.exec(heading[2]!);
-      const ids = id ? [id[1]!] : [];
-      if (ids.length) {
-        finish();
-        for (const id of ids) {
-          if (known.has(id)) throw new Error(`Duplicate rule heading ${id}`);
-          known.add(id);
-        }
-        current = { ids, depth, tombstone: /\btombstone\b/i.test(heading[2]!) };
-      }
-    } else if (current && /^\s*(?:\*\*?|_)?(?:status\s*:\s*)?tombstone\b/i.test(line)) current.tombstone = true;
+    const heading = /^ {0,3}#{1,6}\s+(.+?)\s*#*\s*$/.exec(line);
+    const id = heading && /^`?(R-[A-Z]+-\d+)\b`?/.exec(heading[1]!)?.[1];
+    if (id) {
+      if (ids.has(id)) throw new Error(`Duplicate rule heading ${id}`);
+      ids.add(id);
+    }
   }
-  finish(); return { active, known };
+  return ids;
 }
 function testTitles(source: string, file: string): string[] {
   const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
@@ -68,15 +56,15 @@ export async function checkRules(rulesFile: string, packagesDir: string): Promis
   let rules: ReturnType<typeof ruleIds>;
   try { rules = ruleIds(await readText(rulesFile)); }
   catch (error) { throw new LocatedError(rulesFile, (error as Error).message); }
-  if (!rules.known.size) throw new LocatedError(rulesFile, 'No rule headings found');
+  if (!rules.size) throw new LocatedError(rulesFile, 'No rule headings found');
   const covered = new Set<string>(), errors: Diagnostic[] = [];
   const files = await walkFiles(packagesDir, file => /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(file));
   for (const file of files) for (const title of testTitles(await readText(file), file)) {
     for (const match of title.matchAll(/\bcovers\s+(R-[A-Z]+-\d+)\b/g)) {
       const id = match[1]!; covered.add(id);
-      if (!rules.known.has(id)) errors.push({ file, pointer: '', message: `${id} is an unknown rule ID in a test title` });
+      if (!rules.has(id)) errors.push({ file, pointer: '', message: `${id} is an unknown rule ID in a test title` });
     }
   }
-  for (const id of [...rules.active].sort()) if (!covered.has(id)) errors.push({ file: rulesFile, pointer: '', message: `${id} is untested (missing a covers tag in a test title)` });
-  return { summary: `${rules.active.size} active rules; ${[...rules.active].filter(id => covered.has(id)).length} covered; ${rules.known.size - rules.active.size} tombstones exempt.`, errors };
+  for (const id of [...rules].sort()) if (!covered.has(id)) errors.push({ file: rulesFile, pointer: '', message: `${id} is untested (missing a covers tag in a test title)` });
+  return { summary: `${rules.size} active rules; ${[...rules].filter(id => covered.has(id)).length} covered.`, errors };
 }

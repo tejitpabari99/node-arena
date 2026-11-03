@@ -96,3 +96,15 @@ test('check:manifest reports an uncredited asset as a warning and exits 0', asyn
   assert.deepEqual(result.report.errors, []);
   assert.ok(result.report.warnings.some((w: { message: string }) => /missing from CREDITS\.md/.test(w.message) && /models\/owner\/mine\.glb/.test(w.message)), result.stdout);
 });
+
+test('validate:content supports a no-baseline override and still rejects stale locks', async t => {
+  const command = 'validate:content';
+  const dir = await fixture(t);
+  let result = run(command, '--dir', dir, '--base', 'none');
+  assert.equal(result.status, 0, result.stdout);
+  const envResult = spawnSync(process.execPath, ['--import', 'tsx', 'tools/src/cli.ts', command, '--dir', dir, '--format', 'json'], { cwd: root, encoding: 'utf8', env: { ...process.env, VERSION_GUARD_BASE: 'none' } });
+  assert.equal(envResult.status, 0, envResult.stdout + envResult.stderr);
+  await writeFile(join(dir, 'hashes.lock.json'), '{"levels":{},"bots":{}}');
+  result = run(command, '--dir', dir, '--base', 'none');
+  assert.equal(result.status, 1); assert.match(result.report.errors[0].message, /stale/);
+});

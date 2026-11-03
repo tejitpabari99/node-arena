@@ -2,15 +2,15 @@
 
 RULES_VERSION: 3.4.0
 
-This is the mechanics contract for Node Arena, motivated by Tower War (APK 1.29.3). It is a full rewrite; there are no profiles and no v1 compatibility. Rules own **structure and formulas**; every tunable number (speeds, coefficients, caps, radii, thresholds) lives in authored content under a named parameter, and rules only name the resolved parameter. The simulation must follow these rules; presentation, bots and tools consume the same mechanics. Tower War defaults appear only in the §7 glossary and in the §5 worked examples.
+This is the mechanics contract for Node Arena, motivated by Tower War (APK 1.29.3). Rules own **structure and formulas**; every tunable number (speeds, coefficients, caps, radii, thresholds) lives in authored content under a named parameter, and rules only name the resolved parameter. The simulation must follow these rules; presentation, bots and tools consume the same mechanics. Tower War defaults appear only in the §7 glossary and in the §5 worked examples.
 
 ## 1. Conventions
 
-**Rule IDs and areas.** Rule IDs have the form `R-<AREA>-<NN>` and are permanent. Areas: `TCK` ticks and determinism, `ENT` entities, `SPN` spawn, `GRW` growth, `LIN` lines, `CAP` level and overflow, `CMB` combat, `CPT` capture, `TWR` towers, `OBS` obstacles, `WIN` outcomes, `SEA` seats, `TEM` teams, `ELM` elimination, `FFT` forfeit. Retired areas `GEN` (generation) and `SND` (sending) exist only as tombstones.
+**Rule IDs and areas.** Rule IDs have the form `R-<AREA>-<NN>` and are permanent. Areas: `TCK` ticks and determinism, `ENT` entities, `SPN` spawn, `GRW` growth, `LIN` lines, `CAP` level and overflow, `CMB` combat, `CPT` capture, `TWR` towers, `OBS` obstacles, `WIN` outcomes, `SEA` seats, `TEM` teams, `ELM` elimination, `FFT` forfeit.
 
-**Id policy.** A rewritten topic keeps its id and records `Since: 2.0.0` plus `Supersedes:` when v1 text meant something different. A dead topic is tombstoned and its id is never reused or reassigned. Tombstones stay listed under "Retired ids" in §3: GEN-01, GEN-02, SND-01, SND-02, CAP-02. Every active rule needs a test whose title contains `covers R-…` (ownership table in §8). A heading is an active rule unless it is marked tombstone; §6 contains no rule headings until an element ships.
+**Id policy.** IDs are never reused or reassigned. A retired rule is deleted with its tests; history lives in git. Every rule needs a test whose title contains `covers R-…` (ownership table in §8). Every rule heading defines an active rule; §6 contains no rule headings until an element ships.
 
-**Rule layout.** Each rule is a `### R-AREA-NN` heading followed by the statement, then `*Source:*` (research or decomp cite), `*Params:*` (content keys, glossary in §7), `*Examples:*` (E-ids in §5), `*Since:*` and optional `*Supersedes:*`. Research cites use `03#x.y` / `06 §n` for `docs/research/tower-wars/`; "decomp" means `Game.Main.*` decompilation of the APK. Where documents disagree, decomp wins (§8 contradiction table).
+**Rule layout.** Each rule is a `### R-AREA-NN` heading followed by the statement, then `*Source:*` (research or decomp cite), `*Params:*` (content keys, glossary in §7), `*Examples:*` (E-ids in §5). Research cites use `03#x.y` / `06 §n` for `docs/research/tower-wars/`; "decomp" means `Game.Main.*` decompilation of the APK. Where documents disagree, decomp wins (§8 contradiction table).
 
 **Numbers.** Rule text contains no tunable literal. The only literals allowed are structural constants: `20` (`tickRate`), `1000` (`numericScale`, one tick = 1000 milli-ticks), `1_200_000` (60 s × 20 Hz × 1000), `60000` (the 60 s offset of the TW spawn/delay curve in milli-seconds), `900_000` (growth base scale), `1_000_000` (`numericScale` squared, for the growth square root), `50` (ms per tick) and `10` (growth step, `k = idiv(L, 10) + 1`). Everything else is a content key.
 
@@ -19,7 +19,7 @@ This is the mechanics contract for Node Arena, motivated by Tower War (APK 1.29.
 **Terms.**
 - *Building*: a map entity of kind `house` or `tower`. Both hold a *building level*, are owned by a player or neutral, and are capturable.
 - *Building level* `L`: integer in `[0, maxLevel]` — garrison and hit points of a building in one number. Not to be confused with a *campaign level* (a playable map).
-- *Line*: an owner-drawn directed channel from a source house to a target building (v1 "channel"). Lines are free to draw.
+- *Line*: an owner-drawn directed channel from a source house to a target building. Lines are free to draw.
 - *Troop*: a unit walking a line; types `soldier` and `tank` (artillery reserved, §6). Type, owner and source building are fixed at departure.
 - *Stage*: 1, 2 or 3 as a building level is below the first threshold, between the two, or at or above the second threshold of `stageThresholds` (default `[10, 30]`, §7). Stage drives line slots, tower radius and art (R-GRW-02).
 - *Hostile*: different team (R-ENT-04). With no `SeatSetup` every player is its own team, so every non-self owner is hostile, AI against AI included; a neutral building is hostile to every non-neutral troop. Same-team owners are *allies* (R-TEM-01).
@@ -36,8 +36,6 @@ The engine constant is `tickRate = 20` ticks per simulation second. A step advan
 
 *Examples:* E-TICK.
 
-*Since:* 2.0.0.
-
 ### R-TCK-02
 
 Authored fixed-point fields have at most three decimal places and compile at `numericScale = 1000`. Simulation state and arithmetic are integers only. Integer division floors for non-negative operands. Multiply before dividing, with an exact intermediate range-checked below 2^53. `isqrt` returns the greatest integer whose square does not exceed its input. No floating point, trigonometry or wall-clock value may influence outcomes.
@@ -47,10 +45,6 @@ Authored fixed-point fields have at most three decimal places and compile at `nu
 *Params:* `numericScale` (rules constant), every fixed-point content value.
 
 *Examples:* E-TICK, E-SPAWN.
-
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-TCK-02 (truncation wording).
 
 ### R-TCK-03
 
@@ -62,21 +56,15 @@ Iteration orders are explicit and are the only tie-breaks. A line's `channelKey`
 
 *Examples:* E-ARRIVAL, E-OVERFLOW.
 
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-TCK-03.
-
 ### R-TCK-04
 
 Progress is measured in `numericScale × tickRate` units per world unit. Each tick a troop advances by `speedMilli`, the compiled form of its type's `speed`; speed is constant per troop type and never changes mid-flight in 2.0.0. Line length between centre positions with milli-unit differences `dx`, `dy` is `isqrt((dx × tickRate)² + (dy × tickRate)²)` progress units. A departing troop starts at progress 0 in its departure tick; afterwards progress is elapsed ticks times `speedMilli`. Movement is analytic (evaluated from departure tick) rather than stepped per troop.
 
-*Source:* v1 R-TCK-04; 03#4.5.
+*Source:* 03#4.5.
 
 *Params:* `units.*.speed` (compiled `speedMilli`), building `pos`.
 
 *Examples:* E-TICK.
-
-*Since:* 2.0.0.
 
 ### R-TCK-05
 
@@ -87,10 +75,6 @@ Each tick follows the nine-phase order in §4. Capture happens inline during the
 *Params:* None.
 
 *Examples:* E-ARRIVAL.
-
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-TCK-05 (eight phases with slot enforcement).
 
 ### R-TCK-06
 
@@ -104,8 +88,6 @@ Timers count in milli-ticks and are translated from TW float timers as follows. 
 
 *Examples:* E-TIMER, E-TOWER.
 
-*Since:* 2.0.0.
-
 ## 2. Entities
 
 ### R-ENT-01
@@ -118,10 +100,6 @@ A building has a stable id, position, owner (a player or neutral), level, kind (
 
 *Examples:* E-SPAWN, E-STAGE.
 
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-ENT-01 (tower with garrison and components).
-
 ### R-ENT-02
 
 A troop has an owner, a source building and a type (`soldier` or `tank`), all fixed at departure, plus hit points and progress on a line. `hp`, `attack` and `defense` are flat per type and come from content, not from the owner. Visual identity never affects mechanics.
@@ -132,21 +110,15 @@ A troop has an owner, a source building and a type (`soldier` or `tank`), all fi
 
 *Examples:* E-EXCHANGE, E-CAPTURE.
 
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-ENT-02 (value-1 troops).
-
 ### R-ENT-03
 
 A line has an owner, a source house, a target building, its own spawn timer (R-SPN-01) and a draw sequence. Troops on a line keep FIFO order. Cutting or replacing a line does not remove its in-flight troops. A line is identified by its ordered source/target pair.
 
-*Source:* v1 R-ENT-03; 03#3.4.
+*Source:* 03#3.4.
 
 *Params:* None.
 
 *Examples:* E-LINES.
-
-*Since:* 2.0.0.
 
 ### R-ENT-04
 
@@ -158,10 +130,6 @@ A player's identity is its team unless a `SeatSetup` assigns teams (R-TEM-01): e
 
 *Examples:* E-ARRIVAL.
 
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-ENT-04 (team field).
-
 *Amended:* 3.1.0 (team = player id unless a `SeatSetup` assigns teams; hostile = different team). Campaign behaviour unchanged.
 
 *Amended:* 3.3.0 (neutral buildings of unused pvp slots).
@@ -171,8 +139,6 @@ A player's identity is its team unless a `SeatSetup` assigns teams (R-TEM-01): e
 Every pair of buildings must be at least `minBuildingDistance` world units apart, center to center (default 3.5). This applies to every archetype and owner in campaign, PvP and custom levels. A distance below the minimum, allowing only a 1e-6 world-unit comparison tolerance, is a hard content validation error naming both buildings. Elements and obstacles are unconstrained. The editor blocks invalid placement and movement; existing violating saved custom levels fail validation without migration.
 
 *Params:* `balance.minBuildingDistance`.
-
-*Since:* 3.4.0.
 
 ## 3. Rules by area
 
@@ -192,8 +158,6 @@ Both `L` and `n` are read afresh every tick. `n` counts every drawn line, includ
 
 *Examples:* E-SPAWN, E-TIMER.
 
-*Since:* 2.0.0.
-
 ### R-SPN-02
 
 When a spawn timer fires, one troop of the house's `spawns.troop` departs on that line at progress 0 with the next global `seq`. Spawning is free: the house's level does not change. If the number of live troops whose source is this house (troops on cut lines included) is at or above `aliveCap`, the spawn is skipped but the timer is still consumed.
@@ -204,8 +168,6 @@ When a spawn timer fires, one troop of the house's `spawns.troop` departs on tha
 
 *Examples:* E-SPAWN.
 
-*Since:* 2.0.0.
-
 ### R-SPN-03
 
 A new line starts with its timer at 0 when drawn. Phase 4 runs after phase 1 in the same tick, so the draw tick already accrues `1000`; the first troop departs on the first tick whose accrued total (counting the draw tick) reaches the period. A line's timer ceases when the line is cut, replaced or cancelled. Neutral buildings never spawn.
@@ -215,8 +177,6 @@ A new line starts with its timer at 0 when drawn. Phase 4 runs after phase 1 in 
 *Params:* None.
 
 *Examples:* E-TIMER.
-
-*Since:* 2.0.0.
 
 ### R-GRW-01
 
@@ -232,8 +192,6 @@ An owned (non-neutral) house with zero lines has a growth timer under R-TCK-06. 
 
 *Examples:* E-GROWTH.
 
-*Since:* 2.0.0.
-
 ### R-GRW-02
 
 `stage(L) = 1 + (number of entries of stageThresholds that are <= L)`. The stage function is the single source for line slots (R-LIN-02), tower radius (R-TWR-01) and art stage. Thresholds are inclusive.
@@ -243,8 +201,6 @@ An owned (non-neutral) house with zero lines has a growth timer under R-TCK-06. 
 *Params:* `stageThresholds`.
 
 *Examples:* E-STAGE.
-
-*Since:* 2.0.0.
 
 ### R-LIN-01
 
@@ -256,10 +212,6 @@ An owned (non-neutral) house with zero lines has a growth timer under R-TCK-06. 
 
 *Examples:* E-LINES, E-BLOCK.
 
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-LIN-01 (tower sources, slot auto-cut).
-
 ### R-LIN-02
 
 A house has `slots = stage(L)` line slots. There is **no auto-cut**: when the level drops (hit, tower shot) a house keeps every drawn line even if `lines > slots`. `free = slots − lines` may be negative; a draw needs `free > 0`. The spawn penalty (R-SPN-01) uses the actual line count.
@@ -269,10 +221,6 @@ A house has `slots = stage(L)` line slots. There is **no auto-cut**: when the le
 *Params:* `stageThresholds`.
 
 *Examples:* E-STAGE.
-
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-LIN-02 / v1 slot enforcement (end-of-tick auto-cut of newest lines).
 
 ### R-LIN-03
 
@@ -284,8 +232,6 @@ Drawing a line that is the reverse of an existing line of the **same owner** rep
 
 *Examples:* E-LINES, E-HEADON.
 
-*Since:* 2.0.0.
-
 ### R-LIN-04
 
 Lines are straight, centre to centre, free to draw and have no length cap. Line crossings alone do nothing; combat between crossing lines is governed by R-CMB-04 and blocking by R-OBS-01.
@@ -295,10 +241,6 @@ Lines are straight, centre to centre, free to draw and have no length cap. Line 
 *Params:* None.
 
 *Examples:* E-LINES.
-
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-LIN-04 (crossings had no effect).
 
 ### R-LIN-05
 
@@ -310,8 +252,6 @@ Lines are straight, centre to centre, free to draw and have no length cap. Line 
 
 *Examples:* E-LINES.
 
-*Since:* 2.0.0.
-
 ### R-CAP-01
 
 A building's level is an integer in `[0, maxLevel]`. A friendly arrival raises the level to `min(L + defense, maxLevel)`, where `defense` is the arriving troop type's `defense`. Any amount above `maxLevel` is surplus handled by R-CAP-03.
@@ -321,10 +261,6 @@ A building's level is an integer in `[0, maxLevel]`. A friendly arrival raises t
 *Params:* `maxLevel`, `units.*.defense`.
 
 *Examples:* E-OVERFLOW.
-
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-CAP-01.
 
 ### R-CAP-03
 
@@ -336,33 +272,23 @@ Surplus from R-CAP-01 re-enters play as **one** new troop of the arriving type, 
 
 *Examples:* E-OVERFLOW.
 
-*Since:* 2.0.0.
-
 ### R-CMB-01
 
 Two hostile troops on opposite lines of the same building pair (head-on) fight when their fronts are within `contactDistance`: for the front-most troop of each line, the exchange fires when `progA + progB >= length − contactDistance_m × tickRate`. The exchange is resolved by R-CMB-05; afterwards the new fronts are tested again, repeating while a new pair qualifies. A pair whose troops both survive the exchange (at most 2 rounds per R-CMB-05) is not fought again in the same tick; the survivors are re-tested on the next tick. Only fronts fight; troops behind them wait.
 
-*Source:* v1 R-CMB-01; 03#5.2.
+*Source:* 03#5.2.
 
 *Params:* `balance.contactDistance`.
 
 *Examples:* E-HEADON.
 
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-CMB-01 (cancel when the progress sum reaches the length).
-
 ### R-CMB-02
 
 Arrivals (progress at or beyond line length) are applied in order of overshoot (`progress − length`) descending, then line order (source index, target index), then FIFO `seq`. Each arrival determines friendship or hostility against the building's owner at its own turn, including ownership changes caused by earlier arrivals in the same tick. Friendly arrivals follow R-CAP-01; hostile arrivals follow R-CMB-03.
 
-*Source:* v1 R-CMB-02.
-
 *Params:* None.
 
 *Examples:* E-ARRIVAL.
-
-*Since:* 2.0.0.
 
 ### R-CMB-03
 
@@ -374,10 +300,6 @@ A hostile arrival deals `attack` damage (not its hit points) and the troop is co
 
 *Examples:* E-CAPTURE.
 
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-CMB-03 (leftover value became the new garrison).
-
 ### R-CMB-04
 
 Hostile troops on different lines fight when, at any instant within the tick, the distance between their centre-line positions is `<= contactDistance` (the interaction window: the region of lane coordinates `(s, u)` where that distance holds; it covers X-crossings and near-parallel lines closer than `contactDistance`). The test is swept, so a troop cannot tunnel through another in one tick. All contacts in a tick resolve in ascending `(channelKeyA, channelKeyB)` of the ordered-pair channel keys, then `(seqA, seqB)`; sub-tick contact time is ignored. Each contact is an exchange under R-CMB-05; survivors continue and may fight again in the same pass. Same-owner troops never fight. Head-on pairs of the same building pair use R-CMB-01 instead.
@@ -387,8 +309,6 @@ Hostile troops on different lines fight when, at any instant within the tick, th
 *Params:* `balance.contactDistance`.
 
 *Examples:* E-CROSSING.
-
-*Since:* 2.0.0.
 
 ### R-CMB-05
 
@@ -400,8 +320,6 @@ An exchange reads both troops' `attack` first and applies both simultaneously; a
 
 *Examples:* E-EXCHANGE.
 
-*Since:* 2.0.0.
-
 ### R-CPT-01
 
 Capture (R-CMB-03) changes the building's owner to the arriver's owner and sets its level to 0. The old owner's outgoing lines are cancelled. **Every troop whose source is this building dies, including troops on cut lines and in flight.** The growth timer resets and `ignoreForWin` is cleared. Spawn timers need no reset: the old lines are cancelled, so a new owner's lines start at timer 0 when drawn (R-SPN-03). A tower's cooldown is **unchanged** by capture (R-TWR-04). Neutral owners cannot capture.
@@ -412,21 +330,13 @@ Capture (R-CMB-03) changes the building's owner to the arriver's owner and sets 
 
 *Examples:* E-CAPTURE, E-ARRIVAL.
 
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-CPT-01 (leftover value became garrison); v1 R-CPT-02 (in-flight troops survived capture).
-
 ### R-CPT-02
 
 Capture keeps incoming lines. Troops of other buildings are unaffected. Every later arrival re-evaluates attack or reinforcement against the current owner.
 
-*Source:* v1 R-CPT-02.
-
 *Params:* None.
 
 *Examples:* E-ARRIVAL.
-
-*Since:* 2.0.0.
 
 ### R-TWR-01
 
@@ -444,8 +354,6 @@ A tower's attack radius depends on its stage and its attack delay depends on its
 
 *Examples:* E-TOWER.
 
-*Since:* 2.0.0.
-
 ### R-TWR-02
 
 A tower is ready when its cooldown is `<= 0`, its level is at least 1, and its owner is non-neutral — or neutral when `neutralFires` is true. A ready tower fires at the nearest hostile troop with `minRadius < dist <= radius + troopPad` (distances in milli-units, compared as squares via exact integers); ties by distance, then owner index, then troop `seq`. If no troop qualifies it fires at the nearest eligible **house**: a house is eligible when it is hostile to the tower's owner, its level is at least 1 (a level 0 house is never shot) and it is in reach. Reach is detection by the tower's trigger sphere, so a house is in reach when the sphere of radius `radius_m` around the tower centre intersects the house's footprint: with `q` the point of the footprint nearest the tower centre, `dist(centre, q)² <= radius_m²` (exact integers; no `troopPad`, because the house footprint is the body). Eligible houses are chosen in two tiers: first houses owned by a non-neutral hostile owner (an opponent), then, only if none of those is in reach, neutral houses (when `hitsNeutralHouses` is true). Within a tier houses are ordered by centre distance, then building index, so an opponent's house is shot even when a neutral house is nearer. Towers are never targets of tower shots, and neutral houses are targets only when `hitsNeutralHouses` is true. A tower fires at most one shot per cooldown; the cooldown is then set from the current level (R-TWR-01). A ready tower with no target stays ready.
@@ -455,8 +363,6 @@ A tower is ready when its cooldown is `<= 0`, its level is at least 1, and its o
 *Params:* `minRadius`, `troopPad`, `hitsNeutralHouses`, `neutralFires`.
 
 *Examples:* E-TOWER.
-
-*Since:* 2.0.0 (house tiering 3.0.0).
 
 ### R-TWR-03
 
@@ -468,8 +374,6 @@ A shot at a troop kills it regardless of hit points. A shot at a house lowers it
 
 *Examples:* E-TOWER.
 
-*Since:* 2.0.0.
-
 ### R-TWR-04
 
 A tower's cooldown timer persists through capture (neither reset nor recomputed). A neutral tower fires at every non-neutral owner's troops when `neutralFires` is true (the decomp has no owner gate on firing); the flag exists so that a change of behaviour is a content flag plus a content-version bump, not a rule change.
@@ -479,8 +383,6 @@ A tower's cooldown timer persists through capture (neither reset nor recomputed)
 *Params:* `neutralFires`.
 
 *Examples:* E-TOWER.
-
-*Since:* 2.0.0.
 
 ### R-OBS-01
 
@@ -492,8 +394,6 @@ A `DrawLine` is blocked when the segment from source centre to target centre, th
 
 *Examples:* E-BLOCK.
 
-*Since:* 2.0.0.
-
 ### R-OBS-02
 
 Obstacles are static, unowned, take no part in winning and do not interact with troops.
@@ -504,8 +404,6 @@ Obstacles are static, unowned, take no part in winning and do not interact with 
 
 *Examples:* E-BLOCK.
 
-*Since:* 2.0.0.
-
 ### R-SEA-01
 
 A `pvp` match has 2 to `level.players.length` seats (`N` slots authored by the map), at most 4 today. A match with `n` seats uses the first `n` slots of `level.players` in authored order; seat `i` is slot `i`, and seats are indexed `0..n-1`. Every seat is occupied for the whole match and there are no empty seats. Each building authored for a slot `>= n` becomes neutral (owner `-1`, R-ENT-04) at its authored level; those slots take no part in the match. `n` is `SeatSetup.teams.length`; an absent setup means `n = N`, identical to the pre-3.3.0 behavior. Whether a seat is driven by a person or a bot is decided outside the simulation (lobby or server): the level's player `kind` is a slot placeholder, and every seat submits the same commands under the same validation with no mechanical privilege (R-ENT-04). `create(level, seed, setup?)` takes an optional `SeatSetup` whose `teams[i]` is the team id of seat `i`. The simulation never reads seat kinds to decide an outcome.
@@ -515,8 +413,6 @@ A `pvp` match has 2 to `level.players.length` seats (`N` slots authored by the m
 *Params:* `level.players`, `SeatSetup.teams`, `timeLimitSec` (pvp default 480, i.e. 9600 ticks).
 
 *Examples:* none.
-
-*Since:* 3.1.0.
 
 *Amended:* 3.3.0 (variable seat count `2..N`; unused slots' buildings neutral).
 
@@ -530,8 +426,6 @@ Teams are static for a match. `SeatSetup.teams[i]` (integers `0..n-1` where `n =
 
 *Examples:* none.
 
-*Since:* 3.1.0.
-
 *Amended:* 3.3.0 (`n` = seat count, may be less than the level's slot count).
 
 ### R-TEM-02
@@ -544,8 +438,6 @@ Allies never fight. Same-team troops skip head-on exchanges (R-CMB-01) and cross
 
 *Examples:* none.
 
-*Since:* 3.1.0.
-
 ### R-TEM-03
 
 A troop that arrives at a building whose owner is on the troop owner's team reinforces it: `defense` is added as in R-CMB-02, subject to the cap and overflow of R-CAP-01 and R-CAP-03. The building's owner is unchanged and the arrival never captures. Ownership is re-evaluated per arrival (R-CMB-02), so a line to an ally building that an enemy has since captured attacks it. `DrawLine` to an ally building is valid (R-LIN-01 has no owner restriction), an ally's reverse line coexists, and R-LIN-03 replacement stays within the same owner.
@@ -556,8 +448,6 @@ A troop that arrives at a building whose owner is on the troop owner's team rein
 
 *Examples:* none.
 
-*Since:* 3.1.0.
-
 ### R-ELM-01
 
 In a `pvp` match a seat is eliminated when it owns no building and owns no troops in transit. Elimination is final (a seat never returns) and records `eliminatedAt` as the tick; the event `SeatEliminated` is emitted. Seats are evaluated at phase 9 by ascending index. A second cause is a `Forfeit` (R-FFT-01), which eliminates the seat at phase 1 of its tick; a seat already eliminated is not eliminated again and keeps its first `eliminatedAt`. A seat with no building has no troops in transit in practice (R-CPT-01 kills troops sourced at a captured building), so the troop condition is defensive.
@@ -567,8 +457,6 @@ In a `pvp` match a seat is eliminated when it owns no building and owns no troop
 *Params:* None.
 
 *Examples:* none.
-
-*Since:* 3.1.0.
 
 *Amended:* 3.2.0 (second elimination cause: `Forfeit`, R-FFT-01).
 
@@ -582,10 +470,6 @@ In objective `captureAll`, the human wins when every building with `ignoreForWin
 
 *Examples:* E-OUTCOME.
 
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-WIN-01 (elimination by towers and troops in transit).
-
 *Amended:* 3.1.0 (scoped to objective `captureAll`; objective `pvp` uses R-WIN-04..07).
 
 ### R-WIN-02
@@ -598,25 +482,17 @@ In objective `captureAll`, the human loses when they own no building with `ignor
 
 *Examples:* E-OUTCOME.
 
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-WIN-02 (mutual-defeat `draw`).
-
 *Amended:* 3.1.0 (scoped to objective `captureAll`; the no-draw statement applies to `captureAll` only, `pvp` may draw, R-WIN-06).
 
 ### R-WIN-03
 
 In objective `captureAll`, a level may set `timeLimitSec`; when absent there is no limit (no campaign level sets one). At phase 9, `tick >= timeLimitSec × tickRate` ends the match as a timeout loss, evaluated after win and loss in that tick (order win → loss → timeout: a win on the final tick counts as a win). Harness step caps are not outcomes. Once recorded, an outcome is final.
 
-*Source:* v1 R-WIN-03; 03#7.2.
+*Source:* 03#7.2.
 
 *Params:* `timeLimitSec` (optional).
 
 *Examples:* E-OUTCOME.
-
-*Since:* 2.0.0.
-
-*Supersedes:* v1 R-WIN-03 (300 s default limit).
 
 *Amended:* 3.1.0 (scoped to objective `captureAll`; the `pvp` time limit is R-WIN-05).
 
@@ -630,8 +506,6 @@ In objective `pvp`, at phase 9 after elimination (R-ELM-01), when exactly one te
 
 *Examples:* none.
 
-*Since:* 3.1.0.
-
 *Amended:* 3.2.0 (cross-reference to `Forfeit`, R-FFT-03).
 
 ### R-WIN-05
@@ -644,8 +518,6 @@ In objective `pvp`, when `tick >= timeLimitSec × tickRate` and no `victory` has
 
 *Examples:* none.
 
-*Since:* 3.1.0.
-
 ### R-WIN-06
 
 In objective `pvp` the outcome `draw` occurs when (a) at the time limit two or more teams tie for best under R-WIN-05, including when 3 or more teams exist and only the top teams tie, with winners = the seats of all tied top teams (a shared first place); or (b) no team has a non-eliminated seat (including when the last remaining teams are all eliminated by `Forfeit` in the same tick, R-FFT-03), with winners `[]`. `winner` is always null on a draw; `winners` lists the tied seats (empty in case b).
@@ -655,8 +527,6 @@ In objective `pvp` the outcome `draw` occurs when (a) at the time limit two or m
 *Params:* None.
 
 *Examples:* none.
-
-*Since:* 3.1.0.
 
 *Amended:* 3.2.0 (case b cross-reference to `Forfeit`, R-FFT-03).
 
@@ -670,8 +540,6 @@ At the end of a `pvp` match the result carries a `ranking` of one placement per 
 
 *Examples:* none.
 
-*Since:* 3.1.0.
-
 ### R-FFT-01
 
 In a `pvp` match a `Forfeit{player}` applied for a non-eliminated seat `s` at phase 1 does, in this order: every building owned by `s` becomes neutral and keeps its building level; every line whose source building was owned by `s` is cancelled; every troop whose source is a building owned by `s` dies (as in R-CPT-01), including troops on cut lines and in flight; the growth timer of each such building resets and its `ignoreForWin` is cleared (as in R-CPT-01); tower cooldowns are unchanged; and `s` is eliminated (R-ELM-01) with `eliminatedAt` set to the current tick and `SeatEliminated` emitted. Lines that other seats drew toward the now-neutral buildings stay valid (neutral targets are legal, R-LIN-01). Neutral towers fire as for any neutral tower (`neutralFires`, R-TWR-04). The effect depends on no wall-clock input: who forfeits and when is decided outside the simulation and recorded in the command log.
@@ -681,8 +549,6 @@ In a `pvp` match a `Forfeit{player}` applied for a non-eliminated seat `s` at ph
 *Params:* None.
 
 *Examples:* none.
-
-*Since:* 3.2.0.
 
 ### R-FFT-02
 
@@ -694,8 +560,6 @@ In a `pvp` match a `Forfeit{player}` applied for a non-eliminated seat `s` at ph
 
 *Examples:* none.
 
-*Since:* 3.2.0.
-
 ### R-FFT-03
 
 A seat eliminated by `Forfeit` is eliminated for every outcome rule: R-WIN-04 awards `victory` when exactly one team keeps a non-eliminated seat after the forfeit (teammates of a forfeited seat still win with their team); if the forfeits of one tick leave no team with a non-eliminated seat, the outcome is a `draw` with no winner (R-WIN-06 case b); R-WIN-07 ranks by `eliminatedAt`, where a forfeited seat's tick is the tick of the `Forfeit`. Outcome evaluation is at phase 9 of the same tick (R-TCK-05) and is not changed by the forfeit path; a forfeit applied after the outcome is recorded changes nothing (the outcome is final).
@@ -705,32 +569,6 @@ A seat eliminated by `Forfeit` is eliminated for every outcome rule: R-WIN-04 aw
 *Params:* None.
 
 *Examples:* none.
-
-*Since:* 3.2.0.
-
-### Retired ids
-
-These ids are tombstones. They stay known so stale references are caught, are never reused, and are not active rules.
-
-### R-GEN-01 — tombstone
-
-Status: tombstone. v1 owned-tower generation at a rate. Replaced by R-SPN-01..03 and R-GRW-01. *Since:* 1.0.0, retired 2.0.0.
-
-### R-GEN-02 — tombstone
-
-Status: tombstone. v1 shared generation accumulator and garrison/departure routing. Replaced by per-line timers (R-SPN-01). *Since:* 1.0.0, retired 2.0.0.
-
-### R-SND-01 — tombstone
-
-Status: tombstone. v1 "sending is generation" (stored garrison never dispatched). Replaced by free spawning (R-SPN-02). *Since:* 1.0.0, retired 2.0.0.
-
-### R-SND-02 — tombstone
-
-Status: tombstone. v1 round-robin target choice across lines. Replaced by independent line timers (R-SPN-01, R-SPN-03). *Since:* 1.0.0, retired 2.0.0.
-
-### R-CAP-02 — tombstone
-
-Status: tombstone. v1 no-bank rule (capped towers stop generating without a line). Replaced by growth (R-GRW-01) and overflow (R-CAP-03). *Since:* 1.0.0, retired 2.0.0.
 
 ## 4. Tick phase order
 
@@ -855,19 +693,13 @@ One row per content key: the key rules name, its Tower War source, the rule ids 
 | `numericScale` | rules constant | R-TCK-02 | 1000 | |
 | `buildings.*` | house / tower archetype (`l` start level, `ml`) | R-ENT-01 | per level | |
 
-`sc` (TW spawn coefficient, speed booster only) and all other TW level keys not listed here are not consumed in 2.0.0 (R11 deferred boosters, §6). Bullet speed and other visuals are presentation only.
+`sc` (TW spawn coefficient, speed booster only) and all other TW level keys not listed here are not consumed (R11 deferred boosters, §6). Bullet speed and other visuals are presentation only.
 
 ## 8. Changelog
 
 | RULES_VERSION | Date | Change |
 |---|---|---|
-| 3.4.0 | 2026-11-03 | Additive authoring constraint R-ENT-05: minimum building center distance, default 3.5 world units; hard validation errors and editor enforcement. Existing valid replay outcomes unchanged. Three shipped campaign layouts nudged through content versioning. |
-| 3.3.0 | 2026-11-01 | Additive; no existing replay outcome changes (full-seat matches, campaign and pvp replays are identical; only `rulesVersion` metadata moves). R-SEA-01 amended: a pvp match has `2..level.players.length` seats using a prefix of the authored slots; buildings of unused slots become neutral at their authored level. R-TEM-01 (`n` = seat count) and R-ENT-04 (neutral note) amended in place. `SCHEMA_VERSION` unchanged. Content note: `na-pvp-cross` slot order changed to `p1,p3,p2,p4` (authored teams `[0,0,1,1]`); the default pairing (p1+p3 vs p2+p4, opposite corners) is preserved, but seat indexes differ, so default Cross replays/goldens were regenerated via content (not a rules change). |
-| 3.2.0 | 2026-10-29 | Additive; no existing replay outcome changes (campaign and pvp replays without `Forfeit` are identical; only `rulesVersion` metadata moves). New area FFT: `Forfeit` system command (R-FFT-01 effect, R-FFT-02 validity/phase-1 order/system-only provenance, R-FFT-03 outcome interaction). Amended in place: R-ELM-01 (second elimination cause), R-WIN-04 and R-WIN-06(b) (cross-references), §4 phase 1 and 9 rows, §4.1 (command set union). `SCHEMA_VERSION` unchanged. |
-| 3.1.0 | 2026-10-28 | Additive; campaign replays unchanged. New objective `pvp`: seats and teams (R-SEA-01, R-TEM-01), ally non-aggression and reinforcement (R-TEM-02, R-TEM-03), seat elimination (R-ELM-01), last-team victory, timeout ranking, draw and placement (R-WIN-04..07). Amended in place: R-ENT-04 (team = player id unless a `SeatSetup` assigns teams), R-WIN-01..03 scoped to `captureAll`. Hash gains a pvp-only tail (§4.2). `SCHEMA_VERSION` unchanged. |
-| 3.0.0 | 2026-10-23 | **Replay outcomes may change.** R-TWR-02: a ready tower with no troop target shoots in-reach opponent (non-neutral hostile) houses before neutral houses; neutral houses only when no opponent house is in reach. Deviation from decomp ordering, justified by playtest. Troop targeting unchanged. |
-| 2.0.0 | 2026-10-22 | Full rewrite as the Tower War (APK 1.29.3) rules contract, replacing v1. **Replay outcomes change**: v1 replays and goldens are invalid and must be regenerated. Per-line spawn timers, zero-line growth, stage-based slots with no auto-cut, tank/soldier hp and attack, capture by damage greater than level with overshoot discarded and the source building's troops killed, overflow forwarded, crossing combat, shooting towers, lane blocking by obstacles, optional time limit; draw outcome and 300 s default limit removed; integer milli-tick timers. **Retired ids:** GEN-01, GEN-02, SND-01, SND-02, CAP-02 (tombstones). Rewritten ids keep their numbers (`Since: 2.0.0`); new areas SPN, GRW, TWR, OBS. Boosters deferred (§6). |
-| 1.0.0 | 2026-10-08 | Initial mechanics contract (generation/sending, strict slots with auto-cut, no-bank capacity, front-only head-on combat, leftover capture, elimination outcomes). Superseded. |
+| 1.0.0 | 2026-11-03 | Initial mechanics contract: deterministic ticks, building and troop entities, minimum building spacing (R-ENT-05), per-line spawning, growth and capacity, combat and capture, towers and obstacles, campaign outcomes, PvP seats and teams, elimination and forfeits. |
 
 ### 8.1 Contradiction settlements
 
@@ -875,10 +707,10 @@ Research documents and earlier drafts disagreed in six places. Settlements follo
 
 | # | Question | Settlement | Rule | Evidence |
 |---|---|---|---|---|
-| 1 | Surplus lines when building level drops (v1 auto-cut; 06 D12) | Kept; no auto-cut | R-LIN-02 | decomp `SetAvailableWays`/`CalculateFreeWays`; 03#3.1 |
-| 2 | Do troops of a captured building survive? (v1 yes) | No: all troops with that source die | R-CPT-01 | decomp `SetNewOwner`; 03#5.3 |
-| 3 | Overshoot damage on capture (v1 leftover became garrison) | Discarded; damage must exceed level | R-CMB-03 | decomp `Building.TryDoDamageFrom`; 03#5.3, 03#14 |
-| 4 | Overflow beyond `maxLevel` (v1 lost) | Forwarded as one troop on a random outgoing line | R-CAP-03 | decomp `House.AddLevel`, `TrySpawnAdditionalWarrior`; 03#5.3 |
+| 1 | Surplus lines when building level drops (06 D12) | Kept; no auto-cut | R-LIN-02 | decomp `SetAvailableWays`/`CalculateFreeWays`; 03#3.1 |
+| 2 | Do troops of a captured building survive? | No: all troops with that source die | R-CPT-01 | decomp `SetNewOwner`; 03#5.3 |
+| 3 | Overshoot damage on capture | Discarded; damage must exceed level | R-CMB-03 | decomp `Building.TryDoDamageFrom`; 03#5.3, 03#14 |
+| 4 | Overflow beyond `maxLevel` | Forwarded as one troop on a random outgoing line | R-CAP-03 | decomp `House.AddLevel`, `TrySpawnAdditionalWarrior`; 03#5.3 |
 | 5 | Tower scaling | Radius by stage, delay by level | R-TWR-01 | decomp `Tower`; 03#5.5 |
 | 6 | Do neutral towers fire? (SP01 draft: inert) | Yes (`neutralFires = true`); flag kept | R-TWR-04 | decomp has no owner gate; level 4 neutral tower; 03#5.5 |
 
@@ -886,13 +718,12 @@ Booster aim count (1 versus 3, 03#8.10 against 05#4.6) is not settled here becau
 
 ### 8.2 Test-tag ownership
 
-`pnpm check:rules` requires, for every active id, a non-skipped test title containing `covers R-X-NN` under `packages/**/*.{test,spec}.*` (`apps/web` and `tools/test` are not scanned); unknown ids in titles are errors; tombstoned ids stay known. It is red from the 2.0.0 commit until the owners below add their tags.
+`pnpm check:rules` requires, for every active id, a non-skipped test title containing `covers R-X-NN` under `packages/**/*.{test,spec}.*` (`apps/web` and `tools/test` are not scanned); unknown ids in titles are errors. Retired rules and their tests are deleted; IDs are never reused.
 
 | Area | Tests written by |
 |---|---|
 | TCK, ENT, SPN, GRW, LIN, CAP, CMB-01/02/03/05, CPT, WIN-01..03 | SP03 (`packages/sim/test`) |
-| SEA, TEM, ELM, WIN-04..07 | PvP SP01 seat-rules (`packages/sim/test`; WIN-07 placement test lands after the text) |
-| FFT-01..03 | PvP SP07 pause-forfeit Task 2 (`packages/sim/test`; `check:rules` is red for FFT until it lands, as for 2.0.0) |
+| SEA, TEM, ELM, WIN-04..07 | PvP SP01 seat-rules (`packages/sim/test`) |
+| FFT-01..03 | PvP SP07 pause-forfeit Task 2 (`packages/sim/test`) |
 | CMB-04, TWR, OBS | SP04 |
 | Content validation of rule params | SP02 (`packages/content/test`) |
-| Stale v1 `covers` tags (sim step/rules/economy tests, content components, tools/test, apps/web) | Deleted by the SP that deletes that file; SP09 verifies none remain |

@@ -26,7 +26,7 @@ Node-only tools run through the root pnpm scripts and `tools/src/cli.ts`. Run `p
 | `pnpm check:schemas` | Generated JSON schemas match defs/content sources |
 | `pnpm check:content --base HEAD` / `pnpm validate:content --base HEAD` | Fresh sim/bot lock, valid v2 content, references and derived requires; content/rules/bot versions compared with committed baseline |
 | `pnpm check:manifest` | Manifest schema and visual/theme/palette references; safe files; unit/building/obstacle/ground triangle budgets 1100/1200/300/500, 256px texture limit; committed output hashes against `tools/assets/tw-extract.lock.json`; `docs/CREDITS.md` coverage warns for all uncredited assets (does not fail) |
-| `pnpm check:rules` | Every active heading rule ID has a literal covers tag in an active test title; unknown tags fail; tombstones remain known and exempt |
+| `pnpm check:rules` | Every active heading rule ID has a literal covers tag in an active test title; unknown tags fail; IDs are never reused and retired rules are deleted with their tests (history lives in git) |
 | `pnpm check:import` | Re-import bytes match committed importer-owned levels/campaign; orphan importer files fail; skips without local extract |
 | `pnpm assets:tw:check` | Regenerated model/texture/FX output and extract lock match committed bytes; skips without local extract |
 | `pnpm assets:ui:check` | Generated UI sprite files/lock match the committed files |
@@ -86,7 +86,7 @@ Owner-art folders, patch whitelist/merge rules, export limits are documented in 
 
 `scripts/ci.sh` wraps named gates and reports each parked entry with its owning SP. `pnpm check:parked` lists remaining entries/artifacts; strict mode fails until all are removed. `CI_RELEASE=1` makes the final parked check strict. See the [SP09 plan](../docs/agent_files/feat-tower-war-port-20261022-0321/09-gates-tooling-docs/PRD.md) for ownership/closure history.
 
-For branch runs the baseline priority is VERSION_GUARD_BASE, CONTENT_BASE, merge-base against main (or origin/main), then HEAD^ (HEAD for an initial commit). CI exports the branch baseline to content and golden version guards; release runs unset VERSION_GUARD_BASE and use the normal committed baseline. Outside CI, content CLI defaults to VERSION_GUARD_BASE or HEAD. Invalid explicit revisions fail. Regenerating a lock cannot bypass version bumps. A shell template, with a placeholder revision:
+For branch runs the baseline priority is VERSION_GUARD_BASE, CONTENT_BASE, merge-base against main (or origin/main), then HEAD^ (HEAD for an initial commit). CI exports the branch baseline to content and golden version guards; release runs unset VERSION_GUARD_BASE and use the normal committed baseline, except for an explicit `none` override. Outside CI, content CLI defaults to VERSION_GUARD_BASE or HEAD. Use `--base none` (content/level CLIs) or `VERSION_GUARD_BASE=none` (content and golden guards) to skip historical version comparisons while retaining lock/golden freshness checks. CI also accepts `CONTENT_BASE=none`; the pre-launch reset workflow sets it once and normal baseline selection must be restored after the reset merges. Other invalid explicit revisions fail. Regenerating a lock cannot bypass version bumps. A shell template, with a placeholder revision:
 
 ```sh
 CONTENT_BASE=<revision> pnpm run ci

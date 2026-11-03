@@ -117,3 +117,7 @@ test('VERSION_GUARD_BASE must be a valid commit (option-like refs are rejected)'
     assert.doesNotMatch(result.stdout + result.stderr, /golden replays (verified|updated)/, ref);
   }
 });
+
+test('explicit no-baseline permits resetting golden versions without reading git', () => {
+  assert.equal(gitBaseline('/no/repository', 'none'), null);
+});
